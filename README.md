@@ -61,7 +61,7 @@ FILES
 -----
   index.html                the game
   peerjs.min.js             online play (PeerJS 1.5.5, MIT license); loads in the background after the menu is up
-  fonts/                    Big Shoulders Stencil Display and IBM Plex Mono (SIL Open Font License)
+  *.woff2                   Big Shoulders Stencil Display and IBM Plex Mono (SIL Open Font License)
   manifest.webmanifest      app name, icon and full-screen setting for home screens
   sw.js                     saves a copy on the phone for offline solo play
   apple-touch-icon.png      the iPhone home-screen icon

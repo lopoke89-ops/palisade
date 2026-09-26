@@ -1,7 +1,7 @@
 // Keeps a copy of the game on the phone so solo works with no signal.
 // The version below changes every time the game is rebuilt, which swaps in the new copy.
-const V='palisade-af089e24f4';
-const FILES=['./','index.html','peerjs.min.js','manifest.webmanifest','icon-192.png','icon-512.png','apple-touch-icon.png','fonts/big-shoulders-stencil-display-600.woff2','fonts/big-shoulders-stencil-display-800.woff2','fonts/big-shoulders-stencil-display-900.woff2','fonts/ibm-plex-mono-400.woff2','fonts/ibm-plex-mono-600.woff2'];
+const V='palisade-a13e4b5bf8';
+const FILES=['./','index.html','peerjs.min.js','manifest.webmanifest','icon-192.png','icon-512.png','apple-touch-icon.png','big-shoulders-stencil-display-600.woff2','big-shoulders-stencil-display-800.woff2','big-shoulders-stencil-display-900.woff2','ibm-plex-mono-400.woff2','ibm-plex-mono-600.woff2'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==V).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',e=>{
