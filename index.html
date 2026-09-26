@@ -488,7 +488,7 @@ const MAT=[
 /* ---------- PvP ---------- */
 // base: two crews, two stakes, a truce to build, then knock theirs down. ffa: everyone for themselves around fixed concrete cover.
 const TEAMS={a:{name:'WEST',col:'#6fa8dc'},b:{name:'EAST',col:'#e0664a'}};
-const PVP={stake:700,dmg:.7,nade:.8,stakeHit:.35,truce:45,bounty:8,startSal:20,ffaGoal:15,ffaTime:300,prot:2};
+const PVP={stake:700,dmg:.7,snipe:1.125,snipeCd:1.25,nade:.8,stakeHit:.35,truce:45,bounty:8,startSal:20,ffaGoal:15,ffaTime:300,prot:2};
 const FFA_SPAWNS=[[1.5,1.5],[14.5,1.5],[14.5,14.5],[1.5,14.5],[7.5,1.3],[14.7,7.5],[8.5,14.7],[1.3,8.5]];
 const CLASSES={
   soldier:{name:'SOLDIER',hp:115,nades:2,build:.6,cap:[52,24,24],blast:1,nadeCd:1,gun:{dmg:12,cd:.11,spread:.12,range:11,speed:22,snd:'ar'}},
@@ -1228,7 +1228,7 @@ function simPlayer(p,dt){
   const G=p.gun;
   // cooldowns keep leftover time, so the fire rate is the same at any frame rate
   if(p.fireIn&&truce()){p.cd=Math.max(p.cd,0);if(p===player&&!game.truceTold){game.truceTold=true;toast('TRUCE','No shooting until the battle starts. Build.')}}
-  else if(p.fireIn){p.prot=0;let n=0;while(p.cd<=0&&n<6){fire(p,Math.atan2(p.aim.y,p.aim.x)+(rnd()-.5)*G.spread,0,G,-p.cd);p.cd+=G.cd;n++}
+  else if(p.fireIn){p.prot=0;let n=0;while(p.cd<=0&&n<6){fire(p,Math.atan2(p.aim.y,p.aim.x)+(rnd()-.5)*G.spread,0,G,-p.cd);p.cd+=G.cd*(game.pvp&&G.pierce?PVP.snipeCd:1);n++}
     if(n){sfx(G.snd,p.x,p.y);if(G.pierce&&p===player)addShake(p.x,p.y,1.5)}}
   else p.cd=Math.max(p.cd,0);
   for(const n of nodes){
@@ -1363,7 +1363,7 @@ function updateBullets(dt){
           const mult=b.team===0?(b.heavy?.6:.25):1;damageWall(k,b.dmg*MAT[w.mat].bullet*mult);hitFx(b.x,b.y,w.mat);sfx('hit'+w.mat,b.x,b.y);
           if(b.pierce>0&&w.mat===0){b.pierce--;b.dmg*=.8}else{b.dead=true;break}}}
       }
-      if(game.pvp){for(const o of players.values())if(o.alive&&!(o.prot>0)&&o.id!==b.own&&(game.pvp==='ffa'||o.team!==b.pt)&&Math.hypot(o.x-b.x,o.y-b.y)<.3){hurtPlayer(o,b.dmg*PVP.dmg,b.own);b.dead=true;break}}
+      if(game.pvp){for(const o of players.values())if(o.alive&&!(o.prot>0)&&o.id!==b.own&&(game.pvp==='ffa'||o.team!==b.pt)&&Math.hypot(o.x-b.x,o.y-b.y)<.3){hurtPlayer(o,b.dmg*(b.heavy?PVP.snipe:PVP.dmg),b.own);b.dead=true;break}}
       else if(b.team===0){for(const e of enemies)if(!e.dead&&Math.hypot(e.x-b.x,e.y-b.y)<.34){hurtEnemy(e,b.dmg,b.own);b.dead=true;break}}
       else{for(const a of allies())if(a.alive&&Math.hypot(a.x-b.x,a.y-b.y)<.3){hurtAlly(a,b.dmg*(a===qm?.7:1));b.dead=true;break}}
     }
