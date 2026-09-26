@@ -354,7 +354,7 @@ input[type=text]{-webkit-user-select:text;user-select:text}
       <p class="install" id="installTip" hidden>Play it like an app: tap <b>Share</b> <span aria-hidden="true">⎙</span> at the bottom of Safari, then <b>Add to Home Screen</b>.</p>
       <button class="ghost" id="installBtn" type="button" hidden>INSTALL AS AN APP</button>
       <p class="note" id="saveNote" hidden></p>
-      <p class="foot">v0.7 · phone and desktop · online co-op and PvP for up to six</p>
+      <p class="foot">v0.7.1 · phone and desktop · online co-op and PvP for up to six</p>
     </section>
 
     <section class="page" id="pg-solo" hidden>
@@ -536,11 +536,11 @@ const MAT=[
 /* ---------- PvP ---------- */
 // base: two crews, two stakes, a truce to build, then knock theirs down. ffa: everyone for themselves around fixed concrete cover.
 const TEAMS={a:{name:'WEST',col:'#6fa8dc'},b:{name:'EAST',col:'#e0664a'}};
-const PVP={stake:700,dmg:.7,snipe:1.125,snipeCd:1.25,nade:.8,stakeHit:.35,truce:45,bounty:8,startSal:20,ffaGoal:15,ffaTime:300,prot:2};
+const PVP={stake:700,dmg:.7,snipe:52/47,snipeCd:1.25,nade:.8,stakeHit:.35,truce:45,bounty:8,startSal:20,ffaGoal:15,ffaTime:300,prot:2};
 const FFA_SPAWNS=[[1.5,1.5],[14.5,1.5],[14.5,14.5],[1.5,14.5],[7.5,1.3],[14.7,7.5],[8.5,14.7],[1.3,8.5]];
 const CLASSES={
   soldier:{name:'SOLDIER',hp:115,nades:2,build:.6,cap:[64,64,64],blast:1,nadeCd:1,gun:{dmg:12,cd:.11,spread:.12,range:11,speed:22,snd:'ar'}},
-  sniper:{name:'SNIPER',hp:90,nades:2,build:1,cap:[64,64,64],blast:1,nadeCd:1,gun:{dmg:40,cd:.55,spread:.02,range:16,speed:34,pierce:2,snd:'sniper',bolt:true}},
+  sniper:{name:'SNIPER',hp:90,nades:2,build:1,cap:[64,64,64],blast:1,nadeCd:1,gun:{dmg:47,cd:1,spread:.02,range:16,speed:34,pierce:2,snd:'sniper',bolt:true}},
   grenadier:{name:'GRENADIER',hp:100,nades:4,build:1,cap:[64,64,64],blast:1.3,nadeCd:.6,gun:{dmg:9,cd:.12,spread:.16,range:9,speed:22,snd:'ar'}}
 };
 const DIFF={
@@ -865,7 +865,7 @@ let kickX=0,kickY=0,shakeT=0;
 function addShake(x,y,a){
   rec(['k',r2(x),r2(y),a]);
   const d=player?Math.hypot(x-player.x,y-player.y):6;const s=a*cfg.shake/(1+d*.35);shake=Math.min(12,shake+s);
-  if(a>=10&&d<5)buzz(35);
+  if(a>=10&&d<5&&!demo)buzz(35);
 }
 function localShake(a){if(!demo)shake=Math.min(12,shake+a*cfg.shake)}
 function kickCam(dx,dy,a){if(demo)return;kickX+=dx*a*cfg.shake;kickY+=dy*a*cfg.shake;const l=Math.hypot(kickX,kickY);if(l>9){kickX*=9/l;kickY*=9/l}}
