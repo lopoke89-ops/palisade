@@ -60,7 +60,8 @@ PLAYING ONLINE
 FILES
 -----
   index.html                the game
-  (online play uses the PeerJS 1.5.5 library, MIT license, loaded from jsDelivr)
+  peerjs.min.js             online play (PeerJS 1.5.5, MIT license); loads in the background after the menu is up
+  fonts/                    Big Shoulders Stencil Display and IBM Plex Mono (SIL Open Font License)
   manifest.webmanifest      app name, icon and full-screen setting for home screens
   sw.js                     saves a copy on the phone for offline solo play
   apple-touch-icon.png      the iPhone home-screen icon

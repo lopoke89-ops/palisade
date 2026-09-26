@@ -13,10 +13,15 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Palisade</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil+Display:wght@600;800;900&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<link rel="preload" href="fonts/big-shoulders-stencil-display-900.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/ibm-plex-mono-400.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+@font-face{font-family:'Big Shoulders Stencil Display';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/big-shoulders-stencil-display-600.woff2) format('woff2')}
+@font-face{font-family:'Big Shoulders Stencil Display';font-style:normal;font-weight:800;font-display:swap;src:url(fonts/big-shoulders-stencil-display-800.woff2) format('woff2')}
+@font-face{font-family:'Big Shoulders Stencil Display';font-style:normal;font-weight:900;font-display:swap;src:url(fonts/big-shoulders-stencil-display-900.woff2) format('woff2')}
+@font-face{font-family:'IBM Plex Mono';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/ibm-plex-mono-400.woff2) format('woff2')}
+@font-face{font-family:'IBM Plex Mono';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/ibm-plex-mono-600.woff2) format('woff2')}
+
 :root{
   --ink:#141210; --panel:#1b1814; --line:#3a3228;
   --bone:#dcd2ba; --dim:#9a8f7a; --warn:#e2b436; --rust:#b0512f;
@@ -408,7 +413,7 @@ input[type=text]{-webkit-user-select:text;user-select:text}
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script>
+<script>window.PEER_SRC='peerjs.min.js'</script>
 <script>
 (()=>{
 'use strict';
@@ -1813,6 +1818,16 @@ const NET={mode:'solo',inGame:false,peer:null,code:'',roster:[],conns:new Map(),
   toHost(msg,ch='r'){const x=this.host&&(this.host[ch]&&this.host[ch].open?this.host[ch]:this.host.r);if(x&&x.open)try{x.send(msg)}catch(e){}}
 };
 const onlineOK=()=>typeof Peer!=='undefined';
+// the website fetches PeerJS in the background once the menu is up, so it never holds up the first screen
+const canOnline=()=>onlineOK()||!!window.PEER_SRC;
+let peerLoad=null;
+function needPeer(){
+  if(onlineOK())return Promise.resolve(true);
+  if(!window.PEER_SRC)return Promise.resolve(false);
+  return peerLoad||(peerLoad=new Promise(res=>{const sc=document.createElement('script');sc.src=window.PEER_SRC;sc.async=true;
+    sc.onload=()=>res(onlineOK());sc.onerror=()=>{peerLoad=null;sc.remove();res(false)};document.head.append(sc)}));
+}
+const PEER_FAIL="Couldn't load online play. Check your signal and try again.";
 function peerOpts(){
   const q=new URLSearchParams(location.search),o={debug:0,config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]}};
   if(q.get('peerhost')){o.host=q.get('peerhost');o.port=+q.get('peerport')||9000;o.path=q.get('peerpath')||'/';o.secure=q.get('peersecure')==='1'}
@@ -1836,8 +1851,8 @@ function netReset(){
 function netLeave(msg){netReset();toMenu();if(msg){showPage('multi');mStatus(msg)}}
 
 // ---------- host ----------
-function netHost(){
-  if(!onlineOK())return;
+async function netHost(){
+  if(!onlineOK()){mStatus('Getting online play ready…');if(!await needPeer()){mStatus(PEER_FAIL);return}if(NET.mode!=='solo')return}
   pick.diff=pick.diff||'normal';mStatus('Opening a room…');
   const code=genCode(),peer=new Peer(ROOM_PREFIX+code,peerOpts());NET.peer=peer;NET.mode='opening';
   peer.on('open',()=>{NET.mode='host';NET.code=code;myId='host';NET.roster=[{id:'host',name:myName(),cls:pick.cls,cos:cosStr(myCos())}];mStatus('');showLobby()});
@@ -1952,8 +1967,8 @@ function makeSnap(withWalls){
 }
 
 // ---------- guest ----------
-function netJoin(code){
-  if(!onlineOK())return;
+async function netJoin(code){
+  if(!onlineOK()){mStatus('Getting online play ready…');if(!await needPeer()){mStatus(PEER_FAIL);return}if(NET.mode!=='solo')return}
   code=String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
   if(code.length!==4){mStatus('Room codes are 4 letters and numbers.');return}
   mStatus('Finding room '+code+'…');
@@ -2142,12 +2157,12 @@ function renderLobby(){
   $('lNote').textContent=host?`${NET.roster.length} of 6 in the crew · ${len} · threat: ${DIFF[pick.diff].name.toLowerCase()}. Share the code, then raise the fence when everyone's in.`:`Waiting for the host to start · ${len} · threat: ${DIFF[pick.diff].name.toLowerCase()}.`;
 }
 // the Multiplayer page needs the matchmaking library; the in-Claude preview doesn't ship it
-if(!onlineOK()){$('hostBtn').disabled=true;$('joinBtn').disabled=true;$('mOffline').hidden=false}
+if(!canOnline()){$('hostBtn').disabled=true;$('joinBtn').disabled=true;$('mOffline').hidden=false}
 
 /* ---------- install as an app ---------- */
 const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 const iOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-const ownSite=onlineOK()&&location.protocol==='https:';
+const ownSite=canOnline()&&location.protocol==='https:';
 if(ownSite&&!standalone&&iOS)$('installTip').hidden=false;
 let installEvt=null;
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;if(!standalone)$('installBtn').hidden=false});
@@ -2156,8 +2171,9 @@ if(ownSite&&'serviceWorker' in navigator)navigator.serviceWorker.register('sw.js
 
 applyCfg();syncPicks();startDemo();showPage('main');
 const invite=new URLSearchParams(location.search).get('room');
-if(invite&&onlineOK()){$('mCode').value=invite.toUpperCase().slice(0,4);showPage('multi');mStatus(`You're invited to room ${invite.toUpperCase().slice(0,4)}. Pick your name and job, then tap JOIN.`)}
+if(invite&&canOnline()){$('mCode').value=invite.toUpperCase().slice(0,4);showPage('multi');mStatus(`You're invited to room ${invite.toUpperCase().slice(0,4)}. Pick your name and job, then tap JOIN.`)}
 if(new URLSearchParams(location.search).has('debug'))window.__pal={get locker(){return locker},lockerReward:(...a)=>lockerReward(...a),openCase:()=>openCase(),buyUpgrade:(p,k)=>buyUpgrade(p,k),render,update,NET,get players(){return players},get player(){return player},get game(){return game},get enemies(){return enemies},get walls(){return walls},get core(){return core},startRaid:()=>startRaid()};
+if(window.PEER_SRC)setTimeout(()=>needPeer(),invite?0:1200);
 requestAnimationFrame(frame);
 })();
 </script>

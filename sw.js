@@ -1,12 +1,21 @@
 // Keeps a copy of the game on the phone so solo works with no signal.
 // The version below changes every time the game is rebuilt, which swaps in the new copy.
-const V='palisade-0391dafe75';
-const FILES=['./','index.html','manifest.webmanifest','icon-192.png','icon-512.png','apple-touch-icon.png'];
+const V='palisade-af089e24f4';
+const FILES=['./','index.html','peerjs.min.js','manifest.webmanifest','icon-192.png','icon-512.png','apple-touch-icon.png','fonts/big-shoulders-stencil-display-600.woff2','fonts/big-shoulders-stencil-display-800.woff2','fonts/big-shoulders-stencil-display-900.woff2','fonts/ibm-plex-mono-400.woff2','fonts/ibm-plex-mono-600.woff2'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==V).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',e=>{
   const r=e.request;if(r.method!=='GET'||new URL(r.url).origin!==location.origin)return;
-  // the page itself: try the network first so updates land, fall back to the saved copy offline
-  if(r.mode==='navigate'){e.respondWith(fetch(r).then(res=>{const c=res.clone();caches.open(V).then(k=>k.put('index.html',c));return res}).catch(()=>caches.match('index.html')));return}
+  // the page itself: try the network so updates land, but on a slow or dead connection
+  // open the saved copy after 2.5 s instead of waiting (the download still finishes and is saved for next time)
+  if(r.mode==='navigate'){
+    let save;const net=fetch(r).then(res=>{if(res.ok){const c=res.clone();save=caches.open(V).then(k=>k.put('index.html',c))}return res});
+    e.waitUntil(net.then(()=>save,()=>{}).catch(()=>{}));
+    const saved=caches.match('index.html');
+    e.respondWith(new Promise(done=>{
+      let over=false;const give=x=>{if(!over&&x){over=true;done(x)}};
+      net.then(give,()=>saved.then(s=>give(s||Response.error())));
+      setTimeout(()=>saved.then(give),2500);
+    }));return}
   e.respondWith(caches.match(r).then(hit=>hit||fetch(r)));
 });
