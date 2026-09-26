@@ -47,8 +47,18 @@ PLAYING ONLINE
   - One person taps MULTIPLAYER > HOST and gets a 4-letter code.
   - Friends tap MULTIPLAYER, type the code, tap JOIN. Or the host taps
     SHARE INVITE LINK and friends open the link, which fills the code in.
-  - Up to 6 players plus Dell. The host taps RAISE THE FENCE to start.
-    Friends can also drop into a game that's already running.
+  - Up to 6 players. Before hosting, pick a mode:
+      CO-OP         everyone plus Dell against the raiders.
+      BASE BATTLE   two crews (WEST and EAST), a 45-second truce to
+                    build, then knock down the other stake. Use SWITCH
+                    SIDES in the lobby to pick a crew.
+      FREE-FOR-ALL  everyone for themselves around concrete cover;
+                    first to 15 drops or most after 5 minutes.
+    PvP needs at least two players. Friends can drop into a game
+    that's already running.
+  - Works on computers too: WASD move, mouse aim and fire, Space build,
+    E armory at your stake, G grenade, Esc pause. The bar at the bottom
+    of the screen always shows the keys that do something right now.
   - The host's phone runs the game. If the host locks their phone or
     leaves, the game ends for everyone.
   - Phones connect straight to each other. A free public service
