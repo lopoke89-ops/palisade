@@ -57,14 +57,36 @@ PLAYING ONLINE
     PvP needs at least two players. Friends can drop into a game
     that's already running.
   - Works on computers too: WASD move, mouse aim and fire, Space build,
-    E armory at your stake, G grenade, Esc pause. The bar at the bottom
-    of the screen always shows the keys that do something right now.
+    E armory at your stake, G grenade, T chat, Esc pause. The bar at the
+    bottom of the screen always shows the keys that do something right now.
+  - Text chat works in the lobby and in the game. On a computer press T
+    (or /), type, Enter to send. On a phone tap the speech bubble next to
+    pause; it also has one-tap lines (NICE, HELP!, ON MY WAY...).
   - The host's phone runs the game. If the host locks their phone or
     leaves, the game ends for everyone.
   - Phones connect straight to each other. A free public service
     (PeerJS) introduces them and never sees the game itself. Home Wi-Fi
     almost always works. Some cellular networks block direct connections;
     if a join hangs, get on Wi-Fi.
+
+
+YOUR SAVE (LOCKER)
+------------------
+  - The locker (cosmetics, cases, shards, stats), best runs and settings
+    are saved in the browser for this site. Pushing a new version of the
+    site does NOT touch them: the save keys never change between versions,
+    and the offline copy (sw.js) only replaces its own cached files.
+  - What can still wipe a save: clearing the browser's site data, a
+    private/incognito window, or on iPhone Safari, not opening the site for
+    7 days of Safari use (Apple's rule). Installing to the home screen
+    avoids that last one. Moving the game to a different web address also
+    starts fresh saves, because saves belong to the address.
+  - Backup: SETTINGS > EXPORT SAVE gives a save code (copy it or download
+    it as a .txt file). SETTINGS > IMPORT SAVE takes the code or file back
+    and restores everything; it works on any device or browser.
+  - If the save gets damaged, the game restores the last good copy it
+    kept and says so on the main menu.
+  - Rule for future updates: never rename the palisade.* storage keys.
 
 
 FILES
