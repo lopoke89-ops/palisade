@@ -31,10 +31,10 @@
   color-scheme:dark;
 }
 [hidden]{display:none!important}
-html,body{height:100%;overflow:hidden;background:var(--ink)}
+html,body{height:var(--appH,100%);overflow:hidden;background:var(--ink)}
 body{margin:0;color:var(--bone);font-family:var(--mono);font-size:13px;
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none;-webkit-tap-highlight-color:transparent}
-#game{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;background:var(--ink)}
+#game{position:fixed;inset:0 0 auto 0;width:100%;height:var(--appH,100%);display:block;touch-action:none;background:var(--ink)}
 button{font:inherit;color:inherit;touch-action:none;cursor:pointer}
 button:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
 
@@ -87,7 +87,7 @@ button:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
 #nadeBtn.empty{opacity:.4}
 
 /* ---------- overlays ---------- */
-.overlay{position:fixed;inset:0;display:grid;grid-template-columns:minmax(0,1fr);justify-items:center;align-items:center;
+.overlay{position:fixed;inset:0 0 auto 0;height:var(--appH,100%);display:grid;grid-template-columns:minmax(0,1fr);justify-items:center;align-items:center;
   padding:calc(env(safe-area-inset-top,0px) + 20px) 16px calc(env(safe-area-inset-bottom,0px) + 20px);
   background:radial-gradient(120% 80% at 50% 30%,rgba(20,18,16,.6),rgba(12,11,9,.95));overflow:auto;touch-action:pan-y}
 .overlay button{touch-action:manipulation}
@@ -125,7 +125,7 @@ h2{margin:0;font-family:var(--stencil);font-weight:800;font-size:13px;letter-spa
 @media (prefers-reduced-motion:reduce){#toast{transition:none}}
 
 /* ---------- main menu: panel over the live yard ---------- */
-#menu{position:fixed;inset:0;display:flex;align-items:stretch}
+#menu{position:fixed;inset:0 0 auto 0;height:var(--appH,100%);display:flex;align-items:stretch}
 #menu .panel{width:min(100%,600px);overflow:auto;touch-action:pan-y;display:flex;flex-direction:column;gap:12px;
   padding:calc(env(safe-area-inset-top,0px) + 40px) 40px calc(env(safe-area-inset-bottom,0px) + 28px) max(16px,5vw);
   background:linear-gradient(90deg,rgba(12,11,9,.97) 0%,rgba(12,11,9,.93) 62%,rgba(12,11,9,0) 100%)}
@@ -354,7 +354,7 @@ input[type=text]{-webkit-user-select:text;user-select:text}
       <p class="install" id="installTip" hidden>Play it like an app: tap <b>Share</b> <span aria-hidden="true">⎙</span> at the bottom of Safari, then <b>Add to Home Screen</b>.</p>
       <button class="ghost" id="installBtn" type="button" hidden>INSTALL AS AN APP</button>
       <p class="note" id="saveNote" hidden></p>
-      <p class="foot">v0.7.1 · phone and desktop · online co-op and PvP for up to six</p>
+      <p class="foot">v0.7.2 · phone and desktop · online co-op and PvP for up to six</p>
     </section>
 
     <section class="page" id="pg-solo" hidden>
@@ -558,8 +558,16 @@ let W=0,H=0,DPR=1,TW2=32,TH2=16,WH=26,u=1,camX=0,camY=0,camSX=0,camSY=0,shake=0;
 const DESK=!matchMedia('(pointer: coarse)').matches;
 const snapPx=v=>Math.round(v*DPR)/DPR;
 const LQ=1;
+// iPhone home-screen apps with a see-through status bar report a window that is short by about the
+// status bar's height, which left an empty band at the bottom. Use the real screen height there instead.
+function appHeight(){
+  let h=innerHeight;
+  if(navigator.standalone===true&&screen&&screen.height){const full=innerWidth<=innerHeight?Math.max(screen.width,screen.height):Math.min(screen.width,screen.height);if(full>h&&full-h<120)h=full}
+  return h;
+}
 function resize(){
-  DPR=Math.min(2,window.devicePixelRatio||1);W=innerWidth;H=innerHeight;
+  DPR=Math.min(2,window.devicePixelRatio||1);W=innerWidth;H=appHeight();
+  document.documentElement.style.setProperty('--appH',H+'px');
   cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);lc.width=Math.round(W*DPR*LQ);lc.height=Math.round(H*DPR*LQ);
   g.setTransform(DPR,0,0,DPR,0,0);lg.setTransform(DPR*LQ,0,0,DPR*LQ,0,0);
   // scale snaps to 5% steps so small height changes (iOS toolbars) don't force a rebuild of the scenery
