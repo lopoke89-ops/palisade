@@ -1,4 +1,4 @@
-// Frame-cost benchmark (not a pass/fail test). node bench.js [label]
+// Frame-cost benchmark (not a pass/fail test). node bench.js [label]   (PORT=8082 PAGE=index.html to measure an older build)
 // Phone-sized canvas (390x844 @3x) with software drawing, so it measures CPU work, the part phones feel.
 // Scenes: a busy raid by day and by night with a walled base (some walls damaged or burning), and
 // CPU time used per second while sitting in the menus (the demo game runs behind them).
@@ -9,7 +9,7 @@ const label = process.argv[2] || 'build';
   const out = { label };
   for (const night of [false, true]) {
     const p = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, hasTouch: true, isMobile: true });
-    await p.goto('http://localhost:8080/index.html?debug=1'); await p.waitForTimeout(800);
+    await p.goto(`http://localhost:${process.env.PORT||8080}/${process.env.PAGE||'debug.html'}?debug=1`); await p.waitForTimeout(800);
     await p.evaluate(() => { __pal.showPage('solo') }); await p.click('#startBtn'); await p.waitForTimeout(300);
     out[night ? 'night' : 'day'] = await p.evaluate((night) => {
       const P = __pal; let s = 7; Math.random = () => (s = (s * 16807) % 2147483647) / 2147483647;
@@ -31,7 +31,7 @@ const label = process.argv[2] || 'build';
   }
   // menus: CPU time per second with the locker page open (demo game behind it)
   const p = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, hasTouch: true, isMobile: true });
-  await p.goto('http://localhost:8080/index.html?debug=1'); await p.waitForTimeout(1500);
+  await p.goto(`http://localhost:${process.env.PORT||8080}/${process.env.PAGE||'debug.html'}?debug=1`); await p.waitForTimeout(1500);
   const cdp = await p.context().newCDPSession(p); await cdp.send('Performance.enable');
   for (const page of ['main', 'locker']) {
     await p.evaluate(pg => __pal.showPage(pg), page); await p.waitForTimeout(800);

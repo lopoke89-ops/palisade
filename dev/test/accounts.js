@@ -63,7 +63,7 @@ function handle(method, url, h, body) {
   });
   const p = await ctx.newPage();
   const errs = []; p.on('pageerror', e => errs.push(e.message + ' @ ' + (e.stack || '').split('\n').slice(1, 4).join(' / '))); p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|ERR_INTERNET/.test(m.text())) errs.push('console ' + m.text()); });
-  const URL0 = 'http://localhost:8080/index.html?debug=1&cloud=1';
+  const URL0 = 'http://localhost:8080/debug.html?debug=1&cloud=1';
   const P = f => p.evaluate(f), log = (...a) => console.log(...a), W = ms => p.waitForTimeout(ms);
   const state = () => P(() => ({ st: __pal.acct.state, guest: __pal.acct.s && __pal.acct.s.user && __pal.acct.s.user.is_anonymous, name: __pal.acct.name, msg: __pal.acct.msg, cases: __pal.locker.cases, shards: __pal.locker.shards, owned: __pal.locker.owned.length, cloud: __pal.locker.cloud, raids: __pal.locker.st.raids, claims: __pal.claims.length, btn: document.getElementById('acctBtn').textContent, lede: document.getElementById('aLede').textContent.slice(0, 60), status: document.getElementById('aStatus').textContent }));
 
@@ -146,7 +146,7 @@ function handle(method, url, h, body) {
 
   await p.goto(URL0); await W(1200); s = await state(); log('9 reload:', s.st, s.guest, 'btn', s.btn);
   // 10. not the hosted site and no ?cloud=1: accounts stay off, local play as before
-  const p2 = await ctx.newPage(); await p2.goto('http://localhost:8080/index.html?debug=1'); await p2.waitForTimeout(800);
+  const p2 = await ctx.newPage(); await p2.goto('http://localhost:8080/debug.html?debug=1'); await p2.waitForTimeout(800);
   log('10 local copy:', await p2.evaluate(() => ({ st: __pal.acct.state, btnHidden: document.getElementById('acctBtn').hidden })));
   log('calls:', db.calls.length, 'errors:', errs.length ? errs : 'none');
   await b.close();

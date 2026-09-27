@@ -362,7 +362,7 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
       <button class="ghost" id="installBtn" type="button" hidden>INSTALL AS AN APP</button>
       <button class="ghost acctBtn" id="acctBtn" type="button" data-go="account" hidden>ACCOUNT</button>
       <p class="note" id="saveNote" hidden></p>
-      <p class="foot">v0.8.5 · phone and desktop · online co-op and PvP for up to six</p>
+      <p class="foot">v0.8.6 · phone and desktop · online co-op and PvP for up to six</p>
     </section>
 
     <section class="page" id="pg-account" hidden>
@@ -627,44 +627,57 @@ function sdirToWorld(sx,sy){const a=sx/TW2,b=sy/TH2;let x=(a+b)/2,y=(b-a)/2;cons
 function wdirToScreen(d){let x=(d.x-d.y)*TW2,y=(d.x+d.y)*TH2;const l=Math.hypot(x,y)||1;return{x:x/l,y:y/l}}
 
 /* ================= audio ================= */
-let AC=null,master=null,NB=null;const lastS={};
+let AC=null,master=null,NB=null;const lastS={},voiceT=[],MUF=[];
+function muffle(wb){if(!MUF[wb]){const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=9000*Math.pow(.22,wb)+200;lp.connect(master);MUF[wb]=lp}return MUF[wb]}
 function initAudio(){
   if(AC){if(AC.state==='suspended')AC.resume();return}
   try{AC=new(window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=.55*cfg.volume;master.connect(AC.destination);
     NB=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=rnd()*2-1}catch(e){AC=null}
 }
-/* ---- music: a track for the build phase between co-op raids. Loaded the first time it's needed,
-   looped with no gap (Web Audio, not an <audio> tag), faded in when a build phase starts and out when the raid comes.
-   More tracks: add an entry to MUSIC and pick it in musicWant(). */
-// each track in two formats: AAC for Safari/iPhone/Chrome, Opus for browsers without AAC (some Linux builds); the first one this browser plays is used
-const MUSIC={between:{src:['between_raids.m4a','between_raids.ogg'],len:2348026/48000}};   // len: the exact loop length of the original file
-const mus={buf:null,loading:false,failAt:-1e9,src:null,g:null,bus:null};
-function musicLoad(){
-  if(mus.buf||mus.loading||performance.now()-mus.failAt<30000||!AC)return;mus.loading=true;
+/* ---- music. Each track is loaded the first time it's needed, looped with no gap (Web Audio, not an <audio> tag),
+   faded in and out. Only the track this part of the game can play stays decoded (a decoded minute of music is
+   ~20 MB), so the between-raid track is let go in the menus and the locker track during a run.
+   Each track comes in two formats: AAC for Safari/iPhone/Chrome, Opus for browsers without AAC; the first one
+   this browser plays is used. len: the exact loop length of the original file, in seconds.
+   New track: add an entry here, a case in musicWant(), and both files to build.py's MUSIC_FILES. */
+const MUSIC={between:{src:['between_raids.m4a','between_raids.ogg'],len:2348026/48000},   // co-op build phase
+             locker:{src:['locker.m4a','locker.ogg'],len:3680004/48000}};                   // the Locker page
+const mus={bufs:{},loading:{},failAt:{},src:null,g:null,bus:null,cur:null};
+function musicLoad(k){
+  if(mus.bufs[k]||mus.loading[k]||performance.now()-(mus.failAt[k]||-1e9)<30000||!AC)return;mus.loading[k]=true;
   const A=document.createElement('audio'),can=u=>/\.m4a/.test(u)?A.canPlayType('audio/mp4; codecs="mp4a.40.2"'):A.canPlayType('audio/ogg; codecs="opus"');
-  const list=MUSIC.between.src.filter(u=>can(u)),get=u=>fetch(u).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()})
+  const list=MUSIC[k].src.filter(u=>can(u)),get=u=>fetch(u).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()})
     .then(a=>new Promise((ok,no)=>{const q=AC.decodeAudioData(a,ok,no);if(q&&q.catch)q.catch(no)}));   // callback form for older Safari
   list.reduce((pr,u)=>pr.catch(()=>get(u)),Promise.reject())
-    .then(b=>{mus.buf=b;mus.loading=false},()=>{mus.loading=false;mus.failAt=performance.now()});
+    .then(b=>{mus.loading[k]=false;if(musicKeep(k))mus.bufs[k]=b},()=>{mus.loading[k]=false;mus.failAt[k]=performance.now()});
 }
-function musicStart(){
-  const b=mus.buf,s=AC.createBufferSource(),g=AC.createGain(),t=AC.currentTime;
-  s.buffer=b;s.loop=true;s.loopStart=0;s.loopEnd=Math.min(b.duration,MUSIC.between.len);
+function musicStart(k){
+  const b=mus.bufs[k],s=AC.createBufferSource(),g=AC.createGain(),t=AC.currentTime;
+  s.buffer=b;s.loop=true;s.loopStart=0;s.loopEnd=Math.min(b.duration,MUSIC[k].len);
   g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(1,t+1.6);
-  s.connect(g);g.connect(mus.bus);s.start(t);mus.src=s;mus.g=g;
+  s.connect(g);g.connect(mus.bus);s.start(t);mus.src=s;mus.g=g;mus.cur=k;
 }
 function musicStop(fade){
-  const s=mus.src,g=mus.g,t=AC.currentTime;mus.src=mus.g=null;
+  const s=mus.src,g=mus.g,t=AC.currentTime;mus.src=mus.g=null;mus.cur=null;
   g.gain.cancelScheduledValues(t);g.gain.setValueAtTime(Math.max(g.gain.value,.0001),t);g.gain.exponentialRampToValueAtTime(.0001,t+fade);
   try{s.stop(t+fade+.05)}catch(e){}
 }
-const musicWant=()=>cfg.music>0&&!demo&&!game.pvp&&game.phase==='build'&&playing()&&!document.hidden;
+// which track should be playing right now (null: none)
+function musicWant(){
+  if(cfg.music<=0||document.hidden)return null;
+  if(!$('menu').hidden&&!$('pg-locker').hidden)return'locker';
+  if(!demo&&!game.pvp&&game.phase==='build'&&playing())return'between';
+  return null;
+}
+const musicKeep=k=>k===(playing()?'between':'locker');   // the one track worth keeping decoded here
 function musicTick(){
   if(!AC)return;
   if(!mus.bus){mus.bus=AC.createGain();mus.bus.connect(master)}
   mus.bus.gain.value=.5*cfg.music;
-  if(musicWant()){musicLoad();if(!mus.src&&mus.buf)musicStart()}
-  else if(mus.src)musicStop(game.phase==='raid'?.9:1.5);
+  const want=musicWant();
+  if(mus.src&&mus.cur!==want)musicStop(game.phase==='raid'?.9:1.2);
+  if(want){musicLoad(want);if(!mus.src&&mus.bufs[want])musicStart(want)}
+  for(const k in mus.bufs)if(!musicKeep(k)&&k!==mus.cur)delete mus.bufs[k];
 }
 const uiSfx=n=>sfx(n,undefined,undefined,true,true);
 // the case reel: a soft click and a small beep as each item crosses the marker, higher for rarer items
@@ -680,12 +693,18 @@ function sfx(name,x,y,noRec,ui){
   if(!noRec)rec(['s',name,x===undefined?null:r2(x),y===undefined?null:r2(y)]);
   // ui: menu sounds, heard even with the demo game running behind the menu
   if(!AC||(!ui&&(game.paused||demo)))return;const t=AC.currentTime;
-  if(lastS[name]&&t-lastS[name]<.035)return;lastS[name]=t;
+  if(lastS[name]&&t-lastS[name]<.035)return;
+  // at most ~14 sounds start in any 0.12 s window; distant world sounds are the first to be skipped
+  while(voiceT.length&&t-voiceT[0]>.12)voiceT.shift();
+  if(x!==undefined&&voiceT.length>=14&&!ui)return;
+  lastS[name]=t;voiceT.push(t);
   let dest=master;
   if(x!==undefined&&player){
-    const d=Math.hypot(x-player.x,y-player.y),gn=AC.createGain();gn.gain.value=1/(1+d*.2);
-    const lp=AC.createBiquadFilter();lp.type='lowpass';const wb=d>1.2?Math.min(3,wallsBetween(x,y,player.x,player.y)):0;
-    lp.frequency.value=9000*Math.pow(.22,wb)+200;lp.connect(gn);gn.connect(master);dest=lp;
+    const d=Math.hypot(x-player.x,y-player.y),v=1/(1+d*.2);if(v<.07)return;   // too far to hear
+    const gn=AC.createGain();gn.gain.value=v;
+    // walls in between muffle it: one shared filter per wall count instead of a new filter for every sound
+    const wb=d>1.2?Math.min(3,wallsBetween(x,y,player.x,player.y)):0;
+    gn.connect(wb?muffle(wb):master);dest=gn;
   }
   switch(name){
     case'ar':nz(dest,t,.07,'highpass',900,.7,.5);osc(dest,t,.08,'triangle',150,.45,50);break;
@@ -1439,7 +1458,7 @@ function updateRockets(dt){
       if(!hit){const k=idx(i,j);hit=!!walls[k]||coreKs.has(k)||!!(nodeAt(i,j)||{}).solid}
       if(!hit)for(const a of allies())if(a.alive&&Math.hypot(a.x-r.x,a.y-r.y)<.45){hit=true;break}
       if(hit){r.dead=true;const bx=clamp(r.x-r.vx/sp*.2,.1,N-.1),by=clamp(r.y-r.vy/sp*.2,.1,N-.1);explode(bx,by,1.7,r.pw,null,true);fires.push({x:bx,y:by,t:4,max:4,tick:.2})}}}
-  rockets=rockets.filter(r=>!r.dead);
+  dropDead(rockets);
   for(const f of fires){f.t-=dt;f.tick-=dt;
     if(f.tick<=0){f.tick=.45;for(const a of allies())if(a.alive&&Math.hypot(a.x-f.x,a.y-f.y)<.9)hurtAlly(a,6*game.Df.dmg);
       const w=walls[idx(Math.floor(f.x),Math.floor(f.y))];if(w&&w.mat===0&&!(w.fire>0))w.fire=5}}
@@ -1817,7 +1836,7 @@ function updateEnemies(dt){
     if(!engaging&&moveTo){const dx=moveTo.x-e.x,dy=moveTo.y-e.y,l=Math.hypot(dx,dy);if(l>.02){const s=Math.min(l,e.speed*dt);moveEnt(e,dx/l*s,dy/l*s,false);e.walk+=dt*9;if(!tgt&&!e.foe)e.aim={x:dx/l,y:dy/l}}}
   }
   for(let a=0;a<enemies.length;a++)for(let b=a+1;b<enemies.length;b++){const A=enemies[a],B=enemies[b],dx=B.x-A.x,dy=B.y-A.y,d=Math.hypot(dx,dy);if(d<.5&&d>.001){const push=(.5-d)*.5;moveEnt(A,-dx/d*push,-dy/d*push,false);moveEnt(B,dx/d*push,dy/d*push,false)}}
-  enemies=enemies.filter(e=>!e.dead);
+  dropDead(enemies);
 }
 function updateBullets(dt){
   for(const b of bullets){
@@ -1870,13 +1889,13 @@ function localAmbience(dt){
   for(const e of enemies)if(e.type==='boss'&&e.boss==='storm'&&rnd()<dt*6)ambient(e.x+(rnd()-.5)*.5,e.y+(rnd()-.5)*.5,WH*(.3+rnd()*.8),'arc');
 }
 function ambient(x,y,z,kind){replaying=true;try{emit(x,y,z,kind)}finally{replaying=false}}
+// count an effect list down and drop what has run out, in place (no new array every frame)
+function ageOut(a,dt){let j=0;for(let i=0;i<a.length;i++){const v=a[i];v.life-=dt;if(v.life>0)a[j++]=v}a.length=j}
+const dropDead=a=>{let j=0;for(let i=0;i<a.length;i++){const v=a[i];if(!v.dead)a[j++]=v}a.length=j};
 function updateParticles(dt){
   if(game.paused)return;
   for(const p of parts){p.life-=dt;p.x+=p.vx*dt*.6;p.y+=p.vy*dt*.6;p.vz-=p.grav*dt;p.z+=p.vz*dt*u;if(p.z<0){p.z=0;p.vz*=-.3;p.vx*=.5;p.vy*=.5}}
-  parts=parts.filter(p=>p.life>0);
-  for(const f of flashes)f.life-=dt;flashes=flashes.filter(f=>f.life>0);
-  for(const z of zaps)z.life-=dt;zaps=zaps.filter(z=>z.life>0);for(const r of rings)r.life-=dt;rings=rings.filter(r=>r.life>0);for(const w of slashes)w.life-=dt;slashes=slashes.filter(w=>w.life>0);
-  for(const f of floats)f.life-=dt;floats=floats.filter(f=>f.life>0);
+  ageOut(parts,0);ageOut(flashes,dt);ageOut(zaps,dt);ageOut(rings,dt);ageOut(slashes,dt);ageOut(floats,dt);
   shake=Math.max(0,shake-dt*30);
   if(running())localAmbience(dt);
   // time of day: overcast → golden hour → night
@@ -2358,6 +2377,26 @@ function drawVignette(forDemo){
   g.drawImage(vignette,0,0,W,H);
 }
 let PROF=null;const PM=k=>{if(PROF){if(PROF.f)g.getImageData(0,0,1,1);const t=performance.now();PROF.a[PROF.k]=(PROF.a[PROF.k]||0)+t-PROF.t;PROF.k=k;PROF.t=t}};
+// the draw list: depth, draw function and its arguments, in reused arrays (sorted back to front, ties in insert order)
+const RI={n:0,d:[],f:[],a:[],b:[],o:[]};
+function ritem(d,f,a,b){const k=RI.n++;RI.d[k]=d;RI.f[k]=f;RI.a[k]=a;RI.b[k]=b}
+const byDepth=(x,y)=>RI.d[x]-RI.d[y]||x-y;
+function itemWall(k,cut){drawWall(k%N,(k/N)|0,walls[k],cut?.3:1)}
+function itemDebris(k){drawDebris(k%N,(k/N)|0,debris[k]-1)}
+function itemSack(s){const c=iso(s.x,s.y);g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(c[0],c[1],6*u,3*u,0,0,Math.PI*2);g.fill();g.fillStyle='#cbbf9f';g.beginPath();g.ellipse(c[0],c[1]-4*u,5*u,5*u,0,0,Math.PI*2);g.fill()}
+function itemCharge(c){const s=iso(c.x,c.y);g.fillStyle='#1a1510';g.fillRect(s[0]-5*u,s[1]-5*u,10*u,6*u);if(Math.sin(game.time*(20-c.fuse*5))>0){g.fillStyle='#ff5a3a';g.beginPath();g.arc(s[0],s[1]-6*u,2*u,0,Math.PI*2);g.fill()}}
+function itemEnemy(e){
+  if(e.type==='boss'){const B=BOSSES[e.boss];if(B)drawPerson(e.x,e.y,Object.assign({aim:e.aim,walk:e.walk,flash:e.flash>0,hp:e.hp/e.max,big:1.45,tag:B.name,tagCol:B.col,swing:e.boss==='butcher'?e.st|0:0},B.look));return}
+  drawPerson(e.x,e.y,Object.assign({aim:e.aim,walk:e.walk,flash:e.flash>0,hp:e.hp/e.max,satchel:e.type==='breach'&&!e.planted},LOOK[e.type],{satchel:e.type==='breach'&&!e.planted}))}
+function itemQM(q){drawPerson(q.x,q.y,Object.assign({aim:q.aim,walk:q.walk,flash:q.flash>0,tag:'DELL'},QM_LOOK))}
+function itemQMDown(q){drawDowned(q.x,q.y,QM_LOOK,q.revive/2,'DELL · DOWN')}
+function itemPlayer(o){
+  const p=player,PL=playerLook(o),me=o===p,tag=me||players.size<2?null:o.name.toUpperCase();
+  if(game.pvp){PL.mark=teamCol(o);if(game.pvp==='base')PL.ring=teamCol(o);else if(me)PL.ring='#e2b436'}
+  const bf=NET.mode==='guest'?(o.boltF||0):(o.bolt>0?o.bolt/o.boltT:0);if(bf>0)PL.bolt=1-bf;
+  if(o.alive)drawPerson(o.x,o.y,Object.assign({aim:o.aim,walk:o.walk,flash:o.flash>0,tag,tagCol:game.pvp?teamCol(o):SLOTCOL[o.slot%6],faded:o.prot>0,hp:game.pvp&&!me&&o.hp<o.max?o.hp/o.max:undefined},PL));
+  else drawDowned(o.x,o.y,PL,o.revive/2.2,me?`DOWN · ${Math.ceil(o.rt)}`:`${o.name.toUpperCase()} · DOWN`);
+}
 function render(dt){
   PM('pre');const p=player;
   if(!caches)makeCaches();
@@ -2372,30 +2411,23 @@ function render(dt){
   PM('back');drawCache(caches.back);PM('items');
   if(game.pvp==='base'&&game.phase==='build'&&!demo){const a=iso(0,0),b=iso(N,N);g.save();g.strokeStyle='rgba(226,180,54,.55)';g.lineWidth=2*u;g.setLineDash([7*u,6*u]);g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();g.restore();
     const m=iso(N*.5,N*.5);label('TRUCE LINE',m[0],m[1]+14*u,'rgba(226,180,54,.8)',11)}
-  const items=[],pd=p.x+p.y,pl=p.x-p.y;
+  RI.n=0;const pd=p.x+p.y,pl=p.x-p.y;
   for(let k=0;k<N*N;k++){
     const i=k%N,j=(k/N)|0;
-    if(walls[k]){const w=walls[k],dd=i+j+1-pd,lat=(i-j)-pl,cut=dd>0&&dd<3.2&&Math.abs(lat)<1.7;items.push([i+j+1,()=>drawWall(i,j,w,cut?.3:1)])}
-    else if(debris[k])items.push([i+j+.2,()=>drawDebris(i,j,debris[k]-1)]);
+    if(walls[k]){const dd=i+j+1-pd,lat=(i-j)-pl;ritem(i+j+1,itemWall,k,dd>0&&dd<3.2&&Math.abs(lat)<1.7)}
+    else if(debris[k])ritem(i+j+.2,itemDebris,k);
   }
-  for(const n of nodes)items.push([n.i+n.j+1,()=>drawNode(n)]);
-  for(const c of cores)items.push([c.i+c.j+1,()=>drawStake(c)]);
-  for(const s of sacks)items.push([s.x+s.y,()=>{const c=iso(s.x,s.y);g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(c[0],c[1],6*u,3*u,0,0,Math.PI*2);g.fill();g.fillStyle='#cbbf9f';g.beginPath();g.ellipse(c[0],c[1]-4*u,5*u,5*u,0,0,Math.PI*2);g.fill()}]);
-  for(const c of charges)items.push([c.x+c.y,()=>{const s=iso(c.x,c.y);g.fillStyle='#1a1510';g.fillRect(s[0]-5*u,s[1]-5*u,10*u,6*u);if(Math.sin(game.time*(20-c.fuse*5))>0){g.fillStyle='#ff5a3a';g.beginPath();g.arc(s[0],s[1]-6*u,2*u,0,Math.PI*2);g.fill()}}]);
-  for(const e of enemies)items.push([e.x+e.y,()=>{
-    if(e.type==='boss'){const B=BOSSES[e.boss];if(B)drawPerson(e.x,e.y,Object.assign({aim:e.aim,walk:e.walk,flash:e.flash>0,hp:e.hp/e.max,big:1.45,tag:B.name,tagCol:B.col,swing:e.boss==='butcher'?e.st|0:0},B.look));return}
-    drawPerson(e.x,e.y,Object.assign({aim:e.aim,walk:e.walk,flash:e.flash>0,hp:e.hp/e.max,satchel:e.type==='breach'&&!e.planted},LOOK[e.type],{satchel:e.type==='breach'&&!e.planted}))}]);
-  if(qm.alive)items.push([qm.x+qm.y,()=>drawPerson(qm.x,qm.y,Object.assign({aim:qm.aim,walk:qm.walk,flash:qm.flash>0,tag:'DELL'},QM_LOOK))]);
-  else if(!qm.gone)items.push([qm.x+qm.y,()=>drawDowned(qm.x,qm.y,QM_LOOK,qm.revive/2,'DELL · DOWN')]);
-  if(!demo)for(const o of players.values()){
-    const PL=playerLook(o),me=o===p,tag=me||players.size<2?null:o.name.toUpperCase();
-    if(game.pvp){PL.mark=teamCol(o);if(game.pvp==='base')PL.ring=teamCol(o);else if(me)PL.ring='#e2b436'}
-    const bf=NET.mode==='guest'?(o.boltF||0):(o.bolt>0?o.bolt/o.boltT:0);if(bf>0)PL.bolt=1-bf;
-    if(o.alive)items.push([o.x+o.y,()=>drawPerson(o.x,o.y,Object.assign({aim:o.aim,walk:o.walk,flash:o.flash>0,tag,tagCol:game.pvp?teamCol(o):SLOTCOL[o.slot%6],faded:o.prot>0,hp:game.pvp&&!me&&o.hp<o.max?o.hp/o.max:undefined},PL))]);
-    else if(o.downed)items.push([o.x+o.y,()=>drawDowned(o.x,o.y,PL,o.revive/2.2,me?`DOWN · ${Math.ceil(o.rt)}`:`${o.name.toUpperCase()} · DOWN`)]);
-  }
-  if(playing()&&p.alive&&cfg.build&&game.pvp!=='ffa'){const t=buildTarget(p,game.sel,game.piece==='door');items.push([t.i+t.j+1.05,()=>drawGhost(t)])}
-  items.sort((a,b)=>a[0]-b[0]);for(const it of items)it[1]();PM('bullets');
+  for(const n of nodes)ritem(n.i+n.j+1,drawNode,n);
+  for(const c of cores)ritem(c.i+c.j+1,drawStake,c);
+  for(const s of sacks)ritem(s.x+s.y,itemSack,s);
+  for(const c of charges)ritem(c.x+c.y,itemCharge,c);
+  for(const e of enemies)ritem(e.x+e.y,itemEnemy,e);
+  if(qm.alive)ritem(qm.x+qm.y,itemQM,qm);else if(!qm.gone)ritem(qm.x+qm.y,itemQMDown,qm);
+  if(!demo)for(const o of players.values())if(o.alive||o.downed)ritem(o.x+o.y,itemPlayer,o);
+  if(playing()&&p.alive&&cfg.build&&game.pvp!=='ffa'){const t=buildTarget(p,game.sel,game.piece==='door');ritem(t.i+t.j+1.05,drawGhost,t)}
+  const O=RI.o;O.length=RI.n;for(let k=0;k<RI.n;k++)O[k]=k;O.sort(byDepth);
+  for(let q=0;q<RI.n;q++){const k=O[q];RI.f[k](RI.a[k],RI.b[k])}
+  RI.a.fill(null,0,RI.n);PM('bullets');
   g.lineCap='round';
   for(const b of bullets)drawTracer(b);
   g.lineCap='butt';
@@ -2408,8 +2440,8 @@ function render(dt){
       g.fillStyle='rgba(255,226,130,.16)';g.beginPath();g.arc(cx,cy,r,0,Math.PI*2);g.fill();g.lineWidth=1.3*u;g.strokeStyle='#ffd24a';g.stroke();
       g.lineWidth=.8*u;g.strokeStyle=`hsl(${(game.time*220+q.h)%360},95%,78%)`;g.beginPath();g.arc(cx,cy,r*.8,-2.4,-.6);g.stroke();
       g.fillStyle='#fffbe8';g.fillRect(cx-r*.45,cy-r*.55,1.4*u,1.4*u);g.globalAlpha=1;continue}
-    if(q.c1){g.globalAlpha=Math.min(1,a*1.5);g.fillStyle=mix(q.c1,q.c2,1-a);g.fillRect(c[0]-q.size*u/2,c[1]-q.z-q.size*u/2,q.size*u,q.size*u);g.globalAlpha=1;continue}
-    if(q.kind==='dust'||q.kind==='smoke'){g.fillStyle=q.col+(a*(q.kind==='smoke'?.5:.4))+')';g.beginPath();g.arc(c[0],c[1]-q.z,q.size*u*(1.6-a*.6),0,Math.PI*2);g.fill()}
+    if(q.c1){g.globalAlpha=Math.min(1,a*1.5);g.fillStyle=mix(q.c1,q.c2,Math.round((1-a)*16)/16);g.fillRect(c[0]-q.size*u/2,c[1]-q.z-q.size*u/2,q.size*u,q.size*u);g.globalAlpha=1;continue}
+    if(q.kind==='dust'||q.kind==='smoke'){g.globalAlpha=a*(q.kind==='smoke'?.5:.4);g.fillStyle=q.rgb||(q.rgb=q.col.replace('rgba','rgb').replace(/,$/,')'));g.beginPath();g.arc(c[0],c[1]-q.z,q.size*u*(1.6-a*.6),0,Math.PI*2);g.fill();g.globalAlpha=1}
     else{g.globalAlpha=Math.min(1,a*1.5);g.fillStyle=q.col;g.fillRect(c[0]-q.size*u/2,c[1]-q.z-q.size*u/2,q.size*u,q.size*u);g.globalAlpha=1}}
   PM('front');drawCache(caches.front);PM('light');
   drawLighting();drawBossFx();PM('flash');
@@ -2771,7 +2803,8 @@ function takeLocker(j){
 }
 async function syncLocker(){
   await flushClaims();
-  const r=await rpc('get_my_locker');if(!r.ok)return r;
+  // a result that just went through already brought the locker back; no need to ask again
+  const r=lastClaimLocker&&Date.now()-lastClaimLocker.at<5000?{ok:true,j:lastClaimLocker.j}:await rpc('get_my_locker');if(!r.ok)return r;lastClaimLocker=null;
   let j=r.j;const L=locker,uid=myUid();
   // a save made on this device before it had an account, or a guest's locker when signing in to a real
   // account, is merged in once; the server refuses a second merge into the same account
@@ -2783,13 +2816,14 @@ async function syncLocker(){
   takeLocker(j);return r;
 }
 async function loadProfile(){
-  const uid=myUid();if(!uid)return;
+  const uid=myUid();if(!uid||!await freshToken())return;
   const u=await sbFetch('/auth/v1/user');if(u.ok&&u.j&&u.j.id){acct.s.user=u.j;setSession(acct.s)}
   const r=await sbFetch('/rest/v1/profiles?select=username&id=eq.'+encodeURIComponent(uid));
   if(r.ok&&Array.isArray(r.j)&&r.j[0])acct.name=r.j[0].username||null;
 }
 
 // ---- finished runs: the server checks each result and hands out the cases. Kept here until it answers.
+let lastClaimLocker=null;
 let claims=(()=>{const a=readJSON(CLAIM_KEY);return a.v&&Array.isArray(a.v.q)?a.v.q:[]})(),flushing=null,flushT=0,flushWhy='';
 function saveClaims(){try{localStorage.setItem(CLAIM_KEY,JSON.stringify({q:claims.slice(-8)}))}catch(e){}}
 function queueClaim(c){
@@ -2804,7 +2838,7 @@ function flushClaims(){
       const c=claims[0];
       if(c.uid!==myUid()||Date.now()-c.at>30*864e5){claims.shift();saveClaims();continue}
       const{uid,at,...p}=c,r=await rpc('claim_match_reward',{p});
-      if(r.ok){claims.shift();saveClaims();takeLocker(r.j.locker);
+      if(r.ok){claims.shift();saveClaims();takeLocker(r.j.locker);lastClaimLocker={j:r.j.locker,at:Date.now()};
         const dropped=c.kind==='match'&&r.j.cases_granted>0||c.kind==='run'&&r.j.bonus&&r.j.bonus.n>0;
         claimShow(c,claimText(c,r.j),dropped?'CASE DROP':'REWARDS SAVED');if(dropped)uiSfx('kx_confetti');continue}
       if(!r.status||r.status>=500||r.status===401){flushWhy='offline';break}
@@ -2826,14 +2860,14 @@ async function boot1(){
   acct.state='wait';renderAcct();
   if(!acct.s){const g=readJSON(GUEST_KEY);if(g.v&&g.v.refresh_token){setSession({...g.v,expires_at:1});try{localStorage.removeItem(GUEST_KEY)}catch(e){}}}
   if(!acct.s){const r=await makeGuest();if(!r.ok){acct.state='down';if(r.status)acct.msg=sbErr(r);renderAcct();return}}
-  const r=await syncLocker();
+  const[r]=await Promise.all([syncLocker(),loadProfile()]);
   if(!acct.s){acct.state='down';renderAcct();return}      // the saved sign-in had ended
   if(!r.ok){acct.state='down';acct.msg=r.status?sbErr(r):'';renderAcct();return}
-  await loadProfile();acct.state=isGuest()?'guest':'full';acct.t=Date.now();renderAcct();
+  acct.state=isGuest()?'guest':'full';acct.t=Date.now();renderAcct();
   if(acct.recovery||acct.hashMsg){showPage('account');acct.hashMsg=false}
 }
 function acctResume(){
-  if(!cloudOn||acct.busy||Date.now()-acct.t<30000)return;acct.t=Date.now();
+  if(!cloudOn||acct.busy||Date.now()-acct.t<120000)return;acct.t=Date.now();
   if(acct.state==='down')acctBoot();else if(acct.state==='guest'||acct.state==='full')syncLocker().then(()=>renderAcct());
 }
 async function makeGuest(){
@@ -2945,7 +2979,9 @@ function lobbyUnpublish(){clearInterval(pubTimer);pubTimer=0;if(!cloudOn||!acct.
   sbFetch('/rest/v1/lobbies?host_id=eq.'+encodeURIComponent(myUid()),{method:'DELETE',keepalive:true})}
 function lobbyStartPublishing(){clearInterval(pubTimer);if(!listing())return;lobbyPublish();pubTimer=setInterval(lobbyPublish,15000)}
 async function refreshLobbies(){
-  const box=$('lobList'),say=t=>{box.textContent='';const p=document.createElement('p');p.className='lobEmpty';p.textContent=t;box.append(p)};
+  // the list is only rebuilt when what it would show changed (it refreshes every 6 s)
+  const box=$('lobList'),same=k=>{if(box.dataset.k===k)return true;box.dataset.k=k;return false},
+    say=t=>{if(same('say:'+t))return;box.textContent='';const p=document.createElement('p');p.className='lobEmpty';p.textContent=t;box.append(p)};
   if(!cloudOn){say('The Open Games list works on the web version of the game.');return}
   if(!acct.s){say(acct.state==='down'?'Can\'t reach the game server right now, so the list is empty. Joining by code still works.':'Connecting…');return}
   if(lobBusy)return;lobBusy=true;
@@ -2954,6 +2990,7 @@ async function refreshLobbies(){
   if(!r.ok||!Array.isArray(r.j)){say('Couldn\'t load the list. Joining by code still works.');return}
   const rows=r.j.filter(g=>g.code!==NET.code);
   if(!rows.length){say('No open games right now. Host one and it shows up here for everyone.');return}
+  if(same(NET.mode+JSON.stringify(rows)))return;
   box.textContent='';
   for(const g of rows){const b=document.createElement('button');b.type='button';b.className='lob';
     const nm=document.createElement('b');nm.textContent=g.name;
@@ -2972,6 +3009,15 @@ function drawFig(ctx,w,h,look,sc,aim,cy){
   try{drawPerson(0,0,Object.assign({aim:aim||{x:.9,y:.25},walk:0},look))}finally{g=kg;u=ku;camX=kx;camY=ky}
 }
 // (x1,y1) is the bullet's head, (x2,y2) the end of its tail
+// gradient tracers: the colours are drawn once into a strip and stretched along each shot
+// (rgrad: 2 rainbow cycles, 128 px per cycle, so a moving window gives the colour drift for free)
+const GSTRIP=new Map();
+function gradStrip(st){
+  const key=st.rgrad?'rgrad':st.grad.join();let c=GSTRIP.get(key);if(c)return c;
+  c=document.createElement('canvas');c.width=st.rgrad?256:64;c.height=8;const x=c.getContext('2d'),gr=x.createLinearGradient(0,0,c.width,0);
+  if(st.rgrad)for(let k=0;k<=12;k++)gr.addColorStop(k/12,`hsl(${k*60%360},100%,68%)`);else{gr.addColorStop(0,st.grad[0]);gr.addColorStop(1,st.grad[1])}
+  x.fillStyle=gr;x.fillRect(0,0,c.width,8);GSTRIP.set(key,c);return c;
+}
 function traceSeg(x,x1,y1,x2,y2,st,w,t,heavy){
   const line=(lw,col,ox=0,oy=0)=>{x.strokeStyle=col;x.lineWidth=lw;x.beginPath();x.moveTo(x1+ox,y1+oy);x.lineTo(x2+ox,y2+oy);x.stroke()};
   x.lineCap='round';
@@ -2980,10 +3026,15 @@ function traceSeg(x,x1,y1,x2,y2,st,w,t,heavy){
   if(st.pulse)w*=1+.5*Math.sin(t*28);
   if(st.glitch){const o=w*(Math.sin(t*47)>.3?1.8:.9);line(w*.8,'rgba(255,50,90,.85)',o,-o*.5);line(w*.8,'rgba(50,255,210,.85)',-o,o*.5);line(w*.6,'#ffffff');x.lineCap='butt';return}
   let col;
-  if(st.rgrad){col=x.createLinearGradient(x1,y1,x2,y2);for(let k=0;k<=5;k++)col.addColorStop(k/5,`hsl(${(t*240+k*60)%360},100%,68%)`)}
-  else if(st.grad){col=x.createLinearGradient(x1,y1,x2,y2);col.addColorStop(0,st.grad[0]);col.addColorStop(1,st.grad[1])}
-  else col=st.rainbow?`hsl(${((Math.floor(t*300+x1*.7))%360+360)%360},100%,66%)`:(heavy&&st===TRAILS.std?'rgba(255,250,220,1)':st.c);
-  line(w,col);
+  if(st.rgrad||st.grad){
+    const S=gradStrip(st),len=Math.hypot(x2-x1,y2-y1),sx=st.rgrad?((t*240)%360+360)%360/360*128:0,sw=st.rgrad?106.7:S.width;
+    x.save();x.translate(x1,y1);x.rotate(Math.atan2(y2-y1,x2-x1));
+    x.drawImage(S,sx,0,sw,S.height,0,-w/2,len,w);
+    x.fillStyle=st.rgrad?`hsl(${(t*240)%360},100%,68%)`:st.grad[0];x.beginPath();x.arc(0,0,w/2,0,Math.PI*2);x.fill();   // the round nose
+    x.fillStyle=st.rgrad?`hsl(${(t*240+300)%360},100%,68%)`:st.grad[1];x.beginPath();x.arc(len,0,w/2,0,Math.PI*2);x.fill();   // and tail
+    x.restore();
+  }else{col=st.rainbow?`hsl(${((Math.floor(t*300+x1*.7))%360+360)%360},100%,66%)`:(heavy&&st===TRAILS.std?'rgba(255,250,220,1)':st.c);
+  line(w,col)}
   if(st.core)line(w*.36,'rgba(255,255,255,.92)');
   if(st.head){x.fillStyle=st.head;x.beginPath();x.arc(x1,y1,w*1.15,0,Math.PI*2);x.fill()}
   x.lineCap='butt';
@@ -3190,7 +3241,7 @@ $('armClose').addEventListener('click',closeArmory);
 // they talk directly. Each guest opens 'r' (reliable: hello, build, grenade, and every
 // one-off event: sounds, particles, bullets, toasts, wall changes), 'u' (fast: movement in),
 // and 'st' (never resent: game state out, 15 times a second).
-const PROTO='yard-9',ROOM_PREFIX='palisade-yard-9-';
+const PROTO='yard-10',ROOM_PREFIX='palisade-yard-10-';
 const NET={mode:'solo',inGame:false,peer:null,code:'',roster:[],conns:new Map(),host:null,fxq:[],snapT:0,snapN:0,lastN:0,inT:0,nextG:1,lastHeard:0,
   sendTo(id,msg){for(const c of this.conns.values())if(c.pid===id&&c.r&&c.r.open){try{c.r.send(msg)}catch(e){}}},
   sendAll(msg,ch='r'){for(const c of this.conns.values()){const x=c[ch]&&c[ch].open?c[ch]:c.r;if(c.pid&&x&&x.open)try{x.send(msg)}catch(e){}}},
@@ -3291,7 +3342,7 @@ function hostData(peerId,d){
     c.r.send({t:'welcome',id:c.pid});
     if(NET.inGame){   // dropping into a game already running
       const p=makePlayer(c.pid,c.name,c.cls,players.size,c.cos,game.pvp==='base'?team:'');[p.x,p.y]=respawnAt(p);if(game.pvp)p.prot=PVP.prot;if(game.pvp==='base')p.sal=PVP.startSal;if(game.pvp==='ffa')p.mats=[0,0,0];players.set(c.pid,p);
-      c.r.send({t:'start',roster:rosterNow(),diff:pick.diff,mode:game.mode,pvp:game.pvp});NET.wlSent=null;
+      c.r.send({t:'start',roster:rosterNow(),diff:pick.diff,mode:game.mode,pvp:game.pvp});NET.wlSent=null;NET.piSent=null;
       toastAll(`${c.name.toUpperCase()} JOINED`,game.pvp==='base'?`Dropped in on ${TEAMS[team].name}.`:game.pvp?'Dropped into the fight.':'Dropped in at the stake.')}
     broadcastLobby();return;
   }
@@ -3334,7 +3385,7 @@ function startOnline(){
   const why=lobbyBlock();if(why){$('lNote').textContent=why;return}
   demo=false;newGame(NET.roster.map(r=>({...r})),pick.pvp);NET.inGame=true;NET.snapN=0;
   const now=performance.now();for(const c of NET.conns.values())c.heard=now;   // the lobby wait is not silence
-  NET.sendAll({t:'start',roster:rosterNow(),diff:pick.diff,mode:game.mode,pvp:game.pvp});NET.wlSent=null;
+  NET.sendAll({t:'start',roster:rosterNow(),diff:pick.diff,mode:game.mode,pvp:game.pvp});NET.wlSent=null;NET.piSent=null;
   enterGame();broadcastLobby();
 }
 // keep quiet lobbies alive (and NAT mappings open), and notice players who vanish
@@ -3356,16 +3407,17 @@ function hostNet(dt){
       if(!old||now-NET.wlAt>10000){wl=encodeWalls();NET.wlAt=now}
       else{for(let k=0,o=0;k<N*N;k++,o+=4)if(b[o]!==old[o]||b[o+1]!==old[o+1]||b[o+2]!==old[o+2]||b[o+3]!==old[o+3])(wd||(wd=[])).push(k,b[o],b[o+1],b[o+2],b[o+3])}
       NET.wlSent=b}
-    if(NET.fxq.length||wl||wd){sendEvents(NET.fxq,wl,wd);NET.fxq=[]}}
+    const pi=changedInfo();
+    if(NET.fxq.length||wl||wd||pi){sendEvents(NET.fxq,wl,wd,pi);NET.fxq=[]}}
   const now=performance.now();
   for(const[id,c]of NET.conns)if(c.pid&&now-c.heard>12000)hostDrop(id);   // phone locked or walked out of signal
 }
 // one-off events (sounds, particles, toasts, bullets, kill feed) and wall changes go on the reliable channel, so a
 // lost or late state packet never takes them with it; big batches are split to stay under PeerJS's 16 KB JSON limit
-function sendEvents(fx,wl,wd){
-  const out=[],put=(list,w,d)=>{const m={t:'x',n:NET.snapN,fx:list};if(w)m.wl=w;if(d)m.wd=d;
-    if(list.length>1&&JSON.stringify(m).length>12000){const h=list.length>>1;put(list.slice(0,h),w,d);put(list.slice(h),null,null)}else out.push(m)};
-  put(fx,wl,wd);for(const m of out)NET.sendAll(m);
+function sendEvents(fx,wl,wd,pi){
+  const out=[],put=(list,w,d,i)=>{const m={t:'x',n:NET.snapN,fx:list};if(w)m.wl=w;if(d)m.wd=d;if(i)m.pi=i;
+    if(list.length>1&&JSON.stringify(m).length>12000){const h=list.length>>1;put(list.slice(0,h),w,d,i);put(list.slice(h),null,null,null)}else out.push(m)};
+  put(fx,wl,wd,pi);for(const m of out)NET.sendAll(m);
 }
 // a data channel that never resends (state is replaced 15 times a second, so a lost one is better skipped);
 // both sides create it on the reliable connection with the same fixed id, no extra handshake
@@ -3391,13 +3443,39 @@ function setWallTile(k,f,hp,fc,db){
 function decodeWalls(str){const s=atob(str);for(let k=0;k<N*N;k++){const o=k*4;setWallTile(k,s.charCodeAt(o),s.charCodeAt(o+1),s.charCodeAt(o+2),s.charCodeAt(o+3))}}
 // only the tiles that changed: [tile, flags, health, fire/char, debris, tile, ...]
 function applyWallDiff(d){for(let q=0;q+4<d.length;q+=5)setWallTile(d[q],d[q+1],d[q+2],d[q+3],d[q+4])}
+// One list per kind of row, used by the host to pack and by guests to unpack, so the two can't drift apart.
+// PL_STATE changes all the time and rides every state packet; PL_INFO rarely changes (joining, upgrades)
+// and goes on the reliable channel only when it does.
+const PL_STATE=[['id',p=>p.id],['x',p=>r2(p.x)],['y',p=>r2(p.y)],['ax',p=>r2(p.aim.x)],['ay',p=>r2(p.aim.y)],['hp',p=>Math.ceil(p.hp)],
+  ['alive',p=>p.alive?1:0],['down',p=>p.downed?1:0],['rev',p=>r2(p.revive)],['rt',p=>r2(p.rt)],['m0',p=>p.mats[0]],['m1',p=>p.mats[1]],['m2',p=>p.mats[2]],
+  ['nades',p=>p.nades],['tp',p=>p.tp],['bcd',p=>r2(Math.max(0,p.bcd))],['sal',p=>p.sal|0],['kills',p=>p.kills|0],['deaths',p=>p.deaths|0],
+  ['prot',p=>p.prot>0?1:0],['bolt',p=>p.bolt>0?r2(p.bolt/p.boltT):0],['ammo',p=>p.gun.mag?p.ammo|0:-1],['rl',p=>p.rl>0?1:0],['stun',p=>r2(p.stun||0)]];
+const PL_INFO=[['id',p=>p.id],['name',p=>p.name],['cls',p=>p.cls],['slot',p=>p.slot],['max',p=>p.max],['maxN',p=>p.maxN],['upS',p=>p.upS],['cosS',p=>p.cosS],['team',p=>p.team||'']];
+// enemies: the boss-only fields sit last and trailing zeros are dropped, so a plain raider sends 7 numbers, not 12
+const EN_STATE=[['id',e=>e.id],['type',e=>ECODE.indexOf(e.type==='boss'?'boss:'+e.boss:e.type)],['x',e=>r2(e.x)],['y',e=>r2(e.y)],['ax',e=>r2(e.aim.x)],['ay',e=>r2(e.aim.y)],
+  ['hp',e=>r2(e.hp/e.max)],['plant',e=>e.planted?1:0],['st',e=>e.st||0],['stF',e=>e.st?r2(Math.max(0,e.stT/e.stM)):0],['lx',e=>r2(e.lx||0)],['ly',e=>r2(e.ly||0)]];
+const fieldIdx=L=>Object.fromEntries(L.map((f,i)=>[f[0],i])),PS=fieldIdx(PL_STATE),PI=fieldIdx(PL_INFO);
+const packRow=(L,x)=>L.map(f=>f[1](x)),packTrim=(L,x)=>{const r=packRow(L,x);while(r.length>1&&r[r.length-1]===0)r.pop();return r},PE=fieldIdx(EN_STATE);
+// player info that changed since it was last sent (all of it after a reset: game start, someone dropping in)
+function changedInfo(){
+  if(!NET.piSent)NET.piSent=new Map();const out=[];
+  for(const p of players.values()){const r=packRow(PL_INFO,p),k=JSON.stringify(r);if(NET.piSent.get(p.id)!==k){NET.piSent.set(p.id,k);out.push(r)}}
+  return out.length?out:null;
+}
+function applyInfo(rows){
+  for(const r of rows){const id=r[PI.id];let p=players.get(id);
+    if(!p){p=makePlayer(id,r[PI.name],r[PI.cls],r[PI.slot],r[PI.cosS],r[PI.team]);players.set(id,p)}
+    if(r[PI.upS]!==undefined&&String(r[PI.upS])!==p.upS){p.upS=String(r[PI.upS]);UPG.forEach((U,i)=>p.up[U.k]=+p.upS[i]||0);refit(p)}
+    if(r[PI.cosS]&&r[PI.cosS]!==p.cosS){p.cos=parseCos(r[PI.cosS]);p.cosS=cosStr(p.cos)}
+    p.name=r[PI.name];p.slot=r[PI.slot];p.max=r[PI.max];p.maxN=r[PI.maxN];if(r[PI.team])p.team=r[PI.team]}
+}
 function makeSnap(withWalls){
   const S=game.stats,flat=(a,f)=>{const o=[];for(const x of a)o.push(...f(x));return o};
   const s={t:'s',n:NET.snapN,ph:game.phase,w:game.wave,bk:game.bosses|0,tm:r2(game.timer),q:game.queue.length,tt:r2(game.time),won:game.won?1:0,wn:game.winner||'',
     cs:flat(cores,c=>[r2(c.hp),c.max,c.flash>0?1:0]),st:[S.dropped,S.built,S.lost,S.repairs,S.revives],
-    pl:[...players.values()].map(p=>[p.id,p.name,p.cls,p.slot,r2(p.x),r2(p.y),r2(p.aim.x),r2(p.aim.y),Math.ceil(p.hp),p.max,p.alive?1:0,p.downed?1:0,r2(p.revive),r2(p.rt),p.mats[0],p.mats[1],p.mats[2],p.nades,p.maxN,p.tp,r2(Math.max(0,p.bcd)),p.sal|0,p.upS,p.cosS,p.kills|0,p.team||'',p.deaths|0,p.prot>0?1:0,p.bolt>0?r2(p.bolt/p.boltT):0,p.gun.mag?p.ammo|0:-1,p.rl>0?1:0,r2(p.stun||0)]),
+    pl:[...players.values()].map(p=>packRow(PL_STATE,p)),
     qm:[r2(qm.x),r2(qm.y),r2(qm.aim.x),r2(qm.aim.y),Math.ceil(qm.hp),qm.max,qm.alive?1:0,r2(qm.revive)],
-    en:flat(enemies,e=>[e.id,ECODE.indexOf(e.type==='boss'?'boss:'+e.boss:e.type),r2(e.x),r2(e.y),r2(e.aim.x),r2(e.aim.y),r2(e.hp/e.max),e.planted?1:0,e.st||0,e.st?r2(Math.max(0,e.stT/e.stM)):0,r2(e.lx||0),r2(e.ly||0)]),
+    en:enemies.map(e=>packTrim(EN_STATE,e)),
     rk:flat(rockets,r=>[r2(r.x),r2(r.y),r2(r.vx),r2(r.vy)]),
     fz:flat(fires,f=>[r2(f.x),r2(f.y),r2(f.t)]),
     lo:flat(lobs,l=>[r2(l.x0),r2(l.y0),r2(l.x1),r2(l.y1),r2(l.t),r2(l.T),r2(l.R)]),
@@ -3436,7 +3514,7 @@ function guestData(d){
     case'start':pick.diff=d.diff;if(d.mode)pick.mode=d.mode;pick.pvp=d.pvp||'coop';demo=false;newGame(d.roster,d.pvp||'');NET.lastN=0;NET.inGame=true;enterGame();break;
     case'ping':break;
     case's':if(NET.inGame&&d.n>NET.lastN){NET.lastN=d.n;applySnap(d)}break;
-    case'x':if(NET.inGame){if(d.wl)decodeWalls(d.wl);if(d.wd)applyWallDiff(d.wd);replayFx(d.fx||[])}break;
+    case'x':if(NET.inGame){if(d.pi)applyInfo(d.pi);if(d.wl)decodeWalls(d.wl);if(d.wd)applyWallDiff(d.wd);replayFx(d.fx||[])}break;
     case't':toast(d.b,d.s);break;
     case'kick':netLeave(d.why);break;
     case'c':addChat(d.id,d.n,cleanChat(d.m),d.tm);break;
@@ -3451,28 +3529,27 @@ function applySnap(s){
   const st=s.st;game.stats={dropped:st[0],built:st[1],lost:st[2],repairs:st[3],revives:st[4]};
   const seen=new Set();
   for(const r of s.pl){
-    let p=players.get(r[0]);seen.add(r[0]);
-    if(!p){p=makePlayer(r[0],r[1],r[2],r[3],r[23],r[25]);p.x=r[4];p.y=r[5];players.set(r[0],p)}
-    if(r[22]!==undefined&&r[22]!==p.upS){p.upS=String(r[22]);UPG.forEach((U,i)=>p.up[U.k]=+p.upS[i]||0);refit(p)}
-    if(r[23]&&r[23]!==p.cosS){p.cos=parseCos(r[23]);p.cosS=cosStr(p.cos)}
-    p.sal=r[21]|0;p.kills=r[24]|0;p.deaths=r[26]|0;p.prot=r[27]?1:0;if(r[25])p.team=r[25];
-    const mine=r[0]===myId;
-    if(mine){if(r[19]!==p.tp){p.x=r[4];p.y=r[5];p.tp=r[19]}}
-    else{p.tx=r[4];p.ty=r[5];p.aim={x:r[6],y:r[7]};p.tp=r[19]}
-    if(r[8]<p.hp-.01)p.flash=.1;
-    p.name=r[1];p.slot=r[3];p.hp=r[8];p.max=r[9];p.alive=!!r[10];p.downed=!!r[11];p.revive=r[12];p.rt=r[13];p.mats=[r[14],r[15],r[16]];p.nades=r[17];p.maxN=r[18];p.bcd=r[20];
-    if((r[28]||0)>(p.boltF||0)+.05)p.boltF=r[28];
-    p.ammo=r[29];p.rl=r[30]?1:0;p.stun=r[31]||0;
+    const id=r[PS.id];let p=players.get(id);seen.add(id);
+    if(!p)continue;   // their details (name, job, outfit) arrive on the reliable channel; they appear a moment later
+    if(p.fresh===undefined){p.fresh=0;p.x=r[PS.x];p.y=r[PS.y]}
+    p.sal=r[PS.sal]|0;p.kills=r[PS.kills]|0;p.deaths=r[PS.deaths]|0;p.prot=r[PS.prot]?1:0;
+    const mine=id===myId;
+    if(mine){if(r[PS.tp]!==p.tp){p.x=r[PS.x];p.y=r[PS.y];p.tp=r[PS.tp]}}
+    else{p.tx=r[PS.x];p.ty=r[PS.y];p.aim={x:r[PS.ax],y:r[PS.ay]};p.tp=r[PS.tp]}
+    if(r[PS.hp]<p.hp-.01)p.flash=.1;
+    p.hp=r[PS.hp];p.alive=!!r[PS.alive];p.downed=!!r[PS.down];p.revive=r[PS.rev];p.rt=r[PS.rt];p.mats=[r[PS.m0],r[PS.m1],r[PS.m2]];p.nades=r[PS.nades];p.bcd=r[PS.bcd];
+    if((r[PS.bolt]||0)>(p.boltF||0)+.05)p.boltF=r[PS.bolt];
+    p.ammo=r[PS.ammo];p.rl=r[PS.rl]?1:0;p.stun=r[PS.stun]||0;
   }
   for(const id of[...players.keys()])if(!seen.has(id))players.delete(id);
   player=players.get(myId)||player;
   const q=s.qm;if(q[4]<qm.hp-.01)qm.flash=.1;qm.tx=q[0];qm.ty=q[1];qm.aim={x:q[2],y:q[3]};qm.hp=q[4];qm.max=q[5];qm.alive=!!q[6];qm.revive=q[7];
   const old=new Map(enemies.map(e=>[e.id,e]));enemies=[];
-  for(let o=0;o<s.en.length;o+=12){const id=s.en[o];let e=old.get(id);
-    if(!e)e={id,x:s.en[o+2],y:s.en[o+3],walk:rnd()*6,flash:0,max:1,hp:1};
-    if(s.en[o+6]<e.hp-.001)e.flash=.08;
-    const c=ECODE[s.en[o+1]]||'rifle',bk=c.startsWith('boss:')?c.slice(5):'';
-    Object.assign(e,{type:bk?'boss':c,boss:bk||undefined,big:!!bk,tx:s.en[o+2],ty:s.en[o+3],aim:{x:s.en[o+4],y:s.en[o+5]},hp:s.en[o+6],max:1,planted:!!s.en[o+7],st:s.en[o+8],stF:s.en[o+9],lx:s.en[o+10],ly:s.en[o+11]});enemies.push(e)}
+  for(const r of s.en){const v=k=>r[PE[k]]||0,id=r[PE.id];let e=old.get(id);
+    if(!e)e={id,x:v('x'),y:v('y'),walk:rnd()*6,flash:0,max:1,hp:1};
+    if(v('hp')<e.hp-.001)e.flash=.08;
+    const c=ECODE[v('type')]||'rifle',bk=c.startsWith('boss:')?c.slice(5):'';
+    Object.assign(e,{type:bk?'boss':c,boss:bk||undefined,big:!!bk,tx:v('x'),ty:v('y'),aim:{x:v('ax'),y:v('ay')},hp:v('hp'),max:1,planted:!!v('plant'),st:v('st'),stF:v('stF'),lx:v('lx'),ly:v('ly')});enemies.push(e)}
   rockets=[];for(let o=0;o<(s.rk||[]).length;o+=4)rockets.push({x:s.rk[o],y:s.rk[o+1],vx:s.rk[o+2],vy:s.rk[o+3]});
   fires=[];for(let o=0;o<(s.fz||[]).length;o+=3)fires.push({x:s.fz[o],y:s.fz[o+1],t:s.fz[o+2],max:4});
   if(s.bu){bullets=[];for(let o=0;o<s.bu.length;o+=7)bullets.push({x:s.bu[o],y:s.bu[o+1],vx:s.bu[o+2],vy:s.bu[o+3],team:s.bu[o+4],heavy:!!s.bu[o+5],tr:s.bu[o+6]|0})}
@@ -3553,6 +3630,7 @@ function startDemo(){
 }
 const PAGES=['main','solo','multi','lobby','locker','settings','account'];
 function showPage(p){
+  if(p==='multi'&&window.PEER_SRC){needPeer();getIce()}   // warm up online play while they pick a name
   for(const id of PAGES)$('pg-'+id).hidden=id!==p;
   $('menu').classList.toggle('sub',p!=='main');
   if(p==='solo')showBest();
@@ -3685,7 +3763,7 @@ if(cloudOn)setTimeout(acctBoot,400);
 const invite=new URLSearchParams(location.search).get('room');
 if(invite&&canOnline()){$('mCode').value=invite.toUpperCase().slice(0,4);showPage('multi');mStatus(`You're invited to room ${invite.toUpperCase().slice(0,4)}. Pick your name and job, then tap JOIN.`)}
 if(new URLSearchParams(location.search).has('debug'))window.__pal={get ctx(){return g},get mus(){return mus},get AC(){return AC},musicWant,caseTick,MUSIC,get parts(){return parts},profOn(f){PROF={a:{},k:'x',f,t:performance.now()}},prof(){const o={};for(const k in PROF.a)if(k!=='end'&&k!=='x')o[k]=+PROF.a[k].toFixed(1);return o},get locker(){return locker},lockerReward:(...a)=>lockerReward(...a),openCase:()=>openCase(),buyUpgrade:(p,k)=>buyUpgrade(p,k),render,update,NET,get players(){return players},get player(){return player},get game(){return game},get enemies(){return enemies},get walls(){return walls},get core(){return core},get cores(){return cores},get bullets(){return bullets},startRaid:()=>startRaid(),scr:(x,y)=>{const c=iso(x,y);return[c[0],c[1]-WH*.55]},endPvp:w=>endPvp(w),hurtPlayer:(p,d,o)=>hurtPlayer(p,d,o),explode:(...a)=>explode(...a),buildEval:(...a)=>buildEval(...a),doBuild:(...a)=>doBuild(...a),acct,acctBoot,syncLocker,flushClaims,get claims(){return claims},showOver:()=>showOver(),showPage:x=>showPage(x),toMenu:()=>toMenu(),refreshLobbies:()=>refreshLobbies(),damageWall:(...a)=>damageWall(...a),spawnBoss:k=>spawnBoss(k),get rockets(){return rockets},get fires(){return fires},get zaps(){return zaps},get slashes(){return slashes},makePlayer:(...a)=>makePlayer(...a),get qm(){return qm},bdmg:b=>bdmg(b),makeWall:(...a)=>makeWall(...a),get walls2(){return walls},COS,CASES,rollCase:id=>rollCase(id),killFx:(...a)=>killFx(...a),renderLocker:()=>renderLocker(),playerLook:p=>playerLook(p),pvpReward:(w,k)=>pvpReward(w,k)};
-if(window.PEER_SRC)setTimeout(()=>needPeer(),invite?0:1200);
+if(window.PEER_SRC&&invite)needPeer();   // otherwise it loads when the Multiplayer page opens
 requestAnimationFrame(frame);
 })();
 </script>

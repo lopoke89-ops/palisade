@@ -34,13 +34,37 @@ src=head+src.replace('<script>\n(()=>{','<script>window.PEER_SRC=\'peerjs.min.js
 # swap </style>…body wrapper: the artifact file has no <body>, browsers infer it; fine.
 src=src.replace('</style>\n','</style>\n</head>\n<body>\n',1)
 src=src.replace('\n</html>\n','\n</body>\n</html>\n')
-# the music file name carries its content hash, so a new track reaches players instead of the cached old one
-for ext in ('m4a','ogg'):
-    mh=hashlib.sha1(open(f'{DEV}/audio/between_raids.{ext}','rb').read()).hexdigest()[:8]
-    src=src.replace(f"'between_raids.{ext}'",f"'between_raids.{ext}?v={mh}'",1)
+# music: each file name carries its content hash, so a new track reaches players instead of the cached old one
+MUSIC_FILES=['between_raids','locker']
+for name in MUSIC_FILES:
+    for ext in ('m4a','ogg'):
+        mh=hashlib.sha1(open(f'{DEV}/audio/{name}.{ext}','rb').read()).hexdigest()[:8]
+        assert f"'{name}.{ext}'" in src,f'{name}.{ext} not referenced in the game'
+        src=src.replace(f"'{name}.{ext}'",f"'{name}.{ext}?v={mh}'",1)
+        shutil.copy(f'{DEV}/audio/{name}.{ext}',f'{SITE}/{name}.{ext}')
+# two copies of the page: debug.html keeps the test hooks (?debug) and profiler marks, for dev/test only
+# (never published: it's in .gitignore); index.html, the one players get, has both stripped
+import re,subprocess
+debug_src=src
+DEBUG_LINE=re.compile(r"^if\(new URLSearchParams\(location\.search\)\.has\('debug'\)\)window\.__pal=.*$\n",re.M)
+assert len(DEBUG_LINE.findall(src))==1,'debug hook line not found'
+src=DEBUG_LINE.sub('',src)
+src=re.sub(r"\bPM\('\w+'\);?",'',src)
+# minify the game's script when terser is installed (npm install in dev/test brings it); otherwise ship it as is
+def find_terser():
+    for c in [os.environ.get('TERSER'),f'{DEV}/test/node_modules/.bin/terser',shutil.which('terser'),'/tmp/tools/node_modules/.bin/terser']:
+        if c and os.path.exists(c):return c
+def minify(page):
+    t=find_terser()
+    if not t:print('note: terser not found, game script not minified');return page
+    a=page.index('<script>\n(()=>{')+len('<script>\n');e=page.index('</script>',a)
+    r=subprocess.run([t,'--compress','passes=2','--mangle','--ecma','2020'],input=page[a:e],capture_output=True,text=True)
+    if r.returncode:raise SystemExit('terser failed: '+r.stderr[:500])
+    return page[:a]+r.stdout+page[e:]
+src=minify(src);debug_src=minify(debug_src)
 open(f'{SITE}/index.html','w',encoding='utf-8').write(src)
+open(f'{SITE}/debug.html','w',encoding='utf-8').write(debug_src)
 shutil.copy(f'{DEV}/vendor/peerjs.min.js',f'{SITE}/peerjs.min.js')
-for ext in ('m4a','ogg'):shutil.copy(f'{DEV}/audio/between_raids.{ext}',f'{SITE}/between_raids.{ext}')
 def icon(n,pad=0.0,round_bg=False):
     S=512;im=Image.new('RGBA',(S,S),(20,18,16,255));d=ImageDraw.Draw(im)
     m=int(S*pad)

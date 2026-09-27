@@ -34,7 +34,7 @@ function handle(m, url, h, body) {
   await ctx.route('https://puvjfhwxigxjpsvdwrwf.supabase.co/**', async r => { const q = r.request(); let body = null; try { body = q.postDataJSON() } catch (e) { } await r.fulfill(handle(q.method(), q.url(), q.headers(), body)) });
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message + ' @ ' + (e.stack || '').split('\n')[1]));
   const P = (f, a) => p.evaluate(f, a), W = ms => p.waitForTimeout(ms), log = (...a) => console.log(...a);
-  await p.goto('http://localhost:8080/index.html?debug=1&cloud=1'); await W(1500); await p.mouse.move(600, 400);
+  await p.goto('http://localhost:8080/debug.html?debug=1&cloud=1'); await W(1500); await p.mouse.move(600, 400);
   log('account:', await P(() => __pal.acct.state));
   // 1. shotgun: fast clicks vs holding
   await P(() => __pal.showPage('solo')); await p.click('[data-c=grenadier]'); await p.click('#startBtn'); await W(300);
@@ -73,7 +73,7 @@ function handle(m, url, h, body) {
   log('list:', await P(() => [...document.querySelectorAll('#lobList .lob')].map(b => b.textContent + (b.disabled ? ' [full]' : '')).join(' | ') || document.getElementById('lobList').textContent));
   await p.screenshot({ path: __dirname + '/out/list.png', fullPage: true });
   // hosting publishes, leaving removes it (PeerJS needs the local peer server)
-  await p.goto('http://localhost:8080/index.html?debug=1&cloud=1&peerhost=127.0.0.1&peerport=9000&peerpath=/'); await W(1500);
+  await p.goto('http://localhost:8080/debug.html?debug=1&cloud=1&peerhost=127.0.0.1&peerport=9000&peerpath=/'); await W(1500);
   await P(() => __pal.showPage('multi')); await p.click('#hostBtn'); await p.waitForSelector('#pg-lobby:not([hidden])', { timeout: 10000 }); await W(800);
   log('host listed:', JSON.stringify(db.lastLobby));
   await p.click('#lLeave'); await W(600);

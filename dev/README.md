@@ -42,7 +42,7 @@ tests fake Supabase, so they don't touch real players.
 ## Publish
 
 1. Build, then test.
-2. Open GitHub Desktop: the changed files show up. Write a summary (for example "v0.8.5: ...").
+2. Open GitHub Desktop: the changed files show up. Write a summary (for example "v0.8.6: ...").
 3. **Commit to main**, then **Push origin**. GitHub Pages is live about a minute later.
 
 ## Rules that keep saves and online play safe
@@ -63,10 +63,19 @@ be on, and email needs custom SMTP.
 
 ## Music
 
-The between-raid track is `audio/between_raids.m4a` + `.ogg`. To replace it, encode both from a
-WAV and update the loop length (in samples) in `MUSIC` inside src/palisade.html:
+Two tracks, each as AAC (.m4a) and Opus (.ogg) in `audio/`: `between_raids` (co-op/Endless build
+phases) and `locker` (the Locker page). To replace one, encode both formats from a WAV under the
+same name and update its loop length (in samples) in `MUSIC` inside src/palisade.html. A new
+track = a new entry in `MUSIC`, its name in `MUSIC_FILES` in build.py, and a case in `musicWant()`.
 
 ```
 ffmpeg -i track.wav -c:a aac -b:a 160k -movflags +faststart between_raids.m4a
 ffmpeg -i track.wav -c:a libopus -b:a 128k between_raids.ogg
+ffprobe -v error -select_streams a -count_packets -show_entries stream=duration_ts track.wav   # loop length
 ```
+
+## Debug copy
+
+The build also writes `debug.html` (not committed): the same game with the test hooks
+(`?debug=1` exposes `window.__pal`) and the profiler. The tests use it; players get index.html,
+which has neither. Minifying needs terser (`npm install` in dev/test installs it).

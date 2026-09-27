@@ -7,7 +7,7 @@ const port = process.argv[2] || 8080, Q = 'peerhost=127.0.0.1&peerport=9000&peer
   const b = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--disable-features=WebRtcHideLocalIpsWithMdns'] });
   const H = await b.newPage({ viewport: { width: 1280, height: 720 } }), G = await b.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
   const errs = []; for (const [p, t] of [[H, 'HOST'], [G, 'GUEST']]) p.on('pageerror', e => errs.push(t + ' ' + e.message));
-  await H.goto(`http://localhost:${port}/?${Q}`); await G.goto(`http://localhost:${port}/?${Q}`); await H.waitForTimeout(700);
+  await H.goto(`http://localhost:${port}/${process.argv[3]||"debug.html"}?${Q}`); await G.goto(`http://localhost:${port}/${process.argv[3]||"debug.html"}?${Q}`); await H.waitForTimeout(700);
   await H.click('[data-go=multi]'); await H.fill('#mName', 'Host'); await H.click('#hostBtn');
   await H.waitForSelector('#pg-lobby:not([hidden])', { timeout: 10000 }); const code = await H.textContent('#lCode');
   await G.click('[data-go=multi]'); await G.fill('#mName', 'Guest'); await G.fill('#mCode', code); await G.click('#joinBtn');

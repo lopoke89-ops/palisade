@@ -527,22 +527,6 @@ AS $function$
 $function$
 ;
 
-CREATE OR REPLACE FUNCTION public.craft_case(p_rev integer DEFAULT NULL::integer)
- RETURNS jsonb
- LANGUAGE sql
- SECURITY DEFINER
- SET search_path TO ''
-AS $function$ select public.buy_case('afterglow', p_rev) $function$
-;
-
-CREATE OR REPLACE FUNCTION public.open_case(p_rev integer DEFAULT NULL::integer)
- RETURNS jsonb
- LANGUAGE sql
- SECURITY DEFINER
- SET search_path TO ''
-AS $function$ select public.open_case_of('supply', p_rev) $function$
-;
-
 -- TRIGGERS
 
 CREATE TRIGGER lobby_stamp BEFORE INSERT OR UPDATE ON public.lobbies FOR EACH ROW EXECUTE FUNCTION private.lobby_stamp();
@@ -578,11 +562,9 @@ grant REFERENCES, SELECT, TRIGGER on public.profiles to authenticated;
 
 grant execute on function public.buy_case(p_case text, p_rev integer) to authenticated;
 grant execute on function public.claim_match_reward(p jsonb) to authenticated;
-grant execute on function public.craft_case(p_rev integer) to authenticated;
 grant execute on function public.equip(p_item text, p_rev integer) to authenticated;
 grant execute on function public.get_my_locker() to authenticated;
 grant execute on function public.import_local_save(p_save jsonb) to authenticated;
-grant execute on function public.open_case(p_rev integer) to authenticated;
 grant execute on function public.open_case_of(p_case text, p_rev integer) to authenticated;
 grant execute on function public.set_username(p_name text) to authenticated;
 

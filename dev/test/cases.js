@@ -5,7 +5,7 @@ const { chromium } = require('playwright');
   const p = await b.newPage({ viewport: { width: 520, height: 1000 } });
   const errs = []; p.on('pageerror', e => errs.push(e.message + ' ' + (e.stack || '').split('\n')[1]));
   const P = (f, a) => p.evaluate(f, a);
-  await p.goto('http://localhost:8080/index.html?debug=1'); await p.waitForTimeout(600);
+  await p.goto('http://localhost:8080/debug.html?debug=1'); await p.waitForTimeout(600);
   console.log('odds (100k rolls each):', await P(() => { const out = {}; for (const id of ['supply', 'afterglow']) { const c = {}; let wrong = 0;
     for (let i = 0; i < 100000; i++) { const it = __pal.rollCase(id); c[it.r] = (c[it.r] || 0) + 1; if (it.box !== id) wrong++ }
     out[id] = Object.entries(c).sort((a, b) => a[1] - b[1]).map(([k, v]) => k + ' ' + (v / 1000).toFixed(2) + '%').join(', ') + (wrong ? ` WRONG POOL ${wrong}` : ' · pool ok') } return out }));

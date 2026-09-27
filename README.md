@@ -71,6 +71,43 @@ JOBS, BOSSES AND SALVAGE (v0.8.1)
     to reload.
 
 
+LOCKER MUSIC, LEANER GAME (v0.8.6)
+----------------------------------
+  - Locker music: a new track plays on the LOCKER page (and through
+    case spins), fades out when you leave, loops with no gap. Same
+    MUSIC slider. Files: locker.m4a and locker.ogg, downloaded the
+    first time you open the Locker and kept for offline. Only the track
+    that can play right now stays in memory (a decoded minute of music
+    is about 20 MB): the raid track is let go in the menus, the locker
+    track during a run.
+  - Night raids draw about 16% faster on phones (14.2 to 11.4-12 ms a
+    frame) and the worst frames about 25% faster (18.6 to 13-15 ms).
+    Lists of effects, enemies and rockets are tidied in place instead
+    of rebuilt every frame, and the scene is sorted from one reused
+    table, so there's less memory churn and fewer stutters.
+  - Gradient and rainbow tracers are drawn from a small cached colour
+    strip instead of a new gradient per bullet. They look the same.
+  - Online: about 16% less data per guest in a busy fight (12.9 to
+    10.8 KB/s). Names, outfits and jobs are sent only when they change,
+    not 15 times a second, and enemy rows drop empty fields.
+  - Sounds: at most 14 positional sounds start in any 0.12 s, sounds
+    too far away to hear aren't played, and walls between you and a
+    sound share one muffle filter per wall count. Big fights no longer
+    pile up hundreds of audio nodes.
+  - Solo players no longer download the online-play code (PeerJS) at
+    startup; it loads when you open MULTIPLAYER or follow an invite
+    link. The game script is minified (about 245 KB for index.html),
+    and the debug hooks and profiler are no longer in the published
+    page.
+  - Signing in is quicker: the locker and profile load at the same
+    time, and the locker isn't fetched twice right after a run is
+    saved. Coming back to the tab re-checks the account only after
+    2 minutes away.
+  - The Open Games list only redraws when a game in it changes.
+  - Server: two unused old case functions were removed.
+  - Online games need everyone on v0.8.6 or later.
+
+
 SMOOTHER ON PHONES, LIGHTER ONLINE (v0.8.5)
 -------------------------------------------
   - Drawing a busy raid takes about a third of the time it did on
@@ -245,7 +282,9 @@ FILES
   dev/                      the source, build script, tests and a server restore
                             script (see dev/README.md); not part of the game itself
   index.html                the game
-  peerjs.min.js             online play (PeerJS 1.5.5, MIT license); loads in the background after the menu is up
+  peerjs.min.js             online play (PeerJS 1.5.5, MIT license); loads when MULTIPLAYER opens or from an invite link
+  between_raids.m4a/.ogg    music between raids (AAC and Opus)
+  locker.m4a/.ogg           music on the Locker page
   *.woff2                   Big Shoulders Stencil Display and IBM Plex Mono (SIL Open Font License)
   manifest.webmanifest      app name, icon and full-screen setting for home screens
   sw.js                     saves a copy on the phone for offline solo play

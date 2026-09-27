@@ -6,7 +6,7 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', O = __dirname +
   const mk = async (opts, tag) => { const p = await b.newPage(opts); p.errs = []; p.on('pageerror', e => p.errs.push(tag + ' ' + e.message + ' @ ' + (e.stack || '').split('\n')[1])); return p };
   const H = await mk({ viewport: { width: 1280, height: 720 } }, 'HOST');
   const G = await mk({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 }, 'GUEST');
-  await H.goto('http://localhost:8080/?' + Q); await G.goto('http://localhost:8080/?' + Q); await H.waitForTimeout(700);
+  await H.goto('http://localhost:8080/debug.html?' + Q); await G.goto('http://localhost:8080/debug.html?' + Q); await H.waitForTimeout(700);
   await H.click('[data-go=multi]'); await H.fill('#mName', 'Big U'); await H.click('[data-mc=quartermaster]'); await H.click('#hostBtn');
   await H.waitForSelector('#pg-lobby:not([hidden])', { timeout: 10000 }); const code = await H.textContent('#lCode');
   await G.click('[data-go=multi]'); await G.screenshot({ path: O + '/m_phone_multi.png' });

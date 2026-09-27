@@ -4,7 +4,7 @@ const O=__dirname+'/out';
  const b=await chromium.launch({executablePath:process.env.CHROMIUM||undefined});
  const p=await b.newPage({viewport:{width:1600,height:900}});
  const errs=[];p.on('pageerror',e=>errs.push(e.message+' '+(e.stack||'').split('\n')[1]));
- await p.goto('http://localhost:8080/?debug=1');await p.waitForTimeout(800);
+ await p.goto('http://localhost:8080/debug.html?debug=1');await p.waitForTimeout(800);
  await p.mouse.move(800,450);
  await p.click('[data-go=solo]');await p.click('[data-c=sniper]');await p.click('#startBtn');await p.waitForTimeout(500);
  const P=f=>p.evaluate(f);

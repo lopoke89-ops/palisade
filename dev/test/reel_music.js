@@ -2,7 +2,7 @@ const { chromium } = require('playwright');
 (async()=>{const b=await chromium.launch({executablePath:process.env.CHROMIUM||undefined,args:['--autoplay-policy=no-user-gesture-required']});
 const ctx=await b.newContext({viewport:{width:390,height:844},deviceScaleFactor:2});const p=await ctx.newPage();
 const errs=[];p.on('pageerror',e=>errs.push(e.message+' @ '+(e.stack||'').split('\n').slice(1,3).join(' | ')));
-await p.goto('http://localhost:8080/index.html?debug=1');await p.waitForTimeout(800);await p.mouse.click(5,5);
+await p.goto('http://localhost:8080/debug.html?debug=1');await p.waitForTimeout(800);await p.mouse.click(5,5);
 // 1. afterglow reel: tile heights, strip visible, tick count while the menu demo runs
 await p.evaluate(()=>{const P=__pal;P.locker.bag.afterglow=2;P.showPage('locker');P.renderLocker();
   // count ticks by watching oscillator creation
@@ -16,7 +16,7 @@ console.log('reel',JSON.stringify(r),'| oscillators (ticks+reveal) during spin:'
 await p.screenshot({path:__dirname+'/out/v084_reel_end.png'});await p.evaluate(()=>document.getElementById('caseDone').click());
 // 2. music: solo co-op run, build phase -> plays, raid -> fades out, menu -> off
 await p.evaluate(()=>__pal.showPage('solo'));await p.click('#startBtn');await p.waitForTimeout(400);
-const m=async()=>p.evaluate(()=>{const M=__pal.mus;return{phase:__pal.game.phase,want:__pal.musicWant(),loaded:!!M.buf,playing:!!M.src,dur:M.buf&&M.buf.duration.toFixed(3),loopEnd:M.src&&M.src.loopEnd.toFixed(3),bus:M.bus&&M.bus.gain.value}});
+const m=async()=>p.evaluate(()=>{const M=__pal.mus,B=M.bufs.between;return{phase:__pal.game.phase,want:__pal.musicWant(),track:M.cur,loaded:!!B,playing:!!M.src,dur:B&&B.duration.toFixed(3),loopEnd:M.src&&M.src.loopEnd.toFixed(3),bus:M.bus&&M.bus.gain.value}});
 await p.waitForTimeout(3500);console.log('opening build phase',JSON.stringify(await m()));
 await p.keyboard.press('Enter');await p.waitForTimeout(600);console.log('raid started',JSON.stringify(await m()));
 await p.evaluate(()=>{const P=__pal;P.game.wave=1;P.startBuild?P.startBuild(30):(P.game.phase='build')});await p.waitForTimeout(600);console.log('between raids',JSON.stringify(await m()));
