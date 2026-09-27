@@ -153,8 +153,13 @@ details.how .ctrls{margin-top:8px}
 #mates:empty{display:none}#mates{display:grid;gap:5px}
 .meter.mate .lab{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--bone)}
 .meter.mate .track{height:6px}
-input[type=text]{-webkit-user-select:text;user-select:text;touch-action:manipulation;font:600 16px var(--mono);color:var(--bone);background:#0c0b09;border:1px solid var(--line);height:46px;padding:0 12px;border-radius:0;min-width:0;width:100%;box-sizing:border-box}
-input[type=text]:focus{outline:2px solid var(--warn);outline-offset:-2px}
+input[type=text],input[type=email],input[type=password]{-webkit-user-select:text;user-select:text;touch-action:manipulation;font:600 16px var(--mono);color:var(--bone);background:#0c0b09;border:1px solid var(--line);height:46px;padding:0 12px;border-radius:0;min-width:0;width:100%;box-sizing:border-box}
+input[type=text]:focus,input[type=email]:focus,input[type=password]:focus{outline:2px solid var(--warn);outline-offset:-2px}
+.acBox{gap:8px;border-top:1px solid var(--line);padding-top:12px}.acBox h2{margin:0}
+.lede.sm{font-size:12px;color:var(--dim);margin:0}.ghost.sm{height:36px;font-size:13px;justify-self:start;padding:0 14px}
+.acctBtn{height:40px;font-size:14px;justify-self:start;padding:0 16px}
+#capBox:not([hidden]){min-height:66px}
+#pg-account button:disabled{opacity:.5}
 .join{display:grid;grid-template-columns:minmax(0,1fr) 120px;gap:8px}
 #mCode{font-family:var(--stencil);font-weight:900;font-size:26px;letter-spacing:.3em;text-transform:uppercase;height:56px;text-align:center}
 .seg#pvSeg button{font-size:clamp(11px,3.4vw,15px);letter-spacing:.05em}
@@ -244,7 +249,7 @@ body.desk #keys{font-size:13px;color:var(--bone);background:rgba(14,12,10,.78);b
 .armHint{display:none;font-size:12px;color:var(--dim);text-align:center;margin:0}body.desk .armHint{display:block}
 /* never let iOS select text or pop a callout mid-fight */
 *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-input[type=text]{-webkit-user-select:text;user-select:text}
+input[type=text],input[type=email],input[type=password]{-webkit-user-select:text;user-select:text}
 /* build on/off, salvage, armory */
 #bmBtn{height:26px;background:rgba(27,24,20,.86);border:1px solid var(--line);font-family:var(--stencil);font-weight:800;font-size:13px;letter-spacing:.08em;color:var(--bone);padding:0}
 #bmBtn.off{color:var(--dim);border-style:dashed}
@@ -353,8 +358,41 @@ input[type=text]{-webkit-user-select:text;user-select:text}
       </nav>
       <p class="install" id="installTip" hidden>Play it like an app: tap <b>Share</b> <span aria-hidden="true">⎙</span> at the bottom of Safari, then <b>Add to Home Screen</b>.</p>
       <button class="ghost" id="installBtn" type="button" hidden>INSTALL AS AN APP</button>
+      <button class="ghost acctBtn" id="acctBtn" type="button" data-go="account" hidden>ACCOUNT</button>
       <p class="note" id="saveNote" hidden></p>
-      <p class="foot">v0.7.3 · phone and desktop · online co-op and PvP for up to six</p>
+      <p class="foot">v0.8 · phone and desktop · online co-op and PvP for up to six</p>
+    </section>
+
+    <section class="page" id="pg-account" hidden>
+      <h2 class="pt">ACCOUNT</h2>
+      <p class="lede" id="aLede"></p>
+      <p class="status" id="aStatus" role="status"></p>
+      <button class="go" id="aRetry" type="button" hidden>TRY AGAIN</button>
+      <form class="page acBox" id="aPwBox" hidden autocomplete="on" novalidate>
+        <h2 id="aPwHead">SET A PASSWORD</h2>
+        <p class="lede sm" id="aPwLede">So you can sign in on your other devices. At least 8 characters.</p>
+        <input type="email" id="aPwMail" autocomplete="username" hidden aria-hidden="true" tabindex="-1">
+        <div class="join"><input type="password" id="aPwIn" minlength="8" maxlength="72" autocomplete="new-password" placeholder="New password" aria-label="New password"><button class="go" type="submit">SAVE</button></div>
+      </form>
+      <form class="page acBox" id="aNameBox" hidden autocomplete="off" novalidate>
+        <h2>USERNAME</h2>
+        <p class="lede sm">What other players see. 3 to 16 letters, numbers or _.</p>
+        <div class="join"><input type="text" id="aUser" maxlength="16" placeholder="Pick a name" aria-label="Username" spellcheck="false" autocapitalize="off"><button class="go" type="submit">SAVE</button></div>
+      </form>
+      <form class="page acBox" id="aLinkBox" hidden autocomplete="on" novalidate>
+        <h2>KEEP IT ON ANY DEVICE</h2>
+        <p class="lede sm">Add your email. We send a link; open it on any device, then choose a password. Your locker stays as it is.</p>
+        <div class="join"><input type="email" id="aLinkMail" maxlength="254" autocomplete="email" placeholder="you@example.com" aria-label="Email"><button class="go" type="submit">SEND LINK</button></div>
+      </form>
+      <form class="page acBox" id="aInBox" hidden autocomplete="on" novalidate>
+        <h2 id="aInHead">HAVE AN ACCOUNT?</h2>
+        <input type="email" id="aInMail" maxlength="254" autocomplete="username" placeholder="Email" aria-label="Email">
+        <div class="join"><input type="password" id="aInPw" maxlength="72" autocomplete="current-password" placeholder="Password" aria-label="Password"><button class="go" type="submit">SIGN IN</button></div>
+        <button class="ghost sm" id="aForgot" type="button">FORGOT PASSWORD</button>
+      </form>
+      <div id="capBox" hidden></div>
+      <button class="ghost" id="aOut" type="button" hidden>SIGN OUT</button>
+      <button class="ghost" type="button" data-go="main">BACK</button>
     </section>
 
     <section class="page" id="pg-solo" hidden>
@@ -432,6 +470,7 @@ input[type=text]{-webkit-user-select:text;user-select:text}
         </div>
       </div>
       <p class="lede" style="font-size:12px;color:var(--dim)" id="lockHint">Earn a case every 3 raids you survive, and for every win. Duplicates turn into shards.</p>
+      <p class="status" id="lockMsg" role="status"></p>
       <div class="tabs" id="lockTabs"><button data-cat="skin" class="sel" type="button">SKINS</button><button data-cat="hat" type="button">HEADGEAR</button><button data-cat="trail" type="button">TRACERS</button><button data-cat="fx" type="button">KILL FX</button></div>
       <div class="grid" id="lockGrid"></div>
       <button class="ghost" type="button" data-go="main">BACK</button>
@@ -2030,9 +2069,11 @@ function saveSummary(d){
 function restoreSave(d){
   try{const cur=localStorage.getItem(LOCK_KEY);if(cur)localStorage.setItem(LOCK_BAK,cur)}catch(e){}
   locker=normLocker(JSON.parse(JSON.stringify(d.locker)));try{localStorage.setItem(LOCK_KEY,JSON.stringify(locker))}catch(e){}
+  restoreExtras(d);lockerNote='';$('saveNote').hidden=true;keepStorage();
+}
+function restoreExtras(d){
   if(d.best&&typeof d.best==='object')try{localStorage.setItem(BEST_KEY,JSON.stringify(d.best))}catch(e){}
   if(d.cfg&&typeof d.cfg==='object'){for(const k of['name','volume','shake','haptics','fps','build'])if(d.cfg[k]!==undefined&&typeof d.cfg[k]===typeof cfg[k])cfg[k]=d.cfg[k];saveCfg();applyCfg()}
-  lockerNote='';$('saveNote').hidden=true;keepStorage();
 }
 let saveMode='',savePending=null;
 function openSaveOv(mode){
@@ -2067,6 +2108,7 @@ function lockerReward(held,win,kills){
   if(win)locker.cases+=game.waves>=10?2:1;
   if(game.mode==='endless')locker.cases+=Math.floor(held/5);
   const got=checkUnlocks();saveLocker();
+  queueClaim({kind:'run',mode:game.mode,diff:pick.diff||'normal',win:!!win,held,kills,duration_s:Math.round(game.time)});
   const n=locker.cases-before,left=3-locker.prog,bits=[];
   if(n>0)bits.push(`+${n} supply case${n>1?'s':''} in your Locker`);
   bits.push(`${left} more raid${left>1?'s':''} to the next case`);
@@ -2079,6 +2121,7 @@ function pvpReward(win,kills){
   st.drops+=kills;st.pvp=(st.pvp|0)+1;if(win)st.pvpWins=(st.pvpWins|0)+1;
   locker.prog+=1;locker.cases+=Math.floor(locker.prog/3);locker.prog%=3;if(win)locker.cases+=1;
   const got=checkUnlocks();saveLocker();
+  queueClaim({kind:'match',pvp:game.pvp,win:!!win,kills,duration_s:Math.round(game.time)});
   const n=locker.cases-before,left=3-locker.prog,bits=[];
   if(n>0)bits.push(`+${n} supply case${n>1?'s':''} in your Locker`);
   bits.push(`${left} more match${left>1?'es':''} or raid${left>1?'s':''} to the next case`);
@@ -2095,6 +2138,242 @@ function openCase(){
   const it=rollCase(),dup=owns(it.id);if(dup)locker.shards+=RAR[it.r].sh;else grant(it.id);
   saveLocker();return{it,dup};
 }
+
+/* ================= accounts and the cloud locker (Supabase) ================= */
+// Everyone starts as a guest account, made quietly in the background, so the locker is backed up from the
+// first case. Adding an email turns the guest into a full account that works on any device.
+// Once an account exists the server owns the locker: cases are rolled there and rewards are checked there.
+// This browser keeps a copy so the menu opens instantly and solo still plays with no signal.
+// SB_KEY is Supabase's public "publishable" key. It can only do what the database's own rules allow.
+const SB_URL='https://puvjfhwxigxjpsvdwrwf.supabase.co',SB_KEY='sb_publishable_xe3uY3icYguSM5pqlD7a1Q_7OD3B4v6';
+const TURNSTILE_KEY='';   // Cloudflare Turnstile site key (public) once the robot check is switched on
+const AUTH_KEY='palisade.auth.v1',GUEST_KEY='palisade.auth.guest',CLAIM_KEY='palisade.claims.v1';
+const SITE_URL=location.origin+location.pathname;
+const cloudOn=location.hostname==='lopoke89-ops.github.io'||/[?&]cloud=1\b/.test(location.search);
+const acct={s:null,name:null,state:cloudOn?'wait':'off',msg:'',recovery:false,busy:false,t:0};
+{const a=readJSON(AUTH_KEY);if(a.v&&a.v.access_token&&a.v.refresh_token)acct.s=a.v}
+const isGuest=()=>!!(acct.s&&acct.s.user&&acct.s.user.is_anonymous);
+const myUid=()=>acct.s&&acct.s.user?acct.s.user.id:acct.s?jwtSub(acct.s.access_token):null;
+function jwtSub(t){try{return JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))).sub||null}catch(e){return null}}
+const needPw=()=>!!(acct.s&&acct.s.user&&!acct.s.user.is_anonymous&&acct.s.user.email&&!(acct.s.user.user_metadata||{}).pw);
+function setSession(d){
+  if(!d||!d.access_token){acct.s=null;try{localStorage.removeItem(AUTH_KEY)}catch(e){}return}
+  const keepUser=acct.s&&acct.s.user&&acct.s.user.id===jwtSub(d.access_token)?acct.s.user:null;
+  acct.s={access_token:d.access_token,refresh_token:d.refresh_token,expires_at:d.expires_at||Math.floor(Date.now()/1000)+(d.expires_in||3600),user:d.user||keepUser};
+  try{localStorage.setItem(AUTH_KEY,JSON.stringify(acct.s))}catch(e){}
+}
+async function sbFetch(path,{method='GET',body,auth=true,timeout=9000}={}){
+  const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),timeout),h={apikey:SB_KEY,'Content-Type':'application/json'};
+  if(auth&&acct.s)h.Authorization='Bearer '+acct.s.access_token;
+  try{const r=await fetch(SB_URL+path,{method,headers:h,body:body===undefined?undefined:JSON.stringify(body),signal:ctl.signal});
+    const t=await r.text();let j=null;try{j=t?JSON.parse(t):null}catch(e){}
+    return{ok:r.ok,status:r.status,j}}
+  catch(e){return{ok:false,status:0,j:null}}finally{clearTimeout(to)}
+}
+function sbErr(r,fb){
+  if(!r.status)return'Couldn\'t reach the account server. Check your signal and try again.';
+  const j=r.j||{},m=j.message||j.msg||j.error_description||j.error||'',c=j.error_code||j.code||'';
+  if(c==='email_exists'||/already been registered/i.test(m))return'That email already has an account. Sign in to it below instead.';
+  if(c==='invalid_credentials'||/invalid login/i.test(m))return'That email and password don\'t match.';
+  if(c==='email_not_confirmed'||/not confirmed/i.test(m))return'That email isn\'t confirmed yet. Open the link we sent, then sign in.';
+  if(c==='weak_password'||/password should/i.test(m))return'Pick a longer password: at least 8 characters.';
+  if(c==='same_password')return'That\'s already your password.';
+  if(c==='over_email_send_rate_limit'||c==='over_request_rate_limit'||r.status===429)return'Too many tries. Wait a few minutes and try again.';
+  if(/captcha/i.test(m))return'The robot check failed. Try again.';
+  if(c==='validation_failed'&&/email/i.test(m))return'That doesn\'t look like an email address.';
+  return m&&m.length<140?m:(fb||'Something went wrong. Try again.');
+}
+let refreshing=null;
+function freshToken(){
+  if(!acct.s)return Promise.resolve(false);
+  if(acct.s.expires_at-Date.now()/1000>90)return Promise.resolve(true);
+  return refreshing||(refreshing=(async()=>{
+    const r=await sbFetch('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:{refresh_token:acct.s.refresh_token},auth:false});
+    refreshing=null;if(r.ok&&r.j&&r.j.access_token){setSession(r.j);return true}
+    if(r.status===400||r.status===401||r.status===403)await endSession('Your sign-in ended. Sign in again to get your locker back.');
+    return false})());
+}
+async function rpc(fn,args){
+  if(!await freshToken())return{ok:false,status:acct.s?0:401,j:{message:'Sign in first.'}};
+  let r=await sbFetch('/rest/v1/rpc/'+fn,{method:'POST',body:args||{}});
+  if(r.status===401&&acct.s){acct.s.expires_at=0;if(await freshToken())r=await sbFetch('/rest/v1/rpc/'+fn,{method:'POST',body:args||{}})}
+  return r;
+}
+// Cloudflare Turnstile: a robot check that is invisible unless it has doubts. Only loaded when it's switched on.
+let tsLoad=null;
+function captcha(){
+  if(!TURNSTILE_KEY)return Promise.resolve(undefined);
+  tsLoad=tsLoad||new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';sc.async=true;
+    sc.onload=()=>res();sc.onerror=()=>{tsLoad=null;sc.remove();rej(new Error('ts'))};document.head.append(sc)});
+  return tsLoad.then(()=>new Promise((res,rej)=>{
+    const box=$('capBox'),el=document.createElement('div');box.textContent='';box.append(el);box.hidden=false;
+    const done=f=>x=>{box.hidden=true;box.textContent='';f(x)};
+    window.turnstile.render(el,{sitekey:TURNSTILE_KEY,appearance:'interaction-only',theme:'dark',action:'auth',
+      callback:done(res),'error-callback':done(()=>rej(new Error('ts'))),'timeout-callback':done(()=>rej(new Error('ts')))});
+  }));
+}
+const withCap=async body=>{let t;try{t=await captcha()}catch(e){return null}if(t)body.gotrue_meta_security={captcha_token:t};return body};
+const capFail={ok:false,status:400,j:{message:'The robot check didn\'t load. Try again.'}};
+
+// ---- the locker copy on this device vs. the account's locker
+const lockerFresh=L=>L.cases<=1&&!L.shards&&!L.prog&&Object.values(L.st).every(v=>!v)&&L.owned.every(id=>COSBY[id]&&COSBY[id].src==='free');
+function takeLocker(j){
+  if(!j||!Array.isArray(j.owned)||!acct.s)return;
+  const L=normLocker({owned:j.owned,eq:j.eq,cases:j.cases,shards:j.shards,prog:j.prog,st:j.st});
+  L.cloud={id:myUid(),guest:isGuest()};locker=L;saveLocker();lockerNote='';
+  if(!$('pg-locker').hidden&&$('caseOv').hidden)renderLocker();
+  mainLabels();
+}
+async function syncLocker(){
+  await flushClaims();
+  const r=await rpc('get_my_locker');if(!r.ok)return r;
+  let j=r.j;const L=locker,uid=myUid();
+  // a save made on this device before it had an account, or a guest's locker when signing in to a real
+  // account, is merged in once; the server refuses a second merge into the same account
+  const mine=!L.cloud||(L.cloud.guest&&L.cloud.id!==uid);
+  if(!j.imported&&mine&&!lockerFresh(L)){
+    const im=await rpc('import_local_save',{p_save:{owned:L.owned,eq:L.eq,cases:L.cases,shards:L.shards,prog:L.prog,st:L.st}});
+    if(im.ok)j=im.j;
+  }else if(j.imported&&mine&&L.cloud&&!lockerFresh(L))acct.msg='This account already took in a guest locker once, so this device\'s guest items stay with the guest. Sign out to get back to them.';
+  takeLocker(j);return r;
+}
+async function loadProfile(){
+  const uid=myUid();if(!uid)return;
+  const u=await sbFetch('/auth/v1/user');if(u.ok&&u.j&&u.j.id){acct.s.user=u.j;setSession(acct.s)}
+  const r=await sbFetch('/rest/v1/profiles?select=username&id=eq.'+encodeURIComponent(uid));
+  if(r.ok&&Array.isArray(r.j)&&r.j[0])acct.name=r.j[0].username||null;
+}
+
+// ---- finished runs: the server checks each result and hands out the cases. Kept here until it answers.
+let claims=(()=>{const a=readJSON(CLAIM_KEY);return a.v&&Array.isArray(a.v.q)?a.v.q:[]})(),flushing=null,flushT=0;
+function saveClaims(){try{localStorage.setItem(CLAIM_KEY,JSON.stringify({q:claims.slice(-8)}))}catch(e){}}
+function queueClaim(c){if(!locker.cloud)return;claims.push({...c,uid:locker.cloud.id,at:Date.now()});saveClaims();flushClaims()}
+function flushClaims(){
+  if(flushing)return flushing;if(!claims.length||!acct.s)return Promise.resolve();
+  const run=async()=>{
+    while(claims.length&&acct.s){
+      const c=claims[0];
+      if(c.uid!==myUid()||Date.now()-c.at>7*864e5){claims.shift();saveClaims();continue}
+      const{uid,at,...p}=c,r=await rpc('claim_match_reward',{p});
+      if(r.ok){claims.shift();saveClaims();takeLocker(r.j.locker);
+        if(r.j.capped)toast('DAILY CASE LIMIT','Stats still count. More cases tomorrow.');continue}
+      if(!r.status||r.status>=500||r.status===401)break;
+      if(/moment ago/.test(sbErr(r))){clearTimeout(flushT);flushT=setTimeout(flushClaims,21000);break}
+      claims.shift();saveClaims();       // the server refused it for good (bad or duplicate result)
+    }};
+  return flushing=run().catch(()=>{}).finally(()=>{flushing=null});
+}
+
+// ---- starting up, and coming back to the app
+async function acctBoot(){
+  if(!cloudOn||acct.booting)return;acct.booting=true;
+  try{await boot1()}finally{acct.booting=false;renderAcct()}
+}
+async function boot1(){
+  readAuthHash();
+  acct.state='wait';renderAcct();
+  if(!acct.s){const g=readJSON(GUEST_KEY);if(g.v&&g.v.refresh_token){setSession({...g.v,expires_at:1});try{localStorage.removeItem(GUEST_KEY)}catch(e){}}}
+  if(!acct.s){const r=await makeGuest();if(!r.ok){acct.state='down';if(r.status)acct.msg=sbErr(r);renderAcct();return}}
+  const r=await syncLocker();
+  if(!acct.s){acct.state='down';renderAcct();return}      // the saved sign-in had ended
+  if(!r.ok){acct.state='down';acct.msg=r.status?sbErr(r):'';renderAcct();return}
+  await loadProfile();acct.state=isGuest()?'guest':'full';acct.t=Date.now();renderAcct();
+  if(acct.recovery||acct.hashMsg){showPage('account');acct.hashMsg=false}
+}
+function acctResume(){
+  if(!cloudOn||acct.busy||Date.now()-acct.t<30000)return;acct.t=Date.now();
+  if(acct.state==='down')acctBoot();else if(acct.state==='guest'||acct.state==='full')syncLocker().then(()=>renderAcct());
+}
+async function makeGuest(){
+  const body=await withCap({data:{}});if(!body)return capFail;
+  const r=await sbFetch('/auth/v1/signup',{method:'POST',body,auth:false});
+  if(r.ok&&r.j&&r.j.access_token)setSession(r.j);else if(r.ok)return{ok:false,status:400,j:{message:'Guest accounts are switched off.'}};
+  return r;
+}
+// the links in our emails come back to the game with the new sign-in in the address
+function readAuthHash(){
+  const h=location.hash.slice(1);if(!/(^|&)(access_token|error_description|error)=/.test(h))return;
+  const q=new URLSearchParams(h);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
+  acct.hashMsg=true;
+  if(!q.get('access_token')){acct.msg=(q.get('error_description')||'That link didn\'t work.')+'. Links only work once and expire after an hour; ask for a new one.';acct.msg=acct.msg.replace(/\.\./g,'.');return}
+  const type=q.get('type')||'';keepGuest(jwtSub(q.get('access_token')));
+  setSession({access_token:q.get('access_token'),refresh_token:q.get('refresh_token'),expires_at:+q.get('expires_at')||0,expires_in:+q.get('expires_in')||3600});
+  if(type==='recovery'){acct.recovery=true;acct.msg='Choose a new password.'}
+  else acct.msg='Email confirmed.';
+}
+// switching from a guest to a full account keeps the guest's sign-in, so signing out returns to it
+function keepGuest(newUid){if(isGuest()&&acct.s.user.id!==newUid)try{localStorage.setItem(GUEST_KEY,JSON.stringify(acct.s))}catch(e){}}
+async function endSession(msg){
+  setSession(null);acct.name=null;acct.recovery=false;acct.state='down';if(msg)acct.msg=msg;
+  locker=normLocker(null);saveLocker();claims=[];saveClaims();
+  if(!$('pg-locker').hidden&&$('caseOv').hidden)renderLocker();
+}
+
+// ---- the account page
+function mainLabels(){
+  const lb=document.querySelector('[data-go=locker]');if(lb)lb.textContent=locker.cases?`LOCKER · ${locker.cases}`:'LOCKER';
+  const ab=$('acctBtn');if(!ab)return;ab.hidden=!cloudOn;
+  ab.textContent=acct.state==='full'?`ACCOUNT · ${(acct.name||'SIGNED IN').toUpperCase()}`:acct.state==='guest'?(acct.name?`GUEST · ${acct.name.toUpperCase()} · SAVE YOUR ACCOUNT`:'GUEST · SAVE YOUR ACCOUNT'):acct.state==='down'?'ACCOUNT · OFFLINE':'ACCOUNT';
+}
+function renderAcct(){
+  mainLabels();if($('pg-account').hidden)return;
+  const st=acct.state,g=isGuest(),u=acct.s&&acct.s.user,live=st==='guest'||st==='full';
+  $('aLede').textContent=
+    st==='wait'?'Connecting to your account…':
+    st==='down'?(acct.s?'Can\'t reach the account server right now. You can still play: finished runs are sent when you\'re back online, and opening cases waits for a connection.':'No account yet. Your locker is saved in this browser, and it moves into your account once one is made.'):
+    g?'You\'re playing as a guest. Your locker is backed up online, but only this browser can get back into it. Add an email to keep it on any device, or sign in to an account you already have.':
+    `Signed in${acct.name?' as '+acct.name:''}${u&&u.email?' · '+u.email:''}. Your locker is saved to your account and follows you to any device you sign in on.`;
+  $('aStatus').textContent=acct.msg||'';
+  $('aRetry').hidden=st!=='down';
+  $('aNameBox').hidden=!live||acct.recovery;
+  $('aLinkBox').hidden=!(live&&g);
+  const pw=live&&!g&&(acct.recovery||needPw());$('aPwBox').hidden=!pw;
+  if(pw){$('aPwHead').textContent=acct.recovery?'NEW PASSWORD':'SET A PASSWORD';$('aPwMail').value=u&&u.email||''}
+  $('aInBox').hidden=!(st==='guest'||st==='down'&&!acct.s);
+  $('aOut').hidden=!(live&&!g);
+  if(document.activeElement!==$('aUser'))$('aUser').value=acct.name||'';
+  for(const b of $('pg-account').querySelectorAll('button:not([data-go]),input'))b.disabled=acct.busy||st==='wait';
+}
+async function acctDo(fn){
+  if(acct.busy)return;acct.busy=true;acct.msg='';renderAcct();
+  try{acct.msg=await fn()||''}catch(e){acct.msg='Something went wrong. Try again.'}
+  acct.busy=false;renderAcct();
+}
+$('aRetry').addEventListener('click',()=>{acct.msg='';acctBoot()});
+$('aNameBox').addEventListener('submit',e=>{e.preventDefault();const n=$('aUser').value.trim();
+  if(!/^[A-Za-z0-9_]{3,16}$/.test(n)){acct.msg='Usernames are 3 to 16 letters, numbers or _.';renderAcct();return}
+  acctDo(async()=>{const r=await rpc('set_username',{p_name:n});if(!r.ok)return sbErr(r);
+    acct.name=n;if(!(cfg.name||'').trim()){cfg.name=n.slice(0,12);saveCfg();applyCfg()}return'Username saved.'})});
+$('aLinkBox').addEventListener('submit',e=>{e.preventDefault();const m=$('aLinkMail').value.trim();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m)){acct.msg='That doesn\'t look like an email address.';renderAcct();return}
+  acctDo(async()=>{if(!await freshToken())return sbErr({status:0});
+    const r=await sbFetch('/auth/v1/user?redirect_to='+encodeURIComponent(SITE_URL),{method:'PUT',body:{email:m}});
+    if(!r.ok)return sbErr(r);return`Link sent to ${m}. Open it on any device (check spam too), then choose a password there.`})});
+$('aPwBox').addEventListener('submit',e=>{e.preventDefault();const pw=$('aPwIn').value;
+  if(pw.length<8){acct.msg='Pick a longer password: at least 8 characters.';renderAcct();return}
+  acctDo(async()=>{if(!await freshToken())return sbErr({status:0});
+    const r=await sbFetch('/auth/v1/user',{method:'PUT',body:{password:pw,data:{pw:1}}});
+    if(!r.ok)return sbErr(r);if(r.j&&r.j.id){acct.s.user=r.j;setSession(acct.s)}
+    acct.recovery=false;$('aPwIn').value='';return'Password saved. Sign in with your email and this password on any device.'})});
+$('aInBox').addEventListener('submit',e=>{e.preventDefault();const m=$('aInMail').value.trim(),pw=$('aInPw').value;
+  if(!m||!pw){acct.msg='Enter your email and password.';renderAcct();return}
+  acctDo(async()=>{const body=await withCap({email:m,password:pw});if(!body)return sbErr(capFail);
+    const r=await sbFetch('/auth/v1/token?grant_type=password',{method:'POST',body,auth:false});
+    if(!r.ok||!r.j||!r.j.access_token)return sbErr(r);
+    keepGuest(r.j.user&&r.j.user.id);setSession(r.j);acct.name=null;$('aInPw').value='';
+    if(!(r.j.user.user_metadata||{}).pw)sbFetch('/auth/v1/user',{method:'PUT',body:{data:{pw:1}}});
+    const s=await syncLocker();await loadProfile();acct.state='full';
+    return s.ok?(acct.msg||'Signed in. Your locker is loaded.'):'Signed in, but your locker didn\'t load yet. It will when you\'re back online.'})});
+$('aForgot').addEventListener('click',()=>{const m=$('aInMail').value.trim();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m)){acct.msg='Type your email above first, then tap Forgot password.';renderAcct();return}
+  acctDo(async()=>{const body=await withCap({email:m});if(!body)return sbErr(capFail);
+    const r=await sbFetch('/auth/v1/recover?redirect_to='+encodeURIComponent(SITE_URL),{method:'POST',body,auth:false});
+    if(!r.ok)return sbErr(r);return`If ${m} has an account, a reset link is on its way. Open it, then choose a new password.`})});
+$('aOut').addEventListener('click',()=>acctDo(async()=>{
+  if(await freshToken())await sbFetch('/auth/v1/logout?scope=local',{method:'POST'});
+  await endSession('');acct.busy=false;await acctBoot();acct.busy=true;return'Signed out. Sign back in any time to get your locker.'}));
+addEventListener('online',()=>{acct.t=0;acctResume()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)acctResume()});
 
 /* ---------- drawing cosmetics ---------- */
 const lookOf=(cos,cls)=>playerLook({cos,cls,C:CLASSES[cls]||CLASSES.soldier,slot:0});
@@ -2201,14 +2480,26 @@ function renderLocker(){
   document.querySelectorAll('#lockTabs button').forEach(b=>b.classList.toggle('sel',b.dataset.cat===lockCat));
   const grid=$('lockGrid');grid.textContent='';
   for(const c of COS.filter(c=>c.cat===lockCat)){const t=itemTile(c);
-    t.addEventListener('click',()=>{if(!owns(c.id))return;locker.eq[c.cat]=c.key;saveLocker();renderLocker()});grid.append(t)}
-  const st=locker.st;$('lockHint').textContent=`Earn a supply case every 3 raids you survive and for every win. Duplicates turn into shards. So far: ${st.raids} raids held, ${st.wins} win${st.wins===1?'':'s'}, ${st.drops} raiders dropped.`;
+    t.addEventListener('click',()=>{if(!owns(c.id))return;locker.eq[c.cat]=c.key;saveLocker();renderLocker();cloudEquip(c.id)});grid.append(t)}
+  const st=locker.st;$('lockHint').textContent=`Earn a supply case every 3 raids you survive and for every win. Duplicates turn into shards. So far: ${st.raids} raids held, ${st.wins} win${st.wins===1?'':'s'}, ${st.drops} raiders dropped.${locker.cloud?' Saved to your account.':''}`;
 }
 document.querySelectorAll('#lockTabs button').forEach(b=>b.addEventListener('click',()=>{lockCat=b.dataset.cat;renderLocker()}));
-$('craftCase').addEventListener('click',()=>{if(locker.shards<10)return;locker.shards-=10;locker.cases++;saveLocker();renderLocker()});
+$('craftCase').addEventListener('click',()=>{if(locker.shards<10)return;
+  if(locker.cloud){lockWait(true);rpc('craft_case').then(r=>{lockWait(false);if(r.ok){takeLocker(r.j);renderLocker()}else lockMsg(r.status?sbErr(r):'Crafting needs a connection. Your shards are safe.')});return}
+  locker.shards-=10;locker.cases++;saveLocker();renderLocker()});
+function lockMsg(t){$('lockMsg').textContent=t||''}
+function lockWait(on){$('openCase').disabled=on||locker.cases<1;$('craftCase').disabled=on||locker.shards<10;lockMsg(on?'Talking to the quartermaster…':'')}
+function cloudEquip(id){if(!locker.cloud)return;rpc('equip',{p_item:id}).then(r=>{if(r.ok)takeLocker(r.j);else if(r.status&&r.status!==401)syncLocker()})}
 $('openCase').addEventListener('click',()=>{initAudio();openCaseUI()});
 function openCaseUI(){
-  const res=openCase();if(!res)return;renderLocker();
+  if(locker.cloud){if(locker.cases<1)return;lockWait(true);
+    rpc('open_case').then(r=>{lockWait(false);
+      if(!r.ok){lockMsg(r.status?sbErr(r):'Opening a case needs a connection. Your cases are safe.');renderLocker();return}
+      const s=r.j.item,it=COSBY[s.id]||{...COSBY['fx:none'],id:s.id,name:s.name,r:s.rarity};
+      takeLocker(r.j.locker);renderLocker();caseReel({it,dup:!!r.j.dup})});return}
+  const res=openCase();if(!res)return;renderLocker();caseReel(res);
+}
+function caseReel(res){
   const ov=$('caseOv'),reel=$('reel'),WIN=29,COUNT=34,TW=94;
   ov.hidden=false;$('caseResult').hidden=true;$('caseEquip').hidden=true;$('caseDone').hidden=true;caseItem=null;
   reel.style.transition='none';reel.style.transform='translateX(0px)';reel.textContent='';
@@ -2227,7 +2518,7 @@ function openCaseUI(){
     sfx(it.r==='l'||it.r==='e'?'win':'restock',undefined,undefined,true);buzz(40);
   },dur*1000+120);
 }
-$('caseEquip').addEventListener('click',()=>{if(caseItem&&owns(caseItem.id)){locker.eq[caseItem.cat]=caseItem.key;saveLocker()}$('caseOv').hidden=true;lockCat=caseItem?caseItem.cat:lockCat;renderLocker()});
+$('caseEquip').addEventListener('click',()=>{if(caseItem&&owns(caseItem.id)){locker.eq[caseItem.cat]=caseItem.key;saveLocker();cloudEquip(caseItem.id)}$('caseOv').hidden=true;lockCat=caseItem?caseItem.cat:lockCat;renderLocker()});
 $('caseDone').addEventListener('click',()=>{$('caseOv').hidden=true;renderLocker()});
 
 /* ---------- armory screen ---------- */
@@ -2571,7 +2862,7 @@ function startDemo(){
   player.alive=false;player.downed=false;player.rt=1e9;player.x=-3;player.y=-3;
   setTip('');$('toast').classList.remove('on');
 }
-const PAGES=['main','solo','multi','lobby','locker','settings'];
+const PAGES=['main','solo','multi','lobby','locker','settings','account'];
 function showPage(p){
   for(const id of PAGES)$('pg-'+id).hidden=id!==p;
   $('menu').classList.toggle('sub',p!=='main');
@@ -2579,7 +2870,9 @@ function showPage(p){
   if(p==='multi')syncPicks();
   if(p==='locker')renderLocker();
   if(p==='main'&&lockerNote){$('saveNote').textContent=lockerNote;$('saveNote').hidden=false}
-  if(p==='main'){const lb=document.querySelector('[data-go=locker]');if(lb)lb.textContent=locker.cases?`LOCKER · ${locker.cases}`:'LOCKER'}
+  if(p==='main')mainLabels();
+  if(p==='account'){if(acct.state!=='wait'&&!acct.busy&&!acct.recovery)acct.msg=acct.hashMsg?acct.msg:'';renderAcct();acctResume()}
+  if(p==='locker')lockMsg('');
   $('menu').querySelector('.panel').scrollTop=0;
 }
 let settingsFromPause=false;
@@ -2612,7 +2905,12 @@ $('saveFileBtn').addEventListener('click',()=>$('saveFile').click());
 $('saveFile').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;
   if(f.size>200000){$('saveMsg').textContent='That file is too big to be a save.';return}
   f.text().then(t=>{$('saveText').value=t.trim();checkImport(t)},()=>{$('saveMsg').textContent='Could not read that file.'})});
-$('saveConfirm').addEventListener('click',()=>{if(!savePending)return;restoreSave(savePending);savePending=null;$('saveConfirm').hidden=true;
+$('saveConfirm').addEventListener('click',()=>{if(!savePending)return;
+  if(locker.cloud){const d=savePending;savePending=null;$('saveConfirm').hidden=true;$('saveMsg').textContent='Bringing it into your account…';
+    rpc('import_local_save',{p_save:d.locker}).then(r=>{
+      if(r.ok){takeLocker(r.j);restoreExtras(d);$('saveMsg').textContent='Added to your account. Items, cases and shards from the code are merged in.';sfx('restock',undefined,undefined,true)}
+      else $('saveMsg').textContent=!r.status?'Bringing a save into your account needs a connection.':/already/.test(sbErr(r))?'This account already took in a save once. Your locker is kept on your account now, so a save code isn\'t needed.':sbErr(r)});return}
+  restoreSave(savePending);savePending=null;$('saveConfirm').hidden=true;
   $('saveMsg').textContent='Restored. Your locker is back.';sfx('restock',undefined,undefined,true);showPage('settings')});
 document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>{initAudio();if(NET.mode==='opening'||NET.mode==='joining'){netReset();mStatus('')}if(b.dataset.go==='settings')openSettings(false);else showPage(b.dataset.go)}));
 addEventListener('keydown',e=>{if(e.key==='Escape'&&e.target&&e.target.tagName==='INPUT'){e.target.blur();return}if(e.key==='Escape'&&!$('saveOv').hidden){closeSaveOv();return}if(e.key==='Escape'&&!$('armory').hidden){closeArmory();return}if(e.key==='Escape'&&!$('menu').hidden){if(!$('pg-settings').hidden)closeSettings();else if(!$('pg-lobby').hidden)netLeave('');else showPage('main')}});
@@ -2684,9 +2982,11 @@ $('installBtn').addEventListener('click',async()=>{if(!installEvt)return;install
 if(ownSite&&'serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 
 applyCfg();syncPicks();startDemo();showPage('main');
+// accounts start after the first screen is up, so a slow connection never holds up the menu
+if(cloudOn)setTimeout(acctBoot,400);
 const invite=new URLSearchParams(location.search).get('room');
 if(invite&&canOnline()){$('mCode').value=invite.toUpperCase().slice(0,4);showPage('multi');mStatus(`You're invited to room ${invite.toUpperCase().slice(0,4)}. Pick your name and job, then tap JOIN.`)}
-if(new URLSearchParams(location.search).has('debug'))window.__pal={get ctx(){return g},get parts(){return parts},profOn(f){PROF={a:{},k:'x',f,t:performance.now()}},prof(){const o={};for(const k in PROF.a)if(k!=='end'&&k!=='x')o[k]=+PROF.a[k].toFixed(1);return o},get locker(){return locker},lockerReward:(...a)=>lockerReward(...a),openCase:()=>openCase(),buyUpgrade:(p,k)=>buyUpgrade(p,k),render,update,NET,get players(){return players},get player(){return player},get game(){return game},get enemies(){return enemies},get walls(){return walls},get core(){return core},get cores(){return cores},get bullets(){return bullets},startRaid:()=>startRaid(),scr:(x,y)=>{const c=iso(x,y);return[c[0],c[1]-WH*.55]},endPvp:w=>endPvp(w),hurtPlayer:(p,d,o)=>hurtPlayer(p,d,o),explode:(...a)=>explode(...a),buildEval:(...a)=>buildEval(...a),doBuild:(...a)=>doBuild(...a)};
+if(new URLSearchParams(location.search).has('debug'))window.__pal={get ctx(){return g},get parts(){return parts},profOn(f){PROF={a:{},k:'x',f,t:performance.now()}},prof(){const o={};for(const k in PROF.a)if(k!=='end'&&k!=='x')o[k]=+PROF.a[k].toFixed(1);return o},get locker(){return locker},lockerReward:(...a)=>lockerReward(...a),openCase:()=>openCase(),buyUpgrade:(p,k)=>buyUpgrade(p,k),render,update,NET,get players(){return players},get player(){return player},get game(){return game},get enemies(){return enemies},get walls(){return walls},get core(){return core},get cores(){return cores},get bullets(){return bullets},startRaid:()=>startRaid(),scr:(x,y)=>{const c=iso(x,y);return[c[0],c[1]-WH*.55]},endPvp:w=>endPvp(w),hurtPlayer:(p,d,o)=>hurtPlayer(p,d,o),explode:(...a)=>explode(...a),buildEval:(...a)=>buildEval(...a),doBuild:(...a)=>doBuild(...a),acct,acctBoot,syncLocker,flushClaims,get claims(){return claims},showOver:()=>showOver(),showPage:x=>showPage(x),toMenu:()=>toMenu()};
 if(window.PEER_SRC)setTimeout(()=>needPeer(),invite?0:1200);
 requestAnimationFrame(frame);
 })();

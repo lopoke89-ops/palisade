@@ -70,8 +70,38 @@ PLAYING ONLINE
     if a join hangs, get on Wi-Fi.
 
 
+ACCOUNTS (v0.8)
+---------------
+  - Accounts only run on https://lopoke89-ops.github.io/palisade/ (add
+    ?cloud=1 to test another address). A copy opened anywhere else keeps
+    the locker in the browser only, like before.
+  - Every player gets a guest account quietly the first time the menu
+    opens. Nothing to type. Any locker already saved in that browser is
+    merged into it once.
+  - MAIN MENU > ACCOUNT: pick a username, add an email to keep the locker
+    on any device (we email a link; open it, then choose a password), sign
+    in to an existing account, reset a forgotten password, sign out.
+    Signing out goes back to the guest account that browser had.
+  - With an account, the server owns the locker: cases are rolled there,
+    and each finished run or match is sent there and checked before cases
+    are handed out (max 15 cases a day from play). A run finished with no
+    signal is kept and sent when the connection is back. Opening or
+    crafting a case needs a connection.
+  - Backend: Supabase project puvjfhwxigxjpsvdwrwf. The key in index.html
+    is the public "publishable" key; it can only call the game's checked
+    functions. Never put the secret key in this folder.
+  - Before real players add emails: set up custom SMTP (for example,
+    Resend) under Authentication > Emails. The built-in sender only
+    mails your own Supabase team, a few times an hour.
+  - Turning on CAPTCHA (Cloudflare Turnstile) needs the site key pasted
+    into TURNSTILE_KEY in index.html at the same time. Otherwise guest
+    accounts stop being created.
+
+
 YOUR SAVE (LOCKER)
 ------------------
+  - With an account (see above), the account holds the locker and this
+    browser keeps a copy. Without one, everything below applies as-is.
   - The locker (cosmetics, cases, shards, stats), best runs and settings
     are saved in the browser for this site. Pushing a new version of the
     site does NOT touch them: the save keys never change between versions,
@@ -83,7 +113,8 @@ YOUR SAVE (LOCKER)
     starts fresh saves, because saves belong to the address.
   - Backup: SETTINGS > EXPORT SAVE gives a save code (copy it or download
     it as a .txt file). SETTINGS > IMPORT SAVE takes the code or file back
-    and restores everything; it works on any device or browser.
+    and restores everything; it works on any device or browser. With an
+    account, a code is merged into the account instead, once per account.
   - If the save gets damaged, the game restores the last good copy it
     kept and says so on the main menu.
   - Rule for future updates: never rename the palisade.* storage keys.
