@@ -127,7 +127,7 @@ function drawIcon(cv2,c){
 }
 function drawLockerPreview(now){
   const c=$('lockPrev'),x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);
-  const ang=Math.sin(now/1500)*.8+.3,aim={x:Math.cos(ang),y:Math.sin(ang)},sc=3.5,base=c.height*.92;
+  const ang=now/2200,aim={x:Math.cos(ang),y:Math.sin(ang)},sc=3.5,base=c.height*.92;
   drawFig(x,c.width,c.height,lookOf(locker.eq,pick.cls),sc,aim,base);
   const sd=wdirToScreen(aim),st=TRAILS[locker.eq.trail]||TRAILS.std,ph=(now%800)/800;
   const ox=c.width/2+sd.x*22*sc,oy=base-17*1.18*sc+sd.y*8*sc,d0=ph*200,len=34*(st.len||1);

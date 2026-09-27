@@ -9,6 +9,414 @@ function disc(x,y,r,col){g.fillStyle=col;g.beginPath();g.arc(x,y,r,0,Math.PI*2);
 function oval(x,y,rx,ry,col){g.fillStyle=col;g.beginPath();g.ellipse(x,y,rx,ry,0,0,Math.PI*2);g.fill()}
 const dark=(c,f)=>mix(c,'#000000',f);
 function neonSeg(a,b,col){const A=g.globalAlpha;g.globalAlpha=A*.32;seg(a,b,col,3.4);g.globalAlpha=A;seg(a,b,col,1.15)}
+/* Character illustration: presentation only; consumes existing look fields. */
+function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
+ const compact=scale<=6;
+ // Outfit details are independent of the separately equipped headgear.
+ const goldClown=!!(o.glitter&&o.dots),goldPolice=!!(o.glitter&&o.badge),goldKnight=!!(o.glitter&&o.plate);
+ // Only luminous trim and specular highlights emit; fabric keeps its dark ink edges.
+ const emit=new Set([o.neon,o.hneon,o.halo,o.visor,o.mask,o.frost,o.spots,
+  ...(o.stars?['#f3eaff','#b2b5ff']:[]),...(o.holo?['#b5f5ff']:[]),
+  ...(o.shine||o.chrome?['#fff1c1','#ffffff']:[]),...(o.glitter?['#fffbe0']:[])].filter(Boolean));
+ const ca=Math.cos(angle),sa=Math.sin(angle),phase=typeof walking==="number"?walking:walking?time*7:0,bob=Math.abs(Math.sin(phase))*.45,faces=[];
+ const hex=c=>{const m=/^#([0-9a-f]{6})$/i.exec(c||'');return m?m[1].match(/../g).map(s=>parseInt(s,16)):[90,95,75]};
+ const tint=(c,k)=>{const v=hex(c);return '#'+v.map(x=>Math.max(0,Math.min(255,Math.round(x*k))).toString(16).padStart(2,'0')).join('')};
+ const project=p=>{const d=-p[0]*sa+p[2]*ca;return [p[0]*ca+p[2]*sa,-p[1]+d*.32,d+p[1]*.32]};
+ const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+ const sub=(a,b)=>a.map((v,i)=>v-b[i]);
+ function mesh(v,ff,col,outline=.55,bias=0){
+  if(o.downed)v=v.map(q=>[q[1]*.8-14,q[2]*.8+4,q[0]*.8]);
+  const vis=[],projected=v.map(project);
+  for(const ids of ff){
+   const A=v[ids[0]],B=v[ids[1]],C=v[ids[2]],ax=B[0]-A[0],ay=B[1]-A[1],az=B[2]-A[2],bx=C[0]-A[0],by=C[1]-A[1],bz=C[2]-A[2];
+   const x=ay*bz-az*by,y=az*bx-ax*bz,z=ax*by-ay*bx,l=Math.hypot(x,y,z)||1;
+   const nx=(x*ca+z*sa)/l,ny=y/l,nz=(-x*sa+z*ca)/l;
+   if(nz+ny*.32<=.001)continue;
+   const pts=ids.map(i=>projected[i]),light=.73+Math.max(0,-nx*.48+ny*.7+nz*.42)*.35;
+   vis.push({ids,pts,emission:!o.flash&&emit.has(col)?col:null,col:o.flash?"#f3e9d6":tint(col,light),depth:pts.reduce((s,p)=>s+p[2],0)/pts.length+bias,edges:[],outline,bias});
+  }
+  const counts=new Map();for(const f of vis)for(let i=0;i<f.ids.length;i++){const a=f.ids[i],b=f.ids[(i+1)%f.ids.length],key=a<b?a*256+b:b*256+a;counts.set(key,(counts.get(key)||0)+1)}
+  for(const f of vis){for(let i=0;i<f.ids.length;i++){const a=f.ids[i],b=f.ids[(i+1)%f.ids.length],key=a<b?a*256+b:b*256+a;if(counts.get(key)===1)f.edges.push([projected[a],projected[b]])}faces.push(f)}
+ }
+ const boxFaces=[[0,3,2,1],[4,5,6,7],[0,1,5,4],[3,7,6,2],[1,2,6,5],[0,4,7,3]];
+ function box(x,y,z,w,h,d,col,outline=.48,bias=0){
+  const v=[[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]].map(p=>[x+p[0]*w/2,y+p[1]*h/2,z+p[2]*d/2]);mesh(v,boxFaces,col,outline,bias);
+ }
+ // Rounded octagonal sections keep the silhouette compact and avoid square toy limbs.
+ function column(x,y,z,w,h,d,col,topScale=1,outline=.55){
+  if(compact&&w<6){box(x,y,z,w,h,d,col,outline);return}
+  const ring=[[-.72,-1],[.72,-1],[1,-.6],[1,.6],[.72,1],[-.72,1],[-1,.6],[-1,-.6]];
+  const v=ring.map(p=>[x+p[0]*w/2,y-h/2,z+p[1]*d/2]).concat(ring.map(p=>[x+p[0]*w/2*topScale,y+h/2,z+p[1]*d/2*topScale]));
+  const ff=[[7,6,5,4,3,2,1,0],[8,9,10,11,12,13,14,15]];for(let i=0;i<8;i++)ff.push([i,(i+1)%8,(i+1)%8+8,i+8]);mesh(v,ff.map(f=>f.slice().reverse()),col,outline);
+ }
+ function beam(a,b,r,col,r2=r,outline=.48){
+  const axis=sub(b,a),L=Math.hypot(...axis),up=Math.abs(axis[1]/L)>.9?[0,0,1]:[0,1,0];let U=cross(axis,up);const ul=Math.hypot(...U);U=U.map(x=>x/ul);let V=cross(axis,U);const vl=Math.hypot(...V);V=V.map(x=>x/vl);
+  const v=[],sides=compact?4:8;for(const [p,rr]of [[a,r],[b,r2]])for(let i=0;i<sides;i++){const t=2*Math.PI*i/sides;v.push(p.map((x,j)=>x+rr*(U[j]*Math.cos(t)+V[j]*Math.sin(t))))}
+  const ff=[Array.from({length:sides},(_,i)=>sides-1-i),Array.from({length:sides},(_,i)=>i+sides)];for(let i=0;i<sides;i++)ff.push([i,(i+1)%sides,(i+1)%sides+sides,i+sides]);mesh(v,ff,col,outline);
+ }
+ const B=goldPolice?'#26334b':goldKnight?'#454039':o.body,V=goldClown?'#67293b':o.vest,H=o.helmet||o.cap||o.boonie||B,T=goldPolice?'#202b40':goldKnight?'#393630':o.pants||"#3b372c",skin=o.head;
+ const bp=o.bolt===undefined?-1:o.bolt,kick=bp>=0&&bp<.2?(1-bp/.2)*.65:0,pull=bp>.24&&bp<.9?Math.sin((bp-.24)/.66*Math.PI):0,shotgun=o.weapon==="sg",sniper=(o.gl||14)>17;
+ // A planted stance, shaped thighs, separate knees and substantial boots.
+ for(const side of[-1,1]){
+  const stride=walking?Math.sin(phase+ (side<0?Math.PI:0))*2.2:0;
+  const x=side*3.1;
+  column(x,2+stride*.12,1.05+stride,4.3,3.1,6.1,'#35362e',.87);
+  box(x, .7+stride*.12,1.2+stride,4.35,.85,6.25,'#202722',.3);
+  beam([x,3.2, stride],[x,8.1, stride*.6],1.7,T,2);
+  beam([x,8.1,stride*.6],[side*2.6,14.4+bob,0],2.05,T,2.35);
+  column(x,8.1,stride*.6+1.75,2.8,3.2,1.25,tint(T,.75),.88,.32);
+  box(side*4.7,11.7+bob,0,1.5,3.3,2.75,tint(T,1.1),.3);
+ }
+ column(0,15+bob,0,9.1,3.8,5.2,B,1.06);
+ column(0,21.2+bob,0,10.2,10.8,5.6,B,1.15);
+ // Plate carrier has its own thickness, shoulder straps and three magazine pouches.
+ column(0,21.7+bob,.1,10.3,8.8,6.35,V,1.02,.48);
+ box(0,23.5+bob,3.36,6.6,3.2,.7,tint(V,1.1),.28);
+ for(const x of[-3.8,3.8])box(x,23.8+bob,3.35,1.25,5.6,.8,tint(V,.72),.22);
+ for(const x of[-2.9,0,2.9]){
+  box(x,19.1+bob,3.75,2.35,3.65,1.55,tint(V,.94),.35);
+  box(x,20.2+bob,4.6,2.35,.75,.22,tint(V,1.15),.12);
+ }
+ box(0,15.8+bob,0,9.35,1.35,5.8,'#35372b',.28);
+ box(0,15.8+bob,3.03,1.6,1.25,.45,'#b6ac7c',.22);
+ // Small collar separates the head from the vest.
+ column(0,27+bob,0,4.5,2.8,3.6,skin,1,.32);
+ box(-1.65,26.1+bob,2,2,1.7,2,tint(B,.85),.3);box(1.65,26.1+bob,2,2,1.7,2,tint(B,.85),.3);
+
+ // Shoulder-mounted stock and forward grips stay clear of the plate carrier.
+ // Cosmetic recoil is short; the simulation's fire timing and aim are untouched.
+ const gunX=5.6,gunZ=3.8;
+ const shL=[-6.2,25+bob,0],elL=o.nogun?[-6.8,20.4+bob,2.2]:[-6.4,20.5+bob,7],haL=o.nogun?[-6.3,16+bob,1]:[gunX-.4,21.8+bob,gunZ+10.2-kick-(shotgun?pull*2:0)];
+ const shR=[6.2,25+bob,0],elR=o.nogun?[7.1,20.8+bob,2.6]:[8.6,20.3+bob,4.8],haR=o.nogun?[6.3,16+bob,1]:[gunX+(sniper?pull*1.6:0),22+bob+(sniper?pull:0),gunZ+4.8-kick-(sniper?pull*1.5:0)];
+ for(const [sh,el,ha]of [[shL,elL,haL],[shR,elR,haR]]){
+  beam(sh,el,2.1,B,1.7);beam(el,ha,1.68,B,1.45);
+  beam(ha.map((v,i)=>v+(el[i]-v)*.13),ha,1.53,'#363b2b',1.5,.35);
+ }
+ box(6.8,24.3+bob,1.8,1.65,1.8,.5,o.mark||'#dcb647',.2);
+ box(8.05,24+bob,.1,.22,1.6,2,o.mark||'#dcb647',.15);
+ if(o.cross){box(-8,24+bob,0,.25,2.6,2.4,'#eee7d6',.2);box(-8.2,24+bob,0,.2,1.8,.6,'#c43a3a',.05);box(-8.2,24+bob,0,.2,.6,1.8,'#c43a3a',.05)}
+ if(!o.nogun){
+ const wb=(x,y,z,w,h,d,c,l=.3)=>box(x+gunX-2.2,y+bob,z+gunZ-kick,w,h,d,c,l);
+ const length=o.gl||14;
+ wb(2.2,23.1,1.8,1.9,2.55,4.2,shotgun?'#6a4526':'#3e4336',.38);
+ wb(2.2,23,6.1,1.85,2.25,5,'#303b3b',.38);
+ wb(2.2,24.4,6.5,1.05,.6,5.4,'#67716b',.2);
+ if(!shotgun)wb(2.2,20.9,5.9,1.3,2.9,1.7,'#333c33',.32);
+ wb(2.2,23,10.2-(shotgun?pull*2:0),1.6,1.9,3.7,shotgun?'#8a603a':'#4a5040',.3);
+ beam([gunX,23+bob,gunZ+11.9-kick],[gunX,23+bob,gunZ+length+2.4-kick],.55,'#333c3b',.48,.28);
+ wb(2.2,23.7,length+1.3,.75,1.5,.65,'#303835',.22);
+ if(shotgun)beam([gunX,21.8+bob,gunZ+7-kick],[gunX,21.8+bob,gunZ+length+.5-kick],.58,'#434b43',.58,.23);
+ if(sniper){
+  beam([gunX,25.7+bob,gunZ+4.5-kick],[gunX,25.7+bob,gunZ+9-kick],.9,'#344038',1,.3);
+  wb(2.2,24.9,6.7,.6,1,1.6,'#282f2a',.2);
+  beam([gunX+.3,23+bob,gunZ+6-kick],[gunX+1.6,23+bob+pull*2,gunZ+6-kick-pull*1.5],.25,'#9caa9c',.25,.1);
+ }
+ }
+ // Angular cheek and jaw planes, ears and a shaped helmet instead of a flat circle.
+ column(0,30.1+bob,.2,7.2,6.4,6.3,skin,1.13,.6);
+ column(-4.05,30.5+bob,.15,1.15,2.25,2,skin,1,.3);column(4.05,30.5+bob,.15,1.15,2.25,2,skin,1,.3);
+ box(-1.45,30.75+bob,3.85,.7,.72,.18,'#34392c',.08,1.5);box(1.45,30.75+bob,3.85,.7,.72,.18,'#34392c',.08,1.5);
+ box(0,29.9+bob,3.6,.75,1.4,.7,tint(skin,1.03),.08,1.2);
+ box(0,28.55+bob,3.45,1.75,.28,.18,tint(skin,.64),.05,1.5);
+
+ function dome(col,base=32,rx=5.3,rz=4.5,height=4.7){
+  const v=[],N=compact?8:12,rings=[[base,rx*.94,rz],[base+height*.24,rx,rz],[base+height*.66,rx*.85,rz*.84],[base+height*.94,rx*.45,rz*.49],[base+height,.08,.08]];
+  for(const[y,xr,zr]of rings)for(let i=0;i<N;i++){const t=Math.PI*2*i/N;v.push([Math.cos(t)*xr,y+bob,Math.sin(t)*zr])}
+  const ff=[];for(let j=0;j<rings.length-1;j++)for(let i=0;i<N;i++)ff.push([j*N+i,j*N+(i+1)%N,(j+1)*N+(i+1)%N,(j+1)*N+i]);
+  ff.push(Array.from({length:N},(_,i)=>(rings.length-1)*N+i));mesh(v,ff.map(f=>f.slice().reverse()),col,.6);
+ }
+ function ball(x,y,z,r,c){column(x,y,z,r*1.8,r*1.65,r*1.8,c,.75,.35)}
+ if(o.helmet){
+  dome(o.helmet);column(0,32.1+bob,.05,10.6,.75,9.1,tint(o.helmet,.73),1,.28);
+  box(-4.15,30.5+bob,.8,.55,3.5,1.2,tint(o.helmet,.53),.22);box(4.15,30.5+bob,.8,.55,3.5,1.2,tint(o.helmet,.53),.22);
+  box(0,34+bob,4.13,1.75,1.6,.5,tint(o.helmet,.62),.22);
+  if(o.hneon){box(0,33.3+bob,4.5,7,.5,.3,o.hneon,.04,1);box(0,35+bob,3.7,.55,2.6,.25,o.hneon,.04,1)}
+ }else if(o.cap){
+  dome(o.cap,32,4.8,4.2,3.3);box(0,32+bob,4.7,8,.5,4.4,tint(o.cap,.85),.4);
+  if(o.capPix){box(0,34+bob,4.1,1.8,1.8,.3,o.capPix,.03,1);box(1.25,33.2+bob,4.3,.7,.7,.2,o.capPix,.03,1)}
+ }else if(o.boonie){
+  column(0,32.1+bob,0,14,.7,12,o.boonie,1,.45);dome(tint(o.boonie,.9),32.4,4.5,3.9,2.9);column(0,33+bob,0,9.3,.65,8,tint(o.boonie,.64),1,.2);
+ }else if(o.beanie){
+  dome(o.beanie,31.9,5.1,4.3,4.7);column(0,32.3+bob,0,10.3,1.5,8.8,tint(o.beanie,.75),1,.32);ball(0,37.1+bob,0,1.3,o.beanie);
+ }else if(o.beret){
+  column(0,32.2+bob,0,9.6,.8,8,'#28291f',1,.25);column(1,34+bob,0,11,3,8.8,o.beret,.66,.5);box(-2,33.5+bob,4.1,1.4,1.5,.3,'#d4be73',.2,1);
+ }else if(o.wrap){
+  dome(o.wrap,31.8,4.9,4.1,3.4);column(0,32+bob,0,10,1.2,8.5,tint(o.wrap,.74),1,.2);beam([-4.4,32+bob,-1],[-5.6,28.4+bob,-4],.5,o.wrap,.3);
+ }else if(o.tophat){
+  column(0,32.4+bob,0,12,.7,10,o.tophat,1,.4);column(0,37+bob,0,8,8.7,7,o.tophat,1.08,.5);column(0,34+bob,0,8.25,1.5,7.2,'#8a2a2a',1,.2);
+ }else if(o.crown){
+  column(0,32.7+bob,0,10,1.7,8.6,o.crown,1,.4);
+  for(let i=0;i<8;i++){const a=i*Math.PI/4;beam([Math.cos(a)*4.6,33+bob,Math.sin(a)*4],[Math.cos(a)*5,37+bob,Math.sin(a)*4.3],.9,o.crown,.1,.3)}
+  box(0,33+bob,4.45,1.5,1.4,.4,'#c43a4a',.15,1);
+ }else if(o.pcap){
+  column(0,34+bob,0,10.7,3.4,8.4,o.pcap,1.12,.5);box(0,32+bob,4.4,8,.6,3.8,tint(o.pcap,.55),.35);box(0,34+bob,4.35,1.6,1.8,.4,'#e2c25a',.2,1);
+ }else if(o.khelm){
+  dome(o.khelm,31.5,5.5,4.6,5);
+  column(0,30+bob,.7,9.5,4.8,8.9,o.khelm,1.04,.4);
+  box(0,31+bob,5.3,7.6,.9,.3,'#111510',.08,1);
+  for(const x of[-1.5,0,1.5])box(x,29+bob,5.3,.45,1.5,.3,'#252820',.06,1);
+  beam([0,36.4+bob,-3],[0,36.4+bob,3],.65,tint(o.khelm,.82),.65,.3);
+ }else if(o.hair){
+  for(const [x,y,z,r]of [[-4.8,32,0,2.6],[4.8,32,0,2.6],[-3,35,-.8,2.6],[3,35,-.8,2.6],[0,37,0,2.3],[0,34,-3.8,2.7]])ball(x,y+bob,z,r,o.hair);
+  if(o.hairGold)for(const x of[-3,1,4])box(x,35.5+bob,1.7,.5,.7,.5,'#fff1b0',.03,1);
+ }else{
+  // Uncovered head remains visible beneath masks and floating accessories.
+  dome('#433b2b',32.7,4.2,3.6,1.65);
+  if(o.mask){column(0,30.4+bob,1,8.6,5.4,7.5,'#15151a',1,.4);for(const x of[-1.8,1.8])box(x,31+bob,4.9,1.5,.85,.3,o.mask,.03,1)}
+  if(o.visor){box(0,31.2+bob,4.3,8.8,2.5,.9,'#101014',.32,1);box(0,31.2+bob,4.82,7.8,.65,.15,o.visor,.03,1)}
+  if(o.headband){column(0,32.2+bob,0,9,.65,7.8,o.headband,1,.15);beam([-4.2,32.2+bob,-1],[-5.7,28.7+bob,-3.6],.35,o.headband,.2,.15)}
+  if(o.halo){for(let i=0;i<16;i++){const a=i*Math.PI/8,b=(i+1)*Math.PI/8,y=39+bob+Math.sin(time*2.4)*.35;beam([Math.cos(a)*6,y,Math.sin(a)*4.8],[Math.cos(b)*6,y,Math.sin(b)*4.8],.22,o.halo,.22,.04)}}
+  if(o.glitchm){const cs=['#ff3a6a','#3affd8','#6a8aff','#ffe03a','#f3f0ff'];for(let y=0;y<3;y++)for(let x=0;x<3;x++)box((x-1)*2.6,28.8+y*2.5+bob,4.3,2.6,2.5,.35,cs[(Math.floor(time*10)+x*3+y*7)%5],.03,1)}
+ }
+ box(0,23+bob,-3.3,6.5,5.7,.7,tint(V,.92),.3);
+ box(0,26.1+bob,-3.8,3.1,.65,.7,tint(V,.65),.2);
+
+ // Existing skin signatures follow the same rotating surfaces as the clothing.
+ const decal=(pts,col,bias=.7)=>mesh(pts.map(p=>[p[0],p[1]+bob,p[2]]),[pts.map((_,i)=>i)],col,.06,bias);
+ const chest=(x,y,w,h,col,z=4.06)=>box(x,y+bob,z,w,h,.15,col,.035,.65);
+ if(o.pack){column(0,21+bob,-4.8,9,8.7,4.2,o.pack,.96,.5);box(0,23.9+bob,-7,7.6,.8,.5,tint(o.pack,.65),.2);box(0,19+bob,-7.1,5,3.6,.7,tint(o.pack,1.06),.25)}
+ if(o.bandolier){
+  beam([-4.3,26+bob,3.8],[4.3,17+bob,4.7],.6,'#3a3020',.6,.2);
+  for(let i=0;i<5;i++)box(-3.2+i*1.35,24.8-i*1.4+bob,4.65,.75,1.5,.8,'#ad8d4e',.18);
+ }
+ if(o.stripe){
+  for(const z of[4.04,-3.6])for(const x of[-3.6,0,3.4]){
+   const p=[[x-1,25,z],[x+.4,25,z],[x+2,21,z],[x+.4,21,z]];decal(z>0?p.slice().reverse():p,o.stripe);
+  }
+  for(const side of[-1,1]){box(side*6.9,23+bob,1.8,1.6,.75,.4,o.stripe,.03,.5);box(side*3.1,10.7+bob,2,2.8,.65,.3,o.stripe,.03,.5)}
+ }
+ if(o.plate){
+  for(const x of[-6.4,6.4])column(x,25+bob,.1,5.3,3.1,5.3,o.plate,.9,.5);
+  chest(0,23.7,6.8,3.4,o.plate);chest(0,23.7,.5,3.6,tint(o.plate,.55),4.22);
+  for(const y of[17.7,19,20.3])chest(0,y,7.7,.5,o.plate,4.72);
+ }
+ if(o.neon){
+  for(const x of[-3.8,3.8])chest(x,23.5,.4,4.4,o.neon,4.35);
+  for(const x of[-4.55,4.55]){beam([x,25.5+bob,3.65],[x*.9,17.4+bob,4.5],.18,o.neon,.18,.015);beam([x,25.5+bob,-3.4],[x*.9,18+bob,-3.4],.17,o.neon,.17,.015)}
+  chest(0,16.5,8.7,.35,o.neon,3.9);
+  for(const side of[-1,1])box(side*3.1,3.3,3.7,3,.3,.2,o.neon,.01);
+ }
+ if(o.badge){
+  const x=-2.5,z=4.35;decal([[x,25.5,z],[x+1.25,24.8,z],[x+.8,22.9,z],[x,22.4,z],[x-.8,22.9,z],[x-1.25,24.8,z]].reverse(),o.badge,.9);
+  chest(x,24.3,.35,1.1,tint(o.badge,.58),4.5);
+ }
+ if(o.ruff){
+  for(let i=0;i<10;i++){const a=i*Math.PI/5,b=(i+1)*Math.PI/5;const p=[[Math.cos(a)*4.7,26,Math.sin(a)*3.8],[Math.cos((a+b)/2)*4.3,27.8,Math.sin((a+b)/2)*3.7],[Math.cos(b)*4.7,26,Math.sin(b)*3.8]];decal(p,o.ruff,.15);decal(p.slice().reverse(),o.ruff,.15)}
+ }
+ if(o.dots)for(const z of[4.33,-3.7])for(const [x,y]of[[-2.7,24.6],[2.8,21.8],[-.6,22.5],[.7,25.1]]){
+ const p=Array.from({length:8},(_,i)=>[x+Math.cos(i*Math.PI/4)*.8,y+Math.sin(i*Math.PI/4)*.8,z]);decal(z>0?p:p.slice().reverse(),o.dots,.8);
+ }
+ if(o.spots){
+  for(const z of[4.15,-3.7])for(const [x,y,h]of[[-2.7,23.7,2.4],[1.2,24.1,3.1],[3,21.5,1.8]]){box(x,y+bob,z,.8,h,.2,o.spots,.03,.7);box(x+.35,y+h/2+bob,z,1.5,.65,.2,o.spots,.03,.7)}
+  box(-6.9,24+bob,1.8,1.25,1.5,.35,o.spots,.03,.5);
+ }
+ if(o.frost){
+  for(const z of[4.2,-3.7])for(const [x,y]of[[-3,24],[3,23],[0,19.5]]){box(x,y+bob,z,1.7,.35,.2,o.frost,.015,.7);box(x,y+bob,z,.35,1.7,.2,o.frost,.015,.7)}
+ }
+ if(o.stars){
+  for(let i=0;i<14;i++){
+   const x=-4+((i*37)%79)/10,y=18+((i*23)%70)/10,z=i%2?4.22:-3.72,k=.32+Math.abs(Math.sin(time*2.2+i*1.9))*.65;
+   box(x,y+bob,z,.3+k*.3,.3+k*.3,.15,i%3?'#f3eaff':'#b2b5ff',.02,.7);
+  }
+ }
+ if(o.shine||o.chrome){
+  chest(-2.8,23.4,.55,3.7,'#fff1c1',4.27);
+  if(o.chrome)chest(2.8,23.4,.4,3.7,'#ffffff',4.27);
+ }
+ if(o.holo){
+  for(let y=17;y<=26;y+=1.4)for(const z of[4.8,-3.9])box(0,y+bob,z,8.9,.14,.15,'#b5f5ff',.01,.8);
+ }
+ // Gold editions have distinct garment construction, not just a shared gold tint.
+ if(goldClown){
+  // Ivory pleated collar, plum panels, gold diamonds, and oversized cuff buttons.
+  for(let i=0;i<12;i++){
+   const a=i*Math.PI/6,b=(i+1)*Math.PI/6;
+   const p=[[Math.cos(a)*5.4,26.2,Math.sin(a)*4.2],[Math.cos((a+b)/2)*5.6,28,Math.sin((a+b)/2)*4.5],[Math.cos(b)*5.4,26.2,Math.sin(b)*4.2]];
+   decal(p,'#fff1c9',.3);decal(p.slice().reverse(),'#fff1c9',.3);
+  }
+  for(const z of[4.95,-3.95])for(const [x,y]of[[-2.7,24.3],[2.7,24.3],[0,21.6],[-2.7,18.8],[2.7,18.8]]){
+   const p=[[x,y+1.3,z],[x+1.1,y,z],[x,y-1.3,z],[x-1.1,y,z]];decal(z>0?p.slice().reverse():p,'#f3d677',.85);
+  }
+  for(const side of[-1,1]){
+   const step=walking?Math.sin(phase+(side<0?Math.PI:0))*2.2:0;
+   column(side*3.1,5.3,step*.82,4.25,1.6,4.15,'#fff1c9',1,.3);
+   for(const z of[-2.4,2.6])for(const y of[10.3,12.8]){
+    const x=side*3.1,p=[[x,y+1.1,z],[x+.95,y,z],[x,y-1.1,z],[x-.95,y,z]];decal(z>0?p.slice().reverse():p,'#67293b',.8);
+   }
+   box(side*6.85,23.4+bob,2,1.7,2.8,.45,'#67293b',.25);
+   ball(side*6.85,23.5+bob,2.5,.65,'#fff1c9');
+  }
+ }
+ if(goldPolice){
+  // Navy sleeves and trousers frame a gold dress vest, ivory shirt, and shield.
+  chest(0,24.5,2.8,3.8,'#f1e8ce',4.45);
+  decal([[-.5,26.2,4.65],[.5,26.2,4.65],[.75,23.2,4.65],[0,22.5,4.65],[-.75,23.2,4.65]].reverse(),'#202b40',.9);
+  for(const x of[-6.2,6.2]){box(x,26.5+bob,0,3.6,.8,3.8,'#f0cf5c',.35);box(x,27+bob,.2,1.9,.2,2.6,'#fff1c1',.1)}
+  const shield=[[-4.1,25.4,4.7],[-1,25.4,4.7],[-1.25,23.3,4.7],[-2.55,22.6,4.7],[-3.85,23.3,4.7]];
+  decal(shield.slice().reverse(),'#202b40',1);chest(-2.55,24.1,1.25,1.5,'#fff1c1',4.87);
+  chest(2.5,24.7,1.8,.55,'#fff1c1',4.8);
+  for(const side of[-1,1]){const step=walking?Math.sin(phase+(side<0?Math.PI:0))*2.2:0;box(side*4.7,10.8+bob,step*.35,.25,5.8,1,'#e6c65c',.12);box(side*3.1,3.5+step*.12,2.6+step,3.3,1.2,1.7,'#202b40',.25)}
+  box(0,15.8+bob,3.45,9,1.4,.55,'#202b40',.3);box(0,15.8+bob,3.8,1.6,1.1,.25,'#fff1c1',.2);
+  for(const x of[-2.8,2.8])box(x,14.7+bob,3.2,1.8,2.2,1.3,'#202b40',.3);
+  box(0,23+bob,-3.9,6.2,3.8,.35,'#26334b',.3);box(0,23+bob,-4.15,3.8,.6,.2,'#f0cf5c',.1);
+ }
+ if(goldKnight){
+  // Articulated gold plate over dark mail, with an ivory heraldic center.
+  for(const side of[-1,1]){
+   const step=walking?Math.sin(phase+(side<0?Math.PI:0))*2.2:0;
+   column(side*6.5,26+bob,0,5.7,2.8,5.2,'#f0cf5c',.72,.55);
+   box(side*6.5,25.2+bob,2.7,4,.8,.35,'#8a6a1c',.2);
+   column(side*3.1,6.1,step*.78,4.4,5.5,4.7,'#d4ae45',.84,.45);
+   column(side*3.1,9,1.65+step*.5,4.2,2.6,2.2,'#f0cf5c',.7,.4);
+   box(side*3.1,5.9,2.45+step*.78,.45,4,.25,'#fff1c1',.06);
+   for(const z of[-3.25,3.3])column(side*2.8,13.5+bob,z,4.35,3.4,1,'#e2bd52',.85,.4);
+  }
+  chest(0,23.6,6.8,4.4,'#d4ae45',4.65);
+  decal([[-1.3,25.6,4.87],[1.3,25.6,4.87],[1,23.3,4.87],[0,22.4,4.87],[-1,23.3,4.87]].reverse(),'#fff1c9',.9);
+  decal([[0,25.1,5.02],[.65,24.3,5.02],[0,23.5,5.02],[-.65,24.3,5.02]].reverse(),'#67293b',1);
+  for(const [el,ha]of [[elL,haL],[elR,haR]]){
+   const a=el.map((v,i)=>v+(ha[i]-v)*.45),b=el.map((v,i)=>v+(ha[i]-v)*.83);
+   beam(a,b,1.87,'#d4ae45',1.7,.4);
+  }
+  column(0,22.5+bob,-3.85,8.2,6.6,1.1,'#d4ae45',.88,.4);
+  box(0,22.6+bob,-4.5,.55,5.8,.25,'#fff1c1',.08);
+ }
+ if(o.glitter){
+  for(let i=0;i<4;i++){const phase=(time*1.1+i*.29+i*.13)%1;if(phase>.3)continue;const r=Math.sin(phase/.3*Math.PI)*1.2,x=-3+i*2,y=22+(i%2)*3;
+   chest(x,y,r*2,.17,'#fffbe0',4.9);chest(x,y,.17,r*2,'#fffbe0',4.9)}
+ }
+
+
+ ctx.save();ctx.translate(cx,cy);ctx.scale(scale,scale);ctx.lineJoin='round';ctx.lineCap='round';
+
+ if(o.faded)ctx.globalAlpha*=.5;
+ if(o.holo)ctx.globalAlpha*=.74+.15*Math.sin(time*9);
+ // Ground light is part of the sprite, behind the feet and their contact shadow.
+ const ground=o.ring||o.glow;
+ if(ground){
+  const rgb=hex(ground).join(',');
+  ctx.save();ctx.translate(0,1);ctx.scale(1,.4);
+  const light=ctx.createRadialGradient(0,0,3,0,0,21);
+  light.addColorStop(0,'rgba('+rgb+',.04)');light.addColorStop(.48,'rgba('+rgb+',.23)');light.addColorStop(1,'rgba('+rgb+',0)');
+  ctx.fillStyle=light;ctx.fillRect(-21,-21,42,42);ctx.restore();
+  const ring=(col,rx,ry)=>{
+   ctx.save();ctx.strokeStyle=col;
+   ctx.shadowColor=col;ctx.shadowBlur=3*scale;
+   for(const [width,alpha]of [[2.5,.55],[1.1,.95]]){
+    ctx.save();ctx.globalAlpha*=alpha;ctx.lineWidth=width;ctx.beginPath();ctx.ellipse(0,1,rx,ry,0,0,Math.PI*2);ctx.stroke();ctx.restore();
+   }
+   ctx.shadowBlur=0;ctx.globalAlpha*=.85;ctx.strokeStyle='#f4fff4';ctx.lineWidth=.28;ctx.beginPath();ctx.ellipse(0,1,rx,ry,0,0,Math.PI*2);ctx.stroke();ctx.restore();
+  };
+  if(o.glow)ring(o.glow,12,4.7);
+  if(o.ring)ring(o.ring,11,4.5);
+ }
+ ctx.fillStyle='rgba(0,0,0,.23)';
+ctx.beginPath();ctx.ellipse(0,1.1,10.5,4,0,0,Math.PI*2);ctx.fill();
+ faces.sort((a,b)=>a.depth-b.depth);
+ for(const f of faces){
+  ctx.beginPath();f.pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle=f.col;
+  if(f.emission){ctx.shadowColor=f.emission;ctx.shadowBlur=2.2*scale;ctx.fill();ctx.shadowBlur=0}
+  ctx.fill();ctx.strokeStyle=f.col;ctx.lineWidth=.13;ctx.stroke();
+  ctx.strokeStyle='#070a08';ctx.lineWidth=f.outline;
+  for(const[a,b]of f.edges){ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}
+ }
+ ctx.restore();
+ let left=ground?-22:-13,right=ground?22:13,top=-1,bottom=ground?11:6;
+ for(const f of faces)for(const p of f.pts){const pad=f.emission?4:1;left=Math.min(left,p[0]-pad);right=Math.max(right,p[0]+pad);top=Math.min(top,p[1]-pad);bottom=Math.max(bottom,p[1]+pad)}
+ return {left:Math.floor(left),top:Math.floor(top),w:Math.ceil(right)-Math.floor(left),h:Math.ceil(bottom)-Math.floor(top)};
+}
+
+
+// Bounded sprite cache keeps the full mesh out of steady-state gameplay frames.
+// 360 headings and 24 gait samples affect illustration only, never simulation or aiming.
+const WARDROBE_CACHE=new Map(),WARDROBE_OMIT=new Set(['aim','walk','tag','tagCol','hp','big','detail','syncRender']);
+const WARDROBE_SCRATCH=document.createElement("canvas"),WARDROBE_POOL=[];
+const wardrobeScratchContext=WARDROBE_SCRATCH.getContext("2d",{willReadFrequently:true});
+let wardrobeCacheBytes=0;
+
+const WARDROBE_RECENT=new Map(),WARDROBE_JOBS=new Map(),WARDROBE_BUSY=new Set();
+let wardrobeWorkers=null,wardrobeWorkerURL=null,wardrobeWorkerCompletions=0;
+function rememberWardrobe(actor,key){
+ WARDROBE_RECENT.delete(actor);WARDROBE_RECENT.set(actor,key);
+ while(WARDROBE_RECENT.size>64)WARDROBE_RECENT.delete(WARDROBE_RECENT.keys().next().value);
+}
+function storeWardrobe(key,entry){
+ if(WARDROBE_CACHE.has(key)){if(entry.cv.close)entry.cv.close();return}
+ while(WARDROBE_CACHE.size&&(wardrobeCacheBytes+entry.bytes>24*1024*1024||WARDROBE_CACHE.size>=96)){
+  const k=WARDROBE_CACHE.keys().next().value,old=WARDROBE_CACHE.get(k);wardrobeCacheBytes-=old.bytes;
+  if(old.cv.close)old.cv.close();else if(WARDROBE_POOL.length<4)WARDROBE_POOL.push(old.cv);
+  WARDROBE_CACHE.delete(k);
+ }
+ WARDROBE_CACHE.set(key,entry);wardrobeCacheBytes+=entry.bytes;
+}
+function startWardrobeWorkers(){
+ if(wardrobeWorkers!==null)return wardrobeWorkers.length>0;
+ wardrobeWorkers=[];
+ if(typeof Worker==='undefined'||typeof OffscreenCanvas==='undefined'||typeof ImageBitmap==='undefined')return false;
+ const source="const paint="+paintWardrobeCharacter.toString()+";"+"\n const stage=new OffscreenCanvas(1,1),ctx=stage.getContext('2d',{willReadFrequently:true}),out=new OffscreenCanvas(1,1),outctx=out.getContext('2d',{willReadFrequently:true});\n onmessage=e=>{const j=e.data;\n try{\n  const w=72*j.r,h=72*j.r;\n  if(stage.width!==w||stage.height!==h){stage.width=w;stage.height=h}else ctx.clearRect(0,0,w,h);\n  const bounds=paint(ctx,j.pose,j.heading*Math.PI/180,j.tick,j.r,36*j.r,54*j.r,j.gait*Math.PI*2/24);\n  if(out.width!==bounds.w*j.r||out.height!==bounds.h*j.r){out.width=bounds.w*j.r;out.height=bounds.h*j.r}\n  outctx.drawImage(stage,(36+bounds.left)*j.r,(54+bounds.top)*j.r,out.width,out.height,0,0,out.width,out.height);\n  const bitmap=out.transferToImageBitmap();postMessage({key:j.key,actor:j.actor,bounds,bitmap},[bitmap]);\n }catch(error){postMessage({failed:true,actor:j.actor})}\n };\n postMessage({ready:true});";
+ try{
+  wardrobeWorkerURL=URL.createObjectURL(new Blob([source],{type:'text/javascript'}));
+  const n=(navigator.hardwareConcurrency||2)>=4?2:1;let ready=0;
+  for(let i=0;i<n;i++){
+   const worker=new Worker(wardrobeWorkerURL),slot={worker,busy:false};wardrobeWorkers.push(slot);
+   worker.onerror=()=>{for(const s of wardrobeWorkers)s.worker.terminate();wardrobeWorkers=[];WARDROBE_BUSY.clear();WARDROBE_JOBS.clear();if(wardrobeWorkerURL){URL.revokeObjectURL(wardrobeWorkerURL);wardrobeWorkerURL=null}};
+   worker.onmessage=e=>{
+    const m=e.data;if(m.ready){if(++ready===n&&wardrobeWorkerURL){URL.revokeObjectURL(wardrobeWorkerURL);wardrobeWorkerURL=null}return}
+    slot.busy=false;WARDROBE_BUSY.delete(m.actor);
+    if(m.failed){worker.onerror();return}
+    wardrobeWorkerCompletions++;storeWardrobe(m.key,{cv:m.bitmap,bytes:m.bitmap.width*m.bitmap.height*4,...m.bounds});rememberWardrobe(m.actor,m.key);
+    dispatchWardrobeJobs();
+   };
+  }
+ }catch(error){for(const s of wardrobeWorkers)s.worker.terminate();wardrobeWorkers=[];if(wardrobeWorkerURL){URL.revokeObjectURL(wardrobeWorkerURL);wardrobeWorkerURL=null}}
+ return wardrobeWorkers.length>0;
+}
+function dispatchWardrobeJobs(){
+ for(const slot of wardrobeWorkers||[]){
+  if(slot.busy)continue;
+  for(const [actor,job]of WARDROBE_JOBS){
+   if(WARDROBE_BUSY.has(actor))continue;
+   WARDROBE_JOBS.delete(actor);WARDROBE_BUSY.add(actor);slot.busy=true;slot.worker.postMessage(job);break;
+  }
+ }
+}
+function queueWardrobePose(job){
+ WARDROBE_JOBS.set(job.actor,job);
+ while(WARDROBE_JOBS.size>16)WARDROBE_JOBS.delete(WARDROBE_JOBS.keys().next().value);
+ dispatchWardrobeJobs();
+}
+
+
+function drawWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
+ const heading=Math.round(angle*180/Math.PI),phase=typeof walking==='number'?walking:walking?time*7:0;
+ const gait=Math.round(((phase%(Math.PI*2))+Math.PI*2)%(Math.PI*2)*24/(Math.PI*2));
+ const animated=o.stars||o.holo||o.glitter||o.halo||o.glitchm;
+ const tick=animated?Math.floor(time*20)/20:0,pose=Object.assign({},o);
+ if(pose.bolt!==undefined)pose.bolt=Math.round(pose.bolt*24)/24;
+ const tr=ctx.getTransform(),dpr=Math.min(3,Math.max(1,Math.hypot(tr.a,tr.b))),r=Math.ceil(scale*Math.min(dpr,scale<=3?2:3));
+ const key=Object.keys(pose).filter(k=>!WARDROBE_OMIT.has(k)).sort().map(k=>k+':'+pose[k]).join('|')+';'+heading+';'+gait+';'+tick+';'+r;
+ const actor=Object.keys(pose).filter(k=>!WARDROBE_OMIT.has(k)&&k!=='bolt').sort().map(k=>k+':'+pose[k]).join('|')+';'+(o.tag||'self')+';'+r;
+ let entry=WARDROBE_CACHE.get(key);
+ if(!entry&&scale<=3&&!o.syncRender&&!o.flash&&!o.downed&&startWardrobeWorkers()){
+  const previous=WARDROBE_CACHE.get(WARDROBE_RECENT.get(actor));
+  if(previous){
+   queueWardrobePose({actor,key,pose,heading,gait,tick,r});
+   ctx.drawImage(previous.cv,cx+previous.left*scale,cy+previous.top*scale,previous.w*scale,previous.h*scale);return;
+  }
+ }
+ if(entry){WARDROBE_CACHE.delete(key);WARDROBE_CACHE.set(key,entry)}
+ else{
+  const cv=WARDROBE_SCRATCH;if(cv.width!==72*r||cv.height!==72*r){cv.width=72*r;cv.height=72*r}else wardrobeScratchContext.clearRect(0,0,cv.width,cv.height);
+  const bounds=paintWardrobeCharacter(wardrobeScratchContext,pose,heading*Math.PI/180,tick,r,36*r,54*r,gait*Math.PI*2/24);
+  const sprite=WARDROBE_POOL.pop()||document.createElement('canvas');sprite.width=bounds.w*r;sprite.height=bounds.h*r;
+  sprite.getContext('2d',{willReadFrequently:true}).drawImage(cv,(36+bounds.left)*r,(54+bounds.top)*r,sprite.width,sprite.height,0,0,sprite.width,sprite.height);
+  entry={cv:sprite,bytes:sprite.width*sprite.height*4,...bounds};
+  storeWardrobe(key,entry);
+ }
+ rememberWardrobe(actor,key);
+ ctx.drawImage(entry.cv,cx+entry.left*scale,cy+entry.top*scale,entry.w*scale,entry.h*scale);
+}
+
 // bp: bolt-action phase after a shot (0 = just fired, 1 = bolt home), or -1 for none
 // kind: '' rifle/carbine, 'sg' pump shotgun (the fore-end slides back on each pump), 'rpg' launcher tube,
 // 'zap' lightning rifle, 'sword' (swing: 0 rest, 1 wind-up, 2 charge wind-up, 3 charging)
@@ -45,6 +453,13 @@ function gunArms(hand,sd,gl,shB,shF,sleeve,nogun,bob,bp=-1,kind='',swing=0){
 }
 // A soldier, raider or Dell standing at tile (x,y), facing o.aim. Drawn in base pixels, scaled.
 function drawPerson(x,y,o){
+  if(o.mark&&o.detail!==false){
+    const [sx,sy]=iso(x,y),sd=wdirToScreen(o.aim),BG=o.big||1;
+    drawWardrobeCharacter(g,o,Math.atan2(sd.x,sd.y),game.time,u*FIG*BG,sx,sy,o.walk||0);
+    if(o.hp!==undefined&&o.hp<1){g.fillStyle='rgba(10,8,6,.8)';g.fillRect(sx-8*u,sy-43*u,16*u,2.6*u);g.fillStyle='#d65a3a';g.fillRect(sx-8*u,sy-43*u,16*u*Math.max(0,o.hp),2.6*u)}
+    if(o.tag)label(o.tag,sx,sy-46*u*BG,o.tagCol||'#a9bccb',BG>1?11:9);
+    return;
+  }
   const [sx,sy]=iso(x,y),BG=o.big||1;
   g.save();g.translate(sx,sy);g.scale(u*FIG*BG,u*FIG*BG);
   const walk=o.walk||0,bob=-Math.abs(Math.sin(walk))*1.1;
@@ -119,6 +534,13 @@ function drawPerson(x,y,o){
   if(o.tag)label(o.tag,sx,sy-46*u*BG,o.tagCol||'#a9bccb',BG>1?11:9);
 }
 function drawDowned(x,y,o,prog,tag){
+  if(o.mark&&o.detail!==false){
+    const [sx,sy]=iso(x,y);
+    drawWardrobeCharacter(g,Object.assign({},o,{downed:true,nogun:true}),.7,game.time,u*FIG,sx,sy,0);
+    label(tag,sx,sy-20*u,'#d65a3a',10);
+    if(prog>0){g.strokeStyle='#a9bccb';g.lineWidth=3*u;g.beginPath();g.arc(sx,sy-10*u,10*u,-Math.PI/2,-Math.PI/2+Math.PI*2*prog);g.stroke()}
+    return;
+  }
   const [sx,sy]=iso(x,y);
   g.save();g.translate(sx,sy);g.scale(u*FIG,u*FIG);
   oval(0,0,13,5.5,'rgba(0,0,0,.38)');
