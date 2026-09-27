@@ -220,6 +220,8 @@ YOUR SAVE (LOCKER)
 
 FILES
 -----
+  dev/                      the source, build script, tests and a server restore
+                            script (see dev/README.md); not part of the game itself
   index.html                the game
   peerjs.min.js             online play (PeerJS 1.5.5, MIT license); loads in the background after the menu is up
   *.woff2                   Big Shoulders Stencil Display and IBM Plex Mono (SIL Open Font License)
