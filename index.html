@@ -157,6 +157,12 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
 input[type=text]:focus,input[type=email]:focus,input[type=password]:focus{outline:2px solid var(--warn);outline-offset:-2px}
 .acBox{gap:8px;border-top:1px solid var(--line);padding-top:12px}.acBox h2{margin:0}
 .lede.sm{font-size:12px;color:var(--dim);margin:0}.ghost.sm{height:36px;font-size:13px;justify-self:start;padding:0 14px}
+.lobList{display:grid;gap:6px}
+.lob{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;align-items:center;text-align:left;border:1px solid var(--line);background:rgba(27,24,20,.8);padding:8px 12px;min-height:54px;color:var(--bone)}
+.lob b{font-family:var(--stencil);font-weight:800;font-size:17px;letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lob span{grid-column:1;font-size:11px;color:var(--dim)}.lob i{grid-row:1/3;grid-column:2;font-style:normal;font-family:var(--stencil);font-weight:900;font-size:18px;color:var(--warn)}
+.lob:hover:not(:disabled),.lob:focus-visible{border-color:var(--warn);outline:none}.lob:disabled{opacity:.45}
+.lobEmpty{margin:0;font-size:12px;color:var(--dim);line-height:1.5}
 .acctBtn{height:40px;font-size:14px;justify-self:start;padding:0 16px}
 #capBox:not([hidden]){min-height:66px}
 #pg-account button:disabled{opacity:.5}
@@ -373,7 +379,7 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
       <button class="ghost" id="installBtn" type="button" hidden>INSTALL AS AN APP</button>
       <button class="ghost acctBtn" id="acctBtn" type="button" data-go="account" hidden>ACCOUNT</button>
       <p class="note" id="saveNote" hidden></p>
-      <p class="foot">v0.8.2 · phone and desktop · online co-op and PvP for up to six</p>
+      <p class="foot">v0.8.3 · phone and desktop · online co-op and PvP for up to six</p>
     </section>
 
     <section class="page" id="pg-account" hidden>
@@ -415,7 +421,7 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
       <div class="classes" id="classes">
         <button class="cls sel" data-c="soldier" type="button"><b>SOLDIER</b><i>the door problem</i><span>Carbine. Builds 40% faster and takes more hits.</span></button>
         <button class="cls" data-c="sniper" type="button"><b>SNIPER</b><i>the angle problem</i><span>Bolt-action rifle. One heavy round per pull, straight through wood.</span></button>
-        <button class="cls" data-c="grenadier" type="button"><b>GRENADIER</b><i>the doorway problem</i><span>Pump shotgun: huge up close, tight spread, six shells. Three grenades a round, bigger blasts.</span></button>
+        <button class="cls" data-c="grenadier" type="button"><b>GRENADIER</b><i>the doorway problem</i><span>Pump shotgun: huge up close, tight spread, fires as fast as you click (holding fires every half second), six shells. Three grenades a round.</span></button>
         <button class="cls" data-c="quartermaster" type="button"><b>QUARTER&shy;MASTER</b><i>the rescue problem</i><span>Walk over a downed teammate to get them up instantly. Carries 96 of everything, gathers faster, repairs for half. SMG.</span></button>
       </div>
       <h2>LENGTH</h2>
@@ -448,7 +454,10 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
       <div class="seg"><button data-mm="5" type="button">5 RAIDS</button><button data-mm="10" type="button">10 RAIDS</button><button data-mm="endless" type="button">ENDLESS</button></div>
       <div class="seg"><button data-md="easy" type="button">EASY</button><button data-md="normal" type="button">NORMAL</button><button data-md="hard" type="button">HARD</button></div>
       </div>
+      <label class="tog" id="mListRow"><input type="checkbox" id="mList"><span>List my game in Open Games</span></label>
       <button class="go" id="hostBtn" type="button">HOST</button>
+      <h2>OPEN GAMES</h2>
+      <div class="lobList" id="lobList" aria-live="polite"></div>
       <h2>JOIN A GAME</h2>
       <div class="join"><input type="text" id="mCode" maxlength="4" placeholder="CODE" autocapitalize="characters" autocomplete="off" spellcheck="false" aria-label="Room code"><button class="go" id="joinBtn" type="button">JOIN</button></div>
       <p class="status" id="mStatus" role="status"></p>
@@ -590,7 +599,7 @@ const CLASSES={
   soldier:{name:'SOLDIER',hp:115,nades:2,build:.6,cap:[64,64,64],blast:1,nadeCd:1,gun:{dmg:12,cd:.11,spread:.12,range:11,speed:22,snd:'ar'}},
   sniper:{name:'SNIPER',hp:90,nades:2,build:1,cap:[64,64,64],blast:1,nadeCd:1,gun:{dmg:47,cd:1,spread:.02,range:16,speed:34,pierce:2,snd:'sniper',bolt:true}},
   // pump shotgun: 7 pellets in a tight, even pattern, full damage out to 2.5 tiles, half by 7; a 6-shell tube loaded one shell at a time
-  grenadier:{name:'GRENADIER',hp:105,nades:3,build:1,cap:[64,64,64],blast:1.25,nadeCd:.6,gun:{dmg:10,cd:.72,spread:.15,range:7.2,speed:24,snd:'shotgun',bolt:true,pump:true,pellets:7,fall:[2.5,7,.5],mag:6,reload:.42}},
+  grenadier:{name:'GRENADIER',hp:105,nades:3,build:1,cap:[64,64,64],blast:1.25,nadeCd:.6,gun:{dmg:12,cd:.5,clickCd:.12,spread:.15,range:7.2,speed:24,snd:'shotgun',bolt:true,pump:true,pellets:7,fall:[2.5,7,.55],mag:6,reload:.42}},
   // support: walking over a downed teammate (or Dell) gets them straight up; bigger packs, faster gathering, half-price repairs
   quartermaster:{name:'QUARTERMASTER',hp:110,nades:2,build:.85,cap:[96,96,96],blast:1,nadeCd:1,gather:.72,repair:.5,medic:true,gun:{dmg:7,cd:.085,spread:.15,range:8.5,speed:22,snd:'smg'}}
 };
@@ -835,7 +844,7 @@ function newGame(roster,pvp=''){
   enemies=[];bullets=[];lobs=[];charges=[];parts=[];flashes=[];floats=[];sacks=[];rockets=[];fires=[];zaps=[];slashes=[];rings=[];
   const mode=['5','10','endless'].includes(pick.mode)?pick.mode:'5';
   game={phase:pvp==='ffa'?'raid':'build',paused:false,wave:0,timer:pvp==='base'?PVP.truce:pvp==='ffa'?PVP.ffaTime:40+Df.build,queue:[],qn:0,spawnT:0,sel:game.sel||0,piece:'wall',time:0,tip:0,gathered:0,C:player.C,Df,
-    mode,waves:mode==='endless'?Infinity:+mode,rewarded:false,pvp,goal:PVP.ffaGoal,winner:'',
+    mode,waves:mode==='endless'?Infinity:+mode,rewarded:false,bosses:0,pvp,goal:PVP.ffaGoal,winner:'',
     stats:{dropped:0,built:0,lost:0,repairs:0,revives:0}};
   for(const p of players.values()){if(pvp==='base')p.sal=PVP.startSal;if(pvp==='ffa'){p.mats=[0,0,0];p.prot=PVP.prot}}
   feedClear();
@@ -1297,11 +1306,12 @@ function spawnBoss(key){
   sfx('horn');addShake(x,y,8);toastAll(B.name,B.intro);
 }
 function bossDown(e,own){
-  const B=BOSSES[e.boss],p=own&&own!=='dell'?players.get(own):null,share=p?15:20;
+  const B=BOSSES[e.boss],p=own&&own!=='dell'?players.get(own):null,share=p?15:20;game.bosses++;
   for(const o of players.values())o.sal+=o===p?B.bounty:share;
   flt(e.x,e.y-.4,p?`+${B.bounty} SALVAGE`:`+${share} SALVAGE EACH`,'#e2b436');
   for(let n=0;n<26;n++)emit(e.x,e.y,WH*.8,n%2?'fire':'spark');addShake(e.x,e.y,11);sfx('bigboom',e.x,e.y);
-  toastAll(`${B.name} IS DOWN`,p?`${p.name} landed it: +${B.bounty} salvage. Everyone else +${share}.`:`+${share} salvage each.`);
+  const bc=bossCase(),cn=bc?` +1 ${CASES[bc].name.replace(' CASE',' Case')} each, added when the run ends (or when you leave it).`:'';
+  toastAll(`${B.name} IS DOWN`,(p?`${p.name} landed it: +${B.bounty} salvage. Everyone else +${share}.`:`+${share} salvage each.`)+cn);
 }
 // the Demolisher: plants his feet, shows a red line for a second, then sends a slow rocket down it. Every third
 // volley is a fan of three. Rockets burst on whatever they touch and leave the ground burning for a few seconds.
@@ -1518,7 +1528,7 @@ const cls=(el,c,on)=>{if(el.classList.contains(c)!==on)el.classList.toggle(c,on)
 const SLOTCOL=['#8fb58a','#a9bccb','#d0b077','#c29ac4','#86c0b8','#d08f78'];
 // the desktop key bar says what the keys do right now
 function keyBar(){
-  if(touchMode)return;const p=player,PV=game.pvp,K=(k,t)=>`<span class="kb"><kbd>${k}</kbd>${t}</span>`,a=[K('WASD','move'),K('MOUSE',p.gun&&p.gun.bolt?'aim, click to fire':'aim, hold to fire'),K('G','grenade')];
+  if(touchMode)return;const p=player,PV=game.pvp,K=(k,t)=>`<span class="kb"><kbd>${k}</kbd>${t}</span>`,a=[K('WASD','move'),K('MOUSE',p.gun&&p.gun.clickCd?'aim, click or hold to fire':p.gun&&p.gun.bolt?'aim, click to fire':'aim, hold to fire'),K('G','grenade')];
   if(p.gun&&p.gun.mag)a.push(K('R','reload'));
   if(PV!=='ffa'&&cfg.build)a.push(K('SPACE','build'),K('1 2 3','material'),K('F','door'));
   if(PV!=='ffa')a.push(K('B','build kit'));
@@ -1548,7 +1558,7 @@ function hud(dt){
   if(!PV){$('qmF').style.transform=`scaleX(${Math.max(0,qm.hp/qm.max)})`;txt($('qmN'),qm.alive?String(Math.ceil(qm.hp)):'DOWN');cls($('qmM'),'alarm',!qm.alive)}
   if(PV!=='ffa'){txt($('coreL'),PV?'STAKE':'CORE');$('coreF').style.transform=`scaleX(${Math.max(0,core.hp/core.max)})`;txt($('coreN'),String(Math.max(0,Math.ceil(core.hp))));
     cls($('coreM'),'alarm',core.flash>0||core.hp/core.max<.3);$('coreF').style.background=PV?(TEAMS[p.team]||TEAMS.a).col:''}
-  if(PV==='base'){const ec=cores[p.team==='a'?1:0];$('core2F').style.transform=`scaleX(${Math.max(0,ec.hp/ec.max)})`;$('core2F').style.background=TEAMS[ec.team].col;txt($('core2N'),String(Math.max(0,Math.ceil(ec.hp))))}
+  if(PV==='base'&&cores[p.team==='a'?1:0]){const ec=cores[p.team==='a'?1:0];$('core2F').style.transform=`scaleX(${Math.max(0,ec.hp/ec.max)})`;$('core2F').style.background=(TEAMS[ec.team]||TEAMS.b).col;txt($('core2N'),String(Math.max(0,Math.ceil(ec.hp))))}
   const lab=$('phaseLab'),host=NET.mode!=='guest';
   if(PV==='base'){
     let mine=0,theirs=0;for(const o of players.values())if(o.team===p.team)mine+=o.kills;else theirs+=o.kills;
@@ -1640,15 +1650,19 @@ function simPlayer(p,dt){
   const G=p.gun;
   // cooldowns keep leftover time, so the fire rate is the same at any frame rate
   // bolt-action: with a mouse, each click is one shot (a click during the bolt cycle is kept for 0.6s); touch aim auto-cycles
-  const semi=G.bolt&&p.autoFire===false,want=semi?p.pullIn!==p.pullUsed&&game.time-(p.pullT||0)<.6:p.fireIn;
+  // the pump shotgun: every click fires (0.12 s apart at most), and holding the trigger or touch-aiming fires on its own cadence
+  const pump=!!G.clickCd,semi=G.bolt&&!pump&&p.autoFire===false,click=pump&&p.autoFire===false&&p.pullIn!==p.pullUsed&&game.time-(p.pullT||0)<.6;
+  if(click&&p.sinceShot>=G.clickCd)p.cd=Math.min(p.cd,0);
+  const want=semi?p.pullIn!==p.pullUsed&&game.time-(p.pullT||0)<.6:pump?(click&&p.sinceShot>=G.clickCd)||(p.fireIn&&p.cd<=0):p.fireIn;
   if(semi&&p.pullIn!==p.pullUsed&&!want)p.pullUsed=p.pullIn;
+  if(pump&&p.pullIn!==p.pullUsed&&!click)p.pullUsed=p.pullIn;
   medicTouch(p);
   const mag=G.mag|0;if(mag&&!(p.ammo>=0))p.ammo=mag;
   if(want&&truce()){p.cd=Math.max(p.cd,0);p.pullUsed=p.pullIn;if(p===player&&!game.truceTold){game.truceTold=true;toast('TRUCE','No shooting until the battle starts. Build.')}}
-  else if(want&&mag&&p.ammo<=0){p.cd=Math.max(p.cd,0);if(semi)p.pullUsed=p.pullIn;if(p.dryT<=0){p.dryT=.45;personal(p,'dry')}}   // empty tube: it keeps loading
+  else if(want&&mag&&p.ammo<=0){p.cd=Math.max(p.cd,0);if(semi||pump)p.pullUsed=p.pullIn;if(p.dryT<=0){p.dryT=.45;personal(p,'dry')}}   // empty tube: it keeps loading
   else if(want){p.prot=0;let n=0;const slow=game.pvp&&G.pierce?PVP.snipeCd:1;
     while(p.cd<=0&&n<(G.bolt?1:6)&&!(mag&&p.ammo<=0)){shoot(p,G,-p.cd);p.cd+=G.cd*slow;n++;if(mag)p.ammo--}
-    if(n){sfx(G.snd,p.x,p.y);const TS=TRAILS[p.cos.trail];if(TS&&TS.snd&&game.time-(p.trT||0)>.22){p.trT=game.time;sfx(TS.snd,p.x,p.y)}personal(p,'~f');p.sinceShot=0;p.rl=0;if(G.bolt){p.pullUsed=p.pullIn;p.boltT=G.cd*slow*.92;p.bolt=p.boltT;if(p.cd<0)p.cd=0}}}
+    if(n){sfx(G.snd,p.x,p.y);const TS=TRAILS[p.cos.trail];if(TS&&TS.snd&&game.time-(p.trT||0)>.22){p.trT=game.time;sfx(TS.snd,p.x,p.y)}personal(p,'~f');p.sinceShot=0;p.rl=0;if(G.bolt){p.pullUsed=p.pullIn;p.boltT=(pump?Math.min(G.cd,.36):G.cd)*slow*.92;p.bolt=p.boltT;if(p.cd<0)p.cd=0}}}
   else p.cd=Math.max(p.cd,0);
   // shells go in one at a time: when the tube is empty, after a second without firing, or on R. Firing stops it.
   if(mag&&p.ammo<mag){
@@ -2355,10 +2369,10 @@ const CASES={
   supply:{name:'SUPPLY CASE',short:'Supply Cases',col:'#e2b436',weights:{c:60,r:27,e:10,l:3},cost:null,
     how:'Co-op and Endless only: one every 3 raids you hold, plus wins.'},
   afterglow:{name:'AFTERGLOW CASE',short:'Afterglow Cases',col:'#ff5ad8',weights:{c:53,r:30,e:12,l:4,g:1},cost:10,
-    drop:{base:{win:.45,loss:.2},ffa:{win:.5,loss:.2}},
-    how:'Base Battle and Free-for-all: 45-50% after a win, 20% after a loss. Or 10 shards.'}
+    drop:{base:{win:.45,loss:.2},ffa:{win:.5,loss:.2},boss:{each:1}},
+    how:'One for everyone in the run each time a boss goes down. Base Battle and Free-for-all: 45-50% after a win, 20% after a loss. Or 10 shards.'}
 };
-const CASE_IDS=Object.keys(CASES),pvpCase=m=>CASE_IDS.find(id=>CASES[id].drop&&CASES[id].drop[m]);
+const CASE_IDS=Object.keys(CASES),pvpCase=m=>CASE_IDS.find(id=>CASES[id].drop&&CASES[id].drop[m]),bossCase=()=>CASE_IDS.find(id=>CASES[id].drop&&CASES[id].drop.boss);
 const SKINS={
   std:{body:'#b9aa82',vest:'#4d6b47',pants:'#4a4636',hat:'#4a5238'},
   desert:{body:'#d2bd92',vest:'#9c8456',pants:'#7c6a4a',hat:'#8e7b55',boonie:'#a58f62'},
@@ -2523,18 +2537,23 @@ function grant(id){if(!COSBY[id]||owns(id))return false;locker.owned.push(id);re
 const meets=need=>Object.entries(need).every(([k,v])=>(locker.st[k]|0)>=v);
 function checkUnlocks(){const got=[];for(const c of COS)if(c.src==='unlock'&&!owns(c.id)&&meets(c.need)){grant(c.id);got.push(c)}return got}
 // called once per finished run, on every player's own phone
+// called once per run: when it ends, or when you leave it early (raids held so far count). With an account the
+// server works out the reward and the text on screen is replaced by what it actually granted.
 function lockerReward(held,win,kills){
   if(demo)return null;
-  const st=locker.st,before=locker.cases;
+  const bosses=game.bosses|0,claim={kind:'run',mode:game.mode,diff:pick.diff||'normal',win:!!win,held,kills,bosses,duration_s:Math.round(game.time)};
+  if(locker.cloud)return queueClaim(claim);
+  const st=locker.st,before=locker.cases,bc=bossCase();
   st.raids+=held;st.drops+=kills;if(win){st.wins++;if(pick.diff==='hard')st.hardWins++}
   if(game.mode==='endless')st.endless=Math.max(st.endless,held);
   locker.prog+=held;locker.cases+=Math.floor(locker.prog/3);locker.prog%=3;
   if(win)locker.cases+=game.waves>=10?2:1;
   if(game.mode==='endless')locker.cases+=Math.floor(held/5);
+  if(bc&&bosses)caseAdd(bc,bosses*(CASES[bc].drop.boss.each||1));
   const got=checkUnlocks();saveLocker();
-  queueClaim({kind:'run',mode:game.mode,diff:pick.diff||'normal',win:!!win,held,kills,duration_s:Math.round(game.time)});
   const n=locker.cases-before,left=3-locker.prog,bits=[];
   if(n>0)bits.push(`+${n} supply case${n>1?'s':''} in your Locker`);
+  if(bc&&bosses)bits.push(`+${bosses} ${CASES[bc].name.toLowerCase()}${bosses>1?'s':''} from bosses`);
   bits.push(`${left} more raid${left>1?'s':''} to the next case`);
   if(got.length)bits.push('Unlocked '+got.map(c=>c.name).join(', '));
   return bits.join(' · ')+'.';
@@ -2543,20 +2562,30 @@ function lockerReward(held,win,kills){
 // Base Battle and FFA don't pay Supply cases (those are co-op only). Each match rolls its mode's drop chance for
 // the PvP case instead. With an account the server does the roll and the result arrives a moment later.
 function pvpReward(win,kills){
-  if(demo)return null;const st=locker.st;
+  if(demo)return null;
+  if(locker.cloud)return queueClaim({kind:'match',pvp:game.pvp,win:!!win,kills,duration_s:Math.round(game.time)});
+  const st=locker.st;
   st.drops+=kills;st.pvp=(st.pvp|0)+1;if(win)st.pvpWins=(st.pvpWins|0)+1;
   const cid=pvpCase(game.pvp),D=cid?CASES[cid].drop[game.pvp]:null,ch=D?(win?D.win:D.loss):0,bits=[];
-  if(cid&&!locker.cloud){if(rnd()<ch){caseAdd(cid,1);bits.push(`+1 ${CASES[cid].name} in your Locker`)}else bits.push(`No ${CASES[cid].name.toLowerCase()} this time (${Math.round(ch*100)}% on a ${win?'win':'loss'})`)}
-  else if(cid)bits.push(`${Math.round(ch*100)}% chance of an ${CASES[cid].name}: rolling…`);
+  if(cid){if(rnd()<ch){caseAdd(cid,1);bits.push(`+1 ${CASES[cid].name} in your Locker`)}else bits.push(`No ${CASES[cid].name.toLowerCase()} this time (${Math.round(ch*100)}% on a ${win?'win':'loss'})`)}
   const got=checkUnlocks();saveLocker();
-  queueClaim({kind:'match',pvp:game.pvp,win:!!win,kills,duration_s:Math.round(game.time)});
   if(got.length)bits.push('Unlocked '+got.map(c=>c.name).join(', '));
   return bits.join(' · ')+'.';
 }
-function caseDropped(id,n){
-  const C=CASES[id];if(!C)return;
-  if(n>0){toast(C.name,'Dropped from that match. Open it in your Locker.');sfx('kx_confetti',undefined,undefined,true)}
-  const ol=$('overLoot');if(!$('over').hidden&&game.pvp&&/rolling/.test(ol.textContent))ol.textContent=ol.textContent.replace(/[^·]*rolling…/,n>0?`+1 ${C.name} in your Locker!`:`No ${C.name.toLowerCase()} this time`);
+// what the server actually granted, in words
+function claimText(c,j){
+  const bits=[],pl=(n,w)=>`${n} ${w}${n===1?'':'s'}`;
+  if(c.kind==='run'){
+    if(j.cases_granted>0)bits.push(`+${pl(j.cases_granted,'supply case')}`);
+    const b=j.bonus||{};if(b.n>0&&CASES[b.case])bits.push(`+${b.n} ${CASES[b.case].name.toLowerCase()}${b.n>1?'s':''} from bosses`);
+    const left=3-((j.locker&&j.locker.prog)|0);bits.push(`${pl(left,'more raid')} to the next supply case`);
+  }else{const C=CASES[j.case_id];if(C)bits.push(j.cases_granted>0?`+1 ${C.name}`:`No ${C.name.toLowerCase()} this time (${Math.round((j.chance||0)*100)}% chance)`)}
+  if(j.unlocked&&j.unlocked.length)bits.push('Unlocked '+j.unlocked.join(', '));
+  return bits.join(' · ')+'. Saved to your account.';
+}
+// show a claim's outcome on the end screen if it's still up for that game, otherwise as a toast
+function claimShow(c,txt,big){
+  if(game.phase==='over'&&game.claimAt===c.at){$('overLoot').textContent=txt;$('overLoot').hidden=false}else toast(big||'REWARDS',txt);   // the over panel fades in late; write into it even before it shows
 }
 const caseCount=id=>id==='supply'?locker.cases:(locker.bag[id]|0);
 function caseAdd(id,n){if(id==='supply')locker.cases=Math.max(0,locker.cases+n);else locker.bag[id]=Math.max(0,(locker.bag[id]|0)+n)}
@@ -2597,10 +2626,10 @@ function setSession(d){
   acct.s={access_token:d.access_token,refresh_token:d.refresh_token,expires_at:d.expires_at||Math.floor(Date.now()/1000)+(d.expires_in||3600),user:d.user||keepUser};
   try{localStorage.setItem(AUTH_KEY,JSON.stringify(acct.s))}catch(e){}
 }
-async function sbFetch(path,{method='GET',body,auth=true,timeout=9000}={}){
-  const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),timeout),h={apikey:SB_KEY,'Content-Type':'application/json'};
+async function sbFetch(path,{method='GET',body,auth=true,timeout=9000,headers,keepalive=false}={}){
+  const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),timeout),h={apikey:SB_KEY,'Content-Type':'application/json',...(headers||{})};
   if(auth&&acct.s)h.Authorization='Bearer '+acct.s.access_token;
-  try{const r=await fetch(SB_URL+path,{method,headers:h,body:body===undefined?undefined:JSON.stringify(body),signal:ctl.signal});
+  try{const r=await fetch(SB_URL+path,{method,headers:h,body:body===undefined?undefined:JSON.stringify(body),signal:ctl.signal,keepalive});
     const t=await r.text();let j=null;try{j=t?JSON.parse(t):null}catch(e){}
     return{ok:r.ok,status:r.status,j}}
   catch(e){return{ok:false,status:0,j:null}}finally{clearTimeout(to)}
@@ -2680,22 +2709,28 @@ async function loadProfile(){
 }
 
 // ---- finished runs: the server checks each result and hands out the cases. Kept here until it answers.
-let claims=(()=>{const a=readJSON(CLAIM_KEY);return a.v&&Array.isArray(a.v.q)?a.v.q:[]})(),flushing=null,flushT=0;
+let claims=(()=>{const a=readJSON(CLAIM_KEY);return a.v&&Array.isArray(a.v.q)?a.v.q:[]})(),flushing=null,flushT=0,flushWhy='';
 function saveClaims(){try{localStorage.setItem(CLAIM_KEY,JSON.stringify({q:claims.slice(-8)}))}catch(e){}}
-function queueClaim(c){if(!locker.cloud)return;claims.push({...c,uid:locker.cloud.id,at:Date.now()});saveClaims();flushClaims()}
+function queueClaim(c){
+  if(!locker.cloud)return null;const q={...c,uid:locker.cloud.id,at:Date.now()};claims.push(q);saveClaims();game.claimAt=q.at;
+  flushClaims().then(()=>{if(claims.includes(q)&&game.claimAt===q.at&&game.phase==='over')$('overLoot').textContent=flushWhy==='wait'?'Saving to your account in a few seconds…':flushWhy==='later'?'Kept on this device. It saves to your account in a few minutes (results can\'t add up to more play time than real time).':'No connection right now. Your result is kept on this device and reaches your account when you\'re back online.'});
+  return 'Sending your result to your account…';
+}
 function flushClaims(){
   if(flushing)return flushing;if(!claims.length||!acct.s)return Promise.resolve();
   const run=async()=>{
     while(claims.length&&acct.s){
       const c=claims[0];
-      if(c.uid!==myUid()||Date.now()-c.at>7*864e5){claims.shift();saveClaims();continue}
+      if(c.uid!==myUid()||Date.now()-c.at>30*864e5){claims.shift();saveClaims();continue}
       const{uid,at,...p}=c,r=await rpc('claim_match_reward',{p});
       if(r.ok){claims.shift();saveClaims();takeLocker(r.j.locker);
-        if(r.j.case_id&&r.j.case_id!=='supply')caseDropped(r.j.case_id,r.j.cases_granted|0);
-        if(r.j.capped)toast('DAILY CASE LIMIT','Stats still count. More cases tomorrow.');continue}
-      if(!r.status||r.status>=500||r.status===401)break;
-      if(/moment ago/.test(sbErr(r))){clearTimeout(flushT);flushT=setTimeout(flushClaims,21000);break}
-      claims.shift();saveClaims();       // the server refused it for good (bad or duplicate result)
+        const dropped=c.kind==='match'&&r.j.cases_granted>0||c.kind==='run'&&r.j.bonus&&r.j.bonus.n>0;
+        claimShow(c,claimText(c,r.j),dropped?'CASE DROP':'REWARDS SAVED');if(dropped)sfx('kx_confetti',undefined,undefined,true);continue}
+      if(!r.status||r.status>=500||r.status===401){flushWhy='offline';break}
+      if(/moment ago/.test(sbErr(r))){flushWhy='wait';clearTimeout(flushT);flushT=setTimeout(flushClaims,21000);break}
+      if(/saved later/.test(sbErr(r))){flushWhy='later';clearTimeout(flushT);flushT=setTimeout(flushClaims,5*60e3);break}   // play-time budget: keep it, the server takes it once enough real time has passed
+      claims.shift();saveClaims();       // refused for good: say so plainly instead of letting a reward quietly vanish
+      claimShow(c,`The server didn't accept that result (${sbErr(r)}). Nothing was added.`,'NOT SAVED');
     }};
   return flushing=run().catch(()=>{}).finally(()=>{flushing=null});
 }
@@ -2810,6 +2845,44 @@ $('aOut').addEventListener('click',()=>acctDo(async()=>{
   await endSession('');acct.busy=false;await acctBoot();acct.busy=true;return'Signed out. Sign back in any time to get your locker.'}));
 addEventListener('online',()=>{acct.t=0;acctResume()});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)acctResume()});
+
+/* ---------- open games list ---------- */
+// Hosts who tick "List my game" publish their room code to Supabase every 15 s while the room is open; the
+// Multiplayer page lists rooms heard from in the last 45 s that run this same version. Joining is the usual
+// room-code join, so the game itself still goes phone to phone.
+const MODE_NAME={coop:'CO-OP',base:'BASE BATTLE',ffa:'FREE-FOR-ALL'},LEN_NAME={'5':'5 RAIDS','10':'10 RAIDS',endless:'ENDLESS'};
+let lobTimer=0,lobBusy=false,pubTimer=0;
+const listing=()=>cloudOn&&cfg.listGame!==false;
+async function lobbyPublish(){
+  if(!listing()||NET.mode!=='host'||!NET.code||!acct.s||!await freshToken())return;
+  const coop=(pick.pvp||'coop')==='coop',n=NET.inGame&&!demo?players.size:NET.roster.length;
+  const body={host_id:myUid(),code:NET.code,name:cleanChat(`${myName()}'s game`).slice(0,24)||'Open game',mode:pick.pvp||'coop',
+    length:coop?pick.mode:null,diff:coop?pick.diff:null,players:Math.max(1,Math.min(6,n)),in_game:!!NET.inGame,proto:PROTO};
+  await sbFetch('/rest/v1/lobbies',{method:'POST',body,headers:{Prefer:'resolution=merge-duplicates,return=minimal'}});
+}
+function lobbyUnpublish(){clearInterval(pubTimer);pubTimer=0;if(!cloudOn||!acct.s)return;
+  sbFetch('/rest/v1/lobbies?host_id=eq.'+encodeURIComponent(myUid()),{method:'DELETE',keepalive:true})}
+function lobbyStartPublishing(){clearInterval(pubTimer);if(!listing())return;lobbyPublish();pubTimer=setInterval(lobbyPublish,15000)}
+async function refreshLobbies(){
+  const box=$('lobList'),say=t=>{box.textContent='';const p=document.createElement('p');p.className='lobEmpty';p.textContent=t;box.append(p)};
+  if(!cloudOn){say('The Open Games list works on the web version of the game.');return}
+  if(!acct.s){say(acct.state==='down'?'Can\'t reach the game server right now, so the list is empty. Joining by code still works.':'Connecting…');return}
+  if(lobBusy)return;lobBusy=true;
+  let r={ok:false,status:0};if(await freshToken())r=await sbFetch(`/rest/v1/lobbies?select=code,name,mode,length,diff,players,in_game&proto=eq.${PROTO}&order=updated_at.desc&limit=30`);
+  lobBusy=false;
+  if(!r.ok||!Array.isArray(r.j)){say('Couldn\'t load the list. Joining by code still works.');return}
+  const rows=r.j.filter(g=>g.code!==NET.code);
+  if(!rows.length){say('No open games right now. Host one and it shows up here for everyone.');return}
+  box.textContent='';
+  for(const g of rows){const b=document.createElement('button');b.type='button';b.className='lob';
+    const nm=document.createElement('b');nm.textContent=g.name;
+    const d=document.createElement('span');d.textContent=[MODE_NAME[g.mode]||g.mode,g.mode==='coop'&&g.length?LEN_NAME[g.length]:'',g.mode==='coop'&&g.diff?g.diff.toUpperCase():'',g.in_game?'IN PROGRESS':'IN LOBBY'].filter(Boolean).join(' · ');
+    const c=document.createElement('i');c.textContent=`${g.players}/6`;
+    b.append(nm,c,d);b.disabled=g.players>=6||NET.mode!=='solo';b.setAttribute('aria-label',`Join ${g.name}, ${d.textContent}, ${g.players} of 6 players`);
+    b.addEventListener('click',()=>{initAudio();$('mCode').value=g.code;netJoin(g.code)});box.append(b)}
+}
+function lobbyBrowse(on){clearInterval(lobTimer);lobTimer=0;if(!on)return;refreshLobbies();lobTimer=setInterval(()=>{if($('pg-multi').hidden||$('menu').hidden){lobbyBrowse(false);return}refreshLobbies()},6000)}
+addEventListener('pagehide',()=>{if(NET.mode==='host')lobbyUnpublish()});
 
 /* ---------- drawing cosmetics ---------- */
 const lookOf=(cos,cls)=>playerLook({cos,cls,C:CLASSES[cls]||CLASSES.soldier,slot:0});
@@ -3035,7 +3108,7 @@ $('armClose').addEventListener('click',closeArmory);
 // A free public matchmaking service (PeerJS) only introduces the phones; after that
 // they talk directly. Each guest opens two channels: 'r' (reliable: hello, build,
 // grenade, toasts) and 'u' (fast, may drop: movement in, snapshots out).
-const PROTO='yard-7',ROOM_PREFIX='palisade-yard-7-';
+const PROTO='yard-8',ROOM_PREFIX='palisade-yard-8-';
 const NET={mode:'solo',inGame:false,peer:null,code:'',roster:[],conns:new Map(),host:null,fxq:[],snapT:0,snapN:0,lastN:0,inT:0,nextG:1,lastHeard:0,
   sendTo(id,msg){for(const c of this.conns.values())if(c.pid===id&&c.r&&c.r.open){try{c.r.send(msg)}catch(e){}}},
   sendAll(msg,ch='r'){for(const c of this.conns.values()){const x=c[ch]&&c[ch].open?c[ch]:c.r;if(c.pid&&x&&x.open)try{x.send(msg)}catch(e){}}},
@@ -3085,6 +3158,7 @@ function netFail(err){
   netReset();showPage('multi');mStatus(why);
 }
 function netReset(){
+  if(NET.mode==='host')lobbyUnpublish();
   clearChat();
   try{NET.peer&&NET.peer.destroy()}catch(e){}
   Object.assign(NET,{mode:'solo',inGame:false,peer:null,code:'',roster:[],host:null,fxq:[],lastN:0});NET.conns.clear();myId='solo';
@@ -3099,7 +3173,7 @@ async function netHost(){
   const ice=await getIce();
   if(NET.mode!=='opening')return;   // they backed out while the relay logins loaded
   const code=genCode(),peer=new Peer(ROOM_PREFIX+code,peerOpts(ice));NET.peer=peer;NET.mode='opening';
-  peer.on('open',()=>{NET.mode='host';NET.code=code;myId='host';NET.roster=[{id:'host',name:myName(),cls:pick.cls,cos:cosStr(myCos()),team:'a'}];mStatus('');showLobby()});
+  peer.on('open',()=>{NET.mode='host';NET.code=code;myId='host';NET.roster=[{id:'host',name:myName(),cls:pick.cls,cos:cosStr(myCos()),team:'a'}];mStatus('');showLobby();lobbyStartPublishing()});
   peer.on('connection',hostConn);
   peer.on('error',err=>{
     if(err.type==='unavailable-id'&&NET.mode==='opening'){try{peer.destroy()}catch(e){}netHost();return}
@@ -3161,6 +3235,7 @@ function hostDrop(peerId){
 function broadcastLobby(){
   const msg={t:'lobby',roster:NET.roster,code:NET.code,diff:pick.diff,mode:pick.mode,pvp:pick.pvp,playing:NET.inGame};
   NET.sendAll(msg);if(!NET.inGame)renderLobby();
+  if(NET.mode==='host'&&pubTimer)lobbyPublish();
 }
 function lobbyBlock(){
   if(pick.pvp==='coop')return'';
@@ -3209,7 +3284,7 @@ function decodeWalls(str){
 }
 function makeSnap(withWalls){
   const S=game.stats,flat=(a,f)=>{const o=[];for(const x of a)o.push(...f(x));return o};
-  const s={t:'s',n:NET.snapN,ph:game.phase,w:game.wave,tm:r2(game.timer),q:game.queue.length,tt:r2(game.time),won:game.won?1:0,wn:game.winner||'',
+  const s={t:'s',n:NET.snapN,ph:game.phase,w:game.wave,bk:game.bosses|0,tm:r2(game.timer),q:game.queue.length,tt:r2(game.time),won:game.won?1:0,wn:game.winner||'',
     cs:flat(cores,c=>[r2(c.hp),c.max,c.flash>0?1:0]),st:[S.dropped,S.built,S.lost,S.repairs,S.revives],
     pl:[...players.values()].map(p=>[p.id,p.name,p.cls,p.slot,r2(p.x),r2(p.y),r2(p.aim.x),r2(p.aim.y),Math.ceil(p.hp),p.max,p.alive?1:0,p.downed?1:0,r2(p.revive),r2(p.rt),p.mats[0],p.mats[1],p.mats[2],p.nades,p.maxN,p.tp,r2(Math.max(0,p.bcd)),p.sal|0,p.upS,p.cosS,p.kills|0,p.team||'',p.deaths|0,p.prot>0?1:0,p.bolt>0?r2(p.bolt/p.boltT):0,p.gun.mag?p.ammo|0:-1,p.rl>0?1:0,r2(p.stun||0)]),
     qm:[r2(qm.x),r2(qm.y),r2(qm.aim.x),r2(qm.aim.y),Math.ceil(qm.hp),qm.max,qm.alive?1:0,r2(qm.revive)],
@@ -3260,7 +3335,7 @@ function guestData(d){
 }
 function applySnap(s){
   const wasOver=game.phase==='over';
-  game.phase=s.ph;game.wave=s.w;game.timer=s.tm;game.qn=s.q;game.won=!!s.won;game.winner=s.wn||'';
+  game.phase=s.ph;game.wave=s.w;game.timer=s.tm;game.bosses=s.bk|0;game.qn=s.q;game.won=!!s.won;game.winner=s.wn||'';
   if(game.pvp)game.won=game.pvp==='base'?!!player&&player.team===game.winner:myId===game.winner;
   if(Math.abs(game.time-s.tt)>1)game.time=s.tt;
   for(let i=0;i<cores.length&&i*3<s.cs.length;i++){const c=cores[i],o=i*3;if(s.cs[o]<c.hp-.01)c.flash=.12;c.hp=s.cs[o];c.max=s.cs[o+1]}
@@ -3365,7 +3440,8 @@ function showPage(p){
   for(const id of PAGES)$('pg-'+id).hidden=id!==p;
   $('menu').classList.toggle('sub',p!=='main');
   if(p==='solo')showBest();
-  if(p==='multi')syncPicks();
+  if(p==='multi'){syncPicks();$('mList').checked=cfg.listGame!==false;$('mListRow').hidden=!cloudOn}
+  lobbyBrowse(p==='multi');
   if(p==='locker')renderLocker();
   if(p==='main'&&lockerNote){$('saveNote').textContent=lockerNote;$('saveNote').hidden=false}
   if(p==='main')mainLabels();
@@ -3388,6 +3464,7 @@ $('sShake').addEventListener('input',e=>{cfg.shake=e.target.value/100;applyCfg()
 $('sHap').addEventListener('change',e=>{cfg.haptics=e.target.checked;saveCfg();if(cfg.haptics)buzz(30)});
 $('sFps').addEventListener('change',e=>{cfg.fps=e.target.checked;applyCfg();saveCfg()});
 $('mName').addEventListener('input',e=>{cfg.name=e.target.value.slice(0,12);saveCfg()});
+$('mList').addEventListener('change',e=>{cfg.listGame=e.target.checked;saveCfg()});
 $('sDone').addEventListener('click',closeSettings);
 $('sExport').addEventListener('click',()=>openSaveOv('export'));
 $('sImport').addEventListener('click',()=>openSaveOv('import'));
@@ -3415,7 +3492,12 @@ addEventListener('keydown',e=>{if(e.key==='Escape'&&e.target&&e.target.tagName==
 function enterGame(){$('menu').hidden=true;$('over').hidden=true;$('pause').hidden=true;$('armory').hidden=true;$('caseOv').hidden=true;game.paused=false;freeSticks();hud(0)}
 function start(){initAudio();netReset();demo=false;newGame(null,'');enterGame()}
 function again(){if(NET.mode==='host')startOnline();else start()}
-function toMenu(){game.paused=false;NET.inGame=false;$('pause').hidden=true;$('over').hidden=true;$('armory').hidden=true;$('menu').hidden=false;showPage('main');startDemo()}
+function leaveRun(){
+  if(demo||!running()||game.pvp||game.phase==='over'||game.rewarded||!player)return;
+  const held=game.phase==='build'?game.wave:Math.max(0,game.wave-1);if(!held&&!game.bosses)return;
+  game.rewarded=true;const t=lockerReward(held,false,player.kills|0);if(t&&!locker.cloud)toast('RUN SAVED',t);
+}
+function toMenu(){leaveRun();game.paused=false;NET.inGame=false;$('pause').hidden=true;$('over').hidden=true;$('armory').hidden=true;$('menu').hidden=false;showPage('main');startDemo()}
 function abandon(){if(NET.mode!=='solo')netLeave('');else toMenu()}
 // class + threat pickers exist on the Solo and Multiplayer pages; keep them in step
 function syncPicks(){
@@ -3484,7 +3566,7 @@ applyCfg();syncPicks();startDemo();showPage('main');
 if(cloudOn)setTimeout(acctBoot,400);
 const invite=new URLSearchParams(location.search).get('room');
 if(invite&&canOnline()){$('mCode').value=invite.toUpperCase().slice(0,4);showPage('multi');mStatus(`You're invited to room ${invite.toUpperCase().slice(0,4)}. Pick your name and job, then tap JOIN.`)}
-if(new URLSearchParams(location.search).has('debug'))window.__pal={get ctx(){return g},get parts(){return parts},profOn(f){PROF={a:{},k:'x',f,t:performance.now()}},prof(){const o={};for(const k in PROF.a)if(k!=='end'&&k!=='x')o[k]=+PROF.a[k].toFixed(1);return o},get locker(){return locker},lockerReward:(...a)=>lockerReward(...a),openCase:()=>openCase(),buyUpgrade:(p,k)=>buyUpgrade(p,k),render,update,NET,get players(){return players},get player(){return player},get game(){return game},get enemies(){return enemies},get walls(){return walls},get core(){return core},get cores(){return cores},get bullets(){return bullets},startRaid:()=>startRaid(),scr:(x,y)=>{const c=iso(x,y);return[c[0],c[1]-WH*.55]},endPvp:w=>endPvp(w),hurtPlayer:(p,d,o)=>hurtPlayer(p,d,o),explode:(...a)=>explode(...a),buildEval:(...a)=>buildEval(...a),doBuild:(...a)=>doBuild(...a),acct,acctBoot,syncLocker,flushClaims,get claims(){return claims},showOver:()=>showOver(),showPage:x=>showPage(x),toMenu:()=>toMenu(),damageWall:(...a)=>damageWall(...a),spawnBoss:k=>spawnBoss(k),get rockets(){return rockets},get fires(){return fires},get zaps(){return zaps},get slashes(){return slashes},makePlayer:(...a)=>makePlayer(...a),get qm(){return qm},bdmg:b=>bdmg(b),makeWall:(...a)=>makeWall(...a),get walls2(){return walls},COS,CASES,rollCase:id=>rollCase(id),killFx:(...a)=>killFx(...a),renderLocker:()=>renderLocker(),playerLook:p=>playerLook(p),pvpReward:(w,k)=>pvpReward(w,k)};
+if(new URLSearchParams(location.search).has('debug'))window.__pal={get ctx(){return g},get parts(){return parts},profOn(f){PROF={a:{},k:'x',f,t:performance.now()}},prof(){const o={};for(const k in PROF.a)if(k!=='end'&&k!=='x')o[k]=+PROF.a[k].toFixed(1);return o},get locker(){return locker},lockerReward:(...a)=>lockerReward(...a),openCase:()=>openCase(),buyUpgrade:(p,k)=>buyUpgrade(p,k),render,update,NET,get players(){return players},get player(){return player},get game(){return game},get enemies(){return enemies},get walls(){return walls},get core(){return core},get cores(){return cores},get bullets(){return bullets},startRaid:()=>startRaid(),scr:(x,y)=>{const c=iso(x,y);return[c[0],c[1]-WH*.55]},endPvp:w=>endPvp(w),hurtPlayer:(p,d,o)=>hurtPlayer(p,d,o),explode:(...a)=>explode(...a),buildEval:(...a)=>buildEval(...a),doBuild:(...a)=>doBuild(...a),acct,acctBoot,syncLocker,flushClaims,get claims(){return claims},showOver:()=>showOver(),showPage:x=>showPage(x),toMenu:()=>toMenu(),refreshLobbies:()=>refreshLobbies(),damageWall:(...a)=>damageWall(...a),spawnBoss:k=>spawnBoss(k),get rockets(){return rockets},get fires(){return fires},get zaps(){return zaps},get slashes(){return slashes},makePlayer:(...a)=>makePlayer(...a),get qm(){return qm},bdmg:b=>bdmg(b),makeWall:(...a)=>makeWall(...a),get walls2(){return walls},COS,CASES,rollCase:id=>rollCase(id),killFx:(...a)=>killFx(...a),renderLocker:()=>renderLocker(),playerLook:p=>playerLook(p),pvpReward:(w,k)=>pvpReward(w,k)};
 if(window.PEER_SRC)setTimeout(()=>needPeer(),invite?0:1200);
 requestAnimationFrame(frame);
 })();

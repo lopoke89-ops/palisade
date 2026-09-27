@@ -47,7 +47,7 @@ JOBS, BOSSES AND SALVAGE (v0.8.1)
   - SOLDIER: carbine, builds 40% faster, takes more hits.
   - SNIPER: bolt-action rifle, one heavy round per pull, through wood.
   - GRENADIER: pump shotgun. 7 pellets in a tight, even spread; full
-    damage out to 2.5 tiles, half by 7. Six shells, loaded one at a time
+    damage out to 2.5 tiles, less further out. Six shells, loaded one at a time
     when the tube runs dry, after a second without firing, or with R.
     Three grenades a raid, bigger blasts.
   - QUARTERMASTER: walk over a downed teammate (or Dell) and they're up
@@ -71,12 +71,41 @@ JOBS, BOSSES AND SALVAGE (v0.8.1)
     to reload.
 
 
+OPEN GAMES, BOSS DROPS, SHOTGUN (v0.8.3)
+---------------------------------------
+  - OPEN GAMES: the Multiplayer page lists games people are hosting
+    (name, mode, players, in lobby or in progress). Tap one to join.
+    Full games are greyed out. Hosting lists your game unless you untick
+    "List my game in Open Games"; a code still works either way. A game
+    drops off the list within 45 seconds of the host leaving. Needs the
+    game server (guest or account); joining by code doesn't.
+  - Every boss killed in co-op or Endless gives everyone in the run +1
+    Afterglow Case, added with the rest of the run's rewards.
+  - No daily limit on cases any more.
+  - Rewards now show what the server actually saved ("+1 supply case ·
+    +1 afterglow case from bosses. Saved to your account."). If the
+    server turns a result down you're told, instead of the case
+    silently not arriving. Offline results are kept on the device and
+    sent when you're back.
+  - Anti-farming (server side): a result can't claim more play time than
+    real time has passed on that account (up to about 6 hours banked),
+    raids need a believable length, and drops are capped at 1 a second.
+    A result that's too early isn't lost: the game keeps it and sends it
+    again a few minutes later.
+  - Leaving a co-op run early still counts the raids you held and the
+    bosses you beat.
+  - GRENADIER shotgun: 12 damage per pellet (84 if all 7 hit). Fires as
+    fast as you can click (up to about 8 a second); holding the button
+    fires every 0.5 s.
+  - Online games need everyone on v0.8.3 or later.
+
+
 CASES (v0.8.2)
 --------------
   - SUPPLY CASE: co-op and Endless only (one every 3 raids held, plus
     wins). Common 60%, rare 27%, epic 10%, legendary 3%.
   - AFTERGLOW CASE: 49 new items (neon, cosmic, gradient, gold). Drops
-    from Base Battle and Free-for-all (45% / 50% after a win, 20% after
+    from every co-op boss, from Base Battle and Free-for-all (45% / 50% after a win, 20% after
     a loss) or costs 10 shards. Common 53%, rare 30%, epic 12%,
     legendary 4%, GOLD 1%. Gold: Gold Clown / Gold Police / Gold Metal
     Knight outfits, Gold Clown Hair, Gold Knight Helm, Gold Rainbow
@@ -93,7 +122,8 @@ CASES (v0.8.2)
 
 PLAYING ONLINE
 --------------
-  - One person taps MULTIPLAYER > HOST and gets a 4-letter code.
+  - One person taps MULTIPLAYER > HOST and gets a 4-letter code. The
+    game also shows up under OPEN GAMES for anyone to tap and join.
   - Friends tap MULTIPLAYER, type the code, tap JOIN. Or the host taps
     SHARE INVITE LINK and friends open the link, which fills the code in.
   - Up to 6 players. Before hosting, pick a mode:
