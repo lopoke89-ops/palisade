@@ -354,7 +354,7 @@ input[type=text]{-webkit-user-select:text;user-select:text}
       <p class="install" id="installTip" hidden>Play it like an app: tap <b>Share</b> <span aria-hidden="true">⎙</span> at the bottom of Safari, then <b>Add to Home Screen</b>.</p>
       <button class="ghost" id="installBtn" type="button" hidden>INSTALL AS AN APP</button>
       <p class="note" id="saveNote" hidden></p>
-      <p class="foot">v0.7.2 · phone and desktop · online co-op and PvP for up to six</p>
+      <p class="foot">v0.7.3 · phone and desktop · online co-op and PvP for up to six</p>
     </section>
 
     <section class="page" id="pg-solo" hidden>
@@ -2275,8 +2275,24 @@ function needPeer(){
     sc.onload=()=>res(onlineOK());sc.onerror=()=>{peerLoad=null;sc.remove();res(false)};document.head.append(sc)}));
 }
 const PEER_FAIL="Couldn't load online play. Check your signal and try again.";
-function peerOpts(){
-  const q=new URLSearchParams(location.search),o={debug:0,config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]}};
+// Relay for networks that block direct links (many cellular networks). The TURN logins are short-lived and
+// come from our Cloudflare Worker, which holds the real key; nothing secret is in this file.
+const TURN_URL='https://palisade-turn.lopoke89.workers.dev/';
+const STUN=[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}];
+let iceCache=null;
+async function getIce(){
+  if(iceCache&&Date.now()<iceCache.until)return iceCache.list;
+  if(location.hostname!=='lopoke89-ops.github.io')return STUN;   // the Worker only answers the live site
+  try{
+    const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),3000);
+    const r=await fetch(TURN_URL,{method:'POST',signal:ctl.signal});clearTimeout(to);
+    const j=await r.json();
+    if(Array.isArray(j.iceServers)&&j.iceServers.length){iceCache={list:[...j.iceServers,...STUN],until:Date.now()+3*3600e3};return iceCache.list}
+  }catch(e){}
+  return STUN;   // no relay this time: direct links still work
+}
+function peerOpts(ice){
+  const q=new URLSearchParams(location.search),o={debug:0,config:{iceServers:ice||STUN}};
   if(q.get('peerhost')){o.host=q.get('peerhost');o.port=+q.get('peerport')||9000;o.path=q.get('peerpath')||'/';o.secure=q.get('peersecure')==='1'}
   return o;
 }
@@ -2301,8 +2317,11 @@ function netLeave(msg){netReset();toMenu();if(msg){showPage('multi');mStatus(msg
 // ---------- host ----------
 async function netHost(){
   if(!onlineOK()){mStatus('Getting online play ready…');if(!await needPeer()){mStatus(PEER_FAIL);return}if(NET.mode!=='solo')return}
-  pick.diff=pick.diff||'normal';mStatus('Opening a room…');
-  const code=genCode(),peer=new Peer(ROOM_PREFIX+code,peerOpts());NET.peer=peer;NET.mode='opening';
+  if(NET.mode==='opening'||NET.mode==='joining')return;   // already on its way
+  pick.diff=pick.diff||'normal';mStatus('Opening a room…');NET.mode='opening';
+  const ice=await getIce();
+  if(NET.mode!=='opening')return;   // they backed out while the relay logins loaded
+  const code=genCode(),peer=new Peer(ROOM_PREFIX+code,peerOpts(ice));NET.peer=peer;NET.mode='opening';
   peer.on('open',()=>{NET.mode='host';NET.code=code;myId='host';NET.roster=[{id:'host',name:myName(),cls:pick.cls,cos:cosStr(myCos()),team:'a'}];mStatus('');showLobby()});
   peer.on('connection',hostConn);
   peer.on('error',err=>{
@@ -2431,8 +2450,11 @@ async function netJoin(code){
   if(!onlineOK()){mStatus('Getting online play ready…');if(!await needPeer()){mStatus(PEER_FAIL);return}if(NET.mode!=='solo')return}
   code=String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
   if(code.length!==4){mStatus('Room codes are 4 letters and numbers.');return}
-  mStatus('Finding room '+code+'…');
-  const peer=new Peer(undefined,peerOpts());NET.peer=peer;NET.mode='joining';NET.code=code;
+  if(NET.mode==='opening'||NET.mode==='joining')return;
+  mStatus('Finding room '+code+'…');NET.mode='joining';
+  const ice=await getIce();
+  if(NET.mode!=='joining')return;
+  const peer=new Peer(undefined,peerOpts(ice));NET.peer=peer;NET.mode='joining';NET.code=code;
   const to=setTimeout(()=>{if(NET.mode==='joining')netFail({type:'timeout'})},15000);
   peer.on('open',()=>{
     const tgt=ROOM_PREFIX+code,r=peer.connect(tgt,{label:'r',reliable:true,serialization:'json'}),uu=peer.connect(tgt,{label:'u',reliable:false,serialization:'json'});
