@@ -308,10 +308,14 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
 #saveText{width:100%;min-height:110px;background:#0c0b09;color:var(--bone);border:1px solid var(--line);padding:10px;font-family:var(--mono);font-size:12px;line-height:1.4;resize:vertical;word-break:break-all}
 .saveRow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .saveRow .go,.saveRow .ghost{height:46px;font-size:16px}
-.reelWrap{position:relative;height:108px;overflow:hidden;border:1px solid var(--line);background:#0c0b09}
+.reelWrap{position:relative;height:112px;overflow:hidden;border:1px solid var(--line);background:#0c0b09}
 .reel{position:absolute;left:0;top:6px;display:flex;gap:6px;will-change:transform}
-.reel .item{width:88px;min-height:94px;flex:none;padding:4px}
-.reel .item canvas{width:56px;height:56px}
+.reel{align-items:flex-start}
+.reel .item{width:88px;height:98px;min-height:0;flex:none;padding:4px 4px 8px;gap:3px;align-content:start;overflow:hidden}
+.reel .item canvas{width:52px;height:52px}
+.reel .item b{font-size:12px;line-height:1.3;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.reel .item i{color:var(--rc);font-weight:600;letter-spacing:.06em}
+.reel .item::after{height:4px}
 .reelWrap::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--warn);z-index:2;transform:translateX(-1px)}
 #caseResult{text-align:center;display:grid;gap:4px}
 #caseResult b{font-family:var(--stencil);font-weight:900;font-size:28px;letter-spacing:.04em}
@@ -379,7 +383,7 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
       <button class="ghost" id="installBtn" type="button" hidden>INSTALL AS AN APP</button>
       <button class="ghost acctBtn" id="acctBtn" type="button" data-go="account" hidden>ACCOUNT</button>
       <p class="note" id="saveNote" hidden></p>
-      <p class="foot">v0.8.3 · phone and desktop · online co-op and PvP for up to six</p>
+      <p class="foot">v0.8.4 · phone and desktop · online co-op and PvP for up to six</p>
     </section>
 
     <section class="page" id="pg-account" hidden>
@@ -497,6 +501,7 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
     <section class="page" id="pg-settings" hidden>
       <h2 class="pt">SETTINGS</h2>
       <label class="set"><span>MASTER VOLUME</span><input type="range" id="sVol" min="0" max="100" step="5"><b id="sVolV">80%</b></label>
+      <label class="set"><span>MUSIC</span><input type="range" id="sMus" min="0" max="100" step="5"><b id="sMusV">70%</b></label>
       <label class="set"><span>SCREEN SHAKE</span><input type="range" id="sShake" min="0" max="100" step="5"><b id="sShakeV">100%</b></label>
       <label class="tog"><input type="checkbox" id="sHap"><span>Vibration on hits and blasts</span></label>
       <label class="tog"><input type="checkbox" id="sFps"><span>Show frame rate</span></label>
@@ -649,13 +654,53 @@ function initAudio(){
   try{AC=new(window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=.55*cfg.volume;master.connect(AC.destination);
     NB=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=rnd()*2-1}catch(e){AC=null}
 }
+/* ---- music: a track for the build phase between co-op raids. Loaded the first time it's needed,
+   looped with no gap (Web Audio, not an <audio> tag), faded in when a build phase starts and out when the raid comes.
+   More tracks: add an entry to MUSIC and pick it in musicWant(). */
+// each track in two formats: AAC for Safari/iPhone/Chrome, Opus for browsers without AAC (some Linux builds); the first one this browser plays is used
+const MUSIC={between:{src:['between_raids.m4a?v=072b9d66','between_raids.ogg?v=e1312bce'],len:2348026/48000}};   // len: the exact loop length of the original file
+const mus={buf:null,loading:false,failAt:-1e9,src:null,g:null,bus:null};
+function musicLoad(){
+  if(mus.buf||mus.loading||performance.now()-mus.failAt<30000||!AC)return;mus.loading=true;
+  const A=document.createElement('audio'),can=u=>/\.m4a/.test(u)?A.canPlayType('audio/mp4; codecs="mp4a.40.2"'):A.canPlayType('audio/ogg; codecs="opus"');
+  const list=MUSIC.between.src.filter(u=>can(u)),get=u=>fetch(u).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()})
+    .then(a=>new Promise((ok,no)=>{const q=AC.decodeAudioData(a,ok,no);if(q&&q.catch)q.catch(no)}));   // callback form for older Safari
+  list.reduce((pr,u)=>pr.catch(()=>get(u)),Promise.reject())
+    .then(b=>{mus.buf=b;mus.loading=false},()=>{mus.loading=false;mus.failAt=performance.now()});
+}
+function musicStart(){
+  const b=mus.buf,s=AC.createBufferSource(),g=AC.createGain(),t=AC.currentTime;
+  s.buffer=b;s.loop=true;s.loopStart=0;s.loopEnd=Math.min(b.duration,MUSIC.between.len);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(1,t+1.6);
+  s.connect(g);g.connect(mus.bus);s.start(t);mus.src=s;mus.g=g;
+}
+function musicStop(fade){
+  const s=mus.src,g=mus.g,t=AC.currentTime;mus.src=mus.g=null;
+  g.gain.cancelScheduledValues(t);g.gain.setValueAtTime(Math.max(g.gain.value,.0001),t);g.gain.exponentialRampToValueAtTime(.0001,t+fade);
+  try{s.stop(t+fade+.05)}catch(e){}
+}
+const musicWant=()=>cfg.music>0&&!demo&&!game.pvp&&game.phase==='build'&&playing()&&!document.hidden;
+function musicTick(){
+  if(!AC)return;
+  if(!mus.bus){mus.bus=AC.createGain();mus.bus.connect(master)}
+  mus.bus.gain.value=.5*cfg.music;
+  if(musicWant()){musicLoad();if(!mus.src&&mus.buf)musicStart()}
+  else if(mus.src)musicStop(game.phase==='raid'?.9:1.5);
+}
+const uiSfx=n=>sfx(n,undefined,undefined,true,true);
+// the case reel: a soft click and a small beep as each item crosses the marker, higher for rarer items
+function caseTick(r){
+  if(!AC)return;const t=AC.currentTime;if(t-(caseTick.t||0)<.028)return;caseTick.t=t;
+  nz(master,t,.012,'highpass',5200,.8,.14);osc(master,t,.05,'sine',({c:880,r:1040,e:1240,l:1480,g:1760})[r]||880,.045);
+}
 function envG(t0,a,d,peak){const gg=AC.createGain();gg.gain.setValueAtTime(.0001,t0);gg.gain.exponentialRampToValueAtTime(Math.max(peak,.0002),t0+a);gg.gain.exponentialRampToValueAtTime(.0001,t0+a+d);return gg}
 function nz(dest,t0,dur,type,f,q,peak,fEnd){const s=AC.createBufferSource();s.buffer=NB;const fl=AC.createBiquadFilter();fl.type=type;fl.frequency.setValueAtTime(f,t0);if(fEnd)fl.frequency.exponentialRampToValueAtTime(fEnd,t0+dur);fl.Q.value=q;const gg=envG(t0,.003,dur,peak);s.connect(fl);fl.connect(gg);gg.connect(dest);s.start(t0,rnd()*1.5);s.stop(t0+dur+.05)}
 function osc(dest,t0,dur,type,f,peak,fEnd){const o=AC.createOscillator();o.type=type;o.frequency.setValueAtTime(f,t0);if(fEnd)o.frequency.exponentialRampToValueAtTime(fEnd,t0+dur);const gg=envG(t0,.004,dur,peak);o.connect(gg);gg.connect(dest);o.start(t0);o.stop(t0+dur+.05)}
 function wallsBetween(x0,y0,x1,y1){let n=0,last=-1;const d=Math.hypot(x1-x0,y1-y0),st=Math.max(1,Math.ceil(d/.3));for(let s=1;s<st;s++){const x=x0+(x1-x0)*s/st,y=y0+(y1-y0)*s/st,i=x|0,j=y|0;if(!inb(i,j))continue;const k=idx(i,j);if(k!==last&&walls[k]&&wallState(walls[k])<2){n++;last=k}}return n}
-function sfx(name,x,y,noRec){
+function sfx(name,x,y,noRec,ui){
   if(!noRec)rec(['s',name,x===undefined?null:r2(x),y===undefined?null:r2(y)]);
-  if(!AC||game.paused||demo)return;const t=AC.currentTime;
+  // ui: menu sounds, heard even with the demo game running behind the menu
+  if(!AC||(!ui&&(game.paused||demo)))return;const t=AC.currentTime;
   if(lastS[name]&&t-lastS[name]<.035)return;lastS[name]=t;
   let dest=master;
   if(x!==undefined&&player){
@@ -748,7 +793,7 @@ let players=new Map(),myId='solo',nextId=1;   // every soldier in the yard; `pla
 let game={phase:'title',paused:false,time:0,wave:0,sel:0,piece:'wall',stats:{dropped:0,built:0,lost:0,repairs:0,revives:0}};
 let pick={cls:'soldier',diff:'normal',mode:'5',pvp:'coop'};
 let demo=false,demoT=0;   // the menu's live background: Dell alone against demo raids
-const cfg={volume:.8,shake:1,haptics:true,fps:false,name:'',build:true};
+const cfg={volume:.8,music:.7,shake:1,haptics:true,fps:false,name:'',build:true};
 try{Object.assign(cfg,JSON.parse(localStorage.getItem('palisade.cfg.v1')||'{}'))}catch(e){}
 function saveCfg(){try{localStorage.setItem('palisade.cfg.v1',JSON.stringify(cfg))}catch(e){}}
 const light={L:.12,r:28,g:34,b:44,warm:0};
@@ -2487,7 +2532,7 @@ function crc32(s){let c,crc=~0;for(let i=0;i<s.length;i++){c=(crc^s.charCodeAt(i
 const b64e=s=>btoa(unescape(encodeURIComponent(s))),b64d=s=>decodeURIComponent(escape(atob(s)));
 function exportSave(){
   const L={owned:locker.owned,eq:locker.eq,cases:locker.cases,bag:locker.bag,shards:locker.shards,prog:locker.prog,st:locker.st};
-  const c={name:cfg.name||'',volume:cfg.volume,shake:cfg.shake,haptics:cfg.haptics,fps:cfg.fps,build:cfg.build};
+  const c={name:cfg.name||'',volume:cfg.volume,music:cfg.music,shake:cfg.shake,haptics:cfg.haptics,fps:cfg.fps,build:cfg.build};
   const body=b64e(JSON.stringify({v:1,at:new Date().toISOString(),locker:L,best:loadBest(),cfg:c}));
   return SAVE_TAG+'.'+body+'.'+crc32(body);
 }
@@ -2511,7 +2556,7 @@ function restoreSave(d){
 }
 function restoreExtras(d){
   if(d.best&&typeof d.best==='object')try{localStorage.setItem(BEST_KEY,JSON.stringify(d.best))}catch(e){}
-  if(d.cfg&&typeof d.cfg==='object'){for(const k of['name','volume','shake','haptics','fps','build'])if(d.cfg[k]!==undefined&&typeof d.cfg[k]===typeof cfg[k])cfg[k]=d.cfg[k];saveCfg();applyCfg()}
+  if(d.cfg&&typeof d.cfg==='object'){for(const k of['name','volume','music','shake','haptics','fps','build'])if(d.cfg[k]!==undefined&&typeof d.cfg[k]===typeof cfg[k])cfg[k]=d.cfg[k];saveCfg();applyCfg()}
 }
 let saveMode='',savePending=null;
 function openSaveOv(mode){
@@ -2725,7 +2770,7 @@ function flushClaims(){
       const{uid,at,...p}=c,r=await rpc('claim_match_reward',{p});
       if(r.ok){claims.shift();saveClaims();takeLocker(r.j.locker);
         const dropped=c.kind==='match'&&r.j.cases_granted>0||c.kind==='run'&&r.j.bonus&&r.j.bonus.n>0;
-        claimShow(c,claimText(c,r.j),dropped?'CASE DROP':'REWARDS SAVED');if(dropped)sfx('kx_confetti',undefined,undefined,true);continue}
+        claimShow(c,claimText(c,r.j),dropped?'CASE DROP':'REWARDS SAVED');if(dropped)uiSfx('kx_confetti');continue}
       if(!r.status||r.status>=500||r.status===401){flushWhy='offline';break}
       if(/moment ago/.test(sbErr(r))){flushWhy='wait';clearTimeout(flushT);flushT=setTimeout(flushClaims,21000);break}
       if(/saved later/.test(sbErr(r))){flushWhy='later';clearTimeout(flushT);flushT=setTimeout(flushClaims,5*60e3);break}   // play-time budget: keep it, the server takes it once enough real time has passed
@@ -3042,8 +3087,8 @@ function renderLocker(){
 document.querySelectorAll('#lockTabs button').forEach(b=>b.addEventListener('click',()=>{lockCat=b.dataset.cat;renderLocker()}));
 let lockBusy=false;
 function buyCase(id){const C=CASES[id];if(!C||!C.cost||locker.shards<C.cost)return;
-  if(locker.cloud){lockWait(true);rpc('buy_case',{p_case:id}).then(r=>{lockWait(false);if(r.ok){takeLocker(r.j);renderLocker();sfx('restock',undefined,undefined,true)}else lockMsg(r.status?sbErr(r):'Buying a case needs a connection. Your shards are safe.')});return}
-  locker.shards-=C.cost;caseAdd(id,1);saveLocker();renderLocker();sfx('restock',undefined,undefined,true)}
+  if(locker.cloud){lockWait(true);rpc('buy_case',{p_case:id}).then(r=>{lockWait(false);if(r.ok){takeLocker(r.j);renderLocker();uiSfx('restock')}else lockMsg(r.status?sbErr(r):'Buying a case needs a connection. Your shards are safe.')});return}
+  locker.shards-=C.cost;caseAdd(id,1);saveLocker();renderLocker();uiSfx('restock')}
 $('caseBoxes').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;initAudio();if(b.dataset.open)openCaseUI(b.dataset.open);else if(b.dataset.buy)buyCase(b.dataset.buy)});
 function lockMsg(t){$('lockMsg').textContent=t||''}
 function lockWait(on){lockBusy=on;renderCaseBoxes();lockMsg(on?'Talking to the quartermaster…':'')}
@@ -3062,19 +3107,19 @@ function caseReel(res){
   ov.hidden=false;$('caseResult').hidden=true;$('caseEquip').hidden=true;$('caseDone').hidden=true;caseItem=null;
   $('caseEye').textContent=C.name;$('caseEye').style.color=C.col;
   reel.style.transition='none';reel.style.transform='translateX(0px)';reel.textContent='';
-  for(let i=0;i<COUNT;i++){const it=i===WIN?res.it:rollCase(res.box||'supply'),t=itemTile(it);t.classList.remove('lock','eq');t.querySelector('i').textContent=RAR[it.r].n;t.tabIndex=-1;reel.append(t)}
+  const rs=[];for(let i=0;i<COUNT;i++){const it=i===WIN?res.it:rollCase(res.box||'supply'),t=itemTile(it);rs.push(it.r);t.classList.remove('lock','eq');t.querySelector('i').textContent=RAR[it.r].n;t.tabIndex=-1;reel.append(t)}
   const wrapW=reel.parentElement.clientWidth,target=WIN*TW+44-wrapW/2+(rnd()-.5)*50;
   const dur=matchMedia('(prefers-reduced-motion: reduce)').matches?.6:4.2,t0=performance.now();
   requestAnimationFrame(()=>requestAnimationFrame(()=>{reel.style.transition=`transform ${dur}s cubic-bezier(.08,.72,.16,1)`;reel.style.transform=`translateX(${-target}px)`}));
   let lastIdx=-1;const tick=()=>{if(ov.hidden)return;let tx=0;try{tx=new DOMMatrix(getComputedStyle(reel).transform).m41}catch(e){}
-    const idx=Math.floor((-tx+wrapW/2)/TW);if(idx!==lastIdx){lastIdx=idx;sfx('gather',undefined,undefined,true)}
+    const idx=Math.floor((-tx+wrapW/2)/TW);if(idx!==lastIdx){lastIdx=idx;caseTick(rs[idx])}
     if(performance.now()-t0<dur*1000)requestAnimationFrame(tick)};requestAnimationFrame(tick);
   setTimeout(()=>{
     const it=res.it,R=RAR[it.r];caseItem=it;
     $('caseName').textContent=it.name;$('caseName').style.color=R.col;$('caseName').classList.toggle('gold',it.r==='g');
     $('caseSub').textContent=`${R.n} ${CATN[it.cat]}`+(res.dup?` · already owned, +${R.sh} shard${R.sh>1?'s':''}`:' · new');
     $('caseResult').hidden=false;$('caseEquip').hidden=locker.eq[it.cat]===it.key;$('caseDone').hidden=false;
-    sfx(it.r==='l'||it.r==='e'||it.r==='g'?'win':'restock',undefined,undefined,true);if(it.r==='g')sfx('kx_bubbles',undefined,undefined,true);buzz(it.r==='g'?[40,60,40,60,90]:40);
+    uiSfx(it.r==='l'||it.r==='e'||it.r==='g'?'win':'restock');if(it.r==='g')uiSfx('kx_bubbles');buzz(it.r==='g'?[40,60,40,60,90]:40);
   },dur*1000+120);
 }
 $('caseEquip').addEventListener('click',()=>{if(caseItem&&owns(caseItem.id)){locker.eq[caseItem.cat]=caseItem.key;saveLocker();cloudEquip(caseItem.id)}$('caseOv').hidden=true;lockCat=caseItem?caseItem.cat:lockCat;renderLocker()});
@@ -3420,7 +3465,7 @@ function frame(now){
   else{update(dt);if(NET.mode==='host')hostNet(dt);else if(NET.mode==='guest')lobbyNet(dt)}
   if(!$('menu').hidden&&!$('pg-locker').hidden)drawLockerPreview(now);
   const wantCursor=playing()&&!touchMode&&!overlayOpen()?'none':'';if(cv.style.cursor!==wantCursor)cv.style.cursor=wantCursor;
-  render(dt);
+  render(dt);musicTick();
   if(demo&&game.phase==='over'){demoT+=dt;if(demoT>4)startDemo()}
   const on=playing();
   if(on&&!game.paused)hud(dt);else if(toastT>0&&!game.paused){toastT-=dt;if(toastT<=0)$('toast').classList.remove('on')}
@@ -3455,11 +3500,13 @@ function closeSettings(){if(settingsFromPause){$('menu').hidden=true;$('pause').
 function applyCfg(){
   if(master)master.gain.value=.55*cfg.volume;
   $('sVol').value=Math.round(cfg.volume*100);$('sVolV').textContent=Math.round(cfg.volume*100)+'%';
+  $('sMus').value=Math.round(cfg.music*100);$('sMusV').textContent=Math.round(cfg.music*100)+'%';
   $('sShake').value=Math.round(cfg.shake*100);$('sShakeV').textContent=Math.round(cfg.shake*100)+'%';
   $('sHap').checked=cfg.haptics;$('sFps').checked=cfg.fps;$('fpsLab').hidden=!cfg.fps;
   $('mName').value=cfg.name||'';
 }
 $('sVol').addEventListener('input',e=>{cfg.volume=e.target.value/100;applyCfg();saveCfg()});
+$('sMus').addEventListener('input',e=>{cfg.music=e.target.value/100;applyCfg();saveCfg()});
 $('sShake').addEventListener('input',e=>{cfg.shake=e.target.value/100;applyCfg();saveCfg()});
 $('sHap').addEventListener('change',e=>{cfg.haptics=e.target.checked;saveCfg();if(cfg.haptics)buzz(30)});
 $('sFps').addEventListener('change',e=>{cfg.fps=e.target.checked;applyCfg();saveCfg()});
@@ -3566,7 +3613,7 @@ applyCfg();syncPicks();startDemo();showPage('main');
 if(cloudOn)setTimeout(acctBoot,400);
 const invite=new URLSearchParams(location.search).get('room');
 if(invite&&canOnline()){$('mCode').value=invite.toUpperCase().slice(0,4);showPage('multi');mStatus(`You're invited to room ${invite.toUpperCase().slice(0,4)}. Pick your name and job, then tap JOIN.`)}
-if(new URLSearchParams(location.search).has('debug'))window.__pal={get ctx(){return g},get parts(){return parts},profOn(f){PROF={a:{},k:'x',f,t:performance.now()}},prof(){const o={};for(const k in PROF.a)if(k!=='end'&&k!=='x')o[k]=+PROF.a[k].toFixed(1);return o},get locker(){return locker},lockerReward:(...a)=>lockerReward(...a),openCase:()=>openCase(),buyUpgrade:(p,k)=>buyUpgrade(p,k),render,update,NET,get players(){return players},get player(){return player},get game(){return game},get enemies(){return enemies},get walls(){return walls},get core(){return core},get cores(){return cores},get bullets(){return bullets},startRaid:()=>startRaid(),scr:(x,y)=>{const c=iso(x,y);return[c[0],c[1]-WH*.55]},endPvp:w=>endPvp(w),hurtPlayer:(p,d,o)=>hurtPlayer(p,d,o),explode:(...a)=>explode(...a),buildEval:(...a)=>buildEval(...a),doBuild:(...a)=>doBuild(...a),acct,acctBoot,syncLocker,flushClaims,get claims(){return claims},showOver:()=>showOver(),showPage:x=>showPage(x),toMenu:()=>toMenu(),refreshLobbies:()=>refreshLobbies(),damageWall:(...a)=>damageWall(...a),spawnBoss:k=>spawnBoss(k),get rockets(){return rockets},get fires(){return fires},get zaps(){return zaps},get slashes(){return slashes},makePlayer:(...a)=>makePlayer(...a),get qm(){return qm},bdmg:b=>bdmg(b),makeWall:(...a)=>makeWall(...a),get walls2(){return walls},COS,CASES,rollCase:id=>rollCase(id),killFx:(...a)=>killFx(...a),renderLocker:()=>renderLocker(),playerLook:p=>playerLook(p),pvpReward:(w,k)=>pvpReward(w,k)};
+if(new URLSearchParams(location.search).has('debug'))window.__pal={get ctx(){return g},get mus(){return mus},get AC(){return AC},musicWant,caseTick,MUSIC,get parts(){return parts},profOn(f){PROF={a:{},k:'x',f,t:performance.now()}},prof(){const o={};for(const k in PROF.a)if(k!=='end'&&k!=='x')o[k]=+PROF.a[k].toFixed(1);return o},get locker(){return locker},lockerReward:(...a)=>lockerReward(...a),openCase:()=>openCase(),buyUpgrade:(p,k)=>buyUpgrade(p,k),render,update,NET,get players(){return players},get player(){return player},get game(){return game},get enemies(){return enemies},get walls(){return walls},get core(){return core},get cores(){return cores},get bullets(){return bullets},startRaid:()=>startRaid(),scr:(x,y)=>{const c=iso(x,y);return[c[0],c[1]-WH*.55]},endPvp:w=>endPvp(w),hurtPlayer:(p,d,o)=>hurtPlayer(p,d,o),explode:(...a)=>explode(...a),buildEval:(...a)=>buildEval(...a),doBuild:(...a)=>doBuild(...a),acct,acctBoot,syncLocker,flushClaims,get claims(){return claims},showOver:()=>showOver(),showPage:x=>showPage(x),toMenu:()=>toMenu(),refreshLobbies:()=>refreshLobbies(),damageWall:(...a)=>damageWall(...a),spawnBoss:k=>spawnBoss(k),get rockets(){return rockets},get fires(){return fires},get zaps(){return zaps},get slashes(){return slashes},makePlayer:(...a)=>makePlayer(...a),get qm(){return qm},bdmg:b=>bdmg(b),makeWall:(...a)=>makeWall(...a),get walls2(){return walls},COS,CASES,rollCase:id=>rollCase(id),killFx:(...a)=>killFx(...a),renderLocker:()=>renderLocker(),playerLook:p=>playerLook(p),pvpReward:(w,k)=>pvpReward(w,k)};
 if(window.PEER_SRC)setTimeout(()=>needPeer(),invite?0:1200);
 requestAnimationFrame(frame);
 })();

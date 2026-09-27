@@ -71,6 +71,25 @@ JOBS, BOSSES AND SALVAGE (v0.8.1)
     to reload.
 
 
+CASE SPIN AND MUSIC (v0.8.4)
+----------------------------
+  - Case spin: every item in the reel shows its rarity (coloured label
+    and strip). A long name used to stretch the tiles and push the
+    strip out of view, mostly in the Afterglow case.
+  - The spin ticks: a soft click and beep as each item passes the
+    marker, pitched higher for rarer items. Case sounds (the tick, the
+    reveal, the gold fanfare) also play now; they were muted by the
+    demo game running behind the menu.
+  - Music between raids: plays during co-op / Endless build phases
+    (including the one before raid 1), fades in, fades out when the
+    raid starts, loops with no gap. MUSIC slider in Settings (0 = off).
+    Not in PvP. Files: between_raids.m4a (AAC, Safari/iPhone/Chrome)
+    and between_raids.ogg (Opus, for browsers without AAC). Each is
+    downloaded once, the first time it plays, and kept for offline.
+    New track: replace both files (same names); MUSIC in index.html
+    holds the loop length in samples.
+
+
 OPEN GAMES, BOSS DROPS, SHOTGUN (v0.8.3)
 ---------------------------------------
   - OPEN GAMES: the Multiplayer page lists games people are hosting
