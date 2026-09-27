@@ -1,0 +1,22 @@
+01-setup.js   constants, tuning, classes, PvP settings
+02-view.js   screen size, camera, iso projection, aiming at bodies
+03-audio.js   sound effects and music
+04-state-armory.js   game state, players, armory upgrades, Dell upgrade, core repair
+05-net-record.js   recording events for guests
+06-world.js   pathing, collision, damage to walls/players/enemies
+07-effects.js   particles and floating text
+08-input.js   keyboard, mouse, touch sticks and buttons
+09-actions.js   building, grenades, sprint, weapons firing (shoot/fire)
+10-phases-bosses.js   raids, build phases, waves, bosses
+11-hud-chat.js   best record, HUD, text chat
+12-players.js   main update, player control and simulation (triggers, bursts, gathering)
+13-dell.js   Dell, the quartermaster AI and shotgun
+14-raiders.js   raider AI, bullets, walls, fires
+15-render.js   world rendering, walls, tiles, lighting
+16-characters.js   characters, kit and boss effects
+17-scenery.js   forest, fence and cached scenery, frame render
+18-cosmetics.js   cosmetics, locker data, cases, save backup
+19-accounts.js   accounts, cloud locker, claims, open games list
+20-locker-ui.js   drawing cosmetics, locker screen, armory screen
+21-online.js   online co-op and PvP networking
+22-loop-menus.js   main loop, menus, install prompt, debug hooks

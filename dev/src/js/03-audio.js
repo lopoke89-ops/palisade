@@ -1,0 +1,158 @@
+/* ================= audio ================= */
+let AC=null,master=null,NB=null;const lastS={},voiceT=[],MUF=[];
+function muffle(wb){if(!MUF[wb]){const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=9000*Math.pow(.22,wb)+200;lp.connect(master);MUF[wb]=lp}return MUF[wb]}
+function initAudio(){
+  if(AC){if(AC.state==='suspended')AC.resume();return}
+  try{AC=new(window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=.55*cfg.volume;master.connect(AC.destination);
+    NB=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=rnd()*2-1}catch(e){AC=null}
+}
+/* ---- music. Each track is loaded the first time it's needed, looped with no gap (Web Audio, not an <audio> tag),
+   faded in and out. Only the track this part of the game can play stays decoded (a decoded minute of music is
+   ~20 MB), so the between-raid track is let go in the menus and the locker track during a run.
+   Each track comes in two formats: AAC for Safari/iPhone/Chrome, Opus for browsers without AAC; the first one
+   this browser plays is used. len: the exact loop length of the original file, in seconds.
+   New track: add an entry here, a case in musicWant(), and both files to build.py's MUSIC_FILES. */
+const MUSIC={between:{src:['between_raids.m4a','between_raids.ogg'],len:2348026/48000},   // co-op build phase
+             locker:{src:['locker.m4a','locker.ogg'],len:3680004/48000}};                   // the Locker page
+const mus={bufs:{},loading:{},failAt:{},src:null,g:null,bus:null,cur:null};
+function musicLoad(k){
+  if(mus.bufs[k]||mus.loading[k]||performance.now()-(mus.failAt[k]||-1e9)<30000||!AC)return;mus.loading[k]=true;
+  const A=document.createElement('audio'),can=u=>/\.m4a/.test(u)?A.canPlayType('audio/mp4; codecs="mp4a.40.2"'):A.canPlayType('audio/ogg; codecs="opus"');
+  const list=MUSIC[k].src.filter(u=>can(u)),get=u=>fetch(u).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()})
+    .then(a=>new Promise((ok,no)=>{const q=AC.decodeAudioData(a,ok,no);if(q&&q.catch)q.catch(no)}));   // callback form for older Safari
+  list.reduce((pr,u)=>pr.catch(()=>get(u)),Promise.reject())
+    .then(b=>{mus.loading[k]=false;if(musicKeep(k))mus.bufs[k]=b},()=>{mus.loading[k]=false;mus.failAt[k]=performance.now()});
+}
+function musicStart(k){
+  const b=mus.bufs[k],s=AC.createBufferSource(),g=AC.createGain(),t=AC.currentTime;
+  s.buffer=b;s.loop=true;s.loopStart=0;s.loopEnd=Math.min(b.duration,MUSIC[k].len);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(1,t+1.6);
+  s.connect(g);g.connect(mus.bus);s.start(t);mus.src=s;mus.g=g;mus.cur=k;
+}
+function musicStop(fade){
+  const s=mus.src,g=mus.g,t=AC.currentTime;mus.src=mus.g=null;mus.cur=null;
+  g.gain.cancelScheduledValues(t);g.gain.setValueAtTime(Math.max(g.gain.value,.0001),t);g.gain.exponentialRampToValueAtTime(.0001,t+fade);
+  try{s.stop(t+fade+.05)}catch(e){}
+}
+// which track should be playing right now (null: none)
+function musicWant(){
+  if(cfg.music<=0||document.hidden)return null;
+  if(!$('menu').hidden&&!$('pg-locker').hidden)return'locker';
+  if(!demo&&!game.pvp&&game.phase==='build'&&playing())return'between';
+  return null;
+}
+const musicKeep=k=>k===(playing()?'between':'locker');   // the one track worth keeping decoded here
+function musicTick(){
+  if(!AC)return;
+  if(!mus.bus){mus.bus=AC.createGain();mus.bus.connect(master)}
+  mus.bus.gain.value=.5*cfg.music;
+  const want=musicWant();
+  if(mus.src&&mus.cur!==want)musicStop(game.phase==='raid'?.9:1.2);
+  if(want){musicLoad(want);if(!mus.src&&mus.bufs[want])musicStart(want)}
+  for(const k in mus.bufs)if(!musicKeep(k)&&k!==mus.cur)delete mus.bufs[k];
+}
+const uiSfx=n=>sfx(n,undefined,undefined,true,true);
+// the case reel: a soft click and a small beep as each item crosses the marker, higher for rarer items
+function caseTick(r){
+  if(!AC)return;const t=AC.currentTime;if(t-(caseTick.t||0)<.028)return;caseTick.t=t;
+  nz(master,t,.012,'highpass',5200,.8,.14);osc(master,t,.05,'sine',({c:880,r:1040,e:1240,l:1480,g:1760})[r]||880,.045);
+}
+function envG(t0,a,d,peak){const gg=AC.createGain();gg.gain.setValueAtTime(.0001,t0);gg.gain.exponentialRampToValueAtTime(Math.max(peak,.0002),t0+a);gg.gain.exponentialRampToValueAtTime(.0001,t0+a+d);return gg}
+function nz(dest,t0,dur,type,f,q,peak,fEnd){const s=AC.createBufferSource();s.buffer=NB;const fl=AC.createBiquadFilter();fl.type=type;fl.frequency.setValueAtTime(f,t0);if(fEnd)fl.frequency.exponentialRampToValueAtTime(fEnd,t0+dur);fl.Q.value=q;const gg=envG(t0,.003,dur,peak);s.connect(fl);fl.connect(gg);gg.connect(dest);s.start(t0,rnd()*1.5);s.stop(t0+dur+.05)}
+function osc(dest,t0,dur,type,f,peak,fEnd){const o=AC.createOscillator();o.type=type;o.frequency.setValueAtTime(f,t0);if(fEnd)o.frequency.exponentialRampToValueAtTime(fEnd,t0+dur);const gg=envG(t0,.004,dur,peak);o.connect(gg);gg.connect(dest);o.start(t0);o.stop(t0+dur+.05)}
+function wallsBetween(x0,y0,x1,y1){let n=0,last=-1;const d=Math.hypot(x1-x0,y1-y0),st=Math.max(1,Math.ceil(d/.3));for(let s=1;s<st;s++){const x=x0+(x1-x0)*s/st,y=y0+(y1-y0)*s/st,i=x|0,j=y|0;if(!inb(i,j))continue;const k=idx(i,j);if(k!==last&&walls[k]&&wallState(walls[k])<2){n++;last=k}}return n}
+function sfx(name,x,y,noRec,ui){
+  if(!noRec)rec(['s',name,x===undefined?null:r2(x),y===undefined?null:r2(y)]);
+  // ui: menu sounds, heard even with the demo game running behind the menu
+  if(!AC||(!ui&&(game.paused||demo)))return;const t=AC.currentTime;
+  if(lastS[name]&&t-lastS[name]<.035)return;
+  // at most ~14 sounds start in any 0.12 s window; distant world sounds are the first to be skipped
+  while(voiceT.length&&t-voiceT[0]>.12)voiceT.shift();
+  if(x!==undefined&&voiceT.length>=14&&!ui)return;
+  lastS[name]=t;voiceT.push(t);
+  let dest=master;
+  if(x!==undefined&&player){
+    const d=Math.hypot(x-player.x,y-player.y),v=1/(1+d*.2);if(v<.07)return;   // too far to hear
+    const gn=AC.createGain();gn.gain.value=v;
+    // walls in between muffle it: one shared filter per wall count instead of a new filter for every sound
+    const wb=d>1.2?Math.min(3,wallsBetween(x,y,player.x,player.y)):0;
+    gn.connect(wb?muffle(wb):master);dest=gn;
+  }
+  switch(name){
+    case'ar':nz(dest,t,.07,'highpass',900,.7,.5);osc(dest,t,.08,'triangle',150,.45,50);break;
+    case'sniper':nz(dest,t,.2,'bandpass',700,.6,.8,200);osc(dest,t,.25,'sine',95,.7,35);nz(dest,t+.05,.4,'lowpass',400,.5,.2);break;
+    case'rack':nz(dest,t,.035,'highpass',2600,1.2,.35);osc(dest,t,.03,'square',1250,.07,700);nz(dest,t+.13,.03,'bandpass',3400,2,.4);osc(dest,t+.13,.04,'square',1650,.08,900);osc(dest,t+.2,.05,'triangle',380,.1,200);break;
+    case'shotgun':nz(dest,t,.16,'lowpass',2600,.6,.95,300);osc(dest,t,.2,'sine',85,.85,32);nz(dest,t,.05,'highpass',1600,.8,.45);break;
+    case'pump':nz(dest,t,.06,'bandpass',1500,1.4,.4,700);osc(dest,t,.05,'square',260,.07,160);nz(dest,t+.12,.05,'bandpass',2100,1.6,.45,1100);osc(dest,t+.12,.05,'square',330,.08,200);break;
+    case'shellin':nz(dest,t,.03,'bandpass',2800,2,.3);osc(dest,t,.035,'triangle',900,.08,600);break;
+    case'dry':osc(dest,t,.03,'square',2200,.06);break;
+    case'medic':[523,659,784,1046].forEach((f,i)=>osc(dest,t+i*.05,.16,'sine',f,.13));break;
+    case'horn':osc(dest,t,1.1,'sawtooth',73,.16,68);osc(dest,t,1.1,'sawtooth',110,.1,104);osc(dest,t+.4,.8,'sawtooth',98,.08,92);nz(dest,t,.9,'lowpass',300,.5,.25);break;
+    case'rocket':nz(dest,t,.5,'bandpass',900,.7,.6,300);osc(dest,t,.35,'sawtooth',160,.12,60);nz(dest,t,.08,'lowpass',1200,.8,.7);break;
+    case'lock':osc(dest,t,.06,'square',1560,.09);osc(dest,t+.1,.06,'square',1560,.09);osc(dest,t+.2,.1,'square',2080,.1);break;
+    case'slash':nz(dest,t,.18,'bandpass',3200,1.5,.55,900);osc(dest,t+.02,.25,'sine',1900,.08,1200);break;
+    case'charge':osc(dest,t,.8,'sawtooth',220,.08,900);osc(dest,t,.8,'sine',440,.07,1800);break;
+    case'zap':nz(dest,t,.35,'highpass',2500,.6,.9);osc(dest,t,.3,'square',95,.25,40);[0,.04,.09,.15].forEach(d=>nz(dest,t+d,.04,'bandpass',4200,3,.5));break;
+    // tracer sounds: a soft layer on top of the gunshot (at most every 0.22 s per soldier)
+    case'ts_gold':osc(dest,t,.12,'sine',2350,.035);osc(dest,t+.03,.12,'sine',3140,.025);break;
+    case'ts_plasma':osc(dest,t,.1,'square',190,.035,95);nz(dest,t,.08,'bandpass',3200,4,.08);break;
+    case'ts_rainbow':[1320,1660,1980].forEach((f,i)=>osc(dest,t+i*.025,.06,'sine',f,.03));break;
+    case'ts_grad':osc(dest,t,.1,'sine',620,.03,940);break;
+    case'ts_aurora':osc(dest,t,.2,'sine',880,.03,1100);osc(dest,t,.2,'sine',886,.025,1108);break;
+    case'ts_star':osc(dest,t,.08,'sine',2600,.035);osc(dest,t+.05,.08,'sine',3300,.025);break;
+    case'ts_comet':nz(dest,t,.18,'bandpass',2400,2,.07,700);break;
+    case'ts_neon':osc(dest,t,.06,'square',880,.025);osc(dest,t+.035,.05,'square',1320,.02);break;
+    case'ts_cosmic':osc(dest,t,.22,'sine',220,.04,440);osc(dest,t,.22,'triangle',330,.02,660);break;
+    case'ts_rock':nz(dest,t,.07,'lowpass',500,1,.08);osc(dest,t,.06,'triangle',110,.04,70);break;
+    case'ts_solar':nz(dest,t,.14,'lowpass',900,.7,.07,300);osc(dest,t,.1,'sawtooth',140,.02,90);break;
+    case'ts_glitch':for(let k=0;k<3;k++)osc(dest,t+k*.02,.018,'square',400+Math.floor(rnd()*6)*240,.03);break;
+    case'ts_galaxy':[523,659,784].forEach(f=>osc(dest,t,.25,'sine',f,.022,f*1.5));break;
+    case'ts_void':osc(dest,t,.24,'sine',320,.05,55);nz(dest,t,.12,'lowpass',260,1,.05);break;
+    case'ts_grainbow':[1568,1976,2349,3136].forEach((f,i)=>osc(dest,t+i*.03,.1,'sine',f,.03));nz(dest,t,.1,'highpass',6000,.5,.03);break;
+    // kill-effect sounds
+    case'kx_sparks':nz(dest,t,.12,'highpass',3000,.8,.12);break;
+    case'kx_smoke':nz(dest,t,.3,'lowpass',500,.6,.1,200);break;
+    case'kx_confetti':nz(dest,t,.05,'bandpass',1800,1,.2);[1046,1318,1568].forEach((f,i)=>osc(dest,t+.04+i*.05,.08,'triangle',f,.05));break;
+    case'kx_embers':nz(dest,t,.35,'bandpass',700,.7,.1,300);break;
+    case'kx_glint':osc(dest,t,.3,'sine',2093,.05);osc(dest,t+.06,.3,'sine',2637,.04);break;
+    case'kx_bolt':nz(dest,t,.12,'highpass',3500,.6,.14);osc(dest,t,.1,'square',80,.06,40);break;
+    case'kx_skull':osc(dest,t,.4,'triangle',196,.06,147);osc(dest,t,.4,'triangle',233,.04,175);break;
+    case'kx_pixel':[523,784,1046,1568].forEach((f,i)=>osc(dest,t+i*.04,.05,'square',f,.04));break;
+    case'kx_frost':nz(dest,t,.12,'highpass',5000,1,.14);osc(dest,t,.25,'sine',3520,.03);break;
+    case'kx_gradburst':osc(dest,t,.3,'sine',400,.05,1200);osc(dest,t,.3,'triangle',600,.03,1800);break;
+    case'kx_sunburst':osc(dest,t,.3,'sine',500,.05,1400);nz(dest,t,.1,'bandpass',1500,1,.08);break;
+    case'kx_toxic':for(let k=0;k<4;k++)osc(dest,t+k*.05,.05,'sine',300+rnd()*300,.05,160);break;
+    case'kx_supernova':nz(dest,t,.5,'lowpass',1200,.6,.18,150);[784,1175,1568].forEach((f,i)=>osc(dest,t+.05+i*.06,.4,'sine',f,.035));break;
+    case'kx_glitchout':for(let k=0;k<6;k++)osc(dest,t+k*.025,.02,'square',200+Math.floor(rnd()*8)*180,.04);break;
+    case'kx_singularity':osc(dest,t,.35,'sine',900,.06,60);nz(dest,t+.3,.15,'lowpass',800,.7,.15);break;
+    case'kx_shockwave':osc(dest,t,.3,'sine',70,.12,35);osc(dest,t,.2,'sawtooth',880,.03,220);nz(dest,t,.08,'bandpass',2500,2,.08);break;
+    case'kx_bubbles':for(let k=0;k<6;k++)osc(dest,t+k*.055,.07,'sine',600+k*180+rnd()*60,.05,1400+k*120);[1568,2093,2637].forEach((f,i)=>osc(dest,t+.34+i*.07,.35,'sine',f,.04));break;
+    case'smg':nz(dest,t,.05,'highpass',1400,.7,.35);osc(dest,t,.05,'square',180,.1,70);break;
+    case'rifle':nz(dest,t,.09,'bandpass',1300,.8,.5);osc(dest,t,.1,'square',110,.16,45);break;
+    case'hit0':nz(dest,t,.08,'lowpass',520,1,.7);osc(dest,t,.07,'sine',190,.45,85);break;
+    case'hit1':nz(dest,t,.12,'bandpass',2300,1.3,.55,800);break;
+    case'hit2':osc(dest,t,.55,'sine',1230,.16);osc(dest,t,.42,'sine',1870,.09);osc(dest,t,.3,'sine',2930,.05);nz(dest,t,.03,'highpass',4200,.4,.3);break;
+    case'boom':nz(dest,t,.9,'lowpass',1900,.7,1,110);osc(dest,t,.65,'sine',72,.9,28);break;
+    case'bigboom':nz(dest,t,1.3,'lowpass',1500,.6,1,70);osc(dest,t,.9,'sine',60,1,22);break;
+    case'collapse':nz(dest,t,.55,'lowpass',950,.6,.75,140);osc(dest,t,.3,'sine',90,.3,40);break;
+    case'place0':osc(dest,t,.06,'sine',230,.5,120);osc(dest,t+.09,.06,'sine',210,.45,110);nz(dest,t,.05,'lowpass',700,1,.25);break;
+    case'place1':nz(dest,t,.28,'bandpass',650,2,.4,380);osc(dest,t+.2,.08,'sine',140,.3,70);break;
+    case'place2':nz(dest,t,.7,'highpass',3200,.5,.28);osc(dest,t,.7,'sawtooth',96,.06);osc(dest,t+.62,.4,'sine',1100,.08);break;
+    case'gather':osc(dest,t,.05,'triangle',540+rnd()*60,.1);break;
+    case'siren':osc(dest,t,1.8,'sine',260,.14,640);osc(dest,t,1.8,'sine',263,.1,646);break;
+    case'core':osc(dest,t,.32,'sine',82,.6,38);nz(dest,t,.1,'lowpass',300,1,.3);break;
+    case'hurt':osc(dest,t,.13,'square',210,.12,90);break;
+    case'drop':nz(dest,t,.16,'lowpass',420,1,.4);break;
+    case'lob':osc(dest,t,.12,'triangle',620,.1,300);break;
+    case'plant':osc(dest,t,.05,'square',1400,.12);osc(dest,t+.12,.05,'square',1400,.12);break;
+    case'beep':osc(dest,t,.04,'square',1800,.08);break;
+    case'revive':[330,440,550].forEach((f,i)=>osc(dest,t+i*.07,.15,'triangle',f,.12));break;
+    case'restock':osc(dest,t,.08,'triangle',700,.12);osc(dest,t+.08,.12,'triangle',940,.12);break;
+    case'deny':osc(dest,t,.1,'square',150,.08);break;
+    case'chat':osc(dest,t,.05,'sine',1320,.07);osc(dest,t+.06,.07,'sine',1760,.06);break;
+    case'win':[392,494,587,784].forEach((f,i)=>osc(master,t+i*.12,.5,'triangle',f,.14));break;
+    case'lose':[220,196,165].forEach((f,i)=>osc(master,t+i*.2,.6,'sawtooth',f,.08));break;
+  }
+}
+const buzz=ms=>{if(!cfg.haptics)return;try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}};
+

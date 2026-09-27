@@ -1,11 +1,14 @@
 import os,shutil,json,hashlib
 from PIL import Image,ImageDraw
-# Builds the playable site into the repo root (the folder above dev/), from dev/src/palisade.html.
+# Builds the playable site into the repo root (the folder above dev/), from the pieces in dev/src
+# (page.html + style.css + js/*.js, joined in file-name order by assemble.py).
 # Usage: python3 dev/build.py            (needs Python 3 + Pillow for the icons)
 DEV=os.path.dirname(os.path.abspath(__file__))
 SITE=os.path.dirname(DEV)
 os.makedirs(SITE,exist_ok=True)
-src=open(f'{DEV}/src/palisade.html',encoding='utf-8').read()
+import sys;sys.path.insert(0,DEV)
+from assemble import assemble
+src=assemble(f'{DEV}/src')
 head='''<!doctype html>
 <html lang="en">
 <head>
@@ -61,7 +64,9 @@ def minify(page):
     r=subprocess.run([t,'--compress','passes=2','--mangle','--ecma','2020'],input=page[a:e],capture_output=True,text=True)
     if r.returncode:raise SystemExit('terser failed: '+r.stderr[:500])
     return page[:a]+r.stdout+page[e:]
-src=minify(src);debug_src=minify(debug_src)
+src=minify(src)
+# NOMIN=1 leaves debug.html unminified (readable names in a profiler); index.html is always minified
+if not os.environ.get('NOMIN'):debug_src=minify(debug_src)
 open(f'{SITE}/index.html','w',encoding='utf-8').write(src)
 open(f'{SITE}/debug.html','w',encoding='utf-8').write(debug_src)
 shutil.copy(f'{DEV}/vendor/peerjs.min.js',f'{SITE}/peerjs.min.js')

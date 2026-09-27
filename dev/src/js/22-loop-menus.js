@@ -1,0 +1,163 @@
+/* ================= loop & menus ================= */
+let last=performance.now(),fpsN=0,fpsT=0;
+function frame(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  controlLocal(dt);
+  const every=demo&&!$('menu').hidden?($('menu').classList.contains('sub')||!$('caseOv').hidden?1/12:DESK?0:1/30):0;
+  demoAcc+=dt;const skip=every>0&&demoAcc<every,sdt=every?Math.min(.1,demoAcc):dt;if(!skip)demoAcc=0;
+  if(NET.mode==='guest'&&NET.inGame){updateParticles(dt);if(running())guestUpdate(dt)}
+  else{if(!skip)update(sdt);if(NET.mode==='host')hostNet(dt);else if(NET.mode==='guest')lobbyNet(dt)}
+  if(!$('menu').hidden&&!$('pg-locker').hidden)drawLockerPreview(now);
+  const wantCursor=playing()&&!touchMode&&!overlayOpen()?'none':'';if(cv.style.cursor!==wantCursor)cv.style.cursor=wantCursor;
+  if(!skip)render(sdt);musicTick();
+  if(demo&&game.phase==='over'){demoT+=dt;if(demoT>4)startDemo()}
+  const on=playing();
+  if(on&&!game.paused)hud(dt);else if(toastT>0&&!game.paused){toastT-=dt;if(toastT<=0)$('toast').classList.remove('on')}
+  $('top').hidden=!on;$('kit').hidden=!on;$('chat').hidden=!on||NET.mode==='solo';$('chatBtn').hidden=NET.mode==='solo';if(!on&&chatOpen())closeChat();$('keys').hidden=touchMode||!on;cls(document.body,'desk',!touchMode);$('tip').hidden=!on||!$('tipText').textContent;
+  fpsN++;fpsT+=now-(frame.prev||now);frame.prev=now;
+  if(fpsT>=1000){if(cfg.fps)$('fpsLab').textContent=Math.round(fpsN*1000/fpsT)+' FPS';fpsN=0;fpsT=0}
+  requestAnimationFrame(frame);
+}
+function startDemo(){
+  const keep=pick.diff,keepM=pick.mode,keepId=myId;pick.diff='easy';pick.mode='5';myId='demo';newGame([{id:'demo',name:'',cls:'soldier'}],'');pick.diff=keep;pick.mode=keepM;myId=keepId;
+  demo=true;demoT=0;game.timer=6;
+  player.alive=false;player.downed=false;player.rt=1e9;player.x=-3;player.y=-3;
+  setTip('');$('toast').classList.remove('on');
+}
+const PAGES=['main','solo','multi','lobby','locker','settings','account'];
+function showPage(p){
+  if(p==='multi'&&window.PEER_SRC){needPeer();getIce()}   // warm up online play while they pick a name
+  for(const id of PAGES)$('pg-'+id).hidden=id!==p;
+  $('menu').classList.toggle('sub',p!=='main');
+  if(p==='solo')showBest();
+  if(p==='multi'){syncPicks();$('mList').checked=cfg.listGame!==false;$('mListRow').hidden=!cloudOn}
+  lobbyBrowse(p==='multi');
+  if(p==='locker')renderLocker();
+  if(p==='main'&&lockerNote){$('saveNote').textContent=lockerNote;$('saveNote').hidden=false}
+  if(p==='main')mainLabels();
+  if(p==='account'){if(acct.state!=='wait'&&!acct.busy&&!acct.recovery)acct.msg=acct.hashMsg?acct.msg:'';renderAcct();acctResume()}
+  if(p==='locker')lockMsg('');
+  $('menu').querySelector('.panel').scrollTop=0;
+}
+let settingsFromPause=false;
+function openSettings(fromPause){settingsFromPause=fromPause;$('menu').hidden=false;$('pause').hidden=true;showPage('settings')}
+function closeSettings(){if(settingsFromPause){$('menu').hidden=true;$('pause').hidden=false}else showPage('main')}
+function applyCfg(){
+  if(master)master.gain.value=.55*cfg.volume;
+  $('sVol').value=Math.round(cfg.volume*100);$('sVolV').textContent=Math.round(cfg.volume*100)+'%';
+  $('sMus').value=Math.round(cfg.music*100);$('sMusV').textContent=Math.round(cfg.music*100)+'%';
+  $('sShake').value=Math.round(cfg.shake*100);$('sShakeV').textContent=Math.round(cfg.shake*100)+'%';
+  $('sHap').checked=cfg.haptics;$('sFps').checked=cfg.fps;$('fpsLab').hidden=!cfg.fps;
+  $('mName').value=cfg.name||'';
+}
+$('sVol').addEventListener('input',e=>{cfg.volume=e.target.value/100;applyCfg();saveCfg()});
+$('sMus').addEventListener('input',e=>{cfg.music=e.target.value/100;applyCfg();saveCfg()});
+$('sShake').addEventListener('input',e=>{cfg.shake=e.target.value/100;applyCfg();saveCfg()});
+$('sHap').addEventListener('change',e=>{cfg.haptics=e.target.checked;saveCfg();if(cfg.haptics)buzz(30)});
+$('sFps').addEventListener('change',e=>{cfg.fps=e.target.checked;applyCfg();saveCfg()});
+$('mName').addEventListener('input',e=>{cfg.name=e.target.value.slice(0,12);saveCfg()});
+$('mList').addEventListener('change',e=>{cfg.listGame=e.target.checked;saveCfg()});
+$('sDone').addEventListener('click',closeSettings);
+$('sExport').addEventListener('click',()=>openSaveOv('export'));
+$('sImport').addEventListener('click',()=>openSaveOv('import'));
+$('saveClose').addEventListener('click',closeSaveOv);
+$('saveCopy').addEventListener('click',()=>{const ta=$('saveText'),done=()=>{$('saveMsg').textContent='Copied. Paste it somewhere safe.'};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(ta.value).then(done,()=>{ta.select();try{document.execCommand('copy');done()}catch(e){$('saveMsg').textContent='Select the code and copy it.'}});
+  else{ta.select();try{document.execCommand('copy');done()}catch(e){$('saveMsg').textContent='Select the code and copy it.'}}});
+$('saveDl').addEventListener('click',()=>{const a=document.createElement('a'),url=URL.createObjectURL(new Blob([$('saveText').value+'\n'],{type:'text/plain'}));
+  a.href=url;a.download=saveFileName();document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);$('saveMsg').textContent='Saved as '+saveFileName()+'.'});
+$('saveCheck').addEventListener('click',()=>checkImport($('saveText').value));
+$('saveText').addEventListener('input',()=>{if(saveMode==='import'){$('saveConfirm').hidden=true;savePending=null}});
+$('saveFileBtn').addEventListener('click',()=>$('saveFile').click());
+$('saveFile').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;
+  if(f.size>200000){$('saveMsg').textContent='That file is too big to be a save.';return}
+  f.text().then(t=>{$('saveText').value=t.trim();checkImport(t)},()=>{$('saveMsg').textContent='Could not read that file.'})});
+$('saveConfirm').addEventListener('click',()=>{if(!savePending)return;
+  if(locker.cloud){const d=savePending;savePending=null;$('saveConfirm').hidden=true;$('saveMsg').textContent='Bringing it into your account…';
+    rpc('import_local_save',{p_save:d.locker}).then(r=>{
+      if(r.ok){takeLocker(r.j);restoreExtras(d);$('saveMsg').textContent='Added to your account. Items, cases and shards from the code are merged in.';sfx('restock',undefined,undefined,true)}
+      else $('saveMsg').textContent=!r.status?'Bringing a save into your account needs a connection.':/already/.test(sbErr(r))?'This account already took in a save once. Your locker is kept on your account now, so a save code isn\'t needed.':sbErr(r)});return}
+  restoreSave(savePending);savePending=null;$('saveConfirm').hidden=true;
+  $('saveMsg').textContent='Restored. Your locker is back.';sfx('restock',undefined,undefined,true);showPage('settings')});
+document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>{initAudio();if(NET.mode==='opening'||NET.mode==='joining'){netReset();mStatus('')}if(b.dataset.go==='settings')openSettings(false);else showPage(b.dataset.go)}));
+addEventListener('keydown',e=>{if(e.key==='Escape'&&e.target&&e.target.tagName==='INPUT'){e.target.blur();return}if(e.key==='Escape'&&!$('saveOv').hidden){closeSaveOv();return}if(e.key==='Escape'&&!$('armory').hidden){closeArmory();return}if(e.key==='Escape'&&!$('menu').hidden){if(!$('pg-settings').hidden)closeSettings();else if(!$('pg-lobby').hidden)netLeave('');else showPage('main')}});
+function enterGame(){$('menu').hidden=true;$('over').hidden=true;$('pause').hidden=true;$('armory').hidden=true;$('caseOv').hidden=true;game.paused=false;freeSticks();hud(0)}
+function start(){initAudio();netReset();demo=false;newGame(null,'');enterGame()}
+function again(){if(NET.mode==='host')startOnline();else start()}
+function leaveRun(){
+  if(demo||!running()||game.pvp||game.phase==='over'||game.rewarded||!player)return;
+  const held=game.phase==='build'?game.wave:Math.max(0,game.wave-1);if(!held&&!game.bosses)return;
+  game.rewarded=true;const t=lockerReward(held,false,player.kills|0);if(t&&!locker.cloud)toast('RUN SAVED',t);
+}
+function toMenu(){leaveRun();game.paused=false;NET.inGame=false;$('pause').hidden=true;$('over').hidden=true;$('armory').hidden=true;$('menu').hidden=false;showPage('main');startDemo()}
+function abandon(){if(NET.mode!=='solo')netLeave('');else toMenu()}
+// class + threat pickers exist on the Solo and Multiplayer pages; keep them in step
+function syncPicks(){
+  document.querySelectorAll('.cls').forEach(x=>x.classList.toggle('sel',x.dataset.c===pick.cls));
+  document.querySelectorAll('[data-mc]').forEach(x=>x.classList.toggle('sel',x.dataset.mc===pick.cls));
+  document.querySelectorAll('#diff button,[data-md]').forEach(x=>x.classList.toggle('sel',(x.dataset.d||x.dataset.md)===pick.diff));
+  document.querySelectorAll('[data-m5],[data-mm]').forEach(x=>x.classList.toggle('sel',(x.dataset.m5||x.dataset.mm)===pick.mode));
+  document.querySelectorAll('[data-pv]').forEach(x=>x.classList.toggle('sel',x.dataset.pv===pick.pvp));
+  $('coopOpts').hidden=pick.pvp!=='coop';
+  $('pvDesc').textContent={coop:'Everyone against the raiders, with Dell. Pick how long and how hard.',
+    base:`Two crews, two stakes. ${PVP.truce} seconds of truce to gather and wall in, then knock down theirs. Kills pay salvage for the armory. No raiders, no Dell.`,
+    ffa:`Everyone for themselves around concrete cover that can't be broken. First to ${PVP.ffaGoal} drops, or the most after ${PVP.ffaTime/60} minutes. No building.`}[pick.pvp]||'';
+}
+document.querySelectorAll('[data-pv]').forEach(b=>b.addEventListener('click',()=>{pick.pvp=b.dataset.pv;syncPicks()}));
+document.querySelectorAll('[data-m5]').forEach(b=>b.addEventListener('click',()=>{pick.mode=b.dataset.m5;syncPicks();showBest()}));
+document.querySelectorAll('[data-mm]').forEach(b=>b.addEventListener('click',()=>{pick.mode=b.dataset.mm;syncPicks()}));
+document.querySelectorAll('.cls').forEach(b=>b.addEventListener('click',()=>{pick.cls=b.dataset.c;syncPicks()}));
+document.querySelectorAll('[data-mc]').forEach(b=>b.addEventListener('click',()=>{pick.cls=b.dataset.mc;syncPicks()}));
+document.querySelectorAll('#diff button').forEach(b=>b.addEventListener('click',()=>{pick.diff=b.dataset.d;syncPicks();showBest()}));
+document.querySelectorAll('[data-md]').forEach(b=>b.addEventListener('click',()=>{pick.diff=b.dataset.md;syncPicks()}));
+$('startBtn').addEventListener('click',start);$('againBtn').addEventListener('click',again);$('menuBtn').addEventListener('click',abandon);
+$('resumeBtn').addEventListener('click',togglePause);$('quitBtn').addEventListener('click',abandon);
+$('pSetBtn').addEventListener('click',()=>openSettings(true));
+$('hostBtn').addEventListener('click',()=>{initAudio();if(NET.mode==='solo')netHost()});
+$('joinBtn').addEventListener('click',()=>{initAudio();if(NET.mode==='solo')netJoin($('mCode').value)});
+$('mCode').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('joinBtn').click()}});
+$('lStart').addEventListener('click',()=>{initAudio();startOnline()});
+$('lLeave').addEventListener('click',()=>netLeave(''));
+$('shareBtn').addEventListener('click',()=>{
+  const url=location.origin+location.pathname+'?room='+NET.code,text=`Join my PALISADE crew. Room ${NET.code}.`;
+  if(navigator.share)navigator.share({title:'PALISADE',text,url}).catch(()=>{});
+  else if(navigator.clipboard)navigator.clipboard.writeText(url).then(()=>{$('lNote').textContent='Invite link copied. Paste it to your crew.'},()=>{$('lNote').textContent=url});
+  else $('lNote').textContent=url;
+});
+function showLobby(){$('menu').hidden=false;showPage('lobby');renderLobby()}
+function renderLobby(){
+  $('lCode').textContent=NET.code||'····';
+  const ul=$('lList');ul.textContent='';
+  const base=pick.pvp==='base';
+  for(const r of NET.roster){const li=document.createElement('li'),tm=TEAMS[r.team]||TEAMS.a;
+    li.textContent=`${r.name.toUpperCase()} · ${CLASSES[r.cls].name}${base?' · '+tm.name:''}${r.id==='host'?' · HOST':''}${r.id===myId?' · YOU':''}`;
+    if(base)li.style.borderLeftColor=tm.col;else if(pick.pvp==='ffa')li.style.borderLeftColor='#e0664a';ul.append(li)}
+  if(pick.pvp==='coop'){const dl=document.createElement('li');dl.className='ai';dl.textContent='DELL · SUPPLY RUNNER · AI';ul.append(dl)}
+  const host=NET.mode==='host';$('lStart').hidden=!host;$('shareBtn').hidden=false;$('lTeam').hidden=!base;
+  $('lStart').textContent=pick.pvp==='coop'?'RAISE THE FENCE':'START THE FIGHT';
+  const len=pick.mode==='endless'?'endless':pick.mode+' raids',what=pick.pvp==='base'?'Base battle':pick.pvp==='ffa'?'Free-for-all':`Co-op · ${len} · threat: ${DIFF[pick.diff].name.toLowerCase()}`;
+  const block=lobbyBlock();
+  $('lNote').textContent=host?`${NET.roster.length} of 6 in the room · ${what}. ${block||'Share the code, then start when everyone is in.'}`:`Waiting for the host to start · ${what}.`;
+}
+$('lTeam').addEventListener('click',()=>{initAudio();if(NET.mode==='host'){const r=NET.roster.find(x=>x.id==='host');if(r){r.team=r.team==='b'?'a':'b';broadcastLobby()}}else if(NET.mode==='guest')NET.toHost({t:'team'})});
+// the Multiplayer page needs the matchmaking library; the in-Claude preview doesn't ship it
+if(!canOnline()){$('hostBtn').disabled=true;$('joinBtn').disabled=true;$('mOffline').hidden=false}
+
+/* ---------- install as an app ---------- */
+const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const iOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const ownSite=canOnline()&&location.protocol==='https:';
+if(ownSite&&!standalone&&iOS)$('installTip').hidden=false;
+let installEvt=null;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;if(!standalone)$('installBtn').hidden=false});
+$('installBtn').addEventListener('click',async()=>{if(!installEvt)return;installEvt.prompt();try{await installEvt.userChoice}catch(e){}installEvt=null;$('installBtn').hidden=true});
+if(ownSite&&'serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+applyCfg();syncPicks();startDemo();showPage('main');
+// accounts start after the first screen is up, so a slow connection never holds up the menu
+if(cloudOn)setTimeout(acctBoot,400);
+const invite=new URLSearchParams(location.search).get('room');
+if(invite&&canOnline()){$('mCode').value=invite.toUpperCase().slice(0,4);showPage('multi');mStatus(`You're invited to room ${invite.toUpperCase().slice(0,4)}. Pick your name and job, then tap JOIN.`)}
+if(new URLSearchParams(location.search).has('debug'))window.__pal={get ctx(){return g},get mus(){return mus},get AC(){return AC},musicWant,caseTick,MUSIC,get parts(){return parts},profOn(f){PROF={a:{},k:'x',f,t:performance.now()}},prof(){const o={};for(const k in PROF.a)if(k!=='end'&&k!=='x')o[k]=+PROF.a[k].toFixed(1);return o},get locker(){return locker},lockerReward:(...a)=>lockerReward(...a),openCase:()=>openCase(),buyUpgrade:(p,k)=>buyUpgrade(p,k),render,update,NET,get players(){return players},get player(){return player},get game(){return game},get enemies(){return enemies},get walls(){return walls},get core(){return core},get cores(){return cores},get bullets(){return bullets},startRaid:()=>startRaid(),scr:(x,y)=>{const c=iso(x,y);return[c[0],c[1]-WH*.55]},endPvp:w=>endPvp(w),hurtPlayer:(p,d,o)=>hurtPlayer(p,d,o),explode:(...a)=>explode(...a),buildEval:(...a)=>buildEval(...a),doBuild:(...a)=>doBuild(...a),acct,acctBoot,syncLocker,flushClaims,get claims(){return claims},showOver:()=>showOver(),showPage:x=>showPage(x),toMenu:()=>toMenu(),refreshLobbies:()=>refreshLobbies(),damageWall:(...a)=>damageWall(...a),spawnBoss:k=>spawnBoss(k),get rockets(){return rockets},get fires(){return fires},get zaps(){return zaps},get slashes(){return slashes},makePlayer:(...a)=>makePlayer(...a),get qm(){return qm},bdmg:b=>bdmg(b),makeWall:(...a)=>makeWall(...a),get walls2(){return walls},COS,CASES,rollCase:id=>rollCase(id),killFx:(...a)=>killFx(...a),renderLocker:()=>renderLocker(),playerLook:p=>playerLook(p),pvpReward:(w,k)=>pvpReward(w,k),bodyUnder,dellGun,salvageShards,iso,localSprint,renderArmory,CLASSES,burstN,burstGap,get light(){return light},get camX(){return camX},get camY(){return camY},get u(){return u},setMouse(x,y,d){mouse.x=x;mouse.y=y;mouse.seen=true;mouse.down=!!d}};
+if(window.PEER_SRC&&invite)needPeer();   // otherwise it loads when the Multiplayer page opens
+requestAnimationFrame(frame);

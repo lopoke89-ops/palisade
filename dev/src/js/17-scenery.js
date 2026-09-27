@@ -1,0 +1,280 @@
+/* ---------- forest, fence and cached scenery ---------- */
+// Scenery that never moves is painted once into two offscreen canvases (behind and in
+// front of the action) instead of every frame. Near trees fade when someone walks behind.
+const BAND=7;
+const treesBack=[],treesFront=[];
+(function genForest(){
+  for(let j=-BAND;j<N+BAND;j++)for(let i=-BAND;i<N+BAND;i++){
+    if(i>=0&&j>=0&&i<N&&j<N)continue;
+    const dx=i<0?-i:(i>=N?i-N+1:0),dy=j<0?-j:(j>=N?j-N+1:0),d=Math.max(dx,dy),front=i>=N||j>=N;
+    const h=hash(i*3+101,j*7+13),v=hash(i+57,j+211),x=i+.2+hash(i+5,j+9)*.6,y=j+.2+hash(i+17,j+3)*.6;
+    let t=null;
+    if(d>=(front?3:2)&&h>.3)t={x,y,kind:v>.93?1:0,v,h:56+v*30+(d-2)*2};
+    else if(d>=1&&h>.8)t={x,y,kind:v>.35?2:3,v,h:0};
+    if(t)t.a=1;
+    if(t)(front?treesFront:treesBack).push(t);
+  }
+  treesBack.sort((a,b)=>a.x+a.y-b.x-b.y);treesFront.sort((a,b)=>a.x+a.y-b.x-b.y);
+})();
+function drawTree(t,alpha){const c=iso(t.x,t.y);drawTreeAt(t,c[0],c[1],alpha)}
+function drawTreeAt(t,cx,cy,alpha){
+  g.save();g.translate(cx,cy);g.scale(u,u);g.globalAlpha=alpha;
+  if(t.kind===0){
+    oval(5,1,17,7,'rgba(0,0,0,.3)');
+    g.fillStyle='#120d0a';g.fillRect(-3.2,-13,6.4,13);g.fillStyle='#45301f';g.fillRect(-2.4,-13,4.8,12.4);
+    const light=mix('#3d5a35','#4b5d34',t.v),dk=mix('#223620','#2a3a22',t.v);
+    for(let k=0;k<3;k++){
+      const by=-9-k*t.h*.2,w=(19-k*4.8)*(.9+t.v*.3),ty=by-t.h*.44;
+      const L=[-w,by],R=[w,by],A=[0,ty],M=[0,by+3.5];
+      P([L,A,M],light,false);P([M,A,R],dk,false);
+      g.strokeStyle=OUT;g.lineWidth=1.1;g.beginPath();g.moveTo(L[0],L[1]);g.lineTo(A[0],A[1]);g.lineTo(R[0],R[1]);g.lineTo(M[0],M[1]);g.closePath();g.stroke();
+    }
+  }else if(t.kind===1){
+    const top=[0,-t.h*.8];seg([0,0],top,OUT,5);seg([0,0],top,'#3d3326',3.4);
+    for(const[f,sgn,len]of[[.45,-1,10],[.6,1,8],[.72,-1,6]]){const p0=[0,-t.h*.8*f],p1=[p0[0]+sgn*len,p0[1]-len*.7];seg(p0,p1,OUT,3.2);seg(p0,p1,'#3d3326',1.8)}
+  }else if(t.kind===2){
+    const g1=mix('#2c4127','#394a2a',t.v),blobs=[[-4,-4,6],[4,-3.5,5.5],[0,-7,6]];
+    for(const b of blobs)disc(b[0],b[1],b[2]+.9,OUT);for(const b of blobs)disc(b[0],b[1],b[2],g1);disc(-2,-9,2.5,mix(g1,'#ffffff',.12));
+  }else{
+    g.fillStyle='#3a2b1c';g.fillRect(-5,-6,10,6);oval(0,-6,5,2.4,'#806645');oval(0,0,5,2.4,'#3a2b1c');
+  }
+  g.restore();
+}
+function drawFence(a,b){
+  const pa=iso(a[0],a[1]),pb=iso(b[0],b[1]);
+  for(const h of[WH*.32,WH*.62]){g.lineWidth=3.4*u;g.strokeStyle=OUT;g.beginPath();g.moveTo(pa[0],pa[1]-h);g.lineTo(pb[0],pb[1]-h);g.stroke();
+    g.lineWidth=2*u;g.strokeStyle='#5d4832';g.stroke()}
+  for(const p of[pa,pb]){g.fillStyle=OUT;g.fillRect(p[0]-2.2*u,p[1]-WH*.85,4.4*u,WH*.85);g.fillStyle='#4a3a28';g.fillRect(p[0]-1.4*u,p[1]-WH*.82,2.8*u,WH*.82)}
+}
+function paintBack(){
+  quad(iso(-BAND-6,-BAND-6),iso(N+BAND+6,-BAND-6),iso(N+BAND+6,N+BAND+6),iso(-BAND-6,N+BAND+6),'#151a12');
+  for(let j=-BAND;j<N+BAND;j++)for(let i=-BAND;i<N+BAND;i++){
+    if(i>=0&&j>=0&&i<N&&j<N)continue;
+    const dx=i<0?-i:(i>=N?i-N+1:0),dy=j<0?-j:(j>=N?j-N+1:0),d=Math.max(dx,dy),h=hash(i+400,j+77);
+    const col=d===1?(h<.5?'#342d21':'#2f2a1e'):mix(mix('#1f2518','#262c1b',h),'#171c13',clamp((d-2)/6,0,1));
+    quad(iso(i,j),iso(i+1,j),iso(i+1,j+1),iso(i,j+1),col);
+    if(d>=2&&h>.55){const c=iso(i+.3+h*.4,j+.5);g.strokeStyle='rgba(107,84,51,.35)';g.lineWidth=u;g.beginPath();g.moveTo(c[0],c[1]);g.lineTo(c[0]+4*u,c[1]-u);g.stroke()}
+    else if(d===1&&h>.7){const c=iso(i+.5,j+.5);oval(c[0],c[1],7*u,2.6*u,'rgba(84,104,64,.35)')}
+  }
+  for(const t of treesBack)drawTree(t,1);
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){
+    const h=hash(i,j);quad(iso(i,j),iso(i+1,j),iso(i+1,j+1),iso(i,j+1),h<.2?'#3d3528':h<.75?'#352e23':'#2f291f');
+    if(h>.86){const c=iso(i+.5,j+.5);oval(c[0]+(h-.9)*40*u,c[1],6*u,2.5*u,'rgba(84,104,64,.35)')}
+  }
+  g.strokeStyle='rgba(0,0,0,.22)';g.lineWidth=1;g.beginPath();
+  for(let s=0;s<=N;s++){let a=iso(s,0),b=iso(s,N);g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);a=iso(0,s);b=iso(N,s);g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1])}g.stroke();
+  for(let s=0;s<N;s++){drawFence([s,0],[s+1,0]);drawFence([0,s],[0,s+1])}
+}
+// Near side of the yard. When someone walks behind a tree, only the small patch around that
+// tree is redrawn in the cached image, never the whole thing (a full redraw was the hitch).
+function paintFront(){
+  for(let s=0;s<N;s++){drawFence([s,N],[s+1,N]);drawFence([N,s],[N,s+1])}
+  for(const t of treesFront)drawTree(t,t.a);
+}
+function treeBox(t){const c=iso(t.x,t.y),top=(t.kind<2?t.h*.9+16:20)*u;return[c[0]-28*u,c[1]-top,c[0]+28*u,c[1]+12*u]}
+function repaintTrees(changed){
+  const c=caches.front,ctx=c.cv.getContext('2d');ctx.setTransform(c.s,0,0,c.s,0,0);
+  const kg=g,kx=camX,ky=camY;g=ctx;camX=-c.minX;camY=-c.minY;
+  try{for(const ch of changed){
+    const[x0,y0,x1,y1]=treeBox(ch);g.save();g.beginPath();g.rect(x0,y0,x1-x0,y1-y0);g.clip();g.clearRect(x0,y0,x1-x0,y1-y0);
+    for(let s=0;s<N;s++){drawFence([s,N],[s+1,N]);drawFence([N,s],[N,s+1])}
+    for(const t of treesFront){const b=treeBox(t);if(b[2]<x0||b[0]>x1||b[3]<y0||b[1]>y1)continue;drawTree(t,t.a)}
+    g.restore()}}finally{g=kg;camX=kx;camY=ky}
+}
+let caches=null,fadeT=0;
+function paintCache(c,fn){
+  const ctx=c.cv.getContext('2d');ctx.setTransform(c.s,0,0,c.s,0,0);if(c===caches.back){ctx.fillStyle='#10140e';ctx.fillRect(0,0,c.w,c.h)}else ctx.clearRect(0,0,c.w,c.h);
+  const kg=g,kx=camX,ky=camY;g=ctx;camX=-c.minX;camY=-c.minY;
+  try{fn()}finally{g=kg;camX=kx;camY=ky}
+}
+function makeCaches(){
+  const minX=-(N+2*BAND)*TW2-40*u,maxX=(N+2*BAND)*TW2+40*u,minY=-2*BAND*TH2-120*u,maxY=(2*N+2*BAND)*TH2+20*u;
+  const budget=DESK?2.4e7:7.4e6;let sc=DPR;if((maxX-minX)*(maxY-minY)*sc*sc>budget)sc=Math.sqrt(budget/((maxX-minX)*(maxY-minY)));
+  const x0=Math.floor(minX*sc)/sc,y0=Math.floor(minY*sc)/sc,pw=Math.ceil((maxX-x0)*sc),ph=Math.ceil((maxY-y0)*sc);
+  const mk=opaque=>{const cv2=document.createElement('canvas');cv2.width=pw;cv2.height=ph;const c={cv:cv2,s:sc,w:pw/sc,h:ph/sc,minX:x0,minY:y0};
+    if(opaque){const x=cv2.getContext('2d',{alpha:false});x.fillStyle='#10140e';x.fillRect(0,0,pw,ph)}return c};
+  caches={back:mk(true),front:mk(false)};
+  paintCache(caches.back,paintBack);paintCache(caches.front,paintFront);
+  caches.front.tiles=frontTiles(caches.front);
+}
+// the front layer (fence + front trees) is mostly empty: find the tiles that hold something, from the
+// trees' and fence's own bounds, and draw only those (a full-screen transparent draw costs as much as an opaque one)
+function frontTiles(c){
+  const T=128,cols=Math.ceil(c.cv.width/T),rows=Math.ceil(c.cv.height/T),on=new Uint8Array(cols*rows);
+  const kx=camX,ky=camY;camX=-c.minX;camY=-c.minY;
+  const mark=(x0,y0,x1,y1)=>{const m=6*u;for(let r=Math.max(0,Math.floor((y0-m)*c.s/T));r<=Math.min(rows-1,Math.floor((y1+m)*c.s/T));r++)
+    for(let q=Math.max(0,Math.floor((x0-m)*c.s/T));q<=Math.min(cols-1,Math.floor((x1+m)*c.s/T));q++)on[r*cols+q]=1};
+  try{
+    for(const t of treesFront){const b=treeBox(t);mark(b[0],b[1],b[2],b[3])}
+    for(let q=0;q<N;q++)for(const[a,b]of[[[q,N],[q+1,N]],[[N,q],[N,q+1]]]){const A=iso(a[0],a[1]),B=iso(b[0],b[1]);
+      mark(Math.min(A[0],B[0]),Math.min(A[1],B[1])-WH*1.6,Math.max(A[0],B[0]),Math.max(A[1],B[1])+4*u)}
+  }finally{camX=kx;camY=ky}
+  const out=[];   // runs of neighbouring tiles in a row become one draw
+  for(let r=0;r<rows;r++)for(let q=0;q<cols;q++){if(!on[r*cols+q])continue;let e=q;while(e+1<cols&&on[r*cols+e+1])e++;
+    const sx=q*T,sy=r*T;out.push([sx,sy,Math.min(c.cv.width,(e+1)*T)-sx,Math.min(c.cv.height,(r+1)*T)-sy]);q=e}
+  return out;
+}
+function updateFades(){
+  const who=[];if(!demo)for(const p of players.values())if(p.alive||p.downed)who.push(p);who.push(qm);for(const e of enemies)who.push(e);
+  const changed=[];
+  for(const t of treesFront){if(t.kind>=2)continue;const td=t.x+t.y,tl=t.x-t.y;let f=false;
+    for(const p of who){const dd=td-(p.x+p.y);if(dd>0&&dd<5.5&&Math.abs((p.x-p.y)-tl)<1.6){f=true;break}}
+    const a=f?.32:1;if(t.a!==a){t.a=a;changed.push(t)}}
+  if(changed.length)repaintTrees(changed);
+}
+const drawCache=c=>{
+  if(!c.tiles){g.drawImage(c.cv,camX+c.minX,camY+c.minY,c.w,c.h);return}
+  const ox=camX+c.minX,oy=camY+c.minY;
+  for(const[sx,sy,sw,sh]of c.tiles){const dx=ox+sx/c.s,dy=oy+sy/c.s,dw=sw/c.s,dh=sh/c.s;
+    if(dx>W||dy>H||dx+dw<0||dy+dh<0)continue;g.drawImage(c.cv,sx,sy,sw,sh,dx,dy,dw,dh)}
+};
+function drawLighting(){
+  if(light.L<.03&&light.warm<.01)return;
+  // dusk's warm grade used to be a full-screen 'soft-light' pass (~5 ms a frame on phones). It's folded into the shade:
+  // one plain tint that matches the old look within ~2/255 per channel (fitted against the old two-pass image).
+  const warm=light.warm;
+  const shade=`rgba(${(light.r+warm*428)|0},${(light.g+warm*214)|0},${light.b|0},${light.L+warm*.57})`;
+  // daylight is a flat 12% tint with no pools of light, so it goes straight onto the frame (one pass instead of three)
+  if(light.L<=.25){g.fillStyle=shade;g.fillRect(0,0,W,H);return}
+  lg.globalCompositeOperation='copy';lg.fillStyle=shade;lg.fillRect(0,0,W,H);
+  lg.globalCompositeOperation='destination-out';
+  // holes are stamped 1:1 from soft dots pre-drawn at device pixels (stretching the 64 px dot up every frame cost ~5 ms at night)
+  const sc=DPR*LQ;lg.setTransform(1,0,0,1,0,0);
+  const hole=(x,y,r,s)=>{const c=holeDot(r*sc);lg.globalAlpha=Math.min(1,s);lg.drawImage(c,Math.round(x*sc)-(c.width>>1),Math.round(y*sc)-(c.width>>1))};
+  const at=(x,y,z=0)=>{const c=iso(x,y);return[c[0],c[1]-z]};
+  if(light.L>.25){
+    let c=at(player.x,player.y,WH*.5);if(!demo)hole(c[0],c[1],TW2*3.4,.95);
+    if(!demo)for(const o of players.values())if(o!==player&&o.alive){c=at(o.x,o.y,WH*.5);hole(c[0],c[1],TW2*2.2,.8)}
+    if(qm.alive){c=at(qm.x,qm.y,WH*.5);hole(c[0],c[1],TW2*1.8,.7)}
+    for(const k of cores){c=at(k.i+.5,k.j+.5,WH);hole(c[0],c[1],TW2*3,.85)}
+    for(const e of enemies){c=at(e.x,e.y,WH*.5);hole(c[0],c[1],TW2*.9,.45)}
+    for(let k=0;k<N*N;k++){const w=walls[k];if(w&&w.fire>0){c=at(k%N+.5,((k/N)|0)+.5,WH);hole(c[0],c[1],TW2*2,.8)}}
+    for(const kiln of nodes)if(kiln.type===1&&!kiln.locked){c=at(kiln.i+.5,kiln.j+.5,WH*.3);hole(c[0],c[1],TW2*1.6,.6)}
+    for(const ch of charges){c=at(ch.x,ch.y);hole(c[0],c[1],TW2*.7,.7)}
+  }
+  for(const f of flashes){const c=at(f.x,f.y,WH*.5),a=f.life/f.max;hole(c[0],c[1],TW2*(f.muzzle?2:4.5)*f.r*.6,a)}
+  lg.globalAlpha=1;lg.setTransform(sc,0,0,sc,0,0);g.drawImage(lc,0,0,W,H);
+}
+// soft round dots for the light holes, one per size (radius in device pixels, rounded to 3 px; at most ~48 kept)
+// (and the same for the warm flash glows)
+const HOLE_DOTS=new Map(),GLOW_DOTS=new Map(),SOFT_HOLE=[[0,'rgba(0,0,0,1)'],[1,'rgba(0,0,0,0)']],SOFT_GLOW=[[0,'rgba(255,210,130,.55)'],[1,'rgba(255,150,60,0)']];
+function softDot(M,rpx,stops){
+  const k=Math.max(3,Math.round(rpx/3)*3);let c=M.get(k);if(c)return c;
+  if(M.size>48)M.clear();
+  c=document.createElement('canvas');c.width=c.height=k*2;const x=c.getContext('2d'),gr=x.createRadialGradient(k,k,0,k,k,k);
+  for(const[o,col]of stops)gr.addColorStop(o,col);x.fillStyle=gr;x.fillRect(0,0,k*2,k*2);M.set(k,c);return c;
+}
+const holeDot=rpx=>softDot(HOLE_DOTS,rpx,SOFT_HOLE);
+// round soft-edged shapes drawn once, then stamped: a black dot for light holes, a warm glow for flashes
+const SOFT=(()=>{const mk=(stops)=>{const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),gr=x.createRadialGradient(32,32,0,32,32,32);
+  for(const[o,col]of stops)gr.addColorStop(o,col);x.fillStyle=gr;x.fillRect(0,0,64,64);return c};
+  return{dot:mk([[0,'rgba(0,0,0,1)'],[1,'rgba(0,0,0,0)']]),glow:mk([[0,'rgba(255,210,130,.55)'],[1,'rgba(255,150,60,0)']])}})();
+let vignette=null,vignetteDemo=null;
+function drawVignette(forDemo){
+  // centred where the camera keeps your soldier (the menu's demo: the middle of the screen)
+  if(forDemo){if(!vignetteDemo){const c=document.createElement('canvas'),s=Math.min(DPR,2);c.width=Math.ceil(W*s);c.height=Math.ceil(H*s);const x=c.getContext('2d');x.scale(s,s);
+    const gr=x.createRadialGradient(W/2,H/2,Math.min(W,H)*.25,W/2,H/2,Math.max(W,H)*.8);gr.addColorStop(0,'rgba(12,10,8,0)');gr.addColorStop(1,'rgba(12,10,8,.6)');x.fillStyle=gr;x.fillRect(0,0,W,H);vignetteDemo=c}
+    g.drawImage(vignetteDemo,0,0,W,H);return}
+  if(!vignette){const c=document.createElement('canvas'),s=Math.min(DPR,2);c.width=Math.ceil(W*s);c.height=Math.ceil(H*s);const x=c.getContext('2d');x.scale(s,s);
+    const cx=W*(W<760?.4:.5),cy=H*.52,gr=x.createRadialGradient(cx,cy,Math.min(W,H)*.25,cx,cy,Math.max(W,H)*.8);
+    gr.addColorStop(0,'rgba(12,10,8,0)');gr.addColorStop(1,'rgba(12,10,8,.6)');x.fillStyle=gr;x.fillRect(0,0,W,H);vignette=c}
+  g.drawImage(vignette,0,0,W,H);
+}
+let PROF=null;const PM=k=>{if(PROF){if(PROF.f)g.getImageData(0,0,1,1);const t=performance.now();PROF.a[PROF.k]=(PROF.a[PROF.k]||0)+t-PROF.t;PROF.k=k;PROF.t=t}};
+// the draw list: depth, draw function and its arguments, in reused arrays (sorted back to front, ties in insert order)
+const RI={n:0,d:[],f:[],a:[],b:[],o:[]};
+function ritem(d,f,a,b){const k=RI.n++;RI.d[k]=d;RI.f[k]=f;RI.a[k]=a;RI.b[k]=b}
+const byDepth=(x,y)=>RI.d[x]-RI.d[y]||x-y;
+function itemWall(k,cut){drawWall(k%N,(k/N)|0,walls[k],cut?.3:1)}
+function itemDebris(k){drawDebris(k%N,(k/N)|0,debris[k]-1)}
+function itemSack(s){const c=iso(s.x,s.y);g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(c[0],c[1],6*u,3*u,0,0,Math.PI*2);g.fill();g.fillStyle='#cbbf9f';g.beginPath();g.ellipse(c[0],c[1]-4*u,5*u,5*u,0,0,Math.PI*2);g.fill()}
+function itemCharge(c){const s=iso(c.x,c.y);g.fillStyle='#1a1510';g.fillRect(s[0]-5*u,s[1]-5*u,10*u,6*u);if(Math.sin(game.time*(20-c.fuse*5))>0){g.fillStyle='#ff5a3a';g.beginPath();g.arc(s[0],s[1]-6*u,2*u,0,Math.PI*2);g.fill()}}
+function itemEnemy(e){
+  if(e.type==='boss'){const B=BOSSES[e.boss];if(B)drawPerson(e.x,e.y,Object.assign({aim:e.aim,walk:e.walk,flash:e.flash>0,hp:e.hp/e.max,big:1.45,tag:B.name,tagCol:B.col,swing:e.boss==='butcher'?e.st|0:0},B.look));return}
+  drawPerson(e.x,e.y,Object.assign({aim:e.aim,walk:e.walk,flash:e.flash>0,hp:e.hp/e.max,satchel:e.type==='breach'&&!e.planted},LOOK[e.type],{satchel:e.type==='breach'&&!e.planted}))}
+function itemQM(q){drawPerson(q.x,q.y,Object.assign({aim:q.aim,walk:q.walk,flash:q.flash>0,tag:'DELL'},QM_LOOK))}
+function itemQMDown(q){drawDowned(q.x,q.y,QM_LOOK,q.revive/2,'DELL · DOWN')}
+function itemPlayer(o){
+  const p=player,PL=playerLook(o),me=o===p,tag=me||players.size<2?null:o.name.toUpperCase();
+  if(game.pvp){PL.mark=teamCol(o);if(game.pvp==='base')PL.ring=teamCol(o);else if(me)PL.ring='#e2b436'}
+  const bf=NET.mode==='guest'?(o.boltF||0):(o.bolt>0?o.bolt/o.boltT:0);if(bf>0)PL.bolt=1-bf;
+  if(o.alive)drawPerson(o.x,o.y,Object.assign({aim:o.aim,walk:o.walk,flash:o.flash>0,tag,tagCol:game.pvp?teamCol(o):SLOTCOL[o.slot%6],faded:o.prot>0,hp:game.pvp&&!me&&o.hp<o.max?o.hp/o.max:undefined},PL));
+  else drawDowned(o.x,o.y,PL,o.revive/2.2,me?`DOWN · ${Math.ceil(o.rt)}`:`${o.name.toUpperCase()} · DOWN`);
+}
+function render(dt){
+  PM('pre');const p=player;
+  if(!caches)makeCaches();
+  fadeT-=dt;if(fadeT<=0){fadeT=.1;updateFades()}
+  let fx=p.x,fy=p.y,cxF=W<760?.4:.5,cyF=.52; // keep the east approach clear of the kit column on phones
+  if(demo){const t=game.time*.07;fx=core.i+2.5+Math.cos(t)*2.5;fy=core.j-2+Math.sin(t)*2;cxF=W>700?.66:.5;cyF=W>700?.5:.3}
+  const tx=W*cxF-(fx-fy)*TW2,ty=H*cyF-(fx+fy)*TH2;
+  camSX+=(tx-camSX)*.14;camSY+=(ty-camSY)*.14;
+  const sh=shakeOffset(dt);camX=snapPx(camSX+sh[0]);camY=snapPx(camSY+sh[1]);
+  const bk=caches.back,bx=camX+bk.minX,by=camY+bk.minY;
+  if(!(bx<=0&&by<=0&&bx+bk.w>=W&&by+bk.h>=H)){g.fillStyle='#10140e';g.fillRect(0,0,W,H)}
+  PM('back');drawCache(caches.back);PM('items');
+  if(game.pvp==='base'&&game.phase==='build'&&!demo){const a=iso(0,0),b=iso(N,N);g.save();g.strokeStyle='rgba(226,180,54,.55)';g.lineWidth=2*u;g.setLineDash([7*u,6*u]);g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();g.restore();
+    const m=iso(N*.5,N*.5);label('TRUCE LINE',m[0],m[1]+14*u,'rgba(226,180,54,.8)',11)}
+  RI.n=0;const pd=p.x+p.y,pl=p.x-p.y;
+  for(let k=0;k<N*N;k++){
+    const i=k%N,j=(k/N)|0;
+    if(walls[k]){const dd=i+j+1-pd,lat=(i-j)-pl;ritem(i+j+1,itemWall,k,dd>0&&dd<3.2&&Math.abs(lat)<1.7)}
+    else if(debris[k])ritem(i+j+.2,itemDebris,k);
+  }
+  for(const n of nodes)ritem(n.i+n.j+1,drawNode,n);
+  for(const c of cores)ritem(c.i+c.j+1,drawStake,c);
+  for(const s of sacks)ritem(s.x+s.y,itemSack,s);
+  for(const c of charges)ritem(c.x+c.y,itemCharge,c);
+  for(const e of enemies)ritem(e.x+e.y,itemEnemy,e);
+  if(qm.alive)ritem(qm.x+qm.y,itemQM,qm);else if(!qm.gone)ritem(qm.x+qm.y,itemQMDown,qm);
+  if(!demo)for(const o of players.values())if(o.alive||o.downed)ritem(o.x+o.y,itemPlayer,o);
+  if(playing()&&p.alive&&cfg.build&&game.pvp!=='ffa'){const t=buildTarget(p,game.sel,game.piece==='door');ritem(t.i+t.j+1.05,drawGhost,t)}
+  const O=RI.o;O.length=RI.n;for(let k=0;k<RI.n;k++)O[k]=k;O.sort(byDepth);
+  for(let q=0;q<RI.n;q++){const k=O[q];RI.f[k](RI.a[k],RI.b[k])}
+  RI.a.fill(null,0,RI.n);PM('bullets');
+  g.lineCap='round';
+  for(const b of bullets)drawTracer(b);
+  g.lineCap='butt';
+  for(const l of lobs){const t=l.t/l.T,x=l.x0+(l.x1-l.x0)*t,y=l.y0+(l.y1-l.y0)*t,z=Math.sin(Math.PI*t)*(40+Math.hypot(l.x1-l.x0,l.y1-l.y0)*9)*u+WH*.5*(1-t);
+    const c=iso(x,y);g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(c[0],c[1],3*u,1.5*u,0,0,Math.PI*2);g.fill();
+    g.fillStyle='#262219';g.beginPath();g.arc(c[0],c[1]-z,3*u,0,Math.PI*2);g.fill();
+    const e=iso(l.x1,l.y1);g.strokeStyle='rgba(214,90,58,.55)';g.lineWidth=1.2*u;g.beginPath();g.ellipse(e[0],e[1],TW2*l.R*.9*(1-t*.3),TH2*l.R*.9*(1-t*.3),0,0,Math.PI*2);g.stroke()}
+  PM('parts');for(const q of parts){const c=iso(q.x,q.y),a=Math.max(0,q.life/q.max);
+    if(q.kind==='bubble'){const r=q.size*u*(1.25-a*.25),cx=c[0]+Math.sin(game.time*4+q.h)*2*u,cy=c[1]-q.z;g.globalAlpha=Math.min(1,a*1.8);
+      g.fillStyle='rgba(255,226,130,.16)';g.beginPath();g.arc(cx,cy,r,0,Math.PI*2);g.fill();g.lineWidth=1.3*u;g.strokeStyle='#ffd24a';g.stroke();
+      g.lineWidth=.8*u;g.strokeStyle=`hsl(${(game.time*220+q.h)%360},95%,78%)`;g.beginPath();g.arc(cx,cy,r*.8,-2.4,-.6);g.stroke();
+      g.fillStyle='#fffbe8';g.fillRect(cx-r*.45,cy-r*.55,1.4*u,1.4*u);g.globalAlpha=1;continue}
+    if(q.c1){g.globalAlpha=Math.min(1,a*1.5);g.fillStyle=mix(q.c1,q.c2,Math.round((1-a)*16)/16);g.fillRect(c[0]-q.size*u/2,c[1]-q.z-q.size*u/2,q.size*u,q.size*u);g.globalAlpha=1;continue}
+    if(q.kind==='dust'||q.kind==='smoke'){g.globalAlpha=a*(q.kind==='smoke'?.5:.4);g.fillStyle=q.rgb||(q.rgb=q.col.replace('rgba','rgb').replace(/,$/,')'));g.beginPath();g.arc(c[0],c[1]-q.z,q.size*u*(1.6-a*.6),0,Math.PI*2);g.fill();g.globalAlpha=1}
+    else{g.globalAlpha=Math.min(1,a*1.5);g.fillStyle=q.col;g.fillRect(c[0]-q.size*u/2,c[1]-q.z-q.size*u/2,q.size*u,q.size*u);g.globalAlpha=1}}
+  PM('front');drawCache(caches.front);PM('light');
+  drawLighting();drawBossFx();PM('flash');
+  g.globalCompositeOperation='lighter';
+  // glows stamped 1:1 from pre-drawn sizes, like the light holes (stretching the 64 px glow was the slow part)
+  if(flashes.length){g.setTransform(1,0,0,1,0,0);
+    for(const f of flashes){const c=iso(f.x,f.y),a=f.life/f.max,r=TW2*f.r*(f.muzzle?1:2.2)*(f.muzzle?1:1.4-a*.4),im=softDot(GLOW_DOTS,r*DPR,SOFT_GLOW);
+      g.globalAlpha=a;g.drawImage(im,Math.round(c[0]*DPR)-(im.width>>1),Math.round((c[1]-WH*.5)*DPR)-(im.width>>1))}
+    g.setTransform(DPR,0,0,DPR,0,0)}
+  g.globalAlpha=1;
+  g.globalCompositeOperation='source-over';
+  drawVignette(demo);PM('floats');
+  for(const f of floats){const c=iso(f.x,f.y),a=f.life/f.max;g.globalAlpha=Math.min(1,a*2);label(f.t,c[0],c[1]-WH*1.5-(1-a)*24*u,f.col,11);g.globalAlpha=1}
+  PM('ui');if(playing()&&!overlayOpen())drawPrompts(p);
+  if(playing()&&p.alive&&!overlayOpen()){drawCrosshair(p);drawShells(p)}
+  const top=110;
+  for(const e of game.pvp&&!demo?foes():enemies){const c=iso(e.x,e.y);if(c[0]>14&&c[0]<W-14&&c[1]>top&&c[1]<H-14)continue;
+    const ex=clamp(c[0],18,W-18),ey=clamp(c[1],top+8,H-18),a=Math.atan2(c[1]-H/2,c[0]-W/2);
+    g.save();g.translate(ex,ey);g.rotate(a);if(e.type==='boss')g.scale(1.6,1.6);g.fillStyle=game.pvp?teamCol(e):e.type==='boss'?(BOSSES[e.boss]||{}).col||'#ff4a3a':e.type==='rifle'?'#d65a3a':e.type==='gren'?'#e2b436':'#ff8a5a';g.beginPath();g.moveTo(8,0);g.lineTo(-5,-6);g.lineTo(-5,6);g.closePath();g.fill();g.restore()}
+  if(!demo&&!game.pvp)drawBossBars(top);
+  if(touchMode&&playing()&&!game.paused){
+    for(const[s,lab]of[[stickMove,'MOVE'],[stickAim,'AIM · FIRE']]){
+      if(s.id!==null){g.strokeStyle='rgba(220,210,186,.35)';g.lineWidth=2;g.beginPath();g.arc(s.ox,s.oy,SR,0,Math.PI*2);g.stroke();
+        g.strokeStyle='rgba(226,180,54,.25)';g.beginPath();g.arc(s.ox,s.oy,SR*.5,0,Math.PI*2);g.stroke();
+        g.fillStyle=s===stickAim&&s.mag>.5?'rgba(226,180,54,.8)':'rgba(220,210,186,.55)';g.beginPath();g.arc(s.ox+s.vx*SR,s.oy+s.vy*SR,20,0,Math.PI*2);g.fill()}
+      else if(game.wave===0&&game.time<25){const x=s===stickMove?W*.2:W*.6,y=H-100;g.strokeStyle='rgba(220,210,186,.18)';g.lineWidth=2;g.beginPath();g.arc(x,y,SR*.8,0,Math.PI*2);g.stroke();
+        g.font='600 11px "IBM Plex Mono", monospace';g.textAlign='center';g.fillStyle='rgba(220,210,186,.45)';g.fillText(lab,x,y+4)}
+    }
+  }
+  PM('end');
+}
+

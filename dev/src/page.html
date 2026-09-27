@@ -1,0 +1,266 @@
+<title>Palisade Field Test</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil+Display:wght@600;800;900&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/*@@STYLE@@*/
+</style>
+
+<canvas id="game" aria-label="Palisade game field"></canvas>
+
+<div id="top" hidden>
+  <div class="vitals">
+    <div class="meter" id="hpM"><span class="lab">YOU</span><div class="track"><i id="hpF"></i></div><b id="hpN">100</b></div>
+    <div id="mates"></div>
+    <div class="meter" id="qmM"><span class="lab">DELL</span><div class="track"><i id="qmF"></i></div><b id="qmN">90</b></div>
+    <div class="meter" id="coreM"><span class="lab" id="coreL">CORE</span><div class="track"><i id="coreF"></i></div><b id="coreN">500</b></div>
+    <div class="meter" id="core2M" hidden><span class="lab">ENEMY</span><div class="track"><i id="core2F"></i></div><b id="core2N">700</b></div>
+  </div>
+  <div class="phase">
+    <div class="phaseRow"><div id="phaseLab">BUILD</div><button id="chatBtn" type="button" aria-label="Chat" hidden><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2 3h12v8H7l-3 3v-3H2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></button><button id="pauseBtn" type="button" aria-label="Pause">II</button></div>
+    <div id="phaseVal">0:40</div>
+    <div id="salv">SALVAGE <span id="salN">0</span></div>
+    <button id="skipBtn" type="button"><span id="skipLab">START RAID</span><kbd class="kc">ENTER</kbd></button>
+    <ol id="board" hidden></ol>
+    <div id="feed"></div>
+  </div>
+</div>
+<div id="tip" hidden><span id="tipText"></span></div>
+<div id="toast"></div>
+
+<div id="kit" hidden>
+  <button id="bmBtn" type="button" aria-pressed="true"><span id="bmLab">BUILD ON</span><kbd class="kc">B</kbd></button>
+  <div id="buildKit">
+  <div class="pieces"><button class="piece sel" id="pWall" type="button">WALL</button><button class="piece" id="pDoor" type="button">DOOR</button><kbd class="kc pk">F</kbd></div>
+  <button class="chip sel" data-m="0" id="c0" type="button"><span class="k">WOOD</span><kbd class="kc">1</kbd><span class="n" id="n0">0</span></button>
+  <button class="chip" data-m="1" id="c1" type="button"><span class="k">BRICK</span><kbd class="kc">2</kbd><span class="n" id="n1">0</span></button>
+  <button class="chip" data-m="2" id="c2" type="button"><span class="k">METAL</span><kbd class="kc">3</kbd><span class="n" id="n2">0</span></button>
+  <button id="buildBtn" type="button"><span id="buildAct">PLACE</span><span id="buildSub">WOOD · 4</span><kbd class="kc kb">SPACE</kbd></button>
+  </div>
+  <button id="armBtn" type="button" hidden><span id="armLab">ARMORY</span><kbd class="kc">E</kbd></button>
+  <button id="nadeBtn" type="button"><span>NADE</span><kbd class="kc">G</kbd><b id="nadeN">2</b></button>
+  <button id="sprBtn" type="button" hidden><span>SPRINT</span><kbd class="kc">SHIFT</kbd><b id="sprN">READY</b></button>
+</div>
+<div id="keys" hidden></div>
+<div id="chat" hidden><ol id="chatLog" aria-live="polite"></ol></div>
+<form id="chatBar" hidden autocomplete="off"><input id="chatIn" type="text" maxlength="120" enterkeyhint="send" placeholder="Say something · Enter sends · Esc closes" aria-label="Chat message" spellcheck="false"><button class="go" type="submit">SEND</button>
+  <div class="quick"><button type="button">NICE</button><button type="button">HELP!</button><button type="button">ON MY WAY</button><button type="button">WALL DOWN</button><button type="button">NEED MATS</button><button type="button">GG</button></div></form>
+
+<div id="fpsLab" hidden></div>
+
+<div id="menu">
+  <div class="panel">
+    <div class="eyebrow">FIELD TEST 03 · LUMBER YARD</div>
+    <h1>PALI<span class="cut">SADE</span></h1>
+    <p class="tag">Neighbors with rifles and a deadline.</p>
+
+    <section class="page" id="pg-main">
+      <nav class="mm">
+        <button type="button" data-go="solo">SOLO</button>
+        <button type="button" data-go="multi">MULTIPLAYER</button>
+        <button type="button" data-go="locker">LOCKER</button>
+        <button type="button" data-go="settings">SETTINGS</button>
+      </nav>
+      <p class="install" id="installTip" hidden>Play it like an app: tap <b>Share</b> <span aria-hidden="true">⎙</span> at the bottom of Safari, then <b>Add to Home Screen</b>.</p>
+      <button class="ghost" id="installBtn" type="button" hidden>INSTALL AS AN APP</button>
+      <button class="ghost acctBtn" id="acctBtn" type="button" data-go="account" hidden>ACCOUNT</button>
+      <p class="note" id="saveNote" hidden></p>
+      <p class="foot">v0.8.8 · phone and desktop · online co-op and PvP for up to six</p>
+    </section>
+
+    <section class="page" id="pg-account" hidden>
+      <h2 class="pt">ACCOUNT</h2>
+      <p class="lede" id="aLede"></p>
+      <p class="status" id="aStatus" role="status"></p>
+      <button class="go" id="aRetry" type="button" hidden>TRY AGAIN</button>
+      <form class="page acBox" id="aPwBox" hidden autocomplete="on" novalidate>
+        <h2 id="aPwHead">SET A PASSWORD</h2>
+        <p class="lede sm" id="aPwLede">So you can sign in on your other devices. At least 8 characters.</p>
+        <input type="email" id="aPwMail" autocomplete="username" hidden aria-hidden="true" tabindex="-1">
+        <div class="join"><input type="password" id="aPwIn" minlength="8" maxlength="72" autocomplete="new-password" placeholder="New password" aria-label="New password"><button class="go" type="submit">SAVE</button></div>
+      </form>
+      <form class="page acBox" id="aNameBox" hidden autocomplete="off" novalidate>
+        <h2>USERNAME</h2>
+        <p class="lede sm">What other players see. 3 to 16 letters, numbers or _.</p>
+        <div class="join"><input type="text" id="aUser" maxlength="16" placeholder="Pick a name" aria-label="Username" spellcheck="false" autocapitalize="off"><button class="go" type="submit">SAVE</button></div>
+      </form>
+      <form class="page acBox" id="aLinkBox" hidden autocomplete="on" novalidate>
+        <h2>KEEP IT ON ANY DEVICE</h2>
+        <p class="lede sm">Add your email. We send a link; open it on any device, then choose a password. Your locker stays as it is.</p>
+        <div class="join"><input type="email" id="aLinkMail" maxlength="254" autocomplete="email" placeholder="you@example.com" aria-label="Email"><button class="go" type="submit">SEND LINK</button></div>
+      </form>
+      <form class="page acBox" id="aInBox" hidden autocomplete="on" novalidate>
+        <h2 id="aInHead">HAVE AN ACCOUNT?</h2>
+        <input type="email" id="aInMail" maxlength="254" autocomplete="username" placeholder="Email" aria-label="Email">
+        <div class="join"><input type="password" id="aInPw" maxlength="72" autocomplete="current-password" placeholder="Password" aria-label="Password"><button class="go" type="submit">SIGN IN</button></div>
+        <button class="ghost sm" id="aForgot" type="button">FORGOT PASSWORD</button>
+      </form>
+      <div id="capBox" hidden></div>
+      <button class="ghost" id="aOut" type="button" hidden>SIGN OUT</button>
+      <button class="ghost" type="button" data-go="main">BACK</button>
+    </section>
+
+    <section class="page" id="pg-solo" hidden>
+      <h2 class="pt">SOLO</h2>
+      <p class="lede">Hold the stake through the raids. Short runs end at night; Endless keeps coming and cycles day to night. Dell gathers, repairs, restocks and picks you up when you drop. Drop raiders for salvage and spend it at the stake between raids.</p>
+      <h2>YOUR JOB</h2>
+      <div class="classes" id="classes">
+        <button class="cls sel" data-c="soldier" type="button"><b>SOLDIER</b><i>the door problem</i><span>Burst carbine: 3 rounds a pull, up to 9 with DAMAGE upgrades. Builds 40% faster and takes more hits.</span></button>
+        <button class="cls" data-c="sniper" type="button"><b>SNIPER</b><i>the angle problem</i><span>Bolt-action rifle. Heavy rounds straight through wood. Moves 10% faster.</span></button>
+        <button class="cls" data-c="grenadier" type="button"><b>GRENADIER</b><i>the doorway problem</i><span>Pump shotgun: huge up close, tight spread, fires as fast as you click (holding fires every half second), six shells. Three grenades a round. Moves 10% slower.</span></button>
+        <button class="cls" data-c="quartermaster" type="button"><b>QUARTER&shy;MASTER</b><i>the rescue problem</i><span>Walk over a downed teammate to get them up instantly. Carries 96 of everything, gathers faster, repairs for half. SMG. The only one who can SPRINT.</span></button>
+      </div>
+      <h2>LENGTH</h2>
+      <div class="seg" id="modes"><button data-m5="5" type="button">5 RAIDS</button><button data-m5="10" type="button">10 RAIDS</button><button data-m5="endless" type="button">ENDLESS</button></div>
+      <h2>THREAT</h2>
+      <div class="seg" id="diff"><button data-d="easy" type="button">EASY</button><button data-d="normal" class="sel" type="button">NORMAL</button><button data-d="hard" type="button">HARD</button></div>
+      <div id="best" hidden></div>
+      <button class="go" id="startBtn" type="button">RAISE THE FENCE</button>
+      <details class="how"><summary>HOW TO PLAY</summary>
+        <div class="ctrls">
+          <div><h3>TOUCH</h3><p>Left thumb: move<br>Right thumb: aim, push far to fire<br>BUILD: place, upgrade or repair the tile you face. DOOR lets you and Dell walk through.</p></div>
+          <div><h3>KEYBOARD</h3><p>WASD move · mouse aim<br>Hold click to fire (soldier: bursts) · Space build<br>1 2 3 material · F wall/door<br>G grenade · E armory at the stake<br>Shift sprint (quartermaster) · B build kit · Enter start raid · T chat online · Esc pause</p></div>
+        </div>
+      </details>
+      <button class="ghost" type="button" data-go="main">BACK</button>
+    </section>
+
+    <section class="page" id="pg-multi" hidden>
+      <h2 class="pt">MULTIPLAYER</h2>
+      <p class="lede">Up to six players over the internet, on phones or computers. One person hosts and gets a 4-letter room code; everyone else types it in.</p>
+      <p class="note" id="mOffline" hidden>Online play needs the hosted copy of the game (the web link, or the icon on your home screen). This preview can't reach the internet, so solo only here.</p>
+      <label class="set"><span>YOUR NAME</span><input type="text" id="mName" maxlength="12" placeholder="Big U" autocomplete="nickname" spellcheck="false"></label>
+      <h2>YOUR JOB</h2>
+      <div class="seg jobs"><button data-mc="soldier" type="button">SOLDIER</button><button data-mc="sniper" type="button">SNIPER</button><button data-mc="grenadier" type="button">GRENADIER</button><button data-mc="quartermaster" type="button">QUARTERMASTER</button></div>
+      <h2>HOST A GAME · MODE</h2>
+      <div class="seg" id="pvSeg"><button data-pv="coop" type="button">CO-OP</button><button data-pv="base" type="button">BASE BATTLE</button><button data-pv="ffa" type="button">FREE-FOR-ALL</button></div>
+      <p class="lede" id="pvDesc" style="font-size:12px;color:var(--dim)"></p>
+      <div id="coopOpts" class="page" style="gap:8px">
+      <h2>LENGTH AND THREAT</h2>
+      <div class="seg"><button data-mm="5" type="button">5 RAIDS</button><button data-mm="10" type="button">10 RAIDS</button><button data-mm="endless" type="button">ENDLESS</button></div>
+      <div class="seg"><button data-md="easy" type="button">EASY</button><button data-md="normal" type="button">NORMAL</button><button data-md="hard" type="button">HARD</button></div>
+      </div>
+      <label class="tog" id="mListRow"><input type="checkbox" id="mList"><span>List my game in Open Games</span></label>
+      <button class="go" id="hostBtn" type="button">HOST</button>
+      <h2>OPEN GAMES</h2>
+      <div class="lobList" id="lobList" aria-live="polite"></div>
+      <h2>JOIN A GAME</h2>
+      <div class="join"><input type="text" id="mCode" maxlength="4" placeholder="CODE" autocapitalize="characters" autocomplete="off" spellcheck="false" aria-label="Room code"><button class="go" id="joinBtn" type="button">JOIN</button></div>
+      <p class="status" id="mStatus" role="status"></p>
+      <details class="how"><summary>IF IT WON'T CONNECT</summary>
+        <p class="lede" style="font-size:12px;color:var(--dim);margin-top:8px">Phones connect straight to each other. Most home Wi-Fi is fine; some cellular networks block it. If a join hangs, put the host (or everyone) on Wi-Fi. Keep the host's screen on. If the host's phone locks, the game ends for everyone.</p>
+      </details>
+      <button class="ghost" type="button" data-go="main">BACK</button>
+    </section>
+
+    <section class="page" id="pg-lobby" hidden>
+      <h2 class="pt">LOBBY</h2>
+      <div class="code"><span>ROOM CODE</span><b id="lCode">····</b></div>
+      <button class="ghost" id="shareBtn" type="button">SHARE INVITE LINK</button>
+      <h2>CREW</h2>
+      <ul class="roster" id="lList"></ul>
+      <p class="lede" id="lNote"></p>
+      <h2>CHAT</h2>
+      <div class="lchat"><ol id="lChatLog" aria-live="polite"></ol><form id="lChatForm" autocomplete="off"><input id="lChatIn" type="text" maxlength="120" enterkeyhint="send" placeholder="Say hi" aria-label="Chat message" spellcheck="false"><button class="go" type="submit">SEND</button></form></div>
+      <button class="ghost" id="lTeam" type="button" hidden>SWITCH SIDES</button>
+      <button class="go" id="lStart" type="button" hidden>RAISE THE FENCE</button>
+      <button class="ghost" id="lLeave" type="button">LEAVE</button>
+    </section>
+
+    <section class="page" id="pg-locker" hidden>
+      <h2 class="pt">LOCKER</h2>
+      <div class="lockTop">
+        <canvas id="lockPrev" width="260" height="300" aria-label="Your soldier"></canvas>
+        <div class="lockCases"><div id="caseBoxes"></div><span id="shardTxt">0 shards</span></div>
+      </div>
+      <p class="lede" style="font-size:12px;color:var(--dim)" id="lockHint">Earn a case every 3 raids you survive, and for every win. Duplicates turn into shards.</p>
+      <p class="status" id="lockMsg" role="status"></p>
+      <div class="tabs" id="lockTabs"><button data-cat="skin" class="sel" type="button">SKINS</button><button data-cat="hat" type="button">HEADGEAR</button><button data-cat="trail" type="button">TRACERS</button><button data-cat="fx" type="button">KILL FX</button></div>
+      <div class="grid" id="lockGrid"></div>
+      <button class="ghost" type="button" data-go="main">BACK</button>
+    </section>
+
+    <section class="page" id="pg-settings" hidden>
+      <h2 class="pt">SETTINGS</h2>
+      <label class="set"><span>MASTER VOLUME</span><input type="range" id="sVol" min="0" max="100" step="5"><b id="sVolV">80%</b></label>
+      <label class="set"><span>MUSIC</span><input type="range" id="sMus" min="0" max="100" step="5"><b id="sMusV">70%</b></label>
+      <label class="set"><span>SCREEN SHAKE</span><input type="range" id="sShake" min="0" max="100" step="5"><b id="sShakeV">100%</b></label>
+      <label class="tog"><input type="checkbox" id="sHap"><span>Vibration on hits and blasts</span></label>
+      <label class="tog"><input type="checkbox" id="sFps"><span>Show frame rate</span></label>
+      <h2>SAVE BACKUP</h2>
+      <p class="lede" style="font-size:12px;color:var(--dim)">Your locker is saved in this browser and stays through game updates. Export a backup to move it to another device, or to restore it if this browser's data is cleared.</p>
+      <div class="saveRow"><button class="ghost" id="sExport" type="button">EXPORT SAVE</button><button class="ghost" id="sImport" type="button">IMPORT SAVE</button></div>
+      <button class="go" id="sDone" type="button">DONE</button>
+    </section>
+  </div>
+</div>
+
+<div class="overlay" id="pause" hidden>
+  <div class="card">
+    <div class="eyebrow" id="pauseEyebrow">PAUSED</div>
+    <h1 style="font-size:clamp(48px,15vw,84px)">HOLD UP</h1>
+    <button class="go" id="resumeBtn" type="button">BACK TO IT</button>
+    <button class="ghost" id="pSetBtn" type="button">SETTINGS</button>
+    <button class="ghost" id="quitBtn" type="button">ABANDON THE CLAIM</button>
+  </div>
+</div>
+
+<div class="overlay" id="armory" hidden>
+  <div class="card">
+    <div class="eyebrow" id="armEyebrow">ARMORY · BETWEEN RAIDS</div>
+    <div class="salbig">SALVAGE <span id="armSal">0</span></div>
+    <p class="lede" style="font-size:12px;color:var(--dim)">Drop raiders to earn salvage; clearing a raid pays everyone. Upgrades are yours and last the whole run. Salvage left when the run ends becomes shards (20 to 1, up to 2 per raid held, 10 a run).</p>
+    <div class="arm" id="armRows"></div>
+    <button class="ghost" id="armClose" type="button">BACK TO THE FENCE</button>
+    <p class="armHint">E or Esc closes the armory.</p>
+  </div>
+</div>
+
+<div class="overlay" id="saveOv" hidden>
+  <div class="card">
+    <div class="eyebrow">SAVE BACKUP</div>
+    <h2 class="pt" id="saveTitle">EXPORT SAVE</h2>
+    <p class="lede" id="saveLede" style="font-size:12px;color:var(--dim)"></p>
+    <textarea id="saveText" rows="5" spellcheck="false" autocomplete="off" aria-label="Save code"></textarea>
+    <p class="status" id="saveMsg" role="status"></p>
+    <div class="saveRow" id="saveExp"><button class="go" id="saveCopy" type="button">COPY</button><button class="ghost" id="saveDl" type="button">DOWNLOAD FILE</button></div>
+    <div class="saveRow" id="saveImp"><button class="go" id="saveCheck" type="button">CHECK CODE</button><button class="ghost" id="saveFileBtn" type="button">LOAD FILE</button><input type="file" id="saveFile" accept=".txt,text/plain" hidden></div>
+    <button class="go" id="saveConfirm" type="button" hidden>RESTORE THIS SAVE</button>
+    <button class="ghost" id="saveClose" type="button">CLOSE</button>
+  </div>
+</div>
+<div class="overlay" id="caseOv" hidden>
+  <div class="card">
+    <div class="eyebrow" id="caseEye">SUPPLY CASE</div>
+    <div class="reelWrap"><div class="reel" id="reel"></div></div>
+    <div id="caseResult" hidden><b id="caseName"></b><span id="caseSub"></span></div>
+    <button class="go" id="caseEquip" type="button" hidden>EQUIP IT</button>
+    <button class="ghost" id="caseDone" type="button" hidden>DONE</button>
+  </div>
+</div>
+
+<div class="overlay" id="over" hidden>
+  <div class="card">
+    <div class="eyebrow" id="overEyebrow">AFTER ACTION</div>
+    <h1 id="overTitle" style="font-size:clamp(52px,16vw,88px)">CLAIM HELD</h1>
+    <p class="lede" id="overLede"></p>
+    <dl class="stats">
+      <div><dt>Raids survived</dt><dd id="sWaves">0</dd></div>
+      <div><dt>Raiders dropped</dt><dd id="sDrop">0</dd></div>
+      <div><dt>Walls raised</dt><dd id="sBuilt">0</dd></div>
+      <div><dt>Walls lost</dt><dd id="sLost">0</dd></div>
+      <div><dt>Repairs by Dell</dt><dd id="sRep">0</dd></div>
+      <div><dt>Revives</dt><dd id="sRev">0</dd></div>
+    </dl>
+    <p class="loot" id="overLoot" hidden></p>
+    <p class="lede" id="overWait" hidden style="color:var(--dim)">Waiting on the host to run it back.</p>
+    <button class="go" id="againBtn" type="button">RUN IT BACK</button>
+    <button class="ghost" id="menuBtn" type="button">MAIN MENU</button>
+  </div>
+</div>
+
+<script>
+(()=>{
+/*@@SCRIPT@@*/
+})();
+</script>

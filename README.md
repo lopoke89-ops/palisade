@@ -71,6 +71,25 @@ JOBS, BOSSES AND SALVAGE (v0.8.1)
     to reload.
 
 
+SMOOTHER NIGHTS AND DUSK (v0.8.8)
+---------------------------------
+  - Night raids draw about 30% faster on phones (12.5 to 8.9 ms a
+    frame; slowest frames 15.5 to 11.2 ms). The soft pools of light
+    around players, Dell, the core and raiders, and the muzzle and
+    explosion glows, are now stamped from pre-drawn circles instead of
+    stretching a small one every frame.
+  - Dusk raids draw about 60% faster (14.3 to 5.7 ms a frame): the warm
+    evening colour was a full-screen blend mode that phones do slowly.
+    It's now one plain tint, matched to the old look (within about
+    1% of the old colours).
+  - A 6-player boss raid went from 15.9 to 8.6 ms a frame. Big Endless
+    crowds (20+ raiders, 6 players) from 9.9 to 8.4 ms. Memory stays
+    flat over a 30-minute Endless run.
+  - Behind the scenes: the game's source is now split into sections
+    (see dev/README.md). The game plays exactly the same.
+  - Nothing changes online: v0.8.7 and v0.8.8 players can play together.
+
+
 BURSTS, REPAIRS AND A STRONGER DELL (v0.8.7)
 --------------------------------------------
   - SOLDIER: the carbine fires bursts. A burst always finishes once
