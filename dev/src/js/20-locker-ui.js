@@ -4,37 +4,8 @@ function drawFig(ctx,w,h,look,sc,aim,cy){
   const kg=g,ku=u,kx=camX,ky=camY;g=ctx;u=sc;camX=w/2;camY=cy;
   try{drawPerson(0,0,Object.assign({aim:aim||{x:.9,y:.25},walk:0},look))}finally{g=kg;u=ku;camX=kx;camY=ky}
 }
-// (x1,y1) is the bullet's head, (x2,y2) the end of its tail
-// gradient tracers: the colours are drawn once into a strip and stretched along each shot
-// (rgrad: 2 rainbow cycles, 128 px per cycle, so a moving window gives the colour drift for free)
-const GSTRIP=new Map();
-function gradStrip(st){
-  const key=st.rgrad?'rgrad':st.grad.join();let c=GSTRIP.get(key);if(c)return c;
-  c=document.createElement('canvas');c.width=st.rgrad?256:64;c.height=8;const x=c.getContext('2d'),gr=x.createLinearGradient(0,0,c.width,0);
-  if(st.rgrad)for(let k=0;k<=12;k++)gr.addColorStop(k/12,`hsl(${k*60%360},100%,68%)`);else{gr.addColorStop(0,st.grad[0]);gr.addColorStop(1,st.grad[1])}
-  x.fillStyle=gr;x.fillRect(0,0,c.width,8);GSTRIP.set(key,c);return c;
-}
-function traceSeg(x,x1,y1,x2,y2,st,w,t,heavy){
-  const line=(lw,col,ox=0,oy=0)=>{x.strokeStyle=col;x.lineWidth=lw;x.beginPath();x.moveTo(x1+ox,y1+oy);x.lineTo(x2+ox,y2+oy);x.stroke()};
-  x.lineCap='round';
-  if(st.glow)line(w*3.2,st.glow);
-  if(st.edge)line(w*1.9,st.edge);
-  if(st.pulse)w*=1+.5*Math.sin(t*28);
-  if(st.glitch){const o=w*(Math.sin(t*47)>.3?1.8:.9);line(w*.8,'rgba(255,50,90,.85)',o,-o*.5);line(w*.8,'rgba(50,255,210,.85)',-o,o*.5);line(w*.6,'#ffffff');x.lineCap='butt';return}
-  let col;
-  if(st.rgrad||st.grad){
-    const S=gradStrip(st),len=Math.hypot(x2-x1,y2-y1),sx=st.rgrad?((t*240)%360+360)%360/360*128:0,sw=st.rgrad?106.7:S.width;
-    x.save();x.translate(x1,y1);x.rotate(Math.atan2(y2-y1,x2-x1));
-    x.drawImage(S,sx,0,sw,S.height,0,-w/2,len,w);
-    x.fillStyle=st.rgrad?`hsl(${(t*240)%360},100%,68%)`:st.grad[0];x.beginPath();x.arc(0,0,w/2,0,Math.PI*2);x.fill();   // the round nose
-    x.fillStyle=st.rgrad?`hsl(${(t*240+300)%360},100%,68%)`:st.grad[1];x.beginPath();x.arc(len,0,w/2,0,Math.PI*2);x.fill();   // and tail
-    x.restore();
-  }else{col=st.rainbow?`hsl(${((Math.floor(t*300+x1*.7))%360+360)%360},100%,66%)`:(heavy&&st===TRAILS.std?'rgba(255,250,220,1)':st.c);
-  line(w,col)}
-  if(st.core)line(w*.36,'rgba(255,255,255,.92)');
-  if(st.head){x.fillStyle=st.head;x.beginPath();x.arc(x1,y1,w*1.15,0,Math.PI*2);x.fill()}
-  x.lineCap='butt';
-}
+// The painter shares the exact calibrated head/tail segment with gameplay and previews.
+function traceSeg(ctx,x1,y1,x2,y2,st,w,t,heavy){paintTracer(ctx,x1,y1,x2,y2,st,w,t,heavy)}
 // A tracer stays on the firing ray at weapon height; its tail cannot draw inside the barrel.
 function tracerPoints(b,L){
  const a=iso(b.x,b.y),c=iso(b.x-b.vx*L,b.y-b.vy*L),v=b.visual;
@@ -55,7 +26,8 @@ function drawTracer(b){
 
 function killFx(x,y,id){
   if(id&&id!=='none')sfx('kx_'+id,x,y);
-  const E=(n,k,z=.6)=>{for(let i=0;i<n;i++)emit(x,y,WH*z,k)};
+  if(FINISH_LIFE[id])emit(x,y,WH*.6,'finish:'+id);
+  const E=(n,k,z=.6)=>{for(let i=0;i<Math.ceil(n*.65);i++)emit(x,y,WH*z,k)};
   switch(id){
     case'pixel':E(14,'pix');break;
     case'frost':E(12,'ice');ringFx(x,y,0,.8,.35,'#ffffff','#9fd8f0',1.6);break;
@@ -66,7 +38,7 @@ function killFx(x,y,id){
     case'glitchout':E(16,'glitch');break;
     case'singularity':E(18,'void');ringFx(x,y,1.3,0,.42,'#b06aff','#1a0630',2.4);E(8,'nova',.6);break;
     case'shockwave':E(12,'neon');ringFx(x,y,0,1.8,.55,'#2af5ff','#1a4aff',2.4);ringFx(x,y,0,1.2,.45,'#ff3ad0','#6a1aff',2);break;
-    case'bubbles':emitSpread(x,y,.4,WH*.3,WH*.9,'bubble',0,22);E(12,'goldsp',.7);E(6,'glint',.7);
+    case'bubbles':emitSpread(x,y,.4,WH*.3,WH*.9,'bubble',0,12);E(12,'goldsp',.7);E(6,'glint',.7);
       ringFx(x,y,0,1.5,.6,'#fff6c8','#e2b436',2.6);ringFx(x,y,0,.9,.4,'#ffffff','#ffd24a',1.6);addFlash({x,y,life:.22,max:.22,r:1.1});break;
     case'sparks':for(let n=0;n<10;n++)emit(x,y,WH*.6,'spark');break;
     case'smoke':for(let n=0;n<5;n++)emit(x,y,WH*.4,'smoke');break;
@@ -74,7 +46,7 @@ function killFx(x,y,id){
     case'embers':for(let n=0;n<12;n++)emit(x,y,WH*.4,'ember');break;
     case'glint':for(let n=0;n<10;n++)emit(x,y,WH*.6,'glint');break;
     case'bolt':for(let n=0;n<9;n++)emit(x+(rnd()-.5)*.15,y+(rnd()-.5)*.15,WH*(.2+n*.3),'bolt');addFlash({x,y,life:.22,max:.22,r:1.1});break;
-    case'skull':flt(x,y,'☠','#efe6d2');for(let n=0;n<6;n++)emit(x,y,WH*.6,'spark');break;
+    case'skull':for(let n=0;n<6;n++)emit(x,y,WH*.6,'spark');break;
   }
 }
 function keyCap(x,y,key,text,col){
@@ -115,28 +87,11 @@ function drawIcon(cv2,c){
   else if(c.cat==='hat')drawFig(x,S,S,lookOf({...locker.eq,hat:c.key},pick.cls),S/34,{x:.9,y:.25},S*.5+34*1.18*(S/34)*.93);
   else if(c.cat==='trail'){const st=TRAILS[c.key];x.fillStyle='#0c0b09';x.fillRect(0,0,S,S);
     for(const k of[0,1])traceSeg(x,S*(.2+k*.2),S*(.8-k*.12),S*(.62+k*.2),S*(.3-k*.12),st,S*.05*(st.w||1),k*.4,false)}
-  else{x.fillStyle='#0c0b09';x.fillRect(0,0,S,S);const cx=S/2,cy=S/2,dot=(px,py,r,col)=>{x.fillStyle=col;x.fillRect(px-r,py-r,r*2,r*2)};
-    const R=(a,d)=>[cx+Math.cos(a)*d*S,cy+Math.sin(a)*d*S],ring=(r,col)=>{x.strokeStyle=col;x.lineWidth=S*.025;x.beginPath();x.arc(cx,cy,r,0,Math.PI*2);x.stroke()};
-    switch(c.key){
-      case'none':for(let n=0;n<7;n++){const[a,b]=R(n*.9,.12+n%3*.06);dot(a,b,S*.03,'#7d231b')}break;
-      case'sparks':for(let n=0;n<12;n++){const[a,b]=R(n*.52,.1+n%4*.07);dot(a,b,S*.022,n%2?'#ffe39a':'#ffb14a')}break;
-      case'smoke':for(let n=0;n<5;n++){const[a,b]=R(n*1.3,.12);x.fillStyle='rgba(120,114,104,.55)';x.beginPath();x.arc(a,b,S*.14,0,7);x.fill()}break;
-      case'confetti':{const cs=['#ff5a8a','#ffd24a','#5ad8ff','#8aff6a','#c78aff'];for(let n=0;n<16;n++){const[a,b]=R(n*.4,.08+n%5*.06);dot(a,b,S*.03,cs[n%5])}break}
-      case'embers':for(let n=0;n<12;n++){const[a,b]=R(-Math.PI/2+(n%5-2)*.25,.05+n*.028);dot(a,b,S*.022,n%2?'#ff8a3a':'#ffd06a')}break;
-      case'glint':for(let n=0;n<10;n++){const[a,b]=R(n*.63,.1+n%3*.08);dot(a,b,S*.02,n%2?'#bfe9ff':'#ffffff')}break;
-      case'bolt':x.strokeStyle='#cfefff';x.lineWidth=S*.04;x.lineJoin='round';x.beginPath();x.moveTo(cx+S*.08,S*.12);x.lineTo(cx-S*.08,cy);x.lineTo(cx+S*.06,cy);x.lineTo(cx-S*.1,S*.88);x.stroke();break;
-      case'skull':x.fillStyle='#efe6d2';x.font=`${Math.round(S*.55)}px serif`;x.textAlign='center';x.textBaseline='middle';x.fillText('☠',cx,cy+S*.03);break;
-      case'pixel':{const cs=['#ff3a6a','#3affd8','#ffe03a','#6a8aff'];for(let n=0;n<14;n++){const[a,b]=R(n*.45,.08+n%4*.08);x.fillStyle=cs[n%4];x.fillRect(a-S*.035,b-S*.035,S*.07,S*.07)}break}
-      case'frost':ring(S*.3,'rgba(207,239,255,.6)');for(let n=0;n<10;n++){const[a,b]=R(n*.63,.1+n%3*.08);x.save();x.translate(a,b);x.rotate(n);x.fillStyle=n%2?'#f2fbff':'#9fd8f0';x.fillRect(-S*.02,-S*.05,S*.04,S*.1);x.restore()}break;
-      case'gradburst':case'sunburst':{const[c1,c2]=c.key==='gradburst'?['#e0a0ff','#3a6aff']:['#ff5ad8','#ffb03a'];ring(S*.34,c2);for(let n=0;n<16;n++){const[a,b]=R(n*.39,.06+n%4*.07);dot(a,b,S*.028,mix(c1,c2,(n%4)/3))}break}
-      case'toxic':for(let n=0;n<9;n++){const[a,b]=R(n*.7,.08+n%3*.08);dot(a,b,S*.03,n%2?'#b6ff3a':'#7adf2a');x.fillStyle='#7adf2a';x.fillRect(a-S*.008,b,S*.016,S*.07)}break;
-      case'supernova':ring(S*.36,'#6a8aff');ring(S*.24,'#bfd0ff');for(let n=0;n<12;n++){const[a,b]=R(n*.52,.14+n%3*.06);dot(a,b,S*.018,'#ffffff')}dot(cx,cy,S*.06,'#ffffff');break;
-      case'glitchout':for(let n=0;n<10;n++){const[a,b]=R(n*1.7,.05+n%4*.08),w=S*(.05+n%3*.03);x.fillStyle=['#ff3a6a','#3affd8','#6a8aff','#ffffff'][n%4];x.fillRect(a-w/2,b-S*.02,w,S*.04)}break;
-      case'singularity':ring(S*.3,'#b06aff');dot(cx,cy,S*.13,'#07020d');ring(S*.15,'#5a1a9a');for(let n=0;n<10;n++){const[a,b]=R(n*.63,.22+n%2*.1);dot(a,b,S*.018,'#b06aff')}break;
-      case'shockwave':ring(S*.36,'#2af5ff');ring(S*.24,'#ff3ad0');for(let n=0;n<8;n++){const[a,b]=R(n*.79,.3);dot(a,b,S*.02,n%2?'#2af5ff':'#ff3ad0')}break;
-      case'bubbles':for(const[a,b,r]of[[.5,.62,.13],[.3,.42,.09],[.68,.36,.1],[.46,.24,.07],[.72,.66,.06],[.24,.7,.06]]){x.fillStyle='rgba(255,226,130,.18)';x.beginPath();x.arc(S*a,S*b,S*r,0,7);x.fill();x.strokeStyle='#ffd24a';x.lineWidth=S*.02;x.stroke();dot(S*a-S*r*.4,S*b-S*r*.45,S*.014,'#fffbe8')}break;
-    }}
+  else{x.fillStyle='#0c0b09';x.fillRect(0,0,S,S);
+    if(c.key==='none'){x.strokeStyle='#6e7568';x.lineWidth=S*.025;x.beginPath();x.arc(S/2,S/2,S*.2,0,Math.PI*2);x.moveTo(S*.36,S*.64);x.lineTo(S*.64,S*.36);x.stroke()}
+    else paintFinish(x,c.key,.3,S/92,S/2,S*.58)}
 }
+
 function drawLockerPreview(now){
   const c=$('lockPrev'),x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);
   const ang=now/2200,aim={x:Math.cos(ang),y:Math.sin(ang)},sc=3.5,base=c.height*.92;

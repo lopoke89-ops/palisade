@@ -240,16 +240,17 @@ function render(dt){
     const c=iso(x,y);g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(c[0],c[1],3*u,1.5*u,0,0,Math.PI*2);g.fill();
     g.fillStyle='#262219';g.beginPath();g.arc(c[0],c[1]-z,3*u,0,Math.PI*2);g.fill();
     const e=iso(l.x1,l.y1);g.strokeStyle='rgba(214,90,58,.55)';g.lineWidth=1.2*u;g.beginPath();g.ellipse(e[0],e[1],TW2*l.R*.9*(1-t*.3),TH2*l.R*.9*(1-t*.3),0,0,Math.PI*2);g.stroke()}
-  PM('parts');for(const q of parts){const c=iso(q.x,q.y),a=Math.max(0,q.life/q.max);
+  PM('parts');for(const q of parts){if(q.kind.startsWith('finish:'))continue;const c=iso(q.x,q.y),a=Math.max(0,q.life/q.max);
     if(q.kind==='bubble'){const r=q.size*u*(1.25-a*.25),cx=c[0]+Math.sin(game.time*4+q.h)*2*u,cy=c[1]-q.z;g.globalAlpha=Math.min(1,a*1.8);
       g.fillStyle='rgba(255,226,130,.16)';g.beginPath();g.arc(cx,cy,r,0,Math.PI*2);g.fill();g.lineWidth=1.3*u;g.strokeStyle='#ffd24a';g.stroke();
       g.lineWidth=.8*u;g.strokeStyle=`hsl(${(game.time*220+q.h)%360},95%,78%)`;g.beginPath();g.arc(cx,cy,r*.8,-2.4,-.6);g.stroke();
       g.fillStyle='#fffbe8';g.fillRect(cx-r*.45,cy-r*.55,1.4*u,1.4*u);g.globalAlpha=1;continue}
+    if(paintCosmeticParticle(g,q,c[0],c[1]-q.z,u,game.time))continue;
     if(q.c1){g.globalAlpha=Math.min(1,a*1.5);g.fillStyle=mix(q.c1,q.c2,Math.round((1-a)*16)/16);g.fillRect(c[0]-q.size*u/2,c[1]-q.z-q.size*u/2,q.size*u,q.size*u);g.globalAlpha=1;continue}
     if(q.kind==='dust'||q.kind==='smoke'){g.globalAlpha=a*(q.kind==='smoke'?.5:.4);g.fillStyle=q.rgb||(q.rgb=q.col.replace('rgba','rgb').replace(/,$/,')'));g.beginPath();g.arc(c[0],c[1]-q.z,q.size*u*(1.6-a*.6),0,Math.PI*2);g.fill();g.globalAlpha=1}
     else{g.globalAlpha=Math.min(1,a*1.5);g.fillStyle=q.col;g.fillRect(c[0]-q.size*u/2,c[1]-q.z-q.size*u/2,q.size*u,q.size*u);g.globalAlpha=1}}
   PM('front');drawCache(caches.front);PM('light');
-  drawLighting();drawBossFx();PM('flash');
+  drawLighting();drawFinishEffects();drawBossFx();PM('flash');
   g.globalCompositeOperation='lighter';
   // glows stamped 1:1 from pre-drawn sizes, like the light holes (stretching the 64 px glow was the slow part)
   if(flashes.length){g.setTransform(1,0,0,1,0,0);

@@ -18,5 +18,6 @@
 18-cosmetics.js   cosmetics, locker data, cases, save backup
 19-accounts.js   accounts, cloud locker, claims, open games list
 20-locker-ui.js   drawing cosmetics, locker screen, armory screen
+20a-cosmetic-art.js (shared tracer and kill effect painters)
 21-online.js   online co-op and PvP networking
 22-loop-menus.js   main loop, menus, install prompt, debug hooks

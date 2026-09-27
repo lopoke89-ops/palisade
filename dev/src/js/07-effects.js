@@ -2,6 +2,10 @@
 function emit(x,y,z,kind,mat){
   rec(['e',r2(x),r2(y),Math.round(z/u),kind,mat|0]);
   const p={x,y,z,vx:(rnd()-.5)*2,vy:(rnd()-.5)*2,vz:rnd()*60,life:.5,max:.5,kind,size:2,col:'#fff',grav:220};
+  if(kind.startsWith('finish:')&&FINISH_LIFE[kind.slice(7)]){
+    p.vx=p.vy=p.vz=p.grav=0;p.life=p.max=FINISH_LIFE[kind.slice(7)];
+    const active=parts.filter(q=>q.kind.startsWith('finish:'));if(active.length>=24)parts.splice(parts.indexOf(active[0]),1);
+  }
   switch(kind){
     case'splinter':p.col=rnd()<.5?'#c99a5e':'#7a5530';p.life=p.max=.45;break;
     case'dust':p.col=mat===1?'rgba(170,110,85,':mat===2?'rgba(150,155,155,':'rgba(150,120,85,';p.vx*=.4;p.vy*=.4;p.vz=10+rnd()*20;p.grav=-8;p.life=p.max=.9+rnd()*.5;p.size=7;break;
