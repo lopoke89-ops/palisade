@@ -383,7 +383,7 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
       <button class="ghost" id="installBtn" type="button" hidden>INSTALL AS AN APP</button>
       <button class="ghost acctBtn" id="acctBtn" type="button" data-go="account" hidden>ACCOUNT</button>
       <p class="note" id="saveNote" hidden></p>
-      <p class="foot">v0.8.4 · phone and desktop · online co-op and PvP for up to six</p>
+      <p class="foot">v0.8.5 · phone and desktop · online co-op and PvP for up to six</p>
     </section>
 
     <section class="page" id="pg-account" hidden>
@@ -623,7 +623,7 @@ let W=0,H=0,DPR=1,TW2=32,TH2=16,WH=26,u=1,camX=0,camY=0,camSX=0,camSY=0,shake=0;
 // desktop gets full-resolution scenery caches (sharper, and they blit 1:1); phones keep the smaller budget
 const DESK=!matchMedia('(pointer: coarse)').matches;
 const snapPx=v=>Math.round(v*DPR)/DPR;
-const LQ=1;
+const LQ=1;   // full size: a half-size lighting layer costs more to stretch back up than it saves
 // iPhone home-screen apps with a see-through status bar report a window that is short by about the
 // status bar's height, which left an empty band at the bottom. Use the real screen height there instead.
 function appHeight(){
@@ -638,10 +638,11 @@ function resize(){
   g.setTransform(DPR,0,0,DPR,0,0);lg.setTransform(DPR*LQ,0,0,DPR*LQ,0,0);
   // scale snaps to 5% steps so small height changes (iOS toolbars) don't force a rebuild of the scenery
   const S=Math.round(clamp(Math.min(W,H*1.15)/560,.72,1.35)*20)/20,old=u;TW2=40*S;TH2=TW2/2;WH=TH2*1.7;u=TW2/32;
-  return u!==old;
+  const dprChanged=DPR!==resize.dpr;resize.dpr=DPR;
+  return u!==old||dprChanged;
 }
 let resizeT=0;
-addEventListener('resize',()=>{clearTimeout(resizeT);resizeT=setTimeout(()=>{if(resize())caches=null;vignette=null},100)});resize();
+addEventListener('resize',()=>{clearTimeout(resizeT);resizeT=setTimeout(()=>{if(resize())caches=null;vignette=null;vignetteDemo=null},100)});resize();
 const iso=(x,y)=>[(x-y)*TW2+camX,(x+y)*TH2+camY];
 function screenToWorld(sx,sy){const a=(sx-camX)/TW2,b=(sy-camY)/TH2;return{x:(a+b)/2,y:(b-a)/2}}
 function sdirToWorld(sx,sy){const a=sx/TW2,b=sy/TH2;let x=(a+b)/2,y=(b-a)/2;const l=Math.hypot(x,y)||1;return{x:x/l,y:y/l}}
@@ -792,7 +793,7 @@ let rockets=[],fires=[],zaps=[],slashes=[],rings=[];   // boss rockets, burning 
 let players=new Map(),myId='solo',nextId=1;   // every soldier in the yard; `player` is the one on this phone
 let game={phase:'title',paused:false,time:0,wave:0,sel:0,piece:'wall',stats:{dropped:0,built:0,lost:0,repairs:0,revives:0}};
 let pick={cls:'soldier',diff:'normal',mode:'5',pvp:'coop'};
-let demo=false,demoT=0;   // the menu's live background: Dell alone against demo raids
+let demo=false,demoT=0,demoAcc=0;   // the menu's live background: Dell alone against demo raids
 const cfg={volume:.8,music:.7,shake:1,haptics:true,fps:false,name:'',build:true};
 try{Object.assign(cfg,JSON.parse(localStorage.getItem('palisade.cfg.v1')||'{}'))}catch(e){}
 function saveCfg(){try{localStorage.setItem('palisade.cfg.v1',JSON.stringify(cfg))}catch(e){}}
@@ -905,8 +906,18 @@ function newGame(roster,pvp=''){
 /* ================= network recording ================= */
 // On the host, every sound, particle and floating word is also queued and shipped to the
 // other phones in the next snapshot, so everyone sees and hears the same fight.
-let replaying=false;
-function rec(e){if(NET.mode==='host'&&NET.inGame&&!demo&&!replaying)NET.fxq.push(e)}
+let replaying=false,bulletSeq=0;
+function rec(e){
+  if(NET.mode!=='host'||!NET.inGame||demo||replaying)return;
+  const q=NET.fxq,l=q[q.length-1];   // the same particle again at the same spot: bump a count instead of a new entry
+  if(e[0]==='e'&&l&&l[0]==='e'&&l[1]===e[1]&&l[2]===e[2]&&l[3]===e[3]&&l[4]===e[4]&&l[5]===e[5]){l[6]=(l[6]||1)+1;return}
+  q.push(e);
+}
+// a burst of particles scattered around a point: one entry on the wire, the guest scatters its own
+function emitSpread(x,y,sp,z0,z1,kind,mat,n){
+  rec(['E',r2(x),r2(y),sp,Math.round(z0/u),Math.round(z1/u),kind,mat|0,n]);
+  const k=replaying;replaying=true;try{for(let q=0;q<n;q++)emit(x+(rnd()-.5)*sp,y+(rnd()-.5)*sp,z0+(z1-z0)*rnd(),kind,mat)}finally{replaying=k}
+}
 const r2=v=>Math.round(v*100)/100;
 function personal(p,name){   // a sound (or, for ~names, a screen feel) only that soldier's screen gets
   if(p.id===myId)feel(name);
@@ -972,7 +983,7 @@ function damageWall(k,amt,own){
     walls[k]=null;debris[k]=w.mat+1;game.stats.lost++;const i=k%N,j=(k/N)|0;
     const by=own&&own!=='dell'?players.get(own):null;   // walls[k] is already empty, so this can only pay once
     if(by&&!demo&&wallPays(w,by)){const v=WALL_SALVAGE[w.mat]||5;by.sal+=v;flt(i+.5,j+.3,`+${v} SALVAGE · ${MAT[w.mat].name} DOWN`,'#e2b436');personal(by,'restock')}
-    for(let n=0;n<14;n++)emit(i+.5+(rnd()-.5)*.8,j+.5+(rnd()-.5)*.8,WH*.6*rnd(),'chunk',w.mat);
+    emitSpread(i+.5,j+.5,.8,0,WH*.6,'chunk',w.mat,14);
     for(let n=0;n<6;n++)emit(i+.5,j+.5,WH*.4,'dust',w.mat);
     sfx('collapse',i+.5,j+.5);addShake(i+.5,j+.5,5);
   }
@@ -1262,8 +1273,9 @@ function bdmg(b){if(!b.fall)return b.dmg;const[a,z,m]=b.fall,d=b.dist;return b.d
 function fire(from,ang,team,gun,late=0,quiet=false){
   const ahead=.33+gun.speed*clamp(late,0,.25);
   const own=from===qm?'dell':(from.id!==undefined&&players.get(from.id)===from?from.id:null);
-  bullets.push({pt:from.team||'',x:from.x+Math.cos(ang)*ahead,y:from.y+Math.sin(ang)*ahead,vx:Math.cos(ang)*gun.speed,vy:Math.sin(ang)*gun.speed,team,dmg:gun.dmg,dist:ahead-.33,over:gun.over!==false,skipped:false,last:-1,range:gun.range,pierce:gun.pierce||0,heavy:!!gun.pierce,
+  bullets.push({id:++bulletSeq,pt:from.team||'',x:from.x+Math.cos(ang)*ahead,y:from.y+Math.sin(ang)*ahead,vx:Math.cos(ang)*gun.speed,vy:Math.sin(ang)*gun.speed,team,dmg:gun.dmg,dist:ahead-.33,over:gun.over!==false,skipped:false,last:-1,range:gun.range,pierce:gun.pierce||0,heavy:!!gun.pierce,
     own,tr:own&&own!=='dell'?Math.max(0,TRAIL_IDS.indexOf(from.cos.trail)):0,fall:gun.fall||null,pel:gun.pellets>1});
+  {const B=bullets[bullets.length-1];rec(['b',B.id,r2(B.x),r2(B.y),r2(B.vx),r2(B.vy),B.team,B.heavy?1:0,B.tr|0,r2(B.range-B.dist)])}
   if(!quiet)addFlash({x:from.x+Math.cos(ang)*.4,y:from.y+Math.sin(ang)*.4,life:.06,max:.06,r:gun.pellets>1?1.3:.9,muzzle:true});
 }
 
@@ -1835,7 +1847,7 @@ function updateBullets(dt){
     for(let s=0;s<steps&&!b.dead;s++){
       b.x+=b.vx*dt/steps;b.y+=b.vy*dt/steps;b.dist+=sp*dt/steps;
       const i=Math.floor(b.x),j=Math.floor(b.y);
-      if(!inb(i,j)||b.dist>b.range){b.dead=true;break}
+      if(!inb(i,j)||b.dist>b.range){b.dead=b.spent=true;break}
       const k=idx(i,j);
       if(coreKs.has(k)){const c=stakeAt(k);if(game.pvp?c.team!==b.pt:b.team===1)hurtStake(c,game.pvp?b.dmg*PVP.stakeHit:6*game.Df.dmg);else emit(b.x,b.y,WH*.5,'spark');b.dead=true;break}
       const n=nodeAt(i,j);if(n&&n.solid){hitFx(b.x,b.y,n.type);b.dead=true;break}
@@ -1852,6 +1864,7 @@ function updateBullets(dt){
       else{for(const a of allies())if(a.alive&&Math.hypot(a.x-b.x,a.y-b.y)<.3){hurtAlly(a,b.dmg*(a===qm?.7:1));b.dead=true;break}}
     }
   }
+  {const hit=[];for(const b of bullets)if(b.dead&&!b.spent&&b.id)hit.push(b.id);if(hit.length)rec(['bx',...hit])}   // guests expire misses on their own
   bullets=bullets.filter(b=>!b.dead);
 }
 function updateLobs(dt){for(const l of lobs){l.t+=dt;if(l.t>=l.T){l.dead=true;explode(l.x1,l.y1,l.R,l.power,l.own)}}lobs=lobs.filter(l=>!l.dead)}
@@ -1895,8 +1908,9 @@ function updateParticles(dt){
 }
 
 /* ================= rendering ================= */
-const hex=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
-const mix=(a,b,t)=>{const A=hex(a),B=hex(b);return`rgb(${A.map((v,i)=>Math.round(v+(B[i]-v)*t)).join(',')})`};
+const HEXC=new Map(),MIXC=new Map();
+const hex=h=>{let v=HEXC.get(h);if(!v){v=[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];if(HEXC.size>512)HEXC.clear();HEXC.set(h,v)}return v};
+const mix=(a,b,t)=>{const k=a+b+t;let v=MIXC.get(k);if(v===undefined){const A=hex(a),B=hex(b);v=`rgb(${Math.round(A[0]+(B[0]-A[0])*t)},${Math.round(A[1]+(B[1]-A[1])*t)},${Math.round(A[2]+(B[2]-A[2])*t)})`;if(MIXC.size>4096)MIXC.clear();MIXC.set(k,v)}return v};
 function quad(a,b,c,d,fill){g.fillStyle=fill;g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.lineTo(c[0],c[1]);g.lineTo(d[0],d[1]);g.closePath();g.fill()}
 const up=(p,h)=>[p[0],p[1]-h];
 function boxR(x0,y0,x1,y1,z,h,top,l,r){
@@ -1908,11 +1922,26 @@ const lerp2=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];
 function faceLine(P,Q,h,v){const a=up(P,h*v),b=up(Q,h*v);g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke()}
 function doorSlab(P,Q,h,col,hc){const a=lerp2(P,Q,.3),b=lerp2(P,Q,.7);quad(a,b,up(b,h*.82),up(a,h*.82),col);const hd=up(lerp2(P,Q,.62),h*.42);g.fillStyle=hc||'#e2b436';g.fillRect(hd[0]-1*u,hd[1]-1*u,2*u,2*u)}
 function drawWall(i,j,w,alpha){
+  const st=wallState(w),key=w.mat+'|'+(w.door?1:0)+'|'+st+'|'+Math.round(w.char*8)+'|'+(w.flash>0?1:0)+'|'+(w.tm||'')+'|'+TW2+'|'+DPR;
+  let S=w._spr;if(!S||S.key!==key||S.i!==i||S.j!==j)S=w._spr=wallSprite(i,j,w,key);
+  g.globalAlpha=alpha;g.drawImage(S.cv,camX+S.x,camY+S.y,S.w,S.h);
+  if(w.fire>0){const c=iso(i+.5,j+.5),R=TW2*1.25,h=WH*(st===2?.58:1);g.globalAlpha=alpha*.85;g.drawImage(SOFT.glow,c[0]-R,c[1]-h-R,R*2,R*2)}
+  g.globalAlpha=1;
+}
+function wallSprite(i,j,w,key){
+  // the tile's box on screen (camera at 0,0), snapped to device pixels so the image copies 1:1
+  const x0=Math.floor(((i-j-1)*TW2-4*u)*DPR)/DPR,y0=Math.floor(((i+j)*TH2-WH-4*u)*DPR)/DPR,x1=(i-j+1)*TW2+4*u,y1=(i+j+2)*TH2+4*u;
+  const cv2=document.createElement('canvas');cv2.width=Math.ceil((x1-x0)*DPR);cv2.height=Math.ceil((y1-y0)*DPR);
+  const ctx=cv2.getContext('2d');ctx.setTransform(DPR,0,0,DPR,0,0);
+  const kg=g,kx=camX,ky=camY;g=ctx;camX=-x0;camY=-y0;
+  try{drawWallShape(i,j,w)}finally{g=kg;camX=kx;camY=ky}
+  return{key,i,j,cv:cv2,x:x0,y:y0,w:cv2.width/DPR,h:cv2.height/DPR};
+}
+function drawWallShape(i,j,w){
   const m=MAT[w.mat],st=wallState(w),h=WH*(st===2?.58:1);
   let top=m.top,l=m.l,r=m.r;
   if(w.char>0){top=mix(top,'#241b15',w.char*.85);l=mix(l,'#1d1612',w.char*.85);r=mix(r,'#18120f',w.char*.85)}
   if(w.flash>0)top=mix(m.top,'#ffffff',.35);
-  g.globalAlpha=alpha;
   const {B,C,D}=boxR(i+.03,j+.03,i+.97,j+.97,0,h,top,l,r);
   g.strokeStyle=m.line;g.lineWidth=Math.max(1,u*.9);
   if(w.mat===2){for(const t of[.2,.4,.6,.8])for(const[P,Q]of[[D,C],[C,B]]){const a=lerp2(P,Q,t);g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(a[0],a[1]-h);g.stroke()}}
@@ -1926,8 +1955,6 @@ function drawWall(i,j,w,alpha){
       g.beginPath();g.ellipse(pt[0],pt[1],(2.2+st)*u,(2.8+st)*u,0,0,Math.PI*2);g.fill();
     }
   }
-  if(w.fire>0){const c=iso(i+.5,j+.5),gr=g.createRadialGradient(c[0],c[1]-h,0,c[0],c[1]-h,TW2*1.1);gr.addColorStop(0,'rgba(255,150,60,.45)');gr.addColorStop(1,'rgba(255,120,40,0)');g.fillStyle=gr;g.fillRect(c[0]-TW2*1.2,c[1]-h-TW2*1.2,TW2*2.4,TW2*2.4)}
-  g.globalAlpha=1;
 }
 function drawDebris(i,j,mat){const m=MAT[mat];for(let q=0;q<3;q++){const a=hash(i+q*17,j),b=hash(i,j+q*29),x=i+.15+a*.55,y=j+.15+b*.55;boxR(x,y,x+.22,y+.18,0,3.5*u,m.top,m.l,m.r)}}
 function label(t,x,y,col,size=11){g.font=`800 ${Math.round(size*u)}px "Big Shoulders Stencil Display", "Arial Narrow", sans-serif`;g.textAlign='center';g.lineWidth=3;g.strokeStyle='rgba(12,10,8,.85)';g.strokeText(t,x,y);g.fillStyle=col;g.fillText(t,x,y)}
@@ -2160,7 +2187,12 @@ const LOOK={
   breach:{body:'#5a2a22',vest:'#1f1512',pants:'#231c19',head:'#a07a5c',cap:'#1a1512',bandana:'#a8342a',nogun:true}
 };
 function playerLook(p){
-  const cos=p.cos||DEFAULT_COS,S=SKINS[cos.skin]||SKINS.std;
+  const cos=p.cos||DEFAULT_COS,C0=p.C||CLASSES[p.cls]||CLASSES.soldier,lk=cos.skin+'|'+cos.hat+'|'+C0.name;
+  if(p._lk!==lk){p._lv=buildLook(p,cos);p._lk=lk}
+  return Object.assign({},p._lv);
+}
+function buildLook(p,cos){
+  const S=SKINS[cos.skin]||SKINS.std;
   const o={body:S.body,vest:S.vest,pants:S.pants,head:'#c19a78',mark:'#e2b436',gl:14,stripe:S.stripe,glow:S.glow,shine:S.shine};
   for(const k of SKIN_FX)if(S[k]!==undefined)o[k]=S[k];
   const C=p.C||CLASSES[p.cls]||CLASSES.soldier;
@@ -2269,12 +2301,30 @@ function paintCache(c,fn){
 }
 function makeCaches(){
   const minX=-(N+2*BAND)*TW2-40*u,maxX=(N+2*BAND)*TW2+40*u,minY=-2*BAND*TH2-120*u,maxY=(2*N+2*BAND)*TH2+20*u;
-  const budget=DESK?2.4e7:4.2e6;let sc=DESK?DPR:Math.min(DPR,1.5);if((maxX-minX)*(maxY-minY)*sc*sc>budget)sc=Math.sqrt(budget/((maxX-minX)*(maxY-minY)));
+  const budget=DESK?2.4e7:7.4e6;let sc=DPR;if((maxX-minX)*(maxY-minY)*sc*sc>budget)sc=Math.sqrt(budget/((maxX-minX)*(maxY-minY)));
   const x0=Math.floor(minX*sc)/sc,y0=Math.floor(minY*sc)/sc,pw=Math.ceil((maxX-x0)*sc),ph=Math.ceil((maxY-y0)*sc);
   const mk=opaque=>{const cv2=document.createElement('canvas');cv2.width=pw;cv2.height=ph;const c={cv:cv2,s:sc,w:pw/sc,h:ph/sc,minX:x0,minY:y0};
     if(opaque){const x=cv2.getContext('2d',{alpha:false});x.fillStyle='#10140e';x.fillRect(0,0,pw,ph)}return c};
   caches={back:mk(true),front:mk(false)};
   paintCache(caches.back,paintBack);paintCache(caches.front,paintFront);
+  caches.front.tiles=frontTiles(caches.front);
+}
+// the front layer (fence + front trees) is mostly empty: find the tiles that hold something, from the
+// trees' and fence's own bounds, and draw only those (a full-screen transparent draw costs as much as an opaque one)
+function frontTiles(c){
+  const T=128,cols=Math.ceil(c.cv.width/T),rows=Math.ceil(c.cv.height/T),on=new Uint8Array(cols*rows);
+  const kx=camX,ky=camY;camX=-c.minX;camY=-c.minY;
+  const mark=(x0,y0,x1,y1)=>{const m=6*u;for(let r=Math.max(0,Math.floor((y0-m)*c.s/T));r<=Math.min(rows-1,Math.floor((y1+m)*c.s/T));r++)
+    for(let q=Math.max(0,Math.floor((x0-m)*c.s/T));q<=Math.min(cols-1,Math.floor((x1+m)*c.s/T));q++)on[r*cols+q]=1};
+  try{
+    for(const t of treesFront){const b=treeBox(t);mark(b[0],b[1],b[2],b[3])}
+    for(let q=0;q<N;q++)for(const[a,b]of[[[q,N],[q+1,N]],[[N,q],[N,q+1]]]){const A=iso(a[0],a[1]),B=iso(b[0],b[1]);
+      mark(Math.min(A[0],B[0]),Math.min(A[1],B[1])-WH*1.6,Math.max(A[0],B[0]),Math.max(A[1],B[1])+4*u)}
+  }finally{camX=kx;camY=ky}
+  const out=[];   // runs of neighbouring tiles in a row become one draw
+  for(let r=0;r<rows;r++)for(let q=0;q<cols;q++){if(!on[r*cols+q])continue;let e=q;while(e+1<cols&&on[r*cols+e+1])e++;
+    const sx=q*T,sy=r*T;out.push([sx,sy,Math.min(c.cv.width,(e+1)*T)-sx,Math.min(c.cv.height,(r+1)*T)-sy]);q=e}
+  return out;
 }
 function updateFades(){
   const who=[];if(!demo)for(const p of players.values())if(p.alive||p.downed)who.push(p);who.push(qm);for(const e of enemies)who.push(e);
@@ -2284,7 +2334,12 @@ function updateFades(){
     const a=f?.32:1;if(t.a!==a){t.a=a;changed.push(t)}}
   if(changed.length)repaintTrees(changed);
 }
-const drawCache=c=>g.drawImage(c.cv,camX+c.minX,camY+c.minY,c.w,c.h);
+const drawCache=c=>{
+  if(!c.tiles){g.drawImage(c.cv,camX+c.minX,camY+c.minY,c.w,c.h);return}
+  const ox=camX+c.minX,oy=camY+c.minY;
+  for(const[sx,sy,sw,sh]of c.tiles){const dx=ox+sx/c.s,dy=oy+sy/c.s,dw=sw/c.s,dh=sh/c.s;
+    if(dx>W||dy>H||dx+dw<0||dy+dh<0)continue;g.drawImage(c.cv,sx,sy,sw,sh,dx,dy,dw,dh)}
+};
 function drawLighting(){
   if(light.L<.03&&light.warm<.01)return;
   const warm=light.warm;
@@ -2313,9 +2368,12 @@ function drawLighting(){
 const SOFT=(()=>{const mk=(stops)=>{const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),gr=x.createRadialGradient(32,32,0,32,32,32);
   for(const[o,col]of stops)gr.addColorStop(o,col);x.fillStyle=gr;x.fillRect(0,0,64,64);return c};
   return{dot:mk([[0,'rgba(0,0,0,1)'],[1,'rgba(0,0,0,0)']]),glow:mk([[0,'rgba(255,210,130,.55)'],[1,'rgba(255,150,60,0)']])}})();
-let vignette=null;
-function drawVignette(){
-  // centred where the camera keeps your soldier
+let vignette=null,vignetteDemo=null;
+function drawVignette(forDemo){
+  // centred where the camera keeps your soldier (the menu's demo: the middle of the screen)
+  if(forDemo){if(!vignetteDemo){const c=document.createElement('canvas'),s=Math.min(DPR,2);c.width=Math.ceil(W*s);c.height=Math.ceil(H*s);const x=c.getContext('2d');x.scale(s,s);
+    const gr=x.createRadialGradient(W/2,H/2,Math.min(W,H)*.25,W/2,H/2,Math.max(W,H)*.8);gr.addColorStop(0,'rgba(12,10,8,0)');gr.addColorStop(1,'rgba(12,10,8,.6)');x.fillStyle=gr;x.fillRect(0,0,W,H);vignetteDemo=c}
+    g.drawImage(vignetteDemo,0,0,W,H);return}
   if(!vignette){const c=document.createElement('canvas'),s=Math.min(DPR,2);c.width=Math.ceil(W*s);c.height=Math.ceil(H*s);const x=c.getContext('2d');x.scale(s,s);
     const cx=W*(W<760?.4:.5),cy=H*.52,gr=x.createRadialGradient(cx,cy,Math.min(W,H)*.25,cx,cy,Math.max(W,H)*.8);
     gr.addColorStop(0,'rgba(12,10,8,0)');gr.addColorStop(1,'rgba(12,10,8,.6)');x.fillStyle=gr;x.fillRect(0,0,W,H);vignette=c}
@@ -2382,7 +2440,7 @@ function render(dt){
     g.globalAlpha=a;g.drawImage(SOFT.glow,c[0]-r,c[1]-WH*.5-r,r*2,r*2)}
   g.globalAlpha=1;
   g.globalCompositeOperation='source-over';
-  if(demo){const vg=g.createRadialGradient(W/2,H/2,Math.min(W,H)*.25,W/2,H/2,Math.max(W,H)*.8);vg.addColorStop(0,'rgba(12,10,8,0)');vg.addColorStop(1,'rgba(12,10,8,.6)');g.fillStyle=vg;g.fillRect(0,0,W,H)}else drawVignette();PM('floats');
+  drawVignette(demo);PM('floats');
   for(const f of floats){const c=iso(f.x,f.y),a=f.life/f.max;g.globalAlpha=Math.min(1,a*2);label(f.t,c[0],c[1]-WH*1.5-(1-a)*24*u,f.col,11);g.globalAlpha=1}
   PM('ui');if(playing()&&!overlayOpen())drawPrompts(p);
   if(playing()&&p.alive&&!overlayOpen()){drawCrosshair(p);drawShells(p)}
@@ -2971,7 +3029,7 @@ function killFx(x,y,id){
     case'glitchout':E(16,'glitch');break;
     case'singularity':E(18,'void');ringFx(x,y,1.3,0,.42,'#b06aff','#1a0630',2.4);E(8,'nova',.6);break;
     case'shockwave':E(12,'neon');ringFx(x,y,0,1.8,.55,'#2af5ff','#1a4aff',2.4);ringFx(x,y,0,1.2,.45,'#ff3ad0','#6a1aff',2);break;
-    case'bubbles':for(let i=0;i<22;i++)emit(x+(rnd()-.5)*.4,y+(rnd()-.5)*.4,WH*(.3+rnd()*.6),'bubble');E(12,'goldsp',.7);E(6,'glint',.7);
+    case'bubbles':emitSpread(x,y,.4,WH*.3,WH*.9,'bubble',0,22);E(12,'goldsp',.7);E(6,'glint',.7);
       ringFx(x,y,0,1.5,.6,'#fff6c8','#e2b436',2.6);ringFx(x,y,0,.9,.4,'#ffffff','#ffd24a',1.6);addFlash({x,y,life:.22,max:.22,r:1.1});break;
     case'sparks':for(let n=0;n<10;n++)emit(x,y,WH*.6,'spark');break;
     case'smoke':for(let n=0;n<5;n++)emit(x,y,WH*.4,'smoke');break;
@@ -3151,12 +3209,16 @@ $('armClose').addEventListener('click',closeArmory);
 /* ================= online co-op ================= */
 // One phone hosts and runs the real game. Others join with a 4-character room code.
 // A free public matchmaking service (PeerJS) only introduces the phones; after that
-// they talk directly. Each guest opens two channels: 'r' (reliable: hello, build,
-// grenade, toasts) and 'u' (fast, may drop: movement in, snapshots out).
-const PROTO='yard-8',ROOM_PREFIX='palisade-yard-8-';
+// they talk directly. Each guest opens 'r' (reliable: hello, build, grenade, and every
+// one-off event: sounds, particles, bullets, toasts, wall changes), 'u' (fast: movement in),
+// and 'st' (never resent: game state out, 15 times a second).
+const PROTO='yard-9',ROOM_PREFIX='palisade-yard-9-';
 const NET={mode:'solo',inGame:false,peer:null,code:'',roster:[],conns:new Map(),host:null,fxq:[],snapT:0,snapN:0,lastN:0,inT:0,nextG:1,lastHeard:0,
   sendTo(id,msg){for(const c of this.conns.values())if(c.pid===id&&c.r&&c.r.open){try{c.r.send(msg)}catch(e){}}},
   sendAll(msg,ch='r'){for(const c of this.conns.values()){const x=c[ch]&&c[ch].open?c[ch]:c.r;if(c.pid&&x&&x.open)try{x.send(msg)}catch(e){}}},
+  sendState(msg){let js=null;for(const c of this.conns.values()){if(!c.pid)continue;
+    if(c.st&&c.st.readyState==='open'){try{c.st.send(js||(js=JSON.stringify(msg)));continue}catch(e){}}
+    const x=c.u&&c.u.open?c.u:c.r;if(x&&x.open)try{x.send(msg)}catch(e){}}},
   toHost(msg,ch='r'){const x=this.host&&(this.host[ch]&&this.host[ch].open?this.host[ch]:this.host.r);if(x&&x.open)try{x.send(msg)}catch(e){}}
 };
 const onlineOK=()=>typeof Peer!=='undefined';
@@ -3230,6 +3292,7 @@ async function netHost(){
 function hostConn(conn){
   let c=NET.conns.get(conn.peer);if(!c){c={r:null,u:null,pid:null,heard:performance.now()};NET.conns.set(conn.peer,c)}
   c[conn.label==='u'?'u':'r']=conn;
+  if(conn.label!=='u')conn.on('open',()=>{c.st=openStateCh(conn)});
   conn.on('data',d=>hostData(conn.peer,d));
   // only the reliable channel going away means the player left; the fast one can hiccup
   if(conn.label==='u')conn.on('close',()=>{const cc=NET.conns.get(conn.peer);if(cc&&cc.u===conn)cc.u=null});
@@ -3250,7 +3313,7 @@ function hostData(peerId,d){
     c.r.send({t:'welcome',id:c.pid});
     if(NET.inGame){   // dropping into a game already running
       const p=makePlayer(c.pid,c.name,c.cls,players.size,c.cos,game.pvp==='base'?team:'');[p.x,p.y]=respawnAt(p);if(game.pvp)p.prot=PVP.prot;if(game.pvp==='base')p.sal=PVP.startSal;if(game.pvp==='ffa')p.mats=[0,0,0];players.set(c.pid,p);
-      c.r.send({t:'start',roster:rosterNow(),diff:pick.diff,mode:game.mode,pvp:game.pvp});
+      c.r.send({t:'start',roster:rosterNow(),diff:pick.diff,mode:game.mode,pvp:game.pvp});NET.wlSent=null;
       toastAll(`${c.name.toUpperCase()} JOINED`,game.pvp==='base'?`Dropped in on ${TEAMS[team].name}.`:game.pvp?'Dropped into the fight.':'Dropped in at the stake.')}
     broadcastLobby();return;
   }
@@ -3293,7 +3356,7 @@ function startOnline(){
   const why=lobbyBlock();if(why){$('lNote').textContent=why;return}
   demo=false;newGame(NET.roster.map(r=>({...r})),pick.pvp);NET.inGame=true;NET.snapN=0;
   const now=performance.now();for(const c of NET.conns.values())c.heard=now;   // the lobby wait is not silence
-  NET.sendAll({t:'start',roster:rosterNow(),diff:pick.diff,mode:game.mode,pvp:game.pvp});
+  NET.sendAll({t:'start',roster:rosterNow(),diff:pick.diff,mode:game.mode,pvp:game.pvp});NET.wlSent=null;
   enterGame();broadcastLobby();
 }
 // keep quiet lobbies alive (and NAT mappings open), and notice players who vanish
@@ -3307,26 +3370,49 @@ function hostNet(dt){
   if(!NET.inGame){lobbyNet(dt);return}
   NET.snapT-=dt;
   if(NET.snapT<=0){NET.snapT=1/15;NET.snapN++;
-    const s=makeSnap(NET.snapN%3===1);s.fx=NET.fxq;NET.fxq=[];NET.sendAll(s,'u')}
+    NET.sendState(makeSnap(false));
+    // walls: checked 5 times a second; only changed tiles go out (events arrive reliably and in order),
+    // with the whole grid at game start, when someone drops in, and every 10 s as a safety net
+    let wl=null,wd=null;const now=performance.now();
+    if(NET.snapN%3===1){const b=wallBytes(),old=NET.wlSent;
+      if(!old||now-NET.wlAt>10000){wl=encodeWalls();NET.wlAt=now}
+      else{for(let k=0,o=0;k<N*N;k++,o+=4)if(b[o]!==old[o]||b[o+1]!==old[o+1]||b[o+2]!==old[o+2]||b[o+3]!==old[o+3])(wd||(wd=[])).push(k,b[o],b[o+1],b[o+2],b[o+3])}
+      NET.wlSent=b}
+    if(NET.fxq.length||wl||wd){sendEvents(NET.fxq,wl,wd);NET.fxq=[]}}
   const now=performance.now();
   for(const[id,c]of NET.conns)if(c.pid&&now-c.heard>12000)hostDrop(id);   // phone locked or walked out of signal
 }
-function encodeWalls(){
+// one-off events (sounds, particles, toasts, bullets, kill feed) and wall changes go on the reliable channel, so a
+// lost or late state packet never takes them with it; big batches are split to stay under PeerJS's 16 KB JSON limit
+function sendEvents(fx,wl,wd){
+  const out=[],put=(list,w,d)=>{const m={t:'x',n:NET.snapN,fx:list};if(w)m.wl=w;if(d)m.wd=d;
+    if(list.length>1&&JSON.stringify(m).length>12000){const h=list.length>>1;put(list.slice(0,h),w,d);put(list.slice(h),null,null)}else out.push(m)};
+  put(fx,wl,wd);for(const m of out)NET.sendAll(m);
+}
+// a data channel that never resends (state is replaced 15 times a second, so a lost one is better skipped);
+// both sides create it on the reliable connection with the same fixed id, no extra handshake
+function openStateCh(conn){
+  try{const pc=conn.peerConnection;if(!pc||!pc.createDataChannel)return null;return pc.createDataChannel('st',{negotiated:true,id:1000,ordered:false,maxRetransmits:0})}catch(e){return null}
+}
+function wallBytes(){
   const b=new Uint8Array(N*N*4);
   for(let k=0;k<N*N;k++){const w=walls[k],o=k*4;
     if(w){b[o]=0x80|(w.door?0x40:0)|(w.tm==='b'?0x20:w.tm==='a'?0x10:0)|(w.mat&3);b[o+1]=clamp(Math.round(w.hp/w.max*255),1,255);b[o+2]=(w.fire>0?0x80:0)|clamp(Math.round(w.char*127),0,127)}
     b[o+3]=debris[k]}
-  let s='';for(let i=0;i<b.length;i++)s+=String.fromCharCode(b[i]);return btoa(s);
+  return b;
 }
-function decodeWalls(str){
-  const s=atob(str);
-  for(let k=0;k<N*N;k++){const o=k*4,f=s.charCodeAt(o);debris[k]=s.charCodeAt(o+3);
-    if(!(f&0x80)){walls[k]=null;continue}
-    const mat=f&3,door=!!(f&0x40),ratio=s.charCodeAt(o+1)/255;let w=walls[k];
-    if(!w||w.mat!==mat||w.door!==door){w=makeWall(mat,door,ratio);walls[k]=w}
-    else{const nh=w.max*ratio;if(nh<w.hp-.5)w.flash=.08;w.hp=nh}
-    const fc=s.charCodeAt(o+2);w.fire=fc&0x80?1:0;w.char=(fc&0x7f)/127;w.tm=f&0x20?'b':f&0x10?'a':undefined}
+function encodeWalls(){const b=wallBytes();let s='';for(let i=0;i<b.length;i++)s+=String.fromCharCode(b[i]);return btoa(s)}
+function setWallTile(k,f,hp,fc,db){
+  debris[k]=db;
+  if(!(f&0x80)){walls[k]=null;return}
+  const mat=f&3,door=!!(f&0x40),ratio=hp/255;let w=walls[k];
+  if(!w||w.mat!==mat||w.door!==door){w=makeWall(mat,door,ratio);walls[k]=w}
+  else{const nh=w.max*ratio;if(nh<w.hp-.5)w.flash=.08;w.hp=nh}
+  w.fire=fc&0x80?1:0;w.char=(fc&0x7f)/127;w.tm=f&0x20?'b':f&0x10?'a':undefined;
 }
+function decodeWalls(str){const s=atob(str);for(let k=0;k<N*N;k++){const o=k*4;setWallTile(k,s.charCodeAt(o),s.charCodeAt(o+1),s.charCodeAt(o+2),s.charCodeAt(o+3))}}
+// only the tiles that changed: [tile, flags, health, fire/char, debris, tile, ...]
+function applyWallDiff(d){for(let q=0;q+4<d.length;q+=5)setWallTile(d[q],d[q+1],d[q+2],d[q+3],d[q+4])}
 function makeSnap(withWalls){
   const S=game.stats,flat=(a,f)=>{const o=[];for(const x of a)o.push(...f(x));return o};
   const s={t:'s',n:NET.snapN,ph:game.phase,w:game.wave,bk:game.bosses|0,tm:r2(game.timer),q:game.queue.length,tt:r2(game.time),won:game.won?1:0,wn:game.winner||'',
@@ -3336,7 +3422,6 @@ function makeSnap(withWalls){
     en:flat(enemies,e=>[e.id,ECODE.indexOf(e.type==='boss'?'boss:'+e.boss:e.type),r2(e.x),r2(e.y),r2(e.aim.x),r2(e.aim.y),r2(e.hp/e.max),e.planted?1:0,e.st||0,e.st?r2(Math.max(0,e.stT/e.stM)):0,r2(e.lx||0),r2(e.ly||0)]),
     rk:flat(rockets,r=>[r2(r.x),r2(r.y),r2(r.vx),r2(r.vy)]),
     fz:flat(fires,f=>[r2(f.x),r2(f.y),r2(f.t)]),
-    bu:flat(bullets,b=>[r2(b.x),r2(b.y),r2(b.vx),r2(b.vy),b.team,b.heavy?1:0,b.tr|0]),
     lo:flat(lobs,l=>[r2(l.x0),r2(l.y0),r2(l.x1),r2(l.y1),r2(l.t),r2(l.T),r2(l.R)]),
     ch:flat(charges,c=>[r2(c.x),r2(c.y),r2(c.fuse)]),
     sa:flat(sacks,k=>[r2(k.x),r2(k.y)]),
@@ -3359,7 +3444,7 @@ async function netJoin(code){
   peer.on('open',()=>{
     const tgt=ROOM_PREFIX+code,r=peer.connect(tgt,{label:'r',reliable:true,serialization:'json'}),uu=peer.connect(tgt,{label:'u',reliable:false,serialization:'json'});
     NET.host={r,u:uu};
-    r.on('open',()=>{clearTimeout(to);NET.lastHeard=performance.now();r.send({t:'hello',name:myName(),cls:pick.cls,cos:cosStr(myCos()),v:PROTO})});
+    r.on('open',()=>{clearTimeout(to);NET.lastHeard=performance.now();const st=openStateCh(r);if(st){NET.host.st=st;st.onmessage=ev=>{try{guestData(JSON.parse(ev.data))}catch(e){}}}r.send({t:'hello',name:myName(),cls:pick.cls,cos:cosStr(myCos()),v:PROTO})});
     for(const c of[r,uu]){c.on('data',guestData);c.on('error',()=>{})}
     r.on('close',()=>{if(NET.mode==='guest')netLeave('The host closed the game.')});
   });
@@ -3373,6 +3458,7 @@ function guestData(d){
     case'start':pick.diff=d.diff;if(d.mode)pick.mode=d.mode;pick.pvp=d.pvp||'coop';demo=false;newGame(d.roster,d.pvp||'');NET.lastN=0;NET.inGame=true;enterGame();break;
     case'ping':break;
     case's':if(NET.inGame&&d.n>NET.lastN){NET.lastN=d.n;applySnap(d)}break;
+    case'x':if(NET.inGame){if(d.wl)decodeWalls(d.wl);if(d.wd)applyWallDiff(d.wd);replayFx(d.fx||[])}break;
     case't':toast(d.b,d.s);break;
     case'kick':netLeave(d.why);break;
     case'c':addChat(d.id,d.n,cleanChat(d.m),d.tm);break;
@@ -3411,7 +3497,7 @@ function applySnap(s){
     Object.assign(e,{type:bk?'boss':c,boss:bk||undefined,big:!!bk,tx:s.en[o+2],ty:s.en[o+3],aim:{x:s.en[o+4],y:s.en[o+5]},hp:s.en[o+6],max:1,planted:!!s.en[o+7],st:s.en[o+8],stF:s.en[o+9],lx:s.en[o+10],ly:s.en[o+11]});enemies.push(e)}
   rockets=[];for(let o=0;o<(s.rk||[]).length;o+=4)rockets.push({x:s.rk[o],y:s.rk[o+1],vx:s.rk[o+2],vy:s.rk[o+3]});
   fires=[];for(let o=0;o<(s.fz||[]).length;o+=3)fires.push({x:s.fz[o],y:s.fz[o+1],t:s.fz[o+2],max:4});
-  bullets=[];for(let o=0;o<s.bu.length;o+=7)bullets.push({x:s.bu[o],y:s.bu[o+1],vx:s.bu[o+2],vy:s.bu[o+3],team:s.bu[o+4],heavy:!!s.bu[o+5],tr:s.bu[o+6]|0});
+  if(s.bu){bullets=[];for(let o=0;o<s.bu.length;o+=7)bullets.push({x:s.bu[o],y:s.bu[o+1],vx:s.bu[o+2],vy:s.bu[o+3],team:s.bu[o+4],heavy:!!s.bu[o+5],tr:s.bu[o+6]|0})}
   lobs=[];for(let o=0;o<s.lo.length;o+=7)lobs.push({x0:s.lo[o],y0:s.lo[o+1],x1:s.lo[o+2],y1:s.lo[o+3],t:s.lo[o+4],T:s.lo[o+5],R:s.lo[o+6]});
   charges=[];for(let o=0;o<s.ch.length;o+=3)charges.push({x:s.ch[o],y:s.ch[o+1],fuse:s.ch[o+2]});
   sacks=[];for(let o=0;o<s.sa.length;o+=2)sacks.push({x:s.sa[o],y:s.sa[o+1]});
@@ -3420,10 +3506,14 @@ function applySnap(s){
   replayFx(s.fx||[]);
   if(game.phase==='over'&&!wasOver)showOver();
 }
+function addGuestBullet(e){if(bullets.length<300)bullets.push({id:e[1],x:e[2],y:e[3],vx:e[4],vy:e[5],team:e[6],heavy:!!e[7],tr:e[8],left:e[9]})}
 function replayFx(list){
   replaying=true;
   try{for(const e of list)switch(e[0]){
-    case'e':emit(e[1],e[2],e[3]*u,e[4],e[5]);break;
+    case'e':for(let n=e[6]||1;n>0;n--)emit(e[1],e[2],e[3]*u,e[4],e[5]);break;
+    case'E':emitSpread(e[1],e[2],e[3],e[4]*u,e[5]*u,e[6],e[7],e[8]);break;
+    case'b':addGuestBullet(e);break;
+    case'bx':{const gone=new Set(e.slice(1));bullets=bullets.filter(b=>!gone.has(b.id));break}
     case's':sfx(e[1],e[2]===null?undefined:e[2],e[3]===null?undefined:e[3],true);break;
     case'f':flt(e[1],e[2],e[3],e[4]);break;
     case'k':addShake(e[1],e[2],e[3]);break;
@@ -3444,7 +3534,8 @@ function guestUpdate(dt){
   for(const p of players.values()){if(p!==player)smooth(p);p.flash=Math.max(0,(p.flash||0)-dt);if(p.boltF>0)p.boltF=Math.max(0,p.boltF-dt*1.9);if(p.stun>0)p.stun=Math.max(0,p.stun-dt)}
   smooth(qm);qm.flash=Math.max(0,qm.flash-dt);
   for(const e of enemies){smooth(e);e.flash=Math.max(0,e.flash-dt)}
-  for(const b of bullets){b.x+=b.vx*dt;b.y+=b.vy*dt}
+  for(const b of bullets){b.x+=b.vx*dt;b.y+=b.vy*dt;if(b.left!==undefined){b.left-=Math.hypot(b.vx,b.vy)*dt;if(b.left<=0||!inb(b.x|0,b.y|0))b.dead=true}}
+  if(bullets.some(b=>b.dead))bullets=bullets.filter(b=>!b.dead);
   for(const l of lobs)l.t=Math.min(l.T,l.t+dt);
   for(const r of rockets){r.x+=r.vx*dt;r.y+=r.vy*dt}for(const f of fires)f.t-=dt;
   for(const e of enemies)if(e.st&&e.stF>0)e.stF=Math.max(0,e.stF-dt/1.1);
@@ -3461,11 +3552,13 @@ let last=performance.now(),fpsN=0,fpsT=0;
 function frame(now){
   const dt=Math.min(.05,(now-last)/1000);last=now;
   controlLocal(dt);
+  const every=demo&&!$('menu').hidden?($('menu').classList.contains('sub')||!$('caseOv').hidden?1/12:DESK?0:1/30):0;
+  demoAcc+=dt;const skip=every>0&&demoAcc<every,sdt=every?Math.min(.1,demoAcc):dt;if(!skip)demoAcc=0;
   if(NET.mode==='guest'&&NET.inGame){updateParticles(dt);if(running())guestUpdate(dt)}
-  else{update(dt);if(NET.mode==='host')hostNet(dt);else if(NET.mode==='guest')lobbyNet(dt)}
+  else{if(!skip)update(sdt);if(NET.mode==='host')hostNet(dt);else if(NET.mode==='guest')lobbyNet(dt)}
   if(!$('menu').hidden&&!$('pg-locker').hidden)drawLockerPreview(now);
   const wantCursor=playing()&&!touchMode&&!overlayOpen()?'none':'';if(cv.style.cursor!==wantCursor)cv.style.cursor=wantCursor;
-  render(dt);musicTick();
+  if(!skip)render(sdt);musicTick();
   if(demo&&game.phase==='over'){demoT+=dt;if(demoT>4)startDemo()}
   const on=playing();
   if(on&&!game.paused)hud(dt);else if(toastT>0&&!game.paused){toastT-=dt;if(toastT<=0)$('toast').classList.remove('on')}

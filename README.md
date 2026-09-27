@@ -71,6 +71,28 @@ JOBS, BOSSES AND SALVAGE (v0.8.1)
     to reload.
 
 
+SMOOTHER ON PHONES, LIGHTER ONLINE (v0.8.5)
+-------------------------------------------
+  - Drawing a busy raid takes about a third of the time it did on
+    phones (measured: 13.6 ms to 4 ms a frame by day, 14.8 to 6 at
+    night). The scenery is stored at the screen's own sharpness and
+    copied straight on, the empty parts of the front tree layer are
+    skipped, each wall is drawn once and reused until it changes, and
+    colours and outfits are worked out once instead of every frame.
+  - Sitting in the menus uses about a sixth of the power it did: the
+    game running behind the menu slows to 12 frames a second behind
+    sub-pages and the case spin (30 behind the main menu on phones).
+  - Online: about 40% less data per guest in a busy fight (20 KB/s to
+    12 KB/s). Game state goes on a channel that never resends (a late
+    copy is useless), while sounds, effects, bullets, toasts and wall
+    changes go on the reliable one, so none of them can be lost with a
+    late packet. Bullets are sent once when fired; walls send only the
+    tiles that changed; repeated particles are sent once with a count.
+  - Online games need everyone on v0.8.5 or later (older copies can't
+    see or join v0.8.5 games, and the other way round).
+  - See-through walls (when you stand behind them) fade evenly now.
+
+
 CASE SPIN AND MUSIC (v0.8.4)
 ----------------------------
   - Case spin: every item in the reel shows its rarity (coloured label
