@@ -15,10 +15,14 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', O = __dirname +
   console.log('lobby:', await H.textContent('#lList'));
   await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 6000 }); await H.waitForTimeout(1200);
   console.log('guest sees classes:', await G.evaluate(() => [...__pal.players.values()].map(p => p.name + ':' + p.cls + (p.gun.mag ? ' ammo ' + p.ammo : '')).join(', ')));
+  await G.evaluate(() => { window.__muzzleIds=new Set(); window.__muzzleTimer=setInterval(()=>{for(const b of __pal.bullets)if(b.visual&&b.visual.length===4)window.__muzzleIds.add(b.id)},10) });
   // guest fires 2 blasts (touch = auto pump): host ammo drops, guest sees it
   await G.evaluate(() => { const f = __pal.NET.toHost.bind(__pal.NET); window.__f = 1; __pal.NET.toHost = (m, c) => { if (m.t === 'i') m.f = window.__f; return f(m, c) } });
   await H.waitForTimeout(1500); await G.evaluate(() => { window.__f = 0 }); await H.waitForTimeout(250);
   console.log('guest shells: host says', await H.evaluate(() => __pal.players.get('g1').ammo), '| guest sees', await G.evaluate(() => __pal.player.ammo), '| reload flag on guest', await G.evaluate(() => __pal.player.rl));
+  const muzzleShots=await G.evaluate(()=>{clearInterval(window.__muzzleTimer);return window.__muzzleIds.size});
+  if(!muzzleShots)throw new Error('Guest did not receive calibrated muzzle coordinates');
+  console.log('guest calibrated projectiles:',muzzleShots);
   await G.screenshot({ path: O + '/m_guest_shells.png' });
   // guest goes down; host (QM) walks over -> instant revive, guest sees it
   await H.evaluate(() => { const g = __pal.players.get('g1'); __pal.hurtPlayer(g, 9999); });

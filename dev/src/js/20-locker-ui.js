@@ -35,12 +35,24 @@ function traceSeg(x,x1,y1,x2,y2,st,w,t,heavy){
   if(st.head){x.fillStyle=st.head;x.beginPath();x.arc(x1,y1,w*1.15,0,Math.PI*2);x.fill()}
   x.lineCap='butt';
 }
-function drawTracer(b){
-  const st=b.team===0?(TRAILS[TRAIL_IDS[b.tr|0]]||TRAILS.std):ENEMY_TR,L=.018*(st.len||1),h=WH*.62;
-  const a=iso(b.x,b.y),c=iso(b.x-b.vx*L,b.y-b.vy*L);
-  traceSeg(g,a[0],a[1]-h,c[0],c[1]-h,st,(b.heavy?2.6:1.8)*u*(st.w||1),game.time,b.heavy);
-  if(st.pk&&rnd()<st.pr*.6&&parts.length<520)ambient(b.x-b.vx*.012,b.y-b.vy*.012,h,st.pk);   // sparkles, rocks, flames shed by fancy tracers
+// A tracer stays on the firing ray at weapon height; its tail cannot draw inside the barrel.
+function tracerPoints(b,L){
+ const a=iso(b.x,b.y),c=iso(b.x-b.vx*L,b.y-b.vy*L),v=b.visual;
+ if(!v)return {head:[a[0],a[1]-WH*.62],tail:[c[0],c[1]-WH*.62]};
+ a[0]+=v[0]*u;a[1]+=v[1]*u;c[0]+=v[0]*u;c[1]+=v[1]*u;
+ const m=iso(v[2],v[3]),dx=(b.vx-b.vy)*TW2,dy=(b.vx+b.vy)*TH2;
+ if((a[0]-m[0])*dx+(a[1]-m[1])*dy<=0)return null;
+ if((c[0]-m[0])*dx+(c[1]-m[1])*dy<0){c[0]=m[0];c[1]=m[1]}
+ return {head:a,tail:c};
 }
+function drawTracer(b){
+ const st=b.team===0?(TRAILS[TRAIL_IDS[b.tr|0]]||TRAILS.std):ENEMY_TR,L=.018*(st.len||1),points=tracerPoints(b,L);
+ if(!points)return;
+ const a=points.head,c=points.tail;
+ traceSeg(g,a[0],a[1],c[0],c[1],st,(b.heavy?2.6:1.8)*u*(st.w||1),game.time,b.heavy);
+ if(st.pk&&rnd()<st.pr*.6&&parts.length<520){const h=WH*.62,p=screenToWorld(c[0],c[1]+h);ambient(p.x,p.y,h,st.pk)}
+}
+
 function killFx(x,y,id){
   if(id&&id!=='none')sfx('kx_'+id,x,y);
   const E=(n,k,z=.6)=>{for(let i=0;i<n;i++)emit(x,y,WH*z,k)};
@@ -128,9 +140,9 @@ function drawIcon(cv2,c){
 function drawLockerPreview(now){
   const c=$('lockPrev'),x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);
   const ang=now/2200,aim={x:Math.cos(ang),y:Math.sin(ang)},sc=3.5,base=c.height*.92;
-  drawFig(x,c.width,c.height,lookOf(locker.eq,pick.cls),sc,aim,base);
+  const look=lookOf(locker.eq,pick.cls);drawFig(x,c.width,c.height,look,sc,aim,base);
   const sd=wdirToScreen(aim),st=TRAILS[locker.eq.trail]||TRAILS.std,ph=(now%800)/800;
-  const ox=c.width/2+sd.x*22*sc,oy=base-17*1.18*sc+sd.y*8*sc,d0=ph*200,len=34*(st.len||1);
+  const muzzle=wardrobeBarrel(look,sd).tip,ox=c.width/2+muzzle[0]*sc*FIG,oy=base+muzzle[1]*sc*FIG,d0=ph*200,len=34*(st.len||1);
   if(ph>.08)traceSeg(x,ox+sd.x*d0,oy+sd.y*d0,ox+sd.x*Math.max(0,d0-len),oy+sd.y*Math.max(0,d0-len),st,3.4*(st.w||1),now/1000,false);
 }
 

@@ -20,5 +20,5 @@ function personal(p,name){   // a sound (or, for ~names, a screen feel) only tha
 }
 function toastAll(big,small){rec(['t',big,small]);toast(big,small)}
 function toastTo(p,big,small){if(p.id===myId)toast(big,small);else if(NET.mode==='host')NET.sendTo(p.id,{t:'t',b:big,s:small||''})}
-function addFlash(f){rec(['h',r2(f.x),r2(f.y),f.r,f.muzzle?1:0,f.life]);flashes.push(f)}
+function addFlash(f){rec(['h',r2(f.x),r2(f.y),f.r,f.muzzle?1:0,f.life,f.visual||null]);flashes.push(f)}
 

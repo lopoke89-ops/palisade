@@ -4,7 +4,7 @@
 // they talk directly. Each guest opens 'r' (reliable: hello, build, grenade, and every
 // one-off event: sounds, particles, bullets, toasts, wall changes), 'u' (fast: movement in),
 // and 'st' (never resent: game state out, 15 times a second).
-const PROTO='yard-11',ROOM_PREFIX='palisade-yard-11-';
+const PROTO='yard-12',ROOM_PREFIX='palisade-yard-12-';
 const NET={mode:'solo',inGame:false,peer:null,code:'',roster:[],conns:new Map(),host:null,fxq:[],snapT:0,snapN:0,lastN:0,inT:0,nextG:1,lastHeard:0,
   sendTo(id,msg){for(const c of this.conns.values())if(c.pid===id&&c.r&&c.r.open){try{c.r.send(msg)}catch(e){}}},
   sendAll(msg,ch='r'){for(const c of this.conns.values()){const x=c[ch]&&c[ch].open?c[ch]:c.r;if(c.pid&&x&&x.open)try{x.send(msg)}catch(e){}}},
@@ -324,7 +324,12 @@ function applySnap(s){
   replayFx(s.fx||[]);
   if(game.phase==='over'&&!wasOver)showOver();
 }
-function addGuestBullet(e){if(bullets.length<300)bullets.push({id:e[1],x:e[2],y:e[3],vx:e[4],vy:e[5],team:e[6],heavy:!!e[7],tr:e[8],left:e[9]})}
+// Optional tail fields keep old shot events readable; no simulation data depends on them.
+function cosmeticPoint(v,n){return Array.isArray(v)&&v.length===n&&v.every(Number.isFinite)?v:null}
+function addGuestBullet(e){
+ const visual=cosmeticPoint(e[10],4),owner=visual&&players.get(e[11]);if(owner)owner._shotDrawUntil=game.time+.08;
+ if(bullets.length<300)bullets.push({id:e[1],x:e[2],y:e[3],vx:e[4],vy:e[5],team:e[6],heavy:!!e[7],tr:e[8],left:e[9],visual});
+}
 function replayFx(list){
   replaying=true;
   try{for(const e of list)switch(e[0]){
@@ -335,7 +340,7 @@ function replayFx(list){
     case's':sfx(e[1],e[2]===null?undefined:e[2],e[3]===null?undefined:e[3],true);break;
     case'f':flt(e[1],e[2],e[3],e[4]);break;
     case'k':addShake(e[1],e[2],e[3]);break;
-    case'h':flashes.push({x:e[1],y:e[2],r:e[3],muzzle:!!e[4],life:e[5],max:e[5]});break;
+    case'h':flashes.push({x:e[1],y:e[2],r:e[3],muzzle:!!e[4],life:e[5],max:e[5],visual:cosmeticPoint(e[6],2)});break;
     case't':toast(e[1],e[2]);break;
     case'p':if(e[1]===myId)feel(e[2]);break;
     case'q':feedLocal(e[1],e[2]);break;

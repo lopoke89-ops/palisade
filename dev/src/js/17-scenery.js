@@ -152,7 +152,7 @@ function drawLighting(){
     for(const kiln of nodes)if(kiln.type===1&&!kiln.locked){c=at(kiln.i+.5,kiln.j+.5,WH*.3);hole(c[0],c[1],TW2*1.6,.6)}
     for(const ch of charges){c=at(ch.x,ch.y);hole(c[0],c[1],TW2*.7,.7)}
   }
-  for(const f of flashes){const c=at(f.x,f.y,WH*.5),a=f.life/f.max;hole(c[0],c[1],TW2*(f.muzzle?2:4.5)*f.r*.6,a)}
+  for(const f of flashes){const c=flashPoint(f),a=f.life/f.max;hole(c[0],c[1],TW2*(f.muzzle?2:4.5)*f.r*.6,a)}
   lg.globalAlpha=1;lg.setTransform(sc,0,0,sc,0,0);g.drawImage(lc,0,0,W,H);
 }
 // soft round dots for the light holes, one per size (radius in device pixels, rounded to 3 px; at most ~48 kept)
@@ -196,6 +196,7 @@ function itemQM(q){drawPerson(q.x,q.y,Object.assign({aim:q.aim,walk:q.walk,flash
 function itemQMDown(q){drawDowned(q.x,q.y,QM_LOOK,q.revive/2,'DELL · DOWN')}
 function itemPlayer(o){
   const p=player,PL=playerLook(o),me=o===p,tag=me||players.size<2?null:o.name.toUpperCase();
+  if(o._shotDrawUntil>game.time)PL.syncRender=true;
   if(game.pvp){PL.mark=teamCol(o);if(game.pvp==='base')PL.ring=teamCol(o);else if(me)PL.ring='#e2b436'}
   const bf=NET.mode==='guest'?(o.boltF||0):(o.bolt>0?o.bolt/o.boltT:0);if(bf>0)PL.bolt=1-bf;
   if(o.alive)drawPerson(o.x,o.y,Object.assign({aim:o.aim,walk:o.walk,flash:o.flash>0,tag,tagCol:game.pvp?teamCol(o):SLOTCOL[o.slot%6],faded:o.prot>0,hp:game.pvp&&!me&&o.hp<o.max?o.hp/o.max:undefined},PL));
@@ -252,8 +253,8 @@ function render(dt){
   g.globalCompositeOperation='lighter';
   // glows stamped 1:1 from pre-drawn sizes, like the light holes (stretching the 64 px glow was the slow part)
   if(flashes.length){g.setTransform(1,0,0,1,0,0);
-    for(const f of flashes){const c=iso(f.x,f.y),a=f.life/f.max,r=TW2*f.r*(f.muzzle?1:2.2)*(f.muzzle?1:1.4-a*.4),im=softDot(GLOW_DOTS,r*DPR,SOFT_GLOW);
-      g.globalAlpha=a;g.drawImage(im,Math.round(c[0]*DPR)-(im.width>>1),Math.round((c[1]-WH*.5)*DPR)-(im.width>>1))}
+    for(const f of flashes){const c=flashPoint(f),a=f.life/f.max,r=TW2*f.r*(f.muzzle?1:2.2)*(f.muzzle?1:1.4-a*.4),im=softDot(GLOW_DOTS,r*DPR,SOFT_GLOW);
+      g.globalAlpha=a;g.drawImage(im,Math.round(c[0]*DPR)-(im.width>>1),Math.round(c[1]*DPR)-(im.width>>1))}
     g.setTransform(DPR,0,0,DPR,0,0)}
   g.globalAlpha=1;
   g.globalCompositeOperation='source-over';

@@ -56,6 +56,9 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  }
  const B=goldPolice?'#26334b':goldKnight?'#454039':o.body,V=goldClown?'#67293b':o.vest,H=o.helmet||o.cap||o.boonie||B,T=goldPolice?'#202b40':goldKnight?'#393630':o.pants||"#3b372c",skin=o.head;
  const bp=o.bolt===undefined?-1:o.bolt,kick=bp>=0&&bp<.2?(1-bp/.2)*.65:0,pull=bp>.24&&bp<.9?Math.sin((bp-.24)/.66*Math.PI):0,shotgun=o.weapon==="sg",sniper=(o.gl||14)>17;
+ const gunX=5.6,gunZ=3.8;
+ // Measurement uses the very same projection and endpoints as the painted barrel.
+ if(!ctx)return {tip:project([gunX,23+bob,gunZ+(o.gl||14)+2.4-kick]),root:project([gunX,23+bob,0])};
  // A planted stance, shaped thighs, separate knees and substantial boots.
  for(const side of[-1,1]){
   const stride=walking?Math.sin(phase+ (side<0?Math.PI:0))*2.2:0;
@@ -85,7 +88,7 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
 
  // Shoulder-mounted stock and forward grips stay clear of the plate carrier.
  // Cosmetic recoil is short; the simulation's fire timing and aim are untouched.
- const gunX=5.6,gunZ=3.8;
+
  const shL=[-6.2,25+bob,0],elL=o.nogun?[-6.8,20.4+bob,2.2]:[-6.4,20.5+bob,7],haL=o.nogun?[-6.3,16+bob,1]:[gunX-.4,21.8+bob,gunZ+10.2-kick-(shotgun?pull*2:0)];
  const shR=[6.2,25+bob,0],elR=o.nogun?[7.1,20.8+bob,2.6]:[8.6,20.3+bob,4.8],haR=o.nogun?[6.3,16+bob,1]:[gunX+(sniper?pull*1.6:0),22+bob+(sniper?pull:0),gunZ+4.8-kick-(sniper?pull*1.5:0)];
  for(const [sh,el,ha]of [[shL,elL,haL],[shR,elR,haR]]){
@@ -327,6 +330,26 @@ ctx.beginPath();ctx.ellipse(0,1.1,10.5,4,0,0,Math.PI*2);ctx.fill();
 }
 
 
+// Compensate for the model's flattened depth before aligning it with the screen aim.
+function wardrobeAimAngle(sd){return Math.atan2(sd.x,sd.y/.32)}
+function wardrobeBarrel(o,sd,walk=0){
+ const angle=Math.round(wardrobeAimAngle(sd)*180/Math.PI)*Math.PI/180;
+ const phase=Math.round(walk*24/(Math.PI*2))*Math.PI*2/24,pose=Object.assign({},o);
+ if(pose.bolt!==undefined)pose.bolt=Math.round(pose.bolt*24)/24;
+ return paintWardrobeCharacter(null,pose,angle,0,1,0,0,phase);
+}
+// Cosmetic coordinates only: collision position, speed, spread, damage and range stay untouched.
+function wardrobeShotVisual(from,ang,gun){
+ if(from.id===undefined||players.get(from.id)!==from)return null;
+ const look=Object.assign(playerLook(from),{bolt:gun.bolt?0:-1}),barrel=wardrobeBarrel(look,wdirToScreen(from.aim),from.walk||0);
+ const tip=barrel.tip.map(v=>v*FIG),root=barrel.root.map(v=>v*FIG);
+ const vx=(Math.cos(ang)-Math.sin(ang))*32,vy=(Math.cos(ang)+Math.sin(ang))*16;
+ const along=((tip[0]-root[0])*vx+(tip[1]-root[1])*vy)/(vx*vx+vy*vy);
+ const c=iso(from.x,from.y),m=screenToWorld(c[0]+tip[0]*u,c[1]+tip[1]*u);
+ return [tip[0]-vx*along,tip[1]-vy*along,m.x,m.y];
+}
+function flashPoint(f){const c=f.visual?iso(f.visual[0],f.visual[1]):iso(f.x,f.y);return [c[0],c[1]-(f.visual?0:WH*.5)]}
+
 // Bounded sprite cache keeps the full mesh out of steady-state gameplay frames.
 // 360 headings and 24 gait samples affect illustration only, never simulation or aiming.
 const WARDROBE_CACHE=new Map(),WARDROBE_OMIT=new Set(['aim','walk','tag','tagCol','hp','big','detail','syncRender']);
@@ -455,7 +478,7 @@ function gunArms(hand,sd,gl,shB,shF,sleeve,nogun,bob,bp=-1,kind='',swing=0){
 function drawPerson(x,y,o){
   if(o.mark&&o.detail!==false){
     const [sx,sy]=iso(x,y),sd=wdirToScreen(o.aim),BG=o.big||1;
-    drawWardrobeCharacter(g,o,Math.atan2(sd.x,sd.y),game.time,u*FIG*BG,sx,sy,o.walk||0);
+    drawWardrobeCharacter(g,o,wardrobeAimAngle(sd),game.time,u*FIG*BG,sx,sy,o.walk||0);
     if(o.hp!==undefined&&o.hp<1){g.fillStyle='rgba(10,8,6,.8)';g.fillRect(sx-8*u,sy-43*u,16*u,2.6*u);g.fillStyle='#d65a3a';g.fillRect(sx-8*u,sy-43*u,16*u*Math.max(0,o.hp),2.6*u)}
     if(o.tag)label(o.tag,sx,sy-46*u*BG,o.tagCol||'#a9bccb',BG>1?11:9);
     return;
