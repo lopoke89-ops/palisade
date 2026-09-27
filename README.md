@@ -42,6 +42,55 @@ Android: Chrome shows an "INSTALL AS AN APP" button on the main menu
 (or use the ⋮ menu > "Add to Home screen").
 
 
+JOBS, BOSSES AND SALVAGE (v0.8.1)
+---------------------------------
+  - SOLDIER: carbine, builds 40% faster, takes more hits.
+  - SNIPER: bolt-action rifle, one heavy round per pull, through wood.
+  - GRENADIER: pump shotgun. 7 pellets in a tight, even spread; full
+    damage out to 2.5 tiles, half by 7. Six shells, loaded one at a time
+    when the tube runs dry, after a second without firing, or with R.
+    Three grenades a raid, bigger blasts.
+  - QUARTERMASTER: walk over a downed teammate (or Dell) and they're up
+    instantly with 60% health. Carries 96 of each material, gathers
+    faster, repairs cost half. SMG.
+  - Bosses: every 5th raid in co-op (5, 10, 15, 20...) has a boss in it,
+    in place of two riflemen, and the raid isn't over until it's down.
+    Order: THE DEMOLISHER (slow rockets down a red line; every third
+    volley is a fan of three; burning ground), THE BUTCHER (sword; red
+    wedge = a cut is coming, red lane = a charge down it; faster below
+    40%), THE STORMCALLER (lightning rifle; blue line tracks you, locks
+    for the last moment; stuns and jumps to two people nearby; fires
+    twice below 50%). Killing one pays the killer 40 salvage, 15 to
+    everyone else. New bosses: add an entry to BOSSES and BOSS_ORDER in
+    index.html.
+  - Knocking down a wall that isn't yours pays salvage: wood 5, brick 8,
+    metal 15. In co-op that's the old ruins in the yard; in Base Battle
+    it's the other crew's walls and the ruins. Your own side's walls (any
+    wall a player built, repaired or changed) never pay.
+  - Online games need everyone on v0.8.1 or later: an older copy is told
+    to reload.
+
+
+CASES (v0.8.2)
+--------------
+  - SUPPLY CASE: co-op and Endless only (one every 3 raids held, plus
+    wins). Common 60%, rare 27%, epic 10%, legendary 3%.
+  - AFTERGLOW CASE: 49 new items (neon, cosmic, gradient, gold). Drops
+    from Base Battle and Free-for-all (45% / 50% after a win, 20% after
+    a loss) or costs 10 shards. Common 53%, rare 30%, epic 12%,
+    legendary 4%, GOLD 1%. Gold: Gold Clown / Gold Police / Gold Metal
+    Knight outfits, Gold Clown Hair, Gold Knight Helm, Gold Rainbow
+    tracer, Gold Bubbles kill effect.
+  - Shards (from duplicates: 1 / 3 / 8 / 20 / 40) now buy Afterglow
+    cases only; Supply cases are earned in co-op.
+  - Tracers and kill effects have their own sounds (quiet, layered on
+    the gunshot at most every 0.22 s).
+  - Cases are data: CASES in index.html (names, odds, shard price, drop
+    table per mode) and the case_types table in Supabase, which is the
+    one that counts for accounts. Adding a case = one row there, one
+    entry in CASES, and items tagged with its id in both lists.
+
+
 PLAYING ONLINE
 --------------
   - One person taps MULTIPLAYER > HOST and gets a 4-letter code.
