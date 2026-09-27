@@ -12,7 +12,7 @@ curl -s -o /dev/null localhost:8080/ || (cd "$ROOT" && setsid nohup python3 -m h
 curl -s -o /dev/null localhost:9000/ || (setsid nohup node peer-server.js > out/peer.log 2>&1 < /dev/null &)
 sleep 1.5
 fail=0
-for t in solo bosses multiplayer cases accounts rewards_lobby_shotgun reel_music v086; do
+for t in solo bosses multiplayer cases accounts rewards_lobby_shotgun reel_music v086 v087; do
   out=$(timeout 300 node $t.js 2>&1); echo "$out" > out/$t.log
   if echo "$out" | grep -qiE "errors?:? *(none|\[\])|ERRS \[\]" && ! echo "$out" | grep -qiE "Error:|TypeError|timed out"; then echo "PASS  $t"; else echo "FAIL  $t  (see out/$t.log)"; fail=1; fi
 done

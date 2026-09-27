@@ -103,6 +103,7 @@ create table public.match_results (
   created_at timestamp with time zone not null default now(),
   case_id text,
   bonus integer not null default 0,
+  shards integer not null default 0,
   constraint match_results_pkey PRIMARY KEY (id),
   constraint match_results_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE,
   constraint match_results_kind_check CHECK ((kind = ANY (ARRAY['run'::text, 'match'::text])))
@@ -176,6 +177,8 @@ declare uid uuid := private.require_user(); l public.lockers; ct public.case_typ
   v_dur int := coalesce(private.num(p->>'duration_s'), 0)::int; v_boss int := least(greatest(coalesce(private.num(p->>'bosses'), 0), 0), 100)::int;
   waves int := 0; v_st jsonb; v_prog int; earned int := 0; granted int; got text[]; v_case text := 'supply'; chance float8; v_bonus int := 0;
   v_budget float8;
+  -- salvage left at the end of a co-op / Endless run: 20 to 1, at most 2 shards per raid held and 10 a run (same as the game)
+  v_sal int := least(greatest(coalesce(private.num(p->>'salvage'), 0), 0), 1000000)::int; v_shards int := 0;
 begin
   if v_kind is null or v_kind not in ('run', 'match') then raise exception 'Unknown result' using errcode = '22023'; end if;
   if v_dur < 20 or v_dur > 21600 or (v_kind = 'match' and v_dur < 30) then raise exception 'That match length doesn''t add up' using errcode = '22023'; end if;
@@ -210,6 +213,7 @@ begin
     if waves > 0 then v_boss := least(v_boss, waves / 5); end if;
     select * into cb from public.case_types c where c.drop ? 'boss' order by c.sort limit 1;
     if found then v_bonus := v_boss * coalesce((cb.drop->'boss'->>'each')::int, 1); end if;
+    v_shards := least(v_sal / 20, 2 * v_held, 10);
   else
     if v_pvp not in ('base', 'ffa') then raise exception 'Unknown match type' using errcode = '22023'; end if;
     v_st := jsonb_set(v_st, '{drops}', to_jsonb(coalesce((v_st->>'drops')::int, 0) + v_kills));
@@ -229,12 +233,13 @@ begin
       bag = private.bag_add(
               case when v_case is not null and v_case <> 'supply' and granted > 0 then private.bag_add(bag, v_case, granted) else bag end,
               coalesce(cb.id, 'afterglow'), v_bonus),
+      shards = shards + v_shards,
       play_budget = greatest(0, v_budget - v_dur), budget_at = now(),
       rev = rev + 1, updated_at = now()
     where user_id = uid;
-  insert into public.match_results (user_id, kind, mode, pvp, diff, win, held, kills, duration_s, cases_granted, case_id, bonus)
+  insert into public.match_results (user_id, kind, mode, pvp, diff, win, held, kills, duration_s, cases_granted, case_id, bonus, shards)
     values (uid, v_kind, case when v_kind = 'run' then v_mode end, nullif(v_pvp, ''), case when v_kind = 'run' then v_diff end,
-            v_win, v_held, v_kills, v_dur, granted, v_case, v_bonus);
+            v_win, v_held, v_kills, v_dur, granted, v_case, v_bonus, v_shards);
   update public.player_stats s set
       raids = s.raids + case when v_kind = 'run' then v_held else 0 end,
       wins = s.wins + case when v_kind = 'run' and v_win then 1 else 0 end,
@@ -247,7 +252,7 @@ begin
   got := private.apply_unlocks(uid);
   select * into l from public.lockers where user_id = uid;
   return jsonb_build_object('cases_granted', granted, 'case_id', v_case, 'capped', false, 'chance', chance,
-    'bonus', jsonb_build_object('case', coalesce(cb.id, 'afterglow'), 'n', v_bonus),
+    'bonus', jsonb_build_object('case', coalesce(cb.id, 'afterglow'), 'n', v_bonus), 'shards', v_shards,
     'unlocked', to_jsonb(got), 'locker', private.locker_out(l));
 end $function$
 ;

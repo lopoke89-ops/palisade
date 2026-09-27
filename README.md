@@ -71,6 +71,45 @@ JOBS, BOSSES AND SALVAGE (v0.8.1)
     to reload.
 
 
+BURSTS, REPAIRS AND A STRONGER DELL (v0.8.7)
+--------------------------------------------
+  - SOLDIER: the carbine fires bursts. A burst always finishes once
+    it starts (one click is a full burst; hold to keep firing).
+    Rounds per burst and the pause after it follow your DAMAGE level:
+      level 0: 3 rounds, 0.40 s pause    level 3: 9 rounds, 0.25 s
+      level 1: 5 rounds, 0.35 s          level 4: 9 rounds, 0.20 s
+      level 2: 7 rounds, 0.30 s
+    FIRE RATE tightens the spacing inside a burst (0.09 s at level 0).
+  - SNIPER: in co-op a round every 0.7 s (was 1 s), still 47 damage,
+    so it still drops a rifleman in one shot through raid 4 on Normal.
+    Base Battle and Free-for-all keep 1.25 s. Hold the button to keep
+    firing; a click during the bolt is still kept.
+  - Move speed: sniper 10% faster, grenadier 10% slower, soldier and
+    quartermaster unchanged.
+  - QUARTERMASTER SPRINT (Shift, or the SPRINT button): 40% faster for
+    2.5 s, no shooting while sprinting, then 6 s to recharge. Only the
+    quartermaster can sprint.
+  - REPAIR CORE (Armory, co-op and Endless): 25 salvage restores up to
+    50 core health, never past full; the quartermaster pays 13. It's
+    greyed out when the core is full, so nothing is charged. Not in
+    Base Battle (the armory is open during the fight there).
+  - DELL: 180 health (was 90) and a pump shotgun (5 pellets of 6,
+    every 0.8 s, full damage to 2.5 tiles). New DELL row in the Armory:
+    one upgrade shared by the whole crew, anyone can buy the next level
+    (30 / 60 / 100 / 150 salvage), each adding 15% damage, 15% reach
+    and 15% fire rate (level 4: +60% of each).
+  - Leftover salvage becomes shards when a co-op or Endless run ends:
+    20 salvage = 1 shard, whole shards only, at most 2 per raid held
+    and 10 per run. Spent salvage doesn't count, and what converts is
+    used up. Accounts: the server applies the same limits.
+  - Aiming: bullets travel along the ground and hit around a raider's
+    feet, but the mouse aimed as if everything stood at hip height, so
+    a shot at someone's head could pass up to a tile beside them. Now,
+    with the cursor anywhere on a raider (boots to helmet), or on an
+    enemy player in PvP, the shot goes straight at them.
+  - Online games need everyone on v0.8.7 or later.
+
+
 LOCKER MUSIC, LEANER GAME (v0.8.6)
 ----------------------------------
   - Locker music: a new track plays on the LOCKER page (and through

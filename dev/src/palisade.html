@@ -62,9 +62,10 @@ button:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
 #buildAct{font-family:var(--stencil);font-weight:900;font-size:19px;letter-spacing:.05em;line-height:1}
 #buildSub{font-size:10px;line-height:1.2}
 #buildBtn.no{background:#4a4234;color:var(--bone)}
-#nadeBtn{height:40px;background:rgba(27,24,20,.86);border:1px solid var(--rust);display:flex;justify-content:space-between;align-items:center;padding:0 10px;
+#nadeBtn,#sprBtn{height:40px;background:rgba(27,24,20,.86);border:1px solid var(--rust);display:flex;justify-content:space-between;align-items:center;padding:0 10px;
   font-family:var(--stencil);font-weight:800;letter-spacing:.08em;font-size:15px;color:#e58a64}
-#nadeBtn b{font-family:var(--mono);font-size:12px;color:var(--bone)}
+#nadeBtn b,#sprBtn b{font-family:var(--mono);font-size:12px;color:var(--bone)}
+#sprBtn{border-color:#6f9a7c;color:#9fd6ae}#sprBtn.empty{opacity:.45}#sprBtn.on{background:rgba(60,98,70,.92)}
 #nadeBtn.empty{opacity:.4}
 
 /* ---------- overlays ---------- */
@@ -172,13 +173,13 @@ input[type=text]:focus,input[type=email]:focus,input[type=password]:focus{outlin
 .kc{display:none;font-family:var(--mono);font-weight:600;font-size:10px;line-height:1;letter-spacing:0;color:#17140f;background:var(--bone);border-radius:2px;padding:2px 4px;margin-left:6px;vertical-align:1px}
 body.desk .kc{display:inline-block}
 #armBtn .kc,#skipBtn .kc{background:var(--warn)}
-#nadeBtn .kc{background:#e58a64}
+#nadeBtn .kc{background:#e58a64}#sprBtn .kc{background:#9fd6ae}
 .pieces{position:relative}.pieces .kc.pk{position:absolute;right:-4px;top:-7px;margin:0}
 #buildBtn .kc.kb{justify-self:center;margin:3px 0 0;background:#17140f;color:var(--warn)}
 #buildBtn.no .kc.kb{background:var(--bone);color:#17140f}
 .chip .kc{margin-left:auto;margin-right:8px}
 #skipBtn,#armBtn,#bmBtn{display:flex;align-items:center;justify-content:center;gap:0}
-#nadeBtn .kc{margin-left:auto;margin-right:8px}
+#nadeBtn .kc,#sprBtn .kc{margin-left:auto;margin-right:8px}
 #feed{display:grid;gap:3px;justify-items:end;margin-top:6px}
 #feed span{font-family:var(--stencil);font-weight:800;font-size:13px;letter-spacing:.06em;background:rgba(14,12,10,.72);padding:2px 7px;border-right:3px solid currentColor;transition:opacity .6s}
 #feed span.old{opacity:0}
@@ -203,7 +204,7 @@ body.desk .chip .k{font-size:18px}
 body.desk #buildBtn{height:70px}
 body.desk #buildAct{font-size:22px}
 body.desk #armBtn{height:44px;font-size:17px}
-body.desk #nadeBtn{height:44px;font-size:17px}
+body.desk #nadeBtn,body.desk #sprBtn{height:44px;font-size:17px}
 body.desk #bmBtn{height:30px;font-size:14px}
 body.desk #feed span{font-size:15px}
 body.desk #board li{font-size:16px}
@@ -337,6 +338,7 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
   </div>
   <button id="armBtn" type="button" hidden><span id="armLab">ARMORY</span><kbd class="kc">E</kbd></button>
   <button id="nadeBtn" type="button"><span>NADE</span><kbd class="kc">G</kbd><b id="nadeN">2</b></button>
+  <button id="sprBtn" type="button" hidden><span>SPRINT</span><kbd class="kc">SHIFT</kbd><b id="sprN">READY</b></button>
 </div>
 <div id="keys" hidden></div>
 <div id="chat" hidden><ol id="chatLog" aria-live="polite"></ol></div>
@@ -362,7 +364,7 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
       <button class="ghost" id="installBtn" type="button" hidden>INSTALL AS AN APP</button>
       <button class="ghost acctBtn" id="acctBtn" type="button" data-go="account" hidden>ACCOUNT</button>
       <p class="note" id="saveNote" hidden></p>
-      <p class="foot">v0.8.6 · phone and desktop · online co-op and PvP for up to six</p>
+      <p class="foot">v0.8.7 · phone and desktop · online co-op and PvP for up to six</p>
     </section>
 
     <section class="page" id="pg-account" hidden>
@@ -402,10 +404,10 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
       <p class="lede">Hold the stake through the raids. Short runs end at night; Endless keeps coming and cycles day to night. Dell gathers, repairs, restocks and picks you up when you drop. Drop raiders for salvage and spend it at the stake between raids.</p>
       <h2>YOUR JOB</h2>
       <div class="classes" id="classes">
-        <button class="cls sel" data-c="soldier" type="button"><b>SOLDIER</b><i>the door problem</i><span>Carbine. Builds 40% faster and takes more hits.</span></button>
-        <button class="cls" data-c="sniper" type="button"><b>SNIPER</b><i>the angle problem</i><span>Bolt-action rifle. One heavy round per pull, straight through wood.</span></button>
-        <button class="cls" data-c="grenadier" type="button"><b>GRENADIER</b><i>the doorway problem</i><span>Pump shotgun: huge up close, tight spread, fires as fast as you click (holding fires every half second), six shells. Three grenades a round.</span></button>
-        <button class="cls" data-c="quartermaster" type="button"><b>QUARTER&shy;MASTER</b><i>the rescue problem</i><span>Walk over a downed teammate to get them up instantly. Carries 96 of everything, gathers faster, repairs for half. SMG.</span></button>
+        <button class="cls sel" data-c="soldier" type="button"><b>SOLDIER</b><i>the door problem</i><span>Burst carbine: 3 rounds a pull, up to 9 with DAMAGE upgrades. Builds 40% faster and takes more hits.</span></button>
+        <button class="cls" data-c="sniper" type="button"><b>SNIPER</b><i>the angle problem</i><span>Bolt-action rifle. Heavy rounds straight through wood. Moves 10% faster.</span></button>
+        <button class="cls" data-c="grenadier" type="button"><b>GRENADIER</b><i>the doorway problem</i><span>Pump shotgun: huge up close, tight spread, fires as fast as you click (holding fires every half second), six shells. Three grenades a round. Moves 10% slower.</span></button>
+        <button class="cls" data-c="quartermaster" type="button"><b>QUARTER&shy;MASTER</b><i>the rescue problem</i><span>Walk over a downed teammate to get them up instantly. Carries 96 of everything, gathers faster, repairs for half. SMG. The only one who can SPRINT.</span></button>
       </div>
       <h2>LENGTH</h2>
       <div class="seg" id="modes"><button data-m5="5" type="button">5 RAIDS</button><button data-m5="10" type="button">10 RAIDS</button><button data-m5="endless" type="button">ENDLESS</button></div>
@@ -416,7 +418,7 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
       <details class="how"><summary>HOW TO PLAY</summary>
         <div class="ctrls">
           <div><h3>TOUCH</h3><p>Left thumb: move<br>Right thumb: aim, push far to fire<br>BUILD: place, upgrade or repair the tile you face. DOOR lets you and Dell walk through.</p></div>
-          <div><h3>KEYBOARD</h3><p>WASD move · mouse aim<br>Hold click to fire (sniper: click per shot) · Space build<br>1 2 3 material · F wall/door<br>G grenade · E armory at the stake<br>B build kit · Enter start raid · T chat online · Esc pause</p></div>
+          <div><h3>KEYBOARD</h3><p>WASD move · mouse aim<br>Hold click to fire (soldier: bursts) · Space build<br>1 2 3 material · F wall/door<br>G grenade · E armory at the stake<br>Shift sprint (quartermaster) · B build kit · Enter start raid · T chat online · Esc pause</p></div>
         </div>
       </details>
       <button class="ghost" type="button" data-go="main">BACK</button>
@@ -506,7 +508,7 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
   <div class="card">
     <div class="eyebrow" id="armEyebrow">ARMORY · BETWEEN RAIDS</div>
     <div class="salbig">SALVAGE <span id="armSal">0</span></div>
-    <p class="lede" style="font-size:12px;color:var(--dim)">Drop raiders to earn salvage; clearing a raid pays everyone. Upgrades are yours and last the whole run.</p>
+    <p class="lede" style="font-size:12px;color:var(--dim)">Drop raiders to earn salvage; clearing a raid pays everyone. Upgrades are yours and last the whole run. Salvage left when the run ends becomes shards (20 to 1, up to 2 per raid held, 10 a run).</p>
     <div class="arm" id="armRows"></div>
     <button class="ghost" id="armClose" type="button">BACK TO THE FENCE</button>
     <p class="armHint">E or Esc closes the armory.</p>
@@ -576,15 +578,18 @@ const MAT=[
 /* ---------- PvP ---------- */
 // base: two crews, two stakes, a truce to build, then knock theirs down. ffa: everyone for themselves around fixed concrete cover.
 const TEAMS={a:{name:'WEST',col:'#6fa8dc'},b:{name:'EAST',col:'#e0664a'}};
-const PVP={stake:700,dmg:.7,snipe:52/47,snipeCd:1.25,nade:.8,stakeHit:.35,truce:45,bounty:8,startSal:20,ffaGoal:15,ffaTime:300,prot:2};
+const PVP={stake:700,dmg:.7,snipe:52/47,snipeCd:1.25/.7,nade:.8,stakeHit:.35,truce:45,bounty:8,startSal:20,ffaGoal:15,ffaTime:300,prot:2};
 const FFA_SPAWNS=[[1.5,1.5],[14.5,1.5],[14.5,14.5],[1.5,14.5],[7.5,1.3],[14.7,7.5],[8.5,14.7],[1.3,8.5]];
 const CLASSES={
-  soldier:{name:'SOLDIER',hp:115,nades:2,build:.6,cap:[64,64,64],blast:1,nadeCd:1,gun:{dmg:12,cd:.11,spread:.12,range:11,speed:22,snd:'ar'}},
-  sniper:{name:'SNIPER',hp:90,nades:2,build:1,cap:[64,64,64],blast:1,nadeCd:1,gun:{dmg:47,cd:1,spread:.02,range:16,speed:34,pierce:2,snd:'sniper',bolt:true}},
+  // burst carbine: a burst always finishes once started. Bullets per burst and the pause after it follow the DAMAGE level;
+  // FIRE RATE tightens the spacing inside a burst (cd)
+  soldier:{name:'SOLDIER',hp:115,nades:2,build:.6,cap:[64,64,64],blast:1,nadeCd:1,spd:1,gun:{dmg:12,cd:.09,spread:.12,range:11,speed:22,snd:'ar',burst:true}},
+  // bolt every 0.7 s in co-op (PvP keeps 1.25 s through PVP.snipeCd). 47 still drops a rifleman in one through raid 4 on Normal
+  sniper:{name:'SNIPER',hp:90,nades:2,build:1,cap:[64,64,64],blast:1,nadeCd:1,spd:1.1,gun:{dmg:47,cd:.7,spread:.02,range:16,speed:34,pierce:2,snd:'sniper',bolt:true}},
   // pump shotgun: 7 pellets in a tight, even pattern, full damage out to 2.5 tiles, half by 7; a 6-shell tube loaded one shell at a time
-  grenadier:{name:'GRENADIER',hp:105,nades:3,build:1,cap:[64,64,64],blast:1.25,nadeCd:.6,gun:{dmg:12,cd:.5,clickCd:.12,spread:.15,range:7.2,speed:24,snd:'shotgun',bolt:true,pump:true,pellets:7,fall:[2.5,7,.55],mag:6,reload:.42}},
+  grenadier:{name:'GRENADIER',hp:105,nades:3,build:1,cap:[64,64,64],blast:1.25,nadeCd:.6,spd:.9,gun:{dmg:12,cd:.5,clickCd:.12,spread:.15,range:7.2,speed:24,snd:'shotgun',bolt:true,pump:true,pellets:7,fall:[2.5,7,.55],mag:6,reload:.42}},
   // support: walking over a downed teammate (or Dell) gets them straight up; bigger packs, faster gathering, half-price repairs
-  quartermaster:{name:'QUARTERMASTER',hp:110,nades:2,build:.85,cap:[96,96,96],blast:1,nadeCd:1,gather:.72,repair:.5,medic:true,gun:{dmg:7,cd:.085,spread:.15,range:8.5,speed:22,snd:'smg'}}
+  quartermaster:{name:'QUARTERMASTER',hp:110,nades:2,build:.85,cap:[96,96,96],blast:1,nadeCd:1,gather:.72,repair:.5,medic:true,spd:1,sprint:true,gun:{dmg:7,cd:.085,spread:.15,range:8.5,speed:22,snd:'smg'}}
 };
 const CLASS_IDS=Object.keys(CLASSES);
 const DIFF={
@@ -623,6 +628,17 @@ let resizeT=0;
 addEventListener('resize',()=>{clearTimeout(resizeT);resizeT=setTimeout(()=>{if(resize())caches=null;vignette=null;vignetteDemo=null},100)});resize();
 const iso=(x,y)=>[(x-y)*TW2+camX,(x+y)*TH2+camY];
 function screenToWorld(sx,sy){const a=(sx-camX)/TW2,b=(sy-camY)/TH2;return{x:(a+b)/2,y:(b-a)/2}}
+// Bullets fly along the ground and hit a circle around each figure's feet, but the figure is drawn standing up.
+// A cursor on someone's head used to turn into a ground point up to ~0.8 tiles behind them, so shots across the screen
+// passed beside them. If the cursor is on a drawn body (feet to helmet), aim at that body's feet instead.
+function bodyUnder(sx,sy,me){
+  let best=null,by=-1e9;
+  const test=(o,big)=>{const[x,y]=iso(o.x,o.y),k=u*FIG*(big||1);
+    if(Math.abs(sx-x)<=9*k&&sy<=y+4*k&&sy>=y-37*k&&y>by){by=y;best={x:o.x,y:o.y}}};   // the front-most one wins
+  if(game.pvp){for(const o of players.values())if(o!==me&&o.alive&&(game.pvp==='ffa'||o.team!==me.team))test(o,1)}
+  else for(const e of enemies)if(!e.dead)test(e,e.big?1.45:1);
+  return best;
+}
 function sdirToWorld(sx,sy){const a=sx/TW2,b=sy/TH2;let x=(a+b)/2,y=(b-a)/2;const l=Math.hypot(x,y)||1;return{x:x/l,y:y/l}}
 function wdirToScreen(d){let x=(d.x-d.y)*TW2,y=(d.x+d.y)*TH2;const l=Math.hypot(x,y)||1;return{x:x/l,y:y/l}}
 
@@ -821,6 +837,12 @@ const UPG=[
   {k:'g',name:'RANGE',what:'+12% reach and bullet speed per level',cost:[15,35,60,100]},
   {k:'a',name:'ARMOR',what:'+15% max health per level',cost:[20,45,80,130]},
   {k:'n',name:'GRENADES',what:'+1 grenade each raid, bigger blasts',cost:[15,35,60,100]}];
+// co-op / Endless only. Dell's level is shared by the whole crew; anyone can buy the next one.
+// +15% damage, range and fire rate per level, added (not multiplied): level 4 = +60% each.
+const DELL_UP={name:'DELL',what:'+15% damage, range and fire rate per level. Shared by the whole crew.',cost:[30,60,100,150]};
+// the core doesn't heal on its own: 25 salvage (13 for the quartermaster) buys back up to 50 health
+const CORE_FIX={hp:50,cost:25};
+const coreFixCost=p=>Math.ceil(CORE_FIX.cost*(p.C.repair||1));
 const BOUNTY={rifle:4,gren:7,breach:6};
 function refit(p){
   const G=p.C.gun,U=p.up;
@@ -828,14 +850,30 @@ function refit(p){
   const mx=Math.round(p.C.hp*(1+.15*U.a));if(mx>p.max)p.hp+=mx-p.max;p.max=mx;
   p.maxN=p.C.nades+U.n;p.blast=p.C.blast*(1+.08*U.n);
 }
+// burst carbine: 3/5/7/9/9 bullets at DAMAGE level 0-4; the pause after a burst is 0.40 s, 0.05 s shorter per level, never under 0.20 s
+const BURST_N=[3,5,7,9,9],burstN=p=>BURST_N[Math.min(4,p.up.d|0)],burstGap=p=>Math.max(.2,.4-.05*(p.up.d|0));
 const upStr=p=>UPG.map(x=>p.up[x.k]).join('');
 const nearStake=p=>{const c=stakeOf(p);return!!c&&Math.hypot(p.x-(c.i+.5),p.y-(c.j+.5))<2.7};
 const shopOpen=p=>!!p&&p.alive&&(game.pvp==='base'?game.phase!=='over':!game.pvp&&game.phase==='build');
 const canShop=p=>shopOpen(p)&&nearStake(p);
 function buyUpgrade(p,k){
+  if(k==='core')return repairCore(p);
+  if(k==='dell')return buyDell(p);
   const U=UPG.find(x=>x.k===k);if(!U||!canShop(p))return false;const t=p.up[k];if(t>=4||p.sal<U.cost[t])return false;
   p.sal-=U.cost[t];p.up[k]=t+1;p.upS=upStr(p);refit(p);if(k==='n')p.nades=Math.max(p.nades,p.maxN);
   personal(p,'restock');return true;
+}
+function repairCore(p){
+  const c=cores[0],cost=coreFixCost(p);
+  if(game.pvp||!canShop(p)||!c||c.hp<=0||c.hp>=c.max||p.sal<cost)return false;   // full core: nothing to buy, nothing charged
+  const add=Math.min(CORE_FIX.hp,c.max-c.hp);p.sal-=cost;c.hp+=add;
+  flt(c.i+.5,c.j+.5,`+${Math.round(add)} CORE`,'#8fe0a0');emit(c.i+.5,c.j+.5,WH*.6,'heal');personal(p,'restock');return true;
+}
+function buyDell(p){
+  const L=game.dellLv|0;
+  if(game.pvp||!canShop(p)||L>=4||p.sal<DELL_UP.cost[L])return false;
+  p.sal-=DELL_UP.cost[L];game.dellLv=L+1;
+  toastAll(`DELL · LEVEL ${L+1}`,`${p.name} upgraded Dell's shotgun: +${15*(L+1)}% damage, range and fire rate.`);personal(p,'restock');return true;
 }
 // who gets paid for a kill; bullets and grenades remember whose they were
 function award(own,e){
@@ -882,7 +920,8 @@ function newGame(roster,pvp=''){
   player=players.get(myId)||[...players.values()][0];
   core=pvp==='base'?cores[player.team==='b'?1:0]:cores[0]||{team:'',i:-9,j:-9,hp:1,max:1,flash:0};
   coreK=cores.length?idx(core.i,core.j):-1;
-  qm={x:3.5,y:11.5,hp:90,max:90,alive:true,revive:0,aim:{x:1,y:0},cd:0,sup:8,gt:0,work:0,job:'',next:-1,pathT:0,scanT:0,foe:null,walk:0,flash:0,mats:[24,0,0],hurt:9};
+  game.dellLv=0;
+  qm={x:3.5,y:11.5,hp:180,max:180,alive:true,revive:0,aim:{x:1,y:0},cd:0,sup:8,gt:0,work:0,job:'',next:-1,pathT:0,scanT:0,foe:null,walk:0,flash:0,mats:[24,0,0],hurt:9};
   if(pvp)Object.assign(qm,{alive:false,gone:true,x:-9,y:-9});   // Dell sits PvP out
   enemies=[];bullets=[];lobs=[];charges=[];parts=[];flashes=[];floats=[];sacks=[];rockets=[];fires=[];zaps=[];slashes=[];rings=[];
   const mode=['5','10','endless'].includes(pick.mode)?pick.mode:'5';
@@ -1157,6 +1196,7 @@ addEventListener('keydown',e=>{
   else if(k==='1'||k==='2'||k==='3')game.sel=+k-1;
   else if(k==='f')game.piece=game.piece==='wall'?'door':'wall';
   else if(k==='g'||k==='q')localNade();
+  else if(k==='shift')localSprint();
   else if(k==='r')localReload();
   else if(k==='enter'&&game.phase==='build'&&NET.mode!=='guest')startRaid();
   else if(k==='b')toggleBuild();
@@ -1171,7 +1211,7 @@ function tapBtn(el,fn){el.addEventListener('pointerdown',e=>{e.preventDefault();
 const live=fn=>()=>{if(playing()&&!overlayOpen())fn()};
 [0,1,2].forEach(m=>tapBtn($('c'+m),live(()=>{game.sel=m})));
 tapBtn($('pWall'),live(()=>{game.piece='wall'}));tapBtn($('pDoor'),live(()=>{game.piece='door'}));
-tapBtn($('buildBtn'),live(localBuild));tapBtn($('nadeBtn'),live(localNade));
+tapBtn($('buildBtn'),live(localBuild));tapBtn($('nadeBtn'),live(localNade));tapBtn($('sprBtn'),live(localSprint));
 tapBtn($('skipBtn'),live(()=>{if(game.phase==='build'&&NET.mode!=='guest')startRaid()}));
 tapBtn($('pauseBtn'),()=>{if(playing())togglePause()});
 $('chatBtn').addEventListener('click',e=>{e.preventDefault();initAudio();chatOpen()?closeChat():openChat()});
@@ -1252,6 +1292,9 @@ function localBuild(){
   doBuild(p,t.i,t.j,game.sel,game.piece==='door');
   if(game.tip===1&&game.stats.built>=3){game.tip=2;setTip('Ring the CORE. Make one tile a DOOR so your crew and Dell can get in and out. Raiders treat doors like walls.')}
 }
+// quartermaster sprint: 1.4x speed for 2.5 s, no shooting while it lasts, then 6 s to recharge
+const SPRINT={mult:1.4,dur:2.5,cd:6};
+function localSprint(){const p=player;if(!p||!p.alive||!p.C.sprint||demo||(p.sprCd||0)>0)return;p.sprT=SPRINT.dur;p.sprCd=SPRINT.dur+SPRINT.cd}
 function localNade(){
   const p=player;if(!p||!p.alive)return;let tx,ty;
   if(!touchMode&&mouse.seen){const w=screenToWorld(mouse.x,mouse.y+WH*.55);tx=w.x;ty=w.y}else{tx=p.x+p.face.x*5;ty=p.y+p.face.y*5}
@@ -1582,7 +1625,7 @@ const cls=(el,c,on)=>{if(el.classList.contains(c)!==on)el.classList.toggle(c,on)
 const SLOTCOL=['#8fb58a','#a9bccb','#d0b077','#c29ac4','#86c0b8','#d08f78'];
 // the desktop key bar says what the keys do right now
 function keyBar(){
-  if(touchMode)return;const p=player,PV=game.pvp,K=(k,t)=>`<span class="kb"><kbd>${k}</kbd>${t}</span>`,a=[K('WASD','move'),K('MOUSE',p.gun&&p.gun.clickCd?'aim, click or hold to fire':p.gun&&p.gun.bolt?'aim, click to fire':'aim, hold to fire'),K('G','grenade')];
+  if(touchMode)return;const p=player,PV=game.pvp,K=(k,t)=>`<span class="kb"><kbd>${k}</kbd>${t}</span>`,a=[K('WASD','move'),K('MOUSE',p.gun&&p.gun.clickCd?'aim, click or hold to fire':p.gun&&p.gun.burst?'aim, hold to fire bursts':'aim, hold to fire'),K('G','grenade')];if(p.C&&p.C.sprint)a.push(K('SHIFT','sprint'));
   if(p.gun&&p.gun.mag)a.push(K('R','reload'));
   if(PV!=='ffa'&&cfg.build)a.push(K('SPACE','build'),K('1 2 3','material'),K('F','door'));
   if(PV!=='ffa')a.push(K('B','build kit'));
@@ -1636,11 +1679,12 @@ function hud(dt){
     txt($('buildSub'),t.ok?`${MAT[t.mat].name} · ${t.cost}`:t.reason);cls(b,'no',!t.ok)}
   txt($('salN'),String(p.sal|0));
   const ab=$('armBtn'),shopPhase=shopOpen(p);ab.hidden=!shopPhase;
-  if(shopPhase){const near=nearStake(p),afford=UPG.some(U=>p.up[U.k]<4&&p.sal>=U.cost[p.up[U.k]]);
+  if(shopPhase){const near=nearStake(p),afford=UPG.some(U=>p.up[U.k]<4&&p.sal>=U.cost[p.up[U.k]])||!game.pvp&&((game.dellLv|0)<4&&p.sal>=DELL_UP.cost[game.dellLv|0]);
     txt($('armLab'),'ARMORY');cls(ab,'far',!near);cls(ab,'pulse',near&&afford)}
   keyBar();
-  if(!$('armory').hidden){const sig=p.sal+'|'+upStr(p)+'|'+canShop(p);if(sig!==armSig)renderArmory()}
+  if(!$('armory').hidden&&armorySig(p)!==armSig)renderArmory()
   txt($('nadeN'),String(p.nades));cls($('nadeBtn'),'empty',p.nades<=0);
+  const sb=$('sprBtn');sb.hidden=!p.C.sprint;if(p.C.sprint){const on=p.sprT>0,cd=p.sprCd||0;txt($('sprN'),on?'GO':cd>0?Math.ceil(cd)+'s':'READY');cls(sb,'on',on);cls(sb,'empty',!on&&cd>0)}
 }
 
 /* ================= update ================= */
@@ -1674,12 +1718,15 @@ function controlLocal(dt){
   let mx=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),my=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
   if(stickMove.id!==null){mx+=stickMove.vx;my+=stickMove.vy}
   const mag=Math.min(1,Math.hypot(mx,my));
-  if(mag>.12){const d=sdirToWorld(mx,my),sp=3.3*mag*(p.stun>0?.45:1);moveEnt(p,d.x*sp*dt,d.y*sp*dt,pt(p));p.walk+=dt*mag*10;p.moveDir=d}
+  p.sprT=Math.max(0,(p.sprT||0)-dt);p.sprCd=Math.max(0,(p.sprCd||0)-dt);const spr=p.sprT>0;
+  // 3.3 tiles a second is everyone's pace; the class sets a multiplier (sniper 1.1, grenadier 0.9)
+  if(mag>.12){const d=sdirToWorld(mx,my),sp=3.3*mag*(p.C.spd||1)*(spr?SPRINT.mult:1)*(p.stun>0?.45:1);moveEnt(p,d.x*sp*dt,d.y*sp*dt,pt(p));p.walk+=dt*mag*(spr?13:10);p.moveDir=d;
+    if(spr&&rnd()<dt*14)emit(p.x-d.x*.2,p.y-d.y*.2,3*u,'dust',0)}
   let firing=false;
-  if(!touchMode&&mouse.seen){const w=screenToWorld(mouse.x,mouse.y+WH*.55);const dx=w.x-p.x,dy=w.y-p.y,l=Math.hypot(dx,dy)||1;p.aim={x:dx/l,y:dy/l};p.face=p.aim;firing=mouse.down}
+  if(!touchMode&&mouse.seen){const w=bodyUnder(mouse.x,mouse.y,p)||screenToWorld(mouse.x,mouse.y+WH*.55);const dx=w.x-p.x,dy=w.y-p.y,l=Math.hypot(dx,dy)||1;p.aim={x:dx/l,y:dy/l};p.face=p.aim;firing=mouse.down}
   else if(stickAim.id!==null&&stickAim.mag>.2){const d=assist(sdirToWorld(stickAim.vx,stickAim.vy));p.aim=d;p.face=d;firing=stickAim.mag>.5}
   else if(mag>.12){p.face=p.moveDir;p.aim=p.moveDir}
-  p.fireIn=firing;p.autoFire=touchMode||!mouse.seen;
+  p.fireIn=firing&&!spr;p.autoFire=touchMode||!mouse.seen;
   if(p.pullIn!==mouse.pulls){if(p.pullIn===undefined)p.pullUsed=mouse.pulls;p.pullIn=mouse.pulls;p.pullT=game.time}
 }
 // host and solo: one soldier's timers, trigger, gathering, downed state
@@ -1687,7 +1734,7 @@ function simPlayer(p,dt){
   p.hurt+=dt;p.cd=Math.max(p.cd-dt,-dt);
   if(p.bolt>0){const b0=p.bolt;p.bolt=Math.max(0,p.bolt-dt);const open=p.boltT*.72;if(b0>open&&p.bolt<=open){sfx(p.gun.pump?'pump':'rack',p.x,p.y);emit(p.x,p.y,WH*.7,p.gun.pump?'hull':'shell')}}
   p.stun=Math.max(0,(p.stun||0)-dt);p.dryT=Math.max(0,(p.dryT||0)-dt);p.sinceShot=(p.sinceShot||0)+dt;p.bcd-=dt;p.gt=Math.max(p.gt-dt,-dt);p.ncd-=dt;p.flash=Math.max(0,p.flash-dt);p.prot=Math.max(0,(p.prot||0)-dt);
-  if(!p.alive){
+  if(!p.alive){p.bLeft=0;
     if(!p.downed)return;   // the menu's hidden demo soldier
     if(game.pvp!=='ffa')for(const o of players.values())if(o!==p&&o.alive&&dist2(o,p)<1&&(!game.pvp||o.team===p.team)){p.revive+=dt;break}
     if(p.revive>=2.2){revivePlayer(p);return}
@@ -1703,19 +1750,21 @@ function simPlayer(p,dt){
   }
   const G=p.gun;
   // cooldowns keep leftover time, so the fire rate is the same at any frame rate
-  // bolt-action: with a mouse, each click is one shot (a click during the bolt cycle is kept for 0.6s); touch aim auto-cycles
+  // bolt-action: holding the trigger fires every bolt cycle, and a click during the cycle is kept for 0.6 s; touch aim auto-cycles
   // the pump shotgun: every click fires (0.12 s apart at most), and holding the trigger or touch-aiming fires on its own cadence
   const pump=!!G.clickCd,semi=G.bolt&&!pump&&p.autoFire===false,click=pump&&p.autoFire===false&&p.pullIn!==p.pullUsed&&game.time-(p.pullT||0)<.6;
   if(click&&p.sinceShot>=G.clickCd)p.cd=Math.min(p.cd,0);
-  const want=semi?p.pullIn!==p.pullUsed&&game.time-(p.pullT||0)<.6:pump?(click&&p.sinceShot>=G.clickCd)||(p.fireIn&&p.cd<=0):p.fireIn;
+  const want=semi?p.fireIn||p.pullIn!==p.pullUsed&&game.time-(p.pullT||0)<.6:pump?(click&&p.sinceShot>=G.clickCd)||(p.fireIn&&p.cd<=0):p.fireIn;
   if(semi&&p.pullIn!==p.pullUsed&&!want)p.pullUsed=p.pullIn;
   if(pump&&p.pullIn!==p.pullUsed&&!click)p.pullUsed=p.pullIn;
   medicTouch(p);
   const mag=G.mag|0;if(mag&&!(p.ammo>=0))p.ammo=mag;
   if(want&&truce()){p.cd=Math.max(p.cd,0);p.pullUsed=p.pullIn;if(p===player&&!game.truceTold){game.truceTold=true;toast('TRUCE','No shooting until the battle starts. Build.')}}
   else if(want&&mag&&p.ammo<=0){p.cd=Math.max(p.cd,0);if(semi||pump)p.pullUsed=p.pullIn;if(p.dryT<=0){p.dryT=.45;personal(p,'dry')}}   // empty tube: it keeps loading
-  else if(want){p.prot=0;let n=0;const slow=game.pvp&&G.pierce?PVP.snipeCd:1;
-    while(p.cd<=0&&n<(G.bolt?1:6)&&!(mag&&p.ammo<=0)){shoot(p,G,-p.cd);p.cd+=G.cd*slow;n++;if(mag)p.ammo--}
+  else if(want||p.bLeft>0){p.prot=0;let n=0;const slow=game.pvp&&G.pierce?PVP.snipeCd:1;
+    while(p.cd<=0&&n<(G.bolt?1:6)&&!(mag&&p.ammo<=0)){
+      if(G.burst){if(!(p.bLeft>0)){if(!want)break;p.bLeft=burstN(p)}p.bLeft--}   // a burst, once started, always finishes
+      shoot(p,G,-p.cd);p.cd+=G.burst&&p.bLeft===0?burstGap(p):G.cd*slow;n++;if(mag)p.ammo--}   // after a burst's last round: the pause instead of the spacing
     if(n){sfx(G.snd,p.x,p.y);const TS=TRAILS[p.cos.trail];if(TS&&TS.snd&&game.time-(p.trT||0)>.22){p.trT=game.time;sfx(TS.snd,p.x,p.y)}personal(p,'~f');p.sinceShot=0;p.rl=0;if(G.bolt){p.pullUsed=p.pullIn;p.boltT=(pump?Math.min(G.cd,.36):G.cd)*slow*.92;p.bolt=p.boltT;if(p.cd<0)p.cd=0}}}
   else p.cd=Math.max(p.cd,0);
   // shells go in one at a time: when the tube is empty, after a second without firing, or on R. Firing stops it.
@@ -1737,6 +1786,11 @@ function simPlayer(p,dt){
 }
 
 /* ---------- Dell, the quartermaster ---------- */
+// Dell's pump shotgun: 5 pellets x 6, every 0.8 s, full damage to 2.5 tiles, falling to 55% by 6.
+// Each crew-bought level adds 15% damage, 15% reach (falloff and range) and 15% fire rate.
+const DELL_GUN={dmg:6,cd:.8,spread:.2,range:6,speed:24,pellets:5,fall:[2.5,6,.55]};
+function dellGun(){const L=game.dellLv|0,m=1+.15*L,G=DELL_GUN;
+  return{dmg:G.dmg*m,cd:G.cd/m,spread:G.spread,range:G.range*m,speed:G.speed*(1+.1*L),pellets:G.pellets,fall:[G.fall[0]*m,G.fall[1]*m,G.fall[2]]}}
 const tileOf=e=>idx(Math.floor(e.x),Math.floor(e.y));
 const adj4=(k,t)=>{const a=k%N,b=(k/N)|0,c=t%N,d=(t/N)|0;return Math.abs(a-c)+Math.abs(b-d)===1};
 function nearestPlayer(from,pred){let best=null,bd=1e9;for(const p of players.values()){if(!pred(p))continue;const d=dist2(p,from);if(d<bd){bd=d;best=p}}return best}
@@ -1770,7 +1824,8 @@ function updateQM(dt){
     return;
   }
   if(q.hurt>5)q.hp=Math.min(q.max,q.hp+3*dt);
-  if(q.scanT<=0){q.scanT=.2;q.foe=null;let bd=6.5;for(const e of enemies){const d=dist2(e,q);if(d<bd&&losClear(q.x,q.y,e.x,e.y)){bd=d;q.foe=e}}}
+  const DG=dellGun();
+  if(q.scanT<=0){q.scanT=.2;q.foe=null;let bd=Math.max(5.2,DG.range*.9);for(const e of enemies){const d=dist2(e,q);if(d<bd&&losClear(q.x,q.y,e.x,e.y)){bd=d;q.foe=e}}}
   if(q.foe&&q.foe.dead)q.foe=null;
   const job=qmJob();if(job.name!==q.job){q.job=job.name;q.work=0;q.pathT=0}
   const here=tileOf(q);let busy=false,reached=job.hold?job.goal(here):dist2(q,job.pt)<=job.near;
@@ -1787,7 +1842,7 @@ function updateQM(dt){
     else if(job.name==='repair'){const w=walls[job.k];if(w)w.skip=4}
   }
   if(q.foe){const dx=q.foe.x-q.x,dy=q.foe.y-q.y,l=Math.hypot(dx,dy)||1;q.aim={x:dx/l,y:dy/l};
-    if(!busy&&q.cd<=0){while(q.cd<=0){fire(q,Math.atan2(dy,dx)+(rnd()-.5)*.18,0,{dmg:6,speed:22,range:9},-q.cd);q.cd+=.17}sfx('smg',q.x,q.y)}}
+    if(!busy&&q.cd<=0){const a=Math.atan2(dy,dx);while(q.cd<=0){for(let i=0;i<DG.pellets;i++)fire(q,a+(i/(DG.pellets-1)-.5)*DG.spread+(rnd()-.5)*DG.spread*.3,0,DG,-q.cd,i>0);q.cd+=DG.cd}sfx('shotgun',q.x,q.y)}}
   if(q.sup<=0){let gave=false;
     for(const p of players.values())if(p.alive&&dist2(p,q)<1.7&&(p.nades<p.maxN||p.hp<p.max*.7)){p.nades=Math.min(p.maxN+1,p.nades+1);p.hp=Math.min(p.max,p.hp+35);flt(p.x,p.y,'RESTOCK · +1 NADE','#e2b436');sfx('restock',p.x,p.y);gave=true}
     if(gave)q.sup=30}
@@ -2177,7 +2232,7 @@ function drawGhost(t){
   g.strokeStyle=col+'.9)';g.lineWidth=1.5*u;g.setLineDash([4*u,3*u]);g.beginPath();g.moveTo(A[0],A[1]);g.lineTo(B[0],B[1]);g.lineTo(C[0],C[1]);g.lineTo(D[0],D[1]);g.closePath();g.stroke();g.setLineDash([]);
   if(t.ok&&(t.act==='PLACE'||t.act==='DOOR')){g.globalAlpha=.32;const m=MAT[t.mat];const r=boxR(t.i+.03,t.j+.03,t.i+.97,t.j+.97,0,WH,m.top,m.l,m.r);if(t.door){doorSlab(r.D,r.C,WH,'#1d150e');doorSlab(r.C,r.B,WH,'#1d150e')}g.globalAlpha=1}
 }
-const QM_LOOK={body:'#9e9a78',vest:'#3d4a52',pants:'#3a3a33',head:'#b58f6e',cap:'#3d4a52',pack:'#5a4a30',gl:11};
+const QM_LOOK={body:'#9e9a78',vest:'#3d4a52',pants:'#3a3a33',head:'#b58f6e',cap:'#3d4a52',pack:'#5a4a30',gl:14,weapon:'sg'};
 const LOOK={
   rifle:{body:'#7e3a2a',vest:'#3f231a',pants:'#2b2420',head:'#b08868',helmet:'#2f2820',bandana:'#a8342a'},
   gren:{body:'#6c5738',vest:'#2f261b',pants:'#2b2420',head:'#a98262',helmet:'#241f19',pack:'#3a2e1f',bandolier:true,bandana:'#a8342a',gl:17},
@@ -2652,10 +2707,17 @@ function checkUnlocks(){const got=[];for(const c of COS)if(c.src==='unlock'&&!ow
 // called once per finished run, on every player's own phone
 // called once per run: when it ends, or when you leave it early (raids held so far count). With an account the
 // server works out the reward and the text on screen is replaced by what it actually granted.
+// salvage still unspent when a co-op / Endless run ends turns into shards: 20 to 1, no part shards,
+// at most 2 per raid held and 10 a run (the server applies the same cap to accounts). Runs once per game (game.rewarded).
+const SAL_SHARD={rate:20,perRaid:2,max:10};
+const salvageShards=(sal,held)=>Math.max(0,Math.min(Math.floor(Math.max(0,sal)/SAL_SHARD.rate),SAL_SHARD.perRaid*Math.max(0,held|0),SAL_SHARD.max));
 function lockerReward(held,win,kills){
   if(demo)return null;
-  const bosses=game.bosses|0,claim={kind:'run',mode:game.mode,diff:pick.diff||'normal',win:!!win,held,kills,bosses,duration_s:Math.round(game.time)};
+  const sal=Math.max(0,(player&&player.sal)|0),shards=salvageShards(sal,held);
+  if(player&&shards)player.sal-=shards*SAL_SHARD.rate;   // what converts is spent, so it can't count twice
+  const bosses=game.bosses|0,claim={kind:'run',mode:game.mode,diff:pick.diff||'normal',win:!!win,held,kills,bosses,salvage:sal,duration_s:Math.round(game.time)};
   if(locker.cloud)return queueClaim(claim);
+  locker.shards=(locker.shards|0)+shards;
   const st=locker.st,before=locker.cases,bc=bossCase();
   st.raids+=held;st.drops+=kills;if(win){st.wins++;if(pick.diff==='hard')st.hardWins++}
   if(game.mode==='endless')st.endless=Math.max(st.endless,held);
@@ -2667,6 +2729,7 @@ function lockerReward(held,win,kills){
   const n=locker.cases-before,left=3-locker.prog,bits=[];
   if(n>0)bits.push(`+${n} supply case${n>1?'s':''} in your Locker`);
   if(bc&&bosses)bits.push(`+${bosses} ${CASES[bc].name.toLowerCase()}${bosses>1?'s':''} from bosses`);
+  if(shards)bits.push(`+${shards} shard${shards>1?'s':''} from ${shards*SAL_SHARD.rate} leftover salvage`);
   bits.push(`${left} more raid${left>1?'s':''} to the next case`);
   if(got.length)bits.push('Unlocked '+got.map(c=>c.name).join(', '));
   return bits.join(' · ')+'.';
@@ -2691,6 +2754,7 @@ function claimText(c,j){
   if(c.kind==='run'){
     if(j.cases_granted>0)bits.push(`+${pl(j.cases_granted,'supply case')}`);
     const b=j.bonus||{};if(b.n>0&&CASES[b.case])bits.push(`+${b.n} ${CASES[b.case].name.toLowerCase()}${b.n>1?'s':''} from bosses`);
+    if(j.shards>0)bits.push(`+${pl(j.shards,'shard')} from leftover salvage`);
     const left=3-((j.locker&&j.locker.prog)|0);bits.push(`${pl(left,'more raid')} to the next supply case`);
   }else{const C=CASES[j.case_id];if(C)bits.push(j.cases_granted>0?`+1 ${C.name}`:`No ${C.name.toLowerCase()} this time (${Math.round((j.chance||0)*100)}% chance)`)}
   if(j.unlocked&&j.unlocked.length)bits.push('Unlocked '+j.unlocked.join(', '));
@@ -3158,7 +3222,7 @@ function renderCaseBoxes(){
     const op=document.createElement('button');op.type='button';op.className='go';op.textContent='OPEN';op.dataset.open=id;op.disabled=n<1||lockBusy;bt.append(op);
     if(C.cost){const buy=document.createElement('button');buy.type='button';buy.className='ghost';buy.textContent=`BUY · ${C.cost} SHARDS`;buy.dataset.buy=id;buy.disabled=locker.shards<C.cost||lockBusy;bt.append(buy)}
     d.append(nm,b,how,bt);box.append(d)}
-  $('shardTxt').textContent=`${locker.shards} shard${locker.shards===1?'':'s'} · duplicates turn into shards`;
+  $('shardTxt').textContent=`${locker.shards} shard${locker.shards===1?'':'s'} · duplicates and leftover run salvage turn into shards`;
 }
 function renderLocker(){
   renderCaseBoxes();
@@ -3217,8 +3281,9 @@ let armSig='';
 function tryArmory(){const p=player;if(!shopOpen(p))return;if(!nearStake(p)){toast('ARMORY',game.pvp?'Walk back to your stake to spend salvage.':'Walk back to the stake to spend salvage.');return}openArmory()}
 function openArmory(){$('armEyebrow').textContent=game.pvp?'ARMORY · AT YOUR STAKE':'ARMORY · BETWEEN RAIDS';$('armory').hidden=false;if(NET.mode==='solo')game.paused=true;freeSticks();renderArmory()}
 function closeArmory(){if($('armory').hidden)return;$('armory').hidden=true;if(NET.mode==='solo'&&$('pause').hidden)game.paused=false}
+const armorySig=p=>p.sal+'|'+upStr(p)+'|'+canShop(p)+'|'+(game.dellLv|0)+'|'+(cores[0]?Math.ceil(cores[0].hp):'');
 function renderArmory(){
-  const p=player;if(!p)return;armSig=p.sal+'|'+upStr(p)+'|'+canShop(p);$('armSal').textContent=p.sal|0;
+  const p=player;if(!p)return;armSig=armorySig(p);$('armSal').textContent=p.sal|0;
   const box=$('armRows');box.textContent='';
   for(const U of UPG){
     const t=p.up[U.k],row=document.createElement('div');row.className='arow';
@@ -3232,6 +3297,20 @@ function renderArmory(){
     btn.addEventListener('click',()=>{initAudio();if(NET.mode==='guest'){NET.toHost({t:'u',k:U.k});btn.disabled=true}else if(buyUpgrade(p,U.k))renderArmory()});
     row.append(b,btn,pips,i);box.append(row);
   }
+  if(game.pvp)return;
+  const extra=(name,lvl,what,label,dis,aria,k)=>{
+    const row=document.createElement('div');row.className='arow';
+    const b=document.createElement('b');b.textContent=name;
+    const pips=document.createElement('div');pips.className='pips';if(lvl>=0)for(let n=0;n<4;n++){const sp=document.createElement('span');if(n<lvl)sp.className='on';pips.append(sp)}
+    const i=document.createElement('i');i.textContent=what;
+    const btn=document.createElement('button');btn.type='button';btn.textContent=label;btn.disabled=dis;btn.setAttribute('aria-label',aria);
+    btn.addEventListener('click',()=>{initAudio();if(NET.mode==='guest'){NET.toHost({t:'u',k});btn.disabled=true}else if(buyUpgrade(p,k))renderArmory()});
+    row.append(b,btn,pips,i);box.append(row)};
+  const L=game.dellLv|0;
+  extra(DELL_UP.name,L,DELL_UP.what,L>=4?'MAXED':DELL_UP.cost[L]+' SAL',L>=4||p.sal<DELL_UP.cost[L]||!canShop(p),`Dell level ${L} of 4. ${L>=4?'Maxed':'Costs '+DELL_UP.cost[L]+' salvage'}`,'dell');
+  const c=cores[0];
+  if(c){const hp=Math.max(0,Math.ceil(c.hp)),full=c.hp>=c.max,cost=coreFixCost(p);
+    extra('REPAIR CORE',-1,`Core ${hp} / ${c.max}. Each repair restores up to ${CORE_FIX.hp}.${p.C.repair?' Half price for you.':''}`,full?'FULL':cost+' SAL',full||c.hp<=0||p.sal<cost||!canShop(p),full?'Core is at full health':`Repair core, ${cost} salvage`,'core')}
 }
 $('armClose').addEventListener('click',closeArmory);
 
@@ -3241,7 +3320,7 @@ $('armClose').addEventListener('click',closeArmory);
 // they talk directly. Each guest opens 'r' (reliable: hello, build, grenade, and every
 // one-off event: sounds, particles, bullets, toasts, wall changes), 'u' (fast: movement in),
 // and 'st' (never resent: game state out, 15 times a second).
-const PROTO='yard-10',ROOM_PREFIX='palisade-yard-10-';
+const PROTO='yard-11',ROOM_PREFIX='palisade-yard-11-';
 const NET={mode:'solo',inGame:false,peer:null,code:'',roster:[],conns:new Map(),host:null,fxq:[],snapT:0,snapN:0,lastN:0,inT:0,nextG:1,lastHeard:0,
   sendTo(id,msg){for(const c of this.conns.values())if(c.pid===id&&c.r&&c.r.open){try{c.r.send(msg)}catch(e){}}},
   sendAll(msg,ch='r'){for(const c of this.conns.values()){const x=c[ch]&&c[ch].open?c[ch]:c.r;if(c.pid&&x&&x.open)try{x.send(msg)}catch(e){}}},
@@ -3474,7 +3553,7 @@ function makeSnap(withWalls){
   const s={t:'s',n:NET.snapN,ph:game.phase,w:game.wave,bk:game.bosses|0,tm:r2(game.timer),q:game.queue.length,tt:r2(game.time),won:game.won?1:0,wn:game.winner||'',
     cs:flat(cores,c=>[r2(c.hp),c.max,c.flash>0?1:0]),st:[S.dropped,S.built,S.lost,S.repairs,S.revives],
     pl:[...players.values()].map(p=>packRow(PL_STATE,p)),
-    qm:[r2(qm.x),r2(qm.y),r2(qm.aim.x),r2(qm.aim.y),Math.ceil(qm.hp),qm.max,qm.alive?1:0,r2(qm.revive)],
+    qm:[r2(qm.x),r2(qm.y),r2(qm.aim.x),r2(qm.aim.y),Math.ceil(qm.hp),qm.max,qm.alive?1:0,r2(qm.revive),game.dellLv|0],
     en:enemies.map(e=>packTrim(EN_STATE,e)),
     rk:flat(rockets,r=>[r2(r.x),r2(r.y),r2(r.vx),r2(r.vy)]),
     fz:flat(fires,f=>[r2(f.x),r2(f.y),r2(f.t)]),
@@ -3543,7 +3622,7 @@ function applySnap(s){
   }
   for(const id of[...players.keys()])if(!seen.has(id))players.delete(id);
   player=players.get(myId)||player;
-  const q=s.qm;if(q[4]<qm.hp-.01)qm.flash=.1;qm.tx=q[0];qm.ty=q[1];qm.aim={x:q[2],y:q[3]};qm.hp=q[4];qm.max=q[5];qm.alive=!!q[6];qm.revive=q[7];
+  const q=s.qm;if(q[4]<qm.hp-.01)qm.flash=.1;qm.tx=q[0];qm.ty=q[1];qm.aim={x:q[2],y:q[3]};qm.hp=q[4];qm.max=q[5];qm.alive=!!q[6];qm.revive=q[7];game.dellLv=q[8]|0;
   const old=new Map(enemies.map(e=>[e.id,e]));enemies=[];
   for(const r of s.en){const v=k=>r[PE[k]]||0,id=r[PE.id];let e=old.get(id);
     if(!e)e={id,x:v('x'),y:v('y'),walk:rnd()*6,flash:0,max:1,hp:1};
@@ -3762,7 +3841,7 @@ applyCfg();syncPicks();startDemo();showPage('main');
 if(cloudOn)setTimeout(acctBoot,400);
 const invite=new URLSearchParams(location.search).get('room');
 if(invite&&canOnline()){$('mCode').value=invite.toUpperCase().slice(0,4);showPage('multi');mStatus(`You're invited to room ${invite.toUpperCase().slice(0,4)}. Pick your name and job, then tap JOIN.`)}
-if(new URLSearchParams(location.search).has('debug'))window.__pal={get ctx(){return g},get mus(){return mus},get AC(){return AC},musicWant,caseTick,MUSIC,get parts(){return parts},profOn(f){PROF={a:{},k:'x',f,t:performance.now()}},prof(){const o={};for(const k in PROF.a)if(k!=='end'&&k!=='x')o[k]=+PROF.a[k].toFixed(1);return o},get locker(){return locker},lockerReward:(...a)=>lockerReward(...a),openCase:()=>openCase(),buyUpgrade:(p,k)=>buyUpgrade(p,k),render,update,NET,get players(){return players},get player(){return player},get game(){return game},get enemies(){return enemies},get walls(){return walls},get core(){return core},get cores(){return cores},get bullets(){return bullets},startRaid:()=>startRaid(),scr:(x,y)=>{const c=iso(x,y);return[c[0],c[1]-WH*.55]},endPvp:w=>endPvp(w),hurtPlayer:(p,d,o)=>hurtPlayer(p,d,o),explode:(...a)=>explode(...a),buildEval:(...a)=>buildEval(...a),doBuild:(...a)=>doBuild(...a),acct,acctBoot,syncLocker,flushClaims,get claims(){return claims},showOver:()=>showOver(),showPage:x=>showPage(x),toMenu:()=>toMenu(),refreshLobbies:()=>refreshLobbies(),damageWall:(...a)=>damageWall(...a),spawnBoss:k=>spawnBoss(k),get rockets(){return rockets},get fires(){return fires},get zaps(){return zaps},get slashes(){return slashes},makePlayer:(...a)=>makePlayer(...a),get qm(){return qm},bdmg:b=>bdmg(b),makeWall:(...a)=>makeWall(...a),get walls2(){return walls},COS,CASES,rollCase:id=>rollCase(id),killFx:(...a)=>killFx(...a),renderLocker:()=>renderLocker(),playerLook:p=>playerLook(p),pvpReward:(w,k)=>pvpReward(w,k)};
+if(new URLSearchParams(location.search).has('debug'))window.__pal={get ctx(){return g},get mus(){return mus},get AC(){return AC},musicWant,caseTick,MUSIC,get parts(){return parts},profOn(f){PROF={a:{},k:'x',f,t:performance.now()}},prof(){const o={};for(const k in PROF.a)if(k!=='end'&&k!=='x')o[k]=+PROF.a[k].toFixed(1);return o},get locker(){return locker},lockerReward:(...a)=>lockerReward(...a),openCase:()=>openCase(),buyUpgrade:(p,k)=>buyUpgrade(p,k),render,update,NET,get players(){return players},get player(){return player},get game(){return game},get enemies(){return enemies},get walls(){return walls},get core(){return core},get cores(){return cores},get bullets(){return bullets},startRaid:()=>startRaid(),scr:(x,y)=>{const c=iso(x,y);return[c[0],c[1]-WH*.55]},endPvp:w=>endPvp(w),hurtPlayer:(p,d,o)=>hurtPlayer(p,d,o),explode:(...a)=>explode(...a),buildEval:(...a)=>buildEval(...a),doBuild:(...a)=>doBuild(...a),acct,acctBoot,syncLocker,flushClaims,get claims(){return claims},showOver:()=>showOver(),showPage:x=>showPage(x),toMenu:()=>toMenu(),refreshLobbies:()=>refreshLobbies(),damageWall:(...a)=>damageWall(...a),spawnBoss:k=>spawnBoss(k),get rockets(){return rockets},get fires(){return fires},get zaps(){return zaps},get slashes(){return slashes},makePlayer:(...a)=>makePlayer(...a),get qm(){return qm},bdmg:b=>bdmg(b),makeWall:(...a)=>makeWall(...a),get walls2(){return walls},COS,CASES,rollCase:id=>rollCase(id),killFx:(...a)=>killFx(...a),renderLocker:()=>renderLocker(),playerLook:p=>playerLook(p),pvpReward:(w,k)=>pvpReward(w,k),bodyUnder,dellGun,salvageShards,iso,localSprint,renderArmory,CLASSES,burstN,burstGap,get camX(){return camX},get camY(){return camY},get u(){return u},setMouse(x,y,d){mouse.x=x;mouse.y=y;mouse.seen=true;mouse.down=!!d}};
 if(window.PEER_SRC&&invite)needPeer();   // otherwise it loads when the Multiplayer page opens
 requestAnimationFrame(frame);
 })();
