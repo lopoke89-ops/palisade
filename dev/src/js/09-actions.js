@@ -71,7 +71,7 @@ const SPRINT={mult:1.4,dur:2.5,cd:6};
 function localSprint(){const p=player;if(!p||!p.alive||!p.C.sprint||demo||(p.sprCd||0)>0)return;const L=(p.perk||PERK0).stride|0;p.sprT=SPRINT.dur+.6*L;p.sprCd=p.sprT+SPRINT.cd-L}   // Long Stride: longer, and back sooner
 function localNade(){
   const p=player;if(!p||!p.alive)return;let tx,ty;
-  if(!touchMode&&mouse.seen){const w=screenToWorld(mouse.x,mouse.y+WH*.55);tx=w.x;ty=w.y}else{tx=p.x+p.face.x*5;ty=p.y+p.face.y*5}
+  if(!touchMode&&!padMode&&mouse.seen){const w=screenToWorld(mouse.x,mouse.y+WH*.55);tx=w.x;ty=w.y}else{tx=p.x+p.face.x*5;ty=p.y+p.face.y*5}
   if(NET.mode==='guest'){if(p.nades<=0){sfx('deny',undefined,undefined,true);return}NET.toHost({t:'n',x:r2(tx),y:r2(ty)});return}
   throwNade(p,tx,ty);
 }

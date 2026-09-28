@@ -49,7 +49,7 @@ addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
 addEventListener('blur',()=>{for(const k in keys)keys[k]=false;mouse.down=false});
 document.addEventListener('visibilitychange',()=>{freeSticks();if(document.hidden&&playing()&&!game.paused&&NET.mode==='solo')togglePause()});
 function localReload(){const p=player;if(!p||!p.alive||!p.gun.mag||p.ammo>=p.gun.mag)return;if(NET.mode==='guest')NET.toHost({t:'rl'});else p.rlReq=true}
-function tapBtn(el,fn){el.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();initAudio();fn()});el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn()}})}
+function tapBtn(el,fn){el._tap=fn;el.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();initAudio();fn()});el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn()}})}
 const live=fn=>()=>{if(playing()&&!overlayOpen())fn()};
 [0,1,2].forEach(m=>tapBtn($('c'+m),live(()=>{game.sel=m})));
 tapBtn($('pWall'),live(()=>{game.piece='wall'}));tapBtn($('pDoor'),live(()=>{game.piece='door'}));

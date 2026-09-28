@@ -169,5 +169,5 @@ function sfx(name,x,y,noRec,ui){
     case'lose':[220,196,165].forEach((f,i)=>osc(master,t+i*.2,.6,'sawtooth',f,.08));break;
   }
 }
-const buzz=ms=>{if(!cfg.haptics)return;try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}};
+const buzz=ms=>{if(!cfg.haptics)return;try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}padRumble(ms)};   // v0.9.2.1: and the controller rumbles
 

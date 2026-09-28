@@ -90,6 +90,7 @@ h2{margin:0;font-family:var(--stencil);font-weight:800;font-size:13px;letter-spa
 .ctrls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;font-size:11px;color:var(--dim);line-height:1.6}
 .ctrls h3{margin:0 0 4px;font-family:var(--stencil);font-weight:800;font-size:13px;letter-spacing:.14em;color:var(--bone)}
 .ctrls p{margin:0}
+.ctrls>div:nth-child(3){grid-column:1/-1}
 .go{height:56px;border:0;background:var(--warn);color:#17140f;font-family:var(--stencil);font-weight:900;font-size:22px;letter-spacing:.1em}
 .ghost{height:46px;background:transparent;border:1px solid var(--line);font-family:var(--stencil);font-weight:800;font-size:16px;letter-spacing:.1em;color:var(--bone)}
 #best{font-size:11px;color:var(--dim)}
@@ -726,3 +727,22 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
 .skRow.on b{color:#f3e7b9}
 .skRow .tog{grid-column:1/-1}
 .rwSkill .rwNum{color:#9fd6ae}
+
+/* ---------- controller (v0.9.2.1) ---------- */
+body.pad .padF{outline:3px solid var(--warn)!important;outline-offset:3px;box-shadow:0 0 0 6px rgba(226,180,54,.18)}
+body.pad label.tog.padF{outline-offset:1px}
+#padHint{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 10px);z-index:60;display:none;gap:16px;
+  padding:6px 14px;background:rgba(14,12,10,.86);border:1px solid var(--line);font-size:12px;letter-spacing:.06em;color:var(--bone);pointer-events:none;white-space:nowrap}
+body.padMenu #padHint{display:flex}
+#padHint kbd,.padRow kbd,.padFixed kbd,.padCard kbd{font-family:var(--mono);font-weight:600;font-size:11px;color:#17140f;background:var(--bone);border-radius:2px;padding:1px 6px;margin-right:6px}
+.padMap{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px}
+.padRow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 10px;background:rgba(0,0,0,.25);border:1px solid #354b56;text-align:left;font-size:12px;letter-spacing:.06em}
+.padRow kbd{margin:0;min-width:28px;text-align:center}
+.padRow.wait{border-color:var(--warn)}.padRow.wait kbd{background:var(--warn)}
+.padFixed{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:14px;font-size:11px;color:var(--dim);padding-top:4px}
+.padCard{border:1px solid var(--line);background:rgba(0,0,0,.25);padding:10px 12px;margin:4px 0;text-align:left}
+.padCardT{font:800 12px var(--stencil);letter-spacing:.16em;color:var(--warn);margin-bottom:6px}
+.padCardG{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px 12px;font-size:11px;letter-spacing:.04em}
+body.padMenu #keys{visibility:hidden}
+@media (max-width:760px){body.pad #keys{display:none}}   /* a phone with a controller: the play buttons and the pause card show the layout */
+body.padMenu #menu .panel{padding-bottom:64px}body.pad .padF{scroll-margin:12px 12px 64px}

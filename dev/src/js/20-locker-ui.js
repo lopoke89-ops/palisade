@@ -66,17 +66,17 @@ function keyCap(x,y,key,text,col){
 }
 function drawPrompts(p){
   if(!p||!p.alive)return;
-  if(canShop(p)&&$('armory').hidden){const c=stakeOf(p),s=iso(c.i+.5,c.j+.5);keyCap(s[0],s[1]-WH*1.15-(game.pvp==='base'?66:52)*u,touchMode?'':'E',touchMode?'TAP ARMORY':'ARMORY',null)}
+  if(canShop(p)&&$('armory').hidden){const c=stakeOf(p),s=iso(c.i+.5,c.j+.5);keyCap(s[0],s[1]-WH*1.15-(game.pvp==='base'?66:52)*u,ctl('','E',padKey('armory')),touchMode&&!padMode?'TAP ARMORY':'ARMORY',null)}
   for(const o of players.values())if(o!==p&&o.downed&&(!game.pvp||(game.pvp==='base'&&o.team===p.team))){const d=dist2(o,p);if(d<2.2){const s=iso(o.x,o.y);keyCap(s[0],s[1]-34*u,'',d<1?'REVIVING · STAY CLOSE':'STAND CLOSE TO REVIVE','#a9bccb')}}
   if(!qm.gone&&!qm.alive&&dist2(qm,p)<2.2){const s=iso(qm.x,qm.y);keyCap(s[0],s[1]-34*u,'',dist2(qm,p)<1?'REVIVING DELL':'STAND CLOSE TO REVIVE DELL','#a9bccb')}
 }
 function drawCrosshair(p){
   let sx,sy,hot=false,faint=false;
-  if(!touchMode&&mouse.seen){
+  if(!touchMode&&!padMode&&mouse.seen){
     sx=mouse.x;sy=mouse.y;const w=screenToWorld(mouse.x,mouse.y+WH*.55);
     for(const e of foes())if(Math.hypot(e.x-w.x,e.y-w.y)<.45){hot=true;break}
   }else{
-    const active=stickAim.id!==null&&stickAim.mag>.2,a=p.aim;let d=active?Math.min(p.gun.range,4.2):2.4;faint=!active;
+    const active=padMode?pad.amag>.2:stickAim.id!==null&&stickAim.mag>.2,a=p.aim;let d=active?Math.min(p.gun.range,4.2):2.4;faint=!active;
     if(active){let best=1e9;for(const e of foes()){const dx=e.x-p.x,dy=e.y-p.y,dd=Math.hypot(dx,dy);if(dd<p.gun.range&&dd>.3&&(dx*a.x+dy*a.y)/dd>.992&&dd<best){best=dd;hot=true}}if(hot)d=best}
     const c=iso(p.x+a.x*d,p.y+a.y*d);sx=c[0];sy=c[1]-WH*.55;
   }

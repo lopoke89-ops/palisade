@@ -49,6 +49,7 @@
   <div class="quick"><button type="button">NICE</button><button type="button">HELP!</button><button type="button">ON MY WAY</button><button type="button">WALL DOWN</button><button type="button">NEED MATS</button><button type="button">GG</button></div></form>
 
 <div id="fpsLab" hidden></div>
+<div id="padHint" hidden></div>
 
 <canvas id="lobbyBg" aria-hidden="true"></canvas>
 <div id="menu">
@@ -155,9 +156,10 @@
         <div class="ctrls">
           <div><h3>TOUCH</h3><p>Left thumb: move<br>Right thumb: aim, push far to fire<br>ROCKET / STEALTH: the soldier's and sniper's ability (co-op)<br>BUILD: place, upgrade or repair the tile you face. DOOR lets you and Dell walk through.</p></div>
           <div><h3>KEYBOARD</h3><p>WASD move · mouse aim<br>Hold click to fire (soldier: bursts) · Space build<br>1 2 3 material · F wall/door<br>G grenade · E armory at the stake<br>Shift sprint (quartermaster) · Q rocket (soldier) or stealth (sniper), co-op · B build kit · Enter start raid · T chat online · Esc pause</p></div>
+          <div><h3>CONTROLLER</h3><p>Left stick move · right stick aim · RT fire<br>LT grenade · A build (hold to keep building)<br>B ability, or sprint if your class has no ability · X armory at the stake<br>Y wall/door · d-pad left/right material · d-pad down build kit<br>View start raid · Menu pause. Change any button in Settings.</p></div>
         </div>
       </details>
-      <p class="foot">v0.9.2 · phone and desktop · online co-op and PvP for up to six</p>
+      <p class="foot">v0.9.2.1 · phone, desktop and controller · online co-op and PvP for up to six</p>
     </section>
 
     <section class="page" id="pg-classes" hidden>
@@ -246,7 +248,11 @@
           <label class="set"><span>SCREEN SHAKE</span><input type="range" id="sShake" min="0" max="100" step="5"><b id="sShakeV">100%</b></label>
           <label class="tog"><input type="checkbox" id="sFps"><span>Show frame rate</span></label></div>
         <div class="setCard"><h3>FEEL</h3>
-          <label class="tog"><input type="checkbox" id="sHap"><span>Vibration on hits and blasts</span></label></div>
+          <label class="tog"><input type="checkbox" id="sHap"><span>Vibration and controller rumble on hits and blasts</span></label></div>
+        <div class="setCard" id="padSet"><h3>CONTROLLER</h3>
+          <p class="lede sm" id="padStatus">No controller found. Plug one in or pair it, then press any button on it.</p>
+          <div class="padMap" id="padMap"></div>
+          <button class="ghost" id="padReset" type="button">RESET BUTTONS</button></div>
         <div class="setCard"><h3>SAVE BACKUP</h3>
           <p class="lede sm">Your locker is saved in this browser and stays through game updates. Export a backup to move it to another device, or to restore it if this browser's data is cleared.</p>
           <div class="saveRow"><button class="ghost" id="sExport" type="button">EXPORT SAVE</button><button class="ghost" id="sImport" type="button">IMPORT SAVE</button></div></div>
@@ -262,6 +268,7 @@
     <h1 style="font-size:clamp(48px,15vw,84px)">HOLD UP</h1>
     <button class="go" id="resumeBtn" type="button">BACK TO IT</button>
     <div id="pauseJobs" class="jobPick" hidden><span>NEXT LIFE AS</span><div class="seg jobs"><button data-nc="soldier" type="button">SOLDIER</button><button data-nc="sniper" type="button">SNIPER</button><button data-nc="grenadier" type="button">GRENADIER</button><button data-nc="quartermaster" type="button">QUARTERMASTER</button></div><small id="pauseJobNote">Takes effect when you respawn.</small></div>
+    <div id="padCard" class="padCard" hidden></div>
     <button class="ghost" id="pSetBtn" type="button">SETTINGS</button>
     <button class="ghost" id="quitBtn" type="button">ABANDON THE CLAIM</button>
   </div>

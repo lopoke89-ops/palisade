@@ -28,16 +28,18 @@ function controlLocal(dt){
   if(!p.alive||overlayOpen()||chatOpen())return;
   let mx=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),my=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
   if(stickMove.id!==null){mx+=stickMove.vx;my+=stickMove.vy}
+  if(padMode){mx+=pad.mx;my+=pad.my}
   const mag=Math.min(1,Math.hypot(mx,my));
   p.sprT=Math.max(0,(p.sprT||0)-dt);p.sprCd=Math.max(0,(p.sprCd||0)-dt);const spr=p.sprT>0;
   // 3.3 tiles a second is everyone's pace; the class sets a multiplier (sniper 1.1, grenadier 0.9)
   if(mag>.12){const d=sdirToWorld(mx,my),sp=3.3*mag*(p.C.spd||1)*(spr?SPRINT.mult:1)*(p.stun>0?.45:1)*slowAt(p.x,p.y)*(p.perk||PERK0).speed*(hasMod('adrenaline')?1.2:1);moveEnt(p,d.x*sp*dt,d.y*sp*dt,pt(p));p.walk+=dt*mag*(spr?13:10);p.moveDir=d;
     if(spr&&rnd()<dt*14)emit(p.x-d.x*.2,p.y-d.y*.2,3*u,'dust',0)}
   let firing=false;
-  if(!touchMode&&mouse.seen){const w=bodyUnder(mouse.x,mouse.y,p)||screenToWorld(mouse.x,mouse.y+WH*.55);const dx=w.x-p.x,dy=w.y-p.y,l=Math.hypot(dx,dy)||1;p.aim={x:dx/l,y:dy/l};p.face=p.aim;firing=mouse.down}
+  if(padMode){if(pad.amag>.2){const d=assist(sdirToWorld(pad.ax,pad.ay));p.aim=d;p.face=d}else if(mag>.12){p.face=p.moveDir;p.aim=p.moveDir}firing=pad.fire}   // v0.9.2.1: right stick aims, the trigger fires
+  else if(!touchMode&&mouse.seen){const w=bodyUnder(mouse.x,mouse.y,p)||screenToWorld(mouse.x,mouse.y+WH*.55);const dx=w.x-p.x,dy=w.y-p.y,l=Math.hypot(dx,dy)||1;p.aim={x:dx/l,y:dy/l};p.face=p.aim;firing=mouse.down}
   else if(stickAim.id!==null&&stickAim.mag>.2){const d=assist(sdirToWorld(stickAim.vx,stickAim.vy));p.aim=d;p.face=d;firing=stickAim.mag>.5}
   else if(mag>.12){p.face=p.moveDir;p.aim=p.moveDir}
-  p.fireIn=firing&&!spr;p.autoFire=touchMode||!mouse.seen;
+  p.fireIn=firing&&!spr;p.autoFire=!padMode&&(touchMode||!mouse.seen);
   if(p.pullIn!==mouse.pulls){if(p.pullIn===undefined)p.pullUsed=mouse.pulls;p.pullIn=mouse.pulls;p.pullT=game.time}
 }
 // host and solo: one soldier's timers, trigger, gathering, downed state
@@ -91,7 +93,7 @@ function simPlayer(p,dt){
     if(d<(n.solid?1.3:1.05)&&p.gt<=0&&p.mats[n.type]<p.cap[n.type]){
       const y=Math.min(YIELD[n.type],p.cap[n.type]-p.mats[n.type],n.type===0?n.amt:99);p.mats[n.type]+=y;if(n.type===0)n.amt-=y;p.gt+=RATE[n.type]*(p.C.gather||1)*(p.perk||PERK0).gather;personal(p,'gather');
       emit(n.i+.5,n.j+.5,10*u,n.type===0?'splinter':n.type===1?'dust':'spark',n.type);
-      if(p===player&&n.type===0&&++game.gathered>=4&&game.tip===0){game.tip=1;setTip(touchMode?'Face a tile and tap BUILD to raise a wall.':'Face a tile with the mouse and press Space to raise a wall.')}
+      if(p===player&&n.type===0&&++game.gathered>=4&&game.tip===0){game.tip=1;setTip(ctl('Face a tile and tap BUILD to raise a wall.','Face a tile with the mouse and press Space to raise a wall.',`Aim at a tile and press ${padKey('build')} to raise a wall.`))}
     }
   }
   for(let s=sacks.length-1;s>=0;s--){const k=sacks[s];if(Math.hypot(k.x-p.x,k.y-p.y)<.7){for(let m=0;m<3;m++)p.mats[m]=Math.min(p.cap[m],p.mats[m]+k.mats[m]);sacks.splice(s,1);personal(p,'gather');flt(p.x,p.y,'PACK RECOVERED')}}

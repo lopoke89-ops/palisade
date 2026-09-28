@@ -8,6 +8,7 @@
 06b-maps.js   maps (Yard, Riverbend, Ashfall Quarry), terrain, floods and pits
 07-effects.js   particles and floating text
 08-input.js   keyboard, mouse, touch sticks and buttons
+08b-pad.js   controller: the button table, play, menu highlight, button changes, rumble
 09-actions.js   building, grenades, sprint, weapons firing (shoot/fire)
 10-phases-bosses.js   raids, build phases, waves, bosses
 10b-mods-play.js   modifiers in play (bosses, storms, Sudden Death, Frenzy) and class abilities

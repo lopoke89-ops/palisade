@@ -66,7 +66,7 @@ function abState(p){p.ab=!hasAbility(p)?0:p.cls==='soldier'?p.rk|0:p.stl>0?Math.
 const stealthed=p=>!!p&&!game.pvp&&p.cls==='sniper'&&(NET.mode==='guest'?p.ab>0:p.stl>0);
 function localAbility(){
   const p=player;if(!p||!p.alive||!hasAbility(p))return;let tx,ty;
-  if(!touchMode&&mouse.seen){const w=screenToWorld(mouse.x,mouse.y+WH*.55);tx=w.x;ty=w.y}else{tx=p.x+p.aim.x*6;ty=p.y+p.aim.y*6}
+  if(!touchMode&&!padMode&&mouse.seen){const w=screenToWorld(mouse.x,mouse.y+WH*.55);tx=w.x;ty=w.y}else{tx=p.x+p.aim.x*6;ty=p.y+p.aim.y*6}
   if(NET.mode==='guest'){if(p.cls==='soldier'&&p.ab<=0||p.cls==='sniper'&&p.ab!==0){sfx('deny',undefined,undefined,true);return}NET.toHost({t:'ab',x:r2(tx),y:r2(ty)});return}
   useAbility(p,tx,ty);
 }

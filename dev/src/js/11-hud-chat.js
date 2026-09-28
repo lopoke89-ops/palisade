@@ -61,7 +61,7 @@ const cls=(el,c,on)=>{if(el.classList.contains(c)!==on)el.classList.toggle(c,on)
 const SLOTCOL=['#8fb58a','#a9bccb','#d0b077','#c29ac4','#86c0b8','#d08f78'];
 // the desktop key bar says what the keys do right now
 function keyBar(){
-  if(touchMode)return;const p=player,PV=game.pvp,K=(k,t)=>`<span class="kb"><kbd>${k}</kbd>${t}</span>`,a=[K('WASD','move'),K('MOUSE',p.gun&&p.gun.clickCd?'aim, click or hold to fire':p.gun&&p.gun.burst?'aim, hold to fire bursts':'aim, hold to fire'),K('G','grenade')];if(p.C&&p.C.sprint)a.push(K('SHIFT','sprint'));
+  if(touchMode)return;if(padMode)return padBar();const p=player,PV=game.pvp,K=(k,t)=>`<span class="kb"><kbd>${k}</kbd>${t}</span>`,a=[K('WASD','move'),K('MOUSE',p.gun&&p.gun.clickCd?'aim, click or hold to fire':p.gun&&p.gun.burst?'aim, hold to fire bursts':'aim, hold to fire'),K('G','grenade')];if(p.C&&p.C.sprint)a.push(K('SHIFT','sprint'));
   if(p.gun&&p.gun.mag)a.push(K('R','reload'));
   if(PV!=='ffa'&&cfg.build)a.push(K('SPACE','build'),K('1 2 3','material'),K('F','door'));
   if(PV!=='ffa')a.push(K('B','build kit'));
@@ -70,6 +70,17 @@ function keyBar(){
   if(NET.mode!=='solo')a.push(K('T','chat'));
   a.push(K('ESC','pause'));
   if(hasAbility(p))a.splice(3,0,K('Q',p.cls==='sniper'?'stealth':'rocket'));
+  const h=a.join(''),el=$('keys');if(el._h!==h){el._h=h;el.innerHTML=h}
+}
+// v0.9.2.1: the same bar with controller buttons (they follow the player's own button changes)
+function padBar(){
+  const p=player,PV=game.pvp,K=(k,t)=>k==='—'?'':`<span class="kb"><kbd>${k}</kbd>${t}</span>`,a=[K(glyph(PB.LS),'move'),K(glyph(PB.RS),'aim'),K(padKey('fire'),'fire'),K(padKey('nade'),'grenade')];
+  if(hasAbility(p))a.push(K(padKey('special'),p.cls==='sniper'?'stealth':'rocket'));else if(p.C&&p.C.sprint)a.push(K(padKey('special'),'sprint'));
+  if(PV!=='ffa'&&cfg.build)a.push(K(padKey('build'),'build'),K(padKey('matPrev')+' '+padKey('matNext'),'material'),K(padKey('piece'),'door'));
+  if(PV!=='ffa')a.push(K(padKey('kit'),'build kit'));
+  if(shopOpen(p))a.push(K(padKey('armory'),'armory'));
+  if(game.phase==='build'&&NET.mode!=='guest')a.push(K(padKey('start'),PV?'start battle':'start raid'));
+  a.push(K(glyph(PB.MENU),'pause'));
   const h=a.join(''),el=$('keys');if(el._h!==h){el._h=h;el.innerHTML=h}
 }
 function mateRows(){

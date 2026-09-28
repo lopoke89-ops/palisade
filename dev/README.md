@@ -234,3 +234,36 @@ play together. `multiplayer.js` verifies host/guest loadout propagation before m
   (leave and come back: two claims that don't overlap, a guest's rocket). `bench.js` adds the SKILLS page and a
   storm raid; `netxl.js` takes `MODS=weather,nightmare`.
 
+## v0.9.2.1: controller support
+
+- **`08b-pad.js`** holds all of it. `PAD_ACTIONS` is the one table of in-game actions on a controller
+  (`[id, Settings name, default button]`, buttons in the browser's standard layout `PB`); a new action is one
+  line there plus its line in `gamePad()`. The player's own buttons are saved in `palisade.pad.v1`
+  (`{map:{action:button}}`; -1 = unbound; MENU can't be taken, it always pauses). Reload is in the table but
+  unbound by default.
+- **`padTick(now)`** runs at the top of `frame()`. With no controller ever seen it looks once a second, so phones
+  pay nothing. `padMode` is true while the controller was the last thing used; any real key, click, touch or a
+  mouse move over 6 px hands back (`padOff`). In play it fills `pad.mx/my/ax/ay/amag/fire`, which `controlLocal`
+  reads like the touch sticks (with `assist()`); a trigger press bumps `mouse.pulls`, so semi-auto guns take one
+  shot per pull, and `autoFire` is off for a controller. Guests send the same `i` message as before: **no
+  protocol change, still yard-16**.
+- **Menus:** `navScope()` picks the window on top (save, case, armory, pause, game over, friends list, lobby,
+  respawn jobs); `navMove` goes to the nearest visible button that way, `navPress` uses a button's `_tap`
+  (`tapBtn` now keeps it) or clicks, `navBack` sends Escape (never out of a room), `navPage` = bumpers through
+  `.partyNav` pages, `navTab` = triggers through `#lockTabs`/`[role=tablist]`, right stick scrolls. The highlight is
+  the `padF` class; `#padHint` is the bottom hint bar. Any new screen works as long as its controls are real
+  buttons/inputs inside one of those windows.
+- **Keyboard focus order:** Tab is kept inside an open window (not the lobby) by the same `navScope`/`navList`.
+- **On screen:** `ctl(touch, keys, pad)` picks a tip's wording; `padKey(action)`/`glyph(button)` give the label
+  (Xbox letters, or PlayStation symbols when the id says so); the `.kc` key labels, the `#keys` bar (`padBar`),
+  the armory prompt, the stake keycap and the HOW TO PLAY box all follow. Settings has the CONTROLLER card
+  (`#padSet`, `renderPadSet`, `padBindTick`: pick, then press; a used button swaps; MENU/HOME cancel; 6 s
+  timeout). The pause screen has `#padCard` while a controller is connected.
+- **Rumble:** `buzz()` also calls `padRumble()` (`vibrationActuator.playEffect('dual-rumble')`), same Vibration
+  setting (`cfg.haptics`).
+- Tests: `controller.js` (a fake controller through `navigator.getGamepads`: menus, pages, tabs, sliders,
+  toggles, changing buttons, a raid, trigger pulls, grenade, build, armory, the pause card, unplugging, a phone,
+  and what a guest sends), `taborder.js` (Tab through every lobby page at desktop and phone-landscape sizes,
+  and it stays inside pause and the armory). `lobby.js` now expects 5 Settings cards. `shots_pad.js` takes
+  controller screenshots (not pass/fail).
+- No server change.

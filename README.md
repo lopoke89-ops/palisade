@@ -71,6 +71,43 @@ JOBS, BOSSES AND SALVAGE (v0.8.1)
     to reload.
 
 
+CONTROLLERS (v0.9.2.1)
+----------------------
+  - Plug in or pair a controller (Xbox, PlayStation and most others) and
+    press any button. Works in Chrome and Edge on PC, Chrome on Android
+    and Safari on iPhone and iPad.
+  - PLAYING: left stick moves, right stick aims (with the same gentle aim
+    help phones get), RT fires. LT grenade, A build (hold to keep
+    building), B your ability (rocket or stealth), or sprint if your job
+    has no ability, X armory at your stake, Y wall/door, d-pad left and
+    right change material, d-pad down turns the build kit on or off, View
+    starts the raid (host), Menu pauses. Guns that fire once per shot fire
+    once per trigger pull.
+  - MENUS: the d-pad or left stick moves a yellow highlight, A picks, B
+    goes back or closes. LB and RB flip through the lobby pages, LT and
+    RT through tabs (locker, friends). The right stick scrolls long pages.
+    A hint bar at the bottom shows this while you're in a menu.
+  - CHANGE YOUR BUTTONS: Settings, CONTROLLER card. Pick an action, then
+    press the button you want for it (a button already in use swaps over).
+    RESET BUTTONS puts everything back. Reload is there too, off by
+    default, since guns reload on their own. Your buttons are saved on
+    this device.
+  - The pause screen shows your current layout while a controller is
+    connected, and every button hint in the game switches to controller
+    buttons (PlayStation symbols on a PlayStation controller).
+  - RUMBLE on hits and blasts, under the same Vibration setting phones use
+    (Chrome and Edge; iPhones don't support controller rumble).
+  - Touch the screen, move the mouse or press a key and the game switches
+    back on its own. On a phone the touch sticks hide while you use the
+    controller.
+  - Typing (logging in, typed chat) still needs a keyboard or touch; the
+    quick-chat buttons work with the controller.
+  - Keyboard players: Tab now moves through every menu in order and stays
+    inside the pause and armory windows.
+  - One player per device. Mixing controller, keyboard and phone players
+    in the same online game is fine.
+
+
 MODIFIERS, THE SKILL TREE, CLASS ABILITIES (v0.9.2)
 ---------------------------------------------------
   - MODIFIERS: switch them on under MODIFIERS on the SOLO page, or in the

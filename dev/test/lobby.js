@@ -42,7 +42,7 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
   // Settings still opens from the pause menu over the running game, and DONE goes back to the pause menu
   await p.keyboard.press('Escape'); await p.click('#pSetBtn');
   out.pauseSettings = await p.evaluate(() => ({ page: document.getElementById('menu').dataset.page, menu: !document.getElementById('menu').hidden, cards: document.querySelectorAll('#pg-settings .setCard').length, running: __pal.game.phase !== 'over' }));
-  assert.deepEqual(out.pauseSettings, { page: 'settings', menu: true, cards: 4, running: true });
+  assert.deepEqual(out.pauseSettings, { page: 'settings', menu: true, cards: 5, running: true });   // v0.9.2.1: + the controller card
   await p.click('#sDone'); assert.equal(await p.evaluate(() => !document.getElementById('pause').hidden && document.getElementById('menu').hidden), true, 'back to the pause menu');
   await p.click('#resumeBtn');
   await p.evaluate(() => __pal.toMenu()); await p.waitForTimeout(300);

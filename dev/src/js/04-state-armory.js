@@ -152,7 +152,7 @@ function newGame(roster,pvp='',opt={}){
   flowDirty=true;computeFlow();flowDirty=false;
   camSX=camX=W*(W<760?.4:.5)-(player.x-player.y)*TW2;camSY=camY=H*.52-(player.x+player.y)*TH2;
   if(pvp==='base'){const me=TEAMS[player.team],them=TEAMS[player.team==='a'?'b':'a'];game.tip=9;
-    setTip(`You're ${me.name}. Truce for ${PVP.truce} seconds: gather and wall in your stake. Then knock down the ${them.name} stake. ${touchMode?'ARMORY':'E'} at your stake spends salvage.`)}
+    setTip(`You're ${me.name}. Truce for ${PVP.truce} seconds: gather and wall in your stake. Then knock down the ${them.name} stake. ${ctl('ARMORY','E',padKey('armory'))} at your stake spends salvage.`)}
   else if(pvp==='ffa'){game.tip=9;setTip(`Free-for-all. First to ${PVP.ffaGoal} drops wins. The cover can't be broken.`)}
   else setTip(touchMode?'Stand next to a wood pile to gather. Dell is gathering too.':'Walk next to a wood pile to gather. Dell is gathering too.');
 }
