@@ -28,7 +28,7 @@ const PAGES=['main','solo','multi','lobby','locker','settings','account'];
 function showPage(p){
   if(p==='multi'&&window.PEER_SRC){needPeer();getIce()}   // warm up online play while they pick a name
   for(const id of PAGES)$('pg-'+id).hidden=id!==p;
-  $('menu').classList.toggle('sub',p!=='main');
+  $('menu').classList.toggle('sub',p!=='main');$('menu').dataset.page=p;
   if(p==='solo')showBest();
   if(p==='multi'){syncPicks();$('mList').checked=cfg.listGame!==false;$('mListRow').hidden=!cloudOn}
   lobbyBrowse(p==='multi');

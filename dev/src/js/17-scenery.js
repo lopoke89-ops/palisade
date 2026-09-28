@@ -207,7 +207,7 @@ function render(dt){
   if(!caches)makeCaches();
   fadeT-=dt;if(fadeT<=0){fadeT=.1;updateFades()}
   let fx=p.x,fy=p.y,cxF=W<760?.4:.5,cyF=.52; // keep the east approach clear of the kit column on phones
-  if(demo){const t=game.time*.07;fx=core.i+2.5+Math.cos(t)*2.5;fy=core.j-2+Math.sin(t)*2;cxF=W>700?.66:.5;cyF=W>700?.5:.3}
+  if(demo){const t=game.time*.07;fx=core.i+2.5+Math.cos(t)*2.5;fy=core.j-2+Math.sin(t)*2;cxF=.5;cyF=W>700?.5:.3}
   const tx=W*cxF-(fx-fy)*TW2,ty=H*cyF-(fx+fy)*TH2;
   camSX+=(tx-camSX)*.14;camSY+=(ty-camSY)*.14;
   const sh=shakeOffset(dt);camX=snapPx(camSX+sh[0]);camY=snapPx(camSY+sh[1]);
