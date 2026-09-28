@@ -625,7 +625,7 @@ insert into public.cosmetics select * from json_populate_recordset(null::public.
  {"id":"hat:crown","cat":"hat","key":"crown","name":"Crown","rarity":"l","src":"case","need":null,"box":"supply"}, 
  {"id":"hat:gclownhair","cat":"hat","key":"gclownhair","name":"Gold Clown Hair","rarity":"g","src":"case","need":null,"box":"afterglow"}, 
  {"id":"hat:ghelm","cat":"hat","key":"ghelm","name":"Gold Knight Helm","rarity":"g","src":"case","need":null,"box":"afterglow"}, 
- {"id":"hat:glitch","cat":"hat","key":"glitch","name":"Glitch Mask","rarity":"l","src":"case","need":null,"box":"afterglow"}, 
+ {"id":"hat:glitch","cat":"hat","key":"glitch","name":"Glitch Head","rarity":"l","src":"case","need":null,"box":"afterglow"}, 
  {"id":"hat:halo","cat":"hat","key":"halo","name":"Halo","rarity":"l","src":"case","need":null,"box":"afterglow"}, 
  {"id":"hat:headband","cat":"hat","key":"headband","name":"Neon Headband","rarity":"c","src":"case","need":null,"box":"afterglow"}, 
  {"id":"hat:ledmask","cat":"hat","key":"ledmask","name":"LED Mask","rarity":"e","src":"case","need":null,"box":"afterglow"}, 

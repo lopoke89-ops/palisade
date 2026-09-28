@@ -79,6 +79,7 @@ function mateRows(){
 function hud(dt){
   if(toastT>0){toastT-=dt;if(toastT<=0)$('toast').classList.remove('on')}
   const p=player;if(!p)return;
+  const rj=game.pvp==='ffa'&&!p.alive&&game.phase!=='over';if($('respawnJobs').hidden===rj){$('respawnJobs').hidden=!rj;if(rj)syncJobPick()}
   $('hpF').style.transform=`scaleX(${Math.max(0,p.hp/p.max)})`;txt($('hpN'),p.alive?String(Math.ceil(p.hp)):'DOWN');cls($('hpM'),'alarm',!p.alive);
   mateRows();
   hud.t=(hud.t||0)-dt;if(hud.t<=0){hud.t=.5;const b=$('top').getBoundingClientRect().bottom;if(b>0){hud.topB=b;const v=Math.round(b+10)+'px';if($('tip').style.top!==v)$('tip').style.top=v}

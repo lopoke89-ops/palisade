@@ -42,6 +42,7 @@
   <button id="sprBtn" type="button" hidden><span>SPRINT</span><kbd class="kc">SHIFT</kbd><b id="sprN">READY</b></button>
 </div>
 <div id="keys" hidden></div>
+<div id="respawnJobs" class="jobPick" hidden><span>NEXT LIFE AS</span><div class="seg jobs"><button data-nc="soldier" type="button">SOLDIER</button><button data-nc="sniper" type="button">SNIPER</button><button data-nc="grenadier" type="button">GRENADIER</button><button data-nc="quartermaster" type="button">QUARTERMASTER</button></div></div>
 <div id="chat" hidden><ol id="chatLog" aria-live="polite"></ol></div>
 <form id="chatBar" hidden autocomplete="off"><input id="chatIn" type="text" maxlength="120" enterkeyhint="send" placeholder="Say something · Enter sends · Esc closes" aria-label="Chat message" spellcheck="false"><button class="go" type="submit">SEND</button>
   <div class="quick"><button type="button">NICE</button><button type="button">HELP!</button><button type="button">ON MY WAY</button><button type="button">WALL DOWN</button><button type="button">NEED MATS</button><button type="button">GG</button></div></form>
@@ -52,7 +53,23 @@
 <div id="menu">
   <div class="panel">
     <header class="accountDock">
-      <nav class="partyNav" aria-label="Lobby navigation"><strong>PALI<span class="cut">SADE</span></strong><button type="button" data-go="solo" data-nav="solo">PLAY</button><button type="button" data-go="multi" data-nav="multi">MULTIPLAYER</button><button type="button" data-go="classes" data-nav="classes">CLASSES</button><button type="button" data-go="locker" data-nav="locker" id="navLocker">LOCKER</button><button type="button" data-go="settings" data-nav="settings">SETTINGS</button></nav>
+      <nav class="partyNav" aria-label="Lobby navigation"><strong>PALI<span class="cut">SADE</span></strong><button type="button" data-go="solo" data-nav="solo">SOLO</button><button type="button" data-go="multi" data-nav="multi">MULTIPLAYER</button><button type="button" data-go="classes" data-nav="classes">CLASSES</button><button type="button" data-go="locker" data-nav="locker" id="navLocker">LOCKER</button><button type="button" data-go="settings" data-nav="settings">SETTINGS</button></nav>
+      <div class="friendsWrap"><button id="friendsBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="friendsDrop" aria-label="Friends"><svg viewBox="0 0 20 16" width="20" height="16" aria-hidden="true"><circle cx="7" cy="5" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M1.5 15c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="14.2" cy="4.6" r="2.4" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M13.6 9.2c2.6-.3 4.4 1.4 4.9 4.6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="fbLab">FRIENDS</span><b id="friendsDot" class="fDot" hidden>0</b></button>
+      <div id="friendsDrop" class="friendsDrop" hidden role="dialog" aria-label="Friends">
+        <div class="fdTabs" role="tablist"><button type="button" role="tab" data-ft="friends" aria-selected="true">FRIENDS <b id="fdFriendsN">0</b></button><button type="button" role="tab" data-ft="requests" aria-selected="false">REQUESTS <b id="fdReqN" class="fCnt" hidden>0</b></button><button type="button" role="tab" data-ft="mail" aria-selected="false">MAILBOX <b id="fdMailN" class="fCnt" hidden>0</b></button></div>
+        <p id="socialStatus" class="status" role="status"></p>
+        <section class="fdPage" data-fp="friends" role="tabpanel">
+          <form id="friendSearch" autocomplete="off"><label for="friendName">FIND A PLAYER</label><div><input id="friendName" type="text" maxlength="16" placeholder="Exact username" aria-label="Find player by username" spellcheck="false" autocapitalize="off"><button class="go" type="submit">FIND</button></div></form>
+          <div id="friendResult"></div>
+          <div class="socialSection"><span>FRIENDS</span><button id="socialRefresh" type="button" aria-label="Refresh friends">REFRESH</button></div>
+          <div id="friendList" class="savedPlayers"></div>
+          <div class="socialSection"><span>RECENT <b id="savedCount">0</b></span></div>
+          <div id="savedPlayers" class="savedPlayers"></div>
+          <p class="socialFoot">JOIN shows when a friend has a listed room. Players without one may still be playing privately.</p>
+        </section>
+        <section class="fdPage" data-fp="requests" role="tabpanel" hidden><div class="socialSection"><span>INCOMING</span></div><div id="reqIn" class="savedPlayers"></div><div class="socialSection"><span>SENT</span></div><div id="reqOut" class="savedPlayers"></div></section>
+        <section class="fdPage" data-fp="mail" role="tabpanel" hidden><div id="mailList" class="mailList"></div></section>
+      </div></div>
       <button id="identityButton" type="button" data-go="account" aria-label="Your account"><canvas id="identityAvatar" width="88" height="88" aria-hidden="true"></canvas><span><b id="identityName">PLAYER</b><small id="identityState">LOCAL PROFILE</small></span><span class="identityDot" aria-hidden="true"></span></button>
       <button class="shardWallet" type="button" data-go="locker" aria-label="Open locker"><span aria-hidden="true">◆</span> <b id="identityShards">0</b> <small>SHARDS</small></button>
     </header>
@@ -60,36 +77,33 @@
       <div id="partyControls" class="partyControls"></div>
       <div class="partyStage">
         <div class="partyHeading"><span class="eyebrow" id="partyMode">CO-OP</span><h2 id="partyTitle">YOUR CREW. YOUR CLAIM.</h2><p id="partySubtitle">Choose your job. Bring your crew.</p></div>
-        <div class="partyHero"><canvas id="partyPreview" width="1000" height="780" aria-label="Your equipped character and party"></canvas><div class="partyNameplate"><b id="partyPlayerName">PLAYER</b><span id="partyPlayerState">IN LOBBY</span></div></div>
+        <div class="partyHero" id="partyHero"><canvas id="partyPreview" width="1000" height="780" aria-label="Your party"></canvas><canvas id="partyMe" width="1000" height="780" aria-label="Your equipped character"></canvas><canvas id="partyFx" width="1000" height="780" aria-hidden="true"></canvas><div class="partyNameplate"><b id="partyPlayerName">PLAYER</b><span id="partyPlayerState">IN LOBBY</span></div></div>
         <div id="partySlots" class="partySlots" aria-label="Party members"></div>
         <p class="partyHint" id="partyHint">Up to six players · desktop and mobile</p>
       </div>
+      <aside class="lockPanel" id="lockPanel" aria-label="Items">
+        <div class="tabs" id="lockTabs"><button data-cat="skin" class="sel" type="button">SKINS</button><button data-cat="hat" type="button">HEADGEAR</button><button data-cat="trail" type="button">TRACERS</button><button data-cat="fx" type="button">KILL FX</button><button data-cat="bg" type="button">BACKGROUNDS</button></div>
+        <div class="grid" id="lockGrid"></div>
+      </aside>
       <aside class="mapPanel" id="mapPanel" aria-label="Map">
         <div class="socialHead"><h2>MAP</h2><b id="mapSizeTag">16×16</b></div>
-        <div id="mapCards" class="mapCards"></div>
-        <h3 class="mapSub">SIZE</h3>
+        <p class="socialCaption" id="mapHostNote" hidden>The host picks the map.</p><div id="mapCards" class="mapCards"></div>
+        <div id="sizeBox"><h3 class="mapSub">SIZE</h3>
         <div class="seg" id="sizeSeg"><button data-size="std" type="button">STANDARD · 16×16</button><button data-size="xl" type="button">XL · 24×24</button></div>
-        <p class="socialCaption" id="sizeNote">XL: a bigger yard and about 40% more raiders.</p>
-      </aside>
-      <aside class="socialPanel" aria-label="Friends and saved players">
-        <div class="socialHead"><h2>FRIENDS</h2><b id="savedCount">0</b></div>
-        <p class="socialCaption">Saved players · synced to your account</p>
-        <form id="friendSearch" autocomplete="off"><label for="friendName">FIND A PLAYER</label><div><input id="friendName" type="text" maxlength="16" placeholder="Exact username" aria-label="Find player by username" spellcheck="false" autocapitalize="off"><button class="go" type="submit">FIND</button></div></form>
-        <p id="socialStatus" class="status" role="status"></p><div id="friendResult"></div>
-        <div class="socialSection"><span>SAVED PLAYERS</span><button id="socialRefresh" type="button" aria-label="Refresh saved players">REFRESH</button></div>
-        <div id="savedPlayers" class="savedPlayers"></div>
-        <p class="socialFoot">A listed room means you can join. Players without one may still be playing privately.</p>
+        <p class="socialCaption" id="sizeNote">XL: a bigger yard and about 40% more raiders.</p></div>
+        <p class="socialCaption" id="pvpSizeNote" hidden>PvP is always 16×16.</p>
       </aside>
     </section>
     <div class="eyebrow">FIELD TEST 03 · LUMBER YARD</div>
     <h1>PALI<span class="cut">SADE</span></h1>
     <p class="tag">Neighbors with rifles and a deadline.</p>
 
-    <section class="page" id="pg-account" hidden>
+    <section class="page cardPage" id="pg-account" hidden>
       <h2 class="pt">ACCOUNT</h2>
-      <p class="lede" id="aLede"></p>
+      <div class="acHead"><canvas id="acAvatar" width="160" height="160" aria-hidden="true"></canvas><div><b id="acName">PLAYER</b><span id="acState">LOCAL PROFILE</span><p class="lede" id="aLede"></p></div></div>
       <p class="status" id="aStatus" role="status"></p>
       <button class="go" id="aRetry" type="button" hidden>TRY AGAIN</button>
+      <div class="cards acCards">
       <form class="page acBox" id="aPwBox" hidden autocomplete="on" novalidate>
         <h2 id="aPwHead">SET A PASSWORD</h2>
         <p class="lede sm" id="aPwLede">So you can sign in on your other devices. At least 8 characters.</p>
@@ -112,13 +126,14 @@
         <div class="join"><input type="password" id="aInPw" maxlength="72" autocomplete="current-password" placeholder="Password" aria-label="Password"><button class="go" type="submit">SIGN IN</button></div>
         <button class="ghost sm" id="aForgot" type="button">FORGOT PASSWORD</button>
       </form>
+      </div>
       <div id="capBox" hidden></div>
       <button class="ghost" id="aOut" type="button" hidden>SIGN OUT</button>
       <button class="ghost" type="button" data-go="main">BACK</button>
     </section>
 
     <section class="page" id="pg-solo" hidden>
-      <h2 class="pt">PLAY</h2>
+      <h2 class="pt">SOLO</h2>
       <p class="lede">Solo, with Dell. Hold the stake through the raids.</p>
       <h2>YOUR JOB <button class="linkBtn" type="button" data-go="classes">ABOUT THE CLASSES</button></h2>
       <div class="seg jobs"><button data-c="soldier" type="button">SOLDIER</button><button data-c="sniper" type="button">SNIPER</button><button data-c="grenadier" type="button">GRENADIER</button><button data-c="quartermaster" type="button">QUARTERMASTER</button></div>
@@ -139,7 +154,7 @@
           <div><h3>KEYBOARD</h3><p>WASD move · mouse aim<br>Hold click to fire (soldier: bursts) · Space build<br>1 2 3 material · F wall/door<br>G grenade · E armory at the stake<br>Shift sprint (quartermaster) · B build kit · Enter start raid · T chat online · Esc pause</p></div>
         </div>
       </details>
-      <p class="foot">v0.9.0 · phone and desktop · online co-op and PvP for up to six</p>
+      <p class="foot">v0.9.1 · phone and desktop · online co-op and PvP for up to six</p>
     </section>
 
     <section class="page" id="pg-classes" hidden>
@@ -168,9 +183,6 @@
       <h2>LENGTH AND THREAT</h2>
       <div class="seg"><button data-mm="5" type="button">5 RAIDS</button><button data-mm="10" type="button">10 RAIDS</button><button data-mm="endless" type="button">ENDLESS</button></div>
       <div class="seg"><button data-md="easy" type="button">EASY</button><button data-md="normal" type="button">NORMAL</button><button data-md="hard" type="button">HARD</button></div>
-      <h2>MAP</h2>
-      <div class="seg" id="mMapSeg"></div>
-      <div class="seg" id="mSizeSeg"><button data-size="std" type="button">STANDARD</button><button data-size="xl" type="button">XL · 24×24</button></div>
       </div>
       <label class="tog" id="mListRow"><input type="checkbox" id="mList"><span>List my game in Open Games</span></label>
       <button class="go" id="hostBtn" type="button">HOST</button>
@@ -188,6 +200,8 @@
       <h2 class="pt">LOBBY</h2>
       <div class="code"><span>ROOM CODE</span><b id="lCode">····</b></div>
       <button class="ghost" id="shareBtn" type="button">SHARE INVITE LINK</button>
+      <h2>YOUR JOB</h2>
+      <div class="seg jobs" id="lJobs"><button data-lc="soldier" type="button">SOLDIER</button><button data-lc="sniper" type="button">SNIPER</button><button data-lc="grenadier" type="button">GRENADIER</button><button data-lc="quartermaster" type="button">QUARTERMASTER</button></div>
       <h2>CREW</h2>
       <ul class="roster" id="lList"></ul>
       <p class="lede" id="lNote"></p>
@@ -200,27 +214,27 @@
 
     <section class="page" id="pg-locker" hidden>
       <h2 class="pt">LOCKER</h2>
-      <div class="lockTop">
-        <canvas id="lockPrev" width="260" height="300" aria-label="Your soldier"></canvas>
-        <div class="lockCases"><div id="caseBoxes"></div><span id="shardTxt">0 shards</span></div>
-      </div>
-      <p class="lede" style="font-size:12px;color:var(--dim)" id="lockHint">Earn a case every 3 raids you survive, and for every win. Duplicates turn into shards.</p>
+      <div class="lockCases"><div id="caseBoxes"></div><span id="shardTxt">0 shards</span></div>
+      <p class="lede sm" id="lockHint">Earn a case every 3 raids you survive, and for every win. Duplicates turn into shards.</p>
       <p class="status" id="lockMsg" role="status"></p>
-      <div class="tabs" id="lockTabs"><button data-cat="skin" class="sel" type="button">SKINS</button><button data-cat="hat" type="button">HEADGEAR</button><button data-cat="trail" type="button">TRACERS</button><button data-cat="fx" type="button">KILL FX</button><button data-cat="bg" type="button">BACKGROUNDS</button></div>
-      <div class="grid" id="lockGrid"></div>
       <button class="ghost" type="button" data-go="main">BACK</button>
     </section>
 
-    <section class="page" id="pg-settings" hidden>
+    <section class="page cardPage" id="pg-settings" hidden>
       <h2 class="pt">SETTINGS</h2>
-      <label class="set"><span>MASTER VOLUME</span><input type="range" id="sVol" min="0" max="100" step="5"><b id="sVolV">80%</b></label>
-      <label class="set"><span>MUSIC</span><input type="range" id="sMus" min="0" max="100" step="5"><b id="sMusV">70%</b></label>
-      <label class="set"><span>SCREEN SHAKE</span><input type="range" id="sShake" min="0" max="100" step="5"><b id="sShakeV">100%</b></label>
-      <label class="tog"><input type="checkbox" id="sHap"><span>Vibration on hits and blasts</span></label>
-      <label class="tog"><input type="checkbox" id="sFps"><span>Show frame rate</span></label>
-      <h2>SAVE BACKUP</h2>
-      <p class="lede" style="font-size:12px;color:var(--dim)">Your locker is saved in this browser and stays through game updates. Export a backup to move it to another device, or to restore it if this browser's data is cleared.</p>
-      <div class="saveRow"><button class="ghost" id="sExport" type="button">EXPORT SAVE</button><button class="ghost" id="sImport" type="button">IMPORT SAVE</button></div>
+      <div class="cards">
+        <div class="setCard"><h3>SOUND</h3>
+          <label class="set"><span>MASTER VOLUME</span><input type="range" id="sVol" min="0" max="100" step="5"><b id="sVolV">80%</b></label>
+          <label class="set"><span>MUSIC</span><input type="range" id="sMus" min="0" max="100" step="5"><b id="sMusV">70%</b></label></div>
+        <div class="setCard"><h3>SCREEN</h3>
+          <label class="set"><span>SCREEN SHAKE</span><input type="range" id="sShake" min="0" max="100" step="5"><b id="sShakeV">100%</b></label>
+          <label class="tog"><input type="checkbox" id="sFps"><span>Show frame rate</span></label></div>
+        <div class="setCard"><h3>FEEL</h3>
+          <label class="tog"><input type="checkbox" id="sHap"><span>Vibration on hits and blasts</span></label></div>
+        <div class="setCard"><h3>SAVE BACKUP</h3>
+          <p class="lede sm">Your locker is saved in this browser and stays through game updates. Export a backup to move it to another device, or to restore it if this browser's data is cleared.</p>
+          <div class="saveRow"><button class="ghost" id="sExport" type="button">EXPORT SAVE</button><button class="ghost" id="sImport" type="button">IMPORT SAVE</button></div></div>
+      </div>
       <button class="go" id="sDone" type="button">DONE</button>
     </section>
   </div>
@@ -231,6 +245,7 @@
     <div class="eyebrow" id="pauseEyebrow">PAUSED</div>
     <h1 style="font-size:clamp(48px,15vw,84px)">HOLD UP</h1>
     <button class="go" id="resumeBtn" type="button">BACK TO IT</button>
+    <div id="pauseJobs" class="jobPick" hidden><span>NEXT LIFE AS</span><div class="seg jobs"><button data-nc="soldier" type="button">SOLDIER</button><button data-nc="sniper" type="button">SNIPER</button><button data-nc="grenadier" type="button">GRENADIER</button><button data-nc="quartermaster" type="button">QUARTERMASTER</button></div><small id="pauseJobNote">Takes effect when you respawn.</small></div>
     <button class="ghost" id="pSetBtn" type="button">SETTINGS</button>
     <button class="ghost" id="quitBtn" type="button">ABANDON THE CLAIM</button>
   </div>
@@ -263,6 +278,7 @@
 <div class="overlay" id="caseOv" hidden>
   <div class="card">
     <div class="eyebrow" id="caseEye">SUPPLY CASE</div>
+    <button id="caseIntro" type="button" hidden aria-label="Opening the case. Tap to skip."><canvas id="caseIntroCv" width="480" height="300" aria-hidden="true"></canvas><small>TAP TO SKIP</small></button>
     <div class="reelWrap"><div class="reel" id="reel"></div></div>
     <div id="caseResult" hidden><b id="caseName"></b><span id="caseSub"></span></div>
     <button class="go" id="caseEquip" type="button" hidden>EQUIP IT</button>
@@ -283,6 +299,7 @@
       <div><dt>Repairs by Dell</dt><dd id="sRep">0</dd></div>
       <div><dt>Revives</dt><dd id="sRev">0</dd></div>
     </dl>
+    <div id="overRewards" class="rwCards" hidden aria-label="Rewards"></div>
     <p class="loot" id="overLoot" hidden></p>
     <p class="lede" id="overWait" hidden style="color:var(--dim)">Waiting on the host to run it back.</p>
     <button class="go" id="againBtn" type="button">RUN IT BACK</button>

@@ -13,7 +13,7 @@ const lerp2=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];
 function faceLine(P,Q,h,v){const a=up(P,h*v),b=up(Q,h*v);g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke()}
 function doorSlab(P,Q,h,col,hc){const a=lerp2(P,Q,.3),b=lerp2(P,Q,.7);quad(a,b,up(b,h*.82),up(a,h*.82),col);const hd=up(lerp2(P,Q,.62),h*.42);g.fillStyle=hc||'#e2b436';g.fillRect(hd[0]-1*u,hd[1]-1*u,2*u,2*u)}
 function drawWall(i,j,w,alpha){
-  const st=wallState(w),key=(w.slab?'s':w.mat)+'|'+(w.door?1:0)+'|'+st+'|'+Math.round(w.char*8)+'|'+(w.flash>0?1:0)+'|'+(w.tm||'')+'|'+TW2+'|'+DPR;
+  const st=wallState(w),key=(w.slab?'s':w.mat)+(w.cov||'')+'|'+(w.door?1:0)+'|'+st+'|'+Math.round(w.char*8)+'|'+(w.flash>0?1:0)+'|'+(w.tm||'')+'|'+TW2+'|'+DPR;
   let S=w._spr;if(!S||S.key!==key||S.i!==i||S.j!==j)S=w._spr=wallSprite(i,j,w,key);
   g.globalAlpha=alpha;g.drawImage(S.cv,camX+S.x,camY+S.y,S.w,S.h);
   if(w.fire>0){const c=iso(i+.5,j+.5),R=TW2*1.25,h=WH*(st===2?.58:1);g.globalAlpha=alpha*.85;g.drawImage(SOFT.glow,c[0]-R,c[1]-h-R,R*2,R*2)}
@@ -35,6 +35,7 @@ function drawWallShape(i,j,w){
     boxR(i+.22+hs*.2,j+.24,i+.62+hs*.2,j+.6,h,WH*.18,'#7d766b','#5c5750','#4a4640');
     if(st>0){g.strokeStyle='#1c1a17';g.lineWidth=u;const c=iso(i+.5,j+.5);g.beginPath();g.moveTo(c[0]-6*u,c[1]-h*.8);g.lineTo(c[0]-1*u,c[1]-h*.4);g.lineTo(c[0]+4*u,c[1]-h*.7);g.stroke()}
     return}
+  if(w.cov){drawCover(i,j,w);return}
   const m=MAT[w.mat],st=wallState(w),h=WH*(st===2?.58:1);
   let top=m.top,l=m.l,r=m.r;
   if(w.char>0){top=mix(top,'#241b15',w.char*.85);l=mix(l,'#1d1612',w.char*.85);r=mix(r,'#18120f',w.char*.85)}
@@ -52,6 +53,26 @@ function drawWallShape(i,j,w){
       g.beginPath();g.ellipse(pt[0],pt[1],(2.2+st)*u,(2.8+st)*u,0,0,Math.PI*2);g.fill();
     }
   }
+}
+// Free-for-all cover (it can't be broken): stacked timber, a ruined shed's walls, or a supply crate
+function drawCover(i,j,w){
+  const hs=hash(i*3+1,j*7+2),fl=w.flash>0;
+  if(w.cov==='timber'){
+    const h=WH*.78,{B,C,D}=boxR(i+.08,j+.08,i+.92,j+.92,0,h,fl?'#d8b27a':'#a47a46','#7a5530','#5e4024');
+    g.fillStyle='#c9a06a';g.strokeStyle='rgba(40,24,10,.7)';g.lineWidth=Math.max(1,u*.8);
+    for(const[P,Q]of[[D,C],[C,B]])for(let r=0;r<3;r++)for(let q=0;q<3;q++){const a=up(lerp2(P,Q,.18+q*.32),h*(.17+r*.31));g.beginPath();g.ellipse(a[0],a[1],3.1*u,3.1*u,0,0,Math.PI*2);g.fill();g.stroke()}
+    g.strokeStyle='#3a2612';g.lineWidth=1.4*u;const c=iso(i+.5,j+.5);g.beginPath();g.moveTo(c[0]-TW2*.8,c[1]-h+2*u);g.lineTo(c[0]+TW2*.8,c[1]-h+2*u);g.stroke();
+    return}
+  if(w.cov==='shed'){
+    const h=WH*(.62+hs*.3),{B,C,D}=boxR(i+.12,j+.12,i+.88,j+.88,0,h,fl?'#8a7a64':'#5b4c3a','#4a3d2e','#3a3024');
+    g.strokeStyle='rgba(20,14,8,.6)';g.lineWidth=Math.max(1,u*.8);for(const[P,Q]of[[D,C],[C,B]])for(const t of[.25,.5,.75]){const a=lerp2(P,Q,t);g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(a[0],a[1]-h*(.8+hash(i+t*9,j)*.2));g.stroke()}
+    g.fillStyle='#2a2119';const c=iso(i+.5,j+.5);g.beginPath();g.moveTo(c[0]-5*u,c[1]-h);g.lineTo(c[0]+1*u,c[1]-h-6*u);g.lineTo(c[0]+5*u,c[1]-h);g.closePath();g.fill();   // a snapped board
+    return}
+  if(w.cov==='crate'){
+    const h=WH*.66,{B,C,D}=boxR(i+.14,j+.14,i+.86,j+.86,0,h,fl?'#c9a877':'#8f7148','#6d5433','#553f25');
+    g.strokeStyle='#3a2a16';g.lineWidth=1.3*u;for(const[P,Q]of[[D,C],[C,B]]){const a=P,b=Q,c=up(Q,h),d=up(P,h);g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(c[0],c[1]);g.moveTo(b[0],b[1]);g.lineTo(d[0],d[1]);g.stroke()}
+    return}
+  boxR(i+.03,j+.03,i+.97,j+.97,0,WH,MAT[3].top,MAT[3].l,MAT[3].r);
 }
 function drawDebris(i,j,mat){const m=MAT[mat];for(let q=0;q<3;q++){const a=hash(i+q*17,j),b=hash(i,j+q*29),x=i+.15+a*.55,y=j+.15+b*.55;boxR(x,y,x+.22,y+.18,0,3.5*u,m.top,m.l,m.r)}}
 function label(t,x,y,col,size=11){g.font=`800 ${Math.round(size*u)}px "Big Shoulders Stencil Display", "Arial Narrow", sans-serif`;g.textAlign='center';g.lineWidth=3;g.strokeStyle='rgba(12,10,8,.85)';g.strokeText(t,x,y);g.fillStyle=col;g.fillText(t,x,y)}

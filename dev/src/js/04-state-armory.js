@@ -26,8 +26,18 @@ function makePlayer(id,name,cls,slot,cos,team){
   if(!CLASSES[cls])cls='soldier';const C=CLASSES[cls],[x,y]=SPAWNS[slot%SPAWNS.length];
   const p={id,name,cls,slot,x,y,hp:C.hp,max:C.hp,alive:true,downed:false,rt:0,revive:0,aim:{x:.7,y:-.7},face:{x:.7,y:-.7},moveDir:{x:.7,y:-.7},
     cd:0,bcd:0,gt:0,ncd:0,mats:[24,0,0],cap:C.cap.slice(),nades:C.nades,maxN:C.nades,hurt:9,walk:0,flash:0,C,tp:0,fireIn:false,
-    sal:0,kills:0,deaths:0,prot:0,team:team==='b'?'b':team==='a'?'a':'',up:{d:0,r:0,g:0,a:0,n:0},upS:'00000',cos:parseCos(cos),cosS:''};
+    sal:0,kills:0,deaths:0,prot:0,ab:0,team:team==='b'?'b':team==='a'?'a':'',up:{d:0,r:0,g:0,a:0,n:0},upS:'00000',cos:parseCos(cos),cosS:''};
   p.cosS=cosStr(p.cos);refit(p);return p;
+}
+// The one way to change jobs (the room, Free-for-all respawns, and later the skill tree all use it): a fresh gun,
+// full ammo, grenades and health for the new job. Kills, deaths, score, salvage, slot, team, armory upgrades and
+// cosmetics stay. p.ab is the (future) class-ability state; it rides the network already and resets here.
+function changeClass(p,cls){
+  if(!p||!CLASSES[cls]||p.cls===cls)return false;
+  const C=CLASSES[cls];p.cls=cls;p.C=C;p.cap=C.cap.slice();p.max=0;refit(p);p.hp=p.max;p.nades=p.maxN;
+  p.mats=p.mats.map((m,i)=>Math.min(m,p.cap[i]));p.ammo=p.gun.mag?p.gun.mag:undefined;p.rl=0;p.rlReq=false;p.bolt=0;p.cd=0;p.bcd=0;p.sinceShot=9;
+  p.bLeft=0;p.ab=0;p._lk='';p.nextShow='';if(p===player&&game)game.C=C;
+  return true;
 }
 /* ---------- armory: salvage buys upgrades between raids ---------- */
 const UPG=[
@@ -92,19 +102,11 @@ function newGame(roster,pvp=''){
   const ruin=(list,mat,ratio,ch)=>list.forEach(([i,j])=>{const w=makeWall(mat,false,ratio);w.char=ch;walls[idx(i,j)]=w});
   const mir=([i,j])=>[N-1-i,N-1-j];
   if(pvp==='base'){
-    cores=[{team:'a',i:4,j:11,hp:PVP.stake,max:PVP.stake,flash:0},{team:'b',i:11,j:4,hp:PVP.stake,max:PVP.stake,flash:0}];
-    const west=[[2,8],[6,14],[1,13],[5,8]];
-    nodes=[...west,...west.map(mir)].map(([i,j])=>wood(i,j));
-    for(const[i,j]of[[1,6],[14,9]])nodes.push({i,j,type:1,locked:false,unlock:0,solid:true});
-    for(const[i,j]of[[7,13],[8,2]])nodes.push({i,j,type:2,locked:false,unlock:0,solid:true});
-    const fence=[[3,9],[4,9],[5,9]];ruin([...fence,...fence.map(mir)],0,.63,.25);
-    ruin([[7,8],[8,7],[6,6],[9,9]],1,.55,.3);
+    cores=L.cores.map(([i,j],n)=>({team:n?'b':'a',i,j,hp:PVP.stake,max:PVP.stake,flash:0}));
+    nodes=L.nodes;for(const[list,mat,ratio,ch]of L.ruins)ruin(list,mat,ratio,ch);
   }else if(pvp==='ffa'){
-    cores=[];nodes=[];
-    // one quarter of the cover, turned four times around the middle so every corner plays the same
-    const q=[[3,3],[4,3],[3,4],[6,2],[2,6],[6,6],[7,4]];
-    const rot=([i,j])=>[N-1-j,i];
-    for(const t of q){let c=t;for(let r=0;r<4;r++){walls[idx(c[0],c[1])]=makeWall(3,false);c=rot(c)}}
+    cores=[];nodes=L.nodes||[];
+    for(const[i,j,style]of L.cover){const w=makeWall(3,false);w.cov=style||'';walls[idx(i,j)]=w}   // the arena's cover can't be broken
   }else{
     cores=[{team:'',i:L.core[0],j:L.core[1],hp:Df.core,max:Df.core,flash:0}];
     nodes=L.nodes;
@@ -113,8 +115,8 @@ function newGame(roster,pvp=''){
   coreKs=new Set(cores.map(c=>idx(c.i,c.j)));
   players=new Map();
   roster.forEach((r,n)=>{const team=pvp==='base'?(r.team==='a'||r.team==='b'?r.team:n%2?'b':'a'):'';players.set(r.id,makePlayer(r.id,r.name,r.cls,n,r.cos,team))});
-  if(pvp==='base'){const cnt={a:0,b:0};for(const p of players.values()){const s=SPAWNS[cnt[p.team]++%SPAWNS.length];[p.x,p.y]=p.team==='b'?[N-s[0],N-s[1]]:s}}
-  if(pvp==='ffa'){let n=0;for(const p of players.values())[p.x,p.y]=FFA_SPAWNS[(n++*5)%FFA_SPAWNS.length]}
+  if(pvp==='base'){const cnt={a:0,b:0},TS=L.teamSpawns;for(const p of players.values()){const s=TS[cnt[p.team]++%TS.length];[p.x,p.y]=p.team==='b'?[N-s[0],N-s[1]]:s}}
+  if(pvp==='ffa'){let n=0;const S=L.pspawns;for(const p of players.values())[p.x,p.y]=S[(n++*5)%S.length]}
   const off=pvp?[0,0]:[cores[0].i-4,cores[0].j-11];   // the spawn spots are laid out round a stake at (4,11)
   if(!pvp)for(const p of players.values()){p.x+=off[0];p.y+=off[1]}
   player=players.get(myId)||[...players.values()][0];
@@ -128,7 +130,7 @@ function newGame(roster,pvp=''){
   game={phase:pvp==='ffa'?'raid':'build',paused:false,wave:0,timer:pvp==='base'?PVP.truce:pvp==='ffa'?PVP.ffaTime:40+Df.build,queue:[],qn:0,spawnT:0,sel:game.sel||0,piece:'wall',time:0,tip:0,gathered:0,C:player.C,Df,
     mode,waves:mode==='endless'?Infinity:+mode,rewarded:false,bosses:0,pvp,goal:PVP.ffaGoal,winner:'',
     stats:{dropped:0,built:0,lost:0,repairs:0,revives:0},
-    map:pvp?'yard':MAP_IDS.includes(pick.map)?pick.map:'yard',size:N>16?'xl':'std',lay:L,flood:{t:0,warned:false},bossLog:[],oct:!!pick.oct};
+    map:MAP_IDS.includes(pick.map)?pick.map:'yard',size:N>16?'xl':'std',lay:L,flood:{t:0,warned:false},bossLog:[],oct:!!pick.oct};
   for(const p of players.values()){if(pvp==='base')p.sal=PVP.startSal;if(pvp==='ffa'){p.mats=[0,0,0];p.prot=PVP.prot}}
   feedClear();
   Object.assign(light,{L:.12,r:28,g:34,b:44,warm:0});
@@ -136,7 +138,7 @@ function newGame(roster,pvp=''){
   camSX=camX=W*(W<760?.4:.5)-(player.x-player.y)*TW2;camSY=camY=H*.52-(player.x+player.y)*TH2;
   if(pvp==='base'){const me=TEAMS[player.team],them=TEAMS[player.team==='a'?'b':'a'];game.tip=9;
     setTip(`You're ${me.name}. Truce for ${PVP.truce} seconds: gather and wall in your stake. Then knock down the ${them.name} stake. ${touchMode?'ARMORY':'E'} at your stake spends salvage.`)}
-  else if(pvp==='ffa'){game.tip=9;setTip(`Free-for-all. First to ${PVP.ffaGoal} drops wins. The concrete cover can't be broken.`)}
+  else if(pvp==='ffa'){game.tip=9;setTip(`Free-for-all. First to ${PVP.ffaGoal} drops wins. The cover can't be broken.`)}
   else setTip(touchMode?'Stand next to a wood pile to gather. Dell is gathering too.':'Walk next to a wood pile to gather. Dell is gathering too.');
 }
 

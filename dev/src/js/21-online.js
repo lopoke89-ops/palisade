@@ -4,7 +4,7 @@
 // they talk directly. Each guest opens 'r' (reliable: hello, build, grenade, and every
 // one-off event: sounds, particles, bullets, toasts, wall changes), 'u' (fast: movement in),
 // and 'st' (never resent: game state out, 15 times a second).
-const PROTO='yard-14',ROOM_PREFIX='palisade-yard-14-';
+const PROTO='yard-15',ROOM_PREFIX='palisade-yard-15-';
 const NET={mode:'solo',inGame:false,peer:null,code:'',roster:[],conns:new Map(),host:null,fxq:[],snapT:0,snapN:0,lastN:0,inT:0,nextG:1,lastHeard:0,
   sendTo(id,msg){for(const c of this.conns.values())if(c.pid===id&&c.r&&c.r.open){try{c.r.send(msg)}catch(e){}}},
   sendAll(msg,ch='r'){for(const c of this.conns.values()){const x=c[ch]&&c[ch].open?c[ch]:c.r;if(c.pid&&x&&x.open)try{x.send(msg)}catch(e){}}},
@@ -117,6 +117,7 @@ function hostData(peerId,d){
   }
   if(d.t==='ping')return;
   if(d.t==='c'){hostChat(c.pid,d.m);return}
+  if(d.t==='nextcls'){const p=players.get(c.pid);if(p&&NET.inGame&&game.pvp==='ffa'&&CLASSES[d.cls])p.nextCls=d.cls===p.cls?'':d.cls;return}
   if(d.t==='team'){if(!NET.inGame){const r=NET.roster.find(x=>x.id===c.pid);if(r){r.team=r.team==='b'?'a':'b';broadcastLobby()}}return}
   const p=players.get(c.pid);if(!p||!NET.inGame||!running())return;
   if(d.t==='i'){
@@ -218,7 +219,7 @@ function applyWallDiff(d){for(let q=0;q+4<d.length;q+=5)setWallTile(d[q],d[q+1],
 const PL_STATE=[['id',p=>p.id],['x',p=>r2(p.x)],['y',p=>r2(p.y)],['ax',p=>r2(p.aim.x)],['ay',p=>r2(p.aim.y)],['hp',p=>Math.ceil(p.hp)],
   ['alive',p=>p.alive?1:0],['down',p=>p.downed?1:0],['rev',p=>r2(p.revive)],['rt',p=>r2(p.rt)],['m0',p=>p.mats[0]],['m1',p=>p.mats[1]],['m2',p=>p.mats[2]],
   ['nades',p=>p.nades],['tp',p=>p.tp],['bcd',p=>r2(Math.max(0,p.bcd))],['sal',p=>p.sal|0],['kills',p=>p.kills|0],['deaths',p=>p.deaths|0],
-  ['prot',p=>p.prot>0?1:0],['bolt',p=>p.bolt>0?r2(p.bolt/p.boltT):0],['ammo',p=>p.gun.mag?p.ammo|0:-1],['rl',p=>p.rl>0?1:0],['stun',p=>r2(p.stun||0)]];
+  ['prot',p=>p.prot>0?1:0],['bolt',p=>p.bolt>0?r2(p.bolt/p.boltT):0],['ammo',p=>p.gun.mag?p.ammo|0:-1],['rl',p=>p.rl>0?1:0],['stun',p=>r2(p.stun||0)],['ab',p=>p.ab|0]];   // ab: class-ability state, reserved (always 0 until abilities land)
 const PL_INFO=[['id',p=>p.id],['name',p=>p.name],['cls',p=>p.cls],['slot',p=>p.slot],['max',p=>p.max],['maxN',p=>p.maxN],['upS',p=>p.upS],['cosS',p=>p.cosS],['team',p=>p.team||'']];
 // enemies: the boss-only fields sit last and trailing zeros are dropped, so a plain raider sends 7 numbers, not 12
 const EN_STATE=[['id',e=>e.id],['type',e=>ECODE.indexOf(e.type==='boss'?'boss:'+e.boss:e.type)],['x',e=>r2(e.x)],['y',e=>r2(e.y)],['ax',e=>r2(e.aim.x)],['ay',e=>r2(e.aim.y)],
@@ -234,6 +235,7 @@ function changedInfo(){
 function applyInfo(rows){
   for(const r of rows){const id=r[PI.id];let p=players.get(id);
     if(!p){p=makePlayer(id,r[PI.name],r[PI.cls],r[PI.slot],r[PI.cosS],r[PI.team]);players.set(id,p)}
+    else if(r[PI.cls]&&r[PI.cls]!==p.cls)changeClass(p,r[PI.cls]);   // a job change on the host
     if(r[PI.upS]!==undefined&&String(r[PI.upS])!==p.upS){p.upS=String(r[PI.upS]);UPG.forEach((U,i)=>p.up[U.k]=+p.upS[i]||0);refit(p)}
     if(r[PI.cosS]&&r[PI.cosS]!==p.cosS){p.cos=parseCos(r[PI.cosS]);p.cosS=cosStr(p.cos)}
     p.name=r[PI.name];p.slot=r[PI.slot];p.max=r[PI.max];p.maxN=r[PI.maxN];if(r[PI.team])p.team=r[PI.team]}
@@ -310,7 +312,7 @@ function applySnap(s){
     if(r[PS.hp]<p.hp-.01)p.flash=.1;
     p.hp=r[PS.hp];p.alive=!!r[PS.alive];p.downed=!!r[PS.down];p.revive=r[PS.rev];p.rt=r[PS.rt];p.mats=[r[PS.m0],r[PS.m1],r[PS.m2]];p.nades=r[PS.nades];p.bcd=r[PS.bcd];
     if((r[PS.bolt]||0)>(p.boltF||0)+.05)p.boltF=r[PS.bolt];
-    p.ammo=r[PS.ammo];p.rl=r[PS.rl]?1:0;p.stun=r[PS.stun]||0;
+    p.ammo=r[PS.ammo];p.rl=r[PS.rl]?1:0;p.stun=r[PS.stun]||0;p.ab=r[PS.ab]|0;
   }
   for(const id of[...players.keys()])if(!seen.has(id))players.delete(id);
   player=players.get(myId)||player;

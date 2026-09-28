@@ -1,5 +1,6 @@
 // v0.9.0 gameplay: maps (layouts, water, floods, pits, night), the Ferryman and the Foreman, the four new raiders,
-// the October Butcher and boss-by-boss case drops, plus the before/after wave table. node v090.js
+// the October Butcher and boss-by-boss case drops, plus the before/after wave table.
+// v0.9.1: per-map enemy health, two bosses on XL, oil drums no longer stop shots, and the PvP layouts. node v090.js
 const { chromium } = require('playwright');
 const assert = require('assert');
 const PORT = process.env.PORT || 8080;
@@ -144,6 +145,44 @@ const PORT = process.env.PORT || 8080;
     for (const Pn of [1, 4]) for (const k of [1, 2, 3, 4, 5, 6, 8, 10]) { const o = old(k, Pn, 0, k % 5 === 0), n = P.waveMix(k, Pn, 0, k % 5 === 0); const tot = x => Object.values(x).reduce((a, b) => a + b, 0);
       rows.push({ players: Pn, raid: k, before: `${o.rifle}r ${o.gren}g ${o.breach}b = ${tot(o)}`, after: `${n.rifle}r ${n.gren}g ${n.breach}b ${n.fire}fire ${n.shield}shield ${n.medic}medic ${n.spotter}spot = ${tot(n)}` }) }
     return rows });
+  // 9. v0.9.1 enemy health: Yard 1.0, Riverbend 1.05, Quarry 1.1, XL +10% (damage unchanged)
+  out.hp = await E(() => { const P = __pal, o = {}; for (const m of ['yard', 'river', 'quarry']) for (const size of ['std', 'xl']) { run(m, size); P.game.wave = 1; const e = P.spawnEnemyAt('rifle', 1.5, 1.5); o[m + ':' + size] = +(e.max / 36 / P.game.Df.hp).toFixed(3); e.dead = true; P.toMenu() } return o });
+  assert.deepEqual(out.hp, { 'yard:std': 1, 'yard:xl': 1.1, 'river:std': 1.05, 'river:xl': 1.155, 'quarry:std': 1.1, 'quarry:xl': 1.21 });
+  // 10. boss raids: one boss on 16×16 (Riverbend too), two different ones on XL at 90% each
+  out.xlBosses = await E(() => { const P = __pal, o = {};
+    for (const [m, size] of [['yard', 'std'], ['river', 'std'], ['yard', 'xl'], ['river', 'xl'], ['quarry', 'xl']]) { run(m, size); clearField(); P.game.wave = 4; P.startRaid();
+      const bs = P.game.queue.filter(q => q.startsWith('boss:')).map(q => q.slice(5)); o[m + ':' + size] = { bosses: bs, share: P.game.bossShare };
+      if (bs.length) { P.spawnBoss(bs[0]); const e = P.enemies.find(x => x.boss === bs[0]), B = P.BOSSES[bs[0]]; o[m + ':' + size].hpShare = +(e.max / (B.hp * P.game.Df.hp * (size === 'xl' ? 1.1 : 1) * ({ yard: 1, river: 1.05, quarry: 1.1 })[m])).toFixed(3) }
+      P.toMenu() } return o });
+  for (const k of ['yard:std', 'river:std']) { assert.equal(out.xlBosses[k].bosses.length, 1, k); assert.equal(out.xlBosses[k].hpShare, 1) }
+  for (const k of ['yard:xl', 'river:xl', 'quarry:xl']) { const v = out.xlBosses[k]; assert.equal(v.bosses.length, 2, k); assert.notEqual(v.bosses[0], v.bosses[1]); assert.equal(v.hpShare, .9, k) }
+  assert.deepEqual(out.xlBosses['river:xl'].bosses, ['ferryman', 'butcher']);
+  out.xlDrops = await E(() => { const P = __pal; run('yard', 'xl', '10'); P.game.waves = 10; const r = P.bossDropsHook(['butcher', 'demolisher', 'storm', 'butcher'], 10); P.toMenu(); return r });
+  assert.deepEqual(out.xlDrops, { halloween: 2, afterglow: 2 }, 'XL: two boss cases per boss raid');
+  // 11. Quarry oil drums: walk into them and build on them, no; shoot and see past them, yes. Rock still stops both.
+  out.drums = await E(() => { const P = __pal; run('quarry'); const N = P.N, k = [...P.terr].indexOf(7), i = k % N, j = (k / N) | 0, r = [...P.terr].indexOf(6), ri = r % N, rj = (r / N) | 0;
+    const o = { solid: P.solidTileHook(i, j), sight: P.losClear(i - .5, j + .5, i + 1.5, j + .5), rockSight: P.losClear(ri - .5, rj + .5, ri + 1.5, rj + .5), rockSolid: P.solidTileHook(ri, rj) };
+    P.player.x = i - .5; P.player.y = j + .5; P.bullets.length = 0; P.fire(P.player, 0, 0, P.player.gun, 0); const bl = P.bullets[0]; for (let s = 0; s < 20 && !bl.dead; s++) P.updateBulletsHook(1 / 60); o.bulletPast = !bl.dead || bl.x > i + 1;
+    P.toMenu(); return o });
+  assert.deepEqual([out.drums.solid, out.drums.sight, out.drums.rockSight, out.drums.rockSolid, out.drums.bulletPast], [true, true, false, true, true]);
+  // 12. PvP layouts on every map: symmetric ground, every spawn reaches every other, no stuck or walled-in tiles,
+  //     and in Free-for-all no spawn in plain sight of another
+  out.pvp = await E(() => { const P = __pal, o = {};
+    for (const map of ['yard', 'river', 'quarry']) for (const pv of ['base', 'ffa']) {
+      P.pick.map = map; P.pick.size = 'std'; P.newGame([0, 1, 2, 3].map(n => ({ id: 'p' + n, name: 'P' + n, cls: 'soldier', cos: 'std|class|std|none', team: n % 2 ? 'b' : 'a' })), pv);
+      const N = P.N, L = P.game.lay, walk = (i, j) => !P.solidTileHook(i, j), key = k => P.terr[k] + (P.walls[k] ? 'w' + (P.walls[k].cov || P.walls[k].mat) : '');
+      let asym = 0; for (let j = 0; j < 16; j++) for (let i = 0; i < 16; i++) { const a = j * 16 + i, bb = pv === 'base' ? (15 - j) * 16 + (15 - i) : (15 - i) * 16 + j; if (pv === 'base' ? key(a) !== key(bb) : P.terr[a] !== P.terr[bb]) asym++ }
+      const spawns = pv === 'ffa' ? L.pspawns : [...L.teamSpawns, ...L.teamSpawns.map(([x, y]) => [16 - x, 16 - y])];
+      const seen = new Uint8Array(N * N), q = [], s0 = spawns[0], k0 = Math.floor(s0[1]) * N + Math.floor(s0[0]); seen[k0] = 1; q.push(k0);
+      for (let h = 0; h < q.length; h++) { const k = q[h], i = k % N, j = (k / N) | 0; for (const [a, c] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const x = i + a, y = j + c; if (x < 0 || y < 0 || x >= N || y >= N) continue; const kk = y * N + x; if (seen[kk] || !walk(x, y)) continue; seen[kk] = 1; q.push(kk) } }
+      let stuck = 0; for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) if (walk(i, j) && !seen[j * N + i]) stuck++;
+      const unreach = spawns.filter(([x, y]) => !seen[Math.floor(y) * N + Math.floor(x)]).length;
+      let close = 0; if (pv === 'ffa') for (let a = 0; a < spawns.length; a++) for (let c = a + 1; c < spawns.length; c++) { const A = spawns[a], B = spawns[c]; if (Math.hypot(A[0] - B[0], A[1] - B[1]) < 12 && P.losClear(A[0], A[1], B[0], B[1])) close++ }
+      o[map + '/' + pv] = { asym, stuck, unreach, close, spawns: spawns.length, cover: (L.cover || []).length, cores: P.cores.map(c => c.i + ',' + c.j).join(' '), map: P.game.map };
+    } P.toMenu(); return o });
+  for (const [k, v] of Object.entries(out.pvp)) { assert.equal(v.stuck, 0, k + ' stuck tiles'); assert.equal(v.unreach, 0, k + ' spawns cut off'); assert.equal(v.close, 0, k + ' spawns in sight of each other'); assert.equal(v.map, k.split('/')[0]) }
+  for (const k of ['yard/base', 'river/base', 'quarry/base', 'river/ffa', 'quarry/ffa']) assert.equal(out.pvp[k].asym, 0, k + ' is symmetric');
+  assert.equal(out.pvp['yard/ffa'].asym, 0, 'yard arena ground is symmetric (the sheds are mirrored, not turned)');
   console.log(JSON.stringify(out, null, 1));
   console.log('errors:', errors.length ? errors : 'none');
   await b.close();

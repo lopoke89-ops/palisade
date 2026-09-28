@@ -7,7 +7,7 @@ await p.goto('http://localhost:8080/debug.html?debug=1');await p.waitForTimeout(
 await p.evaluate(()=>{const P=__pal;P.locker.bag.afterglow=2;P.showPage('locker');P.renderLocker();
   // count ticks by watching oscillator creation
   window.__osc=0;const o=AudioContext.prototype.createOscillator;AudioContext.prototype.createOscillator=function(){window.__osc++;return o.call(this)}});
-await p.click('[data-open=afterglow]');await p.waitForTimeout(1500);
+await p.click('[data-open=afterglow]');await p.waitForTimeout(400);await p.click('#caseIntro');await p.waitForTimeout(1500);
 const r=await p.evaluate(()=>{const w=document.querySelector('.reelWrap').getBoundingClientRect();const tiles=[...document.querySelectorAll('#reel .item')];
   const hs=[...new Set(tiles.map(t=>Math.round(t.getBoundingClientRect().height)))];
   const bottoms=tiles.map(t=>t.getBoundingClientRect().bottom);return{heights:hs,stripInside:bottoms.every(y=>y<=w.bottom+.5),demo:__pal.demo,labels:tiles.slice(0,6).map(t=>t.querySelector('i').textContent+'/'+getComputedStyle(t.querySelector('i')).color).join(' ')}});

@@ -4,12 +4,13 @@ const SOCIAL={owner:null,ids:[],profiles:[],rooms:[],result:null,status:'',busy:
 const validPlayerId=v=>typeof v==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 const savedPlayerIds=user=>[...new Set((Array.isArray(user?.user_metadata?.[SAVED_PLAYERS_KEY])?user.user_metadata[SAVED_PLAYERS_KEY]:[]).filter(validPlayerId))].slice(0,50);
 const socialAccount=()=>cloudOn&&acct.state==='full'&&!isGuest()&&!!myUid();
-const socialVisible=()=>!$('menu').hidden&&['multi','lobby'].includes($('menu').dataset.page);
+const socialVisible=()=>!$('menu').hidden&&!$('friendsDrop').hidden;
 // the pages that use the lobby shell (character on stage, columns either side)
-const STAGE_PAGES=['solo','classes','multi','lobby'];
+const STAGE_PAGES=['solo','classes','multi','lobby','locker'];
+const CARD_PAGES=['settings','account'];   // the same shell, laid out as cards instead of a stage
 const stageVisible=()=>!$('menu').hidden&&STAGE_PAGES.includes($('menu').dataset.page);
 const inRoom=()=>NET.mode==='host'||NET.mode==='guest';
-function socialReset(){SOCIAL.owner=myUid();SOCIAL.ids=[];SOCIAL.profiles=[];SOCIAL.rooms=[];SOCIAL.result=null;SOCIAL.status='';SOCIAL.loading=false;SOCIAL.busy=false;SOCIAL.roomsOK=false;SOCIAL.seq++;SOCIAL.searchSeq++;}
+function socialReset(){FR.friends=[];FR.incoming=[];FR.outgoing=[];FR.notes=[];FR.unseen=0;FR.ok=false;FR.loaded=false;FR.rooms=[];FR.seq++;SOCIAL.owner=myUid();SOCIAL.ids=[];SOCIAL.profiles=[];SOCIAL.rooms=[];SOCIAL.result=null;SOCIAL.status='';SOCIAL.loading=false;SOCIAL.busy=false;SOCIAL.roomsOK=false;SOCIAL.seq++;SOCIAL.searchSeq++;}
 function renderIdentity(){
  const b=$('identityButton');if(!b)return;
  const full=acct.state==='full'&&!isGuest(),name=acct.name||(full?'SET USERNAME':myName());
@@ -19,15 +20,15 @@ function renderIdentity(){
  $('identityState').textContent=state;b.classList.toggle('signedIn',full);b.setAttribute('aria-label',name+', '+state+'. Open account');$('identityShards').textContent=String(locker.shards||0);
  const cv=$('identityAvatar'),key=cosStr(locker.eq)+'|'+pick.cls;if(cv.dataset.look!==key){cv.dataset.look=key;const x=cv.getContext('2d');x.clearRect(0,0,88,88);drawFig(x,88,88,lookOf(locker.eq,pick.cls),2.2,{x:.8,y:.3},106)}
  if(SOCIAL.owner!==myUid())socialReset();
- if(socialVisible())renderSocial();
+ if(socialAccount()&&!FR.timer&&!$('menu').hidden){friendsPoll();friendsTick()}   // signed in (or switched account): start checking
+ renderFriendBadge();if(socialVisible())renderSocial();
 }
 function syncPartyShell(){
- const pg=$('menu').dataset.page,on=STAGE_PAGES.includes(pg),social=socialVisible();$('partyShell').hidden=!on;$('menu').classList.toggle('partyMenu',on);
+ const pg=$('menu').dataset.page,on=STAGE_PAGES.includes(pg);$('partyShell').hidden=!on;$('menu').classList.toggle('partyMenu',on);$('menu').classList.toggle('cardMenu',CARD_PAGES.includes(pg));
  document.querySelectorAll('[data-nav]').forEach(b=>{const cur=b.dataset.nav===pg||(b.dataset.nav==='multi'&&pg==='lobby');if(cur)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
- if(on){renderIdentity();renderPartyState();partyPaintAt=0;partySig=''}
- if(social){refreshSocial();if(!SOCIAL.timer)SOCIAL.timer=setInterval(()=>{if(socialVisible())refreshSocial();else{clearInterval(SOCIAL.timer);SOCIAL.timer=0}},15000)}
- else{clearInterval(SOCIAL.timer);SOCIAL.timer=0}
- if(on&&(pg==='solo'||pg==='classes'))renderPlayPanel();
+ if(on){renderIdentity();renderPartyState();partyPaintAt=0;partySig='';partyMeSig='';stageLay=''}
+ if(!FR.timer&&socialAccount()){friendsPoll();friendsTick()}
+ if(on&&MAP_PAGES.includes(pg))renderMapPanel();
 }
 function partyRows(){return inRoom()?NET.roster:[{id:myId,name:myName(),cls:pick.cls,cos:cosStr(locker.eq)}]}
 function partyInvite(){
@@ -37,6 +38,9 @@ function partyInvite(){
 function renderPartyState(){
  if(!$('partyShell')||$('partyShell').hidden)return;
  const room=inRoom(),rows=partyRows(),me=rows.find(r=>r.id===myId)||rows[0],pg=$('menu').dataset.page,C=CLASSES[pick.cls]||CLASSES.soldier,M=MAPS[pick.map]||MAPS.yard;
+ if(pg==='locker'){const eq=locker.eq,nm=(c,k)=>(COSBY[c+':'+k]||{name:k}).name;
+  $('partyMode').textContent='LOCKER';$('partyTitle').textContent='YOUR KIT';$('partySubtitle').textContent=`${nm('skin',eq.skin)} · ${nm('hat',eq.hat)} · ${nm("trail",eq.trail)}${/tracer/i.test(nm("trail",eq.trail))?"":" tracer"} · ${nm('fx',eq.fx)}`;
+  $('partyPlayerName').textContent=myName();$('partyPlayerState').textContent='EQUIPPED';$('partyHint').textContent='Tap an item you own to wear it.';return}
  if(pg==='solo'||pg==='classes'){
   $('partyMode').textContent=pg==='solo'?`SOLO · ${M.name}${pick.size==='xl'?' XL':''}`:'CLASSES';$('partyTitle').textContent=pg==='solo'?'HOLD THE STAKE.':C.name;
   $('partySubtitle').textContent=pg==='solo'?`${LEN_NAME[pick.mode]||'5 RAIDS'} · ${DIFF[pick.diff].name} · ${C.name}`:'Your job carries into solo and multiplayer.';
@@ -51,42 +55,167 @@ function renderPartyState(){
   if(!r){el.type='button';el.setAttribute('aria-label','Invite player to slot '+(i+1));el.addEventListener('click',partyInvite)}box.append(el)}
  $('partyHint').textContent=room?'Share your room link. Your host starts the match.':'Up to six players · desktop and mobile';
 }
-let partyPaintAt=0,partySig='';
-// The stage is repainted only when something on it changes: who is on it, their looks, the (slowly swinging)
-// heading step or an animated cosmetic's tick. Idle, that is every few seconds instead of 10-20 times a second.
-function drawPartyPreview(now){
- if(!stageVisible()||now-partyPaintAt<(touchMode?LOBBY.stageTouch:LOBBY.stageDesk))return;partyPaintAt=now;
- const rows=partyRows(),me=rows.find(r=>r.id===myId)||rows[0],others=rows.filter(r=>r!==me),solo=!socialVisible(),t=now/1000;   // PLAY and CLASSES: just you on the stage
- const meA=.35+Math.sin(now/4500)*.16,look=r=>lookOf(parseCos(r.cos),r.cls),looks=[me,...(solo?[]:others.slice(0,2))].map(r=>r&&look(r));
- const sig=solo+'|'+rows.map(r=>r.id+r.cls+r.cos).join()+'|'+(looks[0]?wardrobePoseSig(looks[0],meA,t,13.4):'')+'|'+looks.slice(1).map((o,i)=>o?wardrobePoseSig(o,i?-.3:.3,t,8):'').join();
- if(sig===partySig)return;partySig=sig;
- const cv=$('partyPreview'),x=cv.getContext('2d');x.clearRect(0,0,cv.width,cv.height);
- const pad=(px,py,r,active)=>{cosmeticGlow(x,px,py,r*1.5,active?'#7de6e8':'#536f89',active?.15:.1);x.fillStyle=active?'rgba(170,239,239,.12)':'rgba(122,171,192,.06)';x.strokeStyle=active?'#b4edee':'#597386';x.lineWidth=active?3:2;x.beginPath();x.ellipse(px,py,r,r*.22,0,0,Math.PI*2);x.fill();x.stroke()};
- if(!solo)for(const [i,px]of [160,840].entries()){pad(px,625,90,!!others[i]);if(others[i])drawWardrobeCharacter(x,looks[i+1],i?-.3:.3,t,8,px,610,false);else{x.fillStyle='#7e98a5';x.font='300 60px system-ui';x.textAlign='center';x.fillText('+',px,590)}}
- pad(500,720,154,true);if(me)drawWardrobeCharacter(x,looks[0],meA,t,13.4,500,700,false);
+let partyPaintAt=0,partySig='',partyMeSig='';
+// The stage has two layers: the back one holds the pads and the rest of the party (repainted only when who is
+// there or how they look changes), the front one holds you, turning slowly in 2° steps. Each layer is painted
+// straight from the model (no sprite cache at this size) and only when its pose changes, at most 30 times a
+// second; the breathing bob is a CSS transform, so it costs no painting at all.
+const STAGE={wide:{me:[500,722,13.4],others:[[250,660,8.2],[762,660,8.2],[88,612,7.4],[918,612,7.4],[395,568,6.8]]},
+ phone:{me:[500,712,11.6],others:[[160,690,8.4],[840,690,8.4],[318,572,7],[682,572,7],[500,468,6.2]]}};
+let stageLay='',stageLayW=-1;   // read the stage width only when the window size changes (reading it every frame forces a layout)
+const stageLayout=()=>{if(stageLayW!==innerWidth||!stageLay){stageLayW=innerWidth;stageLay=$('partyHero').clientWidth<520?'phone':'wide'}return stageLay};
+const stageAngle=(i,t)=>i<0?.35+Math.sin(t/4.5)*.16:[.62,-.62,.5,-.5,.1][i]||0;
+function stagePlate(x,px,py,name,sub,scale){
+ const f=Math.round(scale*2.9);x.save();x.font=`800 ${f}px 'Big Shoulders Stencil Display',sans-serif`;const w=Math.max(x.measureText(name).width,f*3.2)+f*1.1,h=f*1.9;
+ x.fillStyle='#12222bd8';x.strokeStyle='#718b8f';x.lineWidth=2;x.beginPath();x.rect(px-w/2,py,w,h);x.fill();x.stroke();
+ x.fillStyle='#eef3ed';x.textAlign='center';x.textBaseline='top';x.fillText(name,px,py+f*.2);
+ x.font=`600 ${Math.round(f*.52)}px 'IBM Plex Mono',monospace`;x.fillStyle='#ecd347';x.fillText(sub,px,py+f*1.25);x.restore();
 }
-function socialMessage(){return !cloudOn?'Saved players are available on the live site.':acct.state==='wait'?'Connecting to your account…':!socialAccount()?'Sign in to save players across your devices.':SOCIAL.status}
+function drawPartyPreview(now){
+ if(!stageVisible()||now-partyPaintAt<33)return;
+ const rows=partyRows(),me=rows.find(r=>r.id===myId)||rows[0],solo=!['multi','lobby'].includes($('menu').dataset.page),t=now/1000,L=STAGE[stageLayout()];
+ const others=solo?[]:rows.filter(r=>r!==me).slice(0,5),look=r=>lookOf(parseCos(r.cos),r.cls);
+ // back layer: pads, the rest of the party and their name plates
+ const sig=L===STAGE.phone?'p':'w';const backSig=sig+'|'+solo+'|'+others.map(r=>r.id+r.cls+r.cos+r.name).join();
+ if(backSig!==partySig){partySig=backSig;
+  const cv=$('partyPreview'),x=cv.getContext('2d');x.clearRect(0,0,cv.width,cv.height);
+  const pad=(px,py,r,active)=>{cosmeticGlow(x,px,py,r*1.5,active?'#7de6e8':'#536f89',active?.15:.1);x.fillStyle=active?'rgba(170,239,239,.12)':'rgba(122,171,192,.06)';x.strokeStyle=active?'#b4edee':'#597386';x.lineWidth=active?3:2;x.beginPath();x.ellipse(px,py,r,r*.22,0,0,Math.PI*2);x.fill();x.stroke()};
+  const [mx,my,ms]=L.me;pad(mx,my,ms*11.5,true);
+  if(!solo){
+   // empty spots show where the next player stands; filled ones are drawn back to front
+   const order=L.others.map((s,i)=>({s,i})).sort((a,b)=>a.s[1]-b.s[1]);
+   for(const {s:[px,py,sc],i} of order){const r=others[i];pad(px,py,sc*9.5,!!r);
+    if(r)paintWardrobeCharacter(x,look(r),stageAngle(i,0),0,sc,px,py,false);
+    else if(i<4){x.fillStyle='#7e98a5';x.font='300 48px system-ui';x.textAlign='center';x.fillText('+',px,py-28)}}
+   for(const {s:[px,py,sc],i} of order){const r=others[i];if(r)stagePlate(x,px,py+sc*2.4,(r.name||'PLAYER').toUpperCase(),CLASSES[r.cls]?.name||'PLAYER',sig==='p'?sc*1.35:sc)}
+  }
+ }
+ // front layer: you, turning in 2° steps; animated outfits tick at 10 a second
+ if(!me)return;const lk=look(me),ang=stageAngle(-1,t),step=Math.round(ang*90/Math.PI)*Math.PI/90;
+ const animated=lk.stars||lk.holo||lk.glitter||lk.halo||lk.glitchm,tick=animated?Math.floor(t*10)/10:lk.pking?Math.floor(t*6)%4:0;
+ const meSig=sig+'|'+me.cls+me.cos+'|'+step.toFixed(4)+'|'+tick;
+ if(meSig===partyMeSig)return;partyMeSig=meSig;partyPaintAt=now;
+ const cv=$('partyMe'),x=cv.getContext('2d');x.clearRect(0,0,cv.width,cv.height);const [mx,my,ms]=L.me;paintWardrobeCharacter(x,lk,step,tick,ms,mx,my-4,false);
+}
+let stageFxAt=0,stageFxOn=false;
+function drawStageFx(now){
+ const on=stageVisible()&&$('menu').dataset.page==='locker';
+ if(!on){if(stageFxOn){stageFxOn=false;const c=$('partyFx');c.getContext('2d').clearRect(0,0,c.width,c.height)}return}
+ // one quick shot every 1.3 s; between shots the layer is left alone (clearing a stage-sized layer costs as much as drawing)
+ const ph=(now%1300)/1300,live=ph>.05&&ph<.4;
+ if(!live){if(stageFxOn){stageFxOn=false;const c=$('partyFx');c.getContext('2d').clearRect(0,0,c.width,c.height)}return}
+ if(now-stageFxAt<33)return;stageFxAt=now;stageFxOn=true;
+ const cv=$('partyFx'),x=cv.getContext('2d');x.clearRect(0,0,cv.width,cv.height);
+ const L=STAGE[stageLayout()],[mx,my,ms]=L.me,lk=lookOf(locker.eq,pick.cls),ang=stageAngle(-1,now/1000),step=Math.round(ang*90/Math.PI)*Math.PI/90;
+ const m=paintWardrobeCharacter(null,lk,step,0,1,0,0,false),tip=[mx+m.tip[0]*ms,my-4+m.tip[1]*ms],dx=m.tip[0]-m.root[0],dy=m.tip[1]-m.root[1],dl=Math.hypot(dx,dy)||1,sd={x:dx/dl,y:dy/dl};
+ const st=TRAILS[locker.eq.trail]||TRAILS.std,d0=(ph-.05)/.35*560,len=90*(st.len||1);
+ traceSeg(x,tip[0]+sd.x*d0,tip[1]+sd.y*d0,tip[0]+sd.x*Math.max(0,d0-len),tip[1]+sd.y*Math.max(0,d0-len),st,8*(st.w||1),now/1000,false);
+}
+function socialMessage(){return !cloudOn?'Friends are available on the live site.':acct.state==='wait'?'Connecting to your account…':!socialAccount()?'Sign in with a saved account to add friends.':SOCIAL.status}
+// ---- Friends: a real request system on the server (friend_send / friend_answer / friend_cancel / friend_remove,
+// social_state for everything at once). "Recent" is the old saved-players list, kept in the account's metadata.
+const FR={friends:[],incoming:[],outgoing:[],notes:[],unseen:0,ok:false,loaded:false,tab:'friends',busy:false,seq:0,timer:0,rooms:[],confirm:'',confirmT:0};
+const dropOpen=()=>!$('friendsDrop').hidden;
+const ago=t=>{const s=Math.max(0,(Date.now()-Date.parse(t))/1000);return s<60?'just now':s<3600?Math.floor(s/60)+' min ago':s<86400?Math.floor(s/3600)+' h ago':Math.floor(s/86400)+' d ago'};
+const friendIds=()=>FR.friends.map(f=>f.id);
+const roomOf=id=>SOCIAL.rooms.find(r=>r.host_id===id)||FR.rooms.find(r=>r.host_id===id);
+function personRow(profile,status,actions,cls){
+ const row=document.createElement('div');row.className='friendRow'+(cls?' '+cls:'');const avatar=document.createElement('canvas');avatar.width=avatar.height=80;avatar.setAttribute('aria-hidden','true');drawFig(avatar.getContext('2d'),80,80,lookOf(parseCos(profile.cos),'soldier'),1.65,{x:.8,y:.3},82);
+ const copy=document.createElement('div'),name=document.createElement('b'),st=document.createElement('small');name.textContent=profile.username||'PLAYER';st.textContent=status;copy.append(name,st);
+ const box=document.createElement('div');box.className='friendActions';
+ for(const [label,fn,opt] of actions){const q=document.createElement('button');q.type='button';q.textContent=label;q.disabled=SOCIAL.busy||FR.busy||!!(opt&&opt.off);if(opt&&opt.aria)q.setAttribute('aria-label',opt.aria);if(opt&&opt.title)q.title=opt.title;if(opt&&opt.main)q.className='main';q.addEventListener('click',fn);box.append(q)}
+ row.append(avatar,copy,box);return row;
+}
+function joinAction(id,name){const room=roomOf(id);if(!room)return null;
+ return [room.players>=6?'FULL':'JOIN',()=>{if(NET.mode!=='solo')return;closeFriends();$('mCode').value=room.code;initAudio();netJoin(room.code)},{main:true,off:room.players>=6||NET.mode!=='solo',title:NET.mode!=='solo'?'Leave your current party to join another':'Join '+name}]}
+const roomText=id=>{const room=roomOf(id);return room?(room.in_game?'IN MATCH':'IN LOBBY')+` · ${room.players}/6`:SOCIAL.roomsOK?'NO LISTED ROOM':'ROOM STATUS UNAVAILABLE'};
+function askSure(key,fn){if(FR.confirm===key){FR.confirm='';clearTimeout(FR.confirmT);fn()}else{FR.confirm=key;clearTimeout(FR.confirmT);FR.confirmT=setTimeout(()=>{FR.confirm='';renderSocial()},3000);renderSocial()}}
 function socialRow(profile,result=false){
- const row=document.createElement('div');row.className='friendRow';const avatar=document.createElement('canvas');avatar.width=avatar.height=80;avatar.setAttribute('aria-hidden','true');drawFig(avatar.getContext('2d'),80,80,lookOf(parseCos(profile.cos),'soldier'),1.65,{x:.8,y:.3},82);
- const copy=document.createElement('div'),name=document.createElement('b'),status=document.createElement('small');name.textContent=profile.username||'PLAYER';
- const room=SOCIAL.rooms.find(r=>r.host_id===profile.id),saved=SOCIAL.ids.includes(profile.id);
- status.textContent=result?(saved?'Already saved':'Player found'):room?(room.in_game?'IN MATCH':'IN LOBBY')+` · ${room.players}/6`:SOCIAL.roomsOK?'NO LISTED ROOM':'ROOM STATUS UNAVAILABLE';copy.append(name,status);
- const actions=document.createElement('div');actions.className='friendActions';
- const button=(label,fn)=>{const q=document.createElement('button');q.type='button';q.textContent=label;q.disabled=SOCIAL.busy;q.addEventListener('click',fn);actions.append(q);return q};
- if(result){const q=button(saved?'SAVED':'SAVE',()=>savePlayer(profile.id,true));q.disabled=saved||SOCIAL.busy||profile.id===myUid()}
- else{if(room){const q=button(room.players>=6?'FULL':'JOIN',()=>{if(NET.mode!=='solo')return;$('mCode').value=room.code;initAudio();netJoin(room.code)});q.disabled=SOCIAL.busy||room.players>=6||NET.mode!=='solo';q.title=NET.mode!=='solo'?'Leave your current party to join another':'Join '+profile.username}
- const q=button('REMOVE',()=>savePlayer(profile.id,false));q.setAttribute('aria-label','Remove '+profile.username+' from saved players')}
- row.append(avatar,copy,actions);return row;
+ const saved=SOCIAL.ids.includes(profile.id),friend=friendIds().includes(profile.id),sent=FR.outgoing.some(r=>r.user.id===profile.id),acts=[];
+ if(result){
+  if(!friend)acts.push([sent?'REQUESTED':'ADD FRIEND',()=>friendSend(profile),{main:true,off:sent||profile.id===myUid()}]);
+  acts.push([saved?'SAVED':'SAVE',()=>savePlayer(profile.id,true),{off:saved||profile.id===myUid()}]);
+  return personRow(profile,friend?'Already your friend':saved?'In your Recent list':'Player found',acts)}
+ const j=joinAction(profile.id,profile.username);if(j)acts.push(j);
+ if(!friend&&FR.ok)acts.push([sent?'REQUESTED':'ADD',()=>friendSend(profile),{off:sent,aria:'Send '+profile.username+' a friend request'}]);
+ acts.push(['REMOVE',()=>savePlayer(profile.id,false),{aria:'Remove '+profile.username+' from saved players'}]);
+ return personRow(profile,roomText(profile.id),acts);
 }
 function renderSocial(){
- const active=socialAccount();$('savedCount').textContent=String(active?SOCIAL.ids.length:0);$('friendName').disabled=!active||SOCIAL.busy;$('friendSearch').querySelector('button').disabled=!active||SOCIAL.busy;$('socialRefresh').disabled=!active||SOCIAL.loading||SOCIAL.busy;
- $('socialStatus').textContent=socialMessage()||'';
+ const active=socialAccount();
+ $('savedCount').textContent=String(active?SOCIAL.ids.length:0);$('friendName').disabled=!active||SOCIAL.busy;$('friendSearch').querySelector('button').disabled=!active||SOCIAL.busy;$('socialRefresh').disabled=!active||SOCIAL.loading||SOCIAL.busy||FR.busy;
+ $('socialStatus').textContent=socialMessage()||FR.msg||'';
+ renderFriendBadge();
  const result=$('friendResult');result.textContent='';if(active&&SOCIAL.result)result.append(socialRow(SOCIAL.result,true));
+ const empty=(box,txt,withAcct)=>{const p=document.createElement('p');p.className='socialEmpty';p.textContent=txt;box.append(p);if(withAcct){const q=document.createElement('button');q.className='ghost';q.type='button';q.textContent='OPEN ACCOUNT';q.addEventListener('click',()=>{closeFriends();showPage('account')});box.append(q)}};
+ // friends
+ const fl=$('friendList');fl.textContent='';
+ if(!active)empty(fl,'Your crew starts here. Sign in with a saved account, then find a player by username.',true);
+ else if(!FR.loaded)empty(fl,'Loading your friends…');
+ else if(!FR.ok)empty(fl,'Friends could not be loaded right now. Try Refresh.');
+ else if(!FR.friends.length)empty(fl,'No friends yet. Find someone above and send a request.');
+ else for(const f of FR.friends){const acts=[],j=joinAction(f.id,f.username);if(j)acts.push(j);
+  acts.push([FR.confirm==='rm'+f.id?'SURE?':'REMOVE',()=>askSure('rm'+f.id,()=>friendRemove(f)),{aria:'Remove '+f.username+' from friends'}]);fl.append(personRow(f,roomText(f.id),acts,'isFriend'))}
+ // recent (saved players)
  const list=$('savedPlayers');list.textContent='';
  if(active&&SOCIAL.profiles.length)for(const p of SOCIAL.profiles)list.append(socialRow(p));
- else{const p=document.createElement('p');p.className='socialEmpty';p.textContent=!active?'Your crew starts here. Sign in, then find a player by username.':SOCIAL.loading?'Loading your saved players…':SOCIAL.ids.length?'Saved players could not be loaded. Try Refresh.':'No saved players yet. Find someone above to keep your crew close.';list.append(p);
- if(!active){const q=document.createElement('button');q.className='ghost';q.type='button';q.textContent='OPEN ACCOUNT';q.addEventListener('click',()=>showPage('account'));list.append(q)}}
+ else if(active)empty(list,SOCIAL.loading?'Loading…':SOCIAL.ids.length?'Recent players could not be loaded. Try Refresh.':'Players you save show up here.');
+ // requests
+ const ri=$('reqIn'),ro=$('reqOut');ri.textContent='';ro.textContent='';
+ if(!active){empty(ri,'Sign in with a saved account to get friend requests.',true)}
+ else{if(!FR.incoming.length)empty(ri,'No requests waiting.');
+  for(const r of FR.incoming)ri.append(personRow(r.user,'Sent '+ago(r.at),[['ACCEPT',()=>friendAnswer(r,true),{main:true,aria:'Accept '+r.user.username}],['DECLINE',()=>friendAnswer(r,false),{aria:'Decline '+r.user.username}]]));
+  if(!FR.outgoing.length)empty(ro,'No requests sent.');
+  for(const r of FR.outgoing)ro.append(personRow(r.user,'Waiting · sent '+ago(r.at),[['CANCEL',()=>friendCancel(r),{aria:'Cancel request to '+r.user.username}]]))}
+ // mailbox
+ const ml=$('mailList');ml.textContent='';
+ if(!active)empty(ml,'Sign in to get your mail.',true);
+ else if(!FR.notes.length)empty(ml,'Nothing here yet.');
+ else for(const n of FR.notes){const d=document.createElement('div');d.className='mailRow'+(n.seen_at?'':' unseen');const b=document.createElement('b'),sm=document.createElement('small');
+  const who=(n.user&&n.user.username)||'A player';b.textContent=n.kind==='friend_request'?`${who} sent you a friend request`:n.kind==='friend_accepted'?`${who} accepted your friend request`:(n.data&&n.data.text)||'Message';sm.textContent=ago(n.created_at);d.append(b,sm);ml.append(d)}
+ document.querySelectorAll('[data-ft]').forEach(b=>b.setAttribute('aria-selected',b.dataset.ft===FR.tab?'true':'false'));document.querySelectorAll('[data-fp]').forEach(s=>s.hidden=s.dataset.fp!==FR.tab);
 }
+function renderFriendBadge(){
+ const on=socialAccount()&&FR.ok,n=on?FR.unseen:0,req=on?FR.incoming.length:0;
+ $('friendsDot').hidden=!n;$('friendsDot').textContent=n>9?'9+':String(n);$('friendsBtn').setAttribute('aria-label',n?`Friends, ${n} new`:'Friends');
+ $('fdFriendsN').textContent=String(on?FR.friends.length:0);$('fdReqN').hidden=!req;$('fdReqN').textContent=String(req);$('fdMailN').hidden=!n;$('fdMailN').textContent=String(n);
+}
+// the friends list, requests and mailbox in one call; the friends' listed rooms in a second
+async function friendsPoll(){
+ if(!socialAccount()){FR.loaded=true;FR.ok=false;renderFriendBadge();if(dropOpen())renderSocial();return}
+ const owner=myUid(),seq=++FR.seq;const r=await rpc('social_state');if(owner!==myUid()||seq!==FR.seq)return;
+ FR.loaded=true;
+ if(r.ok&&r.j){FR.ok=true;FR.friends=r.j.friends||[];FR.incoming=r.j.incoming||[];FR.outgoing=r.j.outgoing||[];FR.notes=r.j.notes||[];FR.unseen=r.j.unseen|0;
+  const ids=FR.friends.map(f=>f.id).filter(id=>!SOCIAL.ids.includes(id));
+  if(ids.length){const q=await sbFetch('/rest/v1/lobbies?select=host_id,code,players,in_game&host_id=in.('+ids.join(',')+')&proto=eq.'+PROTO+'&limit=60');if(owner!==myUid()||seq!==FR.seq)return;FR.rooms=q.ok&&Array.isArray(q.j)?q.j:[];if(q.ok)SOCIAL.roomsOK=true}else FR.rooms=[];
+  if(dropOpen()&&FR.tab!=='friends'&&FR.unseen)markSeen()}
+ else FR.ok=false;
+ renderFriendBadge();if(dropOpen())renderSocial();
+}
+async function markSeen(){if(!FR.unseen)return;FR.unseen=0;for(const n of FR.notes)n.seen_at=n.seen_at||new Date().toISOString();renderFriendBadge();await rpc('notes_seen',{})}
+async function friendDo(fn,args,okMsg){
+ if(!socialAccount()||FR.busy)return;FR.busy=true;FR.msg='';renderSocial();
+ try{const r=await rpc(fn,args);FR.msg=r.ok?okMsg(r.j||{}):sbErr(r)}finally{FR.busy=false;await friendsPoll();renderSocial()}
+}
+const friendSend=p=>friendDo('friend_send',{p_to:p.id},j=>j.state==='friends'?`You and ${p.username} are friends now.`:`Request sent to ${p.username}.`);
+const friendAnswer=(r,yes)=>friendDo('friend_answer',{p_id:r.id,p_accept:!!yes},()=>yes?`You and ${r.user.username} are friends now.`:'Request declined.');
+const friendCancel=r=>friendDo('friend_cancel',{p_id:r.id},()=>'Request cancelled.');
+const friendRemove=f=>friendDo('friend_remove',{p_other:f.id},()=>`${f.username} removed from friends.`);
+function friendsTick(){   // every 15 s while the menu is up
+ clearInterval(FR.timer);FR.timer=0;if($('menu').hidden||!socialAccount())return;
+ FR.timer=setInterval(()=>{if($('menu').hidden||!socialAccount()){clearInterval(FR.timer);FR.timer=0;return}friendsPoll();if(dropOpen()&&SOCIAL.ids.length)refreshSocial()},15000);
+}
+function openFriends(){
+ $('friendsDrop').hidden=false;$('friendsBtn').setAttribute('aria-expanded','true');FR.msg='';renderSocial();refreshSocial();friendsPoll();
+ if(FR.tab!=='friends')markSeen();
+ const f=$('friendsDrop').querySelector('[aria-selected=true]');if(f)f.focus();
+}
+function closeFriends(){if(!dropOpen())return;$('friendsDrop').hidden=true;$('friendsBtn').setAttribute('aria-expanded','false')}
+$('friendsBtn').addEventListener('click',e=>{e.stopPropagation();initAudio();if(dropOpen())closeFriends();else openFriends()});
+document.querySelectorAll('[data-ft]').forEach(b=>b.addEventListener('click',()=>{FR.tab=b.dataset.ft;FR.msg='';renderSocial();if(FR.tab!=='friends')markSeen()}));
+$('friendsDrop').addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();closeFriends();$('friendsBtn').focus()}
+ if((e.key==='ArrowRight'||e.key==='ArrowLeft')&&e.target.dataset&&e.target.dataset.ft){const t=['friends','requests','mail'],i=(t.indexOf(FR.tab)+(e.key==='ArrowRight'?1:2))%3;FR.tab=t[i];renderSocial();if(FR.tab!=='friends')markSeen();$('friendsDrop').querySelector(`[data-ft=${FR.tab}]`).focus()}});
+document.addEventListener('pointerdown',e=>{if(dropOpen()&&!e.target.closest('.friendsWrap'))closeFriends()});
 async function refreshSocial(){
  if(SOCIAL.owner!==myUid())socialReset();if(!socialAccount()){renderSocial();return}if(SOCIAL.loading||SOCIAL.busy)return;
  const owner=myUid(),seq=++SOCIAL.seq;SOCIAL.loading=true;renderSocial();
@@ -94,7 +223,7 @@ async function refreshSocial(){
  try{
   if(!await freshToken()||!current())return;
   const user=await sbFetch('/auth/v1/user');if(!current())return;
-  if(!user.ok||user.j?.id!==owner){SOCIAL.status='Could not refresh saved players. Try again.';SOCIAL.rooms=[];SOCIAL.roomsOK=false;return}
+  if(!user.ok||user.j?.id!==owner){SOCIAL.status='Could not refresh your players. Try again.';SOCIAL.rooms=[];SOCIAL.roomsOK=false;return}
   acct.s.user=user.j;setSession(acct.s);SOCIAL.ids=savedPlayerIds(user.j).filter(id=>id!==owner);
   if(!SOCIAL.ids.length){SOCIAL.profiles=[];SOCIAL.rooms=[];SOCIAL.roomsOK=true;return}
   const ids=SOCIAL.ids.join(','),[profiles,rooms]=await Promise.all([sbFetch('/rest/v1/profiles?select=id,username,cos&id=in.('+ids+')&banned=eq.false&limit=50'),sbFetch('/rest/v1/lobbies?select=host_id,code,players,in_game&host_id=in.('+ids+')&proto=eq.'+PROTO+'&limit=50')]);if(!current())return;
@@ -120,11 +249,11 @@ async function savePlayer(id,add){
   // Only our own metadata field is sent; passwords, profile fields and locker records are untouched.
   const r=await sbFetch('/auth/v1/user',{method:'PUT',body:{data:{[SAVED_PLAYERS_KEY]:ids}}});if(!current())return;
   if(!r.ok||r.j?.id!==owner){SOCIAL.status='Could not save. Try again.';return}
-  acct.s.user=r.j;setSession(acct.s);SOCIAL.ids=ids;SOCIAL.status=add?'Player saved to your account.':'Player removed.';if(!add)SOCIAL.profiles=SOCIAL.profiles.filter(p=>p.id!==id);else if(SOCIAL.result?.id===id&&!SOCIAL.profiles.some(p=>p.id===id))SOCIAL.profiles.push(SOCIAL.result);
+  acct.s.user=r.j;setSession(acct.s);SOCIAL.ids=ids;SOCIAL.status=add?'Player saved to Recent.':'Player removed.';if(!add)SOCIAL.profiles=SOCIAL.profiles.filter(p=>p.id!==id);else if(SOCIAL.result?.id===id&&!SOCIAL.profiles.some(p=>p.id===id))SOCIAL.profiles.push(SOCIAL.result);
  }finally{if(current()){SOCIAL.busy=false;renderSocial()}}
 }
-$('partyControls').append($('pg-solo'),$('pg-classes'),$('pg-multi'),$('pg-lobby'));   // the left column of the lobby shell
-$('friendSearch').addEventListener('submit',e=>{e.preventDefault();findPlayer()});$('socialRefresh').addEventListener('click',refreshSocial);
+$('partyControls').append($('pg-solo'),$('pg-classes'),$('pg-multi'),$('pg-lobby'),$('pg-locker'));   // the left column of the lobby shell
+$('friendSearch').addEventListener('submit',e=>{e.preventDefault();findPlayer()});$('socialRefresh').addEventListener('click',()=>{refreshSocial();friendsPoll()});
 
 
 // Returning from the locker updates the real party loadout before the host starts.
@@ -138,29 +267,39 @@ function syncLobbyLoadout(){
 
 // ---- PLAY: map cards (a painted thumbnail of each map), size, and the summary in the left column
 const MAP_THUMBS=new Map();
-function mapThumb(id,size){
- const key=id+'|'+size;let c=MAP_THUMBS.get(key);if(c)return c;
+function mapThumb(id,size,pvp=''){
+ const key=id+'|'+size+'|'+pvp;let c=MAP_THUMBS.get(key);if(c)return c;
  c=document.createElement('canvas');c.width=172;c.height=116;const x=c.getContext('2d'),M=MAPS[id];
  // lay the map out on a scratch copy of the terrain, then draw it top-down as a tiny isometric diamond
  const keep=[terr,N,MAP,terrLog,MAPO,floodOn,floodLv];let L=null;
- try{L=layMap(id,size,'');const n=N,tw=172/(n+2)/1.02,th=tw*.5,ox=86,oy=6;
+ try{L=layMap(id,size,pvp);const n=N,tw=172/(n+2)/1.02,th=tw*.5,ox=86,oy=6;
   x.fillStyle='#0e1519';x.fillRect(0,0,172,116);
   const col=t=>t===T_WATER?'#2a5a74':t===T_BRIDGE?'#7a5a38':t===T_LOW?'#3e4a30':t===T_CRACK?'#5a4838':t===T_ROCK?'#7c776d':t===T_DRUM?'#ff8a2a':id==='quarry'?'#403a33':id==='river'?'#394a2c':'#4a4030';
   for(let j=0;j<n;j++)for(let i=0;i<n;i++){const sx=ox+(i-j)*tw/2,sy=oy+(i+j)*th/2;x.fillStyle=col(terr[j*n+i]);x.beginPath();x.moveTo(sx,sy);x.lineTo(sx+tw/2,sy+th/2);x.lineTo(sx,sy+th);x.lineTo(sx-tw/2,sy+th/2);x.closePath();x.fill()}
   const dot=(i,j,c,r)=>{const sx=ox+(i-j)*tw/2,sy=oy+(i+j)*th/2+th/2;x.fillStyle=c;x.beginPath();x.arc(sx,sy,r,0,Math.PI*2);x.fill()};
-  for(const nd of L.nodes)dot(nd.i,nd.j,nd.type===0?'#c09058':nd.type===1?'#a0533c':'#a3a9a8',1.6);
-  for(const s of L.spawns)for(const t of s.tiles)dot(t[0],t[1],'#d65a3a',1.2);
-  dot(L.core[0],L.core[1],'#e2b436',3);
+  if(L){for(const [i,j] of L.cover||[])dot(i,j,'#b8b4aa',1.5);
+  for(const nd of L.nodes||[])dot(nd.i,nd.j,nd.type===0?'#c09058':nd.type===1?'#a0533c':'#a3a9a8',1.6);
+  for(const s of L.spawns||[])for(const t of s.tiles)dot(t[0],t[1],'#d65a3a',1.2);
+  for(const c of L.cores||(L.core?[L.core]:[]))dot(c[0],c[1],'#e2b436',3);
+  for(const t of L.pspawns||[])dot(t[0],t[1],'#6fd0e0',1.8)}
  }finally{[terr,N,MAP,terrLog,MAPO,floodOn,floodLv]=keep}
  MAP_THUMBS.set(key,c);return c;
 }
-function renderPlayPanel(){
- const box=$('mapCards');if(!box)return;box.textContent='';
- for(const id of MAP_IDS){const M=MAPS[id],b=document.createElement('button');b.type='button';b.className='mapCard'+(pick.map===id?' sel':'');b.dataset.map=id;
-  const cv=document.createElement('canvas');cv.width=172;cv.height=116;cv.getContext('2d').drawImage(mapThumb(id,pick.size),0,0);
+// the map panel (right column) is shared by SOLO, MULTIPLAYER and the room. PvP is always 16×16, so it hides the size;
+// in a room only the host picks, and guests see the host's choice.
+const MAP_PAGES=['solo','multi','lobby'];
+const mapPvp=()=>{const pg=$('menu').dataset.page;return (pg==='multi'||pg==='lobby')&&pick.pvp!=='coop'?pick.pvp:''};
+function pickMap(id){if(NET.mode==='guest'||!MAPS[id])return;pick.map=id;cfg.map=id;saveCfg();syncPicks();showBest();if(NET.mode==='host')broadcastLobby()}
+function renderMapPanel(){
+ const box=$('mapCards');if(!box)return;const pv=mapPvp(),guest=NET.mode==='guest',size=pv?'std':pick.size;
+ const key=[pick.map,size,pv,guest].join();if(box.dataset.key!==key||box.children.length!==MAP_IDS.length){box.dataset.key=key;box.textContent='';
+ for(const id of MAP_IDS){const M=MAPS[id],b=document.createElement('button');b.type='button';b.className='mapCard'+(pick.map===id?' sel':'');b.dataset.map=id;b.dataset.mmap=id;
+  const cv=document.createElement('canvas');cv.width=172;cv.height=116;cv.getContext('2d').drawImage(mapThumb(id,size,pv),0,0);
   const t=document.createElement('div'),nm=document.createElement('b'),bl=document.createElement('span'),bs=document.createElement('i');
-  nm.textContent=M.name;bl.textContent=M.blurb;bs.textContent='BOSSES · '+M.bosses.map(k=>(BOSSES[k]||{}).name||k).join(' · ').replace(/THE /g,'');
-  t.append(nm,bl,bs);b.append(cv,t);b.setAttribute('aria-pressed',pick.map===id?'true':'false');b.addEventListener('click',()=>{pick.map=id;cfg.map=id;saveCfg();syncPicks();showBest()});box.append(b)}
- $('mapSizeTag').textContent=pick.size==='xl'?'24×24':'16×16';
- const C=CLASSES[pick.cls]||CLASSES.soldier,M=MAPS[pick.map]||MAPS.yard;$('soloMap').textContent=`${M.name} · ${pick.size==='xl'?'XL 24×24':'16×16'}${M.night?' · always night':''}`;
+  nm.textContent=M.name;bl.textContent=pv?((M.pvpBlurb||{})[pv]||M.blurb):M.blurb;bs.textContent=pv?(pv==='base'?'BASE BATTLE LAYOUT':'FREE-FOR-ALL ARENA'):'BOSSES · '+M.bosses.map(k=>(BOSSES[k]||{}).name||k).join(' · ').replace(/THE /g,'');
+  t.append(nm,bl,bs);b.append(cv,t);b.setAttribute('aria-pressed',pick.map===id?'true':'false');b.disabled=guest&&pick.map!==id;b.addEventListener('click',()=>pickMap(id));box.append(b)}}
+ $('mapSizeTag').textContent=size==='xl'?'24×24':'16×16';$('sizeBox').hidden=!!pv;$('pvpSizeNote').hidden=!pv;$('mapHostNote').hidden=!guest;
+ document.querySelectorAll('#sizeSeg button').forEach(b=>b.disabled=guest);
+ const M=MAPS[pick.map]||MAPS.yard;$('soloMap').textContent=`${M.name} · ${pick.size==='xl'?'XL 24×24':'16×16'}${M.night?' · always night':''}`;
 }
+const renderPlayPanel=renderMapPanel;

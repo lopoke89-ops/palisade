@@ -10,6 +10,24 @@ function oval(x,y,rx,ry,col){g.fillStyle=col;g.beginPath();g.ellipse(x,y,rx,ry,0
 const dark=(c,f)=>mix(c,'#000000',f);
 function neonSeg(a,b,col){const A=g.globalAlpha;g.globalAlpha=A*.32;seg(a,b,col,3.4);g.globalAlpha=A;seg(a,b,col,1.15)}
 /* Character illustration: presentation only; consumes existing look fields. */
+// Weapon table (model units; every gun points along +z from its butt). x/y: where the gun sits beside the body;
+// butt: how far in front of the chest the stock starts; stock/recv: [length, height, width, colour]; grip: rear hand;
+// fore/foreL: where the front hand holds and how long the fore-end is; barrel: radius. The painter and the muzzle
+// measurement both read this, so a new held item only needs a row here.
+const WEAPON_TABLE={
+ carbine:{x:5.9,y:21.9,butt:4.3,stock:[4.2,2.4,1.8,'#3e4336'],recv:[5.2,2.3,1.85,'#303b3b'],grip:5.3,mag:[1.6,3,1.3],magZ:6.6,fore:9.6,foreL:3.8,foreC:'#4a5040',barrel:.55},
+ rifle:{x:5.9,y:21.9,butt:4.3,stock:[4.6,2.5,1.75,'#4d3a26'],stockY:-.1,recv:[5.4,2.1,1.75,'#2e3431'],grip:5.6,fore:10.2,foreL:4.4,foreC:'#5a4430',barrel:.5,scope:true},
+ sg:{x:6.3,y:19.6,butt:4.6,stock:[4.6,2.5,1.9,'#6a4526'],stockY:-.15,recv:[4.4,2.4,1.85,'#2e3534'],grip:5.6,fore:9.6,foreL:4.6,foreC:'#8a603a',foreW:1.9,foreH:1.6,foreY:-1.2,barrel:.6,tube:true,pump:true},
+ smg:{x:5.9,y:21.9,butt:4.3,stock:[2.8,1.5,1.3,'#2a2e2b'],recv:[5,2.5,1.9,'#303836'],grip:4,mag:[1.2,3.8,1.2],magZ:6.2,magC:'#262b28',fore:7.9,foreL:2.8,foreC:'#3a403a',barrel:.5}
+};
+function weaponKind(o){return o.weapon==='sg'?'sg':(o.gl||14)>17?'rifle':(o.gl||14)<=11?'smg':'carbine'}
+// two-bone reach: the elbow for a shoulder, a hand, the two bone lengths and a hint of which way the elbow bends
+function reach(S,H,L1,L2,pole){
+ const d0=[H[0]-S[0],H[1]-S[1],H[2]-S[2]],D=Math.hypot(...d0)||1,dir=d0.map(v=>v/D),d=Math.min(D,(L1+L2)*.999);
+ const a=(L1*L1-L2*L2+d*d)/(2*d),h=Math.sqrt(Math.max(0,L1*L1-a*a)),pd=pole[0]*dir[0]+pole[1]*dir[1]+pole[2]*dir[2];
+ let p=pole.map((v,i)=>v-dir[i]*pd);const pl=Math.hypot(...p)||1;p=p.map(v=>v/pl);
+ return [0,1,2].map(i=>S[i]+dir[i]*a+p[i]*h);
+}
 function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  const compact=scale<=6;
  // Outfit details are independent of the separately equipped headgear.
@@ -57,9 +75,9 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  }
  const B=goldPolice?'#26334b':goldKnight?'#454039':o.body,V=goldClown?'#67293b':o.vest,H=o.helmet||o.cap||o.boonie||B,T=goldPolice?'#202b40':goldKnight?'#393630':o.pants||"#3b372c",skin=o.head;
  const bp=o.bolt===undefined?-1:o.bolt,kick=bp>=0&&bp<.2?(1-bp/.2)*.65:0,pull=bp>.24&&bp<.9?Math.sin((bp-.24)/.66*Math.PI):0,shotgun=o.weapon==="sg",sniper=(o.gl||14)>17;
- const gunX=5.6,gunZ=3.8;
+ const W=WEAPON_TABLE[weaponKind(o)],gunX=W.x,gunY=W.y,gunZ=W.butt,gl=o.gl||14;
  // Measurement uses the very same projection and endpoints as the painted barrel.
- if(!ctx)return {tip:project([gunX,23+bob,gunZ+(o.gl||14)+2.4-kick]),root:project([gunX,23+bob,0])};
+ if(!ctx)return {tip:project([gunX,gunY+bob,gunZ+gl+2.4-kick]),root:project([gunX,gunY+bob,0])};
  // A planted stance, shaped thighs, separate knees and substantial boots.
  for(const side of[-1,1]){
   const stride=walking?Math.sin(phase+ (side<0?Math.PI:0))*2.2:0;
@@ -87,42 +105,50 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  column(0,27+bob,0,4.5,2.8,3.6,skin,1,.32);
  box(-1.65,26.1+bob,2,2,1.7,2,tint(B,.85),.3);box(1.65,26.1+bob,2,2,1.7,2,tint(B,.85),.3);
 
- // Shoulder-mounted stock and forward grips stay clear of the plate carrier.
+ // Arms: a two-bone reach from the shoulder to where each hand holds the gun (weapon table), with the elbows
+ // bent down and out so the upper arms stay outside the chest and the gun sits clear in front of it.
  // Cosmetic recoil is short; the simulation's fire timing and aim are untouched.
-
- const shL=[-6.2,25+bob,0],elL=o.nogun?[-6.8,20.4+bob,2.2]:[-6.4,20.5+bob,7],haL=o.nogun?[-6.3,16+bob,1]:[gunX-.4,21.8+bob,gunZ+10.2-kick-(shotgun?pull*2:0)];
- const shR=[6.2,25+bob,0],elR=o.nogun?[7.1,20.8+bob,2.6]:[8.6,20.3+bob,4.8],haR=o.nogun?[6.3,16+bob,1]:[gunX+(sniper?pull*1.6:0),22+bob+(sniper?pull:0),gunZ+4.8-kick-(sniper?pull*1.5:0)];
+ const shL=[-6.3,24.7+bob,1],shR=[6.3,24.7+bob,1];
+ const haL=o.nogun?[-6.3,16+bob,1]:[gunX-.3,gunY-1.1+bob,gunZ+W.fore+W.foreL*.35-kick-(W.pump?pull*2:0)];
+ const haR=o.nogun?[6.3,16+bob,1]:[gunX+.2+(sniper?pull*1.6:0),gunY-1.6+bob+(sniper?pull:0),gunZ+W.grip-kick-(sniper?pull*1.5:0)];
+ const elL=o.nogun?[-6.8,20.4+bob,2.2]:reach(shL,haL,8.2,12.6,[-.75,-1,.1]),elR=o.nogun?[7.1,20.8+bob,2.6]:reach(shR,haR,7.4,7.8,[.8,-1,-.35]);
  for(const [sh,el,ha]of [[shL,elL,haL],[shR,elR,haR]]){
-  beam(sh,el,2.1,B,1.7);beam(el,ha,1.68,B,1.45);
+  beam(sh,el,2,B,1.7);beam(el,ha,1.65,B,1.42);
   if(o.reaper){beam(sh,el,2.7,B,2.5,.4);beam(el,ha.map((v,i)=>v+(el[i]-v)*.3),2.5,B,2.6,.4)}
-  beam(ha.map((v,i)=>v+(el[i]-v)*.13),ha,1.53,'#363b2b',1.5,.35);
+  beam(ha.map((v,i)=>v+(el[i]-v)*.13),ha,1.5,'#363b2b',1.48,.35);
  }
  box(6.8,24.3+bob,1.8,1.65,1.8,.5,o.mark||'#dcb647',.2);
  box(8.05,24+bob,.1,.22,1.6,2,o.mark||'#dcb647',.15);
  if(o.cross){box(-8,24+bob,0,.25,2.6,2.4,'#eee7d6',.2);box(-8.2,24+bob,0,.2,1.8,.6,'#c43a3a',.05);box(-8.2,24+bob,0,.2,.6,1.8,'#c43a3a',.05)}
  if(!o.nogun){
- const wb=(x,y,z,w,h,d,c,l=.3)=>box(x+gunX-2.2,y+bob,z+gunZ-kick,w,h,d,c,l);
- const length=o.gl||14;
- wb(2.2,23.1,1.8,1.9,2.55,4.2,shotgun?'#6a4526':'#3e4336',.38);
- wb(2.2,23,6.1,1.85,2.25,5,'#303b3b',.38);
- wb(2.2,24.4,6.5,1.05,.6,5.4,'#67716b',.2);
- if(!shotgun)wb(2.2,20.9,5.9,1.3,2.9,1.7,'#333c33',.32);
- wb(2.2,23,10.2-(shotgun?pull*2:0),1.6,1.9,3.7,shotgun?'#8a603a':'#4a5040',.3);
- beam([gunX,23+bob,gunZ+11.9-kick],[gunX,23+bob,gunZ+length+2.4-kick],.55,'#333c3b',.48,.28);
- wb(2.2,23.7,length+1.3,.75,1.5,.65,'#303835',.22);
- if(shotgun)beam([gunX,21.8+bob,gunZ+7-kick],[gunX,21.8+bob,gunZ+length+.5-kick],.58,'#434b43',.58,.23);
- if(sniper){
-  beam([gunX,25.7+bob,gunZ+4.5-kick],[gunX,25.7+bob,gunZ+9-kick],.9,'#344038',1,.3);
-  wb(2.2,24.9,6.7,.6,1,1.6,'#282f2a',.2);
-  beam([gunX+.3,23+bob,gunZ+6-kick],[gunX+1.6,23+bob+pull*2,gunZ+6-kick-pull*1.5],.25,'#9caa9c',.25,.1);
- }
+  // every gun is assembled from the weapon table: stock, receiver, grip, magazine, fore-end, barrel, sights
+  const z0=gunZ-kick,wb=(y,z,w,h,d,c,l=.3)=>box(gunX,gunY+y+bob,z0+z,w,h,d,c,l);
+  const [sl,sh,sw,sc]=W.stock;wb(W.stockY||0,sl/2,sw,sh,sl,sc,.36);
+  if(W.stockTop)wb(sh/2-.2,sl/2,sw*.7,.4,sl*.9,tint(sc,.8),.15);
+  const [rl,rh,rw,rc]=W.recv;wb(0,sl+rl/2,rw,rh,rl,rc,.38);
+  wb(rh/2+.25,sl+rl/2+.2,rw*.55,.5,rl*.9,'#67716b',.2);   // top rail / sight line
+  wb(-rh/2-.9,W.grip,1.25,2,1.3,tint(rc,.9),.3);            // pistol grip
+  if(W.mag)wb(-rh/2-W.mag[1]/2+.3,W.magZ,W.mag[2],W.mag[1],W.mag[0],W.magC||'#333c33',.32);
+  const fz=W.fore-(W.pump?pull*2:0);wb(W.foreY||0,fz+W.foreL/2,W.foreW||1.6,W.foreH||1.9,W.foreL,W.foreC,.3);
+  if(W.pump)for(let i=0;i<3;i++)wb((W.foreY||0)-(W.foreH||1.9)/2-.05,fz+.8+i*1.2,(W.foreW||1.6)*1.05,.25,.45,tint(W.foreC,.7),.05);
+  // the barrel in three pieces, so the painter's depth order stays right when it points at or away from you
+  const bz0=gunZ+sl+rl-.4-kick,bz1=gunZ+gl+2.4-kick;for(let i=0;i<3;i++)beam([gunX,gunY+bob,bz0+(bz1-bz0)*i/3],[gunX,gunY+bob,bz0+(bz1-bz0)*(i+1)/3],W.barrel,'#333c3b',W.barrel*.88,.28);
+  wb(.7,gl+1.3,.75,1.5,.65,'#303835',.22);                   // front sight
+  if(W.tube)beam([gunX,gunY-1.2+bob,gunZ+sl+rl-kick],[gunX,gunY-1.2+bob,gunZ+gl+.6-kick],W.barrel*1.05,'#434b43',W.barrel,.23);
+  if(W.scope){
+   beam([gunX,gunY+2.6+bob,gunZ+sl+.4-kick],[gunX,gunY+2.6+bob,gunZ+sl+rl+2.2-kick],.9,'#344038',1,.3);
+   wb(1.8,sl+rl/2+.5,.6,1,1.6,'#282f2a',.2);
+   beam([gunX+.3,gunY+bob,gunZ+sl+.8-kick],[gunX+1.6,gunY+bob+pull*2,gunZ+sl+.8-kick-pull*1.5],.25,'#9caa9c',.25,.1);
+  }
  }
  // Angular cheek and jaw planes, ears and a shaped helmet instead of a flat circle.
+ if(!o.pumpkin){   // a pumpkin replaces the head entirely (no ears or face poking through it)
  column(0,30.1+bob,.2,7.2,6.4,6.3,skin,1.13,.6);
  column(-4.05,30.5+bob,.15,1.15,2.25,2,skin,1,.3);column(4.05,30.5+bob,.15,1.15,2.25,2,skin,1,.3);
  box(-1.45,30.75+bob,3.85,.7,.72,.18,'#34392c',.08,1.5);box(1.45,30.75+bob,3.85,.7,.72,.18,'#34392c',.08,1.5);
  box(0,29.9+bob,3.6,.75,1.4,.7,tint(skin,1.03),.08,1.2);
  box(0,28.55+bob,3.45,1.75,.28,.18,tint(skin,.64),.05,1.5);
+ }
 
  function dome(col,base=32,rx=5.3,rz=4.5,height=4.7){
   const v=[],N=compact?8:12,rings=[[base,rx*.94,rz],[base+height*.24,rx,rz],[base+height*.66,rx*.85,rz*.84],[base+height*.94,rx*.45,rz*.49],[base+height,.08,.08]];
@@ -134,14 +160,20 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  if(o.pumpkin){
   // a ribbed pumpkin replaces the head; the carved face glows (the Pumpkin King's flames flicker over 4 cached frames)
   const pc=o.pumpkin,glowC=o.pking?'#ffb040':'#ffd35a';
-  column(0,31+bob,.2,9.4,6.8,8.8,pc,.86,.6);dome(tint(pc,.95),33.9,4.3,4.1,1.7);
-  for(const [x,z]of[[0,4.35],[-3,3.5],[3,3.5],[0,-4],[-4.3,.2],[4.3,.2]])box(x,31+bob,z,.45,6.2,.3,tint(pc,.62),.05,.4);
-  beam([0,35.4+bob,0],[.6,37.4+bob,.4],.6,'#4a6a22',.45,.35);
-  const face=(pts)=>{const v=pts.map(q=>[q[0],q[1]+bob,4.62]).reverse();mesh(v,[v.map((_,i)=>i)],glowC,.06,1.2)};
+  // a round, ribbed gourd (a lathe with eight lobes), about 10% smaller than the old block and seated on the collar
+  const cy=30.3,RX=4.35,RY=3.35,RZ=4.05,SEG=compact?12:24,RINGS=compact?5:8,v=[],ff=[];
+  for(let r=0;r<=RINGS;r++){const a=-Math.PI/2+Math.PI*r/RINGS,y=Math.sin(a)*RY,k=Math.cos(a)*(r===0||r===RINGS?.25:1);
+   for(let q=0;q<SEG;q++){const t=Math.PI*2*q/SEG,rib=1-.085*(1-Math.cos(8*t))/2;v.push([Math.cos(t)*RX*k*rib,cy+y+bob-(r===RINGS?.5:0),Math.sin(t)*RZ*k*rib])}}
+  for(let r=0;r<RINGS;r++)for(let q=0;q<SEG;q++){const a0=r*SEG+q,a1=r*SEG+(q+1)%SEG;ff.push([a0,a1,a1+SEG,a0+SEG])}
+  ff.push(Array.from({length:SEG},(_,q)=>RINGS*SEG+SEG-1-q),Array.from({length:SEG},(_,q)=>q));
+  mesh(v,ff.map(f=>f.slice().reverse()),pc,.55);
+  beam([0,cy+RY-.7+bob,0],[.5,cy+RY+1.3+bob,.35],.55,'#4a6a22',.4,.35);
+  // the carved face sits on the front of the gourd and turns with it
+  const fz=RZ*.985,face=(pts)=>{const q=pts.map(p=>[p[0]*.9,cy+(p[1]-31)*.9+bob,fz-Math.pow(p[0]/RX,2)*1.3]).reverse();mesh(q,[q.map((_,i)=>i)],glowC,.06,1.2)};
   face([[-2.9,31.5],[-1.4,33.3],[-.5,31.5]]);face([[.5,31.5],[1.4,33.3],[2.9,31.5]]);
   face([[-3.1,29.9],[-2,28.7],[-1,29.5],[0,28.5],[1,29.5],[2,28.7],[3.1,29.9],[2.2,28],[-2.2,28]]);
   if(o.pking){const f=[0,1,2,3].map(k=>1.6+1.3*Math.abs(Math.sin((time+k*.7)*1.9)));
-   for(const [i,x,z]of[[0,-1.8,.6],[1,0,-.2],[2,1.8,.5]])beam([x,35+bob,z],[x*.8,35+bob+f[i],z],.8,i===1?'#ffd24a':'#ff7a1a',.05,.1)}
+   for(const [i,x,z]of[[0,-1.8,.6],[1,0,-.2],[2,1.8,.5]])beam([x,cy+RY-.3+bob,z],[x*.8,cy+RY-.3+bob+f[i],z],.8,i===1?'#ffd24a':'#ff7a1a',.05,.1)}
  }else if(o.witch){
   // wide brim, a cone in three stacked pieces that bends back, a purple band with a gold buckle
   column(0,32.5+bob,0,15.5,.6,13.5,o.witch,1,.4);column(0,34.6+bob,0,8.6,3.6,7.8,o.witch,.72,.45);
@@ -210,8 +242,11 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  const chest=(x,y,w,h,col,z=4.06)=>box(x,y+bob,z,w,h,.15,col,.035,.65);
  if(o.pack){column(0,21+bob,-4.8,9,8.7,4.2,o.pack,.96,.5);box(0,23.9+bob,-7,7.6,.8,.5,tint(o.pack,.65),.2);box(0,19+bob,-7.1,5,3.6,.7,tint(o.pack,1.06),.25)}
  if(o.bandolier){
-  beam([-4.3,26+bob,3.8],[4.3,17+bob,4.7],.6,'#3a3020',.6,.2);
-  for(let i=0;i<5;i++)box(-3.2+i*1.35,24.8-i*1.4+bob,4.65,.75,1.5,.8,'#ad8d4e',.18);
+  // the grenadier's kit: a chest belt of five green grenades on a strap, and a smaller row on the waist belt
+  beam([-4.3,26+bob,3.9],[4.3,17+bob,4.75],.6,'#3a3020',.6,.2);
+  for(let i=0;i<5;i++){const t=(i+.5)/5,x=-4.3+8.6*t,y=26-9*t+bob,z=4.75+.85*t;
+   column(x,y,z,1.75,2.05,1.7,'#8aa83f',.8,.4);box(x,y+1.15,z,.55,.45,.55,'#8f9486',.1);box(x+.45,y+.9,z+.35,.18,.7,.18,'#c9c2a2',.05,.6)}
+  for(const x of[-3.2,-1.6,0])column(x,15.9+bob,3.95,1.3,1.55,1.3,'#8aa83f',.8,.3);
  }
  if(o.stripe){
   for(const z of[4.04,-3.6])for(const x of[-3.6,0,3.4]){
@@ -424,7 +459,7 @@ function startWardrobeWorkers(){
  if(wardrobeWorkers!==null)return wardrobeWorkers.length>0;
  wardrobeWorkers=[];
  if(typeof Worker==='undefined'||typeof OffscreenCanvas==='undefined'||typeof ImageBitmap==='undefined')return false;
- const source="const paint="+paintWardrobeCharacter.toString()+";"+"\n const stage=new OffscreenCanvas(1,1),ctx=stage.getContext('2d',{willReadFrequently:true}),out=new OffscreenCanvas(1,1),outctx=out.getContext('2d',{willReadFrequently:true});\n onmessage=e=>{const j=e.data;\n try{\n  const w=72*j.r,h=72*j.r;\n  if(stage.width!==w||stage.height!==h){stage.width=w;stage.height=h}else ctx.clearRect(0,0,w,h);\n  const bounds=paint(ctx,j.pose,j.heading*Math.PI/180,j.tick,j.r,36*j.r,54*j.r,j.gait*Math.PI*2/24);\n  if(out.width!==bounds.w*j.r||out.height!==bounds.h*j.r){out.width=bounds.w*j.r;out.height=bounds.h*j.r}\n  outctx.drawImage(stage,(36+bounds.left)*j.r,(54+bounds.top)*j.r,out.width,out.height,0,0,out.width,out.height);\n  const bitmap=out.transferToImageBitmap();postMessage({key:j.key,actor:j.actor,bounds,bitmap},[bitmap]);\n }catch(error){postMessage({failed:true,actor:j.actor})}\n };\n postMessage({ready:true});";
+ const source="const WEAPON_TABLE="+JSON.stringify(WEAPON_TABLE)+";"+weaponKind.toString()+";"+reach.toString()+";const paint="+paintWardrobeCharacter.toString()+";"+"\n const stage=new OffscreenCanvas(1,1),ctx=stage.getContext('2d',{willReadFrequently:true}),out=new OffscreenCanvas(1,1),outctx=out.getContext('2d',{willReadFrequently:true});\n onmessage=e=>{const j=e.data;\n try{\n  const w=72*j.r,h=72*j.r;\n  if(stage.width!==w||stage.height!==h){stage.width=w;stage.height=h}else ctx.clearRect(0,0,w,h);\n  const bounds=paint(ctx,j.pose,j.heading*Math.PI/180,j.tick,j.r,36*j.r,54*j.r,j.gait*Math.PI*2/24);\n  if(out.width!==bounds.w*j.r||out.height!==bounds.h*j.r){out.width=bounds.w*j.r;out.height=bounds.h*j.r}\n  outctx.drawImage(stage,(36+bounds.left)*j.r,(54+bounds.top)*j.r,out.width,out.height,0,0,out.width,out.height);\n  const bitmap=out.transferToImageBitmap();postMessage({key:j.key,actor:j.actor,bounds,bitmap},[bitmap]);\n }catch(error){postMessage({failed:true,actor:j.actor})}\n };\n postMessage({ready:true});";
  try{
   wardrobeWorkerURL=URL.createObjectURL(new Blob([source],{type:'text/javascript'}));
   const n=(navigator.hardwareConcurrency||2)>=4?2:1;let ready=0;
@@ -577,7 +612,8 @@ function drawPerson(x,y,o){
   if(front){g.fillStyle=dark(vest,.3);for(const px of[-4,-1.2,1.6])g.fillRect(px,-17.2+bob,2.4,2.6)}
   if(o.stripe)for(const[a,b2]of[[-5,-7],[-1,-2.5],[3,1.5]]){seg([a,-23.5+bob],[b2+2,-13+bob],o.stripe,1.3)}
   if(o.shine){g.globalAlpha=.45;seg([-4,-23+bob],[-2.4,-14+bob],'#fff6c8',1.2);g.globalAlpha=1}
-  if(o.bandolier){seg([-5.2*side,-23.5+bob],[4.6*side,-13+bob],'#1d1914',2.6);seg([-5.2*side,-23.5+bob],[4.6*side,-13+bob],'#8a6a36',1.6)}
+  if(o.bandolier){seg([-5.2*side,-23.5+bob],[4.6*side,-13+bob],'#1d1914',2.6);seg([-5.2*side,-23.5+bob],[4.6*side,-13+bob],'#8a6a36',1.6);
+    if(front)for(let k=0;k<4;k++){const t=(k+.6)/4.4;disc(-5.2*side+9.8*side*t,-23.5+10.5*t+bob,1.45,OUT);disc(-5.2*side+9.8*side*t,-23.5+10.5*t+bob,1.05,'#8aa83f')}}   // green grenades on the strap
   if(o.plate){P(domeP(-5.8,-21.4+bob,3.1),o.plate);P(domeP(5.8,-21.4+bob,3.1),o.plate);seg([0,-23+bob],[0,-14.6+bob],dark(o.plate,.35),1.2);seg([-4.2,-18.6+bob],[4.2,-18.6+bob],dark(o.plate,.3),1)}
   if(o.dots)for(const[a,b2]of[[-3.2,-20.6],[2.4,-17.4],[-1,-14.9],[3.4,-22.1]])disc(a,b2+bob,1.15,o.dots);
   if(o.spots)for(const[a,b2,l]of[[-3,-21.5,3],[2,-19.5,4],[0,-15.5,2.5]]){seg([a,b2+bob],[a,b2+l+bob],o.spots,1.3);disc(a,b2+l+bob,.95,o.spots)}
@@ -605,7 +641,7 @@ function drawPerson(x,y,o){
   if(o.mark){g.fillStyle=o.mark;g.fillRect(shF[0]-1.3,shF[1]+.8,2.6,2.4)}
   if(o.satchel){const c=[side*5.5,-14+bob];P(rectP(c[0],c[1],6,5),'#1a1510');g.fillStyle='#d65a3a';g.fillRect(c[0]-1,c[1]-1,2,1.5)}
   if(o.pack&&!front){P(rectP(0,-18.5+bob,11,10),o.pack);seg([-5.5,-21.5+bob],[5.5,-21.5+bob],OUT,1)}
-  const hx=side*.4,hy2=-28.8+bob;
+  const hx=side*.4;let hy2=-28.8+bob;
   disc(hx,hy2,5.3,OUT);disc(hx,hy2,4.5,front?skin:dark(skin,.3));
   if(front&&!o.pumpkin&&!o.hood){
     if(o.bones){g.fillStyle='#1a1614';disc(hx-1.5+side*1.2,hy2-.5,1.3,'#1a1614');disc(hx+1.5+side*1.2,hy2-.5,1.3,'#1a1614');g.fillRect(hx+side*1.2-.4,hy2+1.2,.8,1);
@@ -615,9 +651,10 @@ function drawPerson(x,y,o){
     if(o.wraps){for(const d of[-2.6,.8,3.4])seg([hx-4.2,hy2+d],[hx+4.2,hy2+d-1],o.wraps,.7);g.fillStyle='#ffd24a';g.fillRect(hx-1.8+side*1.2,hy2-.9,.9,.6);g.fillRect(hx+1+side*1.2,hy2-.9,.9,.6)}
     if(o.bandana)P(rectP(hx+side*.4,hy2+2.3,8.2,3.6),o.bandana)}
   if(o.pumpkin){const pc=o.pumpkin,fl=o.pking?.75+.25*Math.sin(game.time*17)*Math.sin(game.time*7.3):1;
-    oval(hx,hy2-.4,6.6,5.9,OUT);oval(hx,hy2-.4,5.9,5.2,pc);for(const d of[-3.3,0,3.3])seg([hx+d*.7,hy2-5.2],[hx+d,hy2+4.4],dark(pc,.3),.7);
-    seg([hx,hy2-5.4],[hx+side*.9,hy2-8],'#4a6a22',1.6);
-    if(front){const fx=hx+side*1.1,glow=o.pking?`rgba(255,${190+40*fl|0},90,${fl})`:'#ffd24a';g.fillStyle=glow;
+    // v0.9.1: rounder and ~10% smaller, seated lower; the ribs and the carved face slide round with the way he faces
+    const py=hy2+.5;oval(hx,py-.4,6,5.4,OUT);oval(hx,py-.4,5.3,4.7,pc);for(const d of[-3,-1,1,3]){const dd=d+sd.x*1.2;if(Math.abs(dd)<4.6)seg([hx+dd*.62,py-4.8],[hx+dd*.9,py+4],dark(pc,.3),.7)}
+    seg([hx,py-4.9],[hx+side*.9,py-7.2],'#4a6a22',1.6);hy2=py;
+    if(front){const fx=hx+sd.x*2.2,glow=o.pking?`rgba(255,${190+40*fl|0},90,${fl})`:'#ffd24a';g.fillStyle=glow;
       P([[fx-3,hy2-.2],[fx-1.4,hy2-2.6],[fx-.4,hy2-.2]],glow,false);P([[fx+.4,hy2-.2],[fx+1.4,hy2-2.6],[fx+3,hy2-.2]],glow,false);
       P([[fx-3.2,hy2+1.4],[fx-2,hy2+3.2],[fx-.8,hy2+2.2],[fx+.4,hy2+3.4],[fx+1.6,hy2+2.2],[fx+3.2,hy2+1.4],[fx+2.4,hy2+3.8],[fx-2.4,hy2+3.8]],glow,false)}
     if(o.pking){g.globalAlpha=A0*(.5+.4*fl);for(let k=0;k<3;k++){const x0=hx-2+k*2,h=2.4+1.6*Math.sin(game.time*9+k*2.1);P([[x0-1.1,hy2-5.4],[x0,hy2-5.6-h],[x0+1.1,hy2-5.4]],k===1?'#ffd24a':'#ff7a1a',false)}g.globalAlpha=A0}}

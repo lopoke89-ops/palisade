@@ -9,13 +9,13 @@ function frame(now){
   demoAcc+=dt;const skip=every>0&&demoAcc<every,sdt=every?Math.min(.1,demoAcc):dt;if(!skip)demoAcc=0;
   if(NET.mode==='guest'&&NET.inGame){updateParticles(dt);if(running())guestUpdate(dt)}
   else{if(!skip&&!bgUp)update(sdt);if(NET.mode==='host')hostNet(dt);else if(NET.mode==='guest')lobbyNet(dt)}
-  if(menuUp&&!$('pg-locker').hidden)drawLockerPreview(now);drawPartyPreview(now);if(bgUp)drawLobbyBg(now);
+  if(!caseIntroOn){drawPartyPreview(now);drawStageFx(now);if(bgUp)drawLobbyBg(now)}   // behind the blurred case intro nothing moves, so the blur is worked out once
   const wantCursor=playing()&&!touchMode&&!overlayOpen()?'none':'';if(cv.style.cursor!==wantCursor)cv.style.cursor=wantCursor;
   if(!skip&&!bgUp)render(sdt);musicTick();
   if(demo&&game.phase==='over'){demoT+=dt;if(demoT>4)startDemo()}
   const on=playing();
   if(on&&!game.paused)hud(dt);else if(toastT>0&&!game.paused){toastT-=dt;if(toastT<=0)$('toast').classList.remove('on')}
-  $('top').hidden=!on;$('kit').hidden=!on;$('chat').hidden=!on||NET.mode==='solo';$('chatBtn').hidden=NET.mode==='solo';if(!on&&chatOpen())closeChat();$('keys').hidden=touchMode||!on;cls(document.body,'desk',!touchMode);$('tip').hidden=!on||!$('tipText').textContent;
+  $('top').hidden=!on;$('kit').hidden=!on;if(!on)$('respawnJobs').hidden=true;$('chat').hidden=!on||NET.mode==='solo';$('chatBtn').hidden=NET.mode==='solo';if(!on&&chatOpen())closeChat();$('keys').hidden=touchMode||!on;cls(document.body,'desk',!touchMode);$('tip').hidden=!on||!$('tipText').textContent;
   fpsN++;fpsT+=now-(frame.prev||now);frame.prev=now;
   if(fpsT>=1000){if(cfg.fps)$('fpsLab').textContent=Math.round(fpsN*1000/fpsT)+' FPS';fpsN=0;fpsT=0}
   requestAnimationFrame(frame);
@@ -33,7 +33,7 @@ function showPage(p){
   if(p==='main')p='solo';
   if((p==='multi'||p==='solo')&&(NET.mode==='host'||NET.mode==='guest')&&!NET.inGame)p='lobby';   // in a room, PLAY and MULTIPLAYER both mean the room
   if(p==='multi'&&window.PEER_SRC){needPeer();getIce()}   // warm up online play while they pick a name
-  for(const id of PAGES)$('pg-'+id).hidden=id!==p;
+  closeFriends();for(const id of PAGES)$('pg-'+id).hidden=id!==p;
   $('menu').classList.toggle('sub',p!=='solo');$('menu').dataset.page=p;if(p==='lobby')syncLobbyLoadout();syncPartyShell();
   if(p==='solo')showBest();
   syncBg();
@@ -87,7 +87,7 @@ $('saveConfirm').addEventListener('click',()=>{if(!savePending)return;
   restoreSave(savePending);savePending=null;$('saveConfirm').hidden=true;
   $('saveMsg').textContent='Restored. Your locker is back.';sfx('restock',undefined,undefined,true);showPage('settings')});
 document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>{initAudio();if(NET.mode==='opening'||NET.mode==='joining'){netReset();mStatus('')}if(b.dataset.go==='settings')openSettings(false);else showPage(b.dataset.go)}));
-addEventListener('keydown',e=>{if(e.key==='Escape'&&e.target&&e.target.tagName==='INPUT'){e.target.blur();return}if(e.key==='Escape'&&!$('saveOv').hidden){closeSaveOv();return}if(e.key==='Escape'&&!$('armory').hidden){closeArmory();return}if(e.key==='Escape'&&!$('menu').hidden){if(!$('pg-settings').hidden)closeSettings();else if(!$('pg-lobby').hidden)netLeave('');else showPage('main')}});
+addEventListener('keydown',e=>{if(e.key==='Escape'&&e.target&&e.target.tagName==='INPUT'){e.target.blur();return}if(e.key==='Escape'&&!$('saveOv').hidden){closeSaveOv();return}if(e.key==='Escape'&&!$('armory').hidden){closeArmory();return}if(e.key==='Escape'&&dropOpen()){closeFriends();return}if(e.key==='Escape'&&!$('menu').hidden){if(!$('pg-settings').hidden)closeSettings();else if(!$('pg-lobby').hidden)netLeave('');else showPage('main')}});
 function enterGame(){$('menu').hidden=true;$('lobbyBg').hidden=true;$('over').hidden=true;$('pause').hidden=true;$('armory').hidden=true;$('caseOv').hidden=true;game.paused=false;freeSticks();hud(0)}
 // the Butcher wears his pumpkin look through October (the host's clock decides for everyone)
 const isOctober=()=>new URLSearchParams(location.search).has('oct')||new Date().getMonth()===9;
@@ -96,33 +96,41 @@ function again(){if(NET.mode==='host')startOnline();else start()}
 function leaveRun(){
   if(demo||!running()||game.pvp||game.phase==='over'||game.rewarded||!player)return;
   const held=game.phase==='build'?game.wave:Math.max(0,game.wave-1);if(!held&&!game.bosses)return;
-  game.rewarded=true;const t=lockerReward(held,false,player.kills|0);if(t&&!locker.cloud)toast('RUN SAVED',t);
+  game.rewarded=true;const t=lockerReward(held,false,player.kills|0);if(t&&!locker.cloud)toast('RUN SAVED',t.text);
 }
 function toMenu(){leaveRun();game.paused=false;NET.inGame=false;$('pause').hidden=true;$('over').hidden=true;$('armory').hidden=true;$('menu').hidden=false;startDemo();showPage('main')}
 function abandon(){if(NET.mode!=='solo')netLeave('');else toMenu()}
 // class + threat pickers exist on the Solo and Multiplayer pages; keep them in step
 function syncPicks(){
   document.querySelectorAll('[data-c]').forEach(x=>x.classList.toggle('sel',x.dataset.c===pick.cls));
-  document.querySelectorAll('[data-mc]').forEach(x=>x.classList.toggle('sel',x.dataset.mc===pick.cls));
+  document.querySelectorAll('[data-mc],[data-lc]').forEach(x=>x.classList.toggle('sel',(x.dataset.mc||x.dataset.lc)===pick.cls));
   document.querySelectorAll('#diff button,[data-md]').forEach(x=>x.classList.toggle('sel',(x.dataset.d||x.dataset.md)===pick.diff));
   document.querySelectorAll('[data-m5],[data-mm]').forEach(x=>x.classList.toggle('sel',(x.dataset.m5||x.dataset.mm)===pick.mode));
   document.querySelectorAll('[data-pv]').forEach(x=>x.classList.toggle('sel',x.dataset.pv===pick.pvp));
   $('coopOpts').hidden=pick.pvp!=='coop';
   document.querySelectorAll('[data-size]').forEach(x=>x.classList.toggle('sel',x.dataset.size===pick.size));
-  const ms=$('mMapSeg');if(!ms.children.length)for(const id of MAP_IDS){const b=document.createElement('button');b.type='button';b.dataset.mmap=id;b.textContent=MAPS[id].short.toUpperCase();b.addEventListener('click',()=>{if(NET.mode==='guest')return;pick.map=id;cfg.map=id;saveCfg();syncPicks();if(NET.mode==='host')broadcastLobby()});ms.append(b)}
-  document.querySelectorAll('[data-mmap]').forEach(x=>x.classList.toggle('sel',x.dataset.mmap===pick.map));
-  if(!$('pg-solo').hidden||!$('pg-classes').hidden)renderPlayPanel();
+  if(MAP_PAGES.includes($('menu').dataset.page))renderMapPanel();
   renderPartyState();
   $('pvDesc').textContent={coop:'Everyone against the raiders, with Dell. Pick how long and how hard.',
     base:`Two crews, two stakes. ${PVP.truce} seconds of truce to gather and wall in, then knock down theirs. Kills pay salvage for the armory. No raiders, no Dell.`,
-    ffa:`Everyone for themselves around concrete cover that can't be broken. First to ${PVP.ffaGoal} drops, or the most after ${PVP.ffaTime/60} minutes. No building.`}[pick.pvp]||'';
+    ffa:`Everyone for themselves in a designed arena whose cover can't be broken. First to ${PVP.ffaGoal} drops, or the most after ${PVP.ffaTime/60} minutes. No building.`}[pick.pvp]||'';
 }
-document.querySelectorAll('[data-pv]').forEach(b=>b.addEventListener('click',()=>{pick.pvp=b.dataset.pv;syncPicks()}));
+document.querySelectorAll('[data-pv]').forEach(b=>b.addEventListener('click',()=>{pick.pvp=b.dataset.pv;syncPicks()}));   // the mode is chosen before hosting; the room keeps it
 document.querySelectorAll('[data-m5]').forEach(b=>b.addEventListener('click',()=>{pick.mode=b.dataset.m5;syncPicks();showBest()}));
 document.querySelectorAll('[data-mm]').forEach(b=>b.addEventListener('click',()=>{pick.mode=b.dataset.mm;syncPicks()}));
 document.querySelectorAll('[data-size]').forEach(b=>b.addEventListener('click',()=>{if(NET.mode==='guest')return;pick.size=b.dataset.size==='xl'?'xl':'std';cfg.size=pick.size;saveCfg();syncPicks();showBest();if(NET.mode==='host')broadcastLobby()}));
 document.querySelectorAll('[data-c]').forEach(b=>b.addEventListener('click',()=>{pick.cls=b.dataset.c;syncPicks()}));
 document.querySelectorAll('[data-mc]').forEach(b=>b.addEventListener('click',()=>{pick.cls=b.dataset.mc;syncPicks()}));
+// in the room: a job change goes to the host as the usual loadout message, so everyone sees it before the start
+document.querySelectorAll('[data-lc]').forEach(b=>b.addEventListener('click',()=>{if(NET.inGame)return;pick.cls=b.dataset.lc;cfg.cls=pick.cls;syncPicks();syncLobbyLoadout();renderLobby()}));
+// Free-for-all: the job for your next life (the host applies it when you respawn)
+function nextJob(cls){
+  if(!CLASSES[cls]||!player||game.pvp!=='ffa')return;pick.cls=cls;
+  if(NET.mode==='guest')NET.toHost({t:'nextcls',cls});else player.nextCls=cls===player.cls?'':cls;
+  player.nextShow=cls;syncJobPick();
+}
+function syncJobPick(){const want=player&&(player.nextShow||player.nextCls||player.cls);document.querySelectorAll('[data-nc]').forEach(x=>x.classList.toggle('sel',x.dataset.nc===want))}
+document.querySelectorAll('[data-nc]').forEach(b=>b.addEventListener('click',()=>{initAudio();nextJob(b.dataset.nc)}));
 document.querySelectorAll('#diff button').forEach(b=>b.addEventListener('click',()=>{pick.diff=b.dataset.d;syncPicks();showBest()}));
 document.querySelectorAll('[data-md]').forEach(b=>b.addEventListener('click',()=>{pick.diff=b.dataset.md;syncPicks()}));
 $('startBtn').addEventListener('click',start);$('againBtn').addEventListener('click',again);$('menuBtn').addEventListener('click',abandon);
@@ -141,7 +149,7 @@ $('shareBtn').addEventListener('click',()=>{
 });
 function showLobby(){$('menu').hidden=false;showPage('lobby');renderLobby()}
 function renderLobby(){
-  renderPartyState();
+  renderPartyState();if(!$('pg-lobby').hidden)renderMapPanel();
   $('lCode').textContent=NET.code||'····';
   const ul=$('lList');ul.textContent='';
   const base=pick.pvp==='base';
@@ -175,6 +183,6 @@ applyCfg();syncPicks();startDemo();showPage('main');
 if(cloudOn)setTimeout(acctBoot,400);
 const invite=new URLSearchParams(location.search).get('room');
 if(invite&&canOnline()){$('mCode').value=invite.toUpperCase().slice(0,4);showPage('multi');mStatus(`You're invited to room ${invite.toUpperCase().slice(0,4)}. Pick your name and job, then tap JOIN.`)}
-if(new URLSearchParams(location.search).has('debug'))window.__pal={SOCIAL,refreshSocial,findPlayer,savePlayer,renderIdentity,renderPartyState,get floats(){return floats},TRAILS,traceSeg,paintFinish,FINISH_LIFE,paintCosmeticParticle,drawIcon,get cosmeticCache(){return {tracers:TRACE_STAMPS.size,glows:FX_GLOWS.size}},wardrobeBarrel,wardrobeShotVisual,wardrobeAimAngle,tracerPoints,flashPoint,fire,addGuestBullet,replayFx,get flashes(){return flashes},drawFig,lookOf,SKINS,drawWardrobeCharacter,get wardrobeStats(){return {workers:wardrobeWorkers?wardrobeWorkers.length:0,completed:wardrobeWorkerCompletions,pending:WARDROBE_JOBS.size,busy:WARDROBE_BUSY.size,entries:WARDROBE_CACHE.size,bytes:wardrobeCacheBytes}},get ctx(){return g},get mus(){return mus},get AC(){return AC},musicWant,caseTick,MUSIC,get parts(){return parts},profOn(f){PROF={a:{},k:'x',f,t:performance.now()}},prof(){const o={};for(const k in PROF.a)if(k!=='end'&&k!=='x')o[k]=+PROF.a[k].toFixed(1);return o},get locker(){return locker},lockerReward:(...a)=>lockerReward(...a),openCase:()=>openCase(),buyUpgrade:(p,k)=>buyUpgrade(p,k),render,update,NET,get players(){return players},get player(){return player},get game(){return game},get enemies(){return enemies},get walls(){return walls},get core(){return core},get cores(){return cores},get bullets(){return bullets},startRaid:()=>startRaid(),scr:(x,y)=>{const c=iso(x,y);return[c[0],c[1]-WH*.55]},endPvp:w=>endPvp(w),hurtPlayer:(p,d,o)=>hurtPlayer(p,d,o),explode:(...a)=>explode(...a),buildEval:(...a)=>buildEval(...a),doBuild:(...a)=>doBuild(...a),acct,acctBoot,syncLocker,flushClaims,get claims(){return claims},showOver:()=>showOver(),showPage:x=>showPage(x),toMenu:()=>toMenu(),refreshLobbies:()=>refreshLobbies(),damageWall:(...a)=>damageWall(...a),spawnBoss:k=>spawnBoss(k),get rockets(){return rockets},get fires(){return fires},get zaps(){return zaps},get slashes(){return slashes},makePlayer:(...a)=>makePlayer(...a),get qm(){return qm},bdmg:b=>bdmg(b),makeWall:(...a)=>makeWall(...a),get walls2(){return walls},COS,CASES,rollCase:id=>rollCase(id),killFx:(...a)=>killFx(...a),renderLocker:()=>renderLocker(),playerLook:p=>playerLook(p),pvpReward:(w,k)=>pvpReward(w,k),bodyUnder,dellGun,salvageShards,iso,localSprint,renderArmory,CLASSES,burstN,burstGap,get light(){return light},BGS,drawBg,BOSSES,BOSS_VARIANTS,COSBY,TRAIL_IDS,get MAPS(){return MAPS},get terr(){return terr},get MAP(){return MAP},get N(){return N},setTerr:(k,t)=>setTerr(k,t),makePit:k=>makePit(k),spawnEnemyAt:(...a)=>spawnEnemyAt(...a),waveMix:(...a)=>waveMix(...a),pick,get lobs(){return lobs},get charges(){return charges},newGame:(...a)=>newGame(...a),get floodOn(){return floodOn},LOBBY,slowAtHook:(x,y)=>slowAt(x,y),solidTileHook:(i,j)=>solidTile(i,j),todStage:w=>todStage(w),updateBulletsHook:dt=>updateBullets(dt),bossOf:w=>bossOf(w),enterGameHook:()=>enterGame(),bossInfo:k=>bossInfo(k),hurtEnemyHook:(e,d,o)=>hurtEnemy(e,d,o),bossDropsHook:(k,h)=>bossDrops(k,h),get camX(){return camX},get camY(){return camY},get u(){return u},setMouse(x,y,d){mouse.x=x;mouse.y=y;mouse.seen=true;mouse.down=!!d}};
+if(new URLSearchParams(location.search).has('debug'))window.__pal={get demo(){return demo},get caseIntroOn(){return caseIntroOn},set demo(v){demo=v},SOCIAL,losClear:(...a)=>losClear(...a),layPvp:(...a)=>layPvp(...a),claimReward,showRewards,changeClass:(p,c)=>changeClass(p,c),parseCos,paintWardrobeCharacter,FR,friendsPoll,renderMapPanel,refreshSocial,findPlayer,savePlayer,renderIdentity,renderPartyState,get floats(){return floats},TRAILS,traceSeg,paintFinish,FINISH_LIFE,paintCosmeticParticle,drawIcon,get cosmeticCache(){return {tracers:TRACE_STAMPS.size,glows:FX_GLOWS.size}},wardrobeBarrel,wardrobeShotVisual,wardrobeAimAngle,tracerPoints,flashPoint,fire,addGuestBullet,replayFx,get flashes(){return flashes},drawFig,lookOf,SKINS,drawWardrobeCharacter,get wardrobeStats(){return {workers:wardrobeWorkers?wardrobeWorkers.length:0,completed:wardrobeWorkerCompletions,pending:WARDROBE_JOBS.size,busy:WARDROBE_BUSY.size,entries:WARDROBE_CACHE.size,bytes:wardrobeCacheBytes}},get ctx(){return g},get mus(){return mus},get AC(){return AC},musicWant,caseTick,MUSIC,get parts(){return parts},profOn(f){PROF={a:{},k:'x',f,t:performance.now()}},prof(){const o={};for(const k in PROF.a)if(k!=='end'&&k!=='x')o[k]=+PROF.a[k].toFixed(1);return o},get locker(){return locker},lockerReward:(...a)=>lockerReward(...a),openCase:()=>openCase(),buyUpgrade:(p,k)=>buyUpgrade(p,k),render,update,NET,get players(){return players},get player(){return player},get game(){return game},get enemies(){return enemies},get walls(){return walls},get core(){return core},get cores(){return cores},get bullets(){return bullets},startRaid:()=>startRaid(),scr:(x,y)=>{const c=iso(x,y);return[c[0],c[1]-WH*.55]},endPvp:w=>endPvp(w),hurtPlayer:(p,d,o)=>hurtPlayer(p,d,o),explode:(...a)=>explode(...a),buildEval:(...a)=>buildEval(...a),doBuild:(...a)=>doBuild(...a),acct,acctBoot,syncLocker,flushClaims,get claims(){return claims},showOver:()=>showOver(),showPage:x=>showPage(x),toMenu:()=>toMenu(),refreshLobbies:()=>refreshLobbies(),damageWall:(...a)=>damageWall(...a),spawnBoss:k=>spawnBoss(k),get rockets(){return rockets},get fires(){return fires},get zaps(){return zaps},get slashes(){return slashes},makePlayer:(...a)=>makePlayer(...a),get qm(){return qm},bdmg:b=>bdmg(b),makeWall:(...a)=>makeWall(...a),get walls2(){return walls},COS,CASES,rollCase:id=>rollCase(id),killFx:(...a)=>killFx(...a),renderLocker:()=>renderLocker(),playerLook:p=>playerLook(p),pvpReward:(w,k)=>pvpReward(w,k),bodyUnder,dellGun,salvageShards,iso,localSprint,renderArmory,CLASSES,burstN,burstGap,get light(){return light},BGS,drawBg,BOSSES,BOSS_VARIANTS,COSBY,TRAIL_IDS,get MAPS(){return MAPS},get terr(){return terr},get MAP(){return MAP},get N(){return N},setTerr:(k,t)=>setTerr(k,t),makePit:k=>makePit(k),spawnEnemyAt:(...a)=>spawnEnemyAt(...a),waveMix:(...a)=>waveMix(...a),pick,get lobs(){return lobs},get charges(){return charges},newGame:(...a)=>newGame(...a),get floodOn(){return floodOn},LOBBY,slowAtHook:(x,y)=>slowAt(x,y),solidTileHook:(i,j)=>solidTile(i,j),todStage:w=>todStage(w),updateBulletsHook:dt=>updateBullets(dt),bossOf:w=>bossOf(w),enterGameHook:()=>enterGame(),bossInfo:k=>bossInfo(k),hurtEnemyHook:(e,d,o)=>hurtEnemy(e,d,o),bossDropsHook:(k,h)=>bossDrops(k,h),get camX(){return camX},get camY(){return camY},get u(){return u},setMouse(x,y,d){mouse.x=x;mouse.y=y;mouse.seen=true;mouse.down=!!d}};
 if(window.PEER_SRC&&invite)needPeer();   // otherwise it loads when the Multiplayer page opens
 requestAnimationFrame(frame);

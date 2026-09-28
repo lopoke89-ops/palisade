@@ -421,7 +421,7 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
 .partyNameplate{position:absolute;left:50%;transform:translateX(-50%);top:16px;display:grid;gap:5px;max-width:90%;padding:8px 16px;background:#12222bbb;border:1px solid #718b8f;box-shadow:0 4px 12px #0003}
 .partyNameplate b{font:800 21px var(--stencil);letter-spacing:.04em;overflow-wrap:anywhere}
 .partyNameplate span{font-size:9px;color:#ecd347}
-.partySlots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:0 6px}
+.partySlots{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:7px;margin:0 6px}.partySlots:empty{display:none}
 .partySlot{box-sizing:border-box;display:grid;align-content:center;gap:4px;padding:9px 4px;min-height:55px;min-width:0;background:#20374166;border:1px dashed #66818b;color:#9db6bd;text-align:center}
 .partySlot.occupied{border:1px solid #93bec0;color:#eef6ef;background:#34515866}
 .partySlot b{font:800 15px var(--stencil);overflow-wrap:anywhere;letter-spacing:.04em}.partySlot:not(.occupied) b{font:24px system-ui;line-height:.8}
@@ -532,3 +532,169 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
 #menu:not(.partyMenu) .partyNav strong{margin-right:auto;font:900 24px var(--stencil);letter-spacing:.05em}
 #menu:not(.partyMenu) .partyNav button{border:0;background:transparent;padding:8px 10px;font:800 15px var(--stencil);letter-spacing:.07em;min-height:40px}
 #menu:not(.partyMenu) .partyNav button:hover,#menu:not(.partyMenu) .partyNav button[aria-current=page]{background:var(--bone);color:#17140f}
+/* ---------- v0.9.1 shell: the map panel sits in the right column of SOLO, MULTIPLAYER and the room ---------- */
+#menu[data-page=multi] #partyShell .mapPanel,#menu[data-page=lobby] #partyShell .mapPanel{display:block}
+.mapCard:disabled{opacity:.45;cursor:default}
+.mapCard:disabled.sel,.mapCard.sel:disabled{opacity:1}
+#sizeSeg button:disabled{opacity:.5;cursor:default}
+@media (max-width:1100px){#menu[data-page=multi] #partyShell .mapPanel,#menu[data-page=lobby] #partyShell .mapPanel{grid-column:1/-1;overflow:visible}}
+@media (max-width:700px){#menu[data-page=multi] #partyShell .mapPanel,#menu[data-page=lobby] #partyShell .mapPanel{grid-column:auto}}
+/* Friends: a button joined to the account badge, and its dropdown */
+.friendsWrap{position:relative;display:flex;align-self:stretch}
+#friendsBtn{position:relative;display:flex;align-items:center;gap:8px;padding:0 12px;border:1px solid var(--line);border-right:0;background:rgba(31,40,38,.8);color:var(--bone);font:800 14px var(--stencil);letter-spacing:.08em;min-height:44px}
+#friendsBtn:hover,#friendsBtn[aria-expanded=true]{background:#eaf4ef;color:#142731}
+.friendsWrap+#identityButton{margin-left:-12px}
+.fDot{position:absolute;top:-7px;right:-7px;min-width:19px;height:19px;padding:0 5px;border-radius:10px;background:#e0412f;color:#fff;font:700 11px/19px var(--mono);text-align:center;box-shadow:0 0 0 2px #0d1b22}
+.fDot[hidden]{display:none}
+.friendsDrop{position:absolute;top:calc(100% + 8px);right:0;z-index:30;width:min(380px,calc(100vw - 24px));max-height:min(620px,calc(var(--appH,100vh) - 120px));overflow:auto;overscroll-behavior:contain;padding:12px 14px 16px;background:#0b1820;border:1px solid #4f6a74;box-shadow:0 18px 50px #000b;text-align:left;scrollbar-width:thin}
+.friendsDrop[hidden]{display:none}
+.fdTabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin-bottom:8px}
+.fdTabs button{min-height:40px;padding:6px 2px;border:1px solid #3c5360;background:#16283299;color:#cfe0e4;font:800 12px var(--stencil);letter-spacing:.06em;display:flex;align-items:center;justify-content:center;gap:5px}
+.fdTabs button[aria-selected=true]{background:#eaf4ef;color:#142731;border-color:#eaf4ef}
+.fdTabs b{font:600 10px var(--mono);opacity:.8}
+.fdTabs .fCnt{min-width:17px;height:17px;border-radius:9px;background:#e0412f;color:#fff;opacity:1;line-height:17px;padding:0 4px}
+.fdTabs .fCnt[hidden]{display:none}
+.friendsDrop .status{font-size:11px;margin:4px 0 8px;min-height:0}
+.friendsDrop .status:empty{display:none}
+.fdPage .socialSection{margin-top:14px;padding:10px 0 8px}
+.fdPage .socialSection b{font:600 10px var(--mono);margin-left:4px;color:#9eb1b7}
+.friendsDrop .friendActions button.main{background:#efd347;color:#152832;border-color:#efd347}
+.friendsDrop .friendRow.isFriend{border-color:#5d8a86}
+.mailList{display:grid;gap:6px}
+.mailRow{display:grid;gap:3px;padding:9px 10px;border:1px solid #3c5360;background:#16283299}
+.mailRow b{font:600 12px var(--mono);color:#e3ecea;line-height:1.4}.mailRow small{font-size:9px;color:#8fa8ae}
+.mailRow.unseen{border-color:#efd347;box-shadow:inset 3px 0 0 #efd347}
+.friendsDrop button:disabled,.friendsDrop input:disabled{opacity:.45;cursor:default}
+@media (max-width:700px){
+  .friendsWrap{order:0}
+  #friendsBtn{padding:0 10px}.fbLab{display:none}
+  .friendsDrop{position:fixed;top:calc(env(safe-area-inset-top,0px) + 70px);left:12px;right:12px;width:auto}
+}
+/* the stage: your figure on its own layer over the party; a slow breathing bob done by the compositor */
+#partyMe{width:100%;height:100%;position:absolute;inset:0;object-fit:contain;pointer-events:none}
+@keyframes stageBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-.55%)}}
+#partyMe{animation:stageBob 3.6s ease-in-out infinite;will-change:transform}
+@media (prefers-reduced-motion:reduce){#partyMe{animation:none}}
+/* Free-for-all: pick the job for your next life (pause card, and while you wait to respawn) */
+.jobPick{display:grid;gap:6px;text-align:center}
+.jobPick>span{font:800 12px var(--stencil);letter-spacing:.14em;color:var(--dim)}
+.jobPick small{font-size:10px;color:var(--dim)}
+.jobPick .seg{grid-template-columns:repeat(4,minmax(0,1fr))}
+.jobPick .seg button{font-size:12px;min-height:40px;padding:6px 2px}
+#respawnJobs{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);transform:translateX(-50%);width:min(520px,calc(100vw - 24px));z-index:6;padding:10px 12px;background:rgba(12,11,9,.88);border:1px solid var(--line)}
+#respawnJobs[hidden],#pauseJobs[hidden]{display:none}
+#lJobs button{font-size:12px}
+/* after-action reward cards */
+.srOnly{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.rwCards{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;cursor:pointer;margin:2px 0 4px}
+.rwCards[hidden]{display:none}
+.rwCard{display:grid;justify-items:center;align-content:center;gap:4px;min-width:86px;max-width:128px;min-height:112px;padding:8px 8px 10px;background:#15130fcc;border:1px solid var(--line);text-align:center;
+  opacity:0;transform:translateY(10px) scale(.94);animation:rwIn .38s cubic-bezier(.2,.9,.3,1.25) forwards}
+.rwCards.skip .rwCard{animation:none;opacity:1;transform:none}
+@keyframes rwIn{to{opacity:1;transform:none}}
+.rwCard b{font:900 20px var(--stencil);letter-spacing:.04em;color:var(--bone)}
+.rwCard small{font-size:9px;line-height:1.35;color:var(--dim);letter-spacing:.04em}
+.rwCase{border-color:var(--cc)}.rwCase canvas{width:58px;height:58px}.rwCase b{color:var(--cc)}
+.rwShard i{font-style:normal;color:#f0d16b;font-size:22px}.rwShard b{color:#f0d16b}
+.rwNew{border-color:var(--rc);box-shadow:inset 0 -3px 0 var(--rc)}.rwNew span{font:800 10px var(--stencil);letter-spacing:.16em;color:var(--rc)}
+.rwNew canvas{width:64px;height:64px}.rwNew b{font-size:14px}
+.rwProg{flex:1 1 100%;max-width:none;min-height:0;padding:10px 12px}
+.rwProg b{font-size:13px;letter-spacing:.14em;color:var(--warn)}
+.rwBar{position:relative;width:100%;height:10px;background:#0c0b09;border:1px solid var(--line);overflow:hidden}
+.rwBar i{position:absolute;inset:0 auto 0 0;width:0;background:linear-gradient(90deg,#b98a1c,#f0d16b);animation:rwFill .7s ease-out forwards;animation-delay:inherit}
+.rwProg{--d:0s}.rwCards .rwProg .rwBar i{animation-delay:calc(var(--d) + .25s)}
+.rwCards.skip .rwBar i{animation:none;width:var(--to)}
+@keyframes rwFill{to{width:var(--to)}}
+.rwBar u{position:absolute;top:0;bottom:0;width:1px;background:#3a3428}
+.rwMiss b{font-size:15px;color:var(--dim)}
+.rwWait b{font-size:15px}
+@media (prefers-reduced-motion:reduce){.rwCard{animation:none;opacity:1;transform:none}.rwBar i{animation:none;width:var(--to)}}
+/* ---------- v0.9.1: the Locker on the stage, Settings and Account as cards, all in the one shell ---------- */
+#partyFx{width:100%;height:100%;position:absolute;inset:0;object-fit:contain;pointer-events:none}
+@media (prefers-reduced-motion:reduce){#partyFx{animation:none}}
+#partyShell .lockPanel{display:none}
+#menu[data-page=locker] #partyShell .lockPanel{display:flex}
+#menu[data-page=locker] #partyShell{grid-template-columns:280px minmax(240px,1fr) minmax(360px,520px)}
+#menu[data-page=locker] .partySlots{display:none}
+.lockPanel{flex-direction:column;gap:10px;min-height:0;min-width:0;padding:14px;border:1px solid #354b56;background:rgba(6,15,23,.84)}
+.lockPanel #lockTabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+.lockPanel #lockTabs button{height:40px;font-size:12px;letter-spacing:.04em;padding:0 2px}
+.lockPanel #lockGrid{flex:1;min-height:0;overflow:auto;grid-auto-rows:max-content;overscroll-behavior:contain;scrollbar-width:thin;display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px;align-content:start}
+.partyControls .lockCases{display:grid;gap:8px}
+.partyControls #caseBoxes{display:grid;grid-template-columns:1fr;gap:8px}
+.partyControls #shardTxt{font-size:10px;color:var(--dim)}
+@media (max-width:1100px){
+  #menu[data-page=locker] #partyShell{grid-template-columns:260px minmax(0,1fr)}
+  #menu[data-page=locker] #partyShell .lockPanel{grid-column:1/-1}
+  .lockPanel #lockGrid{overflow:visible}
+}
+@media (max-width:700px){
+  #menu[data-page=locker] #partyShell{grid-template-columns:minmax(0,1fr)}
+  #menu[data-page=locker] #partyShell .lockPanel{grid-column:auto}
+  .lockPanel #lockTabs button{font-size:10px}
+  .lockPanel #lockGrid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}
+}
+/* Settings and Account: the shell's frame, the content as cards */
+#menu.cardMenu{padding:16px;background:radial-gradient(ellipse at 50% 55%,rgba(8,14,18,.25) 30%,rgba(8,14,18,.7))}
+#menu.cardMenu .panel{width:min(100%,1180px);padding:18px 22px;gap:16px;background:linear-gradient(180deg,rgba(10,20,27,.94),rgba(10,20,27,.86));border-color:#496067;--line:#354e59;--dim:#9eb1b7;--bone:#edf1e9;--warn:#efd347;box-shadow:0 20px 80px #0008}
+#menu.cardMenu .partyNav{display:flex;align-items:center;gap:5px;margin-right:auto;flex:initial;order:0;flex-wrap:nowrap}
+#menu.cardMenu .partyNav strong{font:900 27px var(--stencil);margin-right:18px;letter-spacing:.05em}
+#menu.cardMenu .partyNav button{font:800 17px var(--stencil);padding:10px 12px;min-height:44px;background:transparent;border:0}
+#menu.cardMenu .partyNav button[aria-current=page]{background:#eaf4ef;color:#142731}
+#menu.cardMenu .accountDock{flex-wrap:nowrap}
+.cardPage .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;align-items:start}
+.setCard,.cardPage .acBox{display:grid;gap:10px;padding:16px;background:rgba(6,15,23,.84);border:1px solid #354b56}
+.setCard h3,.cardPage .acBox h2{font:800 14px var(--stencil);letter-spacing:.16em;color:var(--warn);margin:0}
+.cardPage .set{grid-template-columns:130px minmax(0,1fr) 48px}
+.cardPage>.go{justify-self:start;min-width:220px}
+.acHead{display:grid;grid-template-columns:96px minmax(0,1fr);gap:16px;align-items:center;padding:14px 16px;background:rgba(6,15,23,.84);border:1px solid #354b56}
+.acHead canvas{width:96px;height:96px;background:radial-gradient(circle,#43534a,#172125)}
+.acHead b{display:block;font:900 30px var(--stencil);letter-spacing:.05em}
+.acHead span{display:block;font-size:10px;color:#a2e7c6;letter-spacing:.08em;margin:3px 0 8px}
+.acHead .lede{margin:0;font-size:12px}
+.cardPage .acBox[hidden]{display:none}
+@media (max-width:1100px){#menu.cardMenu .partyNav strong{display:none}#menu.cardMenu .partyNav button{font-size:15px;padding-inline:9px}}
+@media (max-width:700px){
+  #menu.cardMenu{padding:0}
+  #menu.cardMenu .panel{padding:calc(env(safe-area-inset-top,0px) + 14px) 14px calc(env(safe-area-inset-bottom,0px) + 20px);border:0;min-height:100%}
+  #menu.cardMenu .accountDock{flex-wrap:wrap}
+  #menu.cardMenu .partyNav{flex-basis:100%;justify-content:center;order:2;margin:0;flex-wrap:wrap;gap:4px}
+  #menu.cardMenu .partyNav button{flex:1 1 30%;font-size:13px;padding:8px 4px;min-height:40px}
+  .cardPage .set{grid-template-columns:1fr 48px}.cardPage .set span{grid-column:1/-1}
+  .acHead{grid-template-columns:72px minmax(0,1fr)}.acHead canvas{width:72px;height:72px}.acHead b{font-size:24px}
+}
+/* locker tiles: the art in its own square, the name and status underneath (never over the art) */
+.item{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-height:0}
+.item .art{flex:none}
+.item .art{display:block;width:100%;aspect-ratio:1;position:relative;overflow:hidden}
+.item .art canvas{position:absolute;inset:0;width:100%;height:100%}
+.item b{max-width:100%;overflow-wrap:anywhere}
+.lockPanel .item{padding:6px 6px 9px}
+.lockPanel .item b{font-size:14px}
+.lockPanel .item i{font-size:9.5px}
+.reel .item .art{width:52px;height:52px;flex:none}
+#lockGrid .item canvas{width:100%;height:100%}
+.cardPage>.ghost{justify-self:start;min-width:220px}
+/* the art square takes the tile's own width as its height (so the grid row makes room for it) */
+#lockGrid .item{container-type:inline-size}
+#lockGrid .item .art{width:100%;height:100cqw;aspect-ratio:auto}
+/* the case intro */
+#caseIntro{display:grid;justify-items:center;gap:6px;background:none;border:0;padding:0;width:100%;cursor:pointer}
+#caseIntro[hidden]{display:none}
+#caseIntro canvas{width:100%;max-width:420px;height:auto;aspect-ratio:480/300}
+#caseIntro small{font-size:9px;letter-spacing:.14em;color:var(--dim)}
+#caseOv.intro .reelWrap{display:none}
+#caseOv{transition:backdrop-filter .6s,background-color .6s}
+#caseOv.blurring{backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);background-color:rgba(8,7,6,.8)}
+@media (prefers-reduced-motion:reduce){#caseOv{transition:none}#caseOv.blurring{backdrop-filter:none}}
+/* v0.9.1 performance: slow-moving decorations update a few times a second instead of every frame (each update
+   repaints and re-composites the page; on phones that, not the drawing, is what costs), and tiles keep repaints local */
+.item.gold b{animation-timing-function:steps(26)}
+#partyMe{animation-timing-function:steps(9)}
+.lockPanel .item{contain:paint}
+/* phones held sideways: a shorter heading so the stage still has room */
+@media (max-height:500px) and (min-width:601px){
+  .partyHeading{padding-top:0}#partyTitle{font-size:22px;margin:2px 0}#partySubtitle{font-size:10px}
+  .partyNameplate{top:2px;padding:4px 10px}.partyNameplate b{font-size:15px}
+  #menu.partyMenu .panel{gap:10px;padding-block:10px}
+}

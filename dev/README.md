@@ -137,3 +137,57 @@ play together. `multiplayer.js` verifies host/guest loadout propagation before m
   changes (`tr`), the flood (`fo`), bosses that fell (`bl`) and a kind per thrown object (lobs have 8 numbers).
 - Tests: `lobby.js` (menus, online map sync), `v090.js` (maps, bosses, raiders, rewards, wave table),
   `v090_net.js` (host/guest).
+
+## v0.9.1: playtest fixes
+
+- **Lobby shell v2.** PLAY is now **SOLO**. One map panel (`#mapPanel`, `renderMapPanel`) sits in the right column
+  of SOLO, MULTIPLAYER and the room, in every mode; PvP hides the size (always 16×16) and guests see the host's
+  pick without being able to change it. The Locker (cases left, your figure on the shared stage, tabs and grid
+  right; `#lockPrev` is gone), Settings (grouped cards; still opens from the pause menu over a running game) and
+  Account (a profile header, the forms as cards) all live in the same shell (`STAGE_PAGES`, `CARD_PAGES`).
+- **Stage renderer** (`16-characters.js`). A `WEAPON_TABLE` (butt, grip, fore-end, stock/receiver sizes, barrel
+  radius per gun) builds every held gun, and a two-bone `reach()` puts the hands on the grip with the elbows bent
+  down and out, so the gun is held clear of the chest. The muzzle measurement reads the same table (`muzzle.js`
+  passes). The lobby figure turns in 2° steps on its own layer (`#partyMe`), repainted only when the pose changes
+  (at most 30 fps); the idle bob is a stepped CSS transform. Up to six figures stand on the stage (you in front,
+  the others about 60% size with name plates; phones: three in front, two behind).
+- **One job-change routine** (`changeClass`): new gun, ammo, grenades and health; kills, deaths, score, salvage,
+  slot, team, upgrades and cosmetics stay. Each player's network state has an `ab` slot for future class
+  abilities (always 0 for now). Job buttons in the room (`#lJobs`, the `loadout` message); in Free-for-all the
+  pause card and the respawn bar pick the job for your next life (`nextcls` → applied on respawn).
+- **Structured rewards.** `lockerReward`, `pvpReward` and `claimReward` return `{cases, shards, unlocked (ids),
+  toNext, prog, text}`; the after-action screen shows reward cards (cases, a shard counter, UNLOCKED cards with the
+  Locker thumbnails, the bar to the next Supply Case) over ~1.5 s; a tap skips.
+- **Friends** (server + a dropdown on the account badge). Requests (send, accept, decline, cancel), two-way
+  friendships, a mailbox with a seen time, a red dot with the count, marked seen when viewed, checked every 15 s
+  while the menu is up. Accounts only; no blocking or reporting, rate limits instead (10 per 10 minutes, 40 a
+  day, 30 waiting, 200 friends, a day's wait after a decline). Saved players are now the "Recent" list.
+- **Gameplay.** Enemy health per map (Yard 1.0, Riverbend 1.05, Quarry 1.1) and +10% on XL; damage unchanged.
+  XL boss raids bring two different bosses (the map's scheduled one and the next in its pool) at 90% health
+  each; 16×16 keeps one. Oil drums no longer stop bullets or sight lines (they still block walking and
+  building); rock does.
+- **PvP on every map** (`06c-pvp-maps.js`): a mirrored Base Battle layout and a designed Free-for-all arena per
+  map (Yard: timber lanes and two ruined sheds; Riverbend: the river corner to corner with two bridges and a ford
+  a side, banks flooding every 75 s / four islands round a pool; Quarry: a lit, mirrored pit with a ramp behind
+  each stake / a stepped pit with ledges, pillars and a cracked floor round a spire). The host picks the map;
+  it reaches guests in the lobby and at the start. `MAPS[..].modes` lists each map's modes.
+- **Looks.** A round, ribbed Jack-o'-Lantern (smaller, lower, the face on the front); the Pumpkin Butcher's 2D
+  head matches. The Grenadier holds a pump shotgun low and wears a chest belt of five green grenades plus a waist
+  row (3D, 2D, thumbnails). "Glitch Mask" is now "Glitch Head" (id `hat:glitch` unchanged). Locker thumbnails are
+  framed from the figure's measured bounds, painted at their displayed size × pixel ratio, backgrounds
+  centre-cropped, names always below the art. Opening a case plays a 3 s intro (shake, blur, it breaks apart;
+  tap to skip, shorter with reduced motion) while the server rolls.
+- **Server: `supabase/v0.9.1-migration.sql` must be run when v0.9.1 is published** (not before). It adds
+  `friend_requests`, `friendships`, `notifications` (read-only to their owners through RLS; all writes go through
+  `friend_send`, `friend_answer`, `friend_cancel`, `friend_remove`, `notes_seen`, and `social_state` reads it all
+  at once), renames Glitch Head, and replaces `claim_match_reward`: it now also returns `cases` per type,
+  `unlocked_ids` and `to_next`, and allows two boss cases per XL boss raid when the claim says `size: 'xl'` and
+  the run took at least 35 s a raid. Older clients keep working. Both parts were tested in rolled-back
+  transactions on the test account.
+- Protocol **yard-15** (room prefix `palisade-yard-15-`): the `ab` player field and the `nextcls` message.
+- Tests: `friends.js` (mock server, two accounts), `rewards_screen.js`; `lobby.js`, `v090.js` and `v090_net.js`
+  cover SOLO, the map panel in every mode, the dropdown, the full party, job changes in the room and in
+  Free-for-all, PvP map sync, XL two bosses, health multipliers, drums and every PvP layout (symmetry, reachable
+  spawns, no stuck tiles, no spawn in plain sight of another). Meters: `bench.js` (now also Settings, Account,
+  the six-player stage, the Friends dropdown and the case intro), `mapbench.js` (XL boss raids, PvP layouts),
+  `netxl.js` (six players online on XL: about 11–12 KB/s to each guest).

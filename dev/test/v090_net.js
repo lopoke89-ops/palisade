@@ -1,5 +1,7 @@
 // v0.9.0 online: what the host changes reaches the guest: floods, pits, a rammed bridge, boss states (raft, burrow),
-// the new raiders and their thrown bottles and slabs, rock slabs, and which bosses fell. node v090_net.js
+// the new raiders and their thrown bottles and slabs, rock slabs, and which bosses fell.
+// v0.9.1: the host's PvP map reaches the guest (same arena), a job change in the room, and a Free-for-all job
+// switch that lands at the next respawn. node v090_net.js
 const { chromium } = require('playwright');
 const assert = require('assert');
 const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.env.PORT || 8080;
@@ -53,6 +55,42 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
     out.slabOnGuest = await G.evaluate(() => __pal.walls.some(w => w && w.slab));
     out.slabOnHost = await H.evaluate(() => __pal.walls.some(w => w && w.slab));
     await G.screenshot({ path: __dirname + '/out/v090_net_guest.png' });
+    await H.close(); await G.close();
+  }
+  // v0.9.1: Free-for-all on Ashfall Quarry. The guest sees the host's map (and can't change it), switches job in the
+  // room, then picks a new job while down; it applies when they respawn, on both screens.
+  {
+    const H = await open(), G = await open();
+    await H.click('[data-nav=multi]'); await H.click('[data-pv=ffa]'); await H.click('[data-mmap=quarry]'); await H.click('#hostBtn');
+    await H.waitForFunction(() => /^[A-Z0-9]{4}$/.test(document.getElementById('lCode').textContent), null, { timeout: 15000 });
+    const code = await H.textContent('#lCode');
+    await G.click('[data-nav=multi]'); await G.fill('#mCode', code); await G.click('#joinBtn'); await G.waitForSelector('#pg-lobby:not([hidden])', { timeout: 15000 }); await G.waitForTimeout(600);
+    out.pvpLobbyGuest = await G.evaluate(() => ({ map: __pal.pick.map, pvp: __pal.pick.pvp, sel: document.querySelector('.mapCard.sel').dataset.map, locked: document.querySelector('.mapCard[data-map=yard]').disabled, size: document.getElementById('sizeBox').hidden, note: !document.getElementById('mapHostNote').hidden }));
+    assert.deepEqual(out.pvpLobbyGuest, { map: 'quarry', pvp: 'ffa', sel: 'quarry', locked: true, size: true, note: true });
+    // the host changes the map; the guest follows
+    await H.click('.mapCard[data-map=river]'); await G.waitForFunction(() => __pal.pick.map === 'river', null, { timeout: 5000 }); await H.click('.mapCard[data-map=quarry]'); await G.waitForFunction(() => __pal.pick.map === 'quarry', null, { timeout: 5000 });
+    // a job change in the room goes through the loadout message
+    await G.click('#lJobs [data-lc=sniper]'); await H.waitForFunction(() => __pal.NET.roster.some(r => r.id !== 'host' && r.cls === 'sniper'), null, { timeout: 5000 });
+    out.roomJob = await G.evaluate(() => __pal.NET.roster.map(r => r.cls).join());
+    await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await H.waitForTimeout(800);
+    const arena = x => x.evaluate(() => ({ map: __pal.game.map, terr: [...__pal.terr].join(''), cover: __pal.walls.filter(w => w).length, pvp: __pal.game.pvp }));
+    const ha = await arena(H), ga = await arena(G); out.pvpArena = { map: ga.map, pvp: ga.pvp, same: ha.terr === ga.terr, cover: [ha.cover, ga.cover] };
+    assert.equal(ga.map, 'quarry'); assert.equal(ha.terr, ga.terr, 'same arena on both'); assert.equal(ga.pvp, 'ffa');
+    out.guestCls = await H.evaluate(() => [...__pal.players.values()].find(p => p.id !== 'host').cls); assert.equal(out.guestCls, 'sniper', 'the room job carried into the match');
+    // the guest goes down, picks grenadier for the next life; it only changes on respawn
+    await H.evaluate(() => { const P = __pal, g = [...P.players.values()].find(p => p.id !== 'host'); g.prot = 0; P.hurtPlayer(g, 1e6, 'host') });
+    await G.waitForFunction(() => !__pal.player.alive, null, { timeout: 5000 }); await G.waitForSelector('#respawnJobs:not([hidden])', { timeout: 3000 });
+    await G.click('#respawnJobs [data-nc=grenadier]'); await H.waitForTimeout(500);
+    out.beforeRespawn = await H.evaluate(() => { const g = [...__pal.players.values()].find(p => p.id !== 'host'); return [g.cls, g.nextCls] });
+    assert.deepEqual(out.beforeRespawn, ['sniper', 'grenadier'], 'not until the respawn');
+    await H.evaluate(() => { const g = [...__pal.players.values()].find(p => p.id !== 'host'); g.rt = .01 }); await H.waitForTimeout(600);
+    await G.waitForFunction(() => __pal.player.alive && __pal.player.cls === 'grenadier', null, { timeout: 5000 });
+    out.afterRespawn = await H.evaluate(() => { const g = [...__pal.players.values()].find(p => p.id !== 'host'); return { cls: g.cls, hp: g.hp === g.max, nades: g.nades === g.maxN, deaths: g.deaths } });
+    assert.equal(out.afterRespawn.cls, 'grenadier'); assert.equal(out.afterRespawn.deaths, 1, 'deaths kept through the job change');
+    // the host can switch too, from the pause card
+    await H.evaluate(() => { __pal.player.prot = 0; __pal.hurtPlayer(__pal.player, 1e6, [...__pal.players.keys()].find(k => k !== 'host')) }); await H.keyboard.press('Escape'); await H.waitForSelector('#pauseJobs:not([hidden])', { timeout: 3000 });
+    await H.click('#pauseJobs [data-nc=quartermaster]'); await H.evaluate(() => { __pal.player.rt = .01 }); await H.keyboard.press('Escape'); await H.waitForTimeout(700);
+    out.hostSwitch = await G.evaluate(() => __pal.players.get('host').cls); assert.equal(out.hostSwitch, 'quartermaster', 'the guest sees the host change job');
     await H.close(); await G.close();
   }
   console.log(JSON.stringify(out, null, 1));

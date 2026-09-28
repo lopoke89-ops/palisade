@@ -53,6 +53,7 @@ function simPlayer(p,dt){
     if(p.rt<=0){
       const m=p.mats.map(v=>Math.floor(v/2));if(m.some(v=>v>0))sacks.push({x:p.x,y:p.y,mats:m});p.mats=p.mats.map((v,i)=>v-m[i]);
       [p.x,p.y]=respawnAt(p);p.tp++;
+      if(game.pvp==='ffa'&&p.nextCls){changeClass(p,p.nextCls);p.nextCls='';p.nextShow=''}   // the job picked for the next life
       p.alive=true;p.downed=false;p.hp=p.max;p.hurt=9;p.revive=0;p.stun=0;if(p.gun.mag){p.ammo=p.gun.mag;p.rl=0}
       if(game.pvp){p.prot=PVP.prot;p.nades=Math.max(p.nades,p.maxN);toastTo(p,game.pvp==='ffa'?'BACK IN':'BACK AT YOUR STAKE',m.some(v=>v>0)?'Half your pack is in a sack where you fell.':'')}
       else toastTo(p,'BACK AT THE STAKE',m.some(v=>v>0)?'Half your pack is in a sack where you fell.':'');

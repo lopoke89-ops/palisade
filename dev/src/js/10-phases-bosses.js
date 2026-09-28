@@ -1,7 +1,7 @@
 /* ================= phases ================= */
 function spawnNearCore(c=core,team=true){for(const[a,b]of[[1,0],[0,1],[-1,0],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1],[2,0],[0,2],[-2,0],[0,-2]]){const i=c.i+a,j=c.j+b;if(!solidTile(i,j,team))return[i+.5,j+.5]}return[c.i+1.5,c.j+.5]}
 // free-for-all: come back in at the spot furthest from everyone still standing
-function ffaSpawn(p){let best=FFA_SPAWNS[0],bd=-1;for(const s of FFA_SPAWNS){let m=1e9;for(const o of players.values())if(o!==p&&o.alive)m=Math.min(m,Math.hypot(o.x-s[0],o.y-s[1]));m+=rnd()*.5;if(m>bd){bd=m;best=s}}return best.slice()}
+function ffaSpawn(p){const S=(game.lay&&game.lay.pspawns)||FFA_SPAWNS;let best=S[0],bd=-1;for(const s of S){let m=1e9;for(const o of players.values())if(o!==p&&o.alive)m=Math.min(m,Math.hypot(o.x-s[0],o.y-s[1]));m+=rnd()*.5;if(m>bd){bd=m;best=s}}return best.slice()}
 const truce=()=>game.pvp==='base'&&game.phase==='build';
 const respawnAt=p=>game.pvp==='ffa'?ffaSpawn(p):game.pvp==='base'?spawnNearCore(stakeOf(p),p.team):spawnNearCore();
 // 0 day, 1 golden hour, 2 night. Endless cycles; fixed-length runs end in the dark.
@@ -29,15 +29,17 @@ function startRaid(){
   game.wave++;game.phase='raid';setTip('');closeArmory();
   const k=Math.floor(waveEff()),Df=game.Df,P=Math.max(1,players.size),q=[];
   // a bigger crew mostly means more riflemen; grenadiers and breachers grow much more slowly
-  const boss=bossOf(game.wave),W=waveMix(k,P,Df.extra,!!boss);
+  const boss=bossOf(game.wave),boss2=boss&&N>16?bossPartner(game.wave):'',W=waveMix(k,P,Df.extra,!!boss);
+  game.bossShare=boss2?XL_BOSS_SHARE:1;
   for(let n=0;n<W.rifle;n++)q.push('rifle');
   for(const t of['gren','fire','shield','medic','spotter','breach'])for(let n=0;n<W[t];n++)q.splice(1+Math.floor(rnd()*q.length),0,t);
   if(boss)q.splice(Math.max(2,Math.floor(q.length*.45)),0,'boss:'+boss);
+  if(boss2)q.splice(Math.max(4,Math.floor(q.length*.62)),0,'boss:'+boss2);
   game.queue=q;game.spawnT=.8;game.spawnGap=Math.max(.5,1.1-.1*(P-1))*(N>16?.85:1);sfx('siren');game.flood={t:0,warned:false};
   const bits=[`${W.rifle} riflemen`];
   for(const t of['gren','breach','shield','medic','spotter','fire'])if(W[t])bits.push(`${W[t]} ${W[t]>1?ENAMES[t][1]:ENAMES[t][0]}`);
-  const B=boss?bossInfo(boss):null;
-  toastAll(boss?`${raidName(game.wave)} · BOSS`:raidName(game.wave),`${bits.join(', ')}${B?' and '+B.name:''} coming ${(MAP||MAPS.yard).from}${todStage(game.wave)===2&&!(MAP&&MAP.night)?' in the dark':''}.`);
+  const B=boss?bossInfo(boss):null,B2=boss2?bossInfo(boss2):null;
+  toastAll(boss?`${raidName(game.wave)} · ${B2?'TWO BOSSES':'BOSS'}`:raidName(game.wave),`${bits.join(', ')}${B?(B2?', '+B.name+' and '+B2.name:' and '+B.name):''} coming ${(MAP||MAPS.yard).from}${todStage(game.wave)===2&&!(MAP&&MAP.night)?' in the dark':''}.`);
 }
 // Who comes in a raid. k is the raid's strength (raid number; in Endless it climbs faster), P the crew size.
 // A bigger crew mostly means more riflemen. The four newer raiders each take a rifleman's place (riflemen never drop
@@ -105,6 +107,11 @@ const BOSS_VARIANTS={
 // each map has its own boss order (MAPS[..].bosses); the Yard's is the old default
 const BOSS_ORDER=['butcher','demolisher','storm'];
 const bossOf=w=>{if(w%5!==0)return'';const L=(MAP&&MAP.bosses)||BOSS_ORDER;return L[(w/5-1)%L.length]};
+// XL boss raids bring a second boss: the next different one in the map's pool
+const bossPartner=w=>{const L=(MAP&&MAP.bosses)||BOSS_ORDER,i=(w/5-1)%L.length;for(let j=1;j<L.length;j++){const k=L[(i+j)%L.length];if(k!==L[i])return k}return''};
+// enemy health: the map's multiplier (Yard 1, Riverbend 1.05, Quarry 1.1) and +10% on XL. Damage is never scaled.
+const mapHp=()=>((MAP&&MAP.hp)||1)*(N>16?1.1:1);
+const XL_BOSS_SHARE=.9;   // each of the two XL bosses has 90% of a normal boss's health
 const ETYPES={rifle:{hp:36,speed:1.5},gren:{hp:46,speed:1.25},breach:{hp:30,speed:2.1},
   shield:{hp:66,speed:1.15},medic:{hp:34,speed:1.55},spotter:{hp:30,speed:1.45},fire:{hp:40,speed:1.4}};
 // type codes for the network: never reorder, only add to the end
@@ -115,7 +122,7 @@ function spawnBoss(key){
   const at=key==='ferryman'?game.lay.raftAt:(game.lay&&game.lay.bossAt)||[];
   for(let a=0;a<40&&at.length;a++){const t=at[Math.floor(rnd()*at.length)];if(!solidTile(t[0],t[1])){x=t[0]+.5;y=t[1]+.5;break}}
   if(!x){const t=spawnTile();if(t){x=t[0]+.5;y=t[1]+.5}else{x=N-.5;y=6.5}}
-  const P=Math.max(1,players.size),hp=B.hp*game.Df.hp*(1+.35*(P-1))*(1+.25*Math.floor(Math.max(0,game.wave-5)/15));
+  const P=Math.max(1,players.size),hp=B.hp*game.Df.hp*(1+.35*(P-1))*(1+.25*Math.floor(Math.max(0,game.wave-5)/15))*mapHp()*(game.bossShare||1);
   const e={id:nextId++,type:'boss',boss:key,big:true,x,y,hp,max:hp,cd:2.2,walk:0,aim:{x:-1,y:0},flash:0,speed:B.speed,scanT:0,foe:null,planted:false,st:0,stT:0,stM:1,lx:x,ly:y,shots:0,ab:3,sw:0};
   if(B.raft){e.raft=true;e.ab=9;e.crews=0;e.pathT=0;e.next=-1}
   if(key==='foreman'){e.ab=5;e.cd=2.5}
@@ -233,7 +240,7 @@ function spawnEnemy(type){
   const t=spawnTile();if(!t)return;spawnEnemyAt(type,t[0]+.5,t[1]+.5);
 }
 function spawnEnemyAt(type,x,y){
-  const T=ETYPES[type]||ETYPES.rifle,s=(1+(game.mode==='endless'?.045:.07)*(game.wave-1))*game.Df.hp;
+  const T=ETYPES[type]||ETYPES.rifle,s=(1+(game.mode==='endless'?.045:.07)*(game.wave-1))*game.Df.hp*mapHp();
   const e={id:nextId++,type,x,y,hp:T.hp*s,max:T.hp*s,cd:1+rnd(),walk:rnd()*6,aim:{x:-1,y:0},flash:0,speed:T.speed,scanT:0,foe:null,planted:false};
   if(type==='medic')e.ab=1.5;if(type==='spotter'){e.st=0;e.stT=0;e.stM=1;e.lx=x;e.ly=y}
   enemies.push(e);return e;
@@ -262,7 +269,7 @@ function showPvpOver(){
     setStats([['Your drops',me.kills|0],['Times you fell',me.deaths|0],['Place',`${ord(place)} of ${P.length}`],['Winning score',lead?`${lead.kills}`:'0']]);
   }
   const loot=game.rewarded?null:pvpReward(win,me.kills|0);game.rewarded=true;
-  if(loot){$('overLoot').textContent=loot;$('overLoot').hidden=false}else $('overLoot').hidden=true;
+  if(loot){$('overLoot').textContent=loot.text;$('overLoot').hidden=false;showRewards(loot)}else{$('overLoot').hidden=true;showRewards(null)}
   $('againBtn').hidden=NET.mode==='guest';$('overWait').hidden=NET.mode!=='guest';
   setTimeout(()=>{if(game.phase==='over')$('over').hidden=false},900);
 }
@@ -276,7 +283,7 @@ function showOver(){
   $('overEyebrow').textContent=`${player.C.name} · ${game.Df.name} · ${endless?'ENDLESS':W+' RAIDS'}${crew} · ${win?`ALL ${W} RAIDS BROKEN`:endless?`${held} RAIDS HELD`:`STAKE FELL IN RAID ${game.wave}`}`;
   $('overLede').textContent=win?'The stake is still standing. Try it with less wood and more nerve, or turn the threat up.':endless?`Endless only ends one way. ${held} raids is the number to beat.`:'They got to the core. Look at where they broke in. That hole is the lesson.';
   const loot=game.rewarded?null:lockerReward(held,win,player.kills|0);game.rewarded=true;
-  if(loot){$('overLoot').textContent=loot;$('overLoot').hidden=false}else $('overLoot').hidden=true;
+  if(loot){$('overLoot').textContent=loot.text;$('overLoot').hidden=false;showRewards(loot)}else{$('overLoot').hidden=true;showRewards(null)}
   $('sWaves').textContent=held;$('sDrop').textContent=S.dropped;$('sBuilt').textContent=S.built;$('sLost').textContent=S.lost;$('sRep').textContent=S.repairs;$('sRev').textContent=S.revives;
   if(NET.mode==='solo')saveBest(held,S.dropped);
   $('againBtn').hidden=NET.mode==='guest';$('overWait').hidden=NET.mode!=='guest';
@@ -285,7 +292,7 @@ function showOver(){
 function togglePause(){
   const open=$('pause').hidden;
   if(NET.mode==='solo')game.paused=open;
-  $('pause').hidden=!open;
+  $('pause').hidden=!open;$('pauseJobs').hidden=game.pvp!=='ffa';if(game.pvp==='ffa')syncJobPick();
   $('pauseEyebrow').textContent=NET.mode!=='solo'?(game.pvp?'THE FIGHT DOESN’T PAUSE':'THE RAID DOESN’T PAUSE ONLINE'):`PAUSED · ${game.phase==='build'?'BUILD PHASE':raidName(game.wave)}`;
   for(const s of[stickMove,stickAim]){s.id=null;s.vx=s.vy=s.mag=0}mouse.down=false;
 }

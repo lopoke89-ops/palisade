@@ -88,7 +88,7 @@ const COS=[
   ['skin','galaxy','Galaxy','l','case',null,null,'afterglow'],['skin','holo','Hologram','l','case',null,null,'afterglow'],['skin','cyber','Cyberpunk','l','case',null,null,'afterglow'],['skin','gclown','Gold Clown','g','case',null,null,'afterglow'],
   ['skin','gpolice','Gold Police','g','case',null,null,'afterglow'],['skin','gknight','Gold Metal Knight','g','case',null,null,'afterglow'],['hat','headband','Neon Headband','c','case',null,null,'afterglow'],['hat','acap','Arcade Cap','c','case',null,null,'afterglow'],
   ['hat','nhelm','Neon Helmet','r','case',null,null,'afterglow'],['hat','pcap','Police Cap','r','case',null,null,'afterglow'],['hat','ledmask','LED Mask','e','case',null,null,'afterglow'],['hat','visor','Cyber Visor','e','case',null,null,'afterglow'],
-  ['hat','clownhair','Neon Clown Hair','e','case',null,null,'afterglow'],['hat','halo','Halo','l','case',null,null,'afterglow'],['hat','glitch','Glitch Mask','l','case',null,null,'afterglow'],['hat','gclownhair','Gold Clown Hair','g','case',null,null,'afterglow'],
+  ['hat','clownhair','Neon Clown Hair','e','case',null,null,'afterglow'],['hat','halo','Halo','l','case',null,null,'afterglow'],['hat','glitch','Glitch Head','l','case',null,null,'afterglow'],['hat','gclownhair','Gold Clown Hair','g','case',null,null,'afterglow'],
   ['hat','ghelm','Gold Knight Helm','g','case',null,null,'afterglow'],['trail','sunset','Sunset Fade','c','case',null,null,'afterglow'],['trail','lagoon','Lagoon Fade','c','case',null,null,'afterglow'],['trail','heat','Heatwave','c','case',null,null,'afterglow'],
   ['trail','aurora','Aurora','r','case',null,null,'afterglow'],['trail','starlight','Starlight','r','case',null,null,'afterglow'],['trail','comet','Comet','r','case',null,null,'afterglow'],['trail','neonpulse','Neon Pulse','r','case',null,null,'afterglow'],
   ['trail','nebula','Nebula','e','case',null,null,'afterglow'],['trail','asteroid','Asteroid Belt','e','case',null,null,'afterglow'],['trail','solar','Solar Flare','e','case',null,null,'afterglow'],['trail','glitch','Glitch Line','e','case',null,null,'afterglow'],
@@ -208,15 +208,32 @@ const salvageShards=(sal,held)=>Math.max(0,Math.min(Math.floor(Math.max(0,sal)/S
 // what each boss that went down drops (the same rule as the server): the Butcher and the Ferryman a Halloween
 // Case (two from the October Butcher), the rest an Afterglow Case; never more bosses than the raids held allow
 function bossDrops(keys,held){
-  const out={},cap=Math.min(Math.floor((held+1)/5),isFinite(game.waves)?Math.floor(game.waves/5):1e9);let n=0;
+  const out={},cap=Math.min(Math.floor((held+1)/5),isFinite(game.waves)?Math.floor(game.waves/5):1e9)*(game.size==='xl'?2:1);let n=0;   // XL boss raids have two bosses
   for(const k of keys){if(n>=cap)break;const key=k==='butcher_oct'?'butcher':k;if(!BOSSES[key])continue;n++;const box=bossBox(key);out[box]=(out[box]|0)+(k==='butcher_oct'?2:1)}
   return out;
 }
+// Rewards come back as data (for the reward cards) with a sentence alongside (toasts, older screens):
+// {kind, cases:{supply,afterglow,halloween,…}, shards, unlocked:[ids], toNext (raids to the next Supply Case),
+//  prog (0-2 of 3), chance/missCase (PvP roll), pending (the server hasn't answered yet), text}
+function rewardText(R){
+  const bits=[],pl=(n,w)=>`${n} ${w}${n===1?'':'s'}`;
+  if(R.pending)return R.text||'Sending your result to your account…';
+  if(R.kind==='run'){
+    if(R.cases.supply>0)bits.push(`+${pl(R.cases.supply,'supply case')}`);
+    for(const id in R.cases)if(id!=='supply'&&R.cases[id]>0&&CASES[id])bits.push(`+${R.cases[id]} ${CASES[id].name.toLowerCase()}${R.cases[id]>1?'s':''} from bosses`);
+    if(R.shards>0)bits.push(`+${pl(R.shards,'shard')} from leftover salvage`);
+    bits.push(`${pl(R.toNext,'more raid')} to the next supply case`);
+  }else if(R.missCase&&CASES[R.missCase])bits.push(`No ${CASES[R.missCase].name.toLowerCase()} this time (${Math.round((R.chance||0)*100)}% chance)`);
+  else for(const id in R.cases)if(R.cases[id]>0&&CASES[id])bits.push(`+${R.cases[id]} ${CASES[id].name}`);
+  if(R.unlocked.length)bits.push('Unlocked '+R.unlocked.map(id=>(COSBY[id]||{name:id}).name).join(', '));
+  return bits.join(' · ')+'.'+(R.cloud?' Saved to your account.':'');
+}
+const mkReward=(kind,o)=>{const R={kind,cases:{},shards:0,unlocked:[],toNext:3-(locker.prog|0),prog:locker.prog|0,...o};R.text=rewardText(R);return R};
 function lockerReward(held,win,kills){
   if(demo)return null;
   const sal=Math.max(0,(player&&player.sal)|0),shards=salvageShards(sal,held);
   if(player&&shards)player.sal-=shards*SAL_SHARD.rate;   // what converts is spent, so it can't count twice
-  const bosses=game.bosses|0,keys=(game.bossLog||[]).slice(0,40),claim={kind:'run',mode:game.mode,diff:pick.diff||'normal',win:!!win,held,kills,bosses,boss_keys:keys,salvage:sal,duration_s:Math.round(game.time)};
+  const bosses=game.bosses|0,keys=(game.bossLog||[]).slice(0,40),claim={kind:'run',mode:game.mode,diff:pick.diff||'normal',win:!!win,held,kills,bosses,boss_keys:keys,salvage:sal,size:game.size||'std',duration_s:Math.round(game.time)};
   if(locker.cloud)return queueClaim(claim);
   locker.shards=(locker.shards|0)+shards;
   const st=locker.st,before=locker.cases,drops=bossDrops(keys,held);
@@ -227,13 +244,7 @@ function lockerReward(held,win,kills){
   if(game.mode==='endless')locker.cases+=Math.floor(held/5);
   for(const id in drops)caseAdd(id,drops[id]);
   const got=checkUnlocks();saveLocker();
-  const n=locker.cases-before,left=3-locker.prog,bits=[];
-  if(n>0)bits.push(`+${n} supply case${n>1?'s':''} in your Locker`);
-  for(const id in drops)if(drops[id])bits.push(`+${drops[id]} ${CASES[id].name.toLowerCase()}${drops[id]>1?'s':''} from bosses`);
-  if(shards)bits.push(`+${shards} shard${shards>1?'s':''} from ${shards*SAL_SHARD.rate} leftover salvage`);
-  bits.push(`${left} more raid${left>1?'s':''} to the next case`);
-  if(got.length)bits.push('Unlocked '+got.map(c=>c.name).join(', '));
-  return bits.join(' · ')+'.';
+  return mkReward('run',{cases:{supply:locker.cases-before,...drops},shards,unlocked:got.map(c=>c.id)});
 }
 // a PvP match counts toward the next case like a raid does; a win is a case outright
 // Base Battle and FFA don't pay Supply cases (those are co-op only). Each match rolls its mode's drop chance for
@@ -243,27 +254,26 @@ function pvpReward(win,kills){
   if(locker.cloud)return queueClaim({kind:'match',pvp:game.pvp,win:!!win,kills,duration_s:Math.round(game.time)});
   const st=locker.st;
   st.drops+=kills;st.pvp=(st.pvp|0)+1;if(win)st.pvpWins=(st.pvpWins|0)+1;
-  const cid=pvpCase(game.pvp),D=cid?CASES[cid].drop[game.pvp]:null,ch=D?(win?D.win:D.loss):0,bits=[];
-  if(cid){if(rnd()<ch){caseAdd(cid,1);bits.push(`+1 ${CASES[cid].name} in your Locker`)}else bits.push(`No ${CASES[cid].name.toLowerCase()} this time (${Math.round(ch*100)}% on a ${win?'win':'loss'})`)}
+  const cid=pvpCase(game.pvp),D=cid?CASES[cid].drop[game.pvp]:null,ch=D?(win?D.win:D.loss):0,cases={};let miss='';
+  if(cid){if(rnd()<ch){caseAdd(cid,1);cases[cid]=1}else miss=cid}
   const got=checkUnlocks();saveLocker();
-  if(got.length)bits.push('Unlocked '+got.map(c=>c.name).join(', '));
-  return bits.join(' · ')+'.';
+  return mkReward('match',{cases,chance:ch,missCase:miss,unlocked:got.map(c=>c.id)});
 }
-// what the server actually granted, in words
-function claimText(c,j){
-  const bits=[],pl=(n,w)=>`${n} ${w}${n===1?'':'s'}`;
-  if(c.kind==='run'){
-    if(j.cases_granted>0)bits.push(`+${pl(j.cases_granted,'supply case')}`);
-    for(const b of j.bonuses||[j.bonus||{}])if(b.n>0&&CASES[b.case])bits.push(`+${b.n} ${CASES[b.case].name.toLowerCase()}${b.n>1?'s':''} from bosses`);
-    if(j.shards>0)bits.push(`+${pl(j.shards,'shard')} from leftover salvage`);
-    const left=3-((j.locker&&j.locker.prog)|0);bits.push(`${pl(left,'more raid')} to the next supply case`);
-  }else{const C=CASES[j.case_id];if(C)bits.push(j.cases_granted>0?`+1 ${C.name}`:`No ${C.name.toLowerCase()} this time (${Math.round((j.chance||0)*100)}% chance)`)}
-  if(j.unlocked&&j.unlocked.length)bits.push('Unlocked '+j.unlocked.join(', '));
-  return bits.join(' · ')+'. Saved to your account.';
+// what the server actually granted, as the same reward data (older servers: derived from the counts)
+function claimReward(c,j){
+  const cases={};
+  if(j.cases&&typeof j.cases==='object')for(const id in j.cases)cases[id]=j.cases[id]|0;
+  else if(c.kind==='run'){cases.supply=j.cases_granted|0;for(const b of j.bonuses||[j.bonus||{}])if(b&&b.case)cases[b.case]=(cases[b.case]|0)+(b.n|0)}
+  else if(j.case_id)cases[j.case_id]=j.cases_granted|0;
+  const prog=(j.locker&&j.locker.prog)|0,ids=Array.isArray(j.unlocked_ids)?j.unlocked_ids:(j.unlocked||[]).map(n=>(COS.find(x=>x.name===n)||{id:n}).id);
+  const R={kind:c.kind,cases,shards:j.shards|0,unlocked:ids,prog,toNext:j.to_next!==undefined?j.to_next|0:3-prog,cloud:true,chance:j.chance||0,missCase:c.kind==='match'&&!(j.cases_granted>0)?j.case_id:''};
+  R.text=rewardText(R);return R;
 }
+const claimText=(c,j)=>claimReward(c,j).text;
 // show a claim's outcome on the end screen if it's still up for that game, otherwise as a toast
-function claimShow(c,txt,big){
-  if(game.phase==='over'&&game.claimAt===c.at){$('overLoot').textContent=txt;$('overLoot').hidden=false}else toast(big||'REWARDS',txt);   // the over panel fades in late; write into it even before it shows
+function claimShow(c,R,big){
+  const txt=typeof R==='string'?R:R.text;
+  if(game.phase==='over'&&game.claimAt===c.at){$('overLoot').textContent=txt;$('overLoot').hidden=false;if(typeof R!=='string')showRewards(R)}else toast(big||'REWARDS',txt);   // the over panel fades in late; write into it even before it shows
 }
 const caseCount=id=>id==='supply'?locker.cases:(locker.bag[id]|0);
 function caseAdd(id,n){if(id==='supply')locker.cases=Math.max(0,locker.cases+n);else locker.bag[id]=Math.max(0,(locker.bag[id]|0)+n)}

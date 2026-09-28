@@ -22,7 +22,8 @@ function genForest(){
   treesBack.sort((a,b)=>a.x+a.y-b.x-b.y);treesFront.sort((a,b)=>a.x+a.y-b.x-b.y);
 }
 // quarry ramps: the gap in the rim and the road up the slope outside it
-function rampNear(i,j){const L=game.lay;if(!L||!L.ramps)return false;for(const[a,b]of L.ramps){if(b===0&&j<0&&Math.abs(i-a)<=1&&j>-5)return true;if(a===N-1&&i>=N&&Math.abs(j-b)<=1&&i<N+4)return true}return false}
+function rampNear(i,j){const L=game.lay;if(!L||!L.ramps)return false;for(const[a,b]of L.ramps){if(b===0&&j<0&&Math.abs(i-a)<=1&&j>-5)return true;if(a===N-1&&i>=N&&Math.abs(j-b)<=1&&i<N+4)return true;
+  if(b===N-1&&j>=N&&Math.abs(i-a)<=1&&j<N+4)return true;if(a===0&&i<0&&Math.abs(j-b)<=1&&i>-5)return true}return false}
 const isRamp=(i,j)=>{const L=game.lay;return!!(L&&L.ramps&&L.ramps.some(r=>r[0]===i&&r[1]===j))};
 function drawTree(t,alpha){const c=iso(t.x,t.y);drawTreeAt(t,c[0],c[1],alpha)}
 function drawTreeAt(t,cx,cy,alpha){
@@ -111,7 +112,7 @@ function repaintTrees(changed){
     g.restore()}}finally{g=kg;camX=kx;camY=ky}
 }
 let caches=null,fadeT=0;
-const cacheKey=()=>(MAP?MAP.name:'')+'|'+N+'|'+(game.lay?game.lay.core.join():'');   // the painted scenery belongs to one map and size
+const cacheKey=()=>(MAP?MAP.name:'')+'|'+N+'|'+(game.pvp||'')+'|'+(game.lay?game.lay.core.join():'');   // the painted scenery belongs to one map and size
 function paintCache(c,fn){
   const ctx=c.cv.getContext('2d');ctx.setTransform(c.s,0,0,c.s,0,0);if(c===caches.back){ctx.fillStyle='#10140e';ctx.fillRect(0,0,c.w,c.h)}else ctx.clearRect(0,0,c.w,c.h);
   const kg=g,kx=camX,ky=camY;g=ctx;camX=-c.minX;camY=-c.minY;

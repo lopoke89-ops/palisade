@@ -33,12 +33,19 @@ const label = process.argv[2] || 'build';
   const p = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, hasTouch: true, isMobile: true });
   await p.goto(`http://localhost:${process.env.PORT||8080}/${process.env.PAGE||'debug.html'}?debug=1`); await p.waitForTimeout(1500);
   const cdp = await p.context().newCDPSession(p); await cdp.send('Performance.enable');
-  for (const page of ['main', 'multi', 'locker']) {
-    await p.evaluate(pg => __pal.showPage(pg), page); await p.waitForTimeout(800);
+  // v0.9.1 adds: the full party on the stage, Settings and Account in the shell, the Friends dropdown, the case intro
+  const scenes = { main: () => __pal.showPage('main'), multi: () => __pal.showPage('multi'), locker: () => __pal.showPage('locker'),
+    settings: () => __pal.showPage('settings'), account: () => __pal.showPage('account'),
+    party6: () => { const P = __pal; P.NET.mode = 'host'; P.NET.code = 'BNCH'; P.NET.roster = ['soldier', 'sniper', 'grenadier', 'quartermaster', 'soldier', 'sniper'].map((c, n) => ({ id: n ? 'g' + n : P.NET.myId || 'host', name: 'P' + n, cls: c, cos: 'std|class|std|none' })); P.showPage('lobby') },
+    friends: () => { const P = __pal; P.NET.mode = 'solo'; P.NET.roster = []; P.showPage('multi'); const f = document.getElementById('friendsBtn'); if (f) f.click() },
+    caseintro: () => { const P = __pal; if (document.getElementById('friendsBtn')) document.getElementById('friendsBtn').click(); P.showPage('locker'); P.locker.cases = 5; P.renderLocker(); document.querySelector('[data-open=supply]').click() } };
+  for (const page of (process.env.SCENES || 'main,multi,locker,settings,account,party6,friends,caseintro').split(',')) {
+    await p.evaluate(src => (0, eval)('(' + src + ')')(), scenes[page].toString()); await p.waitForTimeout(page === 'caseintro' ? 200 : 800);
     const m0 = (await cdp.send('Performance.getMetrics')).metrics.find(m => m.name === 'TaskDuration').value;
-    await p.waitForTimeout(4000);
+    const dur = page === 'caseintro' ? 2500 : 4000; await p.waitForTimeout(dur);
     const m1 = (await cdp.send('Performance.getMetrics')).metrics.find(m => m.name === 'TaskDuration').value;
-    out['menu_' + page + '_cpu_ms_per_s'] = +((m1 - m0) / 4 * 1000).toFixed(0);
+    out['menu_' + page + '_cpu_ms_per_s'] = +((m1 - m0) / (dur / 1000) * 1000).toFixed(0);
+    if (page === 'caseintro') { await p.evaluate(() => { const c = document.getElementById('caseDone'); document.getElementById('caseOv').hidden = true }); await p.waitForTimeout(3000) }
   }
   console.log(JSON.stringify(out));
   await b.close();

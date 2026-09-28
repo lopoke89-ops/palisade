@@ -111,7 +111,7 @@ function saveClaims(){try{localStorage.setItem(CLAIM_KEY,JSON.stringify({q:claim
 function queueClaim(c){
   if(!locker.cloud)return null;const q={...c,uid:locker.cloud.id,at:Date.now()};claims.push(q);saveClaims();game.claimAt=q.at;
   flushClaims().then(()=>{if(claims.includes(q)&&game.claimAt===q.at&&game.phase==='over')$('overLoot').textContent=flushWhy==='wait'?'Saving to your account in a few seconds…':flushWhy==='later'?'Kept on this device. It saves to your account in a few minutes (results can\'t add up to more play time than real time).':'No connection right now. Your result is kept on this device and reaches your account when you\'re back online.'});
-  return 'Sending your result to your account…';
+  return {kind:c.kind,pending:true,cases:{},shards:0,unlocked:[],text:'Sending your result to your account…'};
 }
 function flushClaims(){
   if(flushing)return flushing;if(!claims.length||!acct.s)return Promise.resolve();
@@ -122,7 +122,7 @@ function flushClaims(){
       const{uid,at,...p}=c,r=await rpc('claim_match_reward',{p});
       if(r.ok){claims.shift();saveClaims();takeLocker(r.j.locker);lastClaimLocker={j:r.j.locker,at:Date.now()};
         const dropped=c.kind==='match'&&r.j.cases_granted>0||c.kind==='run'&&r.j.bonus&&r.j.bonus.n>0;
-        claimShow(c,claimText(c,r.j),dropped?'CASE DROP':'REWARDS SAVED');if(dropped)uiSfx('kx_confetti');continue}
+        claimShow(c,claimReward(c,r.j),dropped?'CASE DROP':'REWARDS SAVED');if(dropped)uiSfx('kx_confetti');continue}
       if(!r.status||r.status>=500||r.status===401){flushWhy='offline';break}
       if(/moment ago/.test(sbErr(r))){flushWhy='wait';clearTimeout(flushT);flushT=setTimeout(flushClaims,21000);break}
       if(/saved later/.test(sbErr(r))){flushWhy='later';clearTimeout(flushT);flushT=setTimeout(flushClaims,5*60e3);break}   // play-time budget: keep it, the server takes it once enough real time has passed
@@ -185,6 +185,9 @@ function mainLabels(){
 function renderAcct(){
   mainLabels();if($('pg-account').hidden)return;
   const st=acct.state,g=isGuest(),u=acct.s&&acct.s.user,live=st==='guest'||st==='full';
+  // the profile header: your figure, your name and where your locker lives
+  $('acName').textContent=$('identityName').textContent;$('acState').textContent=$('identityState').textContent;
+  const av=$('acAvatar'),key=cosStr(locker.eq)+'|'+pick.cls;if(av.dataset.look!==key){av.dataset.look=key;const x=av.getContext('2d');x.clearRect(0,0,160,160);drawFig(x,160,160,lookOf(locker.eq,pick.cls),3.6,{x:.8,y:.3},152)}
   $('aLede').textContent=
     st==='off'?'This preview uses a local profile. Open the live site to sign in and sync your account.':
     st==='wait'?'Connecting to your account…':

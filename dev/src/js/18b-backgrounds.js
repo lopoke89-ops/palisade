@@ -208,14 +208,14 @@ locker=normLocker(locker);   // the locker loaded before these items existed: gi
 const DEFAULT_BG='campfire',lobbyBgId=()=>BGS[locker.eq.bg]?locker.eq.bg:DEFAULT_BG;
 // the lobby background canvas: shown whenever the menu is up outside a game (the demo yard behind it is never drawn)
 let bgDrawn='',bgAt=0;
-const LOBBY={bgFps:DESK?30:20,bgDpr:DESK?1.5:1,stageTouch:100,stageDesk:50};
+const LOBBY={bgFps:DESK?30:15,bgDpr:DESK?1.5:1,stageTouch:100,stageDesk:50};
 function syncBg(){const on=!$('menu').hidden&&demo;$('lobbyBg').hidden=!on;bgDrawn=''}
 const RM=matchMedia('(prefers-reduced-motion: reduce)'),reduceMotion=()=>RM.matches;
 function drawLobbyBg(now){
   // Only the lobby's own pages show the background in full; behind the Locker, Settings and Account panels it's a still.
   // Animated ones run at a modest rate and resolution: they're soft gradients, glows and drifting specks, and every
   // repaint means the whole screen is composited again (that, not the drawing, was most of the menu's cost).
-  const id=lobbyBgId(),B=BGS[id],c=$('lobbyBg'),still=B.still!==undefined||reduceMotion()||!stageVisible();
+  const id=lobbyBgId(),B=BGS[id],c=$('lobbyBg'),still=B.still!==undefined||reduceMotion()||!stageVisible()||$('menu').dataset.page==='locker';   // the Locker's item grid is busy enough: a still there
   const dpr=Math.min(DPR,still?1.5:LOBBY.bgDpr),w=W,h=H,pw=Math.round(w*dpr),ph=Math.round(h*dpr),key=id+'|'+pw+'x'+ph+(still?'|s':'');
   if(still&&bgDrawn===key)return;                         // a still background is drawn once
   if(!still&&bgDrawn===key&&now-bgAt<1000/LOBBY.bgFps)return;

@@ -10,7 +10,7 @@ const SIZES={std:16,xl:24};
 let terr=new Uint8Array(N*N),terrLog=[],floodOn=false,floodLv=0,MAP=null,MAPO={ox:0,oy:0,xl:false};   // terrLog: tiles changed since the start (host sends it)
 const tAt=(i,j)=>inb(i,j)?terr[idx(i,j)]:T_GROUND;
 const terrSolid=t=>t===T_PIT||t===T_ROCK||t===T_DRUM;
-const terrShot=t=>t===T_ROCK||t===T_DRUM;   // what stops a bullet (a pit doesn't)
+const terrShot=t=>t===T_ROCK;   // what stops a bullet and blocks sight: rock outcrops only (v0.9.1: oil drums don't; a pit doesn't)
 const wetT=t=>t===T_WATER||(t===T_LOW&&floodOn);
 // how fast you move on this spot (1 = normal)
 function slowAt(x,y){const t=tAt(Math.floor(x),Math.floor(y));return t===T_WATER?.5:t===T_LOW&&floodOn?.62:1}
@@ -31,7 +31,7 @@ function applyTerrLog(list){for(let q=0;q+1<list.length;q+=2){const k=list[q],t=
 const riverC=(j,o)=>9+o.ox+1.2*Math.sin((j-o.oy)*.5+.6);   // Riverbend's river: centre column for each row
 const MAPS={
   yard:{name:'THE YARD',short:'Yard',blurb:'The claim you know. Open ground, a few old ruins, raiders over the east fence.',
-    from:'over the east fence',bosses:['butcher','demolisher','storm'],col:'#b8894f',
+    from:'over the east fence',bosses:['butcher','demolisher','storm'],col:'#b8894f',hp:1,
     lay(o){
       const P=([i,j])=>[i+o.ox,j+o.oy],L={core:P([4,11]),nodes:[],ruins:[]};
       const wood=[[2,7],[7,13],[6,6],[9,9],[1,13],[10,4],[13,14]].map(P);
@@ -45,7 +45,7 @@ const MAPS={
       return L;
     }},
   river:{name:'RIVERBEND',short:'Riverbend',blurb:'A river cuts the yard in two. Two bridges, slow wading, more scrap, less wood. From raid 3 the banks flood.',
-    from:'across the river',bosses:['ferryman','butcher','storm'],col:'#4a9ac0',
+    from:'across the river',bosses:['ferryman','butcher','storm'],col:'#4a9ac0',hp:1.05,
     lay(o){
       const P=([i,j])=>[i+o.ox,j+o.oy],L={core:P([4,11]),nodes:[],ruins:[]};
       // the river: about two tiles wide, winding north to south; the bridges cross it
@@ -69,9 +69,9 @@ const MAPS={
       return L;
     },
     // outside the fence the river keeps going, so it reads as one river
-    outWater(i,j,o){if(i<0||i>=N)return false;const c=riverC(j,o);return Math.abs(i+.5-c)<1}},
+    outWater(i,j,o){if(o.pvp==='base')return Math.abs(i-j)<=1;if(o.pvp==='ffa')return i===7||i===8||j===7||j===8;if(i<0||i>=N)return false;const c=riverC(j,o);return Math.abs(i+.5-c)<1}},
   quarry:{name:'ASHFALL QUARRY',short:'Quarry',blurb:'A night pit lit by oil drums. Plenty of brick, little wood, three ramps in. Heavy blasts crack the floor into pits.',
-    from:'down the ramps',bosses:['foreman','demolisher','storm'],col:'#e0763a',night:true,
+    from:'down the ramps',bosses:['foreman','demolisher','storm'],col:'#e0763a',night:true,hp:1.1,
     lay(o){
       const P=([i,j])=>[i+o.ox,j+o.oy],L={core:P([4,11]),nodes:[],ruins:[]};
       const put=(list,t)=>{for(const[i,j]of list)if(inb(i,j))terr[idx(i,j)]=t};
@@ -106,9 +106,9 @@ function layMap(id,size,pvp){
   const n=pvp?16:SIZES[size]||16;
   if(n!==N){N=n}
   terr=new Uint8Array(N*N);terrLog=[];floodOn=false;floodLv=0;
-  if(pvp){MAP=MAPS.yard;return null}
+  if(pvp){MAP=MAPS[id]||MAPS.yard;MAPO={ox:0,oy:0,xl:false,pvp};return layPvp(MAP===MAPS[id]?id:'yard',pvp)}   // v0.9.1: PvP plays on every map
   MAP=MAPS[id]||MAPS.yard;
-  const o={ox:N>16?2:0,oy:N>16?N-16-2:0,xl:N>16};   // XL: the 16×16 layout moves in a little from the south-west corner
+  const o={ox:N>16?2:0,oy:N>16?N-16-2:0,xl:N>16,pvp:''};   // XL: the 16×16 layout moves in a little from the south-west corner
   MAPO=o;const L=MAP.lay(o);
   // piles, ruins and the stake always stand on plain ground
   for(const[i,j]of[L.core,...L.nodes.map(n=>[n.i,n.j]),...L.ruins.flatMap(r=>r[0])]){const k=idx(i,j);if(terr[k]!==T_GROUND&&terr[k]!==T_LOW)terr[k]=T_GROUND}
@@ -142,10 +142,15 @@ function makePit(k){
   for(const e of enemies)out(e);out(qm);
 }
 // Riverbend floods from raid 3: a warning, then the low banks go under for a while, then drain
-const FLOOD={from:3,delay:14,warn:5,len:24};
+const FLOOD={from:3,delay:14,warn:5,len:24},PVP_FLOOD={every:75,at:45,len:20};
 function updateFlood(dt){
-  if(MAP!==MAPS.river||game.pvp)return;
+  if(MAP!==MAPS.river||game.pvp==='ffa')return;
   const F=game.flood;
+  if(game.pvp==='base'){if(game.phase!=='raid'){if(floodOn){floodOn=false;markFlow()}return}
+    F.t+=dt;const c=F.t%PVP_FLOOD.every;
+    if(!F.warned&&c>=PVP_FLOOD.at-FLOOD.warn&&c<PVP_FLOOD.at){F.warned=true;toastAll('THE RIVER IS RISING','Both low banks go under in a few seconds.');sfx('flood')}
+    const on=c>=PVP_FLOOD.at&&c<PVP_FLOOD.at+PVP_FLOOD.len;if(on!==floodOn){floodOn=on;markFlow();if(!on){F.warned=false;toastAll('THE WATER DROPS','The banks are dry again.')}}
+    return}
   if(game.phase==='raid'&&game.wave>=FLOOD.from){
     F.t+=dt;
     if(!F.warned&&F.t>=FLOOD.delay-FLOOD.warn){F.warned=true;toastAll('THE RIVER IS RISING','The low banks go under in a few seconds. Wading is slow, and nothing new can be built there while it floods.');sfx('flood')}

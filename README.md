@@ -71,6 +71,28 @@ JOBS, BOSSES AND SALVAGE (v0.8.1)
     to reload.
 
 
+FRIENDS, PVP ON EVERY MAP, A NEW LOCKER (v0.9.1)
+------------------------------------------------
+  - FRIENDS: the button next to your name (top right). Find a player by
+    username and send a request; they accept or decline. Requests and a
+    mailbox have their own tabs, and a red dot shows what's new. Needs a
+    saved account. Players you saved before are under RECENT.
+  - PvP on every map: the host picks the map for Base Battle and
+    Free-for-all too. Each map has a mirrored Base Battle layout and its own
+    Free-for-all arena. PvP is always 16x16.
+  - Change your job in the room before the start, and in Free-for-all from
+    the pause menu or while you wait to respawn (it applies when you're
+    back in).
+  - XL boss raids bring two different bosses at once, each a little weaker.
+    Riverbend's raiders are a bit tougher, the Quarry's a bit more; XL adds
+    a little more. Oil drums no longer stop bullets.
+  - The Locker, Settings and Account pages use the new lobby. Thumbnails fit
+    their squares, cases open with a short intro (tap to skip), and the end
+    screen shows your rewards as cards with progress to the next case.
+  - New looks: a rounder Jack-o'-Lantern, and the Grenadier carries a pump
+    shotgun and a belt of grenades. "Glitch Mask" is now "Glitch Head".
+
+
 SMOOTHER NIGHTS AND DUSK (v0.8.8)
 ---------------------------------
   - Night raids draw about 30% faster on phones (12.5 to 8.9 ms a
