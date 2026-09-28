@@ -71,6 +71,27 @@ JOBS, BOSSES AND SALVAGE (v0.8.1)
     to reload.
 
 
+MILESTONES, CLASS REWARDS, MORE HALLOWEEN, THE FLAG CASE (v0.9.3)
+------------------------------------------------------------------
+  - MILESTONES: every boss (Butcher, Demolisher, Stormcaller, Ferryman,
+    Foreman) has four outfits built on its look, unlocked by beating it
+    25 / 50 / 100 / 250 times in runs you were in. Every map (Yard,
+    Riverbend, Quarry) has four outfits for 250 / 500 / 1000 / 2500 raids
+    held there. The steps go Rare, Epic, Legendary (one moving effect) and
+    Gold (the best effects in the game).
+  - CLASS REWARDS: each class unlocks headgear, a tracer, a kill effect
+    and a Gold outfit at 250 / 500 / 1000 / 2500 raids held as that class
+    (the class you end a run as).
+  - The Locker has a MILESTONES tab with every ladder and its count, and
+    locked items show a progress bar. After a run, a card shows the
+    milestone you're closest to. Counting starts with this version.
+  - HALLOWEEN CASE: Sheet Ghost, Scarecrow, Frankenstein's Monster, Scary
+    Clown, Hockey-Mask Slasher and Dracula, plus Candle Flicker, Poison
+    Apple, Blood Trail and Hellfire tracers.
+  - FLAG CASE: 32 flags, each as a lobby background and a tracer. A 25%
+    chance for everyone after any win (co-op or PvP), or 10 shards.
+
+
 CONTROLLERS (v0.9.2.1)
 ----------------------
   - Plug in or pair a controller (Xbox, PlayStation and most others) and

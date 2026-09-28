@@ -119,6 +119,11 @@ function sfx(name,x,y,noRec,ui){
     case'kx_bats':for(let k=0;k<5;k++){nz(dest,t+k*.045,.04,'bandpass',2600+k*300,3,.08);osc(dest,t+k*.05,.05,'sine',3200-k*180,.025)}break;
     case'kx_spider':osc(dest,t,.5,'sawtooth',220,.03,110);nz(dest,t+.45,.08,'lowpass',400,.7,.12);break;
     case'kx_souls':osc(dest,t,.9,'sine',330,.05,660);osc(dest,t+.08,.9,'sine',392,.035,784);nz(dest,t,.6,'bandpass',900,1.4,.05,1800);break;
+    // v0.9.3 class rewards: a short boom; a scope's click and ping; a crack and rattling shrapnel; clinking scrap
+    case'kx_rocketburst':nz(dest,t,.45,'lowpass',900,.6,.16,120);osc(dest,t,.3,'sine',90,.1,40);break;
+    case'kx_reticle':osc(dest,t,.03,'square',1200,.03);osc(dest,t+.05,.25,'sine',1760,.04);osc(dest,t+.05,.25,'sine',2640,.02);break;
+    case'kx_frag':nz(dest,t,.1,'highpass',2500,.7,.14);nz(dest,t,.35,'lowpass',700,.7,.12,160);for(let k=0;k<4;k++)nz(dest,t+.08+k*.05,.03,'bandpass',3500+k*400,4,.05);break;
+    case'kx_salvage':[1318,1760,1568,2093].forEach((f,i)=>osc(dest,t+i*.06,.09,'triangle',f,.04));break;
     case'kx_bolt':nz(dest,t,.12,'highpass',3500,.6,.14);osc(dest,t,.1,'square',80,.06,40);break;
     case'kx_skull':osc(dest,t,.4,'triangle',196,.06,147);osc(dest,t,.4,'triangle',233,.04,175);break;
     case'kx_pixel':[523,784,1046,1568].forEach((f,i)=>osc(dest,t+i*.04,.05,'square',f,.04));break;

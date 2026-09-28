@@ -746,3 +746,12 @@ body.padMenu #padHint{display:flex}
 body.padMenu #keys{visibility:hidden}
 @media (max-width:760px){body.pad #keys{display:none}}   /* a phone with a controller: the play buttons and the pause card show the layout */
 body.padMenu #menu .panel{padding-bottom:64px}body.pad .padF{scroll-margin:12px 12px 64px}
+
+/* ---------- milestones and the Flag Case (v0.9.3) ---------- */
+/* six tabs now: two rows of three */
+#lockTabs,.lockPanel #lockTabs{grid-template-columns:repeat(3,minmax(0,1fr))}#lockTabs button:nth-child(4){border-left:0}#lockTabs button:nth-child(n+4){border-top:1px solid var(--line)}
+.gsec small{display:block;font-family:var(--mono);font-weight:600;font-size:10px;letter-spacing:.04em;color:var(--dim);margin-top:2px}
+.item .iprog{position:relative;width:100%;height:12px;background:rgba(0,0,0,.45);border:1px solid var(--line);overflow:hidden}
+.item .iprog::before{content:'';position:absolute;left:0;top:0;bottom:0;width:var(--p,0%);background:var(--rc,#e2b436);opacity:.55}
+.item .iprog small{position:relative;display:block;font-size:8.5px;line-height:10px;color:var(--bone);letter-spacing:.03em}
+.rwMile small{max-width:220px}

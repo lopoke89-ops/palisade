@@ -56,7 +56,7 @@ function renderPartyState(){
   if(!r){el.type='button';el.setAttribute('aria-label','Invite player to slot '+(i+1));el.addEventListener('click',partyInvite)}box.append(el)}
  $('partyHint').textContent=room?'Share your room link. Your host starts the match.':'Up to six players · desktop and mobile';
 }
-let partyPaintAt=0,partySig='',partyMeSig='';
+let partyPaintAt=0,partySig='',partyMeSig='',partyCharSig='',partyCharCv=null;
 // The stage has two layers: the back one holds the pads and the rest of the party (repainted only when who is
 // there or how they look changes), the front one holds you, turning slowly in 2° steps. Each layer is painted
 // straight from the model (no sprite cache at this size) and only when its pose changes, at most 30 times a
@@ -86,7 +86,7 @@ function drawPartyPreview(now){
    // empty spots show where the next player stands; filled ones are drawn back to front
    const order=L.others.map((s,i)=>({s,i})).sort((a,b)=>a.s[1]-b.s[1]);
    for(const {s:[px,py,sc],i} of order){const r=others[i];pad(px,py,sc*9.5,!!r);
-    if(r)paintWardrobeCharacter(x,look(r),stageAngle(i,0),0,sc,px,py,false);
+    if(r){const lr=look(r);if(lr.aura)paintAura(x,lr.aura,px,py,sc,1.3,1,'ground');paintWardrobeCharacter(x,lr,stageAngle(i,0),0,sc,px,py,false);if(lr.aura)paintAura(x,lr.aura,px,py,sc,1.3,1,'top')}   // the others' outfit effects hold still
     else if(i<4){x.fillStyle='#7e98a5';x.font='300 48px system-ui';x.textAlign='center';x.fillText('+',px,py-28)}}
    for(const {s:[px,py,sc],i} of order){const r=others[i];if(r)stagePlate(x,px,py+sc*2.4,(r.name||'PLAYER').toUpperCase(),CLASSES[r.cls]?.name||'PLAYER',sig==='p'?sc*1.35:sc)}
   }
@@ -94,9 +94,20 @@ function drawPartyPreview(now){
  // front layer: you, turning in 2° steps; animated outfits tick at 10 a second
  if(!me)return;const lk=look(me),ang=stageAngle(-1,t),step=Math.round(ang*90/Math.PI)*Math.PI/90;
  const animated=lk.stars||lk.holo||lk.glitter||lk.halo||lk.glitchm,tick=animated?Math.floor(t*10)/10:lk.pking?Math.floor(t*6)%4:0;
- const meSig=sig+'|'+me.cls+me.cos+'|'+step.toFixed(4)+'|'+tick;
+ // v0.9.3: an outfit effect moves at 12 frames a second over a copy of the figure (the figure is only repainted when it turns)
+ const aura=lk.aura&&!reduceMotion()?lk.aura:'',at=aura?Math.floor(t*12)/12:0;
+ const charSig=sig+'|'+me.cls+me.cos+'|'+step.toFixed(4)+'|'+tick,meSig=charSig+'|'+at;
  if(meSig===partyMeSig)return;partyMeSig=meSig;partyPaintAt=now;
- const cv=$('partyMe'),x=cv.getContext('2d');x.clearRect(0,0,cv.width,cv.height);const [mx,my,ms]=L.me;paintWardrobeCharacter(x,lk,step,tick,ms,mx,my-4,false);
+ const cv=$('partyMe'),x=cv.getContext('2d'),[mx,my,ms]=L.me;
+ if(!lk.aura){x.clearRect(0,0,cv.width,cv.height);paintWardrobeCharacter(x,lk,step,tick,ms,mx,my-4,false);return}
+ // only the box around the figure is cleared and redrawn for each frame of the effect (the whole layer only when the figure turns)
+ const T=x.getTransform(),k=T.a,bx=Math.max(0,Math.floor((mx-ms*24)*k+T.e)),by=Math.max(0,Math.floor((my-4-ms*50)*k+T.f)),bw=Math.min(cv.width-bx,Math.ceil(ms*48*k)),bh=Math.min(cv.height-by,Math.ceil(ms*62*k));
+ let full=false;
+ if(charSig!==partyCharSig||!partyCharCv||partyCharCv.width!==cv.width||partyCharCv.height!==cv.height){partyCharSig=charSig;full=true;partyCharCv=partyCharCv||document.createElement('canvas');partyCharCv.width=cv.width;partyCharCv.height=cv.height;
+   const c=partyCharCv.getContext('2d');c.setTransform(T);paintAura(c,lk.aura,mx,my-4,ms,1.3,1,'sground');paintWardrobeCharacter(c,lk,step,tick,ms,mx,my-4,false);paintAura(c,lk.aura,mx,my-4,ms,1.3,1,'stop')}
+ const ta=aura?at:1.3;x.save();x.setTransform(1,0,0,1,0,0);if(full)x.clearRect(0,0,cv.width,cv.height);else x.clearRect(bx,by,bw,bh);x.restore();
+ x.save();x.setTransform(1,0,0,1,0,0);if(full)x.drawImage(partyCharCv,0,0);else x.drawImage(partyCharCv,bx,by,bw,bh,bx,by,bw,bh);x.restore();
+ x.save();x.beginPath();x.rect((bx-T.e)/k,(by-T.f)/k,bw/k,bh/k);x.clip();paintAura(x,lk.aura,mx,my-4,ms,ta,1,'moving');x.restore();
 }
 let stageFxAt=0,stageFxOn=false;
 function drawStageFx(now){

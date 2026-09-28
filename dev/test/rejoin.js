@@ -64,6 +64,8 @@ const claims = [];
   assert.deepEqual(out.first, { gid: true, from: 0, to: 3, held: 3, left: true, win: false, bosses: [], dur: true });
   assert.deepEqual(out.second, { gid: true, from: 3, to: 5, held: 2, left: false, win: true, bosses: ['demolisher'], dur: true });
   out.upgrades = claims[0].upgrades; assert.match(out.upgrades, /^\d{5}:\d$/);
+  // v0.9.3: every claim says which class the player ended as and which map it was (the milestone counters need both)
+  out.clsMap = claims.map(c => c.cls + '@' + c.map); for (const c of claims) { assert.ok(['soldier', 'sniper', 'grenadier', 'quartermaster'].includes(c.cls)); assert.ok(['yard', 'river', 'quarry'].includes(c.map)) }
   await G.screenshot({ path: __dirname + '/out/rejoin_over.png' });
   console.log(JSON.stringify(out)); console.log('errors:', errors.length ? errors : 'none'); assert.equal(errors.length, 0); await b.close();
 })().catch(e => { console.log('Error:', e.message, (e.stack || '').split('\n').find(l => /rejoin.js/.test(l))); process.exit(1) });

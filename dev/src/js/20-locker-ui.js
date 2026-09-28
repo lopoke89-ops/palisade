@@ -54,6 +54,11 @@ function killFxAt(x,y,id){
     case'bats':E(11,'bat',.55);E(3,'smoke',.3);break;
     case'spider':E(1,'spider',0);ringFx(x,y,0,.75,.7,'#f0f0f8','#8a8aa0',1.1);ringFx(x,y,0,.45,.55,'#f0f0f8','#8a8aa0',.8);break;
     case'souls':E(4,'soul',.35);E(10,'gflame',.25);ringFx(x,y,0,1.3,.7,'#c8ffe0','#1ee860',2.2);addFlash({x,y,life:.2,max:.2,r:.9});break;
+    // v0.9.3 class rewards
+    case'rocketburst':E(10,'fire',.5);E(5,'smoke',.5);ringFx(x,y,0,1.3,.5,'#ffd070','#ff6a1a',2.4);addFlash({x,y,life:.2,max:.2,r:1});break;
+    case'reticle':E(6,'glint',.7);ringFx(x,y,1.1,0,.4,'#ff6a6a','#ff2a2a',1.6);break;
+    case'frag':E(10,'rock',.5);E(8,'spark');ringFx(x,y,0,1.2,.45,'#fff0c0','#8a8680',2);addFlash({x,y,life:.16,max:.16,r:.8});break;
+    case'salvage':E(10,'rock',.6);E(6,'heal',.5);break;
   }
 }
 function keyCap(x,y,key,text,col){
@@ -107,7 +112,10 @@ function drawIcon(cv2,c){
     const look=lookOf(c.cat==='skin'?{...locker.eq,skin:c.key}:{...locker.eq,hat:c.key},pick.cls),key=c.id+'|'+pick.cls+'|'+(c.cat==='hat'?locker.eq.skin:locker.eq.hat)+'|'+S;
     let img=THUMB_CACHE.get(key);
     if(!img){const f=figFrame(look,c.cat),pad=c.cat==='hat'?1.18:1.1,sc=S/(f.s*pad);img=document.createElement('canvas');img.width=img.height=S;
-      paintWardrobeCharacter(img.getContext('2d'),look,THUMB_ANG,0,sc,S/2-f.cx*sc,S/2-f.cy*sc,false);
+      const ic=img.getContext('2d'),au=c.cat==='skin'&&look.aura;   // v0.9.3: one moment of the outfit's moving effect
+      if(au)paintAura(ic,au,S/2-f.cx*sc,S/2-f.cy*sc,sc,1.3,1,'ground');
+      paintWardrobeCharacter(ic,look,THUMB_ANG,0,sc,S/2-f.cx*sc,S/2-f.cy*sc,false);
+      if(au)paintAura(ic,au,S/2-f.cx*sc,S/2-f.cy*sc,sc,1.3,1,'top');
       if(THUMB_CACHE.size>240)THUMB_CACHE.clear();THUMB_CACHE.set(key,img)}
     x.drawImage(img,0,0);return}
   if(c.cat==='bg'){   // painted wide (16:9, like a screen) and cropped to the middle square
@@ -123,6 +131,8 @@ function drawIcon(cv2,c){
 }
 // grid thumbnails are painted at their displayed size × pixel ratio, a few per frame so a tab opens without a stall
 const thumbQ=[];let thumbBusy=false;
+// v0.9.3: a thumbnail is only painted once it scrolls into view (the Skins tab alone has about a hundred)
+const thumbSeen=typeof IntersectionObserver==='function'?new IntersectionObserver(es=>{for(const e of es)if(e.isIntersecting){thumbSeen.unobserve(e.target);queueThumb(e.target,e.target._c)}},{rootMargin:'160px'}):null;
 function queueThumb(cv2,c){thumbQ.push([cv2,c]);if(!thumbBusy){thumbBusy=true;requestAnimationFrame(thumbTick)}}
 function thumbTick(){
   const t0=performance.now();
@@ -136,12 +146,16 @@ let lockCat='skin',caseItem=null;
 function itemTile(c,lazy){
   const d=document.createElement('button');d.type='button';d.className='item';d.style.setProperty('--rc',RAR[c.r].col);
   const art=document.createElement('span');art.className='art';const cv2=document.createElement('canvas');cv2.width=cv2.height=128;art.append(cv2);
-  if(lazy)queueThumb(cv2,c);else drawIcon(cv2,c);
+  if(lazy){if(thumbSeen){cv2._c=c;thumbSeen.observe(cv2)}else queueThumb(cv2,c)}else drawIcon(cv2,c);
   const b=document.createElement('b');b.textContent=c.name;const i=document.createElement('i');
   const own=owns(c.id),eq=locker.eq[c.cat]===c.key;if(c.r==='g')d.classList.add('gold');
   i.textContent=eq?'EQUIPPED':own?RAR[c.r].n:c.how;if(!own)d.classList.add('lock');if(eq)d.classList.add('eq');
-  d.setAttribute('aria-label',`${c.name}, ${RAR[c.r].n.toLowerCase()} ${CATN[c.cat].toLowerCase()}, ${eq?'equipped':own?'owned':'locked: '+c.how}`);
-  d.append(art,b,i);return d;
+  // v0.9.3: a locked unlock shows how far along it is ("12 / 25")
+  const pr=!own&&c.src==='unlock'&&c.need?needProgress(c.need):null;
+  d.setAttribute('aria-label',`${c.name}, ${RAR[c.r].n.toLowerCase()} ${CATN[c.cat].toLowerCase()}, ${eq?'equipped':own?'owned':'locked: '+c.how+(pr?`, ${pr.have} of ${pr.need}`:'')}`);
+  d.append(art,b,i);
+  if(pr){const bar=document.createElement('span');bar.className='iprog';bar.style.setProperty('--p',Math.round(pr.have/pr.need*100)+'%');const n=document.createElement('small');n.textContent=`${pr.have} / ${pr.need}`;bar.append(n);d.append(bar)}
+  return d;
 }
 // one panel per case: how many you hold, OPEN, and BUY for cases that have a shard price
 function renderCaseBoxes(){
@@ -154,15 +168,24 @@ function renderCaseBoxes(){
     d.append(nm,b,how,bt);box.append(d)}
   $('shardTxt').textContent=`${locker.shards} shard${locker.shards===1?'':'s'} · duplicates and leftover run salvage turn into shards`;
 }
+// v0.9.3: how far a counter has got toward an unlock's goal (the first counter it needs)
+function needProgress(need){const k=Object.keys(need)[0];if(!k)return null;const n=need[k];return{key:k,have:Math.min(n,locker.st[k]|0),need:n}}
 function renderLocker(){
   renderCaseBoxes();
   document.querySelectorAll('#lockTabs button').forEach(b=>b.classList.toggle('sel',b.dataset.cat===lockCat));renderPartyState();
   const grid=$('lockGrid');grid.textContent='';let sec='';
-  const ord=c=>c.box?1+CASE_IDS.indexOf(c.box):0;   // free and unlockable items first, then each case's own section
+  const tile=c=>{const t=itemTile(c,true);t.addEventListener('click',()=>{if(!owns(c.id))return;locker.eq[c.cat]=c.key;saveLocker();renderLocker();cloudEquip(c.id)});return t};
+  const head=(text,col,sub)=>{const h=document.createElement('div');h.className='gsec';if(col)h.style.setProperty('--cc',col);h.textContent=text;if(sub){const s=document.createElement('small');s.textContent=sub;h.append(s)}grid.append(h)};
+  if(lockCat==='ms'){   // v0.9.3 MILESTONES: every ladder, its counter and its four items
+    for(const L of LADDERS){const have=locker.st[L.st]|0;head(L.title,null,`${have} ${L.unit}`);for(const [cat,key]of L.items)grid.append(tile(COSBY[cat+':'+key]))}
+  }else{
+  // free and plain unlockable items first, then the milestone items, then each case's own section
+  const ord=c=>c.ladder?.5:c.box?1+CASE_IDS.indexOf(c.box):0;
   for(const c of COS.filter(c=>c.cat===lockCat).sort((a,b)=>ord(a)-ord(b))){
-    if(c.box&&c.box!==sec){sec=c.box;const h=document.createElement('div');h.className='gsec';h.style.setProperty('--cc',CASES[c.box].col);h.textContent=CASES[c.box].name;grid.append(h)}
-    const t=itemTile(c,true);
-    t.addEventListener('click',()=>{if(!owns(c.id))return;locker.eq[c.cat]=c.key;saveLocker();renderLocker();cloudEquip(c.id)});grid.append(t)}
+    if(c.ladder&&sec!=='ms'){sec='ms';head('MILESTONES')}
+    if(c.box&&c.box!==sec){sec=c.box;head(CASES[c.box].name,CASES[c.box].col)}
+    grid.append(tile(c))}
+  }
   syncBg();
   const st=locker.st;$('lockHint').textContent=`Earn a supply case every 3 raids you survive and for every win. Duplicates turn into shards. So far: ${st.raids} raids held, ${st.wins} win${st.wins===1?'':'s'}, ${st.drops} raiders dropped.${locker.cloud?' Saved to your account.':''}`;
 }
@@ -267,6 +290,10 @@ function showRewards(R){
     if(R.sp>0){const d=card('rwShard rwSkill');const n=document.createElement('b');n.className='rwNum';n.dataset.to=R.sp;n.textContent='+0';const g=document.createElement('i');g.textContent='✦';d.append(g,n);small(d,R.sp===1?'SKILL POINT':'SKILL POINTS')}
     for(const id of R.unlocked){const c=COSBY[id];if(!c)continue;const d=card('rwNew');d.style.setProperty('--rc',RAR[c.r].col);const t=document.createElement('span');t.textContent='UNLOCKED';
       const cv=document.createElement('canvas');cv.width=cv.height=Math.round(88*Math.min(2,devicePixelRatio||1));drawIcon(cv,c);const n=document.createElement('b');n.textContent=c.name;d.append(t,cv,n)}
+    // v0.9.3: the milestone this player is closest to (of the ladders they've started)
+    if(R.kind==='run'){let best=null;for(const L of LADDERS){const have=locker.st[L.st]|0;if(!have)continue;const i=L.items.findIndex(([c,k])=>!owns(c+':'+k));if(i<0)continue;const f=have/L.steps[i];if(!best||f>best.f)best={L,i,f,have}}
+      if(best){const{L,i,have}=best,it=COSBY[L.items[i][0]+':'+L.items[i][1]],d=card('rwProg rwMile',L.title);const bar=document.createElement('div');bar.className='rwBar';const f=document.createElement('i');bar.append(f);
+        f.style.setProperty('--to',Math.min(100,have/L.steps[i]*100)+'%');d.append(bar);small(d,`${have} / ${L.steps[i]} ${L.unit} · next: ${it.name}`)}}
     if(R.kind==='run'){const d=card('rwProg','SUPPLY CASE');const bar=document.createElement('div');bar.className='rwBar';const f=document.createElement('i');bar.append(f);
       for(let k=1;k<3;k++){const m=document.createElement('u');m.style.left=(k*100/3)+'%';bar.append(m)}
       f.style.setProperty('--to',((R.prog|0)/3*100)+'%');d.append(bar);small(d,R.toNext===1?'1 more raid to the next case':`${R.toNext} more raids to the next case`)}

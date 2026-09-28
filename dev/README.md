@@ -267,3 +267,22 @@ play together. `multiplayer.js` verifies host/guest loadout propagation before m
   and it stays inside pause and the armory). `lobby.js` now expects 5 Settings cards. `shots_pad.js` takes
   controller screenshots (not pass/fail).
 - No server change.
+
+## v0.9.3: milestones, class rewards, Halloween additions, the Flag Case
+
+- **Ladders** (`LADDERS` in `18-cosmetics.js`): 12 ladders of four unlock items (r, e, l, g), each keyed to one locker
+  counter: `boss_<boss>`, `map_<map>`, `cls_<class>_raids`. `addMilestones` (local lockers) and
+  `claim_match_reward` (accounts) add to them; the claim now sends `cls`. Existing `need`/`apply_unlocks` does the rest.
+- **Outfits**: new skin parts in `paintWardrobeCharacter` (apron, facewrap, coat, cape/collar, reflect, waders, charges,
+  medals, ghillie, sheet, hockey, clownface, stitches, sack, straws, and hats hardhat/straw/ghood/bomb/slick/mop/headset).
+  `headwear` in `SKINS` = what the head wears with Class Issue headgear.
+- **Auras** (`16b-auras.js`): the moving part of Legendary/Gold outfits, drawn over the cached figure each frame
+  (`paintAura`, parts `ground`/`top`; the lobby stage bakes the still lights into its cached figure). New Gold outfits
+  have no `glitter` (it forces a 20 fps repaint of the figure).
+- **Flag Case** (`FLAGS`, `drawFlag`, `flagScene` in `18b-backgrounds.js`; `CASES.flags`, `drop.win`, `winDrop`).
+  New tracers are appended to the END of `TRAILS` (shots send the tracer's index).
+- Locker thumbnails paint when they scroll into view (IntersectionObserver).
+- **Server: `supabase/v0.9.3-migration.sql`** (case type, 122 items, `match_results.cls`, new `claim_match_reward`).
+  Tested in a rolled-back transaction on the test account. No backfill: counters start at zero.
+- Tests: `milestones.js`, `flagcase.js`; `cosmetic_network.js` (a guest sees a new outfit and flag tracer; unknown ids
+  fall back), `rejoin.js` (claims carry `cls` and `map`). Meter: `goldbench.js` (six Gold outfits vs standard).
