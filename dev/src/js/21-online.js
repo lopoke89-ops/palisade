@@ -4,7 +4,7 @@
 // they talk directly. Each guest opens 'r' (reliable: hello, build, grenade, and every
 // one-off event: sounds, particles, bullets, toasts, wall changes), 'u' (fast: movement in),
 // and 'st' (never resent: game state out, 15 times a second).
-const PROTO='yard-15',ROOM_PREFIX='palisade-yard-15-';
+const PROTO='yard-16',ROOM_PREFIX='palisade-yard-16-';
 const NET={mode:'solo',inGame:false,peer:null,code:'',roster:[],conns:new Map(),host:null,fxq:[],snapT:0,snapN:0,lastN:0,inT:0,nextG:1,lastHeard:0,
   sendTo(id,msg){for(const c of this.conns.values())if(c.pid===id&&c.r&&c.r.open){try{c.r.send(msg)}catch(e){}}},
   sendAll(msg,ch='r'){for(const c of this.conns.values()){const x=c[ch]&&c[ch].open?c[ch]:c.r;if(c.pid&&x&&x.open)try{x.send(msg)}catch(e){}}},
@@ -60,7 +60,7 @@ function netReset(){
   if(NET.mode==='host')lobbyUnpublish();
   clearChat();
   try{NET.peer&&NET.peer.destroy()}catch(e){}
-  Object.assign(NET,{mode:'solo',inGame:false,peer:null,code:'',roster:[],host:null,fxq:[],lastN:0});NET.conns.clear();myId='solo';
+  Object.assign(NET,{mode:'solo',inGame:false,peer:null,code:'',roster:[],host:null,fxq:[],lastN:0,hostMods:[]});NET.conns.clear();myId='solo';
 }
 function netLeave(msg){netReset();toMenu();if(msg){showPage('multi');mStatus(msg)}}
 
@@ -72,7 +72,7 @@ async function netHost(){
   const ice=await getIce();
   if(NET.mode!=='opening')return;   // they backed out while the relay logins loaded
   const code=genCode(),peer=new Peer(ROOM_PREFIX+code,peerOpts(ice));NET.peer=peer;NET.mode='opening';
-  peer.on('open',()=>{NET.mode='host';NET.code=code;myId='host';NET.roster=[{id:'host',name:myName(),cls:pick.cls,cos:cosStr(myCos()),team:'a'}];mStatus('');showLobby();lobbyStartPublishing()});
+  peer.on('open',()=>{NET.mode='host';NET.code=code;myId='host';NET.roster=[{id:'host',name:myName(),cls:pick.cls,cos:cosStr(myCos()),team:'a',sk:mySkills()}];mStatus('');showLobby();lobbyStartPublishing()});
   peer.on('connection',hostConn);
   peer.on('error',err=>{
     if(err.type==='unavailable-id'&&NET.mode==='opening'){try{peer.destroy()}catch(e){}netHost();return}
@@ -91,7 +91,18 @@ function hostConn(conn){
   else conn.on('close',()=>hostDrop(conn.peer));
   conn.on('error',()=>{});
 }
-const rosterNow=()=>running()&&!demo?[...players.values()].map(p=>({id:p.id,name:p.name,cls:p.cls,cos:p.cosS,team:p.team})):NET.roster;
+const rosterNow=()=>running()&&!demo?[...players.values()].map(p=>({id:p.id,name:p.name,cls:p.cls,cos:p.cosS,team:p.team,sk:p.sk})):NET.roster;
+// v0.9.2: a guest's skill tree only counts once the host has checked it against their account (the server's copy);
+// until then, and for players without an account, they play without perks
+function checkSkills(c,claimed){
+  const want=parseSkills(claimed);c.sk='';if(!validPlayerId(c.uid)||!claimed)return;
+  const put=sk=>{c.sk=sk;const r=NET.roster.find(x=>x.id===c.pid);if(r){r.sk=sk;if(!NET.inGame)broadcastLobby()}
+    const p=players.get(c.pid);if(p&&NET.inGame&&p.sk!==sk){p.sk=sk;const hp=p.hp/p.max;p.perk=perkMods(parseSkills(sk),!!game.pvp);p.max=0;refit(p);p.hp=Math.max(1,Math.round(p.max*hp))}};
+  if(!cloudOn||!acct.s){if(new URLSearchParams(location.search).has('trustskills'))put(skillStr(want,want.molOff));return}   // offline test rooms only
+  rpc('skills_of',{p_uid:c.uid}).then(r=>{if(!r.ok||!r.j||typeof r.j!=='object')return;const t={};
+    for(const S of SKILLS)t[S.id]=Math.min(want[S.id]|0,r.j[S.id]|0);put(skillStr(parseSkills(skillStr(t)),want.molOff))}).catch(()=>{});
+}
+const startMsg=()=>({t:'start',roster:rosterNow(),diff:pick.diff,mode:game.mode,pvp:game.pvp,map:game.map,size:game.size,oct:game.oct?1:0,gid:game.gid,mods:game.mods,job:game.job});
 const lighterSide=list=>{let a=0,b=0;for(const r of list)if(r.team==='b')b++;else a++;return a<=b?'a':'b'};
 function hostData(peerId,d){
   const c=NET.conns.get(peerId);if(!c||!d)return;c.heard=performance.now();
@@ -99,25 +110,25 @@ function hostData(peerId,d){
     if(c.pid)return;
     if(d.v!==PROTO){c.r.send({t:'kick',why:'Your copy of PALISADE is a different version from the host’s. Both of you reload the page.'});return}
     if(NET.roster.length>=6){c.r.send({t:'kick',why:'That game is full (6 players).'});return}
-    c.pid='g'+(NET.nextG++);c.name=String(d.name||'Player').slice(0,12);c.cls=CLASSES[d.cls]?d.cls:'soldier';c.cos=cosStr(parseCos(d.cos));
+    c.pid='g'+(NET.nextG++);c.name=String(d.name||'Player').slice(0,12);c.cls=CLASSES[d.cls]?d.cls:'soldier';c.cos=cosStr(parseCos(d.cos));c.uid=validPlayerId(d.uid)?d.uid:'';
     const team=NET.inGame&&game.pvp==='base'?lighterSide([...players.values()]):lighterSide(NET.roster);
-    NET.roster.push({id:c.pid,name:c.name,cls:c.cls,cos:c.cos,team});
+    NET.roster.push({id:c.pid,name:c.name,cls:c.cls,cos:c.cos,team,sk:''});checkSkills(c,d.sk);
     c.r.send({t:'welcome',id:c.pid});
     if(NET.inGame){   // dropping into a game already running
-      const p=makePlayer(c.pid,c.name,c.cls,players.size,c.cos,game.pvp==='base'?team:'');[p.x,p.y]=respawnAt(p);if(game.pvp)p.prot=PVP.prot;if(game.pvp==='base')p.sal=PVP.startSal;if(game.pvp==='ffa')p.mats=[0,0,0];players.set(c.pid,p);
-      c.r.send({t:'start',roster:rosterNow(),diff:pick.diff,mode:game.mode,pvp:game.pvp,map:game.map,size:game.size,oct:game.oct?1:0});NET.wlSent=null;NET.piSent=null;
+      const p=makePlayer(c.pid,c.name,game.job||c.cls,players.size,c.cos,game.pvp==='base'?team:'',c.sk);kitUp(p);[p.x,p.y]=respawnAt(p);if(game.pvp)p.prot=PVP.prot;if(game.pvp==='base')p.sal=PVP.startSal;if(game.pvp==='ffa')p.mats=[0,0,0];players.set(c.pid,p);
+      c.r.send(startMsg());NET.wlSent=null;NET.piSent=null;
       toastAll(`${c.name.toUpperCase()} JOINED`,game.pvp==='base'?`Dropped in on ${TEAMS[team].name}.`:game.pvp?'Dropped into the fight.':'Dropped in at the stake.')}
     broadcastLobby();return;
   }
   if(d.t==='loadout'){
     if(c.pid&&!NET.inGame){const r=NET.roster.find(x=>x.id===c.pid);if(r){
       c.cls=CLASSES[d.cls]?d.cls:r.cls;c.cos=cosStr(parseCos(d.cos));c.name=String(d.name||r.name).slice(0,12);
-      Object.assign(r,{cls:c.cls,cos:c.cos,name:c.name});broadcastLobby();
+      Object.assign(r,{cls:c.cls,cos:c.cos,name:c.name});if(d.sk!==undefined&&d.sk!==c.skAsk){c.skAsk=d.sk;checkSkills(c,d.sk)}broadcastLobby();
     }}return;
   }
   if(d.t==='ping')return;
   if(d.t==='c'){hostChat(c.pid,d.m);return}
-  if(d.t==='nextcls'){const p=players.get(c.pid);if(p&&NET.inGame&&game.pvp==='ffa'&&CLASSES[d.cls])p.nextCls=d.cls===p.cls?'':d.cls;return}
+  if(d.t==='nextcls'){const p=players.get(c.pid);if(p&&NET.inGame&&game.pvp==='ffa'&&!game.job&&CLASSES[d.cls])p.nextCls=d.cls===p.cls?'':d.cls;return}
   if(d.t==='team'){if(!NET.inGame){const r=NET.roster.find(x=>x.id===c.pid);if(r){r.team=r.team==='b'?'a':'b';broadcastLobby()}}return}
   const p=players.get(c.pid);if(!p||!NET.inGame||!running())return;
   if(d.t==='i'){
@@ -130,6 +141,7 @@ function hostData(peerId,d){
   else if(d.t==='n')throwNade(p,+d.x,+d.y);
   else if(d.t==='u')buyUpgrade(p,String(d.k));
   else if(d.t==='rl'){if(p.gun.mag)p.rlReq=true}
+  else if(d.t==='ab')useAbility(p,+d.x,+d.y);
 }
 function hostDrop(peerId){
   const c=NET.conns.get(peerId);if(!c)return;NET.conns.delete(peerId);
@@ -140,7 +152,7 @@ function hostDrop(peerId){
   broadcastLobby();
 }
 function broadcastLobby(){
-  const msg={t:'lobby',roster:NET.roster,code:NET.code,diff:pick.diff,mode:pick.mode,pvp:pick.pvp,map:pick.map,size:pick.size,playing:NET.inGame};
+  const msg={t:'lobby',roster:NET.roster,code:NET.code,diff:pick.diff,mode:pick.mode,pvp:pick.pvp,map:pick.map,size:pick.size,playing:NET.inGame,mods:roomMods(),job:pick.job};
   NET.sendAll(msg);if(!NET.inGame)renderLobby();
   if(NET.mode==='host'&&pubTimer)lobbyPublish();
 }
@@ -153,9 +165,9 @@ function lobbyBlock(){
 function startOnline(){
   if(NET.mode!=='host')return;
   const why=lobbyBlock();if(why){$('lNote').textContent=why;return}
-  demo=false;pick.oct=isOctober();newGame(NET.roster.map(r=>({...r})),pick.pvp);NET.inGame=true;NET.snapN=0;
+  demo=false;pick.oct=isOctober();newGame(NET.roster.map(r=>({...r})),pick.pvp,{mods:roomMods(),job:pick.job});NET.inGame=true;NET.snapN=0;
   const now=performance.now();for(const c of NET.conns.values())c.heard=now;   // the lobby wait is not silence
-  NET.sendAll({t:'start',roster:rosterNow(),diff:pick.diff,mode:game.mode,pvp:game.pvp,map:game.map,size:game.size,oct:game.oct?1:0});NET.wlSent=null;NET.piSent=null;
+  NET.sendAll(startMsg());NET.wlSent=null;NET.piSent=null;modsToast();
   enterGame();broadcastLobby();
 }
 // keep quiet lobbies alive (and NAT mappings open), and notice players who vanish
@@ -243,12 +255,13 @@ function applyInfo(rows){
 function makeSnap(withWalls){
   const S=game.stats,flat=(a,f)=>{const o=[];for(const x of a)o.push(...f(x));return o};
   const s={t:'s',n:NET.snapN,ph:game.phase,w:game.wave,bk:game.bosses|0,tm:r2(game.timer),q:game.queue.length,tt:r2(game.time),won:game.won?1:0,wn:game.winner||'',
+    sb:game.sbN|0,wx:game.wx?1:0,sd:game.sd?1:0,
     cs:flat(cores,c=>[r2(c.hp),c.max,c.flash>0?1:0]),st:[S.dropped,S.built,S.lost,S.repairs,S.revives],
     pl:[...players.values()].map(p=>packRow(PL_STATE,p)),
     qm:[r2(qm.x),r2(qm.y),r2(qm.aim.x),r2(qm.aim.y),Math.ceil(qm.hp),qm.max,qm.alive?1:0,r2(qm.revive),game.dellLv|0],
     en:enemies.map(e=>packTrim(EN_STATE,e)),
     rk:flat(rockets,r=>[r2(r.x),r2(r.y),r2(r.vx),r2(r.vy)]),
-    fz:flat(fires,f=>[r2(f.x),r2(f.y),r2(f.t)]),
+    fz:flat(fires,f=>[r2(f.x),r2(f.y),r2(f.t),r2(f.r||.9)]),
     lo:flat(lobs,l=>[r2(l.x0),r2(l.y0),r2(l.x1),r2(l.y1),r2(l.t),r2(l.T),r2(l.R),l.k|0]),
     ch:flat(charges,c=>[r2(c.x),r2(c.y),r2(c.fuse)]),
     sa:flat(sacks,k=>[r2(k.x),r2(k.y)]),
@@ -273,7 +286,7 @@ async function netJoin(code){
   peer.on('open',()=>{
     const tgt=ROOM_PREFIX+code,r=peer.connect(tgt,{label:'r',reliable:true,serialization:'json'}),uu=peer.connect(tgt,{label:'u',reliable:false,serialization:'json'});
     NET.host={r,u:uu};
-    r.on('open',()=>{clearTimeout(to);NET.lastHeard=performance.now();const st=openStateCh(r);if(st){NET.host.st=st;st.onmessage=ev=>{try{guestData(JSON.parse(ev.data))}catch(e){}}}r.send({t:'hello',name:myName(),cls:pick.cls,cos:cosStr(myCos()),v:PROTO})});
+    r.on('open',()=>{clearTimeout(to);NET.lastHeard=performance.now();const st=openStateCh(r);if(st){NET.host.st=st;st.onmessage=ev=>{try{guestData(JSON.parse(ev.data))}catch(e){}}}r.send({t:'hello',name:myName(),cls:pick.cls,cos:cosStr(myCos()),v:PROTO,sk:mySkills(),uid:locker.cloud?myUid():''})});
     for(const c of[r,uu]){c.on('data',guestData);c.on('error',()=>{})}
     r.on('close',()=>{if(NET.mode==='guest')netLeave('The host closed the game.')});
   });
@@ -283,8 +296,9 @@ function guestData(d){
   if(!d)return;NET.lastHeard=performance.now();
   switch(d.t){
     case'welcome':myId=d.id;NET.mode='guest';mStatus('');showLobby();break;
-    case'lobby':NET.roster=d.roster;NET.code=d.code;pick.diff=d.diff;if(d.mode)pick.mode=d.mode;pick.pvp=d.pvp||'coop';if(d.map)pick.map=MAP_IDS.includes(d.map)?d.map:'yard';if(d.size)pick.size=d.size==='xl'?'xl':'std';if(!NET.inGame)renderLobby();break;
-    case'start':pick.diff=d.diff;if(d.mode)pick.mode=d.mode;pick.pvp=d.pvp||'coop';pick.map=MAP_IDS.includes(d.map)?d.map:'yard';pick.size=d.size==='xl'?'xl':'std';pick.oct=!!d.oct;demo=false;newGame(d.roster,d.pvp||'');NET.lastN=0;NET.inGame=true;enterGame();break;
+    case'lobby':NET.roster=d.roster;NET.code=d.code;pick.diff=d.diff;if(d.mode)pick.mode=d.mode;pick.pvp=d.pvp||'coop';NET.hostMods=cleanMods(d.mods,pick.pvp);pick.job=CLASSES[d.job]?d.job:pick.job;if(d.map)pick.map=MAP_IDS.includes(d.map)?d.map:'yard';if(d.size)pick.size=d.size==='xl'?'xl':'std';if(!NET.inGame)renderLobby();break;
+    case'start':pick.diff=d.diff;if(d.mode)pick.mode=d.mode;pick.pvp=d.pvp||'coop';pick.map=MAP_IDS.includes(d.map)?d.map:'yard';pick.size=d.size==='xl'?'xl':'std';pick.oct=!!d.oct;demo=false;
+      newGame(d.roster,d.pvp||'',{gid:d.gid,mods:d.mods,job:d.job,guest:true});NET.lastN=0;NET.inGame=true;enterGame();modsToast();break;
     case'ping':break;
     case's':if(NET.inGame&&d.n>NET.lastN){NET.lastN=d.n;applySnap(d)}break;
     case'x':if(NET.inGame){if(d.pi)applyInfo(d.pi);if(d.wl)decodeWalls(d.wl);if(d.wd)applyWallDiff(d.wd);replayFx(d.fx||[])}break;
@@ -296,6 +310,8 @@ function guestData(d){
 function applySnap(s){
   const wasOver=game.phase==='over';
   game.phase=s.ph;game.wave=s.w;game.timer=s.tm;game.bosses=s.bk|0;game.qn=s.q;game.won=!!s.won;game.winner=s.wn||'';
+  game.sbN=s.sb|0;game.wx=s.wx?1:0;game.sd=!!s.sd;
+  if(game.joinHeld==null){game.joinHeld=s.ph==='build'||s.ph==='over'&&s.won?s.w:Math.max(0,s.w-1);game.joinT=s.tt;game.joinBoss=(s.bl||[]).length;game.joinSB=s.sb|0}   // where this phone came in
   if(game.pvp)game.won=game.pvp==='base'?!!player&&player.team===game.winner:myId===game.winner;
   if(Math.abs(game.time-s.tt)>1)game.time=s.tt;
   for(let i=0;i<cores.length&&i*3<s.cs.length;i++){const c=cores[i],o=i*3;if(s.cs[o]<c.hp-.01)c.flash=.12;c.hp=s.cs[o];c.max=s.cs[o+1]}
@@ -324,7 +340,7 @@ function applySnap(s){
     const c=ECODE[v('type')]||'rifle',bk=c.startsWith('boss:')?c.slice(5):'';
     Object.assign(e,{type:bk?'boss':c,boss:bk||undefined,big:!!bk,raft:bk==='ferryman',burrow:bk==='foreman'&&(v('st')===2||v('st')===4),tx:v('x'),ty:v('y'),aim:{x:v('ax'),y:v('ay')},hp:v('hp'),max:1,planted:!!v('plant'),st:v('st'),stF:v('stF'),lx:v('lx'),ly:v('ly')});enemies.push(e)}
   rockets=[];for(let o=0;o<(s.rk||[]).length;o+=4)rockets.push({x:s.rk[o],y:s.rk[o+1],vx:s.rk[o+2],vy:s.rk[o+3]});
-  fires=[];for(let o=0;o<(s.fz||[]).length;o+=3)fires.push({x:s.fz[o],y:s.fz[o+1],t:s.fz[o+2],max:4});
+  fires=[];for(let o=0;o<(s.fz||[]).length;o+=4)fires.push({x:s.fz[o],y:s.fz[o+1],t:s.fz[o+2],r:s.fz[o+3],max:4});
   if(s.bu){bullets=[];for(let o=0;o<s.bu.length;o+=7)bullets.push({x:s.bu[o],y:s.bu[o+1],vx:s.bu[o+2],vy:s.bu[o+3],team:s.bu[o+4],heavy:!!s.bu[o+5],tr:s.bu[o+6]|0})}
   lobs=[];for(let o=0;o<s.lo.length;o+=8)lobs.push({x0:s.lo[o],y0:s.lo[o+1],x1:s.lo[o+2],y1:s.lo[o+3],t:s.lo[o+4],T:s.lo[o+5],R:s.lo[o+6],k:s.lo[o+7]});
   charges=[];for(let o=0;o<s.ch.length;o+=3)charges.push({x:s.ch[o],y:s.ch[o+1],fuse:s.ch[o+2]});

@@ -9,17 +9,23 @@ function lookAhead(e){
   }
   return null;
 }
+// v0.9.2: a sniper in stealth is ignored; Nightmare raiders spot further, fire and move faster; Berserk bosses
+// wind up their next attack sooner (their warnings, e.stT, keep their full length)
+const seen=a=>a.alive&&!(a.stl>0);
 function updateEnemies(dt){
-  const Df=game.Df;for(const a of allies())if(a.markT>0)a.markT-=dt;
+  const Df=game.Df,NM=hasMod('nightmare'),BZ=hasMod('berserk'),EL=hasMod('elite');for(const a of allies())if(a.markT>0)a.markT-=dt;
   for(const e of enemies){
-    if(e.dead)continue;e.cd=Math.max(e.cd-dt,-dt);e.flash=Math.max(0,e.flash-dt);e.scanT-=dt;
+    if(e.dead)continue;const boss=e.type==='boss',hurry=NM&&!boss?1.18:1;
+    e.cd=Math.max(e.cd-dt*hurry,-dt);e.flash=Math.max(0,e.flash-dt);e.scanT-=dt;
+    if(BZ&&boss&&!e.st){e.cd-=dt*.33;if(e.ab!==undefined)e.ab-=dt*.33}
     const ti=e.x|0,tj=e.y|0;let tgt=null,moveTo=null;
     if(Math.abs(ti-core.i)<=1&&Math.abs(tj-core.j)<=1)tgt={x:core.i+.5,y:core.j+.5};
     else{const k=bestStep(ti,tj);if(k>=0){const c={x:k%N+.5,y:((k/N)|0)+.5};if(walls[k])tgt=c;else moveTo=c}}
-    if(e.scanT<=0){e.scanT=.2;e.foe=null;let bd=e.type==='boss'?BOSSES[e.boss].scan:e.type==='gren'?6.5:e.type==='spotter'?10:e.type==='medic'?5:e.type==='fire'?6.5:7;
-      if(e.type==='rifle'){for(const a of allies())if(a.alive&&a.markT>0){const d=dist2(a,e);if(d<bd+3&&losClear(e.x,e.y,a.x,a.y)){e.foe=a;bd=-1;break}}}   // spotted: riflemen go for the marked soldier first
-      if(bd>=0)for(const a of allies()){if(!a.alive)continue;const d=dist2(a,e);if(d<bd&&losClear(e.x,e.y,a.x,a.y)){bd=d;e.foe=a}}}
-    if(e.foe&&!e.foe.alive)e.foe=null;
+    if(e.scanT<=0){e.scanT=.2;e.foe=null;let bd=(e.type==='boss'?BOSSES[e.boss].scan:e.type==='gren'?6.5:e.type==='spotter'?10:e.type==='medic'?5:e.type==='fire'?6.5:7)*(NM&&!boss?1.3:1);
+      // spotted: riflemen go for the marked soldier first (Elite Raid: grenadiers and firebrands do, from further out)
+      if(e.type==='rifle'||EL&&(e.type==='gren'||e.type==='fire')){for(const a of allies())if(seen(a)&&a.markT>0){const d=dist2(a,e);if(d<bd+3&&losClear(e.x,e.y,a.x,a.y)){e.foe=a;bd=-1;break}}}
+      if(bd>=0)for(const a of allies()){if(!seen(a))continue;const d=dist2(a,e);if(d<bd&&losClear(e.x,e.y,a.x,a.y)){bd=d;e.foe=a}}}
+    if(e.foe&&!seen(e.foe))e.foe=null;
     const aimAt=(x,y)=>{const dx=x-e.x,dy=y-e.y,l=Math.hypot(dx,dy)||1;e.aim={x:dx/l,y:dy/l};return Math.atan2(dy,dx)};
     let engaging=false;
     if(e.type==='boss'){const r=BOSSES[e.boss].think(e,dt,tgt,moveTo,aimAt,Df);engaging=r.eng;moveTo=r.mv}
@@ -28,7 +34,7 @@ function updateEnemies(dt){
       if(e.foe){engaging=true;const mk=e.foe.markT>0,a=aimAt(e.foe.x,e.foe.y);if(e.cd<=0){while(e.cd<=0){fire(e,a+(rnd()-.5)*(mk?.06:.2),1,{dmg:8*Df.dmg,speed:22,range:mk?13:11},-e.cd);e.cd+=.65+rnd()*.45}sfx('rifle',e.x,e.y)}}
       else if(tgt){const a=aimAt(tgt.x,tgt.y);if(e.cd<=0){while(e.cd<=0){fire(e,a+(rnd()-.5)*.1,1,{dmg:7*Df.dmg,speed:22,range:11,over:false},-e.cd);e.cd+=.6+rnd()*.3}sfx('rifle',e.x,e.y)}}
     }else if(e.type==='gren'){
-      const lt=e.foe?{x:e.foe.x,y:e.foe.y}:lookAhead(e);if(lt)aimAt(lt.x,lt.y);
+      const lt=e.foe&&(dist2(e.foe,e)<(EL&&e.foe.markT>0?8.5:7))?{x:e.foe.x,y:e.foe.y}:lookAhead(e);if(lt)aimAt(lt.x,lt.y);
       if(e.cd<=0&&lt){const tx=clamp(lt.x+(rnd()-.5)*.8,.3,N-.3),ty=clamp(lt.y+(rnd()-.5)*.8,.3,N-.3),d=Math.hypot(tx-e.x,ty-e.y);
         lobs.push({x0:e.x,y0:e.y,x1:tx,y1:ty,t:0,T:.55+d*.08,R:1.65,power:Df.dmg});e.cd+=3.1+rnd()*1.2;sfx('lob',e.x,e.y)}
       if(e.foe&&dist2(e.foe,e)<3.5)engaging=true;
@@ -58,7 +64,7 @@ function updateEnemies(dt){
     }else if(e.type==='fire'){
       // firebrand: lobs fire bottles at the wooden wall in his way (or at people close by); the glass bursts into a
       // patch of burning ground and sets wood alight
-      let lt=null;if(e.foe&&dist2(e.foe,e)<6.5)lt={x:e.foe.x,y:e.foe.y};else{const la=lookAhead(e);if(la){const w=walls[idx(Math.floor(la.x),Math.floor(la.y))];if(w&&w.mat===0&&!(w.fire>0))lt=la}}
+      let lt=null;if(e.foe&&dist2(e.foe,e)<(EL&&e.foe.markT>0?8.5:6.5))lt={x:e.foe.x,y:e.foe.y};else{const la=lookAhead(e);if(la){const w=walls[idx(Math.floor(la.x),Math.floor(la.y))];if(w&&w.mat===0&&!(w.fire>0))lt=la}}
       if(lt)aimAt(lt.x,lt.y);
       if(e.cd<=0&&lt){const tx=clamp(lt.x+(rnd()-.5)*.6,.3,N-.3),ty=clamp(lt.y+(rnd()-.5)*.6,.3,N-.3),d=Math.hypot(tx-e.x,ty-e.y);
         lobs.push({x0:e.x,y0:e.y,x1:tx,y1:ty,t:0,T:.5+d*.08,R:1,power:Df.dmg,k:1});e.cd+=3.6+rnd()*1.2;sfx('lob',e.x,e.y)}
@@ -72,7 +78,7 @@ function updateEnemies(dt){
       if(e.planted){let bk=-1,bv=-1;for(const[di,dj]of D4){const i=ti+di,j=tj+dj;if(!inb(i,j)||solidTile(i,j))continue;const k=idx(i,j);if(dist[k]>bv){bv=dist[k];bk=k}}
         moveTo=bk>=0?{x:bk%N+.5,y:((bk/N)|0)+.5}:null}
     }
-    if(!engaging&&moveTo){const dx=moveTo.x-e.x,dy=moveTo.y-e.y,l=Math.hypot(dx,dy);if(l>.02){const s=Math.min(l,e.speed*dt*slowAt(e.x,e.y));moveEnt(e,dx/l*s,dy/l*s,false);e.walk+=dt*9;if(!tgt&&!e.foe)e.aim={x:dx/l,y:dy/l}}}
+    if(!engaging&&moveTo){const dx=moveTo.x-e.x,dy=moveTo.y-e.y,l=Math.hypot(dx,dy);if(l>.02){const s=Math.min(l,e.speed*dt*slowAt(e.x,e.y)*(NM&&!boss?1.12:1));moveEnt(e,dx/l*s,dy/l*s,false);e.walk+=dt*9;if(!tgt&&!e.foe)e.aim={x:dx/l,y:dy/l}}}
   }
   for(let a=0;a<enemies.length;a++)for(let b=a+1;b<enemies.length;b++){const A=enemies[a],B=enemies[b];if(A.raft||B.raft||A.burrow||B.burrow)continue;const dx=B.x-A.x,dy=B.y-A.y,d=Math.hypot(dx,dy);if(d<.5&&d>.001){const push=(.5-d)*.5;moveEnt(A,-dx/d*push,-dy/d*push,false);moveEnt(B,dx/d*push,dy/d*push,false)}}
   dropDead(enemies);
@@ -107,22 +113,25 @@ function updateBullets(dt){
   {const hit=[];for(const b of bullets)if(b.dead&&!b.spent&&b.id)hit.push(b.id);if(hit.length)rec(['bx',...hit])}   // guests expire misses on their own
   bullets=bullets.filter(b=>!b.dead);
 }
-function updateLobs(dt){for(const l of lobs){l.t+=dt;if(l.t>=l.T){l.dead=true;if(l.k===1)bottleLand(l);else if(l.k===2)slabLand(l);else explode(l.x1,l.y1,l.R,l.power,l.own)}}lobs=lobs.filter(l=>!l.dead)}
+function updateLobs(dt){for(const l of lobs){l.t+=dt;if(l.t>=l.T){l.dead=true;if(l.k===1)bottleLand(l);else if(l.k===2)slabLand(l);else{explode(l.x1,l.y1,l.R,l.power,l.own);if(l.own)molotovAt(l)}}}lobs=lobs.filter(l=>!l.dead)}
 // a firebrand's bottle: burning ground for 5 s (it hurts people standing in it) and any wood within a tile catches
+// Firestorm: the patch burns 8 s instead of 5 and is half again as wide, and catches wood further out
 function bottleLand(l){
-  fires.push({x:l.x1,y:l.y1,t:5,max:5,tick:.3});sfx('bottle',l.x1,l.y1);addFlash({x:l.x1,y:l.y1,life:.3,max:.3,r:1});
+  const FS=hasMod('firestorm'),R=FS?1.9:1.3;
+  fires.push({x:l.x1,y:l.y1,t:FS?8:5,max:FS?8:5,tick:.3,r:FS?1.35:.9});sfx('bottle',l.x1,l.y1);addFlash({x:l.x1,y:l.y1,life:.3,max:.3,r:FS?1.5:1});
   for(let n=0;n<10;n++)emit(l.x1,l.y1,4*u,'fire');
-  for(let i=Math.floor(l.x1-1.1);i<=Math.floor(l.x1+1.1);i++)for(let j=Math.floor(l.y1-1.1);j<=Math.floor(l.y1+1.1);j++){if(!inb(i,j))continue;const w=walls[idx(i,j)];
-    if(w&&w.mat===0&&Math.hypot(i+.5-l.x1,j+.5-l.y1)<1.3&&!(w.fire>0)){w.fire=6;w.fireBy=null}}
+  for(let i=Math.floor(l.x1-R);i<=Math.floor(l.x1+R);i++)for(let j=Math.floor(l.y1-R);j<=Math.floor(l.y1+R);j++){if(!inb(i,j))continue;const w=walls[idx(i,j)];
+    if(w&&w.mat===0&&Math.hypot(i+.5-l.x1,j+.5-l.y1)<R&&!(w.fire>0)){w.fire=FS?9:6;w.fireBy=null}}
 }
 function updateCharges(dt){for(const c of charges){c.fuse-=dt;c.beep-=dt;if(c.beep<=0){c.beep=Math.max(.12,c.fuse*.25);sfx('beep',c.x,c.y)}if(c.fuse<=0){c.dead=true;explode(c.x,c.y,2.1,1.6)}}charges=charges.filter(c=>!c.dead)}
 function updateWalls(dt){
+  const FS=hasMod('firestorm'),spread=FS?.8:.45,burn=FS?15:9;   // Firestorm: walls burn down faster and it spreads more
   for(let k=0;k<N*N;k++){
     const w=walls[k];if(!w)continue;w.flash=Math.max(0,w.flash-dt);
     if(w.fire>0){
       w.fire-=dt;w.char=Math.min(1,w.char+dt*.14);const i=k%N,j=(k/N)|0;
-      if(rnd()<dt*.45)for(const[di,dj]of D4){const ni=i+di,nj=j+dj;if(!inb(ni,nj))continue;const nw=walls[idx(ni,nj)];if(nw&&nw.mat===0&&nw.fire<=0&&rnd()<.5){nw.fire=6;nw.fireBy=w.fireBy}}
-      damageWall(k,9*dt,w.fireBy);
+      if(rnd()<dt*spread)for(const[di,dj]of D4){const ni=i+di,nj=j+dj;if(!inb(ni,nj))continue;const nw=walls[idx(ni,nj)];if(nw&&nw.mat===0&&nw.fire<=0&&rnd()<.5){nw.fire=6;nw.fireBy=w.fireBy}}
+      damageWall(k,burn*dt,w.fireBy);
     }
   }
 }
@@ -149,7 +158,7 @@ function updateParticles(dt){
   shake=Math.max(0,shake-dt*30);
   if(running())localAmbience(dt);
   // time of day: overcast → golden hour → night
-  const tod=game.pvp?0:todStage(game.phase==='raid'?game.wave:game.wave+.5);
+  const tod=game.pvp?(hasMod('nightmare')?2:0):todStage(game.phase==='raid'?game.wave:game.wave+.5);
   const T=tod===2?{L:.7,r:5,g:8,b:22,warm:0}:tod===1?{L:.2,r:60,g:30,b:10,warm:.07}:{L:.12,r:28,g:34,b:44,warm:0};
   const k=Math.min(1,dt*.8);for(const key of['L','r','g','b','warm'])light[key]+=(T[key]-light[key])*k;
 }

@@ -40,6 +40,7 @@
   <button id="armBtn" type="button" hidden><span id="armLab">ARMORY</span><kbd class="kc">E</kbd></button>
   <button id="nadeBtn" type="button"><span>NADE</span><kbd class="kc">G</kbd><b id="nadeN">2</b></button>
   <button id="sprBtn" type="button" hidden><span>SPRINT</span><kbd class="kc">SHIFT</kbd><b id="sprN">READY</b></button>
+  <button id="abBtn" type="button" hidden><span id="abLab">ROCKET</span><kbd class="kc">Q</kbd><b id="abN">5</b></button>
 </div>
 <div id="keys" hidden></div>
 <div id="respawnJobs" class="jobPick" hidden><span>NEXT LIFE AS</span><div class="seg jobs"><button data-nc="soldier" type="button">SOLDIER</button><button data-nc="sniper" type="button">SNIPER</button><button data-nc="grenadier" type="button">GRENADIER</button><button data-nc="quartermaster" type="button">QUARTERMASTER</button></div></div>
@@ -53,7 +54,7 @@
 <div id="menu">
   <div class="panel">
     <header class="accountDock">
-      <nav class="partyNav" aria-label="Lobby navigation"><strong>PALI<span class="cut">SADE</span></strong><button type="button" data-go="solo" data-nav="solo">SOLO</button><button type="button" data-go="multi" data-nav="multi">MULTIPLAYER</button><button type="button" data-go="classes" data-nav="classes">CLASSES</button><button type="button" data-go="locker" data-nav="locker" id="navLocker">LOCKER</button><button type="button" data-go="settings" data-nav="settings">SETTINGS</button></nav>
+      <nav class="partyNav" aria-label="Lobby navigation"><strong>PALI<span class="cut">SADE</span></strong><button type="button" data-go="solo" data-nav="solo">SOLO</button><button type="button" data-go="multi" data-nav="multi">MULTIPLAYER</button><button type="button" data-go="classes" data-nav="classes">CLASSES</button><button type="button" data-go="locker" data-nav="locker" id="navLocker">LOCKER</button><button type="button" data-go="skills" data-nav="skills" id="navSkills">SKILLS</button><button type="button" data-go="settings" data-nav="settings">SETTINGS</button></nav>
       <div class="friendsWrap"><button id="friendsBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="friendsDrop" aria-label="Friends"><svg viewBox="0 0 20 16" width="20" height="16" aria-hidden="true"><circle cx="7" cy="5" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M1.5 15c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="14.2" cy="4.6" r="2.4" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M13.6 9.2c2.6-.3 4.4 1.4 4.9 4.6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="fbLab">FRIENDS</span><b id="friendsDot" class="fDot" hidden>0</b></button>
       <div id="friendsDrop" class="friendsDrop" hidden role="dialog" aria-label="Friends">
         <div class="fdTabs" role="tablist"><button type="button" role="tab" data-ft="friends" aria-selected="true">FRIENDS <b id="fdFriendsN">0</b></button><button type="button" role="tab" data-ft="requests" aria-selected="false">REQUESTS <b id="fdReqN" class="fCnt" hidden>0</b></button><button type="button" role="tab" data-ft="mail" aria-selected="false">MAILBOX <b id="fdMailN" class="fCnt" hidden>0</b></button></div>
@@ -76,7 +77,7 @@
     <section id="partyShell" hidden aria-label="Lobby">
       <div id="partyControls" class="partyControls"></div>
       <div class="partyStage">
-        <div class="partyHeading"><span class="eyebrow" id="partyMode">CO-OP</span><h2 id="partyTitle">YOUR CREW. YOUR CLAIM.</h2><p id="partySubtitle">Choose your job. Bring your crew.</p></div>
+        <div class="partyHeading"><span class="eyebrow" id="partyMode">CO-OP</span><h2 id="partyTitle">YOUR CREW. YOUR CLAIM.</h2><p id="partySubtitle">Choose your job. Bring your crew.</p><p id="partyMods" class="partyMods" hidden></p></div>
         <div class="partyHero" id="partyHero"><canvas id="partyPreview" width="1000" height="780" aria-label="Your party"></canvas><canvas id="partyMe" width="1000" height="780" aria-label="Your equipped character"></canvas><canvas id="partyFx" width="1000" height="780" aria-hidden="true"></canvas><div class="partyNameplate"><b id="partyPlayerName">PLAYER</b><span id="partyPlayerState">IN LOBBY</span></div></div>
         <div id="partySlots" class="partySlots" aria-label="Party members"></div>
         <p class="partyHint" id="partyHint">Up to six players · desktop and mobile</p>
@@ -143,6 +144,8 @@
       <div class="seg" id="modes"><button data-m5="5" type="button">5 RAIDS</button><button data-m5="10" type="button">10 RAIDS</button><button data-m5="endless" type="button">ENDLESS</button></div>
       <h2>THREAT</h2>
       <div class="seg" id="diff"><button data-d="easy" type="button">EASY</button><button data-d="normal" class="sel" type="button">NORMAL</button><button data-d="hard" type="button">HARD</button></div>
+      <h2>MODIFIERS <span class="modTag" id="soloModTag"></span></h2>
+      <div class="mods" id="soloMods"></div>
       <div id="best" hidden></div>
       <button class="go" id="startBtn" type="button">RAISE THE FENCE</button>
       <p class="install" id="installTip" hidden>Play it like an app: tap <b>Share</b> <span aria-hidden="true">⎙</span> at the bottom of Safari, then <b>Add to Home Screen</b>.</p>
@@ -150,11 +153,11 @@
       <p class="note" id="saveNote" hidden></p>
       <details class="how"><summary>HOW TO PLAY</summary>
         <div class="ctrls">
-          <div><h3>TOUCH</h3><p>Left thumb: move<br>Right thumb: aim, push far to fire<br>BUILD: place, upgrade or repair the tile you face. DOOR lets you and Dell walk through.</p></div>
-          <div><h3>KEYBOARD</h3><p>WASD move · mouse aim<br>Hold click to fire (soldier: bursts) · Space build<br>1 2 3 material · F wall/door<br>G grenade · E armory at the stake<br>Shift sprint (quartermaster) · B build kit · Enter start raid · T chat online · Esc pause</p></div>
+          <div><h3>TOUCH</h3><p>Left thumb: move<br>Right thumb: aim, push far to fire<br>ROCKET / STEALTH: the soldier's and sniper's ability (co-op)<br>BUILD: place, upgrade or repair the tile you face. DOOR lets you and Dell walk through.</p></div>
+          <div><h3>KEYBOARD</h3><p>WASD move · mouse aim<br>Hold click to fire (soldier: bursts) · Space build<br>1 2 3 material · F wall/door<br>G grenade · E armory at the stake<br>Shift sprint (quartermaster) · Q rocket (soldier) or stealth (sniper), co-op · B build kit · Enter start raid · T chat online · Esc pause</p></div>
         </div>
       </details>
-      <p class="foot">v0.9.1 · phone and desktop · online co-op and PvP for up to six</p>
+      <p class="foot">v0.9.2 · phone and desktop · online co-op and PvP for up to six</p>
     </section>
 
     <section class="page" id="pg-classes" hidden>
@@ -205,6 +208,9 @@
       <h2>CREW</h2>
       <ul class="roster" id="lList"></ul>
       <p class="lede" id="lNote"></p>
+      <h2>MODIFIERS <span class="modTag" id="lModTag"></span></h2>
+      <div class="mods" id="lMods"></div>
+      <div id="lOneJob" hidden><h2>ONE JOB · EVERYONE PLAYS</h2><div class="seg jobs"><button data-oj="soldier" type="button">SOLDIER</button><button data-oj="sniper" type="button">SNIPER</button><button data-oj="grenadier" type="button">GRENADIER</button><button data-oj="quartermaster" type="button">QUARTERMASTER</button></div></div>
       <h2>CHAT</h2>
       <div class="lchat"><ol id="lChatLog" aria-live="polite"></ol><form id="lChatForm" autocomplete="off"><input id="lChatIn" type="text" maxlength="120" enterkeyhint="send" placeholder="Say hi" aria-label="Chat message" spellcheck="false"><button class="go" type="submit">SEND</button></form></div>
       <button class="ghost" id="lTeam" type="button" hidden>SWITCH SIDES</button>
@@ -217,6 +223,16 @@
       <div class="lockCases"><div id="caseBoxes"></div><span id="shardTxt">0 shards</span></div>
       <p class="lede sm" id="lockHint">Earn a case every 3 raids you survive, and for every win. Duplicates turn into shards.</p>
       <p class="status" id="lockMsg" role="status"></p>
+      <button class="ghost" type="button" data-go="main">BACK</button>
+    </section>
+
+    <section class="page cardPage" id="pg-skills" hidden>
+      <h2 class="pt">SKILL TREE</h2>
+      <div class="skHead"><div class="skPts"><b id="skPts">0</b><span>SKILL POINTS</span></div><p class="lede sm" id="skLede"></p></div>
+      <p class="lede sm">One tree for every job. In Base Battle and Free-for-all the perks count half and the job nodes are off. Rockets (soldier, Q) and stealth (sniper, Q) are co-op only.</p>
+      <p class="status" id="skMsg" role="status"></p>
+      <div class="cards skTree" id="skTree"></div>
+      <button class="ghost" id="skReset" type="button">RESET TREE · 40 SHARDS</button>
       <button class="ghost" type="button" data-go="main">BACK</button>
     </section>
 

@@ -6,7 +6,7 @@ const truce=()=>game.pvp==='base'&&game.phase==='build';
 const respawnAt=p=>game.pvp==='ffa'?ffaSpawn(p):game.pvp==='base'?spawnNearCore(stakeOf(p),p.team):spawnNearCore();
 // 0 day, 1 golden hour, 2 night. Endless cycles; fixed-length runs end in the dark.
 function todStage(stage){
-  if(MAP&&MAP.night&&!game.pvp)return 2;   // Ashfall Quarry is always night
+  if(MAP&&MAP.night&&!game.pvp||hasMod('nightmare'))return 2;   // Ashfall Quarry is always night (and Nightmare is, everywhere)
   const W=game.waves;
   if(!isFinite(W)){const c=((stage-1)%6+6)%6;return c>4.5?2:c>2.5?1:0}
   return stage>W-(W>=10?1.5:.5)?2:stage>W*.5?1:0;
@@ -17,8 +17,9 @@ function startBuild(dur){
   game.phase='build';game.timer=dur;
   const pay=8+game.wave;for(const p of players.values())p.sal+=pay;
   for(const p of players.values()){p.nades=Math.max(p.nades,p.maxN);if(p.downed){p.alive=true;p.downed=false;p.revive=0}p.hp=p.max;p.stun=0;if(p.gun.mag){p.ammo=p.gun.mag;p.rl=0}}
-  if(!qm.alive){qm.alive=true;[qm.x,qm.y]=spawnNearCore();flt(qm.x,qm.y,'DELL IS BACK','#a9bccb')}qm.hp=qm.max;
-  let note='Grenades refilled. Dell will head out for materials.';
+  if(!qm.alive&&!qm.gone){qm.alive=true;[qm.x,qm.y]=spawnNearCore();flt(qm.x,qm.y,'DELL IS BACK','#a9bccb')}qm.hp=qm.max;
+  game.wx=0;refillAbilities();
+  let note=qm.gone?'Grenades refilled.':'Grenades refilled. Dell will head out for materials.';
   for(const n of nodes)if(n.locked&&n.unlock===game.wave+1){n.locked=false;note=n.type===1?'A brick kiln is lit. Brick soaks rifle fire.':'Scrap metal is open. It shrugs off bullets.'}
   if(game.wave===2)note+=' Breachers join the next raid. Shoot them before they reach a wall.';
   if(todStage(game.wave+1)===2&&todStage(game.wave)!==2)note+=isFinite(game.waves)&&game.wave+1>=game.waves?' The last raid comes at night.':' The next raid comes at night.';
@@ -29,17 +30,18 @@ function startRaid(){
   game.wave++;game.phase='raid';setTip('');closeArmory();
   const k=Math.floor(waveEff()),Df=game.Df,P=Math.max(1,players.size),q=[];
   // a bigger crew mostly means more riflemen; grenadiers and breachers grow much more slowly
-  const boss=bossOf(game.wave),boss2=boss&&N>16?bossPartner(game.wave):'',W=waveMix(k,P,Df.extra,!!boss);
-  game.bossShare=boss2?XL_BOSS_SHARE:1;
+  const boss=bossOf(game.wave),boss2=boss&&N>16?bossPartner(game.wave):'',xb=boss?'':extraBoss(game.wave),W=modWaveMix(waveMix(k,P,Df.extra,!!(boss||xb)),k);
+  game.bossShare=boss2?XL_BOSS_SHARE:1;stormRaid();
   for(let n=0;n<W.rifle;n++)q.push('rifle');
   for(const t of['gren','fire','shield','medic','spotter','breach'])for(let n=0;n<W[t];n++)q.splice(1+Math.floor(rnd()*q.length),0,t);
   if(boss)q.splice(Math.max(2,Math.floor(q.length*.45)),0,'boss:'+boss);
   if(boss2)q.splice(Math.max(4,Math.floor(q.length*.62)),0,'boss:'+boss2);
+  if(xb)q.splice(Math.max(2,Math.floor(q.length*.45)),0,'boss:'+xb+':sb');   // an in-between boss (Boss Rush, Nightmare): pays shards
   game.queue=q;game.spawnT=.8;game.spawnGap=Math.max(.5,1.1-.1*(P-1))*(N>16?.85:1);sfx('siren');game.flood={t:0,warned:false};
   const bits=[`${W.rifle} riflemen`];
   for(const t of['gren','breach','shield','medic','spotter','fire'])if(W[t])bits.push(`${W[t]} ${W[t]>1?ENAMES[t][1]:ENAMES[t][0]}`);
-  const B=boss?bossInfo(boss):null,B2=boss2?bossInfo(boss2):null;
-  toastAll(boss?`${raidName(game.wave)} · ${B2?'TWO BOSSES':'BOSS'}`:raidName(game.wave),`${bits.join(', ')}${B?(B2?', '+B.name+' and '+B2.name:' and '+B.name):''} coming ${(MAP||MAPS.yard).from}${todStage(game.wave)===2&&!(MAP&&MAP.night)?' in the dark':''}.`);
+  const B=boss?bossInfo(boss):xb&&hasMod('bossrush')?bossInfo(xb):null,B2=boss2?bossInfo(boss2):null;   // Nightmare's surprise boss stays a surprise
+  toastAll(B?`${raidName(game.wave)} · ${B2?'TWO BOSSES':'BOSS'}`:raidName(game.wave),`${bits.join(', ')}${B?(B2?', '+B.name+' and '+B2.name:' and '+B.name):''} coming ${(MAP||MAPS.yard).from}${todStage(game.wave)===2&&!(MAP&&MAP.night)?' in the dark':''}.`);
 }
 // Who comes in a raid. k is the raid's strength (raid number; in Endless it climbs faster), P the crew size.
 // A bigger crew mostly means more riflemen. The four newer raiders each take a rifleman's place (riflemen never drop
@@ -62,7 +64,7 @@ const ENAMES={rifle:['rifleman','riflemen'],gren:['grenadier','grenadiers'],brea
 function startBattle(){
   if(game.pvp!=='base'||game.phase!=='build')return;
   game.phase='raid';game.timer=0;setTip('');sfx('siren');
-  for(const p of players.values())p.sal+=10;
+  for(const p of players.values())p.sal+=10;game.wxT=0;
   toastAll('BATTLE','The truce is over. Knock down their stake, keep yours standing.');
 }
 function endPvp(winner){
@@ -70,6 +72,7 @@ function endPvp(winner){
   game.won=game.pvp==='base'?player.team===winner:player.id===winner;showOver();
 }
 function updatePvp(dt){
+  stormTick(dt);suddenTick();
   if(game.phase==='build'){game.timer-=dt;if(game.timer<=0)startBattle()}
   else if(game.pvp==='ffa'){game.timer-=dt;if(game.timer<=0){let best=null;for(const p of players.values())if(!best||p.kills>best.kills||(p.kills===best.kills&&p.deaths<best.deaths))best=p;endPvp(best?best.id:'')}}
   else game.timer+=dt;
@@ -116,26 +119,26 @@ const ETYPES={rifle:{hp:36,speed:1.5},gren:{hp:46,speed:1.25},breach:{hp:30,spee
   shield:{hp:66,speed:1.15},medic:{hp:34,speed:1.55},spotter:{hp:30,speed:1.45},fire:{hp:40,speed:1.4}};
 // type codes for the network: never reorder, only add to the end
 const ECODE=['rifle','gren','breach','boss:demolisher','boss:butcher','boss:storm','shield','medic','spotter','fire','boss:ferryman','boss:foreman'];
-function spawnBoss(key){
+function spawnBoss(key,sb){
   if(key==='ferryman'&&!(game.lay&&game.lay.raftAt&&game.lay.raftAt.length))key='butcher';   // no river, no raft
   const B=BOSSES[key];if(!B)return;let x=0,y=0;
   const at=key==='ferryman'?game.lay.raftAt:(game.lay&&game.lay.bossAt)||[];
   for(let a=0;a<40&&at.length;a++){const t=at[Math.floor(rnd()*at.length)];if(!solidTile(t[0],t[1])){x=t[0]+.5;y=t[1]+.5;break}}
   if(!x){const t=spawnTile();if(t){x=t[0]+.5;y=t[1]+.5}else{x=N-.5;y=6.5}}
   const P=Math.max(1,players.size),hp=B.hp*game.Df.hp*(1+.35*(P-1))*(1+.25*Math.floor(Math.max(0,game.wave-5)/15))*mapHp()*(game.bossShare||1);
-  const e={id:nextId++,type:'boss',boss:key,big:true,x,y,hp,max:hp,cd:2.2,walk:0,aim:{x:-1,y:0},flash:0,speed:B.speed,scanT:0,foe:null,planted:false,st:0,stT:0,stM:1,lx:x,ly:y,shots:0,ab:3,sw:0};
+  const e={id:nextId++,type:'boss',boss:key,big:true,x,y,hp,max:hp,cd:2.2,walk:0,aim:{x:-1,y:0},flash:0,speed:B.speed,scanT:0,foe:null,planted:false,st:0,stT:0,stM:1,lx:x,ly:y,shots:0,ab:3,sw:0,sb:!!sb};
   if(B.raft){e.raft=true;e.ab=9;e.crews=0;e.pathT=0;e.next=-1}
   if(key==='foreman'){e.ab=5;e.cd=2.5}
   enemies.push(e);
-  const I=bossInfo(key);sfx('horn');addShake(x,y,8);toastAll(I.name,B.intro);
+  const I=bossInfo(key);sfx('horn');addShake(x,y,8);toastAll(sb&&nightmare()&&!hasMod('bossrush')?'SURPRISE · '+I.name:I.name,B.intro);
 }
 function bossDown(e,own){
   const B=BOSSES[e.boss],I=bossInfo(e.boss),p=own&&own!=='dell'?players.get(own):null,share=p?15:20;game.bosses++;
-  const oct=game.oct&&e.boss==='butcher';game.bossLog.push(oct?'butcher_oct':e.boss);
+  const oct=game.oct&&e.boss==='butcher'&&!e.sb;if(e.sb)game.sbN=(game.sbN|0)+1;else game.bossLog.push(oct?'butcher_oct':e.boss);
   for(const o of players.values())o.sal+=o===p?B.bounty:share;
   flt(e.x,e.y-.4,p?`+${B.bounty} SALVAGE`:`+${share} SALVAGE EACH`,'#e2b436');
   for(let n=0;n<26;n++)emit(e.x,e.y,WH*.8,n%2?'fire':'spark');addShake(e.x,e.y,11);sfx('bigboom',e.x,e.y);
-  const bc=bossBox(e.boss),n=oct?2:1,cn=CASES[bc]?` +${n} ${CASES[bc].name.replace(' CASE',n>1?' Cases':' Case')} each, added when the run ends (or when you leave it).`:'';
+  const bc=bossBox(e.boss),n=oct?2:1,cn=e.sb?' +15-30 shards each, added when the run ends (or when you leave it).':CASES[bc]?` +${n} ${CASES[bc].name.replace(' CASE',n>1?' Cases':' Case')} each, added when the run ends (or when you leave it).`:'';
   toastAll(`${I.name} IS DOWN`,(p?`${p.name} landed it: +${B.bounty} salvage. Everyone else +${share}.`:`+${share} salvage each.`)+cn);
 }
 // the Demolisher: plants his feet, shows a red line for a second, then sends a slow rocket down it. Every third
@@ -227,16 +230,20 @@ function updateRockets(dt){
     for(let s=0;s<steps&&!r.dead;s++){r.x+=r.vx*dt/steps;r.y+=r.vy*dt/steps;r.d+=sp*dt/steps;
       const i=Math.floor(r.x),j=Math.floor(r.y);let hit=!inb(i,j)||r.d>r.max;
       if(!hit){const k=idx(i,j);hit=!!walls[k]||coreKs.has(k)||!!(nodeAt(i,j)||{}).solid||terrShot(terr[k])}
-      if(!hit)for(const a of allies())if(a.alive&&Math.hypot(a.x-r.x,a.y-r.y)<.45){hit=true;break}
-      if(hit){r.dead=true;const bx=clamp(r.x-r.vx/sp*.2,.1,N-.1),by=clamp(r.y-r.vy/sp*.2,.1,N-.1);explode(bx,by,1.7,r.pw,null,true);fires.push({x:bx,y:by,t:4,max:4,tick:.2})}}}
+      if(!hit&&r.pl){for(const e of enemies)if(!e.dead&&!e.burrow&&Math.hypot(e.x-r.x,e.y-r.y)<(e.big?.6:.4)){hit=true;break}}   // a soldier's rocket: raiders
+      else if(!hit)for(const a of allies())if(a.alive&&Math.hypot(a.x-r.x,a.y-r.y)<.45){hit=true;break}
+      if(hit){r.dead=true;const bx=clamp(r.x-r.vx/sp*.2,.1,N-.1),by=clamp(r.y-r.vy/sp*.2,.1,N-.1);
+        if(r.pl)explode(bx,by,ABIL.rocket.R,r.pw,r.own,false);else{explode(bx,by,1.7,r.pw,null,true);fires.push({x:bx,y:by,t:4,max:4,tick:.2})}}}}
   dropDead(rockets);
   for(const f of fires){f.t-=dt;f.tick-=dt;
-    if(f.tick<=0){f.tick=.45;for(const a of allies())if(a.alive&&Math.hypot(a.x-f.x,a.y-f.y)<.9)hurtAlly(a,6*game.Df.dmg);
-      const w=walls[idx(Math.floor(f.x),Math.floor(f.y))];if(w&&w.mat===0&&!(w.fire>0))w.fire=5}}
+    if(f.tick<=0){f.tick=.45;const R=f.r||.9;
+      if(f.pl){for(const e of enemies)if(!e.dead&&!e.burrow&&Math.hypot(e.x-f.x,e.y-f.y)<R)hurtEnemy(e,e.type==='boss'?5:9,f.own);continue}   // Molotov fire: raiders only, never your walls
+      for(const a of allies())if(a.alive&&Math.hypot(a.x-f.x,a.y-f.y)<R)hurtAlly(a,6*game.Df.dmg);
+      const w=walls[idx(Math.floor(f.x),Math.floor(f.y))];if(w&&w.mat===0&&!(w.fire>0))w.fire=hasMod('firestorm')?8:5}}
   fires=fires.filter(f=>f.t>0);
 }
 function spawnEnemy(type){
-  if(type.startsWith('boss:')){spawnBoss(type.slice(5));return}
+  if(type.startsWith('boss:')){const[,k,sb]=type.split(':');spawnBoss(k,sb==='sb');return}
   const t=spawnTile();if(!t)return;spawnEnemyAt(type,t[0]+.5,t[1]+.5);
 }
 function spawnEnemyAt(type,x,y){
@@ -257,13 +264,13 @@ function showPvpOver(){
   $('overTitle').textContent=win?'VICTORY':'DEFEAT';$('overTitle').className=win?'':'lost';
   if(game.pvp==='base'){
     const wT=TEAMS[game.winner]||TEAMS.a,na=P.filter(p=>p.team==='a').length,nb=P.length-na;
-    $('overEyebrow').textContent=`BASE BATTLE · ${na}V${nb} · ${wT.name} TOOK THE ${game.winner==='a'?'EAST':'WEST'} STAKE`;
+    $('overEyebrow').textContent=`BASE BATTLE · ${na}V${nb} · ${wT.name} TOOK THE ${game.winner==='a'?'EAST':'WEST'} STAKE${game.mods.length?' · '+modNames(game.mods).join(' + '):''}`;
     $('overLede').textContent=win?'Their stake is splinters. Run it back and swap sides if it was lopsided.':'They got through. Look at which wall went first; that\'s where to put metal next time.';
     let tk=0,ek=0;for(const p of P)if(p.team===me.team)tk+=p.kills;else ek+=p.kills;
     setStats([['Your drops',me.kills|0],['Times you fell',me.deaths|0],[`${TEAMS[me.team].name} drops`,tk],[`${TEAMS[me.team==='a'?'b':'a'].name} drops`,ek],['Walls raised',S.built],['Walls lost',S.lost]]);
   }else{
     const rank=P.slice().sort((a,b)=>b.kills-a.kills||a.deaths-b.deaths),place=rank.indexOf(me)+1,lead=rank[0];
-    $('overEyebrow').textContent=`FREE-FOR-ALL · ${P.length} PLAYERS · ${lead?lead.name.toUpperCase():''} WINS`;
+    $('overEyebrow').textContent=`FREE-FOR-ALL · ${P.length} PLAYERS · ${lead?lead.name.toUpperCase():''} WINS${game.mods.length?' · '+modNames(game.mods).join(' + '):''}`;
     $('overLede').textContent=rank.map((p,i)=>`${i+1}. ${p===me?'YOU':p.name.toUpperCase()} ${p.kills}`).join('   ');
     const ord=n=>n+(['th','st','nd','rd'][n%100>10&&n%100<14?0:Math.min(n%10,4)%4]||'th');
     setStats([['Your drops',me.kills|0],['Times you fell',me.deaths|0],['Place',`${ord(place)} of ${P.length}`],['Winning score',lead?`${lead.kills}`:'0']]);
@@ -280,7 +287,7 @@ function showOver(){
   $('overTitle').textContent=win?'CLAIM HELD':'CLAIM LOST';$('overTitle').className=win?'':'lost';
   const crew=players.size>1?` · CREW OF ${players.size}`:'',W=game.waves,endless=!isFinite(W);
   const held=win?W:Math.max(0,game.wave-1),S=game.stats;
-  $('overEyebrow').textContent=`${player.C.name} · ${game.Df.name} · ${endless?'ENDLESS':W+' RAIDS'}${crew} · ${win?`ALL ${W} RAIDS BROKEN`:endless?`${held} RAIDS HELD`:`STAKE FELL IN RAID ${game.wave}`}`;
+  $('overEyebrow').textContent=`${player.C.name} · ${game.Df.name} · ${endless?'ENDLESS':W+' RAIDS'}${crew} · ${win?`ALL ${W} RAIDS BROKEN`:endless?`${held} RAIDS HELD`:`STAKE FELL IN RAID ${game.wave}`}${game.mods.length?' · '+modNames(game.mods).join(' + '):''}`;
   $('overLede').textContent=win?'The stake is still standing. Try it with less wood and more nerve, or turn the threat up.':endless?`Endless only ends one way. ${held} raids is the number to beat.`:'They got to the core. Look at where they broke in. That hole is the lesson.';
   const loot=game.rewarded?null:lockerReward(held,win,player.kills|0);game.rewarded=true;
   if(loot){$('overLoot').textContent=loot.text;$('overLoot').hidden=false;showRewards(loot)}else{$('overLoot').hidden=true;showRewards(null)}
@@ -338,7 +345,7 @@ function thinkFerryman(e,dt,tgt,mv,aimAt,Df){
   if(f)aimAt(f.x,f.y);
   return{eng:true,mv:null};
 }
-function nearestAlly(e){let b=null,bd=1e9;for(const a of allies())if(a.alive){const d=dist2(a,e);if(d<bd){bd=d;b=a}}return b}
+function nearestAlly(e){let b=null,bd=1e9;for(const a of allies())if(a.alive&&!(a.stl>0)){const d=dist2(a,e);if(d<bd){bd=d;b=a}}return b}
 function bridgeRows(){const rows=new Map();for(let k=0;k<N*N;k++)if(terr[k]===T_BRIDGE){const j=(k/N)|0;if(!rows.has(j))rows.set(j,[]);rows.get(j).push(k)}return[...rows].map(([j,ks])=>({j,ks}))}
 // a dry tile next to the water near the raft, preferring the stake's side of the river
 function bankTile(e){let best=null,bs=1e9;const ei=Math.floor(e.x),ej=Math.floor(e.y);

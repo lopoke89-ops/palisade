@@ -137,6 +137,8 @@ function normLocker(L){
   // items this build doesn't know (renamed or from a newer version) are kept, just not shown
   L.owned=Array.isArray(L.owned)?[...new Set(L.owned.filter(id=>typeof id==='string'&&id.length<40))]:free.slice();for(const id of free)if(!L.owned.includes(id))L.owned.push(id);
   L.st=Object.assign({},base.st,L.st||{});for(const k of['cases','shards','prog'])L[k]=Math.max(0,L[k]|0);
+  // v0.9.2: the skill tree (accounts only; the server's copy is the real one)
+  for(const k of['sp','spProg','spTotal'])L[k]=Math.max(0,L[k]|0);{const t={};if(L.skills&&typeof L.skills==='object')for(const S of SKILLS)if(L.skills[S.id]>0)t[S.id]=Math.min(S.max,L.skills[S.id]|0);L.skills=t}
   const bag={};if(L.bag&&typeof L.bag==='object')for(const k in L.bag)if(k!=='supply'&&/^[a-z0-9_]{1,24}$/.test(k))bag[k]=Math.max(0,L.bag[k]|0);L.bag=bag;   // unknown cases are kept
   const bg=L.eq&&typeof L.eq.bg==='string'?L.eq.bg:'campfire';
   L.eq=parseCos(L.eq);for(const k in L.eq)if(!L.owned.includes(k+':'+L.eq[k]))L.eq[k]=DEFAULT_COS[k];
@@ -207,8 +209,9 @@ const SAL_SHARD={rate:20,perRaid:2,max:10};
 const salvageShards=(sal,held)=>Math.max(0,Math.min(Math.floor(Math.max(0,sal)/SAL_SHARD.rate),SAL_SHARD.perRaid*Math.max(0,held|0),SAL_SHARD.max));
 // what each boss that went down drops (the same rule as the server): the Butcher and the Ferryman a Halloween
 // Case (two from the October Butcher), the rest an Afterglow Case; never more bosses than the raids held allow
-function bossDrops(keys,held){
-  const out={},cap=Math.min(Math.floor((held+1)/5),isFinite(game.waves)?Math.floor(game.waves/5):1e9)*(game.size==='xl'?2:1);let n=0;   // XL boss raids have two bosses
+// v0.9.2: `from` is the raid count when this player came in; only boss raids after it count
+function bossDrops(keys,held,from=0){
+  const hi=Math.min(held+1,isFinite(game.waves)?game.waves:1e9),out={},cap=Math.max(0,Math.floor(hi/5)-Math.floor(from/5))*(game.size==='xl'?2:1);let n=0;   // XL boss raids have two bosses
   for(const k of keys){if(n>=cap)break;const key=k==='butcher_oct'?'butcher':k;if(!BOSSES[key])continue;n++;const box=bossBox(key);out[box]=(out[box]|0)+(k==='butcher_oct'?2:1)}
   return out;
 }
@@ -221,7 +224,9 @@ function rewardText(R){
   if(R.kind==='run'){
     if(R.cases.supply>0)bits.push(`+${pl(R.cases.supply,'supply case')}`);
     for(const id in R.cases)if(id!=='supply'&&R.cases[id]>0&&CASES[id])bits.push(`+${R.cases[id]} ${CASES[id].name.toLowerCase()}${R.cases[id]>1?'s':''} from bosses`);
-    if(R.shards>0)bits.push(`+${pl(R.shards,'shard')} from leftover salvage`);
+    if(R.bossShards>0)bits.push(`+${pl(R.bossShards,'shard')} from in-between bosses`);
+    if(R.shards-(R.bossShards|0)>0)bits.push(`+${pl(R.shards-(R.bossShards|0),'shard')} from leftover salvage`);
+    if(R.sp>0)bits.push(`+${pl(R.sp,'skill point')}`);
     bits.push(`${pl(R.toNext,'more raid')} to the next supply case`);
   }else if(R.missCase&&CASES[R.missCase])bits.push(`No ${CASES[R.missCase].name.toLowerCase()} this time (${Math.round((R.chance||0)*100)}% chance)`);
   else for(const id in R.cases)if(R.cases[id]>0&&CASES[id])bits.push(`+${R.cases[id]} ${CASES[id].name}`);
@@ -229,32 +234,40 @@ function rewardText(R){
   return bits.join(' · ')+'.'+(R.cloud?' Saved to your account.':'');
 }
 const mkReward=(kind,o)=>{const R={kind,cases:{},shards:0,unlocked:[],toNext:3-(locker.prog|0),prog:locker.prog|0,...o};R.text=rewardText(R);return R};
-function lockerReward(held,win,kills){
+// held = raids held in the whole game; a player who came in late (or came back) is paid from game.joinHeld on.
+// left = they walked out before the end. Everything else about the game rides along for the match record.
+function lockerReward(held,win,kills,left=false){
   if(demo)return null;
-  const sal=Math.max(0,(player&&player.sal)|0),shards=salvageShards(sal,held);
+  const from=Math.min(held,game.joinHeld|0),mine=held-from,pct=modBonus(game.mods,'');
+  const sal=Math.max(0,(player&&player.sal)|0),shards=Math.min(salvageShards(sal,mine),Math.floor(SAL_SHARD.max*(100+pct)/100));
   if(player&&shards)player.sal-=shards*SAL_SHARD.rate;   // what converts is spent, so it can't count twice
-  const bosses=game.bosses|0,keys=(game.bossLog||[]).slice(0,40),claim={kind:'run',mode:game.mode,diff:pick.diff||'normal',win:!!win,held,kills,bosses,boss_keys:keys,salvage:sal,size:game.size||'std',duration_s:Math.round(game.time)};
+  const keys=(game.bossLog||[]).slice(game.joinBoss|0).slice(0,40),sb=Math.max(0,(game.sbN|0)-(game.joinSB|0)),dur=Math.round(game.time-(game.joinT||0));
+  const claim={kind:'run',mode:game.mode,diff:pick.diff||'normal',win:!!win,held:mine,raid_from:from,raid_to:held,kills,bosses:keys.length,boss_keys:keys,shard_bosses:sb,
+    salvage:sal,size:game.size||'std',duration_s:dur,game_id:game.gid,joined_s:Math.round(game.joinT||0),left_s:Math.round(game.time),left:!!left,
+    upgrades:(player?player.upS:'')+':'+(game.dellLv|0),mods:game.mods||[],map:game.map};
   if(locker.cloud)return queueClaim(claim);
-  locker.shards=(locker.shards|0)+shards;
-  const st=locker.st,before=locker.cases,drops=bossDrops(keys,held);
-  st.raids+=held;st.drops+=kills;if(win){st.wins++;if(pick.diff==='hard')st.hardWins++}
+  // this browser's own locker (no account): the same rules as the server, minus skill points
+  const st=locker.st,before=locker.cases,drops=bossDrops(keys,held,from),bshards=sb*(15+Math.floor(rnd()*16));
+  locker.shards=(locker.shards|0)+shards+bshards;
+  st.raids+=mine;st.drops+=kills;if(win&&from*2<=game.waves){st.wins++;if(pick.diff==='hard')st.hardWins++}
   if(game.mode==='endless')st.endless=Math.max(st.endless,held);
-  locker.prog+=held;locker.cases+=Math.floor(locker.prog/3);locker.prog%=3;
-  if(win)locker.cases+=game.waves>=10?2:1;
-  if(game.mode==='endless')locker.cases+=Math.floor(held/5);
+  locker.prog+=Math.floor(mine*(100+pct)/100);locker.cases+=Math.floor(locker.prog/3);locker.prog%=3;
+  if(win&&from*2<=game.waves)locker.cases+=game.waves>=10?2:1;
+  if(game.mode==='endless')locker.cases+=Math.floor(mine/5);
   for(const id in drops)caseAdd(id,drops[id]);
   const got=checkUnlocks();saveLocker();
-  return mkReward('run',{cases:{supply:locker.cases-before,...drops},shards,unlocked:got.map(c=>c.id)});
+  return mkReward('run',{cases:{supply:locker.cases-before,...drops},shards:shards+bshards,bossShards:bshards,unlocked:got.map(c=>c.id)});
 }
 // a PvP match counts toward the next case like a raid does; a win is a case outright
 // Base Battle and FFA don't pay Supply cases (those are co-op only). Each match rolls its mode's drop chance for
 // the PvP case instead. With an account the server does the roll and the result arrives a moment later.
 function pvpReward(win,kills){
   if(demo)return null;
-  if(locker.cloud)return queueClaim({kind:'match',pvp:game.pvp,win:!!win,kills,duration_s:Math.round(game.time)});
+  if(locker.cloud)return queueClaim({kind:'match',pvp:game.pvp,win:!!win,kills,duration_s:Math.round(game.time-(game.joinT||0)),game_id:game.gid,mods:game.mods||[],
+    joined_s:Math.round(game.joinT||0),left_s:Math.round(game.time),map:game.map});
   const st=locker.st;
   st.drops+=kills;st.pvp=(st.pvp|0)+1;if(win)st.pvpWins=(st.pvpWins|0)+1;
-  const cid=pvpCase(game.pvp),D=cid?CASES[cid].drop[game.pvp]:null,ch=D?(win?D.win:D.loss):0,cases={};let miss='';
+  const cid=pvpCase(game.pvp),D=cid?CASES[cid].drop[game.pvp]:null,ch=(D?(win?D.win:D.loss):0)*(100+modBonus(game.mods,game.pvp))/100,cases={};let miss='';
   if(cid){if(rnd()<ch){caseAdd(cid,1);cases[cid]=1}else miss=cid}
   const got=checkUnlocks();saveLocker();
   return mkReward('match',{cases,chance:ch,missCase:miss,unlocked:got.map(c=>c.id)});
@@ -266,7 +279,8 @@ function claimReward(c,j){
   else if(c.kind==='run'){cases.supply=j.cases_granted|0;for(const b of j.bonuses||[j.bonus||{}])if(b&&b.case)cases[b.case]=(cases[b.case]|0)+(b.n|0)}
   else if(j.case_id)cases[j.case_id]=j.cases_granted|0;
   const prog=(j.locker&&j.locker.prog)|0,ids=Array.isArray(j.unlocked_ids)?j.unlocked_ids:(j.unlocked||[]).map(n=>(COS.find(x=>x.name===n)||{id:n}).id);
-  const R={kind:c.kind,cases,shards:j.shards|0,unlocked:ids,prog,toNext:j.to_next!==undefined?j.to_next|0:3-prog,cloud:true,chance:j.chance||0,missCase:c.kind==='match'&&!(j.cases_granted>0)?j.case_id:''};
+  const R={kind:c.kind,cases,shards:j.shards|0,unlocked:ids,prog,toNext:j.to_next!==undefined?j.to_next|0:3-prog,cloud:true,chance:j.chance||0,missCase:c.kind==='match'&&!(j.cases_granted>0)?j.case_id:'',
+    bossShards:j.boss_shards|0,sp:j.skill_points|0,spToNext:j.sp_to_next|0};
   R.text=rewardText(R);return R;
 }
 const claimText=(c,j)=>claimReward(c,j).text;

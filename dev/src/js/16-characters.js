@@ -718,7 +718,7 @@ function drawDowned(x,y,o,prog,tag){
 function bossLine(x0,y0,x1,y1,z){const a=iso(x0,y0),b=iso(x1,y1);g.beginPath();g.moveTo(a[0],a[1]-z);g.lineTo(b[0],b[1]-z);g.stroke()}
 function drawBossFx(){
   const ch=WH*.55,t=game.time,pulse=.55+.45*Math.sin(t*22);
-  for(const f of fires){const c=iso(f.x,f.y),a=Math.min(1,f.t)*(.34+.1*Math.sin(t*9+f.x*3));g.fillStyle=`rgba(255,110,40,${a})`;g.beginPath();g.ellipse(c[0],c[1],TW2*.95,TH2*.95,0,0,Math.PI*2);g.fill()}
+  for(const f of fires){const c=iso(f.x,f.y),a=Math.min(1,f.t)*(.34+.1*Math.sin(t*9+f.x*3)),fr=(f.r||.9)/.9;g.fillStyle=`rgba(255,110,40,${a})`;g.beginPath();g.ellipse(c[0],c[1],TW2*.95*fr,TH2*.95*fr,0,0,Math.PI*2);g.fill()}
   // spotters: a red laser while they line up (st 1), solid with a mark over the soldier once they have them (st 2)
   for(const e of enemies){if(e.type!=='spotter'||!e.st)continue;const a=iso(e.x,e.y),b=iso(e.lx,e.ly);g.strokeStyle=e.st===2?'rgba(255,60,50,.75)':`rgba(255,60,50,${.25+.3*pulse})`;g.lineWidth=(e.st===2?1.3:.9)*u;
     g.beginPath();g.moveTo(a[0],a[1]-ch);g.lineTo(b[0],b[1]-ch);g.stroke();

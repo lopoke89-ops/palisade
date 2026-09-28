@@ -36,6 +36,7 @@ addEventListener('keydown',e=>{
   if(k===' '){e.preventDefault();localBuild()}
   else if(k==='1'||k==='2'||k==='3')game.sel=+k-1;
   else if(k==='f')game.piece=game.piece==='wall'?'door':'wall';
+  else if(k==='q'&&hasAbility(player))localAbility();   // the soldier's rocket, the sniper's stealth (co-op)
   else if(k==='g'||k==='q')localNade();
   else if(k==='shift')localSprint();
   else if(k==='r')localReload();
@@ -52,7 +53,7 @@ function tapBtn(el,fn){el.addEventListener('pointerdown',e=>{e.preventDefault();
 const live=fn=>()=>{if(playing()&&!overlayOpen())fn()};
 [0,1,2].forEach(m=>tapBtn($('c'+m),live(()=>{game.sel=m})));
 tapBtn($('pWall'),live(()=>{game.piece='wall'}));tapBtn($('pDoor'),live(()=>{game.piece='door'}));
-tapBtn($('buildBtn'),live(localBuild));tapBtn($('nadeBtn'),live(localNade));tapBtn($('sprBtn'),live(localSprint));
+tapBtn($('buildBtn'),live(localBuild));tapBtn($('nadeBtn'),live(localNade));tapBtn($('sprBtn'),live(localSprint));tapBtn($('abBtn'),live(localAbility));
 tapBtn($('skipBtn'),live(()=>{if(game.phase==='build'&&NET.mode!=='guest')startRaid()}));
 tapBtn($('pauseBtn'),()=>{if(playing())togglePause()});
 $('chatBtn').addEventListener('click',e=>{e.preventDefault();initAudio();chatOpen()?closeChat():openChat()});

@@ -57,7 +57,7 @@ function throwNade(p,tx,ty){
   if(!p.alive||p.nades<=0||p.ncd>0||truce()){personal(p,'deny');return}
   let dx=tx-p.x,dy=ty-p.y;const d0=Math.hypot(dx,dy)||1,m=Math.min(d0,6.5);
   tx=clamp(p.x+dx/d0*m,.3,N-.3);ty=clamp(p.y+dy/d0*m,.3,N-.3);
-  const d=Math.hypot(tx-p.x,ty-p.y);lobs.push({x0:p.x,y0:p.y,x1:tx,y1:ty,t:0,T:.5+d*.08,R:1.65*(p.C.blast>1?1.15:1)*(1+.05*p.up.n),power:p.blast,own:p.id});p.nades--;p.ncd=p.C.nadeCd;sfx('lob',p.x,p.y);
+  const FZ=hasMod('frenzy'),d=Math.hypot(tx-p.x,ty-p.y);lobs.push({x0:p.x,y0:p.y,x1:tx,y1:ty,t:0,T:.5+d*.08,R:1.65*(p.C.blast>1?1.15:1)*(1+.05*p.up.n)*(FZ?1.33:1),power:p.blast,own:p.id});p.nades--;p.ncd=p.C.nadeCd*(p.perk||PERK0).reload*(FZ?.5:1);sfx('lob',p.x,p.y);
 }
 // this phone's buttons: do it (host/solo) or ask the host (guest)
 function localBuild(){
@@ -68,7 +68,7 @@ function localBuild(){
 }
 // quartermaster sprint: 1.4x speed for 2.5 s, no shooting while it lasts, then 6 s to recharge
 const SPRINT={mult:1.4,dur:2.5,cd:6};
-function localSprint(){const p=player;if(!p||!p.alive||!p.C.sprint||demo||(p.sprCd||0)>0)return;p.sprT=SPRINT.dur;p.sprCd=SPRINT.dur+SPRINT.cd}
+function localSprint(){const p=player;if(!p||!p.alive||!p.C.sprint||demo||(p.sprCd||0)>0)return;const L=(p.perk||PERK0).stride|0;p.sprT=SPRINT.dur+.6*L;p.sprCd=p.sprT+SPRINT.cd-L}   // Long Stride: longer, and back sooner
 function localNade(){
   const p=player;if(!p||!p.alive)return;let tx,ty;
   if(!touchMode&&mouse.seen){const w=screenToWorld(mouse.x,mouse.y+WH*.55);tx=w.x;ty=w.y}else{tx=p.x+p.face.x*5;ty=p.y+p.face.y*5}

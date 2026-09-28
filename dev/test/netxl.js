@@ -1,6 +1,6 @@
 // Network traffic meter (not pass/fail), v0.9.1: six players online on an XL (24×24) Riverbend, in a boss raid
 // with both XL bosses up, plus a busy normal raid. Prints what the host sends each guest per second, split by kind,
-// and the host's frame time while it runs. node netxl.js [port] [page]
+// and the host's frame time while it runs. node netxl.js [port] [page]   (MODS=weather,nightmare to switch modifiers on)
 const { chromium } = require('playwright');
 const port = process.argv[2] || 8080, page = process.argv[3] || 'debug.html', Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1';
 (async () => {
@@ -13,6 +13,7 @@ const port = process.argv[2] || 8080, page = process.argv[3] || 'debug.html', Q 
   for (let n = 1; n <= 5; n++) { const g = await open({ width: 400, height: 300 }, 'G' + n); await g.click('[data-go=multi]'); await g.fill('#mName', 'Guest' + n); await g.fill('#mCode', code); await g.click('#joinBtn');
     await g.waitForSelector('#pg-lobby:not([hidden])', { timeout: 15000 }); G.push(g) }
   await H.waitForFunction(() => __pal.NET.roster.length === 6, null, { timeout: 10000 });
+  if (process.env.MODS) await H.evaluate(m => { for (const id of m.split(',')) __pal.toggleMod('coop', id) }, process.env.MODS);   // v0.9.2: e.g. MODS=weather,nightmare
   await H.click('#lStart'); for (const g of G) await g.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await H.waitForTimeout(1000);
   const meter = async (label, setup) => {
     await H.evaluate(setup);

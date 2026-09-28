@@ -2,10 +2,12 @@
 const BEST_KEY='palisade.best.v3';
 function loadBest(){try{return JSON.parse(localStorage.getItem(BEST_KEY)||'{}')||{}}catch(e){return{}}}
 // one record per length and threat on the Yard (the keys from before maps), and per map and size elsewhere
-const bestKey=(mode,diff,map,size)=>mode+':'+diff+(map&&map!=='yard'||size==='xl'?':'+(map||'yard')+(size==='xl'?':xl':''):'');
-function saveBest(held,dropped){try{const b=loadBest(),k=bestKey(game.mode,pick.diff,game.map,game.size),o=b[k];if(!o||held>o.held||(held===o.held&&dropped>o.dropped)){b[k]={held,dropped,cls:player.C.name};localStorage.setItem(BEST_KEY,JSON.stringify(b))}}catch(e){}}
-function showBest(){const b=loadBest()[bestKey(pick.mode,pick.diff,pick.map,pick.size)],el=$('best');if(!b){el.hidden=true;return}el.hidden=false;
-  el.textContent=pick.mode==='endless'?`Best endless on ${DIFF[pick.diff].name.toLowerCase()}: ${b.held} raids held, ${b.dropped} raiders dropped (${b.cls.toLowerCase()}).`:`Best on ${DIFF[pick.diff].name.toLowerCase()}: ${b.held} of ${pick.mode} raids held, ${b.dropped} raiders dropped (${b.cls.toLowerCase()}).`}
+// v0.9.2: and per modifier set (no modifiers keeps the old key)
+const bestKey=(mode,diff,map,size,mods)=>mode+':'+diff+(map&&map!=='yard'||size==='xl'?':'+(map||'yard')+(size==='xl'?':xl':''):'')+(mods&&mods.length?'|'+modKey(mods):'');
+function saveBest(held,dropped){try{const b=loadBest(),k=bestKey(game.mode,pick.diff,game.map,game.size,game.mods),o=b[k];if(!o||held>o.held||(held===o.held&&dropped>o.dropped)){b[k]={held,dropped,cls:player.C.name};localStorage.setItem(BEST_KEY,JSON.stringify(b))}}catch(e){}}
+function showBest(){const m=myMods('coop'),b=loadBest()[bestKey(pick.mode,pick.diff,pick.map,pick.size,m)],el=$('best');if(!b){el.hidden=true;return}el.hidden=false;
+  const w=m.length?` with ${m.length>2?m.length+' modifiers':modNames(m).map(n=>n.toLowerCase()).join(' + ')}`:'';
+  el.textContent=pick.mode==='endless'?`Best endless on ${DIFF[pick.diff].name.toLowerCase()}${w}: ${b.held} raids held, ${b.dropped} raiders dropped (${b.cls.toLowerCase()}).`:`Best on ${DIFF[pick.diff].name.toLowerCase()}${w}: ${b.held} of ${pick.mode} raids held, ${b.dropped} raiders dropped (${b.cls.toLowerCase()}).`}
 
 /* ================= HUD ================= */
 let toastT=0;
@@ -67,6 +69,7 @@ function keyBar(){
   if(game.phase==='build'&&NET.mode!=='guest')a.push(K('ENTER',PV?'start battle':'start raid'));
   if(NET.mode!=='solo')a.push(K('T','chat'));
   a.push(K('ESC','pause'));
+  if(hasAbility(p))a.splice(3,0,K('Q',p.cls==='sniper'?'stealth':'rocket'));
   const h=a.join(''),el=$('keys');if(el._h!==h){el._h=h;el.innerHTML=h}
 }
 function mateRows(){
@@ -79,14 +82,14 @@ function mateRows(){
 function hud(dt){
   if(toastT>0){toastT-=dt;if(toastT<=0)$('toast').classList.remove('on')}
   const p=player;if(!p)return;
-  const rj=game.pvp==='ffa'&&!p.alive&&game.phase!=='over';if($('respawnJobs').hidden===rj){$('respawnJobs').hidden=!rj;if(rj)syncJobPick()}
+  const rj=game.pvp==='ffa'&&!game.job&&!p.alive&&game.phase!=='over';if($('respawnJobs').hidden===rj){$('respawnJobs').hidden=!rj;if(rj)syncJobPick()}
   $('hpF').style.transform=`scaleX(${Math.max(0,p.hp/p.max)})`;txt($('hpN'),p.alive?String(Math.ceil(p.hp)):'DOWN');cls($('hpM'),'alarm',!p.alive);
   mateRows();
   hud.t=(hud.t||0)-dt;if(hud.t<=0){hud.t=.5;const b=$('top').getBoundingClientRect().bottom;if(b>0){hud.topB=b;const v=Math.round(b+10)+'px';if($('tip').style.top!==v)$('tip').style.top=v}
     const tp=$('tip');hud.tipB=tp.hidden||!$('tipText').textContent?0:tp.getBoundingClientRect().bottom}
   if($('tipText').textContent&&(game.pvp==='ffa'&&game.time>9||game.pvp==='base'&&game.phase==='raid'))setTip('');
   const PV=game.pvp,clock=t=>{const s=Math.max(0,Math.ceil(t));return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`};
-  $('qmM').hidden=!!PV;$('coreM').hidden=PV==='ffa';$('core2M').hidden=PV!=='base';$('board').hidden=PV!=='ffa';$('salv').hidden=PV==='ffa';
+  $('qmM').hidden=!!PV||!!qm.gone;$('coreM').hidden=PV==='ffa';$('core2M').hidden=PV!=='base';$('board').hidden=PV!=='ffa';$('salv').hidden=PV==='ffa';
   if(!PV){$('qmF').style.transform=`scaleX(${Math.max(0,qm.hp/qm.max)})`;txt($('qmN'),qm.alive?String(Math.ceil(qm.hp)):'DOWN');cls($('qmM'),'alarm',!qm.alive)}
   if(PV!=='ffa'){txt($('coreL'),PV?'STAKE':'CORE');$('coreF').style.transform=`scaleX(${Math.max(0,core.hp/core.max)})`;txt($('coreN'),String(Math.max(0,Math.ceil(core.hp))));
     cls($('coreM'),'alarm',core.flash>0||core.hp/core.max<.3);$('coreF').style.background=PV?(TEAMS[p.team]||TEAMS.a).col:''}
@@ -119,6 +122,9 @@ function hud(dt){
   keyBar();
   if(!$('armory').hidden&&armorySig(p)!==armSig)renderArmory()
   txt($('nadeN'),String(p.nades));cls($('nadeBtn'),'empty',p.nades<=0);
+  const abb=$('abBtn'),hasAb=hasAbility(p);if(abb.hidden===hasAb)abb.hidden=!hasAb;
+  if(hasAb){const a=p.ab|0,snipe=p.cls==='sniper';txt($('abLab'),snipe?'STEALTH':'ROCKET');
+    txt($('abN'),snipe?(a>0?Math.ceil(a/10)+'s':a<0?(-a)+'s':'READY'):String(Math.max(0,a)));cls(abb,'on',snipe&&a>0);cls(abb,'empty',snipe?a<0:a<=0)}
   const sb=$('sprBtn');sb.hidden=!p.C.sprint;if(p.C.sprint){const on=p.sprT>0,cd=p.sprCd||0;txt($('sprN'),on?'GO':cd>0?Math.ceil(cd)+'s':'READY');cls(sb,'on',on);cls(sb,'empty',!on&&cd>0)}
 }
 

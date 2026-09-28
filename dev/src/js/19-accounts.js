@@ -78,7 +78,7 @@ const capFail={ok:false,status:400,j:{message:'The robot check didn\'t load. Try
 const lockerFresh=L=>L.cases<=1&&!L.shards&&!L.prog&&Object.values(L.st).every(v=>!v)&&!Object.values(L.bag||{}).some(v=>v>0)&&L.owned.every(id=>COSBY[id]&&COSBY[id].src==='free');
 function takeLocker(j){
   if(!j||!Array.isArray(j.owned)||!acct.s)return;
-  const L=normLocker({owned:j.owned,eq:j.eq,cases:j.cases,bag:j.bag,shards:j.shards,prog:j.prog,st:j.st});
+  const L=normLocker({owned:j.owned,eq:j.eq,cases:j.cases,bag:j.bag,shards:j.shards,prog:j.prog,st:j.st,sp:j.sp,spProg:j.sp_prog,spTotal:j.sp_total,skills:j.skills});
   L.cloud={id:myUid(),guest:isGuest()};locker=L;saveLocker();lockerNote='';
   if(!$('pg-locker').hidden&&$('caseOv').hidden)renderLocker();
   mainLabels();
@@ -104,6 +104,13 @@ async function loadProfile(){
   if(r.ok&&Array.isArray(r.j)&&r.j[0])acct.name=r.j[0].username||null;
 }
 
+// ---- v0.9.2: your skill tree as it travels to the host (accounts only; the host checks it with the server)
+const mySkills=()=>locker.cloud&&locker.skills?skillStr(locker.skills,!!cfg.molOff):'';
+function skillBuy(id){if(!locker.cloud||skillBusy)return;skillBusy=true;renderSkills();
+  rpc('skill_buy',{p_node:id}).then(r=>{skillBusy=false;if(r.ok){takeLocker(r.j);skillMsg('');uiSfx('restock');syncLobbyLoadout()}else skillMsg(r.status?sbErr(r):'Buying a skill needs a connection.');renderSkills()})}
+function skillRespec(){if(!locker.cloud||skillBusy)return;skillBusy=true;renderSkills();
+  rpc('skill_respec',{}).then(r=>{skillBusy=false;if(r.ok){takeLocker(r.j);skillMsg('Your points are back. Spend them again.');uiSfx('restock');syncLobbyLoadout()}else skillMsg(r.status?sbErr(r):'Resetting needs a connection.');renderSkills()})}
+let skillBusy=false;
 // ---- finished runs: the server checks each result and hands out the cases. Kept here until it answers.
 let lastClaimLocker=null;
 let claims=(()=>{const a=readJSON(CLAIM_KEY);return a.v&&Array.isArray(a.v.q)?a.v.q:[]})(),flushing=null,flushT=0,flushWhy='';
@@ -180,6 +187,8 @@ async function endSession(msg){
 // ---- the account page
 function mainLabels(){
   const lb=$('navLocker'),n=allCases();if(lb)lb.textContent=n?`LOCKER · ${n}`:'LOCKER';
+  const sk=$('navSkills'),pts=locker.cloud?locker.sp|0:0;if(sk)sk.textContent=pts?`SKILLS · ${pts}`:'SKILLS';   // points waiting to be spent
+  if(!$('pg-skills').hidden)renderSkills();
   renderIdentity();   // the account button (top right) shows who you are and whether the account is saved
 }
 function renderAcct(){

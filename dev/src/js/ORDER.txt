@@ -1,4 +1,5 @@
 01-setup.js   constants, tuning, classes, PvP settings
+01b-mods-skills.js   modifiers (MODS), the skill tree (SKILLS, perks), class ability settings
 02-view.js   screen size, camera, iso projection, aiming at bodies
 03-audio.js   sound effects and music
 04-state-armory.js   game state, players, armory upgrades, Dell upgrade, core repair
@@ -9,6 +10,7 @@
 08-input.js   keyboard, mouse, touch sticks and buttons
 09-actions.js   building, grenades, sprint, weapons firing (shoot/fire)
 10-phases-bosses.js   raids, build phases, waves, bosses
+10b-mods-play.js   modifiers in play (bosses, storms, Sudden Death, Frenzy) and class abilities
 11-hud-chat.js   best record, HUD, text chat
 12-players.js   main update, player control and simulation (triggers, bursts, gathering)
 13-dell.js   Dell, the quartermaster AI and shotgun

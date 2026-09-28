@@ -71,6 +71,33 @@ JOBS, BOSSES AND SALVAGE (v0.8.1)
     to reload.
 
 
+MODIFIERS, THE SKILL TREE, CLASS ABILITIES (v0.9.2)
+---------------------------------------------------
+  - MODIFIERS: switch them on under MODIFIERS on the SOLO page, or in the
+    room (the host picks; everyone sees them). Only the ones that work in
+    the mode you're hosting are listed. Co-op: No Patch-Ups, On Your Own
+    (no Dell), Firestorm, Adrenaline, Last Stand, Elite Raid, Boss Rush,
+    Weather, Nightmare, Berserk. Base Battle and Free-for-all: Adrenaline,
+    Weather, Nightmare (night only), Glass Cannon, One Job, Grenade Frenzy,
+    plus Scrap Shortage (Base Battle) and Sudden Death (Free-for-all).
+    Harder co-op modifiers raise your rewards (up to +75%); Adrenaline
+    lowers them a little. Best scores are kept per set of modifiers.
+  - Boss Rush and Nightmare bosses in between the usual ones (raids 5, 10,
+    15 still drop their case) pay 15-30 shards each.
+  - SKILLS: a new page with one skill tree for every job. You earn 1 point
+    for every 5 raids you hold and 1 for every boss that goes down (needs an
+    account; a guest account works). Weapon, health and movement perks, plus
+    upgrades for each job's ability. Reset the tree for 40 shards. In Base
+    Battle and Free-for-all the perks count half and job nodes are off.
+  - ABILITIES (co-op, key Q or the new button by the grenade): the Soldier
+    fires rockets (5 a run, 2 back each build phase), the Sniper goes
+    unseen for 12 seconds (raiders stop targeting you). The Grenadier's tree
+    has more grenades and Molotovs; the Quartermaster keeps sprint.
+  - Leaving a run and coming back no longer pays for the same raids twice:
+    you're paid for the raids you were there for.
+  - Phones: all six players now show on the lobby stage.
+
+
 FRIENDS, PVP ON EVERY MAP, A NEW LOCKER (v0.9.1)
 ------------------------------------------------
   - FRIENDS: the button next to your name (top right). Find a player by

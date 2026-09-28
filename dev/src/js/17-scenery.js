@@ -249,8 +249,8 @@ function itemPlayer(o){
   if(o._shotDrawUntil>game.time)PL.syncRender=true;
   if(game.pvp){PL.mark=teamCol(o);if(game.pvp==='base')PL.ring=teamCol(o);else if(me)PL.ring='#e2b436'}
   const bf=NET.mode==='guest'?(o.boltF||0):(o.bolt>0?o.bolt/o.boltT:0);if(bf>0)PL.bolt=1-bf;
-  if(o.alive)drawPerson(o.x,o.y,Object.assign({aim:o.aim,walk:o.walk,flash:o.flash>0,tag,tagCol:game.pvp?teamCol(o):SLOTCOL[o.slot%6],faded:o.prot>0,hp:game.pvp&&!me&&o.hp<o.max?o.hp/o.max:undefined},PL));
-  else drawDowned(o.x,o.y,PL,o.revive/2.2,me?`DOWN · ${Math.ceil(o.rt)}`:`${o.name.toUpperCase()} · DOWN`);
+  if(o.alive)drawPerson(o.x,o.y,Object.assign({aim:o.aim,walk:o.walk,flash:o.flash>0,tag,tagCol:game.pvp?teamCol(o):SLOTCOL[o.slot%6],faded:o.prot>0||stealthed(o),hp:game.pvp&&!me&&o.hp<o.max?o.hp/o.max:undefined},PL));
+  else drawDowned(o.x,o.y,PL,o.revive/2.2,me?(o.rt>1e5?'DOWN · UNTIL THE RAID IS BROKEN':`DOWN · ${Math.ceil(o.rt)}`):`${o.name.toUpperCase()} · DOWN`);
 }
 function render(dt){
   PM('pre');const p=player;
@@ -323,7 +323,7 @@ function render(dt){
     g.setTransform(DPR,0,0,DPR,0,0)}
   g.globalAlpha=1;
   g.globalCompositeOperation='source-over';
-  drawVignette(demo);PM('floats');
+  drawStorm(dt);drawVignette(demo);PM('floats');
   for(const f of floats){const c=iso(f.x,f.y),a=f.life/f.max;g.globalAlpha=Math.min(1,a*2);label(f.t,c[0],c[1]-WH*1.5-(1-a)*24*u,f.col,11);g.globalAlpha=1}
   PM('ui');if(playing()&&!overlayOpen())drawPrompts(p);
   if(playing()&&p.alive&&!overlayOpen()){drawCrosshair(p);drawShells(p)}

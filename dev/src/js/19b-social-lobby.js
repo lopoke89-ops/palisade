@@ -7,7 +7,7 @@ const socialAccount=()=>cloudOn&&acct.state==='full'&&!isGuest()&&!!myUid();
 const socialVisible=()=>!$('menu').hidden&&!$('friendsDrop').hidden;
 // the pages that use the lobby shell (character on stage, columns either side)
 const STAGE_PAGES=['solo','classes','multi','lobby','locker'];
-const CARD_PAGES=['settings','account'];   // the same shell, laid out as cards instead of a stage
+const CARD_PAGES=['settings','account','skills'];   // the same shell, laid out as cards instead of a stage
 const stageVisible=()=>!$('menu').hidden&&STAGE_PAGES.includes($('menu').dataset.page);
 const inRoom=()=>NET.mode==='host'||NET.mode==='guest';
 function socialReset(){FR.friends=[];FR.incoming=[];FR.outgoing=[];FR.notes=[];FR.unseen=0;FR.ok=false;FR.loaded=false;FR.rooms=[];FR.seq++;SOCIAL.owner=myUid();SOCIAL.ids=[];SOCIAL.profiles=[];SOCIAL.rooms=[];SOCIAL.result=null;SOCIAL.status='';SOCIAL.loading=false;SOCIAL.busy=false;SOCIAL.roomsOK=false;SOCIAL.seq++;SOCIAL.searchSeq++;}
@@ -37,6 +37,7 @@ function partyInvite(){
 }
 function renderPartyState(){
  if(!$('partyShell')||$('partyShell').hidden)return;
+ {const pg=$('menu').dataset.page,m=pg==='solo'?myMods('coop'):pg==='lobby'?roomMods():[],el=$('partyMods'),t=m.length?'MODIFIERS · '+modNames(m).join(' · '):'';el.hidden=!t;if(el.textContent!==t)el.textContent=t}
  const room=inRoom(),rows=partyRows(),me=rows.find(r=>r.id===myId)||rows[0],pg=$('menu').dataset.page,C=CLASSES[pick.cls]||CLASSES.soldier,M=MAPS[pick.map]||MAPS.yard;
  if(pg==='locker'){const eq=locker.eq,nm=(c,k)=>(COSBY[c+':'+k]||{name:k}).name;
   $('partyMode').textContent='LOCKER';$('partyTitle').textContent='YOUR KIT';$('partySubtitle').textContent=`${nm('skin',eq.skin)} · ${nm('hat',eq.hat)} · ${nm("trail",eq.trail)}${/tracer/i.test(nm("trail",eq.trail))?"":" tracer"} · ${nm('fx',eq.fx)}`;
@@ -61,7 +62,7 @@ let partyPaintAt=0,partySig='',partyMeSig='';
 // straight from the model (no sprite cache at this size) and only when its pose changes, at most 30 times a
 // second; the breathing bob is a CSS transform, so it costs no painting at all.
 const STAGE={wide:{me:[500,722,13.4],others:[[250,660,8.2],[762,660,8.2],[88,612,7.4],[918,612,7.4],[395,568,6.8]]},
- phone:{me:[500,712,11.6],others:[[160,690,8.4],[840,690,8.4],[318,572,7],[682,572,7],[500,468,6.2]]}};
+ phone:{me:[500,712,11.6],others:[[150,700,8.2],[830,712,8.2],[292,580,6.8],[690,572,6.8],[930,522,5.8]]}};   // v0.9.2: the sixth stands off to the side, not behind you
 let stageLay='',stageLayW=-1;   // read the stage width only when the window size changes (reading it every frame forces a layout)
 const stageLayout=()=>{if(stageLayW!==innerWidth||!stageLay){stageLayW=innerWidth;stageLay=$('partyHero').clientWidth<520?'phone':'wide'}return stageLay};
 const stageAngle=(i,t)=>i<0?.35+Math.sin(t/4.5)*.16:[.62,-.62,.5,-.5,.1][i]||0;
@@ -260,8 +261,8 @@ $('friendSearch').addEventListener('submit',e=>{e.preventDefault();findPlayer()}
 function syncLobbyLoadout(){
  if(NET.inGame||!['host','guest'].includes(NET.mode))return;
  const r=NET.roster.find(r=>r.id===myId);if(!r)return;
- const next={name:myName(),cls:pick.cls,cos:cosStr(myCos())};
- if(r.name===next.name&&r.cls===next.cls&&r.cos===next.cos)return;
+ const next={name:myName(),cls:pick.cls,cos:cosStr(myCos()),sk:mySkills()};
+ if(r.name===next.name&&r.cls===next.cls&&r.cos===next.cos&&(r.sk||'')===next.sk)return;
  if(NET.mode==='host'){Object.assign(r,next);broadcastLobby()}else NET.toHost({t:'loadout',...next});
 }
 
@@ -303,3 +304,59 @@ function renderMapPanel(){
  const M=MAPS[pick.map]||MAPS.yard;$('soloMap').textContent=`${M.name} · ${pick.size==='xl'?'XL 24×24':'16×16'}${M.night?' · always night':''}`;
 }
 const renderPlayPanel=renderMapPanel;
+
+
+/* ---- v0.9.2: modifiers. The host picks them on the SOLO page or in the room; guests see the host's picks. ---- */
+// saved per mode (cfg.mods = {coop:[…], base:[…], ffa:[…]}); only the ones that work in that mode are ever used
+const myMods=m=>cleanMods((cfg.mods||{})[m],m==='coop'?'':m);
+const roomMods=()=>NET.mode==='guest'?(NET.hostMods||[]):myMods(modMode(pick.pvp));
+function toggleMod(m,id){
+  if(NET.mode==='guest')return;const all=Object.assign({coop:[],base:[],ffa:[]},cfg.mods||{}),cur=new Set(all[m]||[]);
+  if(cur.has(id))cur.delete(id);else cur.add(id);all[m]=cleanMods([...cur],m==='coop'?'':m);cfg.mods=all;saveCfg();
+  renderMods();showBest();if(NET.mode==='host')broadcastLobby();renderPartyState();
+}
+const modPct=list=>{const b=modBonus(list,'');return b?`REWARDS ${b>0?'+':''}${b}%`:''};
+function modBox(box,m,on,edit){
+  const key=m+'|'+on.join()+'|'+edit;if(box.dataset.key===key)return;box.dataset.key=key;box.textContent='';
+  for(const M of MODS){if(!M.modes.includes(m))continue;const sel=on.includes(M.id);if(!edit&&!sel)continue;
+    const b=document.createElement('button');b.type='button';b.className='modChip'+(sel?' sel':'');b.dataset.mod=M.id;b.setAttribute('aria-pressed',sel?'true':'false');b.disabled=!edit;
+    const n=document.createElement('b');n.textContent=M.name;const w=document.createElement('span');w.textContent=M.what;b.append(n,w);
+    if(m==='coop'&&M.bonus){const r=document.createElement('i');r.textContent=(M.bonus>0?'+':'')+M.bonus+'%';r.className=M.bonus>0?'up':'down';b.append(r)}
+    if(edit)b.addEventListener('click',()=>{initAudio();toggleMod(m,M.id)});box.append(b)}
+  if(!box.children.length){const p=document.createElement('p');p.className='lede sm';p.textContent=edit?'No modifiers for this mode.':'No modifiers. The host picks them.';box.append(p)}
+}
+function renderMods(){
+  if($('soloMods')){const on=myMods('coop');modBox($('soloMods'),'coop',on,true);$('soloModTag').textContent=on.length?`${on.length} ON${modPct(on)?' · '+modPct(on):''}`:''}
+  if($('lMods')){const m=modMode(pick.pvp),on=roomMods(),host=NET.mode!=='guest';modBox($('lMods'),m,on,host);
+    $('lModTag').textContent=on.length?`${on.length} ON${m==='coop'&&modPct(on)?' · '+modPct(on):''}`:'';
+    const oj=on.includes('onejob');$('lOneJob').hidden=!oj;$('lJobs').classList.toggle('locked',oj);
+    document.querySelectorAll('[data-oj]').forEach(b=>{b.classList.toggle('sel',b.dataset.oj===pick.job);b.disabled=!host})}
+}
+function modsToast(){if(game.mods&&game.mods.length)toast('MODIFIERS',modNames(game.mods).join(' · ')+(game.job?` · everyone is a ${CLASSES[game.job].name.toLowerCase()}`:''))}
+
+/* ---- v0.9.2: the skill tree page ---- */
+function skillMsg(t){$('skMsg').textContent=t||''}
+function renderSkills(){
+  const box=$('skTree');if(!box)return;const L=locker,acc=!!L.cloud,t=L.skills||{},spent=skillSpent(t);
+  $('skPts').textContent=acc?String(L.sp|0):'–';
+  $('skLede').textContent=!acc?(cloudOn?'Skill points are kept on your account. Sign in, or play as a guest, to start earning them.':'Skill points are kept on your account, on the live site.')
+    :`1 point for every 5 raids you hold (${5-(L.spProg|0)} more to the next one), and 1 for every boss that goes down. ${spent} spent, ${L.spTotal|0} earned in all.`;
+  $('skReset').disabled=!acc||skillBusy||!spent||L.shards<RESPEC_COST;if(!skSure)$('skReset').textContent=`RESET TREE · ${RESPEC_COST} SHARDS`;
+  const br=[...new Set(SKILLS.map(S=>S.br))];box.textContent='';
+  for(const name of br){const card=document.createElement('div');card.className='setCard skBranch';const h=document.createElement('h3');h.textContent=name;card.append(h);
+    for(const S of SKILLS.filter(x=>x.br===name)){const lv=t[S.id]|0,row=document.createElement('div');row.className='skRow'+(lv?' on':'');
+      const nm=document.createElement('b');nm.textContent=S.name;const w=document.createElement('i');w.textContent=S.what+(S.cls?'':(S.id==='revive'?' (co-op)':''));
+      const pips=document.createElement('div');pips.className='pips';for(let n=0;n<S.max;n++){const sp=document.createElement('span');if(n<lv)sp.className='on';pips.append(sp)}
+      const btn=document.createElement('button');btn.type='button';btn.dataset.sk=S.id;const locked=S.req&&(t[S.req[0]]|0)<S.req[1];
+      if(lv>=S.max){btn.textContent='MAXED';btn.disabled=true}
+      else{const c=S.cost[lv];btn.textContent=locked?`NEEDS ${SKILLBY[S.req[0]].name}`:`${c} PT${c>1?'S':''}`;btn.disabled=!acc||skillBusy||locked||(L.sp|0)<c}
+      btn.setAttribute('aria-label',`${S.name}, level ${lv} of ${S.max}. ${btn.textContent}`);btn.addEventListener('click',()=>{initAudio();skillBuy(S.id)});
+      row.append(nm,btn,pips,w);
+      if(S.id==='molotov'&&lv){const tg=document.createElement('label');tg.className='tog';const cb=document.createElement('input');cb.type='checkbox';cb.id='skMolotov';cb.checked=!cfg.molOff;
+        cb.addEventListener('change',()=>{cfg.molOff=!cb.checked;saveCfg();syncLobbyLoadout()});const sp=document.createElement('span');sp.textContent='Throw Molotovs';tg.append(cb,sp);row.append(tg)}
+      card.append(row)}
+    box.append(card)}
+}
+let skSure=0;   // resetting asks once more first
+$('skReset').addEventListener('click',()=>{initAudio();if(skSure){clearTimeout(skSure);skSure=0;skillRespec();return}
+  skSure=setTimeout(()=>{skSure=0;renderSkills()},3000);$('skReset').textContent='TAP AGAIN TO RESET';skillMsg(`Every point comes back; it costs ${RESPEC_COST} shards.`)});

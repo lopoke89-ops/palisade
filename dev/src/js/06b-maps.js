@@ -13,7 +13,7 @@ const terrSolid=t=>t===T_PIT||t===T_ROCK||t===T_DRUM;
 const terrShot=t=>t===T_ROCK;   // what stops a bullet and blocks sight: rock outcrops only (v0.9.1: oil drums don't; a pit doesn't)
 const wetT=t=>t===T_WATER||(t===T_LOW&&floodOn);
 // how fast you move on this spot (1 = normal)
-function slowAt(x,y){const t=tAt(Math.floor(x),Math.floor(y));return t===T_WATER?.5:t===T_LOW&&floodOn?.62:1}
+function slowAt(x,y){const t=tAt(Math.floor(x),Math.floor(y));return(t===T_WATER?.5:t===T_LOW&&floodOn?.62:1)*stormSlow()}   // the Weather modifier's storm slows everyone
 function terrNoBuild(k,hasWall){
   const t=terr[k];
   if(t===T_WATER)return'Can\'t build on water';

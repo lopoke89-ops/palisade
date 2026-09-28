@@ -4,7 +4,7 @@ function update(dt){
   updateParticles(dt);
   if(!running()||game.paused||(NET.mode==='guest'&&NET.inGame))return;
   if(demo&&game.phase==='build'&&game.timer>8)game.timer=8;
-  game.time+=dt;for(const c of cores)c.flash=Math.max(0,c.flash-dt);updateFlood(dt);
+  game.time+=dt;for(const c of cores)c.flash=Math.max(0,c.flash-dt);updateFlood(dt);if(!game.pvp&&game.phase==='raid')stormTick(dt);
   if(game.pvp){updatePvp(dt);if(game.phase==='over')return}
   else if(game.phase==='build'){game.timer-=dt;if(game.timer<=0)startRaid()}
   else{
@@ -31,7 +31,7 @@ function controlLocal(dt){
   const mag=Math.min(1,Math.hypot(mx,my));
   p.sprT=Math.max(0,(p.sprT||0)-dt);p.sprCd=Math.max(0,(p.sprCd||0)-dt);const spr=p.sprT>0;
   // 3.3 tiles a second is everyone's pace; the class sets a multiplier (sniper 1.1, grenadier 0.9)
-  if(mag>.12){const d=sdirToWorld(mx,my),sp=3.3*mag*(p.C.spd||1)*(spr?SPRINT.mult:1)*(p.stun>0?.45:1)*slowAt(p.x,p.y);moveEnt(p,d.x*sp*dt,d.y*sp*dt,pt(p));p.walk+=dt*mag*(spr?13:10);p.moveDir=d;
+  if(mag>.12){const d=sdirToWorld(mx,my),sp=3.3*mag*(p.C.spd||1)*(spr?SPRINT.mult:1)*(p.stun>0?.45:1)*slowAt(p.x,p.y)*(p.perk||PERK0).speed*(hasMod('adrenaline')?1.2:1);moveEnt(p,d.x*sp*dt,d.y*sp*dt,pt(p));p.walk+=dt*mag*(spr?13:10);p.moveDir=d;
     if(spr&&rnd()<dt*14)emit(p.x-d.x*.2,p.y-d.y*.2,3*u,'dust',0)}
   let firing=false;
   if(!touchMode&&mouse.seen){const w=bodyUnder(mouse.x,mouse.y,p)||screenToWorld(mouse.x,mouse.y+WH*.55);const dx=w.x-p.x,dy=w.y-p.y,l=Math.hypot(dx,dy)||1;p.aim={x:dx/l,y:dy/l};p.face=p.aim;firing=mouse.down}
@@ -45,9 +45,10 @@ function simPlayer(p,dt){
   p.hurt+=dt;p.cd=Math.max(p.cd-dt,-dt);
   if(p.bolt>0){const b0=p.bolt;p.bolt=Math.max(0,p.bolt-dt);const open=p.boltT*.72;if(b0>open&&p.bolt<=open){sfx(p.gun.pump?'pump':'rack',p.x,p.y);emit(p.x,p.y,WH*.7,p.gun.pump?'hull':'shell')}}
   p.stun=Math.max(0,(p.stun||0)-dt);p.dryT=Math.max(0,(p.dryT||0)-dt);p.sinceShot=(p.sinceShot||0)+dt;p.bcd-=dt;p.gt=Math.max(p.gt-dt,-dt);p.ncd-=dt;p.flash=Math.max(0,p.flash-dt);p.prot=Math.max(0,(p.prot||0)-dt);
+  if(!game.pvp)simAbility(p,dt);else if(p.ab)p.ab=0;frenzyTick(p,dt);
   if(!p.alive){p.bLeft=0;
     if(!p.downed)return;   // the menu's hidden demo soldier
-    if(game.pvp!=='ffa')for(const o of players.values())if(o!==p&&o.alive&&dist2(o,p)<1&&(!game.pvp||o.team===p.team)){p.revive+=dt;break}
+    if(game.pvp!=='ffa')for(const o of players.values())if(o!==p&&o.alive&&dist2(o,p)<1&&(!game.pvp||o.team===p.team)){p.revive+=dt*(o.perk||PERK0).revive*(p.perk||PERK0).revive;break}   // Back On Your Feet: either side
     if(p.revive>=2.2){revivePlayer(p);return}
     p.rt-=dt;
     if(p.rt<=0){
@@ -55,7 +56,7 @@ function simPlayer(p,dt){
       [p.x,p.y]=respawnAt(p);p.tp++;
       if(game.pvp==='ffa'&&p.nextCls){changeClass(p,p.nextCls);p.nextCls='';p.nextShow=''}   // the job picked for the next life
       p.alive=true;p.downed=false;p.hp=p.max;p.hurt=9;p.revive=0;p.stun=0;if(p.gun.mag){p.ammo=p.gun.mag;p.rl=0}
-      if(game.pvp){p.prot=PVP.prot;p.nades=Math.max(p.nades,p.maxN);toastTo(p,game.pvp==='ffa'?'BACK IN':'BACK AT YOUR STAKE',m.some(v=>v>0)?'Half your pack is in a sack where you fell.':'')}
+      if(game.pvp){p.prot=game.sd?0:PVP.prot;p.nades=Math.max(p.nades,p.maxN);toastTo(p,game.pvp==='ffa'?'BACK IN':'BACK AT YOUR STAKE',m.some(v=>v>0)?'Half your pack is in a sack where you fell.':'')}
       else toastTo(p,'BACK AT THE STAKE',m.some(v=>v>0)?'Half your pack is in a sack where you fell.':'');
     }
     return;
@@ -88,12 +89,12 @@ function simPlayer(p,dt){
     if(n.locked||(n.type===0&&n.amt<=0))continue;
     const d=Math.hypot(p.x-(n.i+.5),p.y-(n.j+.5));
     if(d<(n.solid?1.3:1.05)&&p.gt<=0&&p.mats[n.type]<p.cap[n.type]){
-      const y=Math.min(YIELD[n.type],p.cap[n.type]-p.mats[n.type],n.type===0?n.amt:99);p.mats[n.type]+=y;if(n.type===0)n.amt-=y;p.gt+=RATE[n.type]*(p.C.gather||1);personal(p,'gather');
+      const y=Math.min(YIELD[n.type],p.cap[n.type]-p.mats[n.type],n.type===0?n.amt:99);p.mats[n.type]+=y;if(n.type===0)n.amt-=y;p.gt+=RATE[n.type]*(p.C.gather||1)*(p.perk||PERK0).gather;personal(p,'gather');
       emit(n.i+.5,n.j+.5,10*u,n.type===0?'splinter':n.type===1?'dust':'spark',n.type);
       if(p===player&&n.type===0&&++game.gathered>=4&&game.tip===0){game.tip=1;setTip(touchMode?'Face a tile and tap BUILD to raise a wall.':'Face a tile with the mouse and press Space to raise a wall.')}
     }
   }
   for(let s=sacks.length-1;s>=0;s--){const k=sacks[s];if(Math.hypot(k.x-p.x,k.y-p.y)<.7){for(let m=0;m<3;m++)p.mats[m]=Math.min(p.cap[m],p.mats[m]+k.mats[m]);sacks.splice(s,1);personal(p,'gather');flt(p.x,p.y,'PACK RECOVERED')}}
-  if(p.hurt>4)p.hp=Math.min(p.max,p.hp+4*dt);
+  {const K=p.perk||PERK0;if(p.hurt>K.regenAfter&&!game.wx)p.hp=Math.min(p.max,p.hp+K.regen*dt)}   // Second Wind; no healing in a storm
 }
 

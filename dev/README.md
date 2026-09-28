@@ -191,3 +191,46 @@ play together. `multiplayer.js` verifies host/guest loadout propagation before m
   spawns, no stuck tiles, no spawn in plain sight of another). Meters: `bench.js` (now also Settings, Account,
   the six-player stage, the Friends dropdown and the case intro), `mapbench.js` (XL boss raids, PvP layouts),
   `netxl.js` (six players online on XL: about 11–12 KB/s to each guest).
+
+## v0.9.2: modifiers, the skill tree, class abilities, the rejoin fix
+
+- **Modifiers** (`01b-mods-skills.js`: `MODS`, `cleanMods`, `hasMod`, `modBonus`; `10b-mods-play.js`: the hooks).
+  Each modifier is data (id, name, text, modes, reward percent). ids travel over the network and into match
+  records: never rename one, only add. The host picks them on SOLO (`#soloMods`) or in the room (`#lMods`, and
+  `#lOneJob` for One Job); they're saved per mode in `cfg.mods`, sent in the `lobby` and `start` messages
+  (`mods`, `job`), and every phone runs `newGame(roster, pvp, {gid, mods, job})`. Best scores: `bestKey` adds
+  `|modKey(mods)` (no modifiers keeps the old key). Hooks: `extraBoss` (Boss Rush, Nightmare's surprise boss,
+  queued as `boss:key:sb`), `modWaveMix` (Elite Raid, Firestorm), `stormRaid`/`stormTick`/`stormSlow`/`drawStorm`
+  (Weather; `game.wx` rides the state packet), `suddenTick`, `frenzyTick`; the rest are single `hasMod()` checks
+  where they act (`repairCore`, `newGame` for Dell, `bottleLand`, `updateWalls`, `hurtPlayer`, `pvpDown`,
+  `updateEnemies`, `todStage`, `refit`, `throwNade`, `controlLocal`).
+- **In-between bosses** set `e.sb`: they count in `game.sbN` (not `bossLog`) and the claim sends `shard_bosses`.
+- **Skill tree** (`SKILLS`, `perkMods`, `skillStr`/`parseSkills`; page `#pg-skills`, `renderSkills`). One digit
+  per node in `SKILLS` order (+`m` when Molotovs are switched off) is how a tree travels (`sk` in the roster).
+  `kitUp(p)` works out a player's perks for the match (PvP: half, job nodes off) and `refit` folds them in. The
+  host only uses a guest's tree after `checkSkills` has read the server's copy (`skills_of`) and taken the lower
+  of the two for each node; without an account, no perks.
+- **Abilities** (`useAbility`, `simAbility`, `localAbility`; guests send `{t:'ab',x,y}`). `p.ab` on the network:
+  soldier = rockets left; sniper = stealth time ×10 while on, minus the recharge seconds. Player rockets are
+  `rockets` with `pl:true` (they hit raiders); Molotov fire is `fires` with `pl:true` (raiders only, never walls).
+  A stealthed sniper is skipped by `updateEnemies` and `nearestAlly`.
+- **Rejoin fix and match records.** Every game has an id (`game.gid`, from the host). A guest's first state
+  packet sets where they came in (`game.joinHeld/joinT/joinBoss/joinSB`); `lockerReward(held, win, kills, left)`
+  claims only from there (`raid_from`/`raid_to`), with `game_id`, `joined_s`, `left_s`, `left`, `upgrades`
+  (`upS:dellLevel`), `salvage`, `mods`, `map`, `shard_bosses`.
+- **Server: `supabase/v0.9.2-migration.sql` must be run when v0.9.2 is published** (not before). New
+  `match_results` columns (game_id, raid_from/to, joined_s/left_s, left_early, upgrades, salvage, mods, map,
+  size, shard_bosses, skill_points); `lockers.sp/sp_prog/sp_total/skills`; `skill_buy`, `skill_respec`
+  (40 shards), `skills_of`; and a new `claim_match_reward`: a claim for a game id already claimed starts where
+  the last one ended (raids, bosses and the win), the modifier bonus is worked out on the server
+  (`private.mod_bonus`), shard bosses need Boss Rush or Nightmare, a fitting count and 25 s a raid, and skill
+  points are paid (1 per 5 raids, 1 per boss). Older clients keep working. Tested in rolled-back transactions.
+- Phones: the lobby stage's sixth player stands to the side instead of behind you (`STAGE.phone`).
+- Protocol **yard-16** (room prefix `palisade-yard-16-`): `gid`/`mods`/`job` in `start`, `mods`/`job` in
+  `lobby`, `sk`/`uid` in `hello`, `sk` in `loadout`, the `ab` message, `sb`/`wx`/`sd` in the state packet,
+  and a radius on each fire.
+- Tests: `modifiers.js` (all 15, the mode lists, rewards, best scores, host → guest), `skilltree.js` (mock
+  server: points, the page, reset, perks, rockets, stealth, Molotovs, PvP, the host's check), `rejoin.js`
+  (leave and come back: two claims that don't overlap, a guest's rocket). `bench.js` adds the SKILLS page and a
+  storm raid; `netxl.js` takes `MODS=weather,nightmare`.
+

@@ -57,9 +57,9 @@ button:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
 #buildAct{font-family:var(--stencil);font-weight:900;font-size:19px;letter-spacing:.05em;line-height:1}
 #buildSub{font-size:10px;line-height:1.2}
 #buildBtn.no{background:#4a4234;color:var(--bone)}
-#nadeBtn,#sprBtn{height:40px;background:rgba(27,24,20,.86);border:1px solid var(--rust);display:flex;justify-content:space-between;align-items:center;padding:0 10px;
+#nadeBtn,#sprBtn,#abBtn{height:40px;background:rgba(27,24,20,.86);border:1px solid var(--rust);display:flex;justify-content:space-between;align-items:center;padding:0 10px;
   font-family:var(--stencil);font-weight:800;letter-spacing:.08em;font-size:15px;color:#e58a64}
-#nadeBtn b,#sprBtn b{font-family:var(--mono);font-size:12px;color:var(--bone)}
+#nadeBtn b,#sprBtn b,#abBtn b{font-family:var(--mono);font-size:12px;color:var(--bone)}
 #sprBtn{border-color:#6f9a7c;color:#9fd6ae}#sprBtn.empty{opacity:.45}#sprBtn.on{background:rgba(60,98,70,.92)}
 #nadeBtn.empty{opacity:.4}
 
@@ -171,7 +171,7 @@ body.desk .kc{display:inline-block}
 #buildBtn.no .kc.kb{background:var(--bone);color:#17140f}
 .chip .kc{margin-left:auto;margin-right:8px}
 #skipBtn,#armBtn,#bmBtn{display:flex;align-items:center;justify-content:center;gap:0}
-#nadeBtn .kc,#sprBtn .kc{margin-left:auto;margin-right:8px}
+#nadeBtn .kc,#sprBtn .kc,#abBtn .kc{margin-left:auto;margin-right:8px}
 #feed{display:grid;gap:3px;justify-items:end;margin-top:6px}
 #feed span{font-family:var(--stencil);font-weight:800;font-size:13px;letter-spacing:.06em;background:rgba(14,12,10,.72);padding:2px 7px;border-right:3px solid currentColor;transition:opacity .6s}
 #feed span.old{opacity:0}
@@ -196,7 +196,7 @@ body.desk .chip .k{font-size:18px}
 body.desk #buildBtn{height:70px}
 body.desk #buildAct{font-size:22px}
 body.desk #armBtn{height:44px;font-size:17px}
-body.desk #nadeBtn,body.desk #sprBtn{height:44px;font-size:17px}
+body.desk #nadeBtn,body.desk #sprBtn,body.desk #abBtn{height:44px;font-size:17px}
 body.desk #bmBtn{height:30px;font-size:14px}
 body.desk #feed span{font-size:15px}
 body.desk #board li{font-size:16px}
@@ -356,7 +356,7 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
 @media (pointer:coarse) and (max-height:650px){
   #kit{bottom:calc(env(safe-area-inset-bottom,0px) + 116px);gap:4px;width:88px;right:12px}
   #buildKit{gap:4px}.chip{height:28px}.piece{height:24px}
-  #buildBtn{height:42px}#armBtn,#nadeBtn,#sprBtn{height:32px}
+  #buildBtn{height:42px}#armBtn,#nadeBtn,#sprBtn,#abBtn{height:32px}
   #buildAct{font-size:17px}#buildSub{font-size:9px}
 }
 /* Landscape phones keep the kit beside the thumb area and below the status bar. */
@@ -368,7 +368,7 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
   #kit .chip{height:36px;padding:0 6px}
   #kit .chip .k{font-size:14px}
   #kit #buildBtn{height:40px}
-  #kit #armBtn,#kit #nadeBtn,#kit #sprBtn{height:40px;font-size:13px;padding:0 6px}
+  #kit #armBtn,#kit #nadeBtn,#kit #sprBtn,#kit #abBtn{height:40px;font-size:13px;padding:0 6px}
 }
 /* Party lobby: character stage, play controls, and account-backed social panel. */
 .accountDock{display:flex;align-items:center;justify-content:flex-end;gap:12px;min-width:0}
@@ -698,3 +698,31 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
   .partyNameplate{top:2px;padding:4px 10px}.partyNameplate b{font-size:15px}
   #menu.partyMenu .panel{gap:10px;padding-block:10px}
 }
+
+/* ---- v0.9.2: class ability button, modifiers, skill tree ---- */
+#abBtn{border-color:#c9a05a;color:#f0cf8a}#abBtn .kc{background:#f0cf8a}#abBtn.empty{opacity:.45}#abBtn.on{background:rgba(70,90,110,.92);border-color:#9fc3e0;color:#cfe6f6}
+#navSkills{position:relative}
+.mods{display:grid;gap:6px}
+.modChip{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;text-align:left;padding:8px 10px;background:rgba(10,18,24,.72);border:1px solid #3b4f59;color:var(--bone);min-height:44px}
+.modChip b{font:800 15px var(--stencil);letter-spacing:.06em}
+.modChip span{grid-column:1;font-size:11px;line-height:1.35;color:var(--dim)}
+.modChip i{grid-row:1;grid-column:2;font:600 11px var(--mono);font-style:normal;color:#9fd6ae}.modChip i.down{color:#e5a06a}
+.modChip.sel{border-color:var(--warn);background:rgba(58,48,18,.82);box-shadow:inset 3px 0 0 var(--warn)}
+.modChip.sel span{color:#d8cfb6}
+.modChip:disabled{cursor:default;opacity:1}
+.modTag{font:600 11px var(--mono);letter-spacing:0;color:var(--warn);margin-left:6px}
+#lJobs.locked{opacity:.4;pointer-events:none}
+.partyMods{margin:6px 0 0;font:600 12px var(--mono);letter-spacing:.04em;color:var(--warn)}
+.partyMods[hidden]{display:none}
+.skHead{display:flex;gap:16px;align-items:center}
+.skPts{display:grid;justify-items:center;min-width:92px;padding:8px 10px;border:1px solid var(--warn);background:rgba(58,48,18,.6)}
+.skPts b{font:900 40px/1 var(--stencil);color:var(--warn)}.skPts span{font:600 10px var(--mono);letter-spacing:.08em}
+.skTree{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+.skRow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;border-top:1px solid var(--line);padding-top:8px}
+.skRow b{font:900 17px var(--stencil);letter-spacing:.05em}
+.skRow i{font-style:normal;font-size:11px;color:var(--dim);grid-column:1}
+.skRow button{grid-row:1/span 3;grid-column:2;min-width:84px;height:44px;background:var(--warn);color:#17140f;border:0;font:900 14px var(--stencil);letter-spacing:.05em;padding:0 8px}
+.skRow button:disabled{background:#3a3228;color:var(--dim)}
+.skRow.on b{color:#f3e7b9}
+.skRow .tog{grid-column:1/-1}
+.rwSkill .rwNum{color:#9fd6ae}

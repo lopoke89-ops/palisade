@@ -264,6 +264,7 @@ function showRewards(R){
       const n=document.createElement('b');n.textContent='×'+R.cases[id];d.append(cv,n);small(d,CASES[id].name)}
     if(R.kind==='match'&&R.missCase&&CASES[R.missCase]){const d=card('rwMiss','NO DROP');small(d,`${Math.round((R.chance||0)*100)}% chance of a ${CASES[R.missCase].name.toLowerCase()}`)}
     if(R.shards>0){const d=card('rwShard');const n=document.createElement('b');n.className='rwNum';n.dataset.to=R.shards;n.textContent='+0';const g=document.createElement('i');g.textContent='◆';d.append(g,n);small(d,'SHARDS')}
+    if(R.sp>0){const d=card('rwShard rwSkill');const n=document.createElement('b');n.className='rwNum';n.dataset.to=R.sp;n.textContent='+0';const g=document.createElement('i');g.textContent='✦';d.append(g,n);small(d,R.sp===1?'SKILL POINT':'SKILL POINTS')}
     for(const id of R.unlocked){const c=COSBY[id];if(!c)continue;const d=card('rwNew');d.style.setProperty('--rc',RAR[c.r].col);const t=document.createElement('span');t.textContent='UNLOCKED';
       const cv=document.createElement('canvas');cv.width=cv.height=Math.round(88*Math.min(2,devicePixelRatio||1));drawIcon(cv,c);const n=document.createElement('b');n.textContent=c.name;d.append(t,cv,n)}
     if(R.kind==='run'){const d=card('rwProg','SUPPLY CASE');const bar=document.createElement('div');bar.className='rwBar';const f=document.createElement('i');bar.append(f);
@@ -311,8 +312,8 @@ function renderArmory(){
     btn.addEventListener('click',()=>{initAudio();if(NET.mode==='guest'){NET.toHost({t:'u',k});btn.disabled=true}else if(buyUpgrade(p,k))renderArmory()});
     row.append(b,btn,pips,i);box.append(row)};
   const L=game.dellLv|0;
-  extra(DELL_UP.name,L,DELL_UP.what,L>=4?'MAXED':DELL_UP.cost[L]+' SAL',L>=4||p.sal<DELL_UP.cost[L]||!canShop(p),`Dell level ${L} of 4. ${L>=4?'Maxed':'Costs '+DELL_UP.cost[L]+' salvage'}`,'dell');
-  const c=cores[0];
+  if(!qm.gone)extra(DELL_UP.name,L,DELL_UP.what,L>=4?'MAXED':DELL_UP.cost[L]+' SAL',L>=4||p.sal<DELL_UP.cost[L]||!canShop(p),`Dell level ${L} of 4. ${L>=4?'Maxed':'Costs '+DELL_UP.cost[L]+' salvage'}`,'dell');
+  const c=hasMod('nopatch')?null:cores[0];   // No Patch-Ups: no core repair
   if(c){const hp=Math.max(0,Math.ceil(c.hp)),full=c.hp>=c.max,cost=coreFixCost(p);
     extra('REPAIR CORE',-1,`Core ${hp} / ${c.max}. Each repair restores up to ${CORE_FIX.hp}.${p.C.repair?' Half price for you.':''}`,full?'FULL':cost+' SAL',full||c.hp<=0||p.sal<cost||!canShop(p),full?'Core is at full health':`Repair core, ${cost} salvage`,'core')}
 }

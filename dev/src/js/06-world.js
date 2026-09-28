@@ -63,12 +63,14 @@ function damageWall(k,amt,own){
 function hurtAlly(a,d){a===qm?hurtQM(d):hurtPlayer(a,d)}
 function anyUp(p){if(qm.alive)return true;for(const o of players.values())if(o!==p&&o.alive)return true;return false}
 function hurtPlayer(p,d,own){
-  if(!p.alive||(game.pvp&&p.prot>0))return;p.hp-=d;p.hurt=0;p.flash=.1;personal(p,'hurt');emit(p.x,p.y,16*u,'blood');
+  if(!p.alive||(game.pvp&&p.prot>0))return;
+  d*=(p.perk||PERK0).vest;if(game.pvp&&hasMod('glass'))d*=1.5;   // Kevlar; Glass Cannon hits harder
+  p.hp-=d;p.hurt=0;p.flash=.1;personal(p,'hurt');emit(p.x,p.y,16*u,'blood');
   if(p.hp<=0&&game.pvp){pvpDown(p,own);return}
   if(p.hp<=0){
-    const help=anyUp(p);p.alive=false;p.downed=true;p.hp=0;p.revive=0;p.rt=help?10:4;
+    const help=anyUp(p),last=hasMod('laststand')&&game.phase==='raid';p.alive=false;p.downed=true;p.hp=0;p.revive=0;p.rt=last?1e6:help?10:4;
     if(p.id===myId)buzz(80);
-    toastTo(p,'DOWN',help?'Hang on. Dell or a teammate can pick you up.':'Back at the stake in a few seconds.');
+    toastTo(p,'DOWN',last?'Last Stand: you\'re down until this raid is broken, unless someone gets you up.':help?'Hang on. Dell or a teammate can pick you up.':'Back at the stake in a few seconds.');
     if(players.size>1)flt(p.x,p.y,`${p.name.toUpperCase()} IS DOWN`,'#d65a3a');
   }
 }
@@ -76,7 +78,7 @@ function pvpDown(p,own){
   p.alive=false;p.downed=true;p.hp=0;p.revive=0;p.deaths++;if(p.id===myId)buzz(80);
   const k=own&&own!==p.id?players.get(own):null;
   sfx('drop',p.x,p.y);for(let n=0;n<6;n++)emit(p.x,p.y,10*u,'blood');
-  if(k){k.kills++;if(game.pvp==='base'){k.sal+=PVP.bounty;flt(p.x,p.y-.25,'+'+PVP.bounty,'#e2b436')}killFx(p.x,p.y,k.cos.fx);personal(k,'restock')}
+  if(k){k.kills+=game.sd?2:1;if(game.pvp==='base'){const v=hasMod('scrap')?Math.ceil(PVP.bounty/2):PVP.bounty;k.sal+=v;flt(p.x,p.y-.25,'+'+v,'#e2b436')}killFx(p.x,p.y,k.cos.fx);personal(k,'restock')}
   feed(k?`${k.name.toUpperCase()} ▸ ${p.name.toUpperCase()}`:`${p.name.toUpperCase()} WENT DOWN`,k?teamCol(k):'#9a8f7a');
   if(game.pvp==='base'){const help=[...players.values()].some(o=>o!==p&&o.alive&&o.team===p.team);p.rt=help?8:5;
     toastTo(p,'DOWN',help?'A teammate can pick you up. If not, you\'re back at your stake shortly.':'Back at your stake in a few seconds.')}

@@ -43,7 +43,7 @@ function updateQM(dt){
   const job=qmJob();if(job.name!==q.job){q.job=job.name;q.work=0;q.pathT=0}
   const here=tileOf(q);let busy=false,reached=job.hold?job.goal(here):dist2(q,job.pt)<=job.near;
   if(reached){
-    if(job.name==='revive'){busy=true;job.who.revive+=dt}
+    if(job.name==='revive'){busy=true;job.who.revive+=dt*(job.who.perk||PERK0).revive}
     else if(job.name==='repair'){busy=true;q.work+=dt;const w=walls[job.k];if(w&&q.work>=.9){q.work=0;if(w.fire>0){w.fire=0;flt(job.pt.x,job.pt.y,'DOUSED','#a9bccb')}else{w.hp=Math.min(w.max,w.hp+w.max*.45);q.mats[w.mat]-=MAT[w.mat].rep;game.stats.repairs++;flt(job.pt.x,job.pt.y,'REPAIRED','#a9bccb')}markFlow();sfx('place'+w.mat,job.pt.x,job.pt.y)}}
     else if(job.name==='gather'){const n=job.node;if(q.gt<=0){const y=Math.min(YIELD[n.type],n.type===0?n.amt:99);q.mats[n.type]+=y;if(n.type===0)n.amt-=y;q.gt+=RATE[n.type]*1.5;emit(n.i+.5,n.j+.5,10*u,n.type===0?'splinter':n.type===1?'dust':'spark',n.type)}}
     else if(job.name==='handoff'){const p=job.who,got=[0,0,0];for(let m=0;m<3;m++){const give=Math.max(0,Math.min(q.mats[m]-QM_RESERVE[m],p.cap[m]-p.mats[m]));q.mats[m]-=give;p.mats[m]+=give;got[m]=give}

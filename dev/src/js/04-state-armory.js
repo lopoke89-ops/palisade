@@ -22,11 +22,11 @@ function foes(){if(!game.pvp)return enemies.some(e=>e.burrow)?enemies.filter(e=>
   const o=[];for(const q of players.values())if(q.alive&&!(q.prot>0)&&rivals(player,q))o.push(q);return o}
 function makeWall(mat,door,ratio=1){const hp=MAT[mat].hp*(door?.85:1);return{mat,door:!!door,hp:hp*ratio,max:hp,fire:0,char:0,flash:0,skip:0}}
 const SPAWNS=[[5.5,11.5],[5.5,12.5],[3.5,12.5],[4.5,12.5],[5.5,10.5],[3.5,10.5]];
-function makePlayer(id,name,cls,slot,cos,team){
+function makePlayer(id,name,cls,slot,cos,team,sk){
   if(!CLASSES[cls])cls='soldier';const C=CLASSES[cls],[x,y]=SPAWNS[slot%SPAWNS.length];
   const p={id,name,cls,slot,x,y,hp:C.hp,max:C.hp,alive:true,downed:false,rt:0,revive:0,aim:{x:.7,y:-.7},face:{x:.7,y:-.7},moveDir:{x:.7,y:-.7},
     cd:0,bcd:0,gt:0,ncd:0,mats:[24,0,0],cap:C.cap.slice(),nades:C.nades,maxN:C.nades,hurt:9,walk:0,flash:0,C,tp:0,fireIn:false,
-    sal:0,kills:0,deaths:0,prot:0,ab:0,team:team==='b'?'b':team==='a'?'a':'',up:{d:0,r:0,g:0,a:0,n:0},upS:'00000',cos:parseCos(cos),cosS:''};
+    sal:0,kills:0,deaths:0,prot:0,ab:0,team:team==='b'?'b':team==='a'?'a':'',up:{d:0,r:0,g:0,a:0,n:0},upS:'00000',cos:parseCos(cos),cosS:'',sk:String(sk||''),perk:PERK0,rk:0,rkCd:0,stl:0,stlCd:0};
   p.cosS=cosStr(p.cos);refit(p);return p;
 }
 // The one way to change jobs (the room, Free-for-all respawns, and later the skill tree all use it): a fresh gun,
@@ -37,6 +37,7 @@ function changeClass(p,cls){
   const C=CLASSES[cls];p.cls=cls;p.C=C;p.cap=C.cap.slice();p.max=0;refit(p);p.hp=p.max;p.nades=p.maxN;
   p.mats=p.mats.map((m,i)=>Math.min(m,p.cap[i]));p.ammo=p.gun.mag?p.gun.mag:undefined;p.rl=0;p.rlReq=false;p.bolt=0;p.cd=0;p.bcd=0;p.sinceShot=9;
   p.bLeft=0;p.ab=0;p._lk='';p.nextShow='';if(p===player&&game)game.C=C;
+  p.rk=abilRockets(p);p.rkCd=0;p.stl=0;p.stlCd=0;
   return true;
 }
 /* ---------- armory: salvage buys upgrades between raids ---------- */
@@ -53,12 +54,19 @@ const DELL_UP={name:'DELL',what:'+15% damage, range and fire rate per level. Sha
 const CORE_FIX={hp:50,cost:25};
 const coreFixCost=p=>Math.ceil(CORE_FIX.cost*(p.C.repair||1));
 const BOUNTY={rifle:4,gren:7,breach:6,shield:6,medic:5,spotter:5,fire:6};
+// v0.9.2: skill-tree perks (p.perk) and modifiers (Glass Cannon, Grenade Frenzy) are folded in here too
+const PERK0=perkMods({},false);
 function refit(p){
-  const G=p.C.gun,U=p.up;
-  p.gun=Object.assign({},G,{dmg:G.dmg*(1+.2*U.d),cd:G.cd*(1-.1*U.r),range:G.range*(1+.12*U.g),speed:G.speed*(1+.1*U.g)});
-  const mx=Math.round(p.C.hp*(1+.15*U.a));if(mx>p.max)p.hp+=mx-p.max;p.max=mx;
-  p.maxN=p.C.nades+U.n;p.blast=p.C.blast*(1+.08*U.n);
+  const G=p.C.gun,U=p.up,K=p.perk||PERK0;
+  p.gun=Object.assign({},G,{dmg:G.dmg*(1+.2*U.d)*K.dmg,cd:G.cd*(1-.1*U.r)/K.rate,range:G.range*(1+.12*U.g)*K.range,speed:G.speed*(1+.1*U.g)});
+  if(G.reload)p.gun.reload=G.reload*K.reload;
+  const mx=Math.round(p.C.hp*(1+.15*U.a)*K.hp*(hasMod('glass')?.7:1));if(mx>p.max)p.hp+=mx-p.max;p.max=mx;if(p.hp>p.max)p.hp=p.max;
+  p.maxN=p.C.nades+U.n+(p.cls==='grenadier'?K.pouch:0);p.blast=p.C.blast*(1+.08*U.n)*(hasMod('frenzy')?1.33:1);
+  p.cap=p.C.cap.map(c=>c+K.carry);
 }
+// perks for this match (PvP halves them), then a full kit: health, grenades, rockets
+function kitUp(p){p.perk=perkMods(parseSkills(p.sk),!!game.pvp);p.max=0;refit(p);p.hp=p.max;p.nades=p.maxN;p.rk=abilRockets(p);p.rkCd=0;p.stl=0;p.stlCd=0}
+const abilRockets=p=>p.cls==='soldier'&&!game.pvp?ABIL.rocket.stock+((p.perk||PERK0).rockets|0):0;
 // burst carbine: 3/5/7/9/9 bullets at DAMAGE level 0-4; the pause after a burst is 0.40 s, 0.05 s shorter per level, never under 0.20 s
 const BURST_N=[3,5,7,9,9],burstN=p=>BURST_N[Math.min(4,p.up.d|0)],burstGap=p=>Math.max(.2,.4-.05*(p.up.d|0));
 const upStr=p=>UPG.map(x=>p.up[x.k]).join('');
@@ -74,7 +82,7 @@ function buyUpgrade(p,k){
 }
 function repairCore(p){
   const c=cores[0],cost=coreFixCost(p);
-  if(game.pvp||!canShop(p)||!c||c.hp<=0||c.hp>=c.max||p.sal<cost)return false;   // full core: nothing to buy, nothing charged
+  if(game.pvp||hasMod('nopatch')||!canShop(p)||!c||c.hp<=0||c.hp>=c.max||p.sal<cost)return false;   // full core: nothing to buy, nothing charged
   const add=Math.min(CORE_FIX.hp,c.max-c.hp);p.sal-=cost;c.hp+=add;
   flt(c.i+.5,c.j+.5,`+${Math.round(add)} CORE`,'#8fe0a0');emit(c.i+.5,c.j+.5,WH*.6,'heal');personal(p,'restock');return true;
 }
@@ -92,9 +100,13 @@ function award(own,e){
   const v=BOUNTY[e.type]||4;p.sal+=v;p.kills++;flt(e.x,e.y-.2,'+'+v,'#e2b436');killFx(e.x,e.y,p.cos.fx);
 }
 const myName=()=>(acct.state==='full'&&acct.name?acct.name.slice(0,12):(cfg.name||'').trim())||'Big U';
-function newGame(roster,pvp=''){
-  roster=roster||[{id:myId,name:myName(),cls:pick.cls,cos:cosStr(myCos())}];
+// opt (v0.9.2): {gid: the shared game id, mods: modifier ids, job: One Job's class, guest: true on a guest's phone}
+const newGid=()=>{const A='abcdefghijkmnpqrstuvwxyz23456789';let s='';for(let i=0;i<12;i++)s+=A[Math.floor(rnd()*A.length)];return Date.now().toString(36)+'-'+s};
+function newGame(roster,pvp='',opt={}){
+  roster=roster||[{id:myId,name:myName(),cls:pick.cls,cos:cosStr(myCos()),sk:mySkills()}];
   pvp=pvp==='base'||pvp==='ffa'?pvp:'';
+  const mods=cleanMods(opt.mods,pvp),job=mods.includes('onejob')&&CLASSES[opt.job]?opt.job:'';
+  if(job)roster=roster.map(r=>({...r,cls:job}));
   const Df=pvp?DIFF.normal:DIFF[pick.diff]||DIFF.normal;
   const L=layMap(pick.map,pick.size,pvp);   // sets the size (N) and the terrain first
   walls=new Array(N*N).fill(null);debris=new Int8Array(N*N);dist=new Float32Array(N*N);
@@ -114,7 +126,7 @@ function newGame(roster,pvp=''){
   }
   coreKs=new Set(cores.map(c=>idx(c.i,c.j)));
   players=new Map();
-  roster.forEach((r,n)=>{const team=pvp==='base'?(r.team==='a'||r.team==='b'?r.team:n%2?'b':'a'):'';players.set(r.id,makePlayer(r.id,r.name,r.cls,n,r.cos,team))});
+  roster.forEach((r,n)=>{const team=pvp==='base'?(r.team==='a'||r.team==='b'?r.team:n%2?'b':'a'):'';players.set(r.id,makePlayer(r.id,r.name,r.cls,n,r.cos,team,r.sk))});
   if(pvp==='base'){const cnt={a:0,b:0},TS=L.teamSpawns;for(const p of players.values()){const s=TS[cnt[p.team]++%TS.length];[p.x,p.y]=p.team==='b'?[N-s[0],N-s[1]]:s}}
   if(pvp==='ffa'){let n=0;const S=L.pspawns;for(const p of players.values())[p.x,p.y]=S[(n++*5)%S.length]}
   const off=pvp?[0,0]:[cores[0].i-4,cores[0].j-11];   // the spawn spots are laid out round a stake at (4,11)
@@ -124,13 +136,16 @@ function newGame(roster,pvp=''){
   coreK=cores.length?idx(core.i,core.j):-1;
   game.dellLv=0;
   qm={x:3.5+off[0],y:11.5+off[1],hp:180,max:180,alive:true,revive:0,aim:{x:1,y:0},cd:0,sup:8,gt:0,work:0,job:'',next:-1,pathT:0,scanT:0,foe:null,walk:0,flash:0,mats:[24,0,0],hurt:9};
-  if(pvp)Object.assign(qm,{alive:false,gone:true,x:-9,y:-9});   // Dell sits PvP out
+  if(pvp||mods.includes('alone'))Object.assign(qm,{alive:false,gone:true,x:-9,y:-9});   // Dell sits PvP (and On Your Own) out
   enemies=[];bullets=[];lobs=[];charges=[];parts=[];flashes=[];floats=[];sacks=[];rockets=[];fires=[];zaps=[];slashes=[];rings=[];chains=[];
   const mode=['5','10','endless'].includes(pick.mode)?pick.mode:'5';
   game={phase:pvp==='ffa'?'raid':'build',paused:false,wave:0,timer:pvp==='base'?PVP.truce:pvp==='ffa'?PVP.ffaTime:40+Df.build,queue:[],qn:0,spawnT:0,sel:game.sel||0,piece:'wall',time:0,tip:0,gathered:0,C:player.C,Df,
     mode,waves:mode==='endless'?Infinity:+mode,rewarded:false,bosses:0,pvp,goal:PVP.ffaGoal,winner:'',
     stats:{dropped:0,built:0,lost:0,repairs:0,revives:0},
-    map:MAP_IDS.includes(pick.map)?pick.map:'yard',size:N>16?'xl':'std',lay:L,flood:{t:0,warned:false},bossLog:[],oct:!!pick.oct};
+    map:MAP_IDS.includes(pick.map)?pick.map:'yard',size:N>16?'xl':'std',lay:L,flood:{t:0,warned:false},bossLog:[],oct:!!pick.oct,
+    gid:String(opt.gid||newGid()).slice(0,40),mods,job,sbN:0,wx:0,wxT:0,sd:false,
+    joinHeld:opt.guest?null:0,joinT:0,joinBoss:0,joinSB:0};   // join*: where this phone came in (guests learn it from the first state packet)
+  for(const p of players.values())kitUp(p);
   for(const p of players.values()){if(pvp==='base')p.sal=PVP.startSal;if(pvp==='ffa'){p.mats=[0,0,0];p.prot=PVP.prot}}
   feedClear();
   Object.assign(light,{L:.12,r:28,g:34,b:44,warm:0});
