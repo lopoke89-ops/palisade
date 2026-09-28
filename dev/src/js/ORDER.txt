@@ -4,6 +4,7 @@
 04-state-armory.js   game state, players, armory upgrades, Dell upgrade, core repair
 05-net-record.js   recording events for guests
 06-world.js   pathing, collision, damage to walls/players/enemies
+06b-maps.js   maps (Yard, Riverbend, Ashfall Quarry), terrain, floods and pits
 07-effects.js   particles and floating text
 08-input.js   keyboard, mouse, touch sticks and buttons
 09-actions.js   building, grenades, sprint, weapons firing (shoot/fire)
@@ -16,6 +17,7 @@
 16-characters.js   characters, kit and boss effects
 17-scenery.js   forest, fence and cached scenery, frame render
 18-cosmetics.js   cosmetics, locker data, cases, save backup
+18b-backgrounds.js   lobby backgrounds (free, milestone and case)
 19-accounts.js   accounts, cloud locker, claims, open games list
 19b-social-lobby.js   account identity, saved players and multiplayer character stage
 20-locker-ui.js   drawing cosmetics, locker screen, armory screen

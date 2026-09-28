@@ -112,3 +112,28 @@ failed writes, metadata preservation and account isolation with a mock backend.
 Protocol yard-13 adds a lobby-only `loadout` message so returning from the locker updates the
 party roster and next match. Old and new clients use separate room prefixes and must reload to
 play together. `multiplayer.js` verifies host/guest loadout propagation before match start.
+
+## v0.9.0: maps, new bosses and raiders, the lobby
+
+- **Maps** (`src/js/06b-maps.js`). Each map is data plus a `lay()` that places the stake, piles, ruins,
+  terrain, raider entry tiles and boss spawns. Terrain is one byte a tile: ground, water (half speed, no
+  building), bridge, low bank (floods on Riverbend from raid 3), cracked (a blast of power 1.2 or more,
+  such as a satchel, turns it into a pit), pit (can't walk or build), rock and oil drums (solid, stop bullets).
+  Maps: the Yard, Riverbend, Ashfall Quarry (always night). Boss order per map is `MAPS[..].bosses`.
+- **XL** is 24×24 (`N` is no longer a constant). The 16×16 layout sits near the south-west corner and XL
+  adds piles and ruins in the new ground; raids are about 40% bigger. PvP stays 16×16 on the Yard.
+- **Bosses**: the Ferryman (Riverbend) and the Foreman (the Quarry) sit beside the Demolisher, Butcher
+  and Stormcaller in `BOSSES`. In October the host's clock turns the Butcher into the Pumpkin Butcher (same fight).
+- **Raiders**: shieldbearer, field medic, spotter, firebrand. The before/after wave table is printed by `v090.js`.
+- **Cases from bosses**: the Butcher and the Ferryman drop a Halloween Case (two from the October Butcher);
+  the others an Afterglow Case. The client sends `boss_keys`; the server caps them by raids held.
+  **`supabase/v0.9.0-migration.sql` must be run when v0.9.0 is published** (not before): it adds the
+  Halloween Case, the `bg` cosmetic category and its items, the free backgrounds for every locker, and the new
+  `claim_match_reward`. Older clients still work (no `boss_keys`: bosses pay Afterglow Cases as before).
+- **Lobby**: one shell (the v0.8.13 party stage) for PLAY, MULTIPLAYER and CLASSES, with the nav bar on every
+  menu page. PLAY has the map picker and size. Backgrounds (`18b-backgrounds.js`) are Locker items
+  (cat `bg`, never sent to other players) drawn on `#lobbyBg` behind every menu page (the old live-yard menu scene is gone).
+- Protocol **yard-14**: start/lobby messages carry map, size and the October flag; snapshots carry terrain
+  changes (`tr`), the flood (`fo`), bosses that fell (`bl`) and a kind per thrown object (lobs have 8 numbers).
+- Tests: `lobby.js` (menus, online map sync), `v090.js` (maps, bosses, raiders, rewards, wave table),
+  `v090_net.js` (host/guest).

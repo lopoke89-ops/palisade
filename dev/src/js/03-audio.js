@@ -115,6 +115,10 @@ function sfx(name,x,y,noRec,ui){
     case'kx_confetti':nz(dest,t,.05,'bandpass',1800,1,.2);[1046,1318,1568].forEach((f,i)=>osc(dest,t+.04+i*.05,.08,'triangle',f,.05));break;
     case'kx_embers':nz(dest,t,.35,'bandpass',700,.7,.1,300);break;
     case'kx_glint':osc(dest,t,.3,'sine',2093,.05);osc(dest,t+.06,.3,'sine',2637,.04);break;
+    // Halloween Case: fluttering chirps; a creaking thread and a thump; a hollow rising wail
+    case'kx_bats':for(let k=0;k<5;k++){nz(dest,t+k*.045,.04,'bandpass',2600+k*300,3,.08);osc(dest,t+k*.05,.05,'sine',3200-k*180,.025)}break;
+    case'kx_spider':osc(dest,t,.5,'sawtooth',220,.03,110);nz(dest,t+.45,.08,'lowpass',400,.7,.12);break;
+    case'kx_souls':osc(dest,t,.9,'sine',330,.05,660);osc(dest,t+.08,.9,'sine',392,.035,784);nz(dest,t,.6,'bandpass',900,1.4,.05,1800);break;
     case'kx_bolt':nz(dest,t,.12,'highpass',3500,.6,.14);osc(dest,t,.1,'square',80,.06,40);break;
     case'kx_skull':osc(dest,t,.4,'triangle',196,.06,147);osc(dest,t,.4,'triangle',233,.04,175);break;
     case'kx_pixel':[523,784,1046,1568].forEach((f,i)=>osc(dest,t+i*.04,.05,'square',f,.04));break;
@@ -134,6 +138,17 @@ function sfx(name,x,y,noRec,ui){
     case'hit2':osc(dest,t,.55,'sine',1230,.16);osc(dest,t,.42,'sine',1870,.09);osc(dest,t,.3,'sine',2930,.05);nz(dest,t,.03,'highpass',4200,.4,.3);break;
     case'boom':nz(dest,t,.9,'lowpass',1900,.7,1,110);osc(dest,t,.65,'sine',72,.9,28);break;
     case'bigboom':nz(dest,t,1.3,'lowpass',1500,.6,1,70);osc(dest,t,.9,'sine',60,1,22);break;
+    case'splash':nz(dest,t,.45,'lowpass',1400,.7,.55,250);nz(dest,t+.05,.2,'highpass',2600,.8,.2);break;
+    case'harpoon':nz(dest,t,.12,'bandpass',1800,1.2,.5,600);osc(dest,t,.18,'sawtooth',180,.12,60);break;
+    case'chain':for(let k=0;k<5;k++)nz(dest,t+k*.05,.03,'bandpass',3600+k*200,4,.12);break;
+    case'drill':osc(dest,t,.6,'sawtooth',70,.14,55);nz(dest,t,.6,'bandpass',900,1.5,.25,700);break;
+    case'rumble':osc(dest,t,.7,'sine',42,.35,36);nz(dest,t,.7,'lowpass',180,1,.3,90);break;
+    case'rockfall':for(let k=0;k<6;k++)nz(dest,t+k*.07,.25,'lowpass',700-k*60,.8,.45,150);osc(dest,t,.8,'sine',55,.4,30);break;
+    case'flood':nz(dest,t,1.4,'lowpass',600,.6,.35,300);osc(dest,t,1.4,'sine',90,.1,70);break;
+    case'bottle':nz(dest,t,.08,'highpass',4200,1,.4);nz(dest,t+.04,.5,'bandpass',800,.7,.4,300);break;
+    case'shieldhit':osc(dest,t,.25,'square',880,.06,700);osc(dest,t,.2,'sine',1320,.06);nz(dest,t,.04,'highpass',3000,1,.25);break;
+    case'medpulse':osc(dest,t,.3,'sine',660,.06,990);osc(dest,t+.08,.3,'sine',880,.04,1320);break;
+    case'mark':osc(dest,t,.08,'square',2400,.05);osc(dest,t+.12,.08,'square',2400,.05);break;
     case'collapse':nz(dest,t,.55,'lowpass',950,.6,.75,140);osc(dest,t,.3,'sine',90,.3,40);break;
     case'place0':osc(dest,t,.06,'sine',230,.5,120);osc(dest,t+.09,.06,'sine',210,.45,110);nz(dest,t,.05,'lowpass',700,1,.25);break;
     case'place1':nz(dest,t,.28,'bandpass',650,2,.4,380);osc(dest,t+.2,.08,'sine',140,.3,70);break;

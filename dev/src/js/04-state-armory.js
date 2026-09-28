@@ -1,9 +1,9 @@
 /* ================= state ================= */
 let walls,debris,nodes,core,coreK,cores=[],coreKs=new Set(),player,qm,enemies,bullets,lobs,charges,parts=[],flashes=[],floats=[],sacks,dist,flowDirty=true,flowT=0;
-let rockets=[],fires=[],zaps=[],slashes=[],rings=[];   // boss rockets, burning ground, lightning and blade arcs
+let rockets=[],fires=[],zaps=[],slashes=[],rings=[],chains=[];   // boss rockets, burning ground, lightning, blade arcs and harpoon chains
 let players=new Map(),myId='solo',nextId=1;   // every soldier in the yard; `player` is the one on this phone
 let game={phase:'title',paused:false,time:0,wave:0,sel:0,piece:'wall',stats:{dropped:0,built:0,lost:0,repairs:0,revives:0}};
-let pick={cls:'soldier',diff:'normal',mode:'5',pvp:'coop'};
+let pick={cls:'soldier',diff:'normal',mode:'5',pvp:'coop',map:'yard',size:'std',oct:false};
 let demo=false,demoT=0,demoAcc=0;   // the menu's live background: Dell alone against demo raids
 const cfg={volume:.8,music:.7,shake:1,haptics:true,fps:false,name:'',build:true};
 try{Object.assign(cfg,JSON.parse(localStorage.getItem('palisade.cfg.v1')||'{}'))}catch(e){}
@@ -18,7 +18,8 @@ const teamCol=p=>game.pvp==='base'&&TEAMS[p.team]?TEAMS[p.team].col:game.pvp==='
 const stakeOf=p=>game.pvp==='base'?cores[p.team==='b'?1:0]:core;
 const stakeAt=k=>{for(const c of cores)if(idx(c.i,c.j)===k)return c;return null};
 // the targets your crosshair and aim assist care about: raiders in co-op, rival players in PvP
-function foes(){if(!game.pvp)return enemies;const o=[];for(const q of players.values())if(q.alive&&!(q.prot>0)&&rivals(player,q))o.push(q);return o}
+function foes(){if(!game.pvp)return enemies.some(e=>e.burrow)?enemies.filter(e=>!e.burrow):enemies;   // a burrowed Foreman can't be aimed at
+  const o=[];for(const q of players.values())if(q.alive&&!(q.prot>0)&&rivals(player,q))o.push(q);return o}
 function makeWall(mat,door,ratio=1){const hp=MAT[mat].hp*(door?.85:1);return{mat,door:!!door,hp:hp*ratio,max:hp,fire:0,char:0,flash:0,skip:0}}
 const SPAWNS=[[5.5,11.5],[5.5,12.5],[3.5,12.5],[4.5,12.5],[5.5,10.5],[3.5,10.5]];
 function makePlayer(id,name,cls,slot,cos,team){
@@ -41,7 +42,7 @@ const DELL_UP={name:'DELL',what:'+15% damage, range and fire rate per level. Sha
 // the core doesn't heal on its own: 25 salvage (13 for the quartermaster) buys back up to 50 health
 const CORE_FIX={hp:50,cost:25};
 const coreFixCost=p=>Math.ceil(CORE_FIX.cost*(p.C.repair||1));
-const BOUNTY={rifle:4,gren:7,breach:6};
+const BOUNTY={rifle:4,gren:7,breach:6,shield:6,medic:5,spotter:5,fire:6};
 function refit(p){
   const G=p.C.gun,U=p.up;
   p.gun=Object.assign({},G,{dmg:G.dmg*(1+.2*U.d),cd:G.cd*(1-.1*U.r),range:G.range*(1+.12*U.g),speed:G.speed*(1+.1*U.g)});
@@ -85,6 +86,7 @@ function newGame(roster,pvp=''){
   roster=roster||[{id:myId,name:myName(),cls:pick.cls,cos:cosStr(myCos())}];
   pvp=pvp==='base'||pvp==='ffa'?pvp:'';
   const Df=pvp?DIFF.normal:DIFF[pick.diff]||DIFF.normal;
+  const L=layMap(pick.map,pick.size,pvp);   // sets the size (N) and the terrain first
   walls=new Array(N*N).fill(null);debris=new Int8Array(N*N);dist=new Float32Array(N*N);
   const wood=(i,j)=>({i,j,type:0,amt:48,max:48,rt:0,locked:false});
   const ruin=(list,mat,ratio,ch)=>list.forEach(([i,j])=>{const w=makeWall(mat,false,ratio);w.char=ch;walls[idx(i,j)]=w});
@@ -104,28 +106,29 @@ function newGame(roster,pvp=''){
     const rot=([i,j])=>[N-1-j,i];
     for(const t of q){let c=t;for(let r=0;r<4;r++){walls[idx(c[0],c[1])]=makeWall(3,false);c=rot(c)}}
   }else{
-    cores=[{team:'',i:4,j:11,hp:Df.core,max:Df.core,flash:0}];
-    nodes=[wood(2,7),wood(7,13),wood(6,6),wood(9,9),wood(1,13),wood(10,4),wood(13,14),
-      {i:11,j:11,type:1,locked:true,unlock:2,solid:true},{i:12,j:7,type:2,locked:true,unlock:4,solid:true}];
-    ruin([[3,9],[4,9],[5,9]],0,.63,.25);
-    ruin([[8,6],[8,7],[11,9]],1,.55,.3); // old brick ruins mid-yard
+    cores=[{team:'',i:L.core[0],j:L.core[1],hp:Df.core,max:Df.core,flash:0}];
+    nodes=L.nodes;
+    for(const[list,mat,ratio,ch]of L.ruins)ruin(list,mat,ratio,ch);   // old ruins: they pay salvage when knocked down
   }
   coreKs=new Set(cores.map(c=>idx(c.i,c.j)));
   players=new Map();
   roster.forEach((r,n)=>{const team=pvp==='base'?(r.team==='a'||r.team==='b'?r.team:n%2?'b':'a'):'';players.set(r.id,makePlayer(r.id,r.name,r.cls,n,r.cos,team))});
   if(pvp==='base'){const cnt={a:0,b:0};for(const p of players.values()){const s=SPAWNS[cnt[p.team]++%SPAWNS.length];[p.x,p.y]=p.team==='b'?[N-s[0],N-s[1]]:s}}
   if(pvp==='ffa'){let n=0;for(const p of players.values())[p.x,p.y]=FFA_SPAWNS[(n++*5)%FFA_SPAWNS.length]}
+  const off=pvp?[0,0]:[cores[0].i-4,cores[0].j-11];   // the spawn spots are laid out round a stake at (4,11)
+  if(!pvp)for(const p of players.values()){p.x+=off[0];p.y+=off[1]}
   player=players.get(myId)||[...players.values()][0];
   core=pvp==='base'?cores[player.team==='b'?1:0]:cores[0]||{team:'',i:-9,j:-9,hp:1,max:1,flash:0};
   coreK=cores.length?idx(core.i,core.j):-1;
   game.dellLv=0;
-  qm={x:3.5,y:11.5,hp:180,max:180,alive:true,revive:0,aim:{x:1,y:0},cd:0,sup:8,gt:0,work:0,job:'',next:-1,pathT:0,scanT:0,foe:null,walk:0,flash:0,mats:[24,0,0],hurt:9};
+  qm={x:3.5+off[0],y:11.5+off[1],hp:180,max:180,alive:true,revive:0,aim:{x:1,y:0},cd:0,sup:8,gt:0,work:0,job:'',next:-1,pathT:0,scanT:0,foe:null,walk:0,flash:0,mats:[24,0,0],hurt:9};
   if(pvp)Object.assign(qm,{alive:false,gone:true,x:-9,y:-9});   // Dell sits PvP out
-  enemies=[];bullets=[];lobs=[];charges=[];parts=[];flashes=[];floats=[];sacks=[];rockets=[];fires=[];zaps=[];slashes=[];rings=[];
+  enemies=[];bullets=[];lobs=[];charges=[];parts=[];flashes=[];floats=[];sacks=[];rockets=[];fires=[];zaps=[];slashes=[];rings=[];chains=[];
   const mode=['5','10','endless'].includes(pick.mode)?pick.mode:'5';
   game={phase:pvp==='ffa'?'raid':'build',paused:false,wave:0,timer:pvp==='base'?PVP.truce:pvp==='ffa'?PVP.ffaTime:40+Df.build,queue:[],qn:0,spawnT:0,sel:game.sel||0,piece:'wall',time:0,tip:0,gathered:0,C:player.C,Df,
     mode,waves:mode==='endless'?Infinity:+mode,rewarded:false,bosses:0,pvp,goal:PVP.ffaGoal,winner:'',
-    stats:{dropped:0,built:0,lost:0,repairs:0,revives:0}};
+    stats:{dropped:0,built:0,lost:0,repairs:0,revives:0},
+    map:pvp?'yard':MAP_IDS.includes(pick.map)?pick.map:'yard',size:N>16?'xl':'std',lay:L,flood:{t:0,warned:false},bossLog:[],oct:!!pick.oct};
   for(const p of players.values()){if(pvp==='base')p.sal=PVP.startSal;if(pvp==='ffa'){p.mats=[0,0,0];p.prot=PVP.prot}}
   feedClear();
   Object.assign(light,{L:.12,r:28,g:34,b:44,warm:0});

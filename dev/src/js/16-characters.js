@@ -17,7 +17,8 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  // Only luminous trim and specular highlights emit; fabric keeps its dark ink edges.
  const emit=new Set([o.neon,o.hneon,o.halo,o.visor,o.mask,o.frost,o.spots,
   ...(o.stars?['#f3eaff','#b2b5ff']:[]),...(o.holo?['#b5f5ff']:[]),
-  ...(o.shine||o.chrome?['#fff1c1','#ffffff']:[]),...(o.glitter?['#fffbe0']:[])].filter(Boolean));
+  ...(o.shine||o.chrome?['#fff1c1','#ffffff']:[]),...(o.glitter?['#fffbe0']:[]),
+  o.reaper,o.phantom,...(o.pumpkin?[o.pking?'#ffb040':'#ffd35a','#ff7a1a']:[]),...(o.wraps?['#ffc94a']:[])].filter(Boolean));
  const ca=Math.cos(angle),sa=Math.sin(angle),phase=typeof walking==="number"?walking:walking?time*7:0,bob=Math.abs(Math.sin(phase))*.45,faces=[];
  const hex=c=>{const m=/^#([0-9a-f]{6})$/i.exec(c||'');return m?m[1].match(/../g).map(s=>parseInt(s,16)):[90,95,75]};
  const tint=(c,k)=>{const v=hex(c);return '#'+v.map(x=>Math.max(0,Math.min(255,Math.round(x*k))).toString(16).padStart(2,'0')).join('')};
@@ -93,6 +94,7 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  const shR=[6.2,25+bob,0],elR=o.nogun?[7.1,20.8+bob,2.6]:[8.6,20.3+bob,4.8],haR=o.nogun?[6.3,16+bob,1]:[gunX+(sniper?pull*1.6:0),22+bob+(sniper?pull:0),gunZ+4.8-kick-(sniper?pull*1.5:0)];
  for(const [sh,el,ha]of [[shL,elL,haL],[shR,elR,haR]]){
   beam(sh,el,2.1,B,1.7);beam(el,ha,1.68,B,1.45);
+  if(o.reaper){beam(sh,el,2.7,B,2.5,.4);beam(el,ha.map((v,i)=>v+(el[i]-v)*.3),2.5,B,2.6,.4)}
   beam(ha.map((v,i)=>v+(el[i]-v)*.13),ha,1.53,'#363b2b',1.5,.35);
  }
  box(6.8,24.3+bob,1.8,1.65,1.8,.5,o.mark||'#dcb647',.2);
@@ -129,7 +131,27 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
   ff.push(Array.from({length:N},(_,i)=>(rings.length-1)*N+i));mesh(v,ff.map(f=>f.slice().reverse()),col,.6);
  }
  function ball(x,y,z,r,c){column(x,y,z,r*1.8,r*1.65,r*1.8,c,.75,.35)}
- if(o.helmet){
+ if(o.pumpkin){
+  // a ribbed pumpkin replaces the head; the carved face glows (the Pumpkin King's flames flicker over 4 cached frames)
+  const pc=o.pumpkin,glowC=o.pking?'#ffb040':'#ffd35a';
+  column(0,31+bob,.2,9.4,6.8,8.8,pc,.86,.6);dome(tint(pc,.95),33.9,4.3,4.1,1.7);
+  for(const [x,z]of[[0,4.35],[-3,3.5],[3,3.5],[0,-4],[-4.3,.2],[4.3,.2]])box(x,31+bob,z,.45,6.2,.3,tint(pc,.62),.05,.4);
+  beam([0,35.4+bob,0],[.6,37.4+bob,.4],.6,'#4a6a22',.45,.35);
+  const face=(pts)=>{const v=pts.map(q=>[q[0],q[1]+bob,4.62]).reverse();mesh(v,[v.map((_,i)=>i)],glowC,.06,1.2)};
+  face([[-2.9,31.5],[-1.4,33.3],[-.5,31.5]]);face([[.5,31.5],[1.4,33.3],[2.9,31.5]]);
+  face([[-3.1,29.9],[-2,28.7],[-1,29.5],[0,28.5],[1,29.5],[2,28.7],[3.1,29.9],[2.2,28],[-2.2,28]]);
+  if(o.pking){const f=[0,1,2,3].map(k=>1.6+1.3*Math.abs(Math.sin((time+k*.7)*1.9)));
+   for(const [i,x,z]of[[0,-1.8,.6],[1,0,-.2],[2,1.8,.5]])beam([x,35+bob,z],[x*.8,35+bob+f[i],z],.8,i===1?'#ffd24a':'#ff7a1a',.05,.1)}
+ }else if(o.witch){
+  // wide brim, a cone in three stacked pieces that bends back, a purple band with a gold buckle
+  column(0,32.5+bob,0,15.5,.6,13.5,o.witch,1,.4);column(0,34.6+bob,0,8.6,3.6,7.8,o.witch,.72,.45);
+  column(0,37.4+bob,-.6,6,2.6,5.4,o.witch,.62,.4);beam([0,38.6+bob,-1],[-.6,41.2+bob,-3.4],1.7,o.witch,.25,.35);
+  column(0,33.4+bob,0,8.8,.9,8,'#6a2a8a',1,.2);box(0,33.4+bob,4.05,1.8,1.3,.3,'#e2c25a',.15,1);box(0,33.4+bob,4.2,.8,.6,.2,'#6a2a8a',.02,1.2);
+ }else if(o.hood){
+  // a deep hood with the face lost in shadow and two glowing eyes
+  dome(o.hood,29.2,5.4,5.1,7.2);column(0,29.4+bob,-.6,11,4.6,10,o.hood,.95,.45);box(0,28.4+bob,-4.4,8.6,6.4,1,o.hood,.35);
+  box(0,30.6+bob,4.35,5.2,5.4,.35,'#050407',.08,1.3);for(const x of[-1.3,1.3])box(x,31+bob,4.6,.9,.6,.2,o.reaper||'#8fe0ff',.02,1.6);
+ }else if(o.helmet){
   dome(o.helmet);column(0,32.1+bob,.05,10.6,.75,9.1,tint(o.helmet,.73),1,.28);
   box(-4.15,30.5+bob,.8,.55,3.5,1.2,tint(o.helmet,.53),.22);box(4.15,30.5+bob,.8,.55,3.5,1.2,tint(o.helmet,.53),.22);
   box(0,34+bob,4.13,1.75,1.6,.5,tint(o.helmet,.62),.22);
@@ -164,7 +186,7 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
   if(o.hairGold)for(const x of[-3,1,4])box(x,35.5+bob,1.7,.5,.7,.5,'#fff1b0',.03,1);
  }else{
   // Uncovered head remains visible beneath masks and floating accessories.
-  dome('#433b2b',32.7,4.2,3.6,1.65);
+  if(!(o.bones||o.wraps||o.phantom))dome('#433b2b',32.7,4.2,3.6,1.65);
   if(o.mask){column(0,30.4+bob,1,8.6,5.4,7.5,'#15151a',1,.4);for(const x of[-1.8,1.8])box(x,31+bob,4.9,1.5,.85,.3,o.mask,.03,1)}
   if(o.visor){box(0,31.2+bob,4.3,8.8,2.5,.9,'#101014',.32,1);box(0,31.2+bob,4.82,7.8,.65,.15,o.visor,.03,1)}
   if(o.headband){column(0,32.2+bob,0,9,.65,7.8,o.headband,1,.15);beam([-4.2,32.2+bob,-1],[-5.7,28.7+bob,-3.6],.35,o.headband,.2,.15)}
@@ -293,6 +315,22 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
   column(0,22.5+bob,-3.85,8.2,6.6,1.1,'#d4ae45',.88,.4);
   box(0,22.6+bob,-4.5,.55,5.8,.25,'#fff1c1',.08);
  }
+ // Halloween outfits
+ const strip=(a,b,w,z,col,bias=.75)=>{const dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1,nx=-dy/l*w/2,ny=dx/l*w/2;
+  const p=[[a[0]+nx,a[1]+ny,z],[b[0]+nx,b[1]+ny,z],[b[0]-nx,b[1]-ny,z],[a[0]-nx,a[1]-ny,z]];decal(z>0?p.slice().reverse():p,col,bias)};   // wound to face outward (back faces are skipped)
+ // chest details sit just in front of the vest and its pouches (z 4.85) and behind the back plate (z -4.2)
+ if(o.ribs)for(const z of[4.85,-4.2])for(const x of[-3.1,0,3.1])strip([x,26],[x*.85,16.6],.9,z,o.ribs);
+ if(o.web)for(const z of[4.85,-4.2]){const c=[-1,22.5];for(let k=0;k<6;k++){const a=k*Math.PI/3;strip(c,[c[0]+Math.cos(a)*5,c[1]+Math.sin(a)*4.4],.34,z,o.web)}
+  for(const r of[1.8,3.6])for(let k=0;k<6;k++){const a0=k*Math.PI/3,a1=a0+Math.PI/3;strip([c[0]+Math.cos(a0)*r,c[1]+Math.sin(a0)*r*.88],[c[0]+Math.cos(a1)*r,c[1]+Math.sin(a1)*r*.88],.28,z,o.web)}}
+ if(o.bones){for(const z of[4.85,-4.2]){strip([0,26.2],[0,16.4],.8,z,o.bones);for(const [y,w]of[[24.6,4.2],[23,4.5],[21.4,4.3],[19.9,3.6]])for(const s of[-1,1])strip([s*.4,y],[s*w,y-.9],.6,z,o.bones)}
+  strip([-2.4,16.2],[2.4,16.2],1,4.85,o.bones);for(const side of[-1,1])for(const [y0,y1]of[[4.5,7.6],[8.8,13.6]])box(side*3.1,(y0+y1)/2+bob*(y0>8?1:0),1.9,.7,y1-y0,.3,o.bones,.02,.6);
+  for(const x of[-1.45,1.45])box(x,30.8+bob,3.95,1.6,1.4,.25,'#15110e',.02,1.6);box(0,29.6+bob,3.95,.6,.8,.25,'#15110e',.02,1.6);for(let k=-2;k<=2;k++)box(k*.7,28.4+bob,3.95,.35,.9,.25,'#15110e',.02,1.6)}
+ if(o.wraps){for(let y=15.2;y<=26;y+=1.9)column(0,y+bob,.1,10.9,.55,6.9,o.wraps,1,.18);
+  for(const side of[-1,1])for(const y of[5.5,7.4,10.4,12.6])column(side*3.1,y+(y>9?bob:0),.6,4.6,.5,4.4,o.wraps,1,.14);
+  for(const y of[29,30.3,32.6])column(0,y+bob,.2,7.8,.55,6.9,o.wraps,1,.16);for(const x of[-1.45,1.45])box(x,31.4+bob,3.95,.9,.45,.2,'#ffc94a',.02,1.6)}
+ if(o.reaper){column(0,7.6,0,13.6,13.6,8.6,B,.62,.5);column(0,1.3,0,14,.8,9,tint(B,.7),1,.3)}
+ if(o.phantom){for(const [i,x]of[[0,-3],[1,0],[2,3]]){const sw=Math.sin(i*2.1)*1.6;beam([x,14.4+bob,0],[x+sw,8,1],1.6,o.phantom,.9,.2);beam([x+sw,8,1],[x-sw*.6,2.5,-.5],.9,o.phantom,.15,.15)}
+  for(const x of[-1.45,1.45])box(x,30.8+bob,3.9,1,1,.2,'#0e3a26',.02,1.6)}
  if(o.glitter){
   for(let i=0;i<4;i++){const phase=(time*1.1+i*.29+i*.13)%1;if(phase>.3)continue;const r=Math.sin(phase/.3*Math.PI)*1.2,x=-3+i*2,y=22+(i%2)*3;
    chest(x,y,r*2,.17,'#fffbe0',4.9);chest(x,y,.17,r*2,'#fffbe0',4.9)}
@@ -303,6 +341,7 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
 
  if(o.faded)ctx.globalAlpha*=.5;
  if(o.holo)ctx.globalAlpha*=.74+.15*Math.sin(time*9);
+ if(o.phantom)ctx.globalAlpha*=.62;
  // Ground light is part of the sprite, behind the feet and their contact shadow.
  const ground=o.ring||o.glow;
  if(ground){
@@ -419,13 +458,17 @@ function queueWardrobePose(job){
 }
 
 
+// what decides which cached pose drawWardrobeCharacter shows (heading step and animation tick), so a caller can skip
+// repainting when nothing it would draw has changed
+function wardrobePoseSig(o,angle,time,scale){const step=scale>3?8:5,animated=o.stars||o.holo||o.glitter||o.halo||o.glitchm;
+ return Math.round(angle*180/Math.PI/step)+':'+(animated?Math.floor(time*20):o.pking?Math.floor(time*6)%4:0)}
 function drawWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
- const heading=Math.round(angle*180/Math.PI),phase=typeof walking==='number'?walking:walking?time*7:0;
+ const step=scale>3?8:5,heading=Math.round(angle*180/Math.PI/step)*step,phase=typeof walking==='number'?walking:walking?time*7:0;
  const gait=Math.round(((phase%(Math.PI*2))+Math.PI*2)%(Math.PI*2)*24/(Math.PI*2));
  const animated=o.stars||o.holo||o.glitter||o.halo||o.glitchm;
- const tick=animated?Math.floor(time*20)/20:0,pose=Object.assign({},o);
+ const tick=animated?Math.floor(time*20)/20:o.pking?Math.floor(time*6)%4:0,pose=Object.assign({},o);
  if(pose.bolt!==undefined)pose.bolt=Math.round(pose.bolt*24)/24;
- const tr=ctx.getTransform(),dpr=Math.min(3,Math.max(1,Math.hypot(tr.a,tr.b))),r=Math.ceil(scale*Math.min(dpr,scale<=3?2:3));
+ const tr=ctx.getTransform(),dpr=Math.min(3,Math.max(1,Math.hypot(tr.a,tr.b))),r=Math.ceil(scale*Math.min(dpr,2));   // 2x is plenty for these sprites; 3x made big previews ~1 MB each and overflowed the cache
  const key=Object.keys(pose).filter(k=>!WARDROBE_OMIT.has(k)).sort().map(k=>k+':'+pose[k]).join('|')+';'+heading+';'+gait+';'+tick+';'+r;
  const actor=Object.keys(pose).filter(k=>!WARDROBE_OMIT.has(k)&&k!=='bolt').sort().map(k=>k+':'+pose[k]).join('|')+';'+(o.tag||'self')+';'+r;
  let entry=WARDROBE_CACHE.get(key);
@@ -454,18 +497,36 @@ function drawWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
 // 'zap' lightning rifle, 'sword' (swing: 0 rest, 1 wind-up, 2 charge wind-up, 3 charging)
 function gunArms(hand,sd,gl,shB,shF,sleeve,nogun,bob,bp=-1,kind='',swing=0){
   if(nogun){limb(shB,[shB[0],-13.5+bob],sleeve,2.6);limb(shF,[shF[0],-13.5+bob],sleeve,2.6);return}
-  if(kind==='sword'){
+  if(kind==='sword'||kind==='swordp'){const pk=kind==='swordp';
     const sx=sd.x>=0?1:-1,a=swing===1?Math.atan2(-1,sx*.35):swing===2?Math.atan2(-.35,sx):swing===3?Math.atan2(sd.y,sd.x):Math.atan2(sd.y+.7,sd.x),c=Math.cos(a),n=Math.sin(a);
     limb(shB,hand,sleeve,2.6);limb(shF,hand,sleeve,2.6);
     const tip=[hand[0]+c*25,hand[1]+n*25],base=[hand[0]+c*2,hand[1]+n*2];
-    if(swing===1||swing===2){g.globalAlpha=.55;seg(base,tip,'#ff4a32',6);g.globalAlpha=1}
+    if(swing===1||swing===2){g.globalAlpha=.55;seg(base,tip,pk?'#ff8a2a':'#ff4a32',6);g.globalAlpha=1}
+    if(pk){g.globalAlpha=.3+.15*Math.sin(game.time*11);seg(base,tip,'#ff9a3a',5);g.globalAlpha=1}
     seg([hand[0]-c*4,hand[1]-n*4],base,OUT,3.4);seg([hand[0]-c*4,hand[1]-n*4],base,'#3a2a1a',2);
-    seg(base,tip,OUT,3.8);seg(base,tip,'#d9dee0',2.2);seg([base[0]+c*6,base[1]+n*6],tip,'#ffffff',.7);
+    seg(base,tip,OUT,3.8);seg(base,tip,pk?'#ffb070':'#d9dee0',2.2);seg([base[0]+c*6,base[1]+n*6],tip,pk?'#fff0c8':'#ffffff',.7);
     seg([base[0]-n*4,base[1]+c*4],[base[0]+n*4,base[1]-c*4],OUT,2.8);seg([base[0]-n*3.4,base[1]+c*3.4],[base[0]+n*3.4,base[1]-c*3.4],'#8a6a36',1.6);return}
+  if(kind==='shield'){   // riot shield on the front arm, pistol in the other hand
+    limb(shB,hand,sleeve,2.6);const pm=[hand[0]+sd.x*6,hand[1]+sd.y*6];seg(hand,pm,OUT,3.6);seg(hand,pm,'#2b2823',2.2);
+    const cx=hand[0]+sd.x*5,cy=hand[1]+sd.y*3-4,w=4+9*Math.min(1,Math.abs(sd.y)*1.7),h=22;limb(shF,[cx,cy+2],sleeve,2.6);
+    g.fillStyle=OUT;g.fillRect(cx-w/2-1,cy-h/2-1,w+2,h+2);g.fillStyle='#4a5358';g.fillRect(cx-w/2,cy-h/2,w,h);g.fillStyle='#6b767c';g.fillRect(cx-w/2,cy-h/2,w*.35,h);
+    g.fillStyle='rgba(160,200,220,.6)';g.fillRect(cx-w*.32,cy-h*.34,w*.64,2.2);g.fillStyle='#e2b436';g.fillRect(cx-w/2,cy+h*.28,w,1.6);return}
+  if(kind==='bottle'){   // a lit fire bottle held up, ready to throw
+    limb(shB,[shB[0],-13.5+bob],sleeve,2.6);const b=[shF[0]+sd.x*3,shF[1]-7];limb(shF,b,sleeve,2.6);
+    g.fillStyle=OUT;g.fillRect(b[0]-2.2,b[1]-6,4.4,7);g.fillStyle='#3f7a4a';g.fillRect(b[0]-1.6,b[1]-5.4,3.2,6);g.fillStyle='#e8dcc0';g.fillRect(b[0]-.8,b[1]-8,1.6,2.6);
+    const f=Math.sin(game.time*20)*.8;g.fillStyle='#ff8a2a';g.beginPath();g.moveTo(b[0]-1.8,b[1]-8);g.quadraticCurveTo(b[0]+f,b[1]-15,b[0]+1.8,b[1]-8);g.fill();
+    g.fillStyle='#ffd070';g.beginPath();g.moveTo(b[0]-.9,b[1]-8);g.quadraticCurveTo(b[0]+f*.5,b[1]-12,b[0]+.9,b[1]-8);g.fill();return}
+  if(kind==='drill'){   // the Foreman's rock drill, pointed at the ground
+    const d0=[hand[0]+sd.x*2,hand[1]-2],d1=[d0[0]+sd.x*6,d0[1]+12];limb(shB,d0,sleeve,2.6);limb(shF,[d0[0]+sd.x*3,d0[1]+1],sleeve,2.6);
+    seg(d0,d1,OUT,6.4);seg(d0,d1,'#e0a030',4.6);seg([d0[0]-3,d0[1]],[d0[0]+3,d0[1]],OUT,3);const jit=Math.sin(game.time*60)*.6,tip=[d1[0]+sd.x+jit,d1[1]+6];seg(d1,tip,OUT,2.6);seg(d1,tip,'#b9bcb8',1.4);return}
   let kb=0,pull=0;
   if(bp>=0){kb=bp<.2?(1-bp/.2)*2.6:0;if(bp>.24&&bp<.9)pull=Math.sin((bp-.24)/.66*Math.PI)}
   const lift=kind==='sg'?kb*.5:pull*2.4+kb*.5,at=k=>[hand[0]+sd.x*(k-kb),hand[1]+sd.y*(k-kb)-lift*Math.max(0,k+5)/(gl+5)];
   const stock=at(-5),muz=at(gl),mid=at(gl*.55),mg=at(2.2);
+  if(kind==='harpoon'){   // the Ferryman's harpoon gun: long, with a barbed head
+    limb(shB,hand,sleeve,2.6);const a0=at(-6),a1=at(gl);seg(a0,a1,OUT,4.6);seg(a0,a1,'#5a4630',3);const t0=at(gl),t1=at(gl+5);seg(t0,t1,OUT,3);seg(t0,t1,'#c9ccc8',1.6);
+    const bb=at(gl+2.4);seg(bb,[bb[0]-sd.y*3-sd.x*2,bb[1]+sd.x*3-sd.y*2],'#c9ccc8',1.2);seg(bb,[bb[0]+sd.y*3-sd.x*2,bb[1]-sd.x*3-sd.y*2],'#c9ccc8',1.2);
+    limb(shF,at(gl*.4),sleeve,2.6);return}
   if(kind==='rpg'){limb(shB,hand,sleeve,2.6);const a0=at(-8),a1=at(gl);seg(a0,a1,OUT,7.4);seg(a0,a1,'#4d5638',5.4);seg(at(gl*.28),at(gl*.36),'#2c3122',5.6);
     const w=at(gl+2.6);disc(w[0],w[1],3.8,OUT);disc(w[0],w[1],3,'#7a6f58');disc(w[0]+sd.x*1.6,w[1]+sd.y*1.6,1.6,'#9a8c6c');
     seg(mg,[mg[0],mg[1]+4],OUT,3);seg(mg,[mg[0],mg[1]+3.6],'#2b2823',1.7);limb(shF,at(gl*.38),sleeve,2.6);return}
@@ -499,6 +560,7 @@ function drawPerson(x,y,o){
   const skin=lit?LIT:o.head,body=lit?LIT:o.body,vest=o.vest,pants=o.pants||'#3b372c',gl=o.gl||14,nogun=!!o.nogun;
   if(o.faded)g.globalAlpha=.5;
   if(o.holo)g.globalAlpha*=.66+.18*Math.sin(game.time*9)-(rnd()<.05?.3:0);   // hologram: flickers
+  if(o.phantom)g.globalAlpha*=.6+.1*Math.sin(game.time*4.2);   // phantom: see-through, breathing
   const A0=g.globalAlpha;
   if(o.glow){g.globalAlpha=.4;oval(0,0,13,6,o.glow);g.globalAlpha=o.faded?.5:1}
   oval(0,0,10,4.8,'rgba(0,0,0,.38)');
@@ -528,14 +590,39 @@ function drawPerson(x,y,o){
   if(o.holo){g.globalAlpha=A0*.32;for(let yy=-25;yy<-11;yy+=1.6)seg([-6.4,yy+bob],[6.4,yy+bob],'#e6fdff',.35);g.globalAlpha=A0}
   if(o.glitter)for(let k=0;k<4;k++){const ph=(game.time*1.1+k*.29+hash(k,11))%1;if(ph>.3)continue;const sz=Math.sin(ph/.3*Math.PI)*1.6,x0=-4.6+hash(k,5)*9.2,y0=-23.5+hash(k,9)*11+bob;
     seg([x0-sz,y0],[x0+sz,y0],'#fffbe0',.6);seg([x0,y0-sz],[x0,y0+sz],'#fffbe0',.6)}
+  if(o.ribs)for(const a of[-3.2,0,3.2])seg([a,-24+bob],[a*.85,-12.6+bob],o.ribs,.8);
+  if(o.web){g.globalAlpha=A0*.8;const c=[-1.5,-19.5+bob];for(let k=0;k<6;k++){const an=k*Math.PI/3;seg(c,[c[0]+Math.cos(an)*6.5,c[1]+Math.sin(an)*6],o.web,.45)}
+    for(const r of[2.2,4.4])for(let k=0;k<6;k++){const a0=k*Math.PI/3,a1=a0+Math.PI/3;seg([c[0]+Math.cos(a0)*r,c[1]+Math.sin(a0)*r*.92],[c[0]+Math.cos(a1)*r,c[1]+Math.sin(a1)*r*.92],o.web,.4)}g.globalAlpha=A0}
+  if(o.bones){seg([0,-23.6+bob],[0,-13+bob],o.bones,1.3);for(const[yy,w]of[[-21.8,4.6],[-19.6,4.9],[-17.4,4.6],[-15.3,3.8]]){seg([-w,yy+bob],[w,yy+bob],o.bones,1)}
+    seg([-2.2,-12.4+bob],[2.2,-12.4+bob],o.bones,1.6)}
+  if(o.wraps){g.globalAlpha=A0*.9;for(let k=0;k<6;k++){const yy=-24+k*2.1;seg([-6,yy+bob+(k%2?1.2:0)],[6,yy+bob+(k%2?0:1.2)],o.wraps,.7)}
+    for(const x of[-2.5,2.5])for(let yy=-10;yy>-2;yy-=2.4)seg([x-1.6,yy+bob],[x+1.6,yy-1+bob],o.wraps,.6);g.globalAlpha=A0}
+  if(o.reaper){P([[-6.4,-13+bob],[6.4,-13+bob],[7.6,-1.2],[-7.6,-1.2]],o.body);seg([-7.2,-1.6],[7.2,-1.6],dark(o.body,.4),.8);
+    for(const x of[-3,1.5])seg([x,-12+bob],[x*1.2,-2],dark(o.body,.5),.5)}
+  if(o.phantom){const t=game.time,A=A0;g.globalAlpha=A*.55;for(let k=0;k<3;k++){const x0=-3.5+k*3.5,ph=t*3+k*2;
+    g.strokeStyle=o.phantom;g.lineWidth=1.4;g.beginPath();g.moveTo(x0,-11+bob);for(let yy=-9;yy<=1;yy+=2)g.lineTo(x0+Math.sin(ph+yy*.5)*1.4,yy+bob);g.stroke()}g.globalAlpha=A}
   seg([-4.8,-12.2+bob],[4.8,-12.2+bob],'#1d1914',1.8);
   if(o.mark){g.fillStyle=o.mark;g.fillRect(shF[0]-1.3,shF[1]+.8,2.6,2.4)}
   if(o.satchel){const c=[side*5.5,-14+bob];P(rectP(c[0],c[1],6,5),'#1a1510');g.fillStyle='#d65a3a';g.fillRect(c[0]-1,c[1]-1,2,1.5)}
   if(o.pack&&!front){P(rectP(0,-18.5+bob,11,10),o.pack);seg([-5.5,-21.5+bob],[5.5,-21.5+bob],OUT,1)}
   const hx=side*.4,hy2=-28.8+bob;
   disc(hx,hy2,5.3,OUT);disc(hx,hy2,4.5,front?skin:dark(skin,.3));
-  if(front){g.fillStyle=OUT;g.fillRect(hx-1.9+side*1.2,hy2-.9,1.1,1.3);g.fillRect(hx+.9+side*1.2,hy2-.9,1.1,1.3);
+  if(front&&!o.pumpkin&&!o.hood){
+    if(o.bones){g.fillStyle='#1a1614';disc(hx-1.5+side*1.2,hy2-.5,1.3,'#1a1614');disc(hx+1.5+side*1.2,hy2-.5,1.3,'#1a1614');g.fillRect(hx+side*1.2-.4,hy2+1.2,.8,1);
+      for(let k=-2;k<=2;k++)g.fillRect(hx+side*1.2+k*.8-.2,hy2+2.8,.4,1)}
+    else if(o.phantom){disc(hx-1.5+side*1.2,hy2-.6,1,'#0e3a26');disc(hx+1.5+side*1.2,hy2-.6,1,'#0e3a26');g.globalAlpha=A0*.6;disc(hx+side*1.2,hy2+2.2,.9,'#0e3a26');g.globalAlpha=A0}
+    else{g.fillStyle=OUT;g.fillRect(hx-1.9+side*1.2,hy2-.9,1.1,1.3);g.fillRect(hx+.9+side*1.2,hy2-.9,1.1,1.3)}
+    if(o.wraps){for(const d of[-2.6,.8,3.4])seg([hx-4.2,hy2+d],[hx+4.2,hy2+d-1],o.wraps,.7);g.fillStyle='#ffd24a';g.fillRect(hx-1.8+side*1.2,hy2-.9,.9,.6);g.fillRect(hx+1+side*1.2,hy2-.9,.9,.6)}
     if(o.bandana)P(rectP(hx+side*.4,hy2+2.3,8.2,3.6),o.bandana)}
+  if(o.pumpkin){const pc=o.pumpkin,fl=o.pking?.75+.25*Math.sin(game.time*17)*Math.sin(game.time*7.3):1;
+    oval(hx,hy2-.4,6.6,5.9,OUT);oval(hx,hy2-.4,5.9,5.2,pc);for(const d of[-3.3,0,3.3])seg([hx+d*.7,hy2-5.2],[hx+d,hy2+4.4],dark(pc,.3),.7);
+    seg([hx,hy2-5.4],[hx+side*.9,hy2-8],'#4a6a22',1.6);
+    if(front){const fx=hx+side*1.1,glow=o.pking?`rgba(255,${190+40*fl|0},90,${fl})`:'#ffd24a';g.fillStyle=glow;
+      P([[fx-3,hy2-.2],[fx-1.4,hy2-2.6],[fx-.4,hy2-.2]],glow,false);P([[fx+.4,hy2-.2],[fx+1.4,hy2-2.6],[fx+3,hy2-.2]],glow,false);
+      P([[fx-3.2,hy2+1.4],[fx-2,hy2+3.2],[fx-.8,hy2+2.2],[fx+.4,hy2+3.4],[fx+1.6,hy2+2.2],[fx+3.2,hy2+1.4],[fx+2.4,hy2+3.8],[fx-2.4,hy2+3.8]],glow,false)}
+    if(o.pking){g.globalAlpha=A0*(.5+.4*fl);for(let k=0;k<3;k++){const x0=hx-2+k*2,h=2.4+1.6*Math.sin(game.time*9+k*2.1);P([[x0-1.1,hy2-5.4],[x0,hy2-5.6-h],[x0+1.1,hy2-5.4]],k===1?'#ffd24a':'#ff7a1a',false)}g.globalAlpha=A0}}
+  else if(o.hood){P([[hx-6.4,hy2+4.6],[hx-6.2,hy2-3.2],[hx-2.6,hy2-7.4],[hx+3,hy2-7.4],[hx+6.2,hy2-3.4],[hx+6.4,hy2+4.6]],o.hood);
+    if(front){oval(hx+side*1.2,hy2+.6,3.6,3.4,'#050407');const e=.6+.4*Math.sin(game.time*3);g.globalAlpha=A0*e;disc(hx-1.3+side*1.4,hy2,.8,o.reaper||'#8fe0ff');disc(hx+1.3+side*1.4,hy2,.8,o.reaper||'#8fe0ff');g.globalAlpha=A0}}
   if(o.helmet){P(domeP(hx,hy2-.4,5.4),o.helmet);seg([hx-6.2,hy2-.3],[hx+6.2,hy2-.3],OUT,1.6);if(o.hneon){neonSeg([hx-4.8,hy2-2.6],[hx+4.8,hy2-2.6],o.hneon);neonSeg([hx,hy2-5.6],[hx,hy2-2.6],o.hneon)}}
   else if(o.beanie){P(domeP(hx,hy2-.2,5.2),o.beanie);g.fillStyle=dark(o.beanie,.3);g.fillRect(hx-5.2,hy2-1.6,10.4,2.2);disc(hx,hy2-6,1.7,OUT);disc(hx,hy2-6,1.2,o.beanie)}
   else if(o.beret){P([[hx-5.6,hy2-1.6],[hx-2,hy2-5],[hx+4.6,hy2-4.4],[hx+6.6,hy2-2.2],[hx+4.8,hy2-1]],o.beret);disc(hx+.5,hy2-4.6,.9,dark(o.beret,.4))}
@@ -558,6 +645,9 @@ function drawPerson(x,y,o){
   else if(o.mask){if(front){disc(hx,hy2+.3,4.6,'#15151a');const bl=Math.sin(game.time*2.6)>.96;if(!bl){g.fillStyle=o.mask;g.fillRect(hx-2.8+side*1.1,hy2-1.4,1.8,1.2);g.fillRect(hx+1+side*1.1,hy2-1.4,1.8,1.2)}}
     seg([hx-4.8,hy2-1.2],[hx+4.8,hy2-1.2],'#15151a',1)}
   else if(o.visor){P(rectP(hx+side*.5,hy2-.9,10.4,2.8),'#101014');neonSeg([hx-4.4+side*.5,hy2-.9],[hx+4.4+side*.5,hy2-.9],o.visor)}
+  else if(o.witch){oval(hx,hy2-2.4,9.4,2.7,OUT);oval(hx,hy2-2.4,8.6,2.1,o.witch);
+    P([[hx-4.4,hy2-2.8],[hx+4.4,hy2-2.8],[hx+2.4,hy2-9],[hx-side*1.6,hy2-13.8],[hx-side*5,hy2-12.6],[hx-1.4,hy2-9]],o.witch);
+    g.fillStyle='#6a2a8a';g.fillRect(hx-4.3,hy2-4.8,8.6,1.8);P(rectP(hx+side*.4,hy2-3.9,2.6,2.4),'#e2c25a',false);P(rectP(hx+side*.4,hy2-3.9,1.2,1.1),'#6a2a8a',false)}
   else if(o.headband){neonSeg([hx-5,hy2-2.2],[hx+5,hy2-2.2],o.headband);seg([hx-side*4.8,hy2-2.2],[hx-side*7.8,hy2+.6],o.headband,1.2)}
   if(o.cross){const c=[shB[0],shB[1]+2.2];g.fillStyle='#efe6d2';g.fillRect(c[0]-1.9,c[1]-1.3,3.8,3.6);g.fillStyle='#c43a3a';g.fillRect(c[0]-.5,c[1]-.9,1,2.8);g.fillRect(c[0]-1.4,c[1]+.05,2.8,1)}
   if(front)gunArms(hand,sd,gl,shB,shF,body,nogun,bob,bp,o.weapon,o.swing);
@@ -592,6 +682,11 @@ function bossLine(x0,y0,x1,y1,z){const a=iso(x0,y0),b=iso(x1,y1);g.beginPath();g
 function drawBossFx(){
   const ch=WH*.55,t=game.time,pulse=.55+.45*Math.sin(t*22);
   for(const f of fires){const c=iso(f.x,f.y),a=Math.min(1,f.t)*(.34+.1*Math.sin(t*9+f.x*3));g.fillStyle=`rgba(255,110,40,${a})`;g.beginPath();g.ellipse(c[0],c[1],TW2*.95,TH2*.95,0,0,Math.PI*2);g.fill()}
+  // spotters: a red laser while they line up (st 1), solid with a mark over the soldier once they have them (st 2)
+  for(const e of enemies){if(e.type!=='spotter'||!e.st)continue;const a=iso(e.x,e.y),b=iso(e.lx,e.ly);g.strokeStyle=e.st===2?'rgba(255,60,50,.75)':`rgba(255,60,50,${.25+.3*pulse})`;g.lineWidth=(e.st===2?1.3:.9)*u;
+    g.beginPath();g.moveTo(a[0],a[1]-ch);g.lineTo(b[0],b[1]-ch);g.stroke();
+    if(e.st===2){const y=b[1]-WH*1.9,s=5*u;g.fillStyle='#ff4a3a';g.beginPath();g.moveTo(b[0],y-s);g.lineTo(b[0]+s*.7,y);g.lineTo(b[0],y+s);g.lineTo(b[0]-s*.7,y);g.closePath();g.fill()}}
+  for(const c of chains){const a=iso(c.x0,c.y0),b=iso(c.x1,c.y1),k=c.life/c.max;g.strokeStyle=`rgba(200,205,200,${k})`;g.lineWidth=2.2*u;g.setLineDash([4*u,2*u]);g.beginPath();g.moveTo(a[0],a[1]-ch);g.lineTo(b[0],b[1]-ch*.8);g.stroke();g.setLineDash([])}
   for(const e of enemies){if(e.type!=='boss'||!e.st)continue;const f=NET.mode==='guest'?(e.stF||0):Math.max(0,e.stT/e.stM);
     if(e.boss==='demolisher'){const a=Math.atan2(e.ly-e.y,e.lx-e.x),L=Math.hypot(e.lx-e.x,e.ly-e.y);
       g.setLineDash([7*u,5*u]);g.lineWidth=2.2*u;g.strokeStyle=`rgba(255,60,40,${.5+.45*pulse})`;
@@ -602,6 +697,13 @@ function drawBossFx(){
       for(let k=0;k<=10;k++){const a=a0+(k/10-.5)*2.4,c=iso(e.x+Math.cos(a)*1.5,e.y+Math.sin(a)*1.5);g.lineTo(c[0],c[1])}g.closePath();g.fill()}
     else if(e.boss==='butcher'&&e.st===2){const dx=e.lx-e.x,dy=e.ly-e.y,l=Math.hypot(dx,dy)||1,nx=-dy/l*.45,ny=dx/l*.45,P=[[e.x+nx,e.y+ny],[e.lx+nx,e.ly+ny],[e.lx-nx,e.ly-ny],[e.x-nx,e.y-ny]].map(q=>iso(q[0],q[1]));
       g.fillStyle=`rgba(255,50,40,${.16+.22*pulse})`;g.strokeStyle=`rgba(255,80,60,${.6+.3*pulse})`;g.lineWidth=1.6*u;g.beginPath();P.forEach((q,i)=>i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.closePath();g.fill();g.stroke()}
+    else if(e.boss==='ferryman'&&e.st===1){g.setLineDash([3*u,4*u]);g.lineCap='round';g.lineWidth=2.2*u;g.strokeStyle=`rgba(95,214,196,${.5+.45*pulse})`;bossLine(e.x,e.y,e.lx,e.ly,ch);g.setLineDash([]);g.lineCap='butt';
+      const q=iso(e.lx,e.ly);g.strokeStyle=`rgba(95,214,196,${.6+.3*pulse})`;g.lineWidth=1.6*u;g.beginPath();g.ellipse(q[0],q[1],TW2*.6,TH2*.6,0,0,Math.PI*2);g.stroke()}
+    else if(e.boss==='ferryman'&&e.st===3){const row=Math.floor(e.ly);g.fillStyle=`rgba(255,60,40,${.18+.25*pulse})`;for(let i=0;i<N;i++)if(tAt(i,row)===T_BRIDGE)quad(iso(i,row),iso(i+1,row),iso(i+1,row+1),iso(i,row+1),g.fillStyle)}
+    else if(e.boss==='foreman'&&e.st===1){const q=iso(e.lx,e.ly);g.strokeStyle=`rgba(255,177,58,${.55+.4*pulse})`;g.lineWidth=2*u;g.beginPath();g.ellipse(q[0],q[1],TW2*.95*(1.2-f*.2),TH2*.95*(1.2-f*.2),0,0,Math.PI*2);g.stroke()}
+    else if(e.boss==='foreman'&&e.st===3){const dx=e.lx-e.x,dy=e.ly-e.y,l=Math.hypot(dx,dy)||1,nx=-dy/l*.5,ny=dx/l*.5,P=[[e.x+nx,e.y+ny],[e.lx+nx,e.ly+ny],[e.lx-nx,e.ly-ny],[e.x-nx,e.y-ny]].map(q=>iso(q[0],q[1]));
+      g.fillStyle=`rgba(255,150,40,${.16+.22*pulse})`;g.strokeStyle=`rgba(255,177,58,${.6+.3*pulse})`;g.lineWidth=1.6*u;g.beginPath();P.forEach((q,i)=>i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.closePath();g.fill();g.stroke()}
+    else if(e.boss==='foreman'&&e.st===4){const q=iso(e.x,e.y);g.strokeStyle=`rgba(255,70,40,${.6+.4*pulse})`;g.lineWidth=2.4*u;g.beginPath();g.ellipse(q[0],q[1],TW2*1.4,TH2*1.4,0,0,Math.PI*2);g.stroke()}
     else if(e.boss==='storm'){const dx=e.lx-e.x,dy=e.ly-e.y,l=Math.hypot(dx,dy)||1,ex=clamp(e.x+dx/l*12,0,N),ey=clamp(e.y+dy/l*12,0,N),locked=f<.36;
       g.lineCap='round';g.strokeStyle=locked?`rgba(235,250,255,${.55+.45*pulse})`:'rgba(127,224,255,.7)';g.lineWidth=(1+2.4*(1-f))*u;bossLine(e.x,e.y,ex,ey,ch*1.2);g.lineCap='butt'}}
   for(const r of rockets){const c=iso(r.x,r.y),sd=wdirToScreen({x:r.vx,y:r.vy}),z=c[1]-ch,L=7*u;
@@ -622,7 +724,7 @@ function drawBossFx(){
 }
 // a boss's name and health across the top of the screen
 function drawBossBars(top){
-  let y=Math.max(W<700?(hud.topB||top)+10:top+10,(hud.tipB||0)+10);for(const e of enemies){if(e.type!=='boss')continue;const B=BOSSES[e.boss];if(!B)continue;
+  let y=Math.max(W<700?(hud.topB||top)+10:top+10,(hud.tipB||0)+10);for(const e of enemies){if(e.type!=='boss')continue;if(!BOSSES[e.boss])continue;const B=bossInfo(e.boss);
     const w=Math.min(440,W-48),x=(W-w)/2,f=Math.max(0,e.hp/e.max);
     g.fillStyle='rgba(12,10,8,.8)';g.fillRect(x-3,y-3,w+6,26);
     g.font='800 13px "Big Shoulders Stencil Display", "Arial Narrow", sans-serif';g.textAlign='left';g.fillStyle=B.col;g.fillText(B.name,x+2,y+10);
@@ -649,7 +751,12 @@ const QM_LOOK={body:'#9e9a78',vest:'#3d4a52',pants:'#3a3a33',head:'#b58f6e',cap:
 const LOOK={
   rifle:{body:'#7e3a2a',vest:'#3f231a',pants:'#2b2420',head:'#b08868',helmet:'#2f2820',bandana:'#a8342a'},
   gren:{body:'#6c5738',vest:'#2f261b',pants:'#2b2420',head:'#a98262',helmet:'#241f19',pack:'#3a2e1f',bandolier:true,bandana:'#a8342a',gl:17},
-  breach:{body:'#5a2a22',vest:'#1f1512',pants:'#231c19',head:'#a07a5c',cap:'#1a1512',bandana:'#a8342a',nogun:true}
+  breach:{body:'#5a2a22',vest:'#1f1512',pants:'#231c19',head:'#a07a5c',cap:'#1a1512',bandana:'#a8342a',nogun:true},
+  // v0.9.0: each has one clear tell at a glance: the riot shield, the white medic kit, the red boonie and scope glint, the lit bottle
+  shield:{body:'#3f4048',vest:'#23242a',pants:'#26262b',head:'#a98262',helmet:'#2a2b30',bandana:'#a8342a',gl:8,weapon:'shield'},
+  medic:{body:'#6a5a48',vest:'#e8e2d0',pants:'#2b2420',head:'#b08868',helmet:'#e8e2d0',pack:'#e8e2d0',cross:true,gl:8},
+  spotter:{body:'#4a4a36',vest:'#2a2a1e',pants:'#2b2420',head:'#a98262',boonie:'#8a2a22',bandana:'#a8342a',gl:8},
+  fire:{body:'#6a3a1e',vest:'#2a1a10',pants:'#231c19',head:'#a07a5c',wrap:'#d06a1e',pack:'#3a2a1a',weapon:'bottle'}
 };
 function playerLook(p){
   const cos=p.cos||DEFAULT_COS,C0=p.C||CLASSES[p.cls]||CLASSES.soldier,lk=cos.skin+'|'+cos.hat+'|'+C0.name;
@@ -658,7 +765,7 @@ function playerLook(p){
 }
 function buildLook(p,cos){
   const S=SKINS[cos.skin]||SKINS.std;
-  const o={body:S.body,vest:S.vest,pants:S.pants,head:'#c19a78',mark:'#e2b436',gl:14,stripe:S.stripe,glow:S.glow,shine:S.shine};
+  const o={body:S.body,vest:S.vest,pants:S.pants,head:S.head||'#c19a78',mark:'#e2b436',gl:14,stripe:S.stripe,glow:S.glow,shine:S.shine};
   for(const k of SKIN_FX)if(S[k]!==undefined)o[k]=S[k];
   const C=p.C||CLASSES[p.cls]||CLASSES.soldier;
   if(C.name==='SNIPER'){o.gl=19}else if(C.name==='GRENADIER'){o.pack='#4a3a26';o.bandolier=true;o.gl=15;o.weapon='sg'}
@@ -670,7 +777,10 @@ function buildLook(p,cos){
   else if(H==='headband')o.headband='#ff3a6a';else if(H==='acap'){o.cap='#e2427f';o.capPix='#ffe03a'}else if(H==='nhelm'){o.helmet='#1b1e26';o.hneon='#2af5ff'}
   else if(H==='pcap')o.pcap='#1a2240';else if(H==='ledmask')o.mask='#ff3a3a';else if(H==='visor')o.visor='#ff2a8a';else if(H==='clownhair')o.hair='#ff3ad0';
   else if(H==='halo')o.halo='#fff0a0';else if(H==='glitch')o.glitchm=true;else if(H==='gclownhair'){o.hair='#f0cf5c';o.hairGold=true}else if(H==='ghelm')o.khelm='#e6c65c';
+  else if(H==='jackolantern')o.pumpkin='#e8771e';else if(H==='pumpkinking'){o.pumpkin='#c9561a';o.pking=true}else if(H==='witch')o.witch='#241a30';
   else o.helmet=S.hat;
+  if(S.reaper&&H==='class'){delete o.helmet;delete o.cap;delete o.boonie;o.hood=S.body}
+  else if((S.bones||S.wraps||S.phantom)&&H==='class'){delete o.helmet;delete o.cap;delete o.boonie}   // the face is the point: no default headgear
   if(p.slot)o.mark=SLOTCOL[p.slot%6];
   return o;
 }

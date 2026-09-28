@@ -65,7 +65,7 @@ function handle(method, url, h, body) {
   const errs = []; p.on('pageerror', e => errs.push(e.message + ' @ ' + (e.stack || '').split('\n').slice(1, 4).join(' / '))); p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|ERR_INTERNET/.test(m.text())) errs.push('console ' + m.text()); });
   const URL0 = 'http://localhost:8080/debug.html?debug=1&cloud=1';
   const P = f => p.evaluate(f), log = (...a) => console.log(...a), W = ms => p.waitForTimeout(ms);
-  const state = () => P(() => ({ st: __pal.acct.state, guest: __pal.acct.s && __pal.acct.s.user && __pal.acct.s.user.is_anonymous, name: __pal.acct.name, msg: __pal.acct.msg, cases: __pal.locker.cases, shards: __pal.locker.shards, owned: __pal.locker.owned.length, cloud: __pal.locker.cloud, raids: __pal.locker.st.raids, claims: __pal.claims.length, btn: document.getElementById('acctBtn').textContent, lede: document.getElementById('aLede').textContent.slice(0, 60), status: document.getElementById('aStatus').textContent }));
+  const state = () => P(() => ({ st: __pal.acct.state, guest: __pal.acct.s && __pal.acct.s.user && __pal.acct.s.user.is_anonymous, name: __pal.acct.name, msg: __pal.acct.msg, cases: __pal.locker.cases, shards: __pal.locker.shards, owned: __pal.locker.owned.length, cloud: __pal.locker.cloud, raids: __pal.locker.st.raids, claims: __pal.claims.length, btn: document.getElementById('identityState').textContent, lede: document.getElementById('aLede').textContent.slice(0, 60), status: document.getElementById('aStatus').textContent }));
 
   // 1. a player with a v0.7 save on this device opens v0.8
   await p.goto('http://localhost:8080/index.html');
@@ -76,7 +76,7 @@ function handle(method, url, h, body) {
   log('  server locker got the old save:', JSON.stringify({ owned: db.lockers[u1].owned.length, cases: db.lockers[u1].cases, raids: db.lockers[u1].st.raids, imported: db.lockers[u1].imported, future: db.lockers[u1].owned.includes('hat:future_thing') }));
 
   // 2. account page as a guest; pick a username
-  await p.click('#acctBtn'); await W(200);
+  await p.click('#identityButton'); await W(200);
   await p.screenshot({ path: O + '/a_guest.png', fullPage: false });
   await p.fill('#aUser', 'x'); await p.click('#aNameBox button'); await W(200); log('2 bad name ->', (await state()).status);
   db.names['someone'] = 'Taken_Name'; await p.fill('#aUser', 'taken_name'); await p.click('#aNameBox button'); await W(300); log('  taken name ->', (await state()).status);
@@ -147,7 +147,7 @@ function handle(method, url, h, body) {
   await p.goto(URL0); await W(1200); s = await state(); log('9 reload:', s.st, s.guest, 'btn', s.btn);
   // 10. not the hosted site and no ?cloud=1: accounts stay off, local play as before
   const p2 = await ctx.newPage(); await p2.goto('http://localhost:8080/debug.html?debug=1'); await p2.waitForTimeout(800);
-  log('10 local copy:', await p2.evaluate(() => ({ st: __pal.acct.state, btnHidden: document.getElementById('acctBtn').hidden })));
+  log('10 local copy:', await p2.evaluate(() => ({ st: __pal.acct.state, btnHidden: document.getElementById('identityButton').hidden })));
   log('calls:', db.calls.length, 'errors:', errs.length ? errs : 'none');
   await b.close();
 })();

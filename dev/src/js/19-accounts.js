@@ -179,10 +179,8 @@ async function endSession(msg){
 
 // ---- the account page
 function mainLabels(){
-  const lb=document.querySelector('.mm [data-go=locker]'),n=allCases();if(lb)lb.textContent=n?`LOCKER · ${n}`:'LOCKER';
-  renderIdentity();
-  const ab=$('acctBtn');if(!ab)return;ab.hidden=!cloudOn;
-  ab.textContent=acct.state==='full'?`ACCOUNT · ${(acct.name||'SIGNED IN').toUpperCase()}`:acct.state==='guest'?(acct.name?`GUEST · ${acct.name.toUpperCase()} · SAVE YOUR ACCOUNT`:'GUEST · SAVE YOUR ACCOUNT'):acct.state==='down'?'ACCOUNT · OFFLINE':'ACCOUNT';
+  const lb=$('navLocker'),n=allCases();if(lb)lb.textContent=n?`LOCKER · ${n}`:'LOCKER';
+  renderIdentity();   // the account button (top right) shows who you are and whether the account is saved
 }
 function renderAcct(){
   mainLabels();if($('pg-account').hidden)return;

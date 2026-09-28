@@ -25,6 +25,9 @@ function drawTracer(b){
 }
 
 function killFx(x,y,id){
+  emitThin=parts.length>480?.3:parts.length>320?.6:1;try{killFxAt(x,y,id)}finally{emitThin=1}
+}
+function killFxAt(x,y,id){
   if(id&&id!=='none')sfx('kx_'+id,x,y);
   if(id!=='skull'&&FINISH_LIFE[id])emit(x,y,WH*.6,'finish:'+id);
   const E=(n,k,z=.6)=>{for(let i=0;i<Math.ceil(n*.65);i++)emit(x,y,WH*z,k)};
@@ -47,6 +50,10 @@ function killFx(x,y,id){
     case'glint':for(let n=0;n<10;n++)emit(x,y,WH*.6,'glint');break;
     case'bolt':for(let n=0;n<9;n++)emit(x+(rnd()-.5)*.15,y+(rnd()-.5)*.15,WH*(.2+n*.3),'bolt');addFlash({x,y,life:.22,max:.22,r:1.1});break;
     case'skull':flt(x,y,'☠','#efe6d2');for(let n=0;n<6;n++)emit(x,y,WH*.6,'spark');break;
+    // Halloween Case
+    case'bats':E(11,'bat',.55);E(3,'smoke',.3);break;
+    case'spider':E(1,'spider',0);ringFx(x,y,0,.75,.7,'#f0f0f8','#8a8aa0',1.1);ringFx(x,y,0,.45,.55,'#f0f0f8','#8a8aa0',.8);break;
+    case'souls':E(4,'soul',.35);E(10,'gflame',.25);ringFx(x,y,0,1.3,.7,'#c8ffe0','#1ee860',2.2);addFlash({x,y,life:.2,max:.2,r:.9});break;
   }
 }
 function keyCap(x,y,key,text,col){
@@ -85,6 +92,7 @@ function drawIcon(cv2,c){
   const x=cv2.getContext('2d'),S=cv2.width;x.clearRect(0,0,S,S);
   if(c.cat==='skin')drawFig(x,S,S,lookOf({...locker.eq,skin:c.key},pick.cls),S/48,{x:.9,y:.25},S*.93);
   else if(c.cat==='hat')drawFig(x,S,S,lookOf({...locker.eq,hat:c.key},pick.cls),S/34,{x:.9,y:.25},S*.5+34*1.18*(S/34)*.93);
+  else if(c.cat==='bg'){x.save();x.beginPath();x.rect(0,0,S,S);x.clip();drawBg(c.key,x,S,S,3);x.restore()}
   else if(c.cat==='trail'){const st=TRAILS[c.key];x.fillStyle='#0c0b09';x.fillRect(0,0,S,S);
     for(const k of[0,1])traceSeg(x,S*(.2+k*.2),S*(.8-k*.12),S*(.62+k*.2),S*(.3-k*.12),st,S*.05*(st.w||1),k*.4,false)}
   else{x.fillStyle='#0c0b09';x.fillRect(0,0,S,S);
@@ -92,7 +100,10 @@ function drawIcon(cv2,c){
     else paintFinish(x,c.key,.3,S/92,S/2,S*.58)}
 }
 
+// the spinning soldier with a shot going off: 30 times a second on phones is smooth enough and halves its cost
+let lockPrevAt=0;
 function drawLockerPreview(now){
+  if((touchMode||!DESK)&&now-lockPrevAt<32)return;lockPrevAt=now;
   const c=$('lockPrev'),x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);
   const ang=now/2200,aim={x:Math.cos(ang),y:Math.sin(ang)},sc=3.5,base=c.height*.92;
   const look=lookOf(locker.eq,pick.cls);drawFig(x,c.width,c.height,look,sc,aim,base);
@@ -132,6 +143,7 @@ function renderLocker(){
     if(c.box&&c.box!==sec){sec=c.box;const h=document.createElement('div');h.className='gsec';h.style.setProperty('--cc',CASES[c.box].col);h.textContent=CASES[c.box].name;grid.append(h)}
     const t=itemTile(c);
     t.addEventListener('click',()=>{if(!owns(c.id))return;locker.eq[c.cat]=c.key;saveLocker();renderLocker();cloudEquip(c.id)});grid.append(t)}
+  syncBg();
   const st=locker.st;$('lockHint').textContent=`Earn a supply case every 3 raids you survive and for every win. Duplicates turn into shards. So far: ${st.raids} raids held, ${st.wins} win${st.wins===1?'':'s'}, ${st.drops} raiders dropped.${locker.cloud?' Saved to your account.':''}`;
 }
 document.querySelectorAll('#lockTabs button').forEach(b=>b.addEventListener('click',()=>{lockCat=b.dataset.cat;renderLocker()}));

@@ -13,7 +13,7 @@ const lerp2=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];
 function faceLine(P,Q,h,v){const a=up(P,h*v),b=up(Q,h*v);g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke()}
 function doorSlab(P,Q,h,col,hc){const a=lerp2(P,Q,.3),b=lerp2(P,Q,.7);quad(a,b,up(b,h*.82),up(a,h*.82),col);const hd=up(lerp2(P,Q,.62),h*.42);g.fillStyle=hc||'#e2b436';g.fillRect(hd[0]-1*u,hd[1]-1*u,2*u,2*u)}
 function drawWall(i,j,w,alpha){
-  const st=wallState(w),key=w.mat+'|'+(w.door?1:0)+'|'+st+'|'+Math.round(w.char*8)+'|'+(w.flash>0?1:0)+'|'+(w.tm||'')+'|'+TW2+'|'+DPR;
+  const st=wallState(w),key=(w.slab?'s':w.mat)+'|'+(w.door?1:0)+'|'+st+'|'+Math.round(w.char*8)+'|'+(w.flash>0?1:0)+'|'+(w.tm||'')+'|'+TW2+'|'+DPR;
   let S=w._spr;if(!S||S.key!==key||S.i!==i||S.j!==j)S=w._spr=wallSprite(i,j,w,key);
   g.globalAlpha=alpha;g.drawImage(S.cv,camX+S.x,camY+S.y,S.w,S.h);
   if(w.fire>0){const c=iso(i+.5,j+.5),R=TW2*1.25,h=WH*(st===2?.58:1);g.globalAlpha=alpha*.85;g.drawImage(SOFT.glow,c[0]-R,c[1]-h-R,R*2,R*2)}
@@ -29,6 +29,12 @@ function wallSprite(i,j,w,key){
   return{key,i,j,cv:cv2,x:x0,y:y0,w:cv2.width/DPR,h:cv2.height/DPR};
 }
 function drawWallShape(i,j,w){
+  if(w.slab){   // the Foreman's rock slab: a rough grey block, lower as it cracks
+    const st=wallState(w),h=WH*(st===2?.45:st===1?.6:.72),hs=hash(i+7,j+3);
+    boxR(i+.1,j+.14,i+.9,j+.86,0,h,w.flash>0?'#9a948a':'#6f695f','#524d46','#403c37');
+    boxR(i+.22+hs*.2,j+.24,i+.62+hs*.2,j+.6,h,WH*.18,'#7d766b','#5c5750','#4a4640');
+    if(st>0){g.strokeStyle='#1c1a17';g.lineWidth=u;const c=iso(i+.5,j+.5);g.beginPath();g.moveTo(c[0]-6*u,c[1]-h*.8);g.lineTo(c[0]-1*u,c[1]-h*.4);g.lineTo(c[0]+4*u,c[1]-h*.7);g.stroke()}
+    return}
   const m=MAT[w.mat],st=wallState(w),h=WH*(st===2?.58:1);
   let top=m.top,l=m.l,r=m.r;
   if(w.char>0){top=mix(top,'#241b15',w.char*.85);l=mix(l,'#1d1612',w.char*.85);r=mix(r,'#18120f',w.char*.85)}

@@ -1,6 +1,7 @@
 /* ================= pathing ================= */
 function nodeAt(i,j){for(const n of nodes)if(n.i===i&&n.j===j)return n;return null}
-function enterCost(k){if(k===coreK)return 0;if(coreKs.has(k))return 1e6;const w=walls[k];if(w)return 1+w.hp/8;const n=nodeAt(k%N,(k/N)|0);if(n&&n.solid)return 1e6;return debris[k]?1.4:1}
+// water costs about what walking round costs (wading is half speed), so raiders take a bridge when one is near
+function enterCost(k){if(k===coreK)return 0;if(coreKs.has(k))return 1e6;const t=terr[k];if(terrSolid(t))return 1e6;const w=walls[k];if(w)return 1+w.hp/8;const n=nodeAt(k%N,(k/N)|0);if(n&&n.solid)return 1e6;return(debris[k]?1.4:1)+(t===T_WATER?2.4:t===T_LOW&&floodOn?1.1:0)}
 function computeFlow(){
   dist.fill(1e9);if(coreK<0)return;const done=new Uint8Array(N*N);dist[coreK]=0;
   for(let it=0;it<N*N;it++){
@@ -25,7 +26,7 @@ function teamPath(si,sj,isGoal){
 }
 
 /* ================= collision ================= */
-function solidTile(i,j,team){if(!inb(i,j))return true;const k=idx(i,j);if(coreKs.has(k))return true;const w=walls[k];if(w)return!(team&&w.door&&(team===true||w.tm===team));const n=nodeAt(i,j);return!!(n&&n.solid)}
+function solidTile(i,j,team){if(!inb(i,j))return true;const k=idx(i,j);if(coreKs.has(k)||terrSolid(terr[k]))return true;const w=walls[k];if(w)return!(team&&w.door&&(team===true||w.tm===team));const n=nodeAt(i,j);return!!(n&&n.solid)}
 function collides(x,y,r,team){
   if(x-r<0||y-r<0||x+r>N||y+r>N)return true;
   if(typeof team==='string'&&game.pvp==='base'&&game.phase==='build'&&(team==='a'?x-y>-.35:x-y<.35))return true;   // the truce line
@@ -37,7 +38,7 @@ function losClear(x0,y0,x1,y1){
   const d=Math.hypot(x1-x0,y1-y0),st=Math.ceil(d/.2);let last=-1,skipped=false;
   for(let s=1;s<st;s++){
     const t=s/st,x=x0+(x1-x0)*t,y=y0+(y1-y0)*t,i=x|0,j=y|0;if(!inb(i,j))return false;const k=idx(i,j);
-    if(coreKs.has(k))return false;const n=nodeAt(i,j);if(n&&n.solid)return false;
+    if(coreKs.has(k)||terrShot(terr[k]))return false;const n=nodeAt(i,j);if(n&&n.solid)return false;
     const w=walls[k];if(w&&k!==last){last=k;if(!skipped&&d*t<1.35){skipped=true;continue}if(wallState(w)===0)return false}
   }
   return true;
@@ -47,7 +48,7 @@ function losClear(x0,y0,x1,y1){
 // Knocking down a wall that isn't yours pays salvage: the yard's old ruins, or the other crew's walls in
 // Base Battle. Your own side's walls never pay (or you could build and break them forever).
 const WALL_SALVAGE=[5,8,15];
-function wallPays(w,p){if(game.pvp==='ffa'||!p)return false;if(w.tm)return w.tm!==p.team;return!w.crew}
+function wallPays(w,p){if(game.pvp==='ffa'||!p||w.slab)return false;if(w.tm)return w.tm!==p.team;return!w.crew}
 function damageWall(k,amt,own){
   const w=walls[k];if(!w||w.mat===3)return;w.hp-=amt;w.flash=.08;markFlow();
   if(w.hp<=0){
@@ -114,9 +115,10 @@ function explode(x,y,R=1.65,power=1,own=null,raid=false){
     if(!inb(i,j))continue;const k=idx(i,j),f=fall(Math.hypot(i+.5-x,j+.5-y));if(f<=0)continue;
     const w=walls[k];if(w){if(w.mat===0&&f>.25){w.fire=6;w.fireBy=own}damageWall(k,80*f*power*MAT[w.mat].blast,own)}
   }
+  crackBlast(x,y,R,power);
   const src=own?players.get(own):null;
   for(const c of cores){const f=fall(Math.hypot(c.i+.5-x,c.j+.5-y));if(f>0&&!(game.pvp&&src&&src.team===c.team))hurtStake(c,48*f*power)}
-  if(!raid)for(const e of enemies){const f=fall(Math.hypot(e.x-x,e.y-y));if(f>0)hurtEnemy(e,62*f*power,own)}
+  if(!raid)for(const e of enemies){if(e.burrow)continue;const f=fall(Math.hypot(e.x-x,e.y-y));if(f>0)hurtEnemy(e,62*f*power,own)}
   if(game.pvp){for(const a of players.values()){if(!a.alive||(src&&!rivals(src,a)))continue;const f=fall(Math.hypot(a.x-x,a.y-y));if(f>0)hurtPlayer(a,50*f*power*PVP.nade,own)}}
   else for(const a of allies()){if(!a.alive)continue;const f=fall(Math.hypot(a.x-x,a.y-y));if(f>0)hurtAlly(a,50*f*power*(a===qm?.8:1))}
 }

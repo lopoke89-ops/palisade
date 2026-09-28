@@ -5,7 +5,8 @@ let g=G0;   // current drawing target; swapped to an offscreen canvas while scen
 const lc=document.createElement('canvas'),lg=lc.getContext('2d');
 
 /* ================= tuning ================= */
-const N=16,idx=(i,j)=>j*N+i,inb=(i,j)=>i>=0&&j>=0&&i<N&&j<N;
+let N=16;   // the yard's size in tiles: 16, or 24 for an XL map (set by newGame)
+const idx=(i,j)=>j*N+i,inb=(i,j)=>i>=0&&j>=0&&i<N&&j<N;
 const D4=[[1,0],[-1,0],[0,1],[0,-1]];
 const MAT=[
   {name:'WOOD', cost:4,hp:60, bullet:1.0, blast:2.2,cd:.22,rep:2,top:'#b8894f',l:'#8b6236',r:'#6b4a28',line:'rgba(52,32,14,.55)'},

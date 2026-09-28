@@ -11,6 +11,7 @@ function buildEval(p,i,j,sel,door){
   if(game.pvp==='ffa'){t.reason='No building in free-for-all';return t}
   if(coreKs.has(k)){t.reason='That is the stake';return t}
   if(nodeAt(i,j)){t.reason='Resource in the way';return t}
+  {const tb=terrNoBuild(k,!!walls[k]);if(tb){t.reason=tb;return t}}
   if(game.pvp==='base'){
     if(game.phase==='build'&&(p.team==='a'?i-j>-1:i-j<1)){t.reason='Your side of the truce line';return t}
     const ec=cores[p.team==='a'?1:0];if(Math.max(Math.abs(i-ec.i),Math.abs(j-ec.j))<=1){t.reason='Too close to their stake';return t}

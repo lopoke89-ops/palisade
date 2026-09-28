@@ -265,7 +265,7 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
 @keyframes gsh{to{background-position:-200% 0}}
 @media (prefers-reduced-motion:reduce){.item.gold b{animation:none}}
 #caseName.gold{text-shadow:0 0 14px rgba(255,220,120,.6)}
-.tabs{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line)}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--line)}
 .tabs button{height:36px;background:transparent;border:0;border-left:1px solid var(--line);font-family:var(--stencil);font-weight:800;font-size:12px;letter-spacing:.08em;color:var(--dim)}
 .tabs button:first-child{border-left:0}.tabs button.sel{background:var(--bone);color:#17140f}
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
@@ -475,3 +475,60 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
   .partyControls #lChatForm{grid-template-columns:minmax(0,1fr) auto}
   .savedPlayers{grid-template-columns:minmax(0,1fr)}
 }
+/* ---------- v0.9.0 lobby: one shell for PLAY, MULTIPLAYER and CLASSES over the chosen background ---------- */
+#lobbyBg{position:fixed;inset:0 0 auto 0;width:100%;height:var(--appH,100%);display:block;pointer-events:none}
+#lobbyBg[hidden]{display:none}
+.partyNav .cut{color:transparent;-webkit-text-stroke:1px var(--bone)}
+.partyNav button[aria-current=page]{background:#eaf4ef;color:#142731}
+/* the background shows through the middle; the side columns keep their own dark panels */
+#menu.partyMenu{background:radial-gradient(ellipse at 50% 55%,rgba(8,14,18,0) 30%,rgba(8,14,18,.55))}
+#menu.partyMenu .panel{background:linear-gradient(180deg,rgba(10,20,27,.72),rgba(10,20,27,.18) 22%,rgba(10,20,27,.18) 78%,rgba(10,20,27,.6));box-shadow:none}
+.partyControls,.socialPanel,.mapPanel{background:rgba(6,15,23,.84)}
+.partyStage{background:radial-gradient(ellipse at 50% 72%,rgba(0,0,0,.34),transparent 62%)}
+.partyHeading,.partyHint{text-shadow:0 2px 10px #000b}
+/* which columns each page uses */
+#partyShell .mapPanel{display:none}
+#menu[data-page=solo] #partyShell .mapPanel{display:block}
+#menu[data-page=solo] #partyShell .socialPanel,#menu[data-page=classes] #partyShell .socialPanel{display:none}
+#menu[data-page=solo] .partySlots,#menu[data-page=classes] .partySlots{display:none}
+#menu[data-page=classes] #partyShell{grid-template-columns:minmax(300px,380px) minmax(260px,1fr)}
+.partyControls [data-go=main]{display:none}
+.mapPanel{min-height:0;min-width:0;overflow:auto;overscroll-behavior:contain;padding:16px;border:1px solid #354b56;scrollbar-width:thin}
+.mapCards{display:grid;gap:10px;margin-top:12px}
+.mapCard{display:grid;grid-template-columns:86px minmax(0,1fr);gap:10px;align-items:start;text-align:left;padding:8px;background:#1b303e;border:1px solid #3c5360;color:var(--bone)}
+.mapCard canvas{width:86px;height:58px;background:#10181c;border:1px solid #2c3f48}
+.mapCard b{display:block;font:800 17px var(--stencil);letter-spacing:.05em}
+.mapCard span{display:block;font-size:10px;line-height:1.5;color:#a8bec4;margin-top:3px}
+.mapCard i{display:block;font-style:normal;font-size:9px;color:#efd347;margin-top:4px;letter-spacing:.04em}
+.mapCard.sel{border-color:#efd347;background:#27404c;box-shadow:inset 3px 0 0 #efd347}
+.mapCard:hover:not(.sel){border-color:#7e98a5}
+.mapSub{font:800 12px var(--stencil);letter-spacing:.12em;color:#b7c9cf;margin:16px 0 8px}
+.mapPanel .seg button{font-size:12px;min-height:40px;height:auto;padding:8px 4px}
+.linkBtn{float:right;background:none;border:0;padding:0;font:600 10px var(--mono);letter-spacing:0;color:#9ec3cb;text-decoration:underline;cursor:pointer}
+.lede.sm{font-size:11px;margin:0}
+#menu[data-page=classes] .partyControls .classes{grid-template-columns:1fr;gap:8px}
+@media (max-width:1100px){
+  #menu[data-page=solo] #partyShell .mapPanel{grid-column:1/-1;overflow:visible}
+  .mapCards{grid-template-columns:repeat(3,minmax(0,1fr))}
+  #menu[data-page=classes] #partyShell{grid-template-columns:300px minmax(0,1fr)}
+}
+@media (max-width:700px){
+  #menu[data-page=solo] #partyShell .mapPanel,#menu[data-page=classes] #partyShell .partyControls{grid-column:auto}
+  #menu[data-page=classes] #partyShell{grid-template-columns:minmax(0,1fr)}
+  .mapCards{grid-template-columns:minmax(0,1fr)}
+  .partyNav{flex-wrap:wrap;gap:4px}.partyNav strong{display:none}
+  .partyNav button{flex:1 1 30%;font-size:13px;padding:8px 4px;min-height:40px}
+}
+@media (prefers-reduced-motion:reduce){#menu h1{transition:none}}
+@media (max-width:700px){
+  #menu[data-page=solo] .partyStage,#menu[data-page=classes] .partyStage{min-height:330px}
+  #menu[data-page=solo] .partyHero,#menu[data-page=classes] .partyHero{min-height:210px}
+  #lockTabs button{font-size:10px;letter-spacing:.02em;padding:0 2px}
+}
+/* the nav bar is on every menu page (the old title block went with the old main page) */
+#menu .panel>.eyebrow,#menu .panel>h1,#menu .panel>.tag{display:none}
+#menu:not(.partyMenu) .accountDock{flex-wrap:wrap}
+#menu:not(.partyMenu) .partyNav{display:flex;align-items:center;gap:4px;flex:1 1 100%;order:2;flex-wrap:wrap}
+#menu:not(.partyMenu) .partyNav strong{margin-right:auto;font:900 24px var(--stencil);letter-spacing:.05em}
+#menu:not(.partyMenu) .partyNav button{border:0;background:transparent;padding:8px 10px;font:800 15px var(--stencil);letter-spacing:.07em;min-height:40px}
+#menu:not(.partyMenu) .partyNav button:hover,#menu:not(.partyMenu) .partyNav button[aria-current=page]{background:var(--bone);color:#17140f}

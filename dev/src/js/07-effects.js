@@ -1,10 +1,14 @@
 /* ================= particles & floating text ================= */
+// emitThin < 1 (set by killFx when the screen is already full of particles) drops that share of a kill
+// effect's loose particles; the painted finisher always shows, so every kill still reads the same
+let emitThin=1;
 function emit(x,y,z,kind,mat){
+  if(emitThin<1&&rnd()>emitThin&&!kind.startsWith('finish:'))return;
   rec(['e',r2(x),r2(y),Math.round(z/u),kind,mat|0]);
   const p={x,y,z,vx:(rnd()-.5)*2,vy:(rnd()-.5)*2,vz:rnd()*60,life:.5,max:.5,kind,size:2,col:'#fff',grav:220};
   if(kind.startsWith('finish:')&&FINISH_LIFE[kind.slice(7)]){
     p.vx=p.vy=p.vz=p.grav=0;p.life=p.max=FINISH_LIFE[kind.slice(7)];
-    const active=parts.filter(q=>q.kind.startsWith('finish:'));if(active.length>=24)parts.splice(parts.indexOf(active[0]),1);
+    let n=0,first=-1;for(let i=0;i<parts.length;i++)if(parts[i].kind.charCodeAt(0)===102&&parts[i].kind.startsWith('finish:')){if(first<0)first=i;n++}if(n>=24)parts.splice(first,1);
   }
   switch(kind){
     case'splinter':p.col=rnd()<.5?'#c99a5e':'#7a5530';p.life=p.max=.45;break;
@@ -37,6 +41,11 @@ function emit(x,y,z,kind,mat){
     case'neon':p.col=rnd()<.5?'#2af5ff':'#ff3ad0';p.vx*=3;p.vy*=3;p.vz=30+rnd()*50;p.grav=60;p.life=p.max=.6;p.size=2.2;break;
     case'bubble':p.vx*=.55;p.vy*=.55;p.vz=15+rnd()*35;p.grav=-38;p.life=p.max=1.2+rnd()*.7;p.size=2.4+rnd()*4.2;p.h=rnd()*360;break;
     case'heal':p.col=rnd()<.5?'#8fe0a0':'#e8fff0';p.vx*=.6;p.vy*=.6;p.vz=30+rnd()*30;p.grav=-40;p.life=p.max=.8;p.size=2.4;break;
+    // Halloween Case: green flame (Ghostfire, Soul Harvest), bats, a spider on a thread, rising souls (the last three are drawn as shapes)
+    case'gflame':p.col=rnd()<.5?'#b8ff8a':'#2ae86a';p.vx*=.3;p.vy*=.3;p.vz=25+rnd()*25;p.grav=-30;p.life=p.max=.5+rnd()*.3;p.size=3;break;
+    case'bat':p.vx*=1.6;p.vy*=1.6;p.vz=45+rnd()*45;p.grav=-15;p.life=p.max=1+rnd()*.5;p.size=5+rnd()*2.2;p.h=rnd()*9;break;
+    case'spider':p.vx=0;p.vy=0;p.z=WH*2.6;p.vz=-WH*3.2/u;p.grav=0;p.life=p.max=1.6;p.size=7;p.h=rnd()*9;break;
+    case'soul':p.vx*=.35;p.vy*=.35;p.vz=26+rnd()*18;p.grav=-4;p.life=p.max=1.5+rnd()*.5;p.size=6.5+rnd()*2;p.h=rnd()*9;break;
     case'arc':p.col=rnd()<.5?'#e8f6ff':'#7fd8ff';p.vx*=2.6;p.vy*=2.6;p.vz=20+rnd()*60;p.grav=0;p.life=p.max=.25;p.size=2;break;
   }
   parts.push(p);if(parts.length>600)parts.splice(0,parts.length-600);

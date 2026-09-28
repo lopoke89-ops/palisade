@@ -1,8 +1,10 @@
 /* ================= best record (this browser only) ================= */
 const BEST_KEY='palisade.best.v3';
 function loadBest(){try{return JSON.parse(localStorage.getItem(BEST_KEY)||'{}')||{}}catch(e){return{}}}
-function saveBest(held,dropped){try{const b=loadBest(),k=game.mode+':'+pick.diff,o=b[k];if(!o||held>o.held||(held===o.held&&dropped>o.dropped)){b[k]={held,dropped,cls:player.C.name};localStorage.setItem(BEST_KEY,JSON.stringify(b))}}catch(e){}}
-function showBest(){const b=loadBest()[pick.mode+':'+pick.diff],el=$('best');if(!b){el.hidden=true;return}el.hidden=false;
+// one record per length and threat on the Yard (the keys from before maps), and per map and size elsewhere
+const bestKey=(mode,diff,map,size)=>mode+':'+diff+(map&&map!=='yard'||size==='xl'?':'+(map||'yard')+(size==='xl'?':xl':''):'');
+function saveBest(held,dropped){try{const b=loadBest(),k=bestKey(game.mode,pick.diff,game.map,game.size),o=b[k];if(!o||held>o.held||(held===o.held&&dropped>o.dropped)){b[k]={held,dropped,cls:player.C.name};localStorage.setItem(BEST_KEY,JSON.stringify(b))}}catch(e){}}
+function showBest(){const b=loadBest()[bestKey(pick.mode,pick.diff,pick.map,pick.size)],el=$('best');if(!b){el.hidden=true;return}el.hidden=false;
   el.textContent=pick.mode==='endless'?`Best endless on ${DIFF[pick.diff].name.toLowerCase()}: ${b.held} raids held, ${b.dropped} raiders dropped (${b.cls.toLowerCase()}).`:`Best on ${DIFF[pick.diff].name.toLowerCase()}: ${b.held} of ${pick.mode} raids held, ${b.dropped} raiders dropped (${b.cls.toLowerCase()}).`}
 
 /* ================= HUD ================= */

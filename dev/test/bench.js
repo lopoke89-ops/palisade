@@ -33,7 +33,7 @@ const label = process.argv[2] || 'build';
   const p = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, hasTouch: true, isMobile: true });
   await p.goto(`http://localhost:${process.env.PORT||8080}/${process.env.PAGE||'debug.html'}?debug=1`); await p.waitForTimeout(1500);
   const cdp = await p.context().newCDPSession(p); await cdp.send('Performance.enable');
-  for (const page of ['main', 'locker']) {
+  for (const page of ['main', 'multi', 'locker']) {
     await p.evaluate(pg => __pal.showPage(pg), page); await p.waitForTimeout(800);
     const m0 = (await cdp.send('Performance.getMetrics')).metrics.find(m => m.name === 'TaskDuration').value;
     await p.waitForTimeout(4000);

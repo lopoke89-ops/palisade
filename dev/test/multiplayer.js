@@ -14,7 +14,7 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', O = __dirname +
   await G.waitForSelector('#pg-lobby:not([hidden])', { timeout: 10000 }); await H.waitForTimeout(700);
   console.log('lobby:', await H.textContent('#lList'));
   // Equipping headgear in the locker must update both party previews and the next match.
-  for(const page of [H,G]){await page.click('[data-party-go=locker]');await page.evaluate(()=>{__pal.locker.eq.hat='cap';__pal.showPage('multi')});await page.waitForSelector('#pg-lobby:not([hidden])')}
+  for(const page of [H,G]){await page.click('[data-nav=locker]');await page.evaluate(()=>{__pal.locker.eq.hat='cap';__pal.showPage('multi')});await page.waitForSelector('#pg-lobby:not([hidden])')}
   await H.waitForFunction(()=>__pal.NET.roster.length===2&&__pal.NET.roster.every(r=>r.cos.split('|')[1]==='cap'));
   await G.waitForFunction(()=>__pal.NET.roster.length===2&&__pal.NET.roster.every(r=>r.cos.split('|')[1]==='cap'));
   if(await H.locator('.partySlot.occupied').count()!==2)throw new Error('Party slots do not match roster');

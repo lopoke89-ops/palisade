@@ -37,7 +37,7 @@ create table public.cosmetics (
   box text,
   constraint cosmetics_pkey PRIMARY KEY (id),
   constraint cosmetics_box_fkey FOREIGN KEY (box) REFERENCES case_types(id),
-  constraint cosmetics_cat_check CHECK ((cat = ANY (ARRAY['skin'::text, 'hat'::text, 'trail'::text, 'fx'::text]))),
+  constraint cosmetics_cat_check CHECK ((cat = ANY (ARRAY['skin'::text, 'hat'::text, 'trail'::text, 'fx'::text, 'bg'::text]))),
   constraint cosmetics_rarity_check CHECK ((rarity = ANY (ARRAY['c'::bpchar, 'r'::bpchar, 'e'::bpchar, 'l'::bpchar, 'g'::bpchar]))),
   constraint cosmetics_src_check CHECK ((src = ANY (ARRAY['free'::text, 'unlock'::text, 'case'::text])))
 );
@@ -68,7 +68,7 @@ alter table public.lobbies enable row level security;
 
 create table public.lockers (
   user_id uuid not null,
-  owned text[] not null default ARRAY['skin:std'::text, 'hat:class'::text, 'hat:cap'::text, 'trail:std'::text, 'fx:none'::text],
+  owned text[] not null default ARRAY['skin:std'::text, 'hat:class'::text, 'hat:cap'::text, 'trail:std'::text, 'fx:none'::text, 'bg:campfire'::text, 'bg:nightwatch'::text],
   eq jsonb not null default '{"fx": "none", "hat": "class", "skin": "std", "trail": "std"}'::jsonb,
   cases integer not null default 1,
   shards integer not null default 0,
@@ -179,6 +179,10 @@ declare uid uuid := private.require_user(); l public.lockers; ct public.case_typ
   v_budget float8;
   -- salvage left at the end of a co-op / Endless run: 20 to 1, at most 2 shards per raid held and 10 a run (same as the game)
   v_sal int := least(greatest(coalesce(private.num(p->>'salvage'), 0), 0), 1000000)::int; v_shards int := 0;
+  -- v0.9.0: which bosses went down (each boss drops its own case; the October Butcher drops two Halloween Cases)
+  v_keys jsonb := p->'boss_keys'; v_key text; v_cap int; v_n int := 0; v_hal int := 0; v_glow int := 0;
+  v_oct boolean := (now() at time zone 'UTC') >= make_timestamp(extract(year from now())::int, 9, 30, 10, 0, 0)
+               and (now() at time zone 'UTC') <  make_timestamp(extract(year from now())::int, 11, 1, 14, 0, 0);
 begin
   if v_kind is null or v_kind not in ('run', 'match') then raise exception 'Unknown result' using errcode = '22023'; end if;
   if v_dur < 20 or v_dur > 21600 or (v_kind = 'match' and v_dur < 30) then raise exception 'That match length doesn''t add up' using errcode = '22023'; end if;
@@ -209,10 +213,25 @@ begin
     v_prog := v_prog + v_held;
     earned := v_prog / 3 + case when v_win then (case when waves >= 10 then 2 else 1 end) else 0 end + case when waves = 0 then v_held / 5 else 0 end;
     v_prog := v_prog % 3;
-    v_boss := least(v_boss, (v_held + 1) / 5);
-    if waves > 0 then v_boss := least(v_boss, waves / 5); end if;
+    -- a boss every fifth raid: no more bosses than raids held allow
+    v_cap := (v_held + 1) / 5;
+    if waves > 0 then v_cap := least(v_cap, waves / 5); end if;
+    if jsonb_typeof(v_keys) = 'array' then
+      for v_key in select value from jsonb_array_elements_text(v_keys) limit 40 loop
+        exit when v_n >= v_cap;
+        if v_key in ('butcher', 'ferryman') then v_hal := v_hal + 1; v_n := v_n + 1;
+        elsif v_key = 'butcher_oct' then v_hal := v_hal + case when v_oct then 2 else 1 end; v_n := v_n + 1;
+        elsif v_key in ('demolisher', 'storm', 'foreman') then v_glow := v_glow + 1; v_n := v_n + 1;
+        end if;
+      end loop;
+      v_boss := v_n;
+    else
+      -- older clients only send a count: those bosses pay Afterglow Cases as before
+      v_boss := least(v_boss, v_cap); v_glow := v_boss;
+    end if;
     select * into cb from public.case_types c where c.drop ? 'boss' order by c.sort limit 1;
-    if found then v_bonus := v_boss * coalesce((cb.drop->'boss'->>'each')::int, 1); end if;
+    if found then v_glow := v_glow * coalesce((cb.drop->'boss'->>'each')::int, 1); end if;
+    v_bonus := v_glow + v_hal;
     v_shards := least(v_sal / 20, 2 * v_held, 10);
   else
     if v_pvp not in ('base', 'ffa') then raise exception 'Unknown match type' using errcode = '22023'; end if;
@@ -230,9 +249,9 @@ begin
   granted := earned;
   update public.lockers set st = v_st, prog = v_prog,
       cases = cases + case when v_case = 'supply' then granted else 0 end,
-      bag = private.bag_add(
+      bag = private.bag_add(private.bag_add(
               case when v_case is not null and v_case <> 'supply' and granted > 0 then private.bag_add(bag, v_case, granted) else bag end,
-              coalesce(cb.id, 'afterglow'), v_bonus),
+              coalesce(cb.id, 'afterglow'), v_glow), 'halloween', v_hal),
       shards = shards + v_shards,
       play_budget = greatest(0, v_budget - v_dur), budget_at = now(),
       rev = rev + 1, updated_at = now()
@@ -252,7 +271,8 @@ begin
   got := private.apply_unlocks(uid);
   select * into l from public.lockers where user_id = uid;
   return jsonb_build_object('cases_granted', granted, 'case_id', v_case, 'capped', false, 'chance', chance,
-    'bonus', jsonb_build_object('case', coalesce(cb.id, 'afterglow'), 'n', v_bonus), 'shards', v_shards,
+    'bonus', jsonb_build_object('case', coalesce(cb.id, 'afterglow'), 'n', v_glow), 'shards', v_shards,
+    'bonuses', jsonb_build_array(jsonb_build_object('case', coalesce(cb.id, 'afterglow'), 'n', v_glow), jsonb_build_object('case', 'halloween', 'n', v_hal)),
     'unlocked', to_jsonb(got), 'locker', private.locker_out(l));
 end $function$
 ;
@@ -663,3 +683,11 @@ insert into public.cosmetics select * from json_populate_recordset(null::public.
 
 -- new accounts get a profile, locker and stats row
 create trigger on_auth_user_created after insert on auth.users for each row execute function private.handle_new_user();
+
+-- v0.9.0 data: the Halloween Case and lobby backgrounds
+insert into public.case_types (id, name, weights, shard_cost, modes, drop, sort)
+values ('halloween', 'HALLOWEEN CASE', '{"c":45,"r":32,"e":16,"l":6,"g":1}', 12, '{}', '{}', 2)
+on conflict (id) do update set name = excluded.name, weights = excluded.weights, shard_cost = excluded.shard_cost, sort = excluded.sort;
+insert into public.cosmetics select * from json_populate_recordset(null::public.cosmetics, '[{"id": "skin:pumpkin", "cat": "skin", "key": "pumpkin", "name": "Pumpkin Patch", "rarity": "c", "src": "case", "need": null, "box": "halloween"}, {"id": "trail:candycorn", "cat": "trail", "key": "candycorn", "name": "Candy Corn", "rarity": "c", "src": "case", "need": null, "box": "halloween"}, {"id": "hat:jackolantern", "cat": "hat", "key": "jackolantern", "name": "Jack-o''-Lantern", "rarity": "r", "src": "case", "need": null, "box": "halloween"}, {"id": "skin:cobweb", "cat": "skin", "key": "cobweb", "name": "Cobweb", "rarity": "r", "src": "case", "need": null, "box": "halloween"}, {"id": "fx:bats", "cat": "fx", "key": "bats", "name": "Bat Swarm", "rarity": "r", "src": "case", "need": null, "box": "halloween"}, {"id": "skin:skeleton", "cat": "skin", "key": "skeleton", "name": "Skeleton", "rarity": "e", "src": "case", "need": null, "box": "halloween"}, {"id": "skin:mummy", "cat": "skin", "key": "mummy", "name": "Mummy", "rarity": "e", "src": "case", "need": null, "box": "halloween"}, {"id": "hat:witch", "cat": "hat", "key": "witch", "name": "Witch Hat", "rarity": "e", "src": "case", "need": null, "box": "halloween"}, {"id": "trail:ghostfire", "cat": "trail", "key": "ghostfire", "name": "Ghostfire", "rarity": "e", "src": "case", "need": null, "box": "halloween"}, {"id": "fx:spider", "cat": "fx", "key": "spider", "name": "Spider Drop", "rarity": "e", "src": "case", "need": null, "box": "halloween"}, {"id": "skin:reaper", "cat": "skin", "key": "reaper", "name": "Grim Reaper", "rarity": "l", "src": "case", "need": null, "box": "halloween"}, {"id": "hat:pumpkinking", "cat": "hat", "key": "pumpkinking", "name": "Pumpkin King", "rarity": "l", "src": "case", "need": null, "box": "halloween"}, {"id": "fx:souls", "cat": "fx", "key": "souls", "name": "Soul Harvest", "rarity": "l", "src": "case", "need": null, "box": "halloween"}, {"id": "skin:phantom", "cat": "skin", "key": "phantom", "name": "Phantom", "rarity": "g", "src": "case", "need": null, "box": "halloween"}, {"id": "bg:campfire", "cat": "bg", "key": "campfire", "name": "Campfire Dusk", "rarity": "c", "src": "free", "need": null, "box": null}, {"id": "bg:nightwatch", "cat": "bg", "key": "nightwatch", "name": "Night Watch", "rarity": "c", "src": "free", "need": null, "box": null}, {"id": "bg:dawn", "cat": "bg", "key": "dawn", "name": "First Light", "rarity": "r", "src": "unlock", "need": {"wins": 1}, "box": null}, {"id": "bg:aurora", "cat": "bg", "key": "aurora", "name": "Aurora", "rarity": "e", "src": "unlock", "need": {"wins": 10}, "box": null}, {"id": "bg:emberfield", "cat": "bg", "key": "emberfield", "name": "Ember Field", "rarity": "r", "src": "unlock", "need": {"drops": 100}, "box": null}, {"id": "bg:crimson", "cat": "bg", "key": "crimson", "name": "Crimson Smoke", "rarity": "e", "src": "unlock", "need": {"drops": 500}, "box": null}, {"id": "bg:neongrid", "cat": "bg", "key": "neongrid", "name": "Neon Grid", "rarity": "l", "src": "unlock", "need": {"drops": 1000}, "box": null}, {"id": "bg:goldrush", "cat": "bg", "key": "goldrush", "name": "Gold Rush", "rarity": "l", "src": "unlock", "need": {"hardWins": 3}, "box": null}, {"id": "bg:harvestmoon", "cat": "bg", "key": "harvestmoon", "name": "Harvest Moon", "rarity": "r", "src": "case", "need": null, "box": "halloween"}, {"id": "bg:hauntedfog", "cat": "bg", "key": "hauntedfog", "name": "Haunted Fog", "rarity": "e", "src": "case", "need": null, "box": "halloween"}, {"id": "bg:fieldmap", "cat": "bg", "key": "fieldmap", "name": "Field Map", "rarity": "r", "src": "case", "need": null, "box": "supply"}, {"id": "bg:sandbags", "cat": "bg", "key": "sandbags", "name": "Sandbag Line", "rarity": "r", "src": "case", "need": null, "box": "supply"}, {"id": "bg:dogtags", "cat": "bg", "key": "dogtags", "name": "Dog Tags", "rarity": "e", "src": "case", "need": null, "box": "supply"}, {"id": "bg:watchtower", "cat": "bg", "key": "watchtower", "name": "Watchtower", "rarity": "e", "src": "case", "need": null, "box": "supply"}, {"id": "bg:searchlight", "cat": "bg", "key": "searchlight", "name": "Searchlight", "rarity": "l", "src": "case", "need": null, "box": "supply"}, {"id": "bg:sunsetfade", "cat": "bg", "key": "sunsetfade", "name": "Sunset Fade", "rarity": "r", "src": "case", "need": null, "box": "afterglow"}, {"id": "bg:lagoonwaves", "cat": "bg", "key": "lagoonwaves", "name": "Lagoon", "rarity": "r", "src": "case", "need": null, "box": "afterglow"}, {"id": "bg:nebula", "cat": "bg", "key": "nebula", "name": "Nebula", "rarity": "e", "src": "case", "need": null, "box": "afterglow"}, {"id": "bg:arcade", "cat": "bg", "key": "arcade", "name": "Arcade", "rarity": "e", "src": "case", "need": null, "box": "afterglow"}, {"id": "bg:neonpulse", "cat": "bg", "key": "neonpulse", "name": "Neon Pulse", "rarity": "l", "src": "case", "need": null, "box": "afterglow"}, {"id": "bg:eventhorizon", "cat": "bg", "key": "eventhorizon", "name": "Event Horizon", "rarity": "l", "src": "case", "need": null, "box": "afterglow"}, {"id": "bg:goldaurora", "cat": "bg", "key": "goldaurora", "name": "Gold Aurora", "rarity": "g", "src": "case", "need": null, "box": "afterglow"}, {"id": "bg:graveyard", "cat": "bg", "key": "graveyard", "name": "Graveyard", "rarity": "r", "src": "case", "need": null, "box": "halloween"}, {"id": "bg:witchbrew", "cat": "bg", "key": "witchbrew", "name": "Witch''s Brew", "rarity": "e", "src": "case", "need": null, "box": "halloween"}, {"id": "bg:bloodmoon", "cat": "bg", "key": "bloodmoon", "name": "Blood Moon", "rarity": "l", "src": "case", "need": null, "box": "halloween"}]')
+on conflict (id) do update set cat = excluded.cat, key = excluded.key, name = excluded.name, rarity = excluded.rarity, src = excluded.src, need = excluded.need, box = excluded.box;
+-- the two free backgrounds: in every new locker, and added to every existing one

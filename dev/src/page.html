@@ -48,14 +48,15 @@
 
 <div id="fpsLab" hidden></div>
 
+<canvas id="lobbyBg" aria-hidden="true"></canvas>
 <div id="menu">
   <div class="panel">
     <header class="accountDock">
-      <nav class="partyNav" aria-label="Lobby navigation"><strong>PALISADE</strong><button type="button" data-party-go="play" class="active">PLAY</button><button type="button" data-party-go="locker">LOCKER</button><button type="button" data-party-go="settings">SETTINGS</button></nav>
+      <nav class="partyNav" aria-label="Lobby navigation"><strong>PALI<span class="cut">SADE</span></strong><button type="button" data-go="solo" data-nav="solo">PLAY</button><button type="button" data-go="multi" data-nav="multi">MULTIPLAYER</button><button type="button" data-go="classes" data-nav="classes">CLASSES</button><button type="button" data-go="locker" data-nav="locker" id="navLocker">LOCKER</button><button type="button" data-go="settings" data-nav="settings">SETTINGS</button></nav>
       <button id="identityButton" type="button" data-go="account" aria-label="Your account"><canvas id="identityAvatar" width="88" height="88" aria-hidden="true"></canvas><span><b id="identityName">PLAYER</b><small id="identityState">LOCAL PROFILE</small></span><span class="identityDot" aria-hidden="true"></span></button>
       <button class="shardWallet" type="button" data-go="locker" aria-label="Open locker"><span aria-hidden="true">◆</span> <b id="identityShards">0</b> <small>SHARDS</small></button>
     </header>
-    <section id="partyShell" hidden aria-label="Multiplayer lobby">
+    <section id="partyShell" hidden aria-label="Lobby">
       <div id="partyControls" class="partyControls"></div>
       <div class="partyStage">
         <div class="partyHeading"><span class="eyebrow" id="partyMode">CO-OP</span><h2 id="partyTitle">YOUR CREW. YOUR CLAIM.</h2><p id="partySubtitle">Choose your job. Bring your crew.</p></div>
@@ -63,6 +64,13 @@
         <div id="partySlots" class="partySlots" aria-label="Party members"></div>
         <p class="partyHint" id="partyHint">Up to six players · desktop and mobile</p>
       </div>
+      <aside class="mapPanel" id="mapPanel" aria-label="Map">
+        <div class="socialHead"><h2>MAP</h2><b id="mapSizeTag">16×16</b></div>
+        <div id="mapCards" class="mapCards"></div>
+        <h3 class="mapSub">SIZE</h3>
+        <div class="seg" id="sizeSeg"><button data-size="std" type="button">STANDARD · 16×16</button><button data-size="xl" type="button">XL · 24×24</button></div>
+        <p class="socialCaption" id="sizeNote">XL: a bigger yard and about 40% more raiders.</p>
+      </aside>
       <aside class="socialPanel" aria-label="Friends and saved players">
         <div class="socialHead"><h2>FRIENDS</h2><b id="savedCount">0</b></div>
         <p class="socialCaption">Saved players · synced to your account</p>
@@ -76,20 +84,6 @@
     <div class="eyebrow">FIELD TEST 03 · LUMBER YARD</div>
     <h1>PALI<span class="cut">SADE</span></h1>
     <p class="tag">Neighbors with rifles and a deadline.</p>
-
-    <section class="page" id="pg-main">
-      <nav class="mm">
-        <button type="button" data-go="solo">SOLO</button>
-        <button type="button" data-go="multi">MULTIPLAYER</button>
-        <button type="button" data-go="locker">LOCKER</button>
-        <button type="button" data-go="settings">SETTINGS</button>
-      </nav>
-      <p class="install" id="installTip" hidden>Play it like an app: tap <b>Share</b> <span aria-hidden="true">⎙</span> at the bottom of Safari, then <b>Add to Home Screen</b>.</p>
-      <button class="ghost" id="installBtn" type="button" hidden>INSTALL AS AN APP</button>
-      <button class="ghost acctBtn" id="acctBtn" type="button" data-go="account" hidden>ACCOUNT</button>
-      <p class="note" id="saveNote" hidden></p>
-      <p class="foot">v0.8.14 · phone and desktop · online co-op and PvP for up to six</p>
-    </section>
 
     <section class="page" id="pg-account" hidden>
       <h2 class="pt">ACCOUNT</h2>
@@ -124,28 +118,40 @@
     </section>
 
     <section class="page" id="pg-solo" hidden>
-      <h2 class="pt">SOLO</h2>
-      <p class="lede">Hold the stake through the raids. Short runs end at night; Endless keeps coming and cycles day to night. Dell gathers, repairs, restocks and picks you up when you drop. Drop raiders for salvage and spend it at the stake between raids.</p>
-      <h2>YOUR JOB</h2>
-      <div class="classes" id="classes">
-        <button class="cls sel" data-c="soldier" type="button"><b>SOLDIER</b><i>the door problem</i><span>Burst carbine: 3 rounds a pull, up to 9 with DAMAGE upgrades. Builds 40% faster and takes more hits.</span></button>
-        <button class="cls" data-c="sniper" type="button"><b>SNIPER</b><i>the angle problem</i><span>Bolt-action rifle. Heavy rounds straight through wood. Moves 10% faster.</span></button>
-        <button class="cls" data-c="grenadier" type="button"><b>GRENADIER</b><i>the doorway problem</i><span>Pump shotgun: huge up close, tight spread, fires as fast as you click (holding fires every half second), six shells. Three grenades a round. Moves 10% slower.</span></button>
-        <button class="cls" data-c="quartermaster" type="button"><b>QUARTER&shy;MASTER</b><i>the rescue problem</i><span>Walk over a downed teammate to get them up instantly. Carries 96 of everything, gathers faster, repairs for half. SMG. The only one who can SPRINT.</span></button>
-      </div>
+      <h2 class="pt">PLAY</h2>
+      <p class="lede">Solo, with Dell. Hold the stake through the raids.</p>
+      <h2>YOUR JOB <button class="linkBtn" type="button" data-go="classes">ABOUT THE CLASSES</button></h2>
+      <div class="seg jobs"><button data-c="soldier" type="button">SOLDIER</button><button data-c="sniper" type="button">SNIPER</button><button data-c="grenadier" type="button">GRENADIER</button><button data-c="quartermaster" type="button">QUARTERMASTER</button></div>
+      <h2>MAP</h2>
+      <p class="lede sm" id="soloMap">The Yard · 16×16</p>
       <h2>LENGTH</h2>
       <div class="seg" id="modes"><button data-m5="5" type="button">5 RAIDS</button><button data-m5="10" type="button">10 RAIDS</button><button data-m5="endless" type="button">ENDLESS</button></div>
       <h2>THREAT</h2>
       <div class="seg" id="diff"><button data-d="easy" type="button">EASY</button><button data-d="normal" class="sel" type="button">NORMAL</button><button data-d="hard" type="button">HARD</button></div>
       <div id="best" hidden></div>
       <button class="go" id="startBtn" type="button">RAISE THE FENCE</button>
+      <p class="install" id="installTip" hidden>Play it like an app: tap <b>Share</b> <span aria-hidden="true">⎙</span> at the bottom of Safari, then <b>Add to Home Screen</b>.</p>
+      <button class="ghost" id="installBtn" type="button" hidden>INSTALL AS AN APP</button>
+      <p class="note" id="saveNote" hidden></p>
       <details class="how"><summary>HOW TO PLAY</summary>
         <div class="ctrls">
           <div><h3>TOUCH</h3><p>Left thumb: move<br>Right thumb: aim, push far to fire<br>BUILD: place, upgrade or repair the tile you face. DOOR lets you and Dell walk through.</p></div>
           <div><h3>KEYBOARD</h3><p>WASD move · mouse aim<br>Hold click to fire (soldier: bursts) · Space build<br>1 2 3 material · F wall/door<br>G grenade · E armory at the stake<br>Shift sprint (quartermaster) · B build kit · Enter start raid · T chat online · Esc pause</p></div>
         </div>
       </details>
-      <button class="ghost" type="button" data-go="main">BACK</button>
+      <p class="foot">v0.9.0 · phone and desktop · online co-op and PvP for up to six</p>
+    </section>
+
+    <section class="page" id="pg-classes" hidden>
+      <h2 class="pt">CLASSES</h2>
+      <p class="lede">Pick your job. It carries into solo and multiplayer.</p>
+      <div class="classes" id="classes">
+        <button class="cls sel" data-c="soldier" type="button"><b>SOLDIER</b><i>the door problem</i><span>Burst carbine: 3 rounds a pull, up to 9 with DAMAGE upgrades. Builds 40% faster and takes more hits.</span></button>
+        <button class="cls" data-c="sniper" type="button"><b>SNIPER</b><i>the angle problem</i><span>Bolt-action rifle. Heavy rounds straight through wood. Moves 10% faster.</span></button>
+        <button class="cls" data-c="grenadier" type="button"><b>GRENADIER</b><i>the doorway problem</i><span>Pump shotgun: huge up close, tight spread, fires as fast as you click (holding fires every half second), six shells. Three grenades a round. Moves 10% slower.</span></button>
+        <button class="cls" data-c="quartermaster" type="button"><b>QUARTER&shy;MASTER</b><i>the rescue problem</i><span>Walk over a downed teammate to get them up instantly. Carries 96 of everything, gathers faster, repairs for half. SMG. The only one who can SPRINT.</span></button>
+      </div>
+      <button class="go" type="button" data-go="solo">DONE</button>
     </section>
 
     <section class="page" id="pg-multi" hidden>
@@ -162,6 +168,9 @@
       <h2>LENGTH AND THREAT</h2>
       <div class="seg"><button data-mm="5" type="button">5 RAIDS</button><button data-mm="10" type="button">10 RAIDS</button><button data-mm="endless" type="button">ENDLESS</button></div>
       <div class="seg"><button data-md="easy" type="button">EASY</button><button data-md="normal" type="button">NORMAL</button><button data-md="hard" type="button">HARD</button></div>
+      <h2>MAP</h2>
+      <div class="seg" id="mMapSeg"></div>
+      <div class="seg" id="mSizeSeg"><button data-size="std" type="button">STANDARD</button><button data-size="xl" type="button">XL · 24×24</button></div>
       </div>
       <label class="tog" id="mListRow"><input type="checkbox" id="mList"><span>List my game in Open Games</span></label>
       <button class="go" id="hostBtn" type="button">HOST</button>
@@ -173,7 +182,6 @@
       <details class="how"><summary>IF IT WON'T CONNECT</summary>
         <p class="lede" style="font-size:12px;color:var(--dim);margin-top:8px">Phones connect straight to each other. Most home Wi-Fi is fine; some cellular networks block it. If a join hangs, put the host (or everyone) on Wi-Fi. Keep the host's screen on. If the host's phone locks, the game ends for everyone.</p>
       </details>
-      <button class="ghost" type="button" data-go="main">BACK</button>
     </section>
 
     <section class="page" id="pg-lobby" hidden>
@@ -198,7 +206,7 @@
       </div>
       <p class="lede" style="font-size:12px;color:var(--dim)" id="lockHint">Earn a case every 3 raids you survive, and for every win. Duplicates turn into shards.</p>
       <p class="status" id="lockMsg" role="status"></p>
-      <div class="tabs" id="lockTabs"><button data-cat="skin" class="sel" type="button">SKINS</button><button data-cat="hat" type="button">HEADGEAR</button><button data-cat="trail" type="button">TRACERS</button><button data-cat="fx" type="button">KILL FX</button></div>
+      <div class="tabs" id="lockTabs"><button data-cat="skin" class="sel" type="button">SKINS</button><button data-cat="hat" type="button">HEADGEAR</button><button data-cat="trail" type="button">TRACERS</button><button data-cat="fx" type="button">KILL FX</button><button data-cat="bg" type="button">BACKGROUNDS</button></div>
       <div class="grid" id="lockGrid"></div>
       <button class="ghost" type="button" data-go="main">BACK</button>
     </section>

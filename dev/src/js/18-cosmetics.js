@@ -10,7 +10,9 @@ const CASES={
     how:'Co-op and Endless only: one every 3 raids you hold, plus wins.'},
   afterglow:{name:'AFTERGLOW CASE',short:'Afterglow Cases',col:'#ff5ad8',weights:{c:53,r:30,e:12,l:4,g:1},cost:10,
     drop:{base:{win:.45,loss:.2},ffa:{win:.5,loss:.2},boss:{each:1}},
-    how:'One for everyone in the run each time a boss goes down. Base Battle and Free-for-all: 45-50% after a win, 20% after a loss. Or 10 shards.'}
+    how:'One for everyone in the run when the Demolisher, the Stormcaller or the Foreman goes down. Base Battle and Free-for-all: 45-50% after a win, 20% after a loss. Or 10 shards.'},
+  halloween:{name:'HALLOWEEN CASE',short:'Halloween Cases',col:'#ff7a1a',weights:{c:45,r:32,e:16,l:6,g:1},cost:12,
+    how:'Dropped by the Butcher and the Ferryman. Or 12 shards.'}
 };
 const CASE_IDS=Object.keys(CASES),pvpCase=m=>CASE_IDS.find(id=>CASES[id].drop&&CASES[id].drop[m]),bossCase=()=>CASE_IDS.find(id=>CASES[id].drop&&CASES[id].drop.boss);
 const SKINS={
@@ -38,8 +40,15 @@ const SKINS={
   cyber:{body:'#2b1140',vest:'#ff2a8a',pants:'#1a0c28',hat:'#1c0d2a',boonie:'#2b1140',neon:'#ffe03a',glow:'#ff2a8a'},
   gclown:{body:'#e0b84a',vest:'#b8871c',pants:'#7a5a16',hat:'#f0cf5c',boonie:'#e0b84a',dots:'#fff3b0',ruff:'#fff0a0',shine:true,glitter:true},
   gpolice:{body:'#d9b24a',vest:'#8a6a1c',pants:'#5a4718',hat:'#e6c65c',boonie:'#d9b24a',badge:'#fffbe0',shine:true,glitter:true},
-  gknight:{body:'#d4ae45',vest:'#a88428',pants:'#6e5418',hat:'#e6c65c',boonie:'#d4ae45',plate:'#f0cf5c',shine:true,glitter:true}};
-const SKIN_FX=['neon','dots','ruff','badge','plate','stars','holo','spots','frost','glitter','chrome'];
+  gknight:{body:'#d4ae45',vest:'#a88428',pants:'#6e5418',hat:'#e6c65c',boonie:'#d4ae45',plate:'#f0cf5c',shine:true,glitter:true},
+  // Halloween Case outfits. head: skin colour override; web / bones / wraps / reaper / phantom: extra detail drawn on the figure
+  pumpkin:{body:'#d9731f',vest:'#3f6b2a',pants:'#4a3a26',hat:'#e07b22',boonie:'#3f6b2a',ribs:'#a8501a'},
+  cobweb:{body:'#3a3a42',vest:'#1f1f25',pants:'#26262c',hat:'#2a2a30',boonie:'#2a2a30',web:'#d8d8e2'},
+  skeleton:{body:'#141417',vest:'#0b0b0d',pants:'#141417',hat:'#141417',boonie:'#141417',head:'#e8e2d0',bones:'#ece6d4'},
+  mummy:{body:'#cfc3a0',vest:'#b8aa84',pants:'#a8996f',hat:'#cfc3a0',boonie:'#cfc3a0',head:'#cfc3a0',wraps:'#e8dfc2'},
+  reaper:{body:'#16141b',vest:'#0c0b10',pants:'#16141b',hat:'#16141b',boonie:'#16141b',head:'#0a090d',reaper:'#8fe0ff'},
+  phantom:{body:'#bff5dc',vest:'#8fe8c0',pants:'#bff5dc',hat:'#dffcee',boonie:'#bff5dc',head:'#e6fff3',glow:'#6affb0',phantom:'#6affb0'}};
+const SKIN_FX=['neon','dots','ruff','badge','plate','stars','holo','spots','frost','glitter','chrome','ribs','web','bones','wraps','reaper','phantom'];
 const TRAILS={std:{c:'rgba(255,236,170,.95)'},green:{c:'#86ff7a'},red:{c:'#ff5a46'},blue:{c:'#9fe8ff'},pink:{c:'#ff5ad8'},
   gold:{c:'#ffd24a',w:1.35,snd:'ts_gold'},plasma:{c:'#7af2ff',w:1.5,glow:'rgba(106,240,255,.3)',len:1.7,snd:'ts_plasma'},rainbow:{rainbow:true,w:1.4,len:2.2,snd:'ts_rainbow'},
   // Afterglow Case tracers. grad: head→tail colours; pk/pr: particles shed along the way; head: a bright tip; core: white centre line
@@ -54,7 +63,10 @@ const TRAILS={std:{c:'rgba(255,236,170,.95)'},green:{c:'#86ff7a'},red:{c:'#ff5a4
   glitch:{c:'#ffffff',w:1.25,glitch:true,snd:'ts_glitch'},
   galaxy:{grad:['#ff8ad8','#6a5aff'],w:1.8,glow:'rgba(120,100,255,.35)',pk:'cosmic',pr:.95,len:2.2,core:true,snd:'ts_galaxy'},
   blackhole:{c:'#0c0616',w:2.2,edge:'#b06aff',glow:'rgba(160,60,255,.42)',pk:'void2',pr:.6,len:1.8,snd:'ts_void'},
-  grainbow:{rgrad:true,w:2,len:2.7,glow:'rgba(255,215,110,.42)',core:true,pk:'goldsp',pr:.95,snd:'ts_grainbow'}};
+  grainbow:{rgrad:true,w:2,len:2.7,glow:'rgba(255,215,110,.42)',core:true,pk:'goldsp',pr:.95,snd:'ts_grainbow'},
+  // Halloween Case tracers. bands: hard-edged stripes, head first
+  candycorn:{bands:['#fff4d6','#ff8a1a','#ffd23a'],w:1.6,len:1.6,snd:'ts_grad'},
+  ghostfire:{grad:['#eaffc8','#1ee860'],w:1.9,len:2,glow:'rgba(60,255,130,.32)',pk:'gflame',pr:.7,snd:'ts_solar'}};
 const TRAIL_IDS=Object.keys(TRAILS),ENEMY_TR={c:'rgba(255,140,90,.95)'};
 const COS=[
   ['skin','std','Standard Issue','c','free'],['skin','desert','Desert','c','unlock',{raids:3},'Survive 3 raids'],
@@ -83,7 +95,15 @@ const COS=[
   ['trail','galaxy','Galaxy','l','case',null,null,'afterglow'],['trail','blackhole','Event Horizon','l','case',null,null,'afterglow'],['trail','grainbow','Gold Rainbow','g','case',null,null,'afterglow'],['fx','pixel','Pixel Pop','c','case',null,null,'afterglow'],
   ['fx','frost','Frost Shatter','c','case',null,null,'afterglow'],['fx','gradburst','Violet Fade','r','case',null,null,'afterglow'],['fx','sunburst','Sunset Burst','r','case',null,null,'afterglow'],['fx','toxic','Toxic Splash','r','case',null,null,'afterglow'],
   ['fx','supernova','Supernova','e','case',null,null,'afterglow'],['fx','glitchout','Glitch Out','e','case',null,null,'afterglow'],['fx','singularity','Singularity','l','case',null,null,'afterglow'],['fx','shockwave','Neon Shockwave','l','case',null,null,'afterglow'],
-  ['fx','bubbles','Gold Bubbles','g','case',null,null,'afterglow']
+  ['fx','bubbles','Gold Bubbles','g','case',null,null,'afterglow'],
+  // the Halloween Case
+  ['skin','pumpkin','Pumpkin Patch','c','case',null,null,'halloween'],['trail','candycorn','Candy Corn','c','case',null,null,'halloween'],
+  ['hat','jackolantern',"Jack-o'-Lantern",'r','case',null,null,'halloween'],['skin','cobweb','Cobweb','r','case',null,null,'halloween'],
+  ['fx','bats','Bat Swarm','r','case',null,null,'halloween'],
+  ['skin','skeleton','Skeleton','e','case',null,null,'halloween'],['skin','mummy','Mummy','e','case',null,null,'halloween'],['hat','witch','Witch Hat','e','case',null,null,'halloween'],
+  ['trail','ghostfire','Ghostfire','e','case',null,null,'halloween'],['fx','spider','Spider Drop','e','case',null,null,'halloween'],
+  ['skin','reaper','Grim Reaper','l','case',null,null,'halloween'],['hat','pumpkinking','Pumpkin King','l','case',null,null,'halloween'],['fx','souls','Soul Harvest','l','case',null,null,'halloween'],
+  ['skin','phantom','Phantom','g','case',null,null,'halloween']
 ].map(([cat,key,name,r,src,need,how,box])=>{box=src==='case'?box||'supply':null;return{id:cat+':'+key,cat,key,name,r,src,box,need:need||null,how:how||(box?'Found in '+CASES[box].short:''),price:null}});
 const COSBY=Object.fromEntries(COS.map(c=>[c.id,c]));
 const CATN={skin:'SKIN',hat:'HEADGEAR',trail:'TRACER',fx:'KILL FX'};
@@ -118,7 +138,9 @@ function normLocker(L){
   L.owned=Array.isArray(L.owned)?[...new Set(L.owned.filter(id=>typeof id==='string'&&id.length<40))]:free.slice();for(const id of free)if(!L.owned.includes(id))L.owned.push(id);
   L.st=Object.assign({},base.st,L.st||{});for(const k of['cases','shards','prog'])L[k]=Math.max(0,L[k]|0);
   const bag={};if(L.bag&&typeof L.bag==='object')for(const k in L.bag)if(k!=='supply'&&/^[a-z0-9_]{1,24}$/.test(k))bag[k]=Math.max(0,L.bag[k]|0);L.bag=bag;   // unknown cases are kept
+  const bg=L.eq&&typeof L.eq.bg==='string'?L.eq.bg:'campfire';
   L.eq=parseCos(L.eq);for(const k in L.eq)if(!L.owned.includes(k+':'+L.eq[k]))L.eq[k]=DEFAULT_COS[k];
+  L.eq.bg=/^[a-z0-9_]{1,24}$/.test(bg)&&(typeof COSBY==='undefined'||!COSBY['bg:'+bg]||L.owned.includes('bg:'+bg))?bg:'campfire';   // the lobby background (unknown ids are kept)
   return L;
 }
 /* ---- save backup: one line of text holding the locker, best runs and settings, with a checksum ---- */
@@ -183,24 +205,31 @@ function checkUnlocks(){const got=[];for(const c of COS)if(c.src==='unlock'&&!ow
 // at most 2 per raid held and 10 a run (the server applies the same cap to accounts). Runs once per game (game.rewarded).
 const SAL_SHARD={rate:20,perRaid:2,max:10};
 const salvageShards=(sal,held)=>Math.max(0,Math.min(Math.floor(Math.max(0,sal)/SAL_SHARD.rate),SAL_SHARD.perRaid*Math.max(0,held|0),SAL_SHARD.max));
+// what each boss that went down drops (the same rule as the server): the Butcher and the Ferryman a Halloween
+// Case (two from the October Butcher), the rest an Afterglow Case; never more bosses than the raids held allow
+function bossDrops(keys,held){
+  const out={},cap=Math.min(Math.floor((held+1)/5),isFinite(game.waves)?Math.floor(game.waves/5):1e9);let n=0;
+  for(const k of keys){if(n>=cap)break;const key=k==='butcher_oct'?'butcher':k;if(!BOSSES[key])continue;n++;const box=bossBox(key);out[box]=(out[box]|0)+(k==='butcher_oct'?2:1)}
+  return out;
+}
 function lockerReward(held,win,kills){
   if(demo)return null;
   const sal=Math.max(0,(player&&player.sal)|0),shards=salvageShards(sal,held);
   if(player&&shards)player.sal-=shards*SAL_SHARD.rate;   // what converts is spent, so it can't count twice
-  const bosses=game.bosses|0,claim={kind:'run',mode:game.mode,diff:pick.diff||'normal',win:!!win,held,kills,bosses,salvage:sal,duration_s:Math.round(game.time)};
+  const bosses=game.bosses|0,keys=(game.bossLog||[]).slice(0,40),claim={kind:'run',mode:game.mode,diff:pick.diff||'normal',win:!!win,held,kills,bosses,boss_keys:keys,salvage:sal,duration_s:Math.round(game.time)};
   if(locker.cloud)return queueClaim(claim);
   locker.shards=(locker.shards|0)+shards;
-  const st=locker.st,before=locker.cases,bc=bossCase();
+  const st=locker.st,before=locker.cases,drops=bossDrops(keys,held);
   st.raids+=held;st.drops+=kills;if(win){st.wins++;if(pick.diff==='hard')st.hardWins++}
   if(game.mode==='endless')st.endless=Math.max(st.endless,held);
   locker.prog+=held;locker.cases+=Math.floor(locker.prog/3);locker.prog%=3;
   if(win)locker.cases+=game.waves>=10?2:1;
   if(game.mode==='endless')locker.cases+=Math.floor(held/5);
-  if(bc&&bosses)caseAdd(bc,bosses*(CASES[bc].drop.boss.each||1));
+  for(const id in drops)caseAdd(id,drops[id]);
   const got=checkUnlocks();saveLocker();
   const n=locker.cases-before,left=3-locker.prog,bits=[];
   if(n>0)bits.push(`+${n} supply case${n>1?'s':''} in your Locker`);
-  if(bc&&bosses)bits.push(`+${bosses} ${CASES[bc].name.toLowerCase()}${bosses>1?'s':''} from bosses`);
+  for(const id in drops)if(drops[id])bits.push(`+${drops[id]} ${CASES[id].name.toLowerCase()}${drops[id]>1?'s':''} from bosses`);
   if(shards)bits.push(`+${shards} shard${shards>1?'s':''} from ${shards*SAL_SHARD.rate} leftover salvage`);
   bits.push(`${left} more raid${left>1?'s':''} to the next case`);
   if(got.length)bits.push('Unlocked '+got.map(c=>c.name).join(', '));
@@ -225,7 +254,7 @@ function claimText(c,j){
   const bits=[],pl=(n,w)=>`${n} ${w}${n===1?'':'s'}`;
   if(c.kind==='run'){
     if(j.cases_granted>0)bits.push(`+${pl(j.cases_granted,'supply case')}`);
-    const b=j.bonus||{};if(b.n>0&&CASES[b.case])bits.push(`+${b.n} ${CASES[b.case].name.toLowerCase()}${b.n>1?'s':''} from bosses`);
+    for(const b of j.bonuses||[j.bonus||{}])if(b.n>0&&CASES[b.case])bits.push(`+${b.n} ${CASES[b.case].name.toLowerCase()}${b.n>1?'s':''} from bosses`);
     if(j.shards>0)bits.push(`+${pl(j.shards,'shard')} from leftover salvage`);
     const left=3-((j.locker&&j.locker.prog)|0);bits.push(`${pl(left,'more raid')} to the next supply case`);
   }else{const C=CASES[j.case_id];if(C)bits.push(j.cases_granted>0?`+1 ${C.name}`:`No ${C.name.toLowerCase()} this time (${Math.round((j.chance||0)*100)}% chance)`)}

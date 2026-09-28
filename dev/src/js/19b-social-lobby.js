@@ -5,6 +5,10 @@ const validPlayerId=v=>typeof v==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4
 const savedPlayerIds=user=>[...new Set((Array.isArray(user?.user_metadata?.[SAVED_PLAYERS_KEY])?user.user_metadata[SAVED_PLAYERS_KEY]:[]).filter(validPlayerId))].slice(0,50);
 const socialAccount=()=>cloudOn&&acct.state==='full'&&!isGuest()&&!!myUid();
 const socialVisible=()=>!$('menu').hidden&&['multi','lobby'].includes($('menu').dataset.page);
+// the pages that use the lobby shell (character on stage, columns either side)
+const STAGE_PAGES=['solo','classes','multi','lobby'];
+const stageVisible=()=>!$('menu').hidden&&STAGE_PAGES.includes($('menu').dataset.page);
+const inRoom=()=>NET.mode==='host'||NET.mode==='guest';
 function socialReset(){SOCIAL.owner=myUid();SOCIAL.ids=[];SOCIAL.profiles=[];SOCIAL.rooms=[];SOCIAL.result=null;SOCIAL.status='';SOCIAL.loading=false;SOCIAL.busy=false;SOCIAL.roomsOK=false;SOCIAL.seq++;SOCIAL.searchSeq++;}
 function renderIdentity(){
  const b=$('identityButton');if(!b)return;
@@ -18,20 +22,28 @@ function renderIdentity(){
  if(socialVisible())renderSocial();
 }
 function syncPartyShell(){
- const on=['multi','lobby'].includes($('menu').dataset.page);$('partyShell').hidden=!on;$('menu').classList.toggle('partyMenu',on);
- if(on){renderIdentity();renderPartyState();refreshSocial();if(!SOCIAL.timer)SOCIAL.timer=setInterval(()=>{if(socialVisible())refreshSocial();else{clearInterval(SOCIAL.timer);SOCIAL.timer=0}},15000)}
+ const pg=$('menu').dataset.page,on=STAGE_PAGES.includes(pg),social=socialVisible();$('partyShell').hidden=!on;$('menu').classList.toggle('partyMenu',on);
+ document.querySelectorAll('[data-nav]').forEach(b=>{const cur=b.dataset.nav===pg||(b.dataset.nav==='multi'&&pg==='lobby');if(cur)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
+ if(on){renderIdentity();renderPartyState();partyPaintAt=0;partySig=''}
+ if(social){refreshSocial();if(!SOCIAL.timer)SOCIAL.timer=setInterval(()=>{if(socialVisible())refreshSocial();else{clearInterval(SOCIAL.timer);SOCIAL.timer=0}},15000)}
  else{clearInterval(SOCIAL.timer);SOCIAL.timer=0}
+ if(on&&(pg==='solo'||pg==='classes'))renderPlayPanel();
 }
-function partyRows(){return NET.mode==='host'||NET.mode==='guest'?NET.roster:[{id:myId,name:myName(),cls:pick.cls,cos:cosStr(locker.eq)}]}
+function partyRows(){return inRoom()?NET.roster:[{id:myId,name:myName(),cls:pick.cls,cos:cosStr(locker.eq)}]}
 function partyInvite(){
  if(NET.code){$('shareBtn').click();$('partyHint').textContent='Use the invite link or room code to bring your crew.'}
  else{$('partyHint').textContent='Create a room with HOST, then copy its invite link for your crew.';$('hostBtn').focus();$('hostBtn').scrollIntoView({block:'nearest'})}
 }
 function renderPartyState(){
  if(!$('partyShell')||$('partyShell').hidden)return;
- const room=NET.mode==='host'||NET.mode==='guest',rows=partyRows(),me=rows.find(r=>r.id===myId)||rows[0];
+ const room=inRoom(),rows=partyRows(),me=rows.find(r=>r.id===myId)||rows[0],pg=$('menu').dataset.page,C=CLASSES[pick.cls]||CLASSES.soldier,M=MAPS[pick.map]||MAPS.yard;
+ if(pg==='solo'||pg==='classes'){
+  $('partyMode').textContent=pg==='solo'?`SOLO · ${M.name}${pick.size==='xl'?' XL':''}`:'CLASSES';$('partyTitle').textContent=pg==='solo'?'HOLD THE STAKE.':C.name;
+  $('partySubtitle').textContent=pg==='solo'?`${LEN_NAME[pick.mode]||'5 RAIDS'} · ${DIFF[pick.diff].name} · ${C.name}`:'Your job carries into solo and multiplayer.';
+  $('partyPlayerName').textContent=myName();$('partyPlayerState').textContent=pg==='solo'?'READY':'CHOOSING A JOB';
+  $('partyHint').textContent=pg==='solo'?M.blurb:'';return}
  $('partyMode').textContent=MODE_NAME[pick.pvp]||'CO-OP';$('partyTitle').textContent=room?'PARTY LOBBY':'YOUR CREW. YOUR CLAIM.';
- $('partySubtitle').textContent=room?`ROOM ${NET.code} · ${rows.length} / 6 PLAYERS`:'Choose your job. Bring your crew.';
+ $('partySubtitle').textContent=room?`ROOM ${NET.code} · ${rows.length} / 6 PLAYERS${pick.pvp==='coop'?' · '+M.name+(pick.size==='xl'?' XL':''):''}`:'Choose your job. Bring your crew.';
  $('partyPlayerName').textContent=me?.name||myName();$('partyPlayerState').textContent=room?(NET.mode==='host'?'PARTY LEADER':'WAITING FOR HOST'):'CHOOSING A LOADOUT';
  const box=$('partySlots');box.textContent='';
  for(let i=0;i<6;i++){const r=rows[i],el=document.createElement(r?'div':'button');el.className='partySlot'+(r?' occupied':'');
@@ -39,13 +51,19 @@ function renderPartyState(){
   if(!r){el.type='button';el.setAttribute('aria-label','Invite player to slot '+(i+1));el.addEventListener('click',partyInvite)}box.append(el)}
  $('partyHint').textContent=room?'Share your room link. Your host starts the match.':'Up to six players · desktop and mobile';
 }
-let partyPaintAt=0;
+let partyPaintAt=0,partySig='';
+// The stage is repainted only when something on it changes: who is on it, their looks, the (slowly swinging)
+// heading step or an animated cosmetic's tick. Idle, that is every few seconds instead of 10-20 times a second.
 function drawPartyPreview(now){
- if(!socialVisible()||now-partyPaintAt<(touchMode?100:50))return;partyPaintAt=now;
- const cv=$('partyPreview'),x=cv.getContext('2d'),rows=partyRows(),me=rows.find(r=>r.id===myId)||rows[0],others=rows.filter(r=>r!==me);x.clearRect(0,0,cv.width,cv.height);
+ if(!stageVisible()||now-partyPaintAt<(touchMode?LOBBY.stageTouch:LOBBY.stageDesk))return;partyPaintAt=now;
+ const rows=partyRows(),me=rows.find(r=>r.id===myId)||rows[0],others=rows.filter(r=>r!==me),solo=!socialVisible(),t=now/1000;   // PLAY and CLASSES: just you on the stage
+ const meA=.35+Math.sin(now/4500)*.16,look=r=>lookOf(parseCos(r.cos),r.cls),looks=[me,...(solo?[]:others.slice(0,2))].map(r=>r&&look(r));
+ const sig=solo+'|'+rows.map(r=>r.id+r.cls+r.cos).join()+'|'+(looks[0]?wardrobePoseSig(looks[0],meA,t,13.4):'')+'|'+looks.slice(1).map((o,i)=>o?wardrobePoseSig(o,i?-.3:.3,t,8):'').join();
+ if(sig===partySig)return;partySig=sig;
+ const cv=$('partyPreview'),x=cv.getContext('2d');x.clearRect(0,0,cv.width,cv.height);
  const pad=(px,py,r,active)=>{cosmeticGlow(x,px,py,r*1.5,active?'#7de6e8':'#536f89',active?.15:.1);x.fillStyle=active?'rgba(170,239,239,.12)':'rgba(122,171,192,.06)';x.strokeStyle=active?'#b4edee':'#597386';x.lineWidth=active?3:2;x.beginPath();x.ellipse(px,py,r,r*.22,0,0,Math.PI*2);x.fill();x.stroke()};
- for(const [i,px]of [160,840].entries()){pad(px,625,90,!!others[i]);if(others[i])drawWardrobeCharacter(x,lookOf(parseCos(others[i].cos),others[i].cls),i?-.3:.3,now/1000,8,px,610,false);else{x.fillStyle='#7e98a5';x.font='300 60px system-ui';x.textAlign='center';x.fillText('+',px,590)}}
- pad(500,720,154,true);if(me)drawWardrobeCharacter(x,lookOf(parseCos(me.cos),me.cls),.35+Math.sin(now/4500)*.16,now/1000,13.4,500,700,false);
+ if(!solo)for(const [i,px]of [160,840].entries()){pad(px,625,90,!!others[i]);if(others[i])drawWardrobeCharacter(x,looks[i+1],i?-.3:.3,t,8,px,610,false);else{x.fillStyle='#7e98a5';x.font='300 60px system-ui';x.textAlign='center';x.fillText('+',px,590)}}
+ pad(500,720,154,true);if(me)drawWardrobeCharacter(x,looks[0],meA,t,13.4,500,700,false);
 }
 function socialMessage(){return !cloudOn?'Saved players are available on the live site.':acct.state==='wait'?'Connecting to your account…':!socialAccount()?'Sign in to save players across your devices.':SOCIAL.status}
 function socialRow(profile,result=false){
@@ -105,10 +123,9 @@ async function savePlayer(id,add){
   acct.s.user=r.j;setSession(acct.s);SOCIAL.ids=ids;SOCIAL.status=add?'Player saved to your account.':'Player removed.';if(!add)SOCIAL.profiles=SOCIAL.profiles.filter(p=>p.id!==id);else if(SOCIAL.result?.id===id&&!SOCIAL.profiles.some(p=>p.id===id))SOCIAL.profiles.push(SOCIAL.result);
  }finally{if(current()){SOCIAL.busy=false;renderSocial()}}
 }
-$('partyControls').append($('pg-multi'),$('pg-lobby'));
+$('partyControls').append($('pg-solo'),$('pg-classes'),$('pg-multi'),$('pg-lobby'));   // the left column of the lobby shell
 $('friendSearch').addEventListener('submit',e=>{e.preventDefault();findPlayer()});$('socialRefresh').addEventListener('click',refreshSocial);
 
-document.querySelectorAll('[data-party-go]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.partyGo==='play'?'multi':b.dataset.partyGo)));
 
 // Returning from the locker updates the real party loadout before the host starts.
 function syncLobbyLoadout(){
@@ -117,4 +134,33 @@ function syncLobbyLoadout(){
  const next={name:myName(),cls:pick.cls,cos:cosStr(myCos())};
  if(r.name===next.name&&r.cls===next.cls&&r.cos===next.cos)return;
  if(NET.mode==='host'){Object.assign(r,next);broadcastLobby()}else NET.toHost({t:'loadout',...next});
+}
+
+// ---- PLAY: map cards (a painted thumbnail of each map), size, and the summary in the left column
+const MAP_THUMBS=new Map();
+function mapThumb(id,size){
+ const key=id+'|'+size;let c=MAP_THUMBS.get(key);if(c)return c;
+ c=document.createElement('canvas');c.width=172;c.height=116;const x=c.getContext('2d'),M=MAPS[id];
+ // lay the map out on a scratch copy of the terrain, then draw it top-down as a tiny isometric diamond
+ const keep=[terr,N,MAP,terrLog,MAPO,floodOn,floodLv];let L=null;
+ try{L=layMap(id,size,'');const n=N,tw=172/(n+2)/1.02,th=tw*.5,ox=86,oy=6;
+  x.fillStyle='#0e1519';x.fillRect(0,0,172,116);
+  const col=t=>t===T_WATER?'#2a5a74':t===T_BRIDGE?'#7a5a38':t===T_LOW?'#3e4a30':t===T_CRACK?'#5a4838':t===T_ROCK?'#7c776d':t===T_DRUM?'#ff8a2a':id==='quarry'?'#403a33':id==='river'?'#394a2c':'#4a4030';
+  for(let j=0;j<n;j++)for(let i=0;i<n;i++){const sx=ox+(i-j)*tw/2,sy=oy+(i+j)*th/2;x.fillStyle=col(terr[j*n+i]);x.beginPath();x.moveTo(sx,sy);x.lineTo(sx+tw/2,sy+th/2);x.lineTo(sx,sy+th);x.lineTo(sx-tw/2,sy+th/2);x.closePath();x.fill()}
+  const dot=(i,j,c,r)=>{const sx=ox+(i-j)*tw/2,sy=oy+(i+j)*th/2+th/2;x.fillStyle=c;x.beginPath();x.arc(sx,sy,r,0,Math.PI*2);x.fill()};
+  for(const nd of L.nodes)dot(nd.i,nd.j,nd.type===0?'#c09058':nd.type===1?'#a0533c':'#a3a9a8',1.6);
+  for(const s of L.spawns)for(const t of s.tiles)dot(t[0],t[1],'#d65a3a',1.2);
+  dot(L.core[0],L.core[1],'#e2b436',3);
+ }finally{[terr,N,MAP,terrLog,MAPO,floodOn,floodLv]=keep}
+ MAP_THUMBS.set(key,c);return c;
+}
+function renderPlayPanel(){
+ const box=$('mapCards');if(!box)return;box.textContent='';
+ for(const id of MAP_IDS){const M=MAPS[id],b=document.createElement('button');b.type='button';b.className='mapCard'+(pick.map===id?' sel':'');b.dataset.map=id;
+  const cv=document.createElement('canvas');cv.width=172;cv.height=116;cv.getContext('2d').drawImage(mapThumb(id,pick.size),0,0);
+  const t=document.createElement('div'),nm=document.createElement('b'),bl=document.createElement('span'),bs=document.createElement('i');
+  nm.textContent=M.name;bl.textContent=M.blurb;bs.textContent='BOSSES · '+M.bosses.map(k=>(BOSSES[k]||{}).name||k).join(' · ').replace(/THE /g,'');
+  t.append(nm,bl,bs);b.append(cv,t);b.setAttribute('aria-pressed',pick.map===id?'true':'false');b.addEventListener('click',()=>{pick.map=id;cfg.map=id;saveCfg();syncPicks();showBest()});box.append(b)}
+ $('mapSizeTag').textContent=pick.size==='xl'?'24×24':'16×16';
+ const C=CLASSES[pick.cls]||CLASSES.soldier,M=MAPS[pick.map]||MAPS.yard;$('soloMap').textContent=`${M.name} · ${pick.size==='xl'?'XL 24×24':'16×16'}${M.night?' · always night':''}`;
 }

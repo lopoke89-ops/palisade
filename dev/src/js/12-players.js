@@ -4,7 +4,7 @@ function update(dt){
   updateParticles(dt);
   if(!running()||game.paused||(NET.mode==='guest'&&NET.inGame))return;
   if(demo&&game.phase==='build'&&game.timer>8)game.timer=8;
-  game.time+=dt;for(const c of cores)c.flash=Math.max(0,c.flash-dt);
+  game.time+=dt;for(const c of cores)c.flash=Math.max(0,c.flash-dt);updateFlood(dt);
   if(game.pvp){updatePvp(dt);if(game.phase==='over')return}
   else if(game.phase==='build'){game.timer-=dt;if(game.timer<=0)startRaid()}
   else{
@@ -31,7 +31,7 @@ function controlLocal(dt){
   const mag=Math.min(1,Math.hypot(mx,my));
   p.sprT=Math.max(0,(p.sprT||0)-dt);p.sprCd=Math.max(0,(p.sprCd||0)-dt);const spr=p.sprT>0;
   // 3.3 tiles a second is everyone's pace; the class sets a multiplier (sniper 1.1, grenadier 0.9)
-  if(mag>.12){const d=sdirToWorld(mx,my),sp=3.3*mag*(p.C.spd||1)*(spr?SPRINT.mult:1)*(p.stun>0?.45:1);moveEnt(p,d.x*sp*dt,d.y*sp*dt,pt(p));p.walk+=dt*mag*(spr?13:10);p.moveDir=d;
+  if(mag>.12){const d=sdirToWorld(mx,my),sp=3.3*mag*(p.C.spd||1)*(spr?SPRINT.mult:1)*(p.stun>0?.45:1)*slowAt(p.x,p.y);moveEnt(p,d.x*sp*dt,d.y*sp*dt,pt(p));p.walk+=dt*mag*(spr?13:10);p.moveDir=d;
     if(spr&&rnd()<dt*14)emit(p.x-d.x*.2,p.y-d.y*.2,3*u,'dust',0)}
   let firing=false;
   if(!touchMode&&mouse.seen){const w=bodyUnder(mouse.x,mouse.y,p)||screenToWorld(mouse.x,mouse.y+WH*.55);const dx=w.x-p.x,dy=w.y-p.y,l=Math.hypot(dx,dy)||1;p.aim={x:dx/l,y:dy/l};p.face=p.aim;firing=mouse.down}

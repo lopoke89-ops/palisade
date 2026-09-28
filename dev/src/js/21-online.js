@@ -4,7 +4,7 @@
 // they talk directly. Each guest opens 'r' (reliable: hello, build, grenade, and every
 // one-off event: sounds, particles, bullets, toasts, wall changes), 'u' (fast: movement in),
 // and 'st' (never resent: game state out, 15 times a second).
-const PROTO='yard-13',ROOM_PREFIX='palisade-yard-13-';
+const PROTO='yard-14',ROOM_PREFIX='palisade-yard-14-';
 const NET={mode:'solo',inGame:false,peer:null,code:'',roster:[],conns:new Map(),host:null,fxq:[],snapT:0,snapN:0,lastN:0,inT:0,nextG:1,lastHeard:0,
   sendTo(id,msg){for(const c of this.conns.values())if(c.pid===id&&c.r&&c.r.open){try{c.r.send(msg)}catch(e){}}},
   sendAll(msg,ch='r'){for(const c of this.conns.values()){const x=c[ch]&&c[ch].open?c[ch]:c.r;if(c.pid&&x&&x.open)try{x.send(msg)}catch(e){}}},
@@ -105,7 +105,7 @@ function hostData(peerId,d){
     c.r.send({t:'welcome',id:c.pid});
     if(NET.inGame){   // dropping into a game already running
       const p=makePlayer(c.pid,c.name,c.cls,players.size,c.cos,game.pvp==='base'?team:'');[p.x,p.y]=respawnAt(p);if(game.pvp)p.prot=PVP.prot;if(game.pvp==='base')p.sal=PVP.startSal;if(game.pvp==='ffa')p.mats=[0,0,0];players.set(c.pid,p);
-      c.r.send({t:'start',roster:rosterNow(),diff:pick.diff,mode:game.mode,pvp:game.pvp});NET.wlSent=null;NET.piSent=null;
+      c.r.send({t:'start',roster:rosterNow(),diff:pick.diff,mode:game.mode,pvp:game.pvp,map:game.map,size:game.size,oct:game.oct?1:0});NET.wlSent=null;NET.piSent=null;
       toastAll(`${c.name.toUpperCase()} JOINED`,game.pvp==='base'?`Dropped in on ${TEAMS[team].name}.`:game.pvp?'Dropped into the fight.':'Dropped in at the stake.')}
     broadcastLobby();return;
   }
@@ -139,7 +139,7 @@ function hostDrop(peerId){
   broadcastLobby();
 }
 function broadcastLobby(){
-  const msg={t:'lobby',roster:NET.roster,code:NET.code,diff:pick.diff,mode:pick.mode,pvp:pick.pvp,playing:NET.inGame};
+  const msg={t:'lobby',roster:NET.roster,code:NET.code,diff:pick.diff,mode:pick.mode,pvp:pick.pvp,map:pick.map,size:pick.size,playing:NET.inGame};
   NET.sendAll(msg);if(!NET.inGame)renderLobby();
   if(NET.mode==='host'&&pubTimer)lobbyPublish();
 }
@@ -152,9 +152,9 @@ function lobbyBlock(){
 function startOnline(){
   if(NET.mode!=='host')return;
   const why=lobbyBlock();if(why){$('lNote').textContent=why;return}
-  demo=false;newGame(NET.roster.map(r=>({...r})),pick.pvp);NET.inGame=true;NET.snapN=0;
+  demo=false;pick.oct=isOctober();newGame(NET.roster.map(r=>({...r})),pick.pvp);NET.inGame=true;NET.snapN=0;
   const now=performance.now();for(const c of NET.conns.values())c.heard=now;   // the lobby wait is not silence
-  NET.sendAll({t:'start',roster:rosterNow(),diff:pick.diff,mode:game.mode,pvp:game.pvp});NET.wlSent=null;NET.piSent=null;
+  NET.sendAll({t:'start',roster:rosterNow(),diff:pick.diff,mode:game.mode,pvp:game.pvp,map:game.map,size:game.size,oct:game.oct?1:0});NET.wlSent=null;NET.piSent=null;
   enterGame();broadcastLobby();
 }
 // keep quiet lobbies alive (and NAT mappings open), and notice players who vanish
@@ -196,7 +196,7 @@ function openStateCh(conn){
 function wallBytes(){
   const b=new Uint8Array(N*N*4);
   for(let k=0;k<N*N;k++){const w=walls[k],o=k*4;
-    if(w){b[o]=0x80|(w.door?0x40:0)|(w.tm==='b'?0x20:w.tm==='a'?0x10:0)|(w.mat&3);b[o+1]=clamp(Math.round(w.hp/w.max*255),1,255);b[o+2]=(w.fire>0?0x80:0)|clamp(Math.round(w.char*127),0,127)}
+    if(w){b[o]=0x80|(w.door?0x40:0)|(w.tm==='b'?0x20:w.tm==='a'?0x10:0)|(w.slab?0x08:0)|(w.mat&3);b[o+1]=clamp(Math.round(w.hp/w.max*255),1,255);b[o+2]=(w.fire>0?0x80:0)|clamp(Math.round(w.char*127),0,127)}
     b[o+3]=debris[k]}
   return b;
 }
@@ -207,7 +207,7 @@ function setWallTile(k,f,hp,fc,db){
   const mat=f&3,door=!!(f&0x40),ratio=hp/255;let w=walls[k];
   if(!w||w.mat!==mat||w.door!==door){w=makeWall(mat,door,ratio);walls[k]=w}
   else{const nh=w.max*ratio;if(nh<w.hp-.5)w.flash=.08;w.hp=nh}
-  w.fire=fc&0x80?1:0;w.char=(fc&0x7f)/127;w.tm=f&0x20?'b':f&0x10?'a':undefined;
+  w.fire=fc&0x80?1:0;w.char=(fc&0x7f)/127;w.tm=f&0x20?'b':f&0x10?'a':undefined;w.slab=!!(f&0x08);
 }
 function decodeWalls(str){const s=atob(str);for(let k=0;k<N*N;k++){const o=k*4;setWallTile(k,s.charCodeAt(o),s.charCodeAt(o+1),s.charCodeAt(o+2),s.charCodeAt(o+3))}}
 // only the tiles that changed: [tile, flags, health, fire/char, debris, tile, ...]
@@ -247,10 +247,12 @@ function makeSnap(withWalls){
     en:enemies.map(e=>packTrim(EN_STATE,e)),
     rk:flat(rockets,r=>[r2(r.x),r2(r.y),r2(r.vx),r2(r.vy)]),
     fz:flat(fires,f=>[r2(f.x),r2(f.y),r2(f.t)]),
-    lo:flat(lobs,l=>[r2(l.x0),r2(l.y0),r2(l.x1),r2(l.y1),r2(l.t),r2(l.T),r2(l.R)]),
+    lo:flat(lobs,l=>[r2(l.x0),r2(l.y0),r2(l.x1),r2(l.y1),r2(l.t),r2(l.T),r2(l.R),l.k|0]),
     ch:flat(charges,c=>[r2(c.x),r2(c.y),r2(c.fuse)]),
     sa:flat(sacks,k=>[r2(k.x),r2(k.y)]),
-    nd:flat(nodes,n=>[n.amt|0,n.locked?1:0])};
+    nd:flat(nodes,n=>[n.amt|0,n.locked?1:0]),fo:floodOn?1:0};
+  if(game.bossLog&&game.bossLog.length)s.bl=game.bossLog;   // which bosses fell (each player's rewards are worked out on their own phone)
+  if(terrLog.length)s.tr=terrLog;   // ground that changed (pits, a rammed bridge): a few numbers
   if(withWalls)s.wl=encodeWalls();
   return s;
 }
@@ -279,8 +281,8 @@ function guestData(d){
   if(!d)return;NET.lastHeard=performance.now();
   switch(d.t){
     case'welcome':myId=d.id;NET.mode='guest';mStatus('');showLobby();break;
-    case'lobby':NET.roster=d.roster;NET.code=d.code;pick.diff=d.diff;if(d.mode)pick.mode=d.mode;pick.pvp=d.pvp||'coop';if(!NET.inGame)renderLobby();break;
-    case'start':pick.diff=d.diff;if(d.mode)pick.mode=d.mode;pick.pvp=d.pvp||'coop';demo=false;newGame(d.roster,d.pvp||'');NET.lastN=0;NET.inGame=true;enterGame();break;
+    case'lobby':NET.roster=d.roster;NET.code=d.code;pick.diff=d.diff;if(d.mode)pick.mode=d.mode;pick.pvp=d.pvp||'coop';if(d.map)pick.map=MAP_IDS.includes(d.map)?d.map:'yard';if(d.size)pick.size=d.size==='xl'?'xl':'std';if(!NET.inGame)renderLobby();break;
+    case'start':pick.diff=d.diff;if(d.mode)pick.mode=d.mode;pick.pvp=d.pvp||'coop';pick.map=MAP_IDS.includes(d.map)?d.map:'yard';pick.size=d.size==='xl'?'xl':'std';pick.oct=!!d.oct;demo=false;newGame(d.roster,d.pvp||'');NET.lastN=0;NET.inGame=true;enterGame();break;
     case'ping':break;
     case's':if(NET.inGame&&d.n>NET.lastN){NET.lastN=d.n;applySnap(d)}break;
     case'x':if(NET.inGame){if(d.pi)applyInfo(d.pi);if(d.wl)decodeWalls(d.wl);if(d.wd)applyWallDiff(d.wd);replayFx(d.fx||[])}break;
@@ -318,15 +320,17 @@ function applySnap(s){
     if(!e)e={id,x:v('x'),y:v('y'),walk:rnd()*6,flash:0,max:1,hp:1};
     if(v('hp')<e.hp-.001)e.flash=.08;
     const c=ECODE[v('type')]||'rifle',bk=c.startsWith('boss:')?c.slice(5):'';
-    Object.assign(e,{type:bk?'boss':c,boss:bk||undefined,big:!!bk,tx:v('x'),ty:v('y'),aim:{x:v('ax'),y:v('ay')},hp:v('hp'),max:1,planted:!!v('plant'),st:v('st'),stF:v('stF'),lx:v('lx'),ly:v('ly')});enemies.push(e)}
+    Object.assign(e,{type:bk?'boss':c,boss:bk||undefined,big:!!bk,raft:bk==='ferryman',burrow:bk==='foreman'&&(v('st')===2||v('st')===4),tx:v('x'),ty:v('y'),aim:{x:v('ax'),y:v('ay')},hp:v('hp'),max:1,planted:!!v('plant'),st:v('st'),stF:v('stF'),lx:v('lx'),ly:v('ly')});enemies.push(e)}
   rockets=[];for(let o=0;o<(s.rk||[]).length;o+=4)rockets.push({x:s.rk[o],y:s.rk[o+1],vx:s.rk[o+2],vy:s.rk[o+3]});
   fires=[];for(let o=0;o<(s.fz||[]).length;o+=3)fires.push({x:s.fz[o],y:s.fz[o+1],t:s.fz[o+2],max:4});
   if(s.bu){bullets=[];for(let o=0;o<s.bu.length;o+=7)bullets.push({x:s.bu[o],y:s.bu[o+1],vx:s.bu[o+2],vy:s.bu[o+3],team:s.bu[o+4],heavy:!!s.bu[o+5],tr:s.bu[o+6]|0})}
-  lobs=[];for(let o=0;o<s.lo.length;o+=7)lobs.push({x0:s.lo[o],y0:s.lo[o+1],x1:s.lo[o+2],y1:s.lo[o+3],t:s.lo[o+4],T:s.lo[o+5],R:s.lo[o+6]});
+  lobs=[];for(let o=0;o<s.lo.length;o+=8)lobs.push({x0:s.lo[o],y0:s.lo[o+1],x1:s.lo[o+2],y1:s.lo[o+3],t:s.lo[o+4],T:s.lo[o+5],R:s.lo[o+6],k:s.lo[o+7]});
   charges=[];for(let o=0;o<s.ch.length;o+=3)charges.push({x:s.ch[o],y:s.ch[o+1],fuse:s.ch[o+2]});
   sacks=[];for(let o=0;o<s.sa.length;o+=2)sacks.push({x:s.sa[o],y:s.sa[o+1]});
   for(let i=0;i<nodes.length&&i*2<s.nd.length;i++){nodes[i].amt=s.nd[i*2];nodes[i].locked=!!s.nd[i*2+1]}
   if(s.wl)decodeWalls(s.wl);
+  if(s.tr&&s.tr.length!==terrLog.length){applyTerrLog(s.tr);terrLog=s.tr.slice()}
+  floodOn=!!s.fo;if(s.bl)game.bossLog=s.bl.slice(0,40);
   replayFx(s.fx||[]);
   if(game.phase==='over'&&!wasOver)showOver();
 }
@@ -352,6 +356,7 @@ function replayFx(list){
     case'q':feedLocal(e[1],e[2]);break;
     case'z':zaps.push({pts:e.slice(1),life:.38,max:.38});break;
     case'w':slashes.push({x:e[1],y:e[2],ax:e[3],ay:e[4],life:.28,max:.28});break;
+    case'C':chains.push({x0:e[1],y0:e[2],x1:e[3],y1:e[4],life:.45,max:.45});break;
     case'o':rings.push({x:e[1],y:e[2],r0:e[3],r1:e[4],life:e[5],max:e[5],c1:e[6],c2:e[7],w:e[8]});break;
   }}finally{replaying=false}
 }

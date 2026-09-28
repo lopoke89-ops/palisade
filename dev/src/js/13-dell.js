@@ -21,7 +21,7 @@ function qmJob(){
   if(game.phase==='build'){
     if(q.mats[0]<32){let n=null,nd=1e9;for(const o of nodes)if(o.type===0&&o.amt>0){const d=Math.hypot(o.i+.5-q.x,o.j+.5-q.y);if(d<nd){nd=d;n=o}}
       if(n)return{name:'gather',node:n,goal:k=>k===idx(n.i,n.j),pt:{x:n.i+.5,y:n.j+.5},near:.9}}
-    for(const t of[1,2]){const n=nodes.find(o=>o.type===t);if(!n.locked&&q.mats[t]<QM_RESERVE[t]+12){const nk=idx(n.i,n.j);return{name:'gather',node:n,goal:k=>adj4(k,nk),pt:{x:n.i+.5,y:n.j+.5},near:1.3}}}
+    for(const t of[1,2]){const n=nodes.find(o=>o.type===t&&!o.locked);if(n&&q.mats[t]<QM_RESERVE[t]+12){const nk=idx(n.i,n.j);return{name:'gather',node:n,goal:k=>adj4(k,nk),pt:{x:n.i+.5,y:n.j+.5},near:1.3}}}
     const needy=nearestPlayer(q,p=>p.alive&&[0,1,2].some(m=>q.mats[m]>QM_RESERVE[m]&&p.mats[m]<p.cap[m]));
     if(needy){const tk=tileOf(needy);return{name:'handoff',who:needy,goal:k=>k===tk,pt:needy,near:1.3}}
   }
@@ -38,7 +38,7 @@ function updateQM(dt){
   }
   if(q.hurt>5)q.hp=Math.min(q.max,q.hp+3*dt);
   const DG=dellGun();
-  if(q.scanT<=0){q.scanT=.2;q.foe=null;let bd=Math.max(5.2,DG.range*.9);for(const e of enemies){const d=dist2(e,q);if(d<bd&&losClear(q.x,q.y,e.x,e.y)){bd=d;q.foe=e}}}
+  if(q.scanT<=0){q.scanT=.2;q.foe=null;let bd=Math.max(5.2,DG.range*.9);for(const e of enemies){if(e.burrow)continue;const d=dist2(e,q);if(d<bd&&losClear(q.x,q.y,e.x,e.y)){bd=d;q.foe=e}}}
   if(q.foe&&q.foe.dead)q.foe=null;
   const job=qmJob();if(job.name!==q.job){q.job=job.name;q.work=0;q.pathT=0}
   const here=tileOf(q);let busy=false,reached=job.hold?job.goal(here):dist2(q,job.pt)<=job.near;
@@ -51,7 +51,7 @@ function updateQM(dt){
   }else{
     if(q.pathT<=0){q.pathT=.25;q.next=teamPath(here%N,(here/N)|0,job.goal)}
     if(q.next>=0){const tgt=q.next===here?(job.pt||{x:here%N+.5,y:((here/N)|0)+.5}):{x:q.next%N+.5,y:((q.next/N)|0)+.5};
-      const dx=tgt.x-q.x,dy=tgt.y-q.y,l=Math.hypot(dx,dy);if(l>.03){const s=Math.min(l,2.9*dt);moveEnt(q,dx/l*s,dy/l*s,true);q.walk+=dt*9;if(!q.foe)q.aim={x:dx/l,y:dy/l}}}
+      const dx=tgt.x-q.x,dy=tgt.y-q.y,l=Math.hypot(dx,dy);if(l>.03){const s=Math.min(l,2.9*dt*slowAt(q.x,q.y));moveEnt(q,dx/l*s,dy/l*s,true);q.walk+=dt*9;if(!q.foe)q.aim={x:dx/l,y:dy/l}}}
     else if(job.name==='repair'){const w=walls[job.k];if(w)w.skip=4}
   }
   if(q.foe){const dx=q.foe.x-q.x,dy=q.foe.y-q.y,l=Math.hypot(dx,dy)||1;q.aim={x:dx/l,y:dy/l};
