@@ -179,7 +179,8 @@ async function endSession(msg){
 
 // ---- the account page
 function mainLabels(){
-  const lb=document.querySelector('[data-go=locker]'),n=allCases();if(lb)lb.textContent=n?`LOCKER · ${n}`:'LOCKER';
+  const lb=document.querySelector('.mm [data-go=locker]'),n=allCases();if(lb)lb.textContent=n?`LOCKER · ${n}`:'LOCKER';
+  renderIdentity();
   const ab=$('acctBtn');if(!ab)return;ab.hidden=!cloudOn;
   ab.textContent=acct.state==='full'?`ACCOUNT · ${(acct.name||'SIGNED IN').toUpperCase()}`:acct.state==='guest'?(acct.name?`GUEST · ${acct.name.toUpperCase()} · SAVE YOUR ACCOUNT`:'GUEST · SAVE YOUR ACCOUNT'):acct.state==='down'?'ACCOUNT · OFFLINE':'ACCOUNT';
 }
@@ -187,6 +188,7 @@ function renderAcct(){
   mainLabels();if($('pg-account').hidden)return;
   const st=acct.state,g=isGuest(),u=acct.s&&acct.s.user,live=st==='guest'||st==='full';
   $('aLede').textContent=
+    st==='off'?'This preview uses a local profile. Open the live site to sign in and sync your account.':
     st==='wait'?'Connecting to your account…':
     st==='down'?(acct.s?'Can\'t reach the account server right now. You can still play: finished runs are sent when you\'re back online, and opening cases waits for a connection.':'No account yet. Your locker is saved in this browser, and it moves into your account once one is made.'):
     g?'You\'re playing as a guest. Your locker is backed up online, but only this browser can get back into it. Add an email to keep it on any device, or sign in to an account you already have.':

@@ -95,3 +95,20 @@ ffprobe -v error -select_streams a -count_packets -show_entries stream=duration_
 The build also writes `debug.html` (not committed): the same game with the test hooks
 (`?debug=1` exposes `window.__pal`) and the profiler. The tests use it; players get index.html,
 which has neither. Minifying needs terser (`npm install` in dev/test installs it).
+
+## Multiplayer identity and saved players (v0.8.13)
+
+The lobby uses the authenticated profile username and the existing locker. Saved players are a
+one-way account list, stored as up to 50 profile UUIDs in the signed-in user's
+`user_metadata.palisade_saved_players_v1`. The client updates only this metadata field through
+`/auth/v1/user`; no social database tables or locker migrations are required. Profiles are read
+through the existing authenticated profile policy. Room labels and Join actions use fresh,
+publicly listed lobbies for the current protocol; no listed room is not an offline indicator.
+
+Each metadata edit re-reads the current user before saving. Account identity and request sequence
+checks discard stale results after account switches. The social regression covers saving, reload,
+failed writes, metadata preservation and account isolation with a mock backend.
+
+Protocol yard-13 adds a lobby-only `loadout` message so returning from the locker updates the
+party roster and next match. Old and new clients use separate room prefixes and must reload to
+play together. `multiplayer.js` verifies host/guest loadout propagation before match start.

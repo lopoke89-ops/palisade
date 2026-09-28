@@ -7,7 +7,7 @@ function frame(now){
   demoAcc+=dt;const skip=every>0&&demoAcc<every,sdt=every?Math.min(.1,demoAcc):dt;if(!skip)demoAcc=0;
   if(NET.mode==='guest'&&NET.inGame){updateParticles(dt);if(running())guestUpdate(dt)}
   else{if(!skip)update(sdt);if(NET.mode==='host')hostNet(dt);else if(NET.mode==='guest')lobbyNet(dt)}
-  if(!$('menu').hidden&&!$('pg-locker').hidden)drawLockerPreview(now);
+  if(!$('menu').hidden&&!$('pg-locker').hidden)drawLockerPreview(now);drawPartyPreview(now);
   const wantCursor=playing()&&!touchMode&&!overlayOpen()?'none':'';if(cv.style.cursor!==wantCursor)cv.style.cursor=wantCursor;
   if(!skip)render(sdt);musicTick();
   if(demo&&game.phase==='over'){demoT+=dt;if(demoT>4)startDemo()}
@@ -26,9 +26,10 @@ function startDemo(){
 }
 const PAGES=['main','solo','multi','lobby','locker','settings','account'];
 function showPage(p){
+  if(p==='multi'&&(NET.mode==='host'||NET.mode==='guest')&&!NET.inGame)p='lobby';
   if(p==='multi'&&window.PEER_SRC){needPeer();getIce()}   // warm up online play while they pick a name
   for(const id of PAGES)$('pg-'+id).hidden=id!==p;
-  $('menu').classList.toggle('sub',p!=='main');$('menu').dataset.page=p;
+  $('menu').classList.toggle('sub',p!=='main');$('menu').dataset.page=p;if(p==='lobby')syncLobbyLoadout();syncPartyShell();
   if(p==='solo')showBest();
   if(p==='multi'){syncPicks();$('mList').checked=cfg.listGame!==false;$('mListRow').hidden=!cloudOn}
   lobbyBrowse(p==='multi');
@@ -37,7 +38,7 @@ function showPage(p){
   if(p==='main')mainLabels();
   if(p==='account'){if(acct.state!=='wait'&&!acct.busy&&!acct.recovery)acct.msg=acct.hashMsg?acct.msg:'';renderAcct();acctResume()}
   if(p==='locker')lockMsg('');
-  $('menu').querySelector('.panel').scrollTop=0;
+  $('menu').querySelector('.panel').scrollTop=0;$('partyControls').scrollTop=0;
 }
 let settingsFromPause=false;
 function openSettings(fromPause){settingsFromPause=fromPause;$('menu').hidden=false;$('pause').hidden=true;showPage('settings')}
@@ -55,7 +56,7 @@ $('sMus').addEventListener('input',e=>{cfg.music=e.target.value/100;applyCfg();s
 $('sShake').addEventListener('input',e=>{cfg.shake=e.target.value/100;applyCfg();saveCfg()});
 $('sHap').addEventListener('change',e=>{cfg.haptics=e.target.checked;saveCfg();if(cfg.haptics)buzz(30)});
 $('sFps').addEventListener('change',e=>{cfg.fps=e.target.checked;applyCfg();saveCfg()});
-$('mName').addEventListener('input',e=>{cfg.name=e.target.value.slice(0,12);saveCfg()});
+$('mName').addEventListener('input',e=>{cfg.name=e.target.value.slice(0,12);saveCfg();renderPartyState();renderIdentity()});
 $('mList').addEventListener('change',e=>{cfg.listGame=e.target.checked;saveCfg()});
 $('sDone').addEventListener('click',closeSettings);
 $('sExport').addEventListener('click',()=>openSaveOv('export'));
@@ -99,6 +100,7 @@ function syncPicks(){
   document.querySelectorAll('[data-m5],[data-mm]').forEach(x=>x.classList.toggle('sel',(x.dataset.m5||x.dataset.mm)===pick.mode));
   document.querySelectorAll('[data-pv]').forEach(x=>x.classList.toggle('sel',x.dataset.pv===pick.pvp));
   $('coopOpts').hidden=pick.pvp!=='coop';
+  renderPartyState();
   $('pvDesc').textContent={coop:'Everyone against the raiders, with Dell. Pick how long and how hard.',
     base:`Two crews, two stakes. ${PVP.truce} seconds of truce to gather and wall in, then knock down theirs. Kills pay salvage for the armory. No raiders, no Dell.`,
     ffa:`Everyone for themselves around concrete cover that can't be broken. First to ${PVP.ffaGoal} drops, or the most after ${PVP.ffaTime/60} minutes. No building.`}[pick.pvp]||'';
@@ -126,6 +128,7 @@ $('shareBtn').addEventListener('click',()=>{
 });
 function showLobby(){$('menu').hidden=false;showPage('lobby');renderLobby()}
 function renderLobby(){
+  renderPartyState();
   $('lCode').textContent=NET.code||'····';
   const ul=$('lList');ul.textContent='';
   const base=pick.pvp==='base';
@@ -158,6 +161,6 @@ applyCfg();syncPicks();startDemo();showPage('main');
 if(cloudOn)setTimeout(acctBoot,400);
 const invite=new URLSearchParams(location.search).get('room');
 if(invite&&canOnline()){$('mCode').value=invite.toUpperCase().slice(0,4);showPage('multi');mStatus(`You're invited to room ${invite.toUpperCase().slice(0,4)}. Pick your name and job, then tap JOIN.`)}
-if(new URLSearchParams(location.search).has('debug'))window.__pal={TRAILS,traceSeg,paintFinish,FINISH_LIFE,paintCosmeticParticle,drawIcon,get cosmeticCache(){return {tracers:TRACE_STAMPS.size,glows:FX_GLOWS.size}},wardrobeBarrel,wardrobeShotVisual,wardrobeAimAngle,tracerPoints,flashPoint,fire,addGuestBullet,replayFx,get flashes(){return flashes},drawFig,lookOf,SKINS,drawWardrobeCharacter,get wardrobeStats(){return {workers:wardrobeWorkers?wardrobeWorkers.length:0,completed:wardrobeWorkerCompletions,pending:WARDROBE_JOBS.size,busy:WARDROBE_BUSY.size,entries:WARDROBE_CACHE.size,bytes:wardrobeCacheBytes}},get ctx(){return g},get mus(){return mus},get AC(){return AC},musicWant,caseTick,MUSIC,get parts(){return parts},profOn(f){PROF={a:{},k:'x',f,t:performance.now()}},prof(){const o={};for(const k in PROF.a)if(k!=='end'&&k!=='x')o[k]=+PROF.a[k].toFixed(1);return o},get locker(){return locker},lockerReward:(...a)=>lockerReward(...a),openCase:()=>openCase(),buyUpgrade:(p,k)=>buyUpgrade(p,k),render,update,NET,get players(){return players},get player(){return player},get game(){return game},get enemies(){return enemies},get walls(){return walls},get core(){return core},get cores(){return cores},get bullets(){return bullets},startRaid:()=>startRaid(),scr:(x,y)=>{const c=iso(x,y);return[c[0],c[1]-WH*.55]},endPvp:w=>endPvp(w),hurtPlayer:(p,d,o)=>hurtPlayer(p,d,o),explode:(...a)=>explode(...a),buildEval:(...a)=>buildEval(...a),doBuild:(...a)=>doBuild(...a),acct,acctBoot,syncLocker,flushClaims,get claims(){return claims},showOver:()=>showOver(),showPage:x=>showPage(x),toMenu:()=>toMenu(),refreshLobbies:()=>refreshLobbies(),damageWall:(...a)=>damageWall(...a),spawnBoss:k=>spawnBoss(k),get rockets(){return rockets},get fires(){return fires},get zaps(){return zaps},get slashes(){return slashes},makePlayer:(...a)=>makePlayer(...a),get qm(){return qm},bdmg:b=>bdmg(b),makeWall:(...a)=>makeWall(...a),get walls2(){return walls},COS,CASES,rollCase:id=>rollCase(id),killFx:(...a)=>killFx(...a),renderLocker:()=>renderLocker(),playerLook:p=>playerLook(p),pvpReward:(w,k)=>pvpReward(w,k),bodyUnder,dellGun,salvageShards,iso,localSprint,renderArmory,CLASSES,burstN,burstGap,get light(){return light},get camX(){return camX},get camY(){return camY},get u(){return u},setMouse(x,y,d){mouse.x=x;mouse.y=y;mouse.seen=true;mouse.down=!!d}};
+if(new URLSearchParams(location.search).has('debug'))window.__pal={SOCIAL,refreshSocial,findPlayer,savePlayer,renderIdentity,renderPartyState,get floats(){return floats},TRAILS,traceSeg,paintFinish,FINISH_LIFE,paintCosmeticParticle,drawIcon,get cosmeticCache(){return {tracers:TRACE_STAMPS.size,glows:FX_GLOWS.size}},wardrobeBarrel,wardrobeShotVisual,wardrobeAimAngle,tracerPoints,flashPoint,fire,addGuestBullet,replayFx,get flashes(){return flashes},drawFig,lookOf,SKINS,drawWardrobeCharacter,get wardrobeStats(){return {workers:wardrobeWorkers?wardrobeWorkers.length:0,completed:wardrobeWorkerCompletions,pending:WARDROBE_JOBS.size,busy:WARDROBE_BUSY.size,entries:WARDROBE_CACHE.size,bytes:wardrobeCacheBytes}},get ctx(){return g},get mus(){return mus},get AC(){return AC},musicWant,caseTick,MUSIC,get parts(){return parts},profOn(f){PROF={a:{},k:'x',f,t:performance.now()}},prof(){const o={};for(const k in PROF.a)if(k!=='end'&&k!=='x')o[k]=+PROF.a[k].toFixed(1);return o},get locker(){return locker},lockerReward:(...a)=>lockerReward(...a),openCase:()=>openCase(),buyUpgrade:(p,k)=>buyUpgrade(p,k),render,update,NET,get players(){return players},get player(){return player},get game(){return game},get enemies(){return enemies},get walls(){return walls},get core(){return core},get cores(){return cores},get bullets(){return bullets},startRaid:()=>startRaid(),scr:(x,y)=>{const c=iso(x,y);return[c[0],c[1]-WH*.55]},endPvp:w=>endPvp(w),hurtPlayer:(p,d,o)=>hurtPlayer(p,d,o),explode:(...a)=>explode(...a),buildEval:(...a)=>buildEval(...a),doBuild:(...a)=>doBuild(...a),acct,acctBoot,syncLocker,flushClaims,get claims(){return claims},showOver:()=>showOver(),showPage:x=>showPage(x),toMenu:()=>toMenu(),refreshLobbies:()=>refreshLobbies(),damageWall:(...a)=>damageWall(...a),spawnBoss:k=>spawnBoss(k),get rockets(){return rockets},get fires(){return fires},get zaps(){return zaps},get slashes(){return slashes},makePlayer:(...a)=>makePlayer(...a),get qm(){return qm},bdmg:b=>bdmg(b),makeWall:(...a)=>makeWall(...a),get walls2(){return walls},COS,CASES,rollCase:id=>rollCase(id),killFx:(...a)=>killFx(...a),renderLocker:()=>renderLocker(),playerLook:p=>playerLook(p),pvpReward:(w,k)=>pvpReward(w,k),bodyUnder,dellGun,salvageShards,iso,localSprint,renderArmory,CLASSES,burstN,burstGap,get light(){return light},get camX(){return camX},get camY(){return camY},get u(){return u},setMouse(x,y,d){mouse.x=x;mouse.y=y;mouse.seen=true;mouse.down=!!d}};
 if(window.PEER_SRC&&invite)needPeer();   // otherwise it loads when the Multiplayer page opens
 requestAnimationFrame(frame);

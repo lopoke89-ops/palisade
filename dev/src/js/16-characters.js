@@ -146,7 +146,7 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  }else if(o.wrap){
   dome(o.wrap,31.8,4.9,4.1,3.4);column(0,32+bob,0,10,1.2,8.5,tint(o.wrap,.74),1,.2);beam([-4.4,32+bob,-1],[-5.6,28.4+bob,-4],.5,o.wrap,.3);
  }else if(o.tophat){
-  column(0,32.4+bob,0,12,.7,10,o.tophat,1,.4);column(0,37+bob,0,8,8.7,7,o.tophat,1.08,.5);column(0,34+bob,0,8.25,1.5,7.2,'#8a2a2a',1,.2);
+  column(0,32.4+bob,0,12,.7,10,o.tophat,1,.4);column(0,34+bob,0,8.6,2,7.6,'#be303b',1,.24);column(0,38.05+bob,0,8.6,6.1,7.6,o.tophat,1,.5);
  }else if(o.crown){
   column(0,32.7+bob,0,10,1.7,8.6,o.crown,1,.4);
   for(let i=0;i<8;i++){const a=i*Math.PI/4;beam([Math.cos(a)*4.6,33+bob,Math.sin(a)*4],[Math.cos(a)*5,37+bob,Math.sin(a)*4.3],.9,o.crown,.1,.3)}
@@ -169,7 +169,16 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
   if(o.visor){box(0,31.2+bob,4.3,8.8,2.5,.9,'#101014',.32,1);box(0,31.2+bob,4.82,7.8,.65,.15,o.visor,.03,1)}
   if(o.headband){column(0,32.2+bob,0,9,.65,7.8,o.headband,1,.15);beam([-4.2,32.2+bob,-1],[-5.7,28.7+bob,-3.6],.35,o.headband,.2,.15)}
   if(o.halo){for(let i=0;i<16;i++){const a=i*Math.PI/8,b=(i+1)*Math.PI/8,y=39+bob+Math.sin(time*2.4)*.35;beam([Math.cos(a)*6,y,Math.sin(a)*4.8],[Math.cos(b)*6,y,Math.sin(b)*4.8],.22,o.halo,.22,.04)}}
-  if(o.glitchm){const cs=['#ff3a6a','#3affd8','#6a8aff','#ffe03a','#f3f0ff'];for(let y=0;y<3;y++)for(let x=0;x<3;x++)box((x-1)*2.6,28.8+y*2.5+bob,4.3,2.6,2.5,.35,cs[(Math.floor(time*10)+x*3+y*7)%5],.03,1)}
+  if(o.glitchm){
+   const cs=['#ff3a6a','#3affd8','#6a8aff','#ffe03a','#f3f0ff'],f=Math.floor(time*10);
+   box(0,31.5+bob,.2,9.4,9.4,9.4,'#161923',.65);
+   for(let y=0;y<3;y++)for(let x=0;x<3;x++){
+    const a=(x-1)*3,b=28.5+y*3+bob,c=cs[(f+x*3+y*7)%5];
+    box(a,b,4.98,2.72,2.72,.18,c,.06,.1);box(a,b,-4.58,2.72,2.72,.18,cs[(f+x+y*2+1)%5],.06,.1);
+    box(-4.78,b,a+.2,.18,2.72,2.72,cs[(f+x*2+y+2)%5],.06,.1);box(4.78,b,a+.2,.18,2.72,2.72,cs[(f+x+y+3)%5],.06,.1);
+    box(a,36.28+bob,(y-1)*3+.2,2.72,.18,2.72,cs[(f+x+y*3)%5],.06,.1);
+   }
+  }
  }
  box(0,23+bob,-3.3,6.5,5.7,.7,tint(V,.92),.3);
  box(0,26.1+bob,-3.8,3.1,.65,.7,tint(V,.65),.2);

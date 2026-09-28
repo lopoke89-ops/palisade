@@ -80,7 +80,7 @@ function award(own,e){
   const p=players.get(own);if(!p)return;
   const v=BOUNTY[e.type]||4;p.sal+=v;p.kills++;flt(e.x,e.y-.2,'+'+v,'#e2b436');killFx(e.x,e.y,p.cos.fx);
 }
-const myName=()=>(cfg.name||'').trim()||'Big U';
+const myName=()=>(acct.state==='full'&&acct.name?acct.name.slice(0,12):(cfg.name||'').trim())||'Big U';
 function newGame(roster,pvp=''){
   roster=roster||[{id:myId,name:myName(),cls:pick.cls,cos:cosStr(myCos())}];
   pvp=pvp==='base'||pvp==='ffa'?pvp:'';

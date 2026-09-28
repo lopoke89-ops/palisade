@@ -50,6 +50,29 @@
 
 <div id="menu">
   <div class="panel">
+    <header class="accountDock">
+      <nav class="partyNav" aria-label="Lobby navigation"><strong>PALISADE</strong><button type="button" data-party-go="play" class="active">PLAY</button><button type="button" data-party-go="locker">LOCKER</button><button type="button" data-party-go="settings">SETTINGS</button></nav>
+      <button id="identityButton" type="button" data-go="account" aria-label="Your account"><canvas id="identityAvatar" width="88" height="88" aria-hidden="true"></canvas><span><b id="identityName">PLAYER</b><small id="identityState">LOCAL PROFILE</small></span><span class="identityDot" aria-hidden="true"></span></button>
+      <button class="shardWallet" type="button" data-go="locker" aria-label="Open locker"><span aria-hidden="true">◆</span> <b id="identityShards">0</b> <small>SHARDS</small></button>
+    </header>
+    <section id="partyShell" hidden aria-label="Multiplayer lobby">
+      <div id="partyControls" class="partyControls"></div>
+      <div class="partyStage">
+        <div class="partyHeading"><span class="eyebrow" id="partyMode">CO-OP</span><h2 id="partyTitle">YOUR CREW. YOUR CLAIM.</h2><p id="partySubtitle">Choose your job. Bring your crew.</p></div>
+        <div class="partyHero"><canvas id="partyPreview" width="1000" height="780" aria-label="Your equipped character and party"></canvas><div class="partyNameplate"><b id="partyPlayerName">PLAYER</b><span id="partyPlayerState">IN LOBBY</span></div></div>
+        <div id="partySlots" class="partySlots" aria-label="Party members"></div>
+        <p class="partyHint" id="partyHint">Up to six players · desktop and mobile</p>
+      </div>
+      <aside class="socialPanel" aria-label="Friends and saved players">
+        <div class="socialHead"><h2>FRIENDS</h2><b id="savedCount">0</b></div>
+        <p class="socialCaption">Saved players · synced to your account</p>
+        <form id="friendSearch" autocomplete="off"><label for="friendName">FIND A PLAYER</label><div><input id="friendName" type="text" maxlength="16" placeholder="Exact username" aria-label="Find player by username" spellcheck="false" autocapitalize="off"><button class="go" type="submit">FIND</button></div></form>
+        <p id="socialStatus" class="status" role="status"></p><div id="friendResult"></div>
+        <div class="socialSection"><span>SAVED PLAYERS</span><button id="socialRefresh" type="button" aria-label="Refresh saved players">REFRESH</button></div>
+        <div id="savedPlayers" class="savedPlayers"></div>
+        <p class="socialFoot">A listed room means you can join. Players without one may still be playing privately.</p>
+      </aside>
+    </section>
     <div class="eyebrow">FIELD TEST 03 · LUMBER YARD</div>
     <h1>PALI<span class="cut">SADE</span></h1>
     <p class="tag">Neighbors with rifles and a deadline.</p>
@@ -65,7 +88,7 @@
       <button class="ghost" id="installBtn" type="button" hidden>INSTALL AS AN APP</button>
       <button class="ghost acctBtn" id="acctBtn" type="button" data-go="account" hidden>ACCOUNT</button>
       <p class="note" id="saveNote" hidden></p>
-      <p class="foot">v0.8.12 · phone and desktop · online co-op and PvP for up to six</p>
+      <p class="foot">v0.8.13 · phone and desktop · online co-op and PvP for up to six</p>
     </section>
 
     <section class="page" id="pg-account" hidden>
@@ -127,7 +150,7 @@
 
     <section class="page" id="pg-multi" hidden>
       <h2 class="pt">MULTIPLAYER</h2>
-      <p class="lede">Up to six players over the internet, on phones or computers. One person hosts and gets a 4-letter room code; everyone else types it in.</p>
+      <p class="lede">Create a room or join your crew.</p>
       <p class="note" id="mOffline" hidden>Online play needs the hosted copy of the game (the web link, or the icon on your home screen). This preview can't reach the internet, so solo only here.</p>
       <label class="set"><span>YOUR NAME</span><input type="text" id="mName" maxlength="12" placeholder="Big U" autocomplete="nickname" spellcheck="false"></label>
       <h2>YOUR JOB</h2>

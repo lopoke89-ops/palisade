@@ -13,6 +13,12 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', O = __dirname +
   await G.fill('#mName', 'Rook'); await G.click('[data-mc=grenadier]'); await G.fill('#mCode', code); await G.click('#joinBtn');
   await G.waitForSelector('#pg-lobby:not([hidden])', { timeout: 10000 }); await H.waitForTimeout(700);
   console.log('lobby:', await H.textContent('#lList'));
+  // Equipping headgear in the locker must update both party previews and the next match.
+  for(const page of [H,G]){await page.click('[data-party-go=locker]');await page.evaluate(()=>{__pal.locker.eq.hat='cap';__pal.showPage('multi')});await page.waitForSelector('#pg-lobby:not([hidden])')}
+  await H.waitForFunction(()=>__pal.NET.roster.length===2&&__pal.NET.roster.every(r=>r.cos.split('|')[1]==='cap'));
+  await G.waitForFunction(()=>__pal.NET.roster.length===2&&__pal.NET.roster.every(r=>r.cos.split('|')[1]==='cap'));
+  if(await H.locator('.partySlot.occupied').count()!==2)throw new Error('Party slots do not match roster');
+  await H.screenshot({path:O+'/party-host.jpg'});await G.screenshot({path:O+'/party-guest.jpg'});
   await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 6000 }); await H.waitForTimeout(1200);
   console.log('guest sees classes:', await G.evaluate(() => [...__pal.players.values()].map(p => p.name + ':' + p.cls + (p.gun.mag ? ' ammo ' + p.ammo : '')).join(', ')));
   await G.evaluate(() => { window.__muzzleIds=new Set(); window.__muzzleTimer=setInterval(()=>{for(const b of __pal.bullets)if(b.visual&&b.visual.length===4)window.__muzzleIds.add(b.id)},10) });

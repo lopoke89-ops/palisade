@@ -4,7 +4,7 @@
 // they talk directly. Each guest opens 'r' (reliable: hello, build, grenade, and every
 // one-off event: sounds, particles, bullets, toasts, wall changes), 'u' (fast: movement in),
 // and 'st' (never resent: game state out, 15 times a second).
-const PROTO='yard-12',ROOM_PREFIX='palisade-yard-12-';
+const PROTO='yard-13',ROOM_PREFIX='palisade-yard-13-';
 const NET={mode:'solo',inGame:false,peer:null,code:'',roster:[],conns:new Map(),host:null,fxq:[],snapT:0,snapN:0,lastN:0,inT:0,nextG:1,lastHeard:0,
   sendTo(id,msg){for(const c of this.conns.values())if(c.pid===id&&c.r&&c.r.open){try{c.r.send(msg)}catch(e){}}},
   sendAll(msg,ch='r'){for(const c of this.conns.values()){const x=c[ch]&&c[ch].open?c[ch]:c.r;if(c.pid&&x&&x.open)try{x.send(msg)}catch(e){}}},
@@ -108,6 +108,12 @@ function hostData(peerId,d){
       c.r.send({t:'start',roster:rosterNow(),diff:pick.diff,mode:game.mode,pvp:game.pvp});NET.wlSent=null;NET.piSent=null;
       toastAll(`${c.name.toUpperCase()} JOINED`,game.pvp==='base'?`Dropped in on ${TEAMS[team].name}.`:game.pvp?'Dropped into the fight.':'Dropped in at the stake.')}
     broadcastLobby();return;
+  }
+  if(d.t==='loadout'){
+    if(c.pid&&!NET.inGame){const r=NET.roster.find(x=>x.id===c.pid);if(r){
+      c.cls=CLASSES[d.cls]?d.cls:r.cls;c.cos=cosStr(parseCos(d.cos));c.name=String(d.name||r.name).slice(0,12);
+      Object.assign(r,{cls:c.cls,cos:c.cos,name:c.name});broadcastLobby();
+    }}return;
   }
   if(d.t==='ping')return;
   if(d.t==='c'){hostChat(c.pid,d.m);return}

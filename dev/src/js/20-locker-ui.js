@@ -26,7 +26,7 @@ function drawTracer(b){
 
 function killFx(x,y,id){
   if(id&&id!=='none')sfx('kx_'+id,x,y);
-  if(FINISH_LIFE[id])emit(x,y,WH*.6,'finish:'+id);
+  if(id!=='skull'&&FINISH_LIFE[id])emit(x,y,WH*.6,'finish:'+id);
   const E=(n,k,z=.6)=>{for(let i=0;i<Math.ceil(n*.65);i++)emit(x,y,WH*z,k)};
   switch(id){
     case'pixel':E(14,'pix');break;
@@ -46,7 +46,7 @@ function killFx(x,y,id){
     case'embers':for(let n=0;n<12;n++)emit(x,y,WH*.4,'ember');break;
     case'glint':for(let n=0;n<10;n++)emit(x,y,WH*.6,'glint');break;
     case'bolt':for(let n=0;n<9;n++)emit(x+(rnd()-.5)*.15,y+(rnd()-.5)*.15,WH*(.2+n*.3),'bolt');addFlash({x,y,life:.22,max:.22,r:1.1});break;
-    case'skull':for(let n=0;n<6;n++)emit(x,y,WH*.6,'spark');break;
+    case'skull':flt(x,y,'☠','#efe6d2');for(let n=0;n<6;n++)emit(x,y,WH*.6,'spark');break;
   }
 }
 function keyCap(x,y,key,text,col){
