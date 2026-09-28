@@ -20,6 +20,13 @@ function tracerStamp(st,t){
  const fade=c.createLinearGradient(0,0,192,0);fade.addColorStop(0,'#fff');fade.addColorStop(.64,'#fff');fade.addColorStop(1,'transparent');c.globalCompositeOperation='destination-in';c.fillStyle=fade;c.fillRect(0,0,192,48);
  TRACE_STAMPS.set(key,cv);if(TRACE_STAMPS.size>64)TRACE_STAMPS.delete(TRACE_STAMPS.keys().next().value);return cv;
 }
+// Cache the two color channels; chromatic splitting adds no per-shot canvas allocation.
+function glitchChannel(col){
+ const key='glitch-channel:'+col;let cv=TRACE_STAMPS.get(key);if(cv)return cv;
+ const source=tracerStamp(TRAILS.glitch,0);cv=document.createElement('canvas');cv.width=source.width;cv.height=source.height;
+ const c=cv.getContext('2d');c.drawImage(source,0,0);c.globalCompositeOperation='source-in';c.fillStyle=col;c.fillRect(0,0,cv.width,cv.height);
+ TRACE_STAMPS.set(key,cv);if(TRACE_STAMPS.size>64)TRACE_STAMPS.delete(TRACE_STAMPS.keys().next().value);return cv;
+}
 function paintTracer(ctx,x1,y1,x2,y2,st,w,t,heavy){
  const len=Math.hypot(x2-x1,y2-y1);if(len<.01)return;
  ctx.save();ctx.translate(x1,y1);ctx.rotate(Math.atan2(y2-y1,x2-x1));
@@ -27,8 +34,15 @@ function paintTracer(ctx,x1,y1,x2,y2,st,w,t,heavy){
  const width=w*(st.pulse?1+.16*Math.sin(t*28):1),height=width*6.5;
  ctx.beginPath();ctx.rect(0,-height/2,len,height);ctx.clip();
  // The stamp is confined to the calibrated segment, including its soft tail.
- ctx.drawImage(tracerStamp(st,t),0,-height/2,len,height);
- if(st.glitch){const jump=Math.floor(t*22)%3;for(let i=0;i<3;i++){ctx.fillStyle=['#ff426c','#47ffe1','#ecfaff'][i];ctx.fillRect(len*(.12+i*.22),width*(i-1)*(jump?.7:1.2),Math.min(len*.18,10),width*.45)}}
+ if(st.glitch){
+  const tear=Math.floor(t*13)%7===0,split=width*(1.05+.22*Math.sin(t*19)+(tear?.35:0)),drift=Math.min(width*.65,len*.08);
+  // Color fringes travel with the shot and remain inside the calibrated head/tail clip.
+  ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha*=.88;
+  ctx.drawImage(glitchChannel('#ff285b'),drift,-height/2-split,len,height);
+  ctx.drawImage(glitchChannel('#24eaff'),-drift,-height/2+split,len,height);ctx.restore();
+  ctx.drawImage(tracerStamp(st,t),0,-height*.32,len,height*.64);
+  if(tear)for(let i=0;i<2;i++){ctx.fillStyle=i?'#24eaff':'#ff285b';ctx.fillRect(len*(.28+i*.28),(i?1:-1)*split,Math.min(len*.17,width*5),width*.42)}
+ }else ctx.drawImage(tracerStamp(st,t),0,-height/2,len,height);
  if(st.pulse||st===TRAILS.plasma||st===TRAILS.aurora){ctx.strokeStyle=st.pulse?'#fff2fb':'#deffff';ctx.globalAlpha*=.7;ctx.lineWidth=Math.max(.5,width*.22);for(let i=1;i<4;i++){const xx=len*i/5;ctx.beginPath();ctx.moveTo(xx,-width*.7);ctx.lineTo(xx+width*.5,0);ctx.lineTo(xx,width*.7);ctx.stroke()}}
  if(st.pk==='star'||st.pk==='cosmic'||st.rgrad){ctx.fillStyle=st.rgrad?'#fff1ac':'#f4edff';for(let i=1;i<4;i++){const xx=len*(i*.21),yy=Math.sin(i*2+t*5)*width*.55,rr=width*(i===1?.65:.4);ctx.beginPath();ctx.moveTo(xx-rr,yy);ctx.lineTo(xx,yy-rr);ctx.lineTo(xx+rr,yy);ctx.lineTo(xx,yy+rr);ctx.closePath();ctx.fill()}}
  if(st.pk==='rock'){ctx.fillStyle='#d2b8a0';ctx.strokeStyle='#292322';ctx.lineWidth=.6;for(let i=1;i<4;i++){const xx=len*i/5,yy=(i%2?1:-1)*width*.7;ctx.beginPath();ctx.moveTo(xx-width*.7,yy);ctx.lineTo(xx,yy-width*.55);ctx.lineTo(xx+width*.5,yy);ctx.lineTo(xx,yy+width*.7);ctx.closePath();ctx.fill();ctx.stroke()}}
