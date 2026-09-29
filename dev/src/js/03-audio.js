@@ -8,12 +8,14 @@ function initAudio(){
 }
 /* ---- music. Each track is loaded the first time it's needed, looped with no gap (Web Audio, not an <audio> tag),
    faded in and out. Only the track this part of the game can play stays decoded (a decoded minute of music is
-   ~20 MB), so the between-raid track is let go in the menus and the locker track during a run.
+   ~20 MB), so only the track needed by the current screen or phase stays decoded.
    Each track comes in two formats: AAC for Safari/iPhone/Chrome, Opus for browsers without AAC; the first one
    this browser plays is used. len: the exact loop length of the original file, in seconds.
    New track: add an entry here, a case in musicWant(), and both files to build.py's MUSIC_FILES. */
 const MUSIC={between:{src:['between_raids.m4a','between_raids.ogg'],len:2348026/48000},   // co-op build phase
-             locker:{src:['locker.m4a','locker.ogg'],len:3680004/48000}};                   // the Locker page
+             locker:{src:['locker.m4a','locker.ogg'],len:3680004/48000},                   // the Locker page
+             menu:{src:['main_menu.m4a','main_menu.ogg'],len:6764037/48000},               // main menu
+             raid:{src:['raid.m4a','raid.ogg'],len:5832911/48000}};                        // co-op raid
 const mus={bufs:{},loading:{},failAt:{},src:null,g:null,bus:null,cur:null};
 function musicLoad(k){
   if(mus.bufs[k]||mus.loading[k]||performance.now()-(mus.failAt[k]||-1e9)<30000||!AC)return;mus.loading[k]=true;
@@ -37,11 +39,11 @@ function musicStop(fade){
 // which track should be playing right now (null: none)
 function musicWant(){
   if(cfg.music<=0||document.hidden)return null;
-  if(!$('menu').hidden&&!$('pg-locker').hidden)return'locker';
-  if(!demo&&!game.pvp&&game.phase==='build'&&playing())return'between';
+  if(!$('menu').hidden&&demo)return $('pg-locker').hidden?'menu':'locker';
+  if(!demo&&!game.pvp&&playing())return game.phase==='raid'?'raid':'between';
   return null;
 }
-const musicKeep=k=>k===(playing()?'between':'locker');   // the one track worth keeping decoded here
+const musicKeep=k=>k===musicWant();   // the one track worth keeping decoded here
 function musicTick(){
   if(!AC)return;
   if(!mus.bus){mus.bus=AC.createGain();mus.bus.connect(master)}

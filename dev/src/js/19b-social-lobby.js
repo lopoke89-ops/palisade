@@ -63,6 +63,8 @@ let partyPaintAt=0,partySig='',partyMeSig='',partyCharSig='',partyCharCv=null;
 // second; the breathing bob is a CSS transform, so it costs no painting at all.
 const STAGE={wide:{me:[500,722,13.4],others:[[250,660,8.2],[762,660,8.2],[88,612,7.4],[918,612,7.4],[395,568,6.8]]},
  phone:{me:[500,712,11.6],others:[[150,700,8.2],[830,712,8.2],[292,580,6.8],[690,572,6.8],[930,522,5.8]]}};   // v0.9.2: the sixth stands off to the side, not behind you
+// The Locker leaves room below the feet for glowing rings and other skin effects.
+const stageMe=L=>$('menu').dataset.page==='locker'?[L.me[0],Math.min(L.me[1],780-L.me[2]*11-8),L.me[2]]:L.me;
 let stageLay='',stageLayW=-1;   // read the stage width only when the window size changes (reading it every frame forces a layout)
 const stageLayout=()=>{if(stageLayW!==innerWidth||!stageLay){stageLayW=innerWidth;stageLay=$('partyHero').clientWidth<520?'phone':'wide'}return stageLay};
 const stageAngle=(i,t)=>i<0?.35+Math.sin(t/4.5)*.16:[.62,-.62,.5,-.5,.1][i]||0;
@@ -77,11 +79,11 @@ function drawPartyPreview(now){
  const rows=partyRows(),me=rows.find(r=>r.id===myId)||rows[0],solo=!['multi','lobby'].includes($('menu').dataset.page),t=now/1000,L=STAGE[stageLayout()];
  const others=solo?[]:rows.filter(r=>r!==me).slice(0,5),look=r=>lookOf(parseCos(r.cos),r.cls);
  // back layer: pads, the rest of the party and their name plates
- const sig=L===STAGE.phone?'p':'w';const backSig=sig+'|'+solo+'|'+others.map(r=>r.id+r.cls+r.cos+r.name).join();
+ const sig=(L===STAGE.phone?'p':'w')+($('menu').dataset.page==='locker'?'l':'');const backSig=sig+'|'+solo+'|'+others.map(r=>r.id+r.cls+r.cos+r.name).join();
  if(backSig!==partySig){partySig=backSig;
   const cv=$('partyPreview'),x=cv.getContext('2d');x.clearRect(0,0,cv.width,cv.height);
   const pad=(px,py,r,active)=>{cosmeticGlow(x,px,py,r*1.5,active?'#7de6e8':'#536f89',active?.15:.1);x.fillStyle=active?'rgba(170,239,239,.12)':'rgba(122,171,192,.06)';x.strokeStyle=active?'#b4edee':'#597386';x.lineWidth=active?3:2;x.beginPath();x.ellipse(px,py,r,r*.22,0,0,Math.PI*2);x.fill();x.stroke()};
-  const [mx,my,ms]=L.me;pad(mx,my,ms*11.5,true);
+  const [mx,my,ms]=stageMe(L);pad(mx,my,ms*11.5,true);
   if(!solo){
    // empty spots show where the next player stands; filled ones are drawn back to front
    const order=L.others.map((s,i)=>({s,i})).sort((a,b)=>a.s[1]-b.s[1]);
@@ -98,7 +100,7 @@ function drawPartyPreview(now){
  const aura=lk.aura&&!reduceMotion()?lk.aura:'',at=aura?Math.floor(t*12)/12:0;
  const charSig=sig+'|'+me.cls+me.cos+'|'+step.toFixed(4)+'|'+tick,meSig=charSig+'|'+at;
  if(meSig===partyMeSig)return;partyMeSig=meSig;partyPaintAt=now;
- const cv=$('partyMe'),x=cv.getContext('2d'),[mx,my,ms]=L.me;
+ const cv=$('partyMe'),x=cv.getContext('2d'),[mx,my,ms]=stageMe(L);
  if(!lk.aura){x.clearRect(0,0,cv.width,cv.height);paintWardrobeCharacter(x,lk,step,tick,ms,mx,my-4,false);return}
  // only the box around the figure is cleared and redrawn for each frame of the effect (the whole layer only when the figure turns)
  const T=x.getTransform(),k=T.a,bx=Math.max(0,Math.floor((mx-ms*24)*k+T.e)),by=Math.max(0,Math.floor((my-4-ms*50)*k+T.f)),bw=Math.min(cv.width-bx,Math.ceil(ms*48*k)),bh=Math.min(cv.height-by,Math.ceil(ms*62*k));
@@ -118,7 +120,7 @@ function drawStageFx(now){
  if(!live){if(stageFxOn){stageFxOn=false;const c=$('partyFx');c.getContext('2d').clearRect(0,0,c.width,c.height)}return}
  if(now-stageFxAt<33)return;stageFxAt=now;stageFxOn=true;
  const cv=$('partyFx'),x=cv.getContext('2d');x.clearRect(0,0,cv.width,cv.height);
- const L=STAGE[stageLayout()],[mx,my,ms]=L.me,lk=lookOf(locker.eq,pick.cls),ang=stageAngle(-1,now/1000),step=Math.round(ang*90/Math.PI)*Math.PI/90;
+ const L=STAGE[stageLayout()],[mx,my,ms]=stageMe(L),lk=lookOf(locker.eq,pick.cls),ang=stageAngle(-1,now/1000),step=Math.round(ang*90/Math.PI)*Math.PI/90;
  const m=paintWardrobeCharacter(null,lk,step,0,1,0,0,false),tip=[mx+m.tip[0]*ms,my-4+m.tip[1]*ms],dx=m.tip[0]-m.root[0],dy=m.tip[1]-m.root[1],dl=Math.hypot(dx,dy)||1,sd={x:dx/dl,y:dy/dl};
  const st=TRAILS[locker.eq.trail]||TRAILS.std,d0=(ph-.05)/.35*560,len=90*(st.len||1);
  traceSeg(x,tip[0]+sd.x*d0,tip[1]+sd.y*d0,tip[0]+sd.x*Math.max(0,d0-len),tip[1]+sd.y*Math.max(0,d0-len),st,8*(st.w||1),now/1000,false);

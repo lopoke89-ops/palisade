@@ -38,7 +38,7 @@ src=head+src.replace('<script>\n(()=>{','<script>window.PEER_SRC=\'peerjs.min.js
 src=src.replace('</style>\n','</style>\n</head>\n<body>\n',1)
 src=src.replace('\n</html>\n','\n</body>\n</html>\n')
 # music: each file name carries its content hash, so a new track reaches players instead of the cached old one
-MUSIC_FILES=['between_raids','locker']
+MUSIC_FILES=['between_raids','locker','main_menu','raid']
 for name in MUSIC_FILES:
     for ext in ('m4a','ogg'):
         mh=hashlib.sha1(open(f'{DEV}/audio/{name}.{ext}','rb').read()).hexdigest()[:8]
@@ -55,13 +55,15 @@ src=DEBUG_LINE.sub('',src)
 src=re.sub(r"\bPM\('\w+'\);?",'',src)
 # minify the game's script when terser is installed (npm install in dev/test brings it); otherwise ship it as is
 def find_terser():
-    for c in [os.environ.get('TERSER'),f'{DEV}/test/node_modules/.bin/terser',shutil.which('terser'),'/tmp/tools/node_modules/.bin/terser']:
-        if c and os.path.exists(c):return c
+    local=f'{DEV}/test/node_modules/terser/bin/terser'
+    if os.path.exists(local):return [shutil.which('node') or 'node',local]
+    for c in [os.environ.get('TERSER'),shutil.which('terser'),'/tmp/tools/node_modules/.bin/terser']:
+        if c and os.path.exists(c):return [c]
 def minify(page):
     t=find_terser()
     if not t:print('note: terser not found, game script not minified');return page
     a=page.index('<script>\n(()=>{')+len('<script>\n');e=page.index('</script>',a)
-    r=subprocess.run([t,'--compress','passes=2','--mangle','--ecma','2020'],input=page[a:e],capture_output=True,text=True)
+    r=subprocess.run([*t,'--compress','passes=2','--mangle','--ecma','2020'],input=page[a:e],capture_output=True,text=True,encoding='utf-8')
     if r.returncode:raise SystemExit('terser failed: '+r.stderr[:500])
     return page[:a]+r.stdout+page[e:]
 src=minify(src)

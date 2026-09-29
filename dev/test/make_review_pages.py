@@ -23,17 +23,18 @@ paths = subprocess.check_output(
     ['git', 'ls-tree', '-r', '--name-only', CANDIDATE, '--', 'dev/src/js'],
     cwd=ROOT, text=True
 ).splitlines()
+paths = [path for path in paths if path.endswith('.js')]
 
 def make(ref, label):
     page = at(ref, 'dev/src/page.html')
     css = at(ref, 'dev/src/style.css')
-    js = ''.join(
+    js = '\n'.join(
         at(ref, path) for path in paths
     )
     page = page.replace('/*@@STYLE@@*/', css.rstrip('\n'))
     page = page.replace('/*@@SCRIPT@@*/', js.rstrip('\n'))
     page = re.sub(r'<link rel="(?:preconnect|stylesheet)"[^>]+>\n', '', page, count=3)
-    page = '<!doctype html><html lang="en"><head><meta charset="utf-8"><base href="/"><title>PALISADE benchmark</title></head><body>' + page + '</body></html>'
+    page = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><base href="/"><title>PALISADE benchmark</title></head><body>' + page + '</body></html>'
     dest = OUT / ('review-' + label + '.html')
     dest.write_text(page, encoding='utf-8')
     print(dest)

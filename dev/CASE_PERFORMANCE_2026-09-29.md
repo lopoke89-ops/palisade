@@ -33,3 +33,20 @@ The intro readings overlap considerably. Locker readings were consistently highe
 The already-committed reel change removes the repeated style read and preserves the winning item. `reel_music.js` and the existing case/cosmetic checks previously passed against current assembled source. Keep the four source commits for the v0.9.3.1 candidate, but **do not mark performance signed off**. Before release, rebuild the actual deployable page, rerun `bench.js` and `caseperf.js` on that page against the v0.9.3 baseline, profile the Locker difference, and test on a real phone. Check the case intro, reel tick timing, reduced-motion path, six-player stage, and raid frame times.
 
 No release files were built or deployed for this comparison. The temporary benchmark pages live under ignored `dev/test/out/` and can be recreated from `dev/test/make_review_pages.py` using the recorded Git commits.
+
+## Corrected mobile rerun for the v0.9.3.1 candidate
+
+The stored review-page generator did not reproduce a valid mobile comparison: it appended `dev/src/js/ORDER.txt` to the JavaScript and omitted the viewport tag. The generator now includes only `.js` files, separates them with newlines, and sets the same mobile viewport as the built page. The earlier figures above remain historical observations; use this corrected rerun for the reproducible mobile comparison.
+
+With the same 390 × 844, 3× software-drawn Chrome setup, `caseperf.js` gave these matched source results (CPU ms/s):
+
+| Run | v0.9.3 intro | Case-fix intro | v0.9.3 reel | Case-fix reel | Reel style reads, old → new |
+|---|---:|---:|---:|---:|---:|
+| 1 | 196 | 176 | 116 | 100 | 207 → 0 |
+| 2 | 179 | 179 | 103 | 98 | 205 → 0 |
+| 3 | 181 | 172 | 103 | 100 | 208 → 0 |
+| Mean | 185 | 176 | 107 | 99 | — |
+
+The actual built v0.9.3.1 debug page measured 176 intro and 98 reel CPU ms/s in one run, with zero repeated reel style reads, the selected item matching the result, and no page errors. This supports the reel optimization and shows no intro regression in these runs. It is still a PC-based emulation, not a physical phone result.
+
+The phone-sized `bench.js` Locker scene measured 72 CPU ms/s for the corrected v0.9.3 baseline, 81 for the case-fix source page, and 82 for the built v0.9.3.1 candidate in one run each. Raid render medians in the same runs were broadly similar, but enemy and wall counts varied. The Locker increase remains unresolved; investigate it on a real phone before publishing. The candidate's music routing test confirmed that only one track remains decoded at a time.

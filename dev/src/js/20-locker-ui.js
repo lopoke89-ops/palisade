@@ -98,9 +98,13 @@ function drawCrosshair(p){
 // own pixel size, so nothing is scaled up or cut off. Backgrounds are painted wide and cropped to the middle.
 const THUMB_CACHE=new Map(),THUMB_SCR=document.createElement('canvas'),THUMB_ANG=.55;
 function figFrame(look,part){
-  const k=3,W=96*k,H=110*k,ox=48*k,oy=100*k;if(THUMB_SCR.width!==W){THUMB_SCR.width=W;THUMB_SCR.height=H}
-  const x=THUMB_SCR.getContext('2d',{willReadFrequently:true});x.clearRect(0,0,W,H);paintWardrobeCharacter(x,look,THUMB_ANG,0,k,ox,oy,false);
-  const d=x.getImageData(0,0,W,H).data,yMax=part==='hat'?oy-25*k:H;let l=W,r=-1,t=H,b=-1;
+  const k=3,W=96*k,H=126*k,ox=48*k,oy=100*k;if(THUMB_SCR.width!==W){THUMB_SCR.width=W;THUMB_SCR.height=H}
+  const x=THUMB_SCR.getContext('2d',{willReadFrequently:true});x.clearRect(0,0,W,H);
+  const aura=part==='skin'&&look.aura;
+  if(aura)paintAura(x,aura,ox,oy,k,1.3,1,'ground');
+  paintWardrobeCharacter(x,look,THUMB_ANG,0,k,ox,oy,false);
+  if(aura)paintAura(x,aura,ox,oy,k,1.3,1,'top');
+  const yMax=part==='hat'?oy-25*k:aura?H:oy+12*k,d=x.getImageData(0,0,W,yMax).data;let l=W,r=-1,t=H,b=-1;
   for(let y=0;y<yMax;y++)for(let q=0;q<W;q++)if(d[(y*W+q)*4+3]>40){if(q<l)l=q;if(q>r)r=q;if(y<t)t=y;if(y>b)b=y}
   if(r<0)return{cx:0,cy:-20,s:44};
   if(part==='hat')b=Math.max(b,oy-25*k);   // the head's bottom edge

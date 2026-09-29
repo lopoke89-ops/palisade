@@ -5,9 +5,10 @@ level (built from here); this folder is the source.
 
 Current live status is v0.9.3. See [STATUS.md](STATUS.md) for the exact GitHub,
 build, server, and test state. The next planned subversion is **v0.9.3.1**;
-[its hardening brief](plans/v0.9.3.1-hardening.md) supersedes the older v0.9.3
-hardening prompt. Source-only case animation optimizations after the v0.9.3
-release still need a release build and validation before publication.
+[its current implementation prompt](plans/v0.9.3.1-polish-music-safe-hardening.md) sets the next patch scope;
+the [broader hardening brief](plans/v0.9.3.1-hardening.md) remains background and backlog.
+The local candidate includes the post-v0.9.3 case animation optimizations, but their
+real-phone performance still needs validation before publication.
 
 ```
 dev/
@@ -49,7 +50,7 @@ Needs Node 18+ and Python 3.
 cd dev/test
 npm install
 npx playwright install chromium
-./run_all.sh
+./run_targeted.sh cosmetics  # choose the changed area; see the map below
 ```
 
 Profiling: `NOMIN=1 python3 dev/build.py` keeps debug.html unminified (readable function names), and
@@ -59,9 +60,17 @@ raid 20, and memory over a 30-minute Endless run); `PROFILE=1` adds the busiest 
 `caseperf.js` measures case intro and reel CPU on a phone-sized, software-drawn page;
 set `PAGE` to each build's debug page and run both on the same machine for comparison.
 
-It serves the built site on localhost:8080, starts a PeerJS server on :9000, runs every test and
-prints PASS or FAIL for each; logs and screenshots go to `dev/test/out/`. The account and reward
-tests fake Supabase, so they don't touch real players.
+`run_targeted.sh` serves the built site on localhost:8080, starts a PeerJS server on :9000,
+and runs a small group. Choose `cosmetics` for model/Locker changes, `music` for audio changes,
+`combat` for weapon and gunplay changes, `host` for guest input/network validation, or `smoke`
+for a quick open/lobby/audio check. The `all` group or `run_all.sh` runs every browser test.
+`TESTS="cosmetics wardrobe3d" ./run_all.sh` remains available for an exact selection.
+On Windows, use `powershell -File .\run_targeted.ps1 -Group cosmetics` (or another group);
+it uses installed Chrome when `CHROMIUM` is unset. `-Tests "locker_fit"` runs one named test.
+Run broader checks only when shared code or a failing targeted check gives a reason. Logs and
+screenshots go to `dev/test/out/`. The account and reward tests fake Supabase, so they don't
+touch real players. New behavior without an existing relevant test warrants a focused regression
+check, not an automatic full-suite run.
 
 ## Publish
 
@@ -87,8 +96,9 @@ be on, and email needs custom SMTP.
 
 ## Music
 
-Two tracks, each as AAC (.m4a) and Opus (.ogg) in `audio/`: `between_raids` (co-op/Endless build
-phases) and `locker` (the Locker page). To replace one, encode both formats from a WAV under the
+Four tracks, each as AAC (.m4a) and Opus (.ogg) in `audio/`: `between_raids` (co-op/Endless build
+phases), `raid` (co-op raids), `main_menu` (menu pages outside the Locker), and `locker` (the
+Locker page). To replace one, encode both formats from a WAV under the
 same name and update its loop length (in samples) in `MUSIC` inside src/js/03-audio.js. A new
 track = a new entry in `MUSIC`, its name in `MUSIC_FILES` in build.py, and a case in `musicWant()`.
 

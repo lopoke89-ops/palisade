@@ -132,16 +132,19 @@ function hostData(peerId,d){
   if(d.t==='team'){if(!NET.inGame){const r=NET.roster.find(x=>x.id===c.pid);if(r){r.team=r.team==='b'?'a':'b';broadcastLobby()}}return}
   const p=players.get(c.pid);if(!p||!NET.inGame||!running())return;
   if(d.t==='i'){
+    // Ignore malformed guest coordinates/aim before they reach collision, rendering or simulation.
+    if(!Number.isFinite(d.x)||!Number.isFinite(d.y)||!Number.isFinite(d.ax)||!Number.isFinite(d.ay)||
+       !Number.isInteger(d.tp)||(d.n!==undefined&&(!Number.isSafeInteger(d.n)||d.n<0)))return;
     const l=Math.hypot(d.ax,d.ay);if(l>.01){p.aim={x:d.ax/l,y:d.ay/l};p.face=p.aim}
     p.fireIn=!!d.f&&p.alive;p.autoFire=d.a!==0;if(d.n!==undefined&&d.n!==p.pullIn){if(p.pullIn===undefined)p.pullUsed=d.n;p.pullIn=d.n;p.pullT=game.time}
     if(p.alive&&d.tp===p.tp){const dd=Math.hypot(d.x-p.x,d.y-p.y);
       if(dd<3&&!collides(d.x,d.y,.2,pt(p))){p.walk+=dd*3;p.x=d.x;p.y=d.y}else if(dd>=3)p.tp++}
   }
-  else if(d.t==='b')doBuild(p,d.i|0,d.j|0,d.s|0,!!d.d);
-  else if(d.t==='n')throwNade(p,+d.x,+d.y);
+  else if(d.t==='b'){if(Number.isInteger(d.i)&&Number.isInteger(d.j)&&Number.isInteger(d.s)&&d.s>=0&&d.s<=2)doBuild(p,d.i,d.j,d.s,!!d.d)}
+  else if(d.t==='n'){if(Number.isFinite(d.x)&&Number.isFinite(d.y))throwNade(p,d.x,d.y)}
   else if(d.t==='u')buyUpgrade(p,String(d.k));
   else if(d.t==='rl'){if(p.gun.mag)p.rlReq=true}
-  else if(d.t==='ab')useAbility(p,+d.x,+d.y);
+  else if(d.t==='ab'){if(Number.isFinite(d.x)&&Number.isFinite(d.y))useAbility(p,d.x,d.y)}
 }
 function hostDrop(peerId){
   const c=NET.conns.get(peerId);if(!c)return;NET.conns.delete(peerId);
