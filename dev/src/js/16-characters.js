@@ -141,13 +141,18 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
    beam([gunX+.3,gunY+bob,gunZ+sl+.8-kick],[gunX+1.6,gunY+bob+pull*2,gunZ+sl+.8-kick-pull*1.5],.25,'#9caa9c',.25,.1);
   }
  }
+ // Opaque face pieces replace facial detail; drawing eyes and nose behind them lets those
+ // small meshes break through when the head turns or an item sits close to the face.
+ const faceCovered=!!(o.hood||o.sheet||o.pumpkin||o.glitchm||o.mask||o.visor||o.hockey||o.sack||o.facewrap||o.khelm||o.bomb||o.clownface);
  // Angular cheek and jaw planes, ears and a shaped helmet instead of a flat circle.
  if(!o.pumpkin&&!o.sheet){   // a pumpkin (or a ghost's sheet) replaces the head entirely (no ears or face poking through it)
  column(0,30.1+bob,.2,7.2,6.4,6.3,skin,1.13,.6);
  column(-4.05,30.5+bob,.15,1.15,2.25,2,skin,1,.3);column(4.05,30.5+bob,.15,1.15,2.25,2,skin,1,.3);
+ if(!faceCovered){
  box(-1.45,30.75+bob,3.85,.7,.72,.18,'#34392c',.08,1.5);box(1.45,30.75+bob,3.85,.7,.72,.18,'#34392c',.08,1.5);
  box(0,29.9+bob,3.6,.75,1.4,.7,tint(skin,1.03),.08,1.2);
  box(0,28.55+bob,3.45,1.75,.28,.18,tint(skin,.64),.05,1.5);
+ }
  }
 
  function dome(col,base=32,rx=5.3,rz=4.5,height=4.7){
@@ -239,7 +244,12 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
   for(const x of[-1.5,0,1.5])box(x,29+bob,5.3,.45,1.5,.3,'#252820',.06,1);
   beam([0,36.4+bob,-3],[0,36.4+bob,3],.65,tint(o.khelm,.82),.65,.3);
  }else if(o.hair){
-  for(const [x,y,z,r]of [[-4.8,32,0,2.6],[4.8,32,0,2.6],[-3,35,-.8,2.6],[3,35,-.8,2.6],[0,37,0,2.3],[0,34,-3.8,2.7]])ball(x,y+bob,z,r,o.hair);
+  // One rounded afro cap, clear of the eyes, instead of separate blocky clumps.
+  const seg=compact?12:20,rings=compact?6:10,v=[],ff=[];
+  for(let r=0;r<=rings;r++){const a=-Math.PI/2+Math.PI*r/rings,y=36+Math.sin(a)*4.7,k=Math.cos(a);
+   for(let q=0;q<seg;q++){const t=2*Math.PI*q/seg;v.push([Math.cos(t)*5.5*k,y+bob,Math.sin(t)*4.9*k-.3])}}
+  for(let r=0;r<rings;r++)for(let q=0;q<seg;q++){const a=r*seg+q,b=r*seg+(q+1)%seg;ff.push([a,b,b+seg,a+seg])}
+  mesh(v,ff.map(f=>f.slice().reverse()),o.hair,.55);
   if(o.hairGold)for(const x of[-3,1,4])box(x,35.5+bob,1.7,.5,.7,.5,'#fff1b0',.03,1);
  }else{
   // Uncovered head remains visible beneath masks and floating accessories.
@@ -706,7 +716,7 @@ function drawPerson(x,y,o){
   if(o.pack&&!front){P(rectP(0,-18.5+bob,11,10),o.pack);seg([-5.5,-21.5+bob],[5.5,-21.5+bob],OUT,1)}
   const hx=side*.4;let hy2=-28.8+bob;
   if(!o.pumpkin){disc(hx,hy2,5.3,OUT);disc(hx,hy2,4.5,front?skin:dark(skin,.3))}
-  if(front&&!o.pumpkin&&!o.hood){
+  if(front&&!o.pumpkin&&!o.hood&&!o.sheet&&!o.glitchm&&!o.mask&&!o.visor&&!o.hockey&&!o.sack&&!o.facewrap&&!o.khelm&&!o.bomb&&!o.clownface){
     if(o.bones){g.fillStyle='#1a1614';disc(hx-1.5+side*1.2,hy2-.5,1.3,'#1a1614');disc(hx+1.5+side*1.2,hy2-.5,1.3,'#1a1614');g.fillRect(hx+side*1.2-.4,hy2+1.2,.8,1);
       for(let k=-2;k<=2;k++)g.fillRect(hx+side*1.2+k*.8-.2,hy2+2.8,.4,1)}
     else if(o.phantom){disc(hx-1.5+side*1.2,hy2-.6,1,'#0e3a26');disc(hx+1.5+side*1.2,hy2-.6,1,'#0e3a26');g.globalAlpha=A0*.6;disc(hx+side*1.2,hy2+2.2,.9,'#0e3a26');g.globalAlpha=A0}
@@ -736,7 +746,7 @@ function drawPerson(x,y,o){
     if(front){g.fillStyle=OUT;g.fillRect(hx-4.2+side*.6,hy2-.8,8.4,1.4);for(const d of[-1.6,0,1.6])g.fillRect(hx+side*2+d-.35,hy2+1.6,.7,1.6)}
     seg([hx,hy2-6.2],[hx,hy2-1],dark(o.khelm,.3),.9);P([[hx-1.1,hy2-5.8],[hx+1.1,hy2-5.8],[hx+side*.6,hy2-10]],dark(o.khelm,.12));
     g.globalAlpha=A0*.6;seg([hx-3.4,hy2-4.6],[hx-4.4,hy2+3],'#fff6c8',.9);g.globalAlpha=A0}
-  else if(o.hair){for(const[dx,dy,r]of[[-5.4,-1.6,3.2],[5.4,-1.6,3.2],[-2.8,-5.2,2.9],[2.8,-5.2,2.9],[0,-6.6,2.7]]){disc(hx+dx,hy2+dy,r+.8,OUT);disc(hx+dx,hy2+dy,r,o.hair)}
+  else if(o.hair){disc(hx,hy2-5.6,6.1,OUT);disc(hx,hy2-5.6,5.5,o.hair);
     if(o.hairGold){g.globalAlpha=A0*.8;for(const[dx,dy]of[[-6.2,-2.8],[1.8,-6.4],[4.6,-2.6]])disc(hx+dx,hy2+dy,.8,'#fffbe0');g.globalAlpha=A0}}
   else if(o.halo){const yy=hy2-9+Math.sin(game.time*2.4)*.7;g.globalAlpha=A0*.4;g.strokeStyle=o.halo;g.lineWidth=3.4;g.beginPath();g.ellipse(hx,yy,6.2,1.9,0,0,Math.PI*2);g.stroke();
     g.globalAlpha=A0;g.lineWidth=1.3;g.beginPath();g.ellipse(hx,yy,6.2,1.9,0,0,Math.PI*2);g.stroke();const a=game.time*3;disc(hx+Math.cos(a)*6.2,yy+Math.sin(a)*1.9,.9,'#ffffff')}

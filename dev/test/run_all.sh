@@ -12,7 +12,7 @@ curl -s -o /dev/null localhost:8080/ || (cd "$ROOT" && setsid nohup python3 -m h
 curl -s -o /dev/null localhost:9000/ || (setsid nohup node peer-server.js > out/peer.log 2>&1 < /dev/null &)
 sleep 1.5
 fail=0
-for t in ${TESTS:-solo bosses multiplayer cases accounts rewards_lobby_shotgun reel_music music_routing v086 v087 muzzle cosmetics locker_fit cosmetic_network social_lobby lobby v090 v090_net hostcheck wardrobe3d friends rewards_screen modifiers skilltree rejoin controller taborder milestones flagcase}; do
+for t in ${TESTS:-solo bosses multiplayer cases accounts rewards_lobby_shotgun reel_music music_routing v086 v087 muzzle cosmetics locker_fit cosmetic_network social_lobby lobby v090 v090_net hostcheck room_controls csp wardrobe3d friends rewards_screen modifiers skilltree rejoin controller taborder milestones flagcase}; do
   out=$(timeout 300 node $t.js 2>&1); echo "$out" > out/$t.log
   if echo "$out" | grep -qiE "errors?:? *(none|\[\])|ERRS \[\]" && ! echo "$out" | grep -qiE "Error:|TypeError|timed out"; then echo "PASS  $t"; else echo "FAIL  $t  (see out/$t.log)"; fail=1; fi
 done

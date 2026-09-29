@@ -3,12 +3,15 @@
 Everything needed to rebuild, test and restore the game. The playable site is the repo's top
 level (built from here); this folder is the source.
 
-Current live status is v0.9.3. See [STATUS.md](STATUS.md) for the exact GitHub,
-build, server, and test state. The next planned subversion is **v0.9.3.1**;
-[its current implementation prompt](plans/v0.9.3.1-polish-music-safe-hardening.md) sets the next patch scope;
-the [broader hardening brief](plans/v0.9.3.1-hardening.md) remains background and backlog.
-The local candidate includes the post-v0.9.3 case animation optimizations, but their
-real-phone performance still needs validation before publication.
+Current live status is **v0.9.3.1**; the local build is an unpublished **v0.9.3.2**
+candidate. See [STATUS.md](STATUS.md) for the exact GitHub,
+build, server, and test state. The [v0.9.3.1 implementation prompt](plans/v0.9.3.1-polish-music-safe-hardening.md)
+records this patch's scope; the [broader hardening brief](plans/v0.9.3.1-hardening.md)
+remains background and backlog. The release includes the post-v0.9.3 case animation
+optimizations, but their real-phone performance still needs validation.
+Use the [current project blueprint](PROJECT_BLUEPRINT_2026-09-29.md) to plan the next work from today's baseline.
+The [cosmetic and independent-hardening prompt](plans/next-cosmetics-and-hardening-prompt.md)
+records the scope of the local candidate and its remaining release checks.
 
 ```
 dev/

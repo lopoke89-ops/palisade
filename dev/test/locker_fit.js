@@ -26,7 +26,7 @@ const assert = require('node:assert/strict');
         if(skin==='galaxy')await p.screenshot({path:__dirname+'/out/locker_galaxy_'+viewport.width+'.png'});
         console.log(viewport.width,skin,JSON.stringify(bounds));
       }
-      if(viewport.width===1280)for(const hat of ['jackolantern','tophat','witch','boonie','officer']){
+      if(viewport.width===1280)for(const hat of ['jackolantern','tophat','witch','boonie','officer','clownhair','gclownhair','glitch','ledmask','visor']){
         await p.evaluate(hat=>{__pal.locker.eq.skin='std';__pal.locker.eq.hat=hat;__pal.showPage('locker')},hat);
         await p.waitForTimeout(500);
         await p.screenshot({path:__dirname+'/out/locker_'+hat+'.png'});
@@ -35,6 +35,11 @@ const assert = require('node:assert/strict');
         await p.evaluate(()=>{__pal.locker.eq.skin='yard3';__pal.locker.eq.hat='class';__pal.showPage('locker')});
         await p.waitForTimeout(500);
         await p.screenshot({path:__dirname+'/out/locker_straw.png'});
+      }
+      if(viewport.width===1280)for(const skin of ['clown','slasher','scarecrow','butcher']){
+        await p.evaluate(skin=>{__pal.locker.eq.skin=skin;__pal.locker.eq.hat='class';__pal.showPage('locker')},skin);
+        await p.waitForTimeout(500);
+        await p.screenshot({path:__dirname+'/out/locker_skin_'+skin+'.png'});
       }
       assert.deepEqual(errors,[]);
       await p.close();

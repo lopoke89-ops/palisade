@@ -5,8 +5,8 @@ case "${1:-}" in
   cosmetics) tests='locker_fit cosmetics wardrobe3d cosmetic_network' ;;
   music) tests='music_routing' ;;
   combat) tests='solo bosses multiplayer muzzle rewards_lobby_shotgun' ;;
-  host) tests='hostcheck multiplayer' ;;
-  smoke) tests='solo lobby reel_music' ;;
+  host) tests='hostcheck room_controls multiplayer' ;;
+  smoke) tests='solo lobby reel_music csp' ;;
   all) exec "$(dirname "$0")/run_all.sh" ;;
   *) echo 'Usage: ./run_targeted.sh {cosmetics|music|combat|host|smoke|all}' >&2; exit 2 ;;
 esac

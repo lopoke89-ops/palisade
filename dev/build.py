@@ -1,4 +1,4 @@
-import os,shutil,json,hashlib
+import os,shutil,json,hashlib,base64
 from PIL import Image,ImageDraw
 # Builds the playable site into the repo root (the folder above dev/), from the pieces in dev/src
 # (page.html + style.css + js/*.js, joined in file-name order by assemble.py).
@@ -69,6 +69,20 @@ def minify(page):
 src=minify(src)
 # NOMIN=1 leaves debug.html unminified (readable names in a profiler); index.html is always minified
 if not os.environ.get('NOMIN'):debug_src=minify(debug_src)
+def add_csp(page,debug=False):
+    scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',page,re.S)
+    assert len(scripts)==2,'CSP hashes require both inline scripts'
+    hashes=['\'sha256-'+base64.b64encode(hashlib.sha256(s.encode('utf-8')).digest()).decode('ascii')+'\'' for s in scripts]
+    connect=["'self'",'https://puvjfhwxigxjpsvdwrwf.supabase.co',
+             'https://palisade-turn.lopoke89.workers.dev','https://0.peerjs.com','wss://0.peerjs.com']
+    if debug:connect+=['http://127.0.0.1:9000','ws://127.0.0.1:9000','http://localhost:9000','ws://localhost:9000']
+    policy='; '.join(["default-src 'self'","base-uri 'none'","object-src 'none'",
+        'script-src '+' '.join(hashes+["'strict-dynamic'"]),"style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: blob:","font-src 'self'","media-src 'self' blob:",
+        'connect-src '+' '.join(connect),"worker-src 'self' blob:","frame-src 'none'"])
+    return page.replace('<head>','<head>\n<meta http-equiv="Content-Security-Policy" content="'+policy+'">',1)
+src=add_csp(src)
+debug_src=add_csp(debug_src,True)
 open(f'{SITE}/index.html','w',encoding='utf-8').write(src)
 open(f'{SITE}/debug.html','w',encoding='utf-8').write(debug_src)
 shutil.copy(f'{DEV}/vendor/peerjs.min.js',f'{SITE}/peerjs.min.js')

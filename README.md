@@ -1,10 +1,11 @@
 PALISADE: phone version with online co-op
 =========================================
 
-CURRENT RELEASE (September 29, 2026): v0.9.3 is live. It includes controller
-support, milestone and class rewards, more Halloween items, and the Flag Case.
-The next planned update is v0.9.3.1 for security and reliability work. It is
-not live yet. The current work and verification are recorded in dev/STATUS.md.
+CURRENT RELEASE (September 29, 2026): v0.9.3.1 is live. It includes targeted
+tests, cosmetic and Locker fit fixes, menu and raid music, safe host input checks,
+and the v0.9.3 milestone cosmetics and Flag Case. A local, unpublished v0.9.3.2
+candidate addresses facial clipping and independent host/web hardening. The current
+work and remaining verification are recorded in dev/STATUS.md.
 
 This folder is the whole game as a website. Put it online once and anyone
 can play by opening the link. No app store, no download.

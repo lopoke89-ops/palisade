@@ -693,6 +693,8 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
 .item.gold b{animation-timing-function:steps(26)}
 #partyMe{animation-timing-function:steps(9)}
 .lockPanel .item{contain:paint}
+.roster li .crewKick{float:right;width:auto;min-height:30px;padding:4px 9px;margin:-4px 0 -4px 8px;font-size:10px}
+#pauseCrew{max-height:32vh;overflow:auto;margin:8px 0}
 /* phones held sideways: a shorter heading so the stage still has room */
 @media (max-height:500px) and (min-width:601px){
   .partyHeading{padding-top:0}#partyTitle{font-size:22px;margin:2px 0}#partySubtitle{font-size:10px}

@@ -143,6 +143,7 @@ $('hostBtn').addEventListener('click',()=>{initAudio();if(NET.mode==='solo')netH
 $('joinBtn').addEventListener('click',()=>{initAudio();if(NET.mode==='solo')netJoin($('mCode').value)});
 $('mCode').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('joinBtn').click()}});
 $('lStart').addEventListener('click',()=>{initAudio();startOnline()});
+$('lLock').addEventListener('click',()=>{if(NET.mode!=='host')return;NET.roomLocked=!NET.roomLocked;broadcastLobby()});
 document.querySelectorAll('[data-oj]').forEach(b=>b.addEventListener('click',()=>{if(NET.mode==='guest')return;pick.job=b.dataset.oj;cfg.job=pick.job;saveCfg();renderMods();if(NET.mode==='host')broadcastLobby()}));
 $('lLeave').addEventListener('click',()=>netLeave(''));
 $('shareBtn').addEventListener('click',()=>{
@@ -152,16 +153,26 @@ $('shareBtn').addEventListener('click',()=>{
   else $('lNote').textContent=url;
 });
 function showLobby(){$('menu').hidden=false;showPage('lobby');renderLobby()}
+function crewRow(r,label){
+  const li=document.createElement('li');li.textContent=label||r.name.toUpperCase()+' · '+(CLASSES[r.cls]?.name||'PLAYER');
+  if(NET.mode==='host'&&r.id!=='host'){
+    const b=document.createElement('button');b.type='button';b.className='ghost crewKick';b.textContent='REMOVE';b.setAttribute('aria-label','Remove '+r.name+' from room');b.addEventListener('click',()=>hostKick(r.id));li.append(b);
+  }
+  return li;
+}
+function renderPauseCrew(){
+  const el=$('pauseCrew');el.hidden=NET.mode!=='host'||!NET.inGame;
+  if(el.hidden)return;const ul=$('pauseCrewList');ul.textContent='';for(const r of NET.roster)ul.append(crewRow(r));
+}
 function renderLobby(){
   renderPartyState();if(!$('pg-lobby').hidden)renderMapPanel();
   $('lCode').textContent=NET.code||'····';
   const ul=$('lList');ul.textContent='';
-  const base=pick.pvp==='base';
-  for(const r of NET.roster){const li=document.createElement('li'),tm=TEAMS[r.team]||TEAMS.a;
-    li.textContent=`${r.name.toUpperCase()} · ${CLASSES[r.cls].name}${base?' · '+tm.name:''}${r.id==='host'?' · HOST':''}${r.id===myId?' · YOU':''}`;
+  const base=pick.pvp==='base',host=NET.mode==='host';
+  for(const r of NET.roster){const tm=TEAMS[r.team]||TEAMS.a,li=crewRow(r,`${r.name.toUpperCase()} · ${CLASSES[r.cls].name}${base?' · '+tm.name:''}${r.id==='host'?' · HOST':''}${r.id===myId?' · YOU':''}`);
     if(base)li.style.borderLeftColor=tm.col;else if(pick.pvp==='ffa')li.style.borderLeftColor='#e0664a';ul.append(li)}
   if(pick.pvp==='coop'){const dl=document.createElement('li');dl.className='ai';dl.textContent='DELL · SUPPLY RUNNER · AI';ul.append(dl)}
-  const host=NET.mode==='host';$('lStart').hidden=!host;$('shareBtn').hidden=false;$('lTeam').hidden=!base;
+  $('lStart').hidden=!host;$('shareBtn').hidden=false;$('lTeam').hidden=!base;$('lLock').hidden=!host;$('lLock').textContent=NET.roomLocked?'UNLOCK ROOM':'LOCK ROOM';
   $('lStart').textContent=pick.pvp==='coop'?'RAISE THE FENCE':'START THE FIGHT';
   renderMods();
   const len=pick.mode==='endless'?'endless':pick.mode+' raids',what=pick.pvp==='base'?'Base battle':pick.pvp==='ffa'?'Free-for-all':`Co-op · ${(MAPS[pick.map]||MAPS.yard).name}${pick.size==='xl'?' XL':''} · ${len} · threat: ${DIFF[pick.diff].name.toLowerCase()}`;

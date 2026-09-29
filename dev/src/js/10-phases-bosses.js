@@ -300,6 +300,7 @@ function togglePause(){
   const open=$('pause').hidden;
   if(NET.mode==='solo')game.paused=open;
   $('pause').hidden=!open;$('pauseJobs').hidden=game.pvp!=='ffa';if(game.pvp==='ffa')syncJobPick();
+  if(open)renderPauseCrew();
   $('pauseEyebrow').textContent=NET.mode!=='solo'?(game.pvp?'THE FIGHT DOESN’T PAUSE':'THE RAID DOESN’T PAUSE ONLINE'):`PAUSED · ${game.phase==='build'?'BUILD PHASE':raidName(game.wave)}`;
   for(const s of[stickMove,stickAim]){s.id=null;s.vx=s.vy=s.mag=0}mouse.down=false;
 }

@@ -13,9 +13,9 @@ $groups = @{
   cosmetics = 'locker_fit cosmetics wardrobe3d cosmetic_network'
   music = 'music_routing'
   combat = 'solo bosses multiplayer muzzle rewards_lobby_shotgun'
-  host = 'hostcheck multiplayer'
-  smoke = 'solo lobby reel_music'
-  all = 'solo bosses multiplayer cases accounts rewards_lobby_shotgun reel_music music_routing v086 v087 muzzle cosmetics locker_fit cosmetic_network social_lobby lobby v090 v090_net hostcheck wardrobe3d friends rewards_screen modifiers skilltree rejoin controller taborder milestones flagcase'
+  host = 'hostcheck room_controls multiplayer'
+  smoke = 'solo lobby reel_music csp'
+  all = 'solo bosses multiplayer cases accounts rewards_lobby_shotgun reel_music music_routing v086 v087 muzzle cosmetics locker_fit cosmetic_network social_lobby lobby v090 v090_net hostcheck room_controls csp wardrobe3d friends rewards_screen modifiers skilltree rejoin controller taborder milestones flagcase'
 }
 $selectedTests = $(if ($Tests) { $Tests } else { $groups[$Group] }).Split(' ', [System.StringSplitOptions]::RemoveEmptyEntries)
 foreach ($t in $selectedTests) { if ($t -notmatch '^[a-z0-9_]+$' -or -not (Test-Path -LiteralPath (Join-Path $testDir "$t.js"))) { throw "Unknown test: $t" } }
