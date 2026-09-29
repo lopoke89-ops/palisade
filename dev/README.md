@@ -3,6 +3,12 @@
 Everything needed to rebuild, test and restore the game. The playable site is the repo's top
 level (built from here); this folder is the source.
 
+Current live status is v0.9.3. See [STATUS.md](STATUS.md) for the exact GitHub,
+build, server, and test state. The next planned subversion is **v0.9.3.1**;
+[its hardening brief](plans/v0.9.3.1-hardening.md) supersedes the older v0.9.3
+hardening prompt. Source-only case animation optimizations after the v0.9.3
+release still need a release build and validation before publication.
+
 ```
 dev/
   src/                  the game's source, in pieces (edit these, never the built index.html)
@@ -50,6 +56,8 @@ Profiling: `NOMIN=1 python3 dev/build.py` keeps debug.html unminified (readable 
 `node stress.js` measures the heavy cases (Endless raid 20, a 6-player boss raid, 6 players in Endless
 raid 20, and memory over a 30-minute Endless run); `PROFILE=1` adds the busiest functions.
 `bench.js` is the quick frame-time check; `PORT=8083 PAGE=index.html node bench.js old` measures another copy.
+`caseperf.js` measures case intro and reel CPU on a phone-sized, software-drawn page;
+set `PAGE` to each build's debug page and run both on the same machine for comparison.
 
 It serves the built site on localhost:8080, starts a PeerJS server on :9000, runs every test and
 prints PASS or FAIL for each; logs and screenshots go to `dev/test/out/`. The account and reward
