@@ -206,7 +206,7 @@ function caseIntro(id){
   const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches,T=reduced?.7:3,t0=performance.now();
   ov.hidden=false;ov.classList.add('intro');btn.hidden=false;$('caseResult').hidden=true;$('caseEquip').hidden=true;$('caseDone').hidden=true;$('reel').textContent='';
   $('caseEye').textContent=C.name;$('caseEye').style.color=C.col;caseIntroOn=true;
-  const crate=document.createElement('canvas');crate.width=crate.height=200;drawCaseIcon(crate,id);
+  const crate=document.createElement('canvas');crate.width=crate.height=180;drawCaseIcon(crate,id);
   const bits=Array.from({length:46},(_,i)=>{const a=Math.PI*2*i/46+Math.random()*.3,sp=120+Math.random()*260;return{vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-120,r:2+Math.random()*5,c:i%3?C.col:'#f3e9d6',rot:Math.random()*6}});
   return new Promise(done=>{
     let lastTick=0,finished=false;
@@ -214,15 +214,15 @@ function caseIntro(id){
     btn.onclick=end;
     let lastDraw=0;   // 30 fps is plenty for a shake
     const step=now=>{if(finished)return;if(now-lastDraw<31){requestAnimationFrame(step);return}lastDraw=now;const t=(now-t0)/1000;x.clearRect(0,0,cv.width,cv.height);const cx=cv.width/2,cy=cv.height/2+10;
-      if(reduced){x.globalAlpha=Math.max(0,1-t/T);x.drawImage(crate,cx-90,cy-90,180,180);x.globalAlpha=1}
+      if(reduced){x.globalAlpha=Math.max(0,1-t/T);x.drawImage(crate,cx-81,cy-81,162,162);x.globalAlpha=1}
       else if(t<2){   // shake, harder and faster, and the screen behind blurs from 1.2 s
         const k=Math.min(1,t/1.8),amp=2+k*9,f=10+k*26,dx=Math.sin(t*f)*amp,rot=Math.sin(t*f*1.3)*.06*k;
         if(t>1.2)ov.classList.add('blurring');
         const tick=Math.floor(t*(4+k*10));if(tick!==lastTick){lastTick=tick;caseTick(k>.6?'e':'r')}
-        x.save();x.translate(cx+dx,cy);x.rotate(rot);x.shadowColor=C.col;x.shadowBlur=10+k*30;x.drawImage(crate,-90,-90,180,180);x.restore();
+        x.save();x.translate(cx+dx,cy);x.rotate(rot);x.shadowColor=C.col;x.shadowBlur=10+k*30;x.drawImage(crate,-81,-81,162,162);x.restore();
       }else{          // it breaks: sparks fly out and fade
         const u=t-2;if(!step.boom){step.boom=true;uiSfx('kx_confetti')}
-        x.save();x.globalAlpha=Math.max(0,1-u*3);x.translate(cx,cy);x.scale(1+u*1.2,1+u*1.2);x.drawImage(crate,-90,-90,180,180);x.restore();
+        x.save();x.globalAlpha=Math.max(0,1-u*3);x.translate(cx,cy);x.scale(1+u*1.2,1+u*1.2);x.drawImage(crate,-81,-81,162,162);x.restore();
         for(const b of bits){const px=cx+b.vx*u,py=cy+b.vy*u+260*u*u,a=Math.max(0,1-u);x.globalAlpha=a;x.fillStyle=b.c;x.save();x.translate(px,py);x.rotate(b.rot+u*6);x.fillRect(-b.r,-b.r*.6,b.r*2,b.r*1.2);x.restore()}
         x.globalAlpha=1}
       if(t>=T||ov.hidden){end();return}requestAnimationFrame(step)};
