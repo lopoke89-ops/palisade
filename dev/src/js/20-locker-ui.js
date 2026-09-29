@@ -250,10 +250,11 @@ function caseReel(res){
   const wrapW=reel.parentElement.clientWidth,target=WIN*TW+44-wrapW/2+(rnd()-.5)*50;
   const dur=matchMedia('(prefers-reduced-motion: reduce)').matches?.6:4.2,t0=performance.now();
   requestAnimationFrame(()=>requestAnimationFrame(()=>{reel.style.transition=`transform ${dur}s cubic-bezier(.08,.72,.16,1)`;reel.style.transform=`translateX(${-target}px)`}));
-  let lastIdx=-1;const tick=now=>{if(ov.hidden)return;const p=Math.min(1,Math.max(0,(now-t0)/(dur*1000))),u=1-p;
+  let lastIdx=-1;const tick=now=>{if(ov.hidden)return;const p=Math.min(1,Math.max(0,(now-t0)/(dur*1000)));
     // Mirror the CSS cubic-bezier easing without forcing a style/layout read every frame.
-    const x1=3*.72*u*u*p+3*1*u*p*p+p*p*p;
-    const idx=Math.floor((target*x1+wrapW/2)/TW);if(idx!==lastIdx){lastIdx=idx;caseTick(rs[idx])}
+    let q=p;for(let i=0;i<4;i++){const u=1-q,x=3*.08*u*u*q+3*.16*u*q*q+q*q*q;const dx=3*.08*u*u+6*(.16-.08)*u*q+3*(1-.16)*q*q;q=Math.min(1,Math.max(0,q-(x-p)/dx))}
+    const u=1-q,y=3*.72*(1-q)*(1-q)*q+3*(1-q)*q*q+q*q*q;
+    const idx=Math.floor((target*y+wrapW/2)/TW);if(idx!==lastIdx){lastIdx=idx;caseTick(rs[idx])}
     if(p<1)requestAnimationFrame(tick)};requestAnimationFrame(tick);
   setTimeout(()=>{
     const it=res.it,R=RAR[it.r];caseItem=it;
