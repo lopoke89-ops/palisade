@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('cosmetics','music','combat','host','smoke','all')]
+  [ValidateSet('cosmetics','locker','music','combat','host','smoke','all')]
   [string]$Group = 'smoke',
   [string]$Tests = ''
 )
@@ -11,11 +11,12 @@ $outDir = Join-Path $testDir 'out'
 New-Item -ItemType Directory -Path $outDir -Force | Out-Null
 $groups = @{
   cosmetics = 'locker_fit cosmetics wardrobe3d cosmetic_network'
+  locker = 'locker_collections locker_fit milestones flagcase accounts taborder csp'
   music = 'music_routing'
   combat = 'solo bosses multiplayer muzzle rewards_lobby_shotgun'
   host = 'hostcheck room_controls multiplayer'
   smoke = 'solo lobby reel_music csp'
-  all = 'solo bosses multiplayer cases accounts rewards_lobby_shotgun reel_music music_routing v086 v087 muzzle cosmetics locker_fit cosmetic_network social_lobby lobby v090 v090_net hostcheck room_controls csp wardrobe3d friends rewards_screen modifiers skilltree rejoin controller taborder milestones flagcase'
+  all = 'solo bosses multiplayer cases accounts rewards_lobby_shotgun reel_music music_routing v086 v087 muzzle cosmetics locker_fit locker_collections cosmetic_network social_lobby lobby v090 v090_net hostcheck room_controls csp wardrobe3d friends rewards_screen modifiers skilltree rejoin controller taborder milestones flagcase'
 }
 $selectedTests = $(if ($Tests) { $Tests } else { $groups[$Group] }).Split(' ', [System.StringSplitOptions]::RemoveEmptyEntries)
 foreach ($t in $selectedTests) { if ($t -notmatch '^[a-z0-9_]+$' -or -not (Test-Path -LiteralPath (Join-Path $testDir "$t.js"))) { throw "Unknown test: $t" } }

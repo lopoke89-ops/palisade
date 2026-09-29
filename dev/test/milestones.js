@@ -64,10 +64,11 @@ const PORT = process.env.PORT || 8080;
   });
   assert.equal(out.ui.heads.length, 12); assert.equal(out.ui.pale, '26 / 50'); assert.equal(out.ui.baseBar, false); assert.match(out.ui.sub, /26 Butchers beaten/);
   await p.screenshot({ path: __dirname + '/out/milestones.png' });
-  // the normal SKINS tab has its own MILESTONES section, between the plain unlocks and the cases
+  // Milestone cosmetics now live exclusively in MILESTONES.
   await p.click('#lockTabs [data-cat=skin]'); await p.waitForTimeout(300);
   out.skinSections = await p.evaluate(() => [...document.querySelectorAll('#lockGrid .gsec')].map(h => h.textContent));
-  assert.equal(out.skinSections[0], 'MILESTONES');
+  assert.ok(!out.skinSections.some(s=>s.includes('MILESTONES')));
+  assert.equal(await p.locator('#lockGrid [data-item="skin:butcher"]').count(),0);
   console.log(JSON.stringify(out, null, 1));
   console.log('errors:', errors.length ? errors : 'none');
   assert.equal(errors.length, 0);

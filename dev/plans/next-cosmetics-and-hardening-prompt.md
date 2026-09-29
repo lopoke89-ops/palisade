@@ -1,6 +1,6 @@
 # PALISADE — cosmetic fit and remaining safe hardening
 
-**Status: implemented as an unpublished local v0.9.3.2 candidate, pending physical-phone and post-publish checks.** This prompt began from the published v0.9.3.1 release at GitHub commit `cea4636`. Check GitHub `main`, the live page, and the local working tree again before editing; preserve any later commits and the uncommitted documentation changes. Choose the next version number from the actual release scope before building. Do not describe this work as part of v0.9.3.1.
+**Status: published as v0.9.3.2 at GitHub commit `39ec2b4`, pending physical-phone and live-service checks.** This prompt began from the published v0.9.3.1 release at GitHub commit `cea4636`. Check GitHub `main`, the live page, and the local working tree again before editing; preserve any later commits and the uncommitted documentation changes. Choose the next version number from the actual release scope before building. Do not describe this work as part of v0.9.3.1.
 
 ## Source of truth and scope
 

@@ -1,11 +1,14 @@
 PALISADE: phone version with online co-op
 =========================================
 
-CURRENT RELEASE (September 29, 2026): v0.9.3.1 is live. It includes targeted
-tests, cosmetic and Locker fit fixes, menu and raid music, safe host input checks,
-and the v0.9.3 milestone cosmetics and Flag Case. A local, unpublished v0.9.3.2
-candidate addresses facial clipping and independent host/web hardening. The current
-work and remaining verification are recorded in dev/STATUS.md.
+CURRENT RELEASE (September 29, 2026): v0.9.3.2 is live. It adds facial cosmetic
+fit, a rounded Clown Hair shape, host room controls, movement checks, and a
+script-hash CSP to the earlier Locker, music, and milestone work. Remaining
+verification is recorded in dev/STATUS.md.
+
+LOCAL CANDIDATE: v0.9.3.3 keeps milestone cosmetics in MILESTONES and makes case
+collections collapsible within the Locker categories. The focused UI checks pass;
+this candidate has not been committed or published.
 
 This folder is the whole game as a website. Put it online once and anyone
 can play by opening the link. No app store, no download.

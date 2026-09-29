@@ -618,9 +618,16 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
 #menu[data-page=locker] #partyShell{grid-template-columns:280px minmax(240px,1fr) minmax(360px,520px)}
 #menu[data-page=locker] .partySlots{display:none}
 .lockPanel{flex-direction:column;gap:10px;min-height:0;min-width:0;padding:14px;border:1px solid #354b56;background:rgba(6,15,23,.84)}
-.lockPanel #lockTabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+.lockPanel #lockTabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
 .lockPanel #lockTabs button{height:40px;font-size:12px;letter-spacing:.04em;padding:0 2px}
 .lockPanel #lockGrid{flex:1;min-height:0;overflow:auto;grid-auto-rows:max-content;overscroll-behavior:contain;scrollbar-width:thin;display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px;align-content:start}
+.lockerCollection{grid-column:1/-1;min-width:0;border:1px solid var(--line);border-left:3px solid var(--cc);background:rgba(6,15,23,.5)}
+.collectionToggle{width:100%;min-height:52px;height:auto;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center;padding:10px 12px;text-align:left;background:transparent;color:var(--cc);border:0;font-family:var(--stencil);font-size:16px;letter-spacing:.06em}
+.collectionToggle small{grid-column:1;font-family:var(--mono);font-size:10px;font-weight:400;letter-spacing:.02em;color:var(--dim)}
+.collectionArrow{grid-column:2;grid-row:1/3;font-size:24px;line-height:1}
+.collectionToggle:hover{background:rgba(255,255,255,.05)}
+.collectionToggle:focus-visible{outline:2px solid var(--bone);outline-offset:-3px}
+.collectionItems{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px;padding:8px;min-width:0;border-top:1px solid var(--line)}
 .partyControls .lockCases{display:grid;gap:8px}
 .partyControls #caseBoxes{display:grid;grid-template-columns:1fr;gap:8px}
 .partyControls #shardTxt{font-size:10px;color:var(--dim)}

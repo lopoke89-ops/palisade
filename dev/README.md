@@ -3,15 +3,19 @@
 Everything needed to rebuild, test and restore the game. The playable site is the repo's top
 level (built from here); this folder is the source.
 
-Current live status is **v0.9.3.1**; the local build is an unpublished **v0.9.3.2**
-candidate. See [STATUS.md](STATUS.md) for the exact GitHub,
+Current live status is **v0.9.3.2**. See [STATUS.md](STATUS.md) for the exact GitHub,
 build, server, and test state. The [v0.9.3.1 implementation prompt](plans/v0.9.3.1-polish-music-safe-hardening.md)
 records this patch's scope; the [broader hardening brief](plans/v0.9.3.1-hardening.md)
 remains background and backlog. The release includes the post-v0.9.3 case animation
 optimizations, but their real-phone performance still needs validation.
 Use the [current project blueprint](PROJECT_BLUEPRINT_2026-09-29.md) to plan the next work from today's baseline.
 The [cosmetic and independent-hardening prompt](plans/next-cosmetics-and-hardening-prompt.md)
-records the scope of the local candidate and its remaining release checks.
+records the scope of this release and its remaining real-device and live-service checks.
+
+The local **v0.9.3.3 candidate** implements the [Locker collections prompt](plans/locker-collections-ui-prompt.md):
+Milestones-only browsing for ladder cosmetics, lazy collapsible case collections, and preserved
+equip focus/scroll. It is uncommitted and unpublished. See [Locker validation](LOCKER_UI_2026-09-29.md)
+for focused checks, captures, and the phone-sized comparison.
 
 ```
 dev/
@@ -64,7 +68,8 @@ raid 20, and memory over a 30-minute Endless run); `PROFILE=1` adds the busiest 
 set `PAGE` to each build's debug page and run both on the same machine for comparison.
 
 `run_targeted.sh` serves the built site on localhost:8080, starts a PeerJS server on :9000,
-and runs a small group. Choose `cosmetics` for model/Locker changes, `music` for audio changes,
+and runs a small group. Choose `cosmetics` for model/art changes, `locker` for collection UI,
+milestone/catalog browsing and equip changes, `music` for audio changes,
 `combat` for weapon and gunplay changes, `host` for guest input/network validation, or `smoke`
 for a quick open/lobby/audio check. The `all` group or `run_all.sh` runs every browser test.
 `TESTS="cosmetics wardrobe3d" ./run_all.sh` remains available for an exact selection.

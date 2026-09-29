@@ -73,8 +73,10 @@ const OLD_TRAILS = ['std', 'green', 'red', 'blue', 'pink', 'gold', 'plasma', 'ra
   out.bought = await p.evaluate(() => ({ shards: __pal.locker.shards, bag: __pal.caseCount('flags') }));
   assert.deepEqual(out.bought, { shards: 0, bag: 1 });
   await p.click('#lockTabs [data-cat=bg]'); await p.waitForTimeout(1200);
+  await p.click('#collection-bg-flags');
   await p.evaluate(() => [...document.querySelectorAll('#lockGrid .item')].find(t => t.querySelector('b').textContent === 'Rainbow Pride Flag').click()); await p.waitForTimeout(300);
   await p.click('#lockTabs [data-cat=trail]'); await p.waitForTimeout(800);
+  await p.click('#collection-trail-flags');
   await p.evaluate(() => [...document.querySelectorAll('#lockGrid .item')].find(t => t.querySelector('b').textContent === 'Progress Pride Flag').click()); await p.waitForTimeout(300);
   out.worn = await p.evaluate(() => ({ bg: __pal.locker.eq.bg, trail: __pal.locker.eq.trail }));
   assert.deepEqual(out.worn, { bg: 'f_pride', trail: 'f_progress' });

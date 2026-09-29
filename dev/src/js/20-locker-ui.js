@@ -147,18 +147,32 @@ function thumbTick(){
 
 /* ---------- locker screen ---------- */
 let lockCat='skin',caseItem=null;
-function itemTile(c,lazy){
-  const d=document.createElement('button');d.type='button';d.className='item';d.style.setProperty('--rc',RAR[c.r].col);
-  const art=document.createElement('span');art.className='art';const cv2=document.createElement('canvas');cv2.width=cv2.height=128;art.append(cv2);
-  if(lazy){if(thumbSeen){cv2._c=c;thumbSeen.observe(cv2)}else queueThumb(cv2,c)}else drawIcon(cv2,c);
-  const b=document.createElement('b');b.textContent=c.name;const i=document.createElement('i');
-  const own=owns(c.id),eq=locker.eq[c.cat]===c.key;if(c.r==='g')d.classList.add('gold');
-  i.textContent=eq?'EQUIPPED':own?RAR[c.r].n:c.how;if(!own)d.classList.add('lock');if(eq)d.classList.add('eq');
-  // v0.9.3: a locked unlock shows how far along it is ("12 / 25")
+const lockOpen=new Set(),lockScroll=new Map();let lockRendered='';
+const lockerThumbKey=()=>pick.cls+'|'+locker.eq.skin+'|'+locker.eq.hat;
+function clearLockerItems(root){
+  if(thumbSeen)for(const cv of root.querySelectorAll('canvas'))thumbSeen.unobserve(cv);
+  root.replaceChildren();
+}
+function refreshItemTile(d,c){
+  const own=owns(c.id),eq=locker.eq[c.cat]===c.key;
+  d.classList.toggle('lock',!own);d.classList.toggle('eq',eq);
+  d.querySelector('i').textContent=eq?'EQUIPPED':own?RAR[c.r].n:c.how;
   const pr=!own&&c.src==='unlock'&&c.need?needProgress(c.need):null;
   d.setAttribute('aria-label',`${c.name}, ${RAR[c.r].n.toLowerCase()} ${CATN[c.cat].toLowerCase()}, ${eq?'equipped':own?'owned':'locked: '+c.how+(pr?`, ${pr.have} of ${pr.need}`:'')}`);
+  let bar=d.querySelector('.iprog');
+  if(pr){if(!bar){bar=document.createElement('span');bar.className='iprog';bar.append(document.createElement('small'));d.append(bar)}
+    bar.style.setProperty('--p',Math.round(pr.have/pr.need*100)+'%');bar.firstChild.textContent=`${pr.have} / ${pr.need}`;
+  }else if(bar)bar.remove();
+}
+function itemTile(c,lazy){
+  const d=document.createElement('button');d.type='button';d.className='item';d.dataset.item=c.id;d.style.setProperty('--rc',RAR[c.r].col);
+  const art=document.createElement('span');art.className='art';const cv2=document.createElement('canvas');cv2.width=cv2.height=128;art.append(cv2);
+  cv2._lockerLook=lockerThumbKey();
+  if(lazy){if(thumbSeen){cv2._c=c;thumbSeen.observe(cv2)}else queueThumb(cv2,c)}else drawIcon(cv2,c);
+  const b=document.createElement('b');b.textContent=c.name;const i=document.createElement('i');
+  if(c.r==='g')d.classList.add('gold');
   d.append(art,b,i);
-  if(pr){const bar=document.createElement('span');bar.className='iprog';bar.style.setProperty('--p',Math.round(pr.have/pr.need*100)+'%');const n=document.createElement('small');n.textContent=`${pr.have} / ${pr.need}`;bar.append(n);d.append(bar)}
+  refreshItemTile(d,c);
   return d;
 }
 // one panel per case: how many you hold, OPEN, and BUY for cases that have a shard price
@@ -174,21 +188,54 @@ function renderCaseBoxes(){
 }
 // v0.9.3: how far a counter has got toward an unlock's goal (the first counter it needs)
 function needProgress(need){const k=Object.keys(need)[0];if(!k)return null;const n=need[k];return{key:k,have:Math.min(n,locker.st[k]|0),need:n}}
+function lockerTile(c){
+  const t=itemTile(c,true);t.addEventListener('click',()=>{if(!owns(c.id))return;locker.eq[c.cat]=c.key;saveLocker();renderLocker();cloudEquip(c.id)});return t;
+}
+function setCollectionOpen(section,open){
+  const button=section.firstChild,body=section.lastChild,key=section.dataset.collection;
+  button.setAttribute('aria-expanded',String(open));body.hidden=!open;
+  button.querySelector('.collectionArrow').textContent=open?'−':'+';
+  if(open){lockOpen.add(key);if(!body.childElementCount)for(const c of section._items)body.append(lockerTile(c))}
+  else{lockOpen.delete(key);clearLockerItems(body)}
+}
+function lockerCollection(id,items){
+  const C=CASES[id],section=document.createElement('section'),button=document.createElement('button'),body=document.createElement('div');
+  section.className='lockerCollection';section.dataset.collection=lockCat+':'+id;section._items=items;section.style.setProperty('--cc',C.col);
+  button.type='button';button.className='collectionToggle';button.id='collection-'+lockCat+'-'+id;
+  body.id=button.id+'-items';body.className='collectionItems';body.setAttribute('role','group');body.setAttribute('aria-labelledby',button.id);
+  button.setAttribute('aria-controls',body.id);
+  const name=document.createElement('span'),count=document.createElement('small'),arrow=document.createElement('span');
+  name.textContent=C.name;count.className='collectionCount';arrow.className='collectionArrow';arrow.setAttribute('aria-hidden','true');button.append(name,count,arrow);
+  button.addEventListener('click',()=>setCollectionOpen(section,button.getAttribute('aria-expanded')!=='true'));
+  section.append(button,body);setCollectionOpen(section,lockOpen.has(section.dataset.collection));return section;
+}
 function renderLocker(){
   renderCaseBoxes();
   document.querySelectorAll('#lockTabs button').forEach(b=>b.classList.toggle('sel',b.dataset.cat===lockCat));renderPartyState();
-  const grid=$('lockGrid');grid.textContent='';let sec='';
-  const tile=c=>{const t=itemTile(c,true);t.addEventListener('click',()=>{if(!owns(c.id))return;locker.eq[c.cat]=c.key;saveLocker();renderLocker();cloudEquip(c.id)});return t};
-  const head=(text,col,sub)=>{const h=document.createElement('div');h.className='gsec';if(col)h.style.setProperty('--cc',col);h.textContent=text;if(sub){const s=document.createElement('small');s.textContent=sub;h.append(s)}grid.append(h)};
-  if(lockCat==='ms'){   // v0.9.3 MILESTONES: every ladder, its counter and its four items
-    for(const L of LADDERS){const have=locker.st[L.st]|0;head(L.title,null,`${have} ${L.unit}`);for(const [cat,key]of L.items)grid.append(tile(COSBY[cat+':'+key]))}
-  }else{
-  // free and plain unlockable items first, then the milestone items, then each case's own section
-  const ord=c=>c.ladder?.5:c.box?1+CASE_IDS.indexOf(c.box):0;
-  for(const c of COS.filter(c=>c.cat===lockCat).sort((a,b)=>ord(a)-ord(b))){
-    if(c.ladder&&sec!=='ms'){sec='ms';head('MILESTONES')}
-    if(c.box&&c.box!==sec){sec=c.box;head(CASES[c.box].name,CASES[c.box].col)}
-    grid.append(tile(c))}
+  const grid=$('lockGrid');
+  // Keep mounted tiles during equip/cloud refresh so scroll, focus, and unrelated art survive.
+  if(lockRendered!==lockCat){
+    if(lockRendered)lockScroll.set(lockRendered,grid.scrollTop);
+    clearLockerItems(grid);lockRendered=lockCat;
+    if(lockCat==='ms'){
+      for(const L of LADDERS){const h=document.createElement('div');h.className='gsec';h._ladder=L;h.append(document.createTextNode(L.title),document.createElement('small'));grid.append(h);
+        for(const [cat,key]of L.items)grid.append(lockerTile(COSBY[cat+':'+key]))}
+    }else{
+      const items=COS.filter(c=>c.cat===lockCat&&!c.ladder),plain=items.filter(c=>!c.box);
+      if(plain.length){const h=document.createElement('div');h.className='gsec';h.textContent='STANDARD & UNLOCKS';grid.append(h);for(const c of plain)grid.append(lockerTile(c))}
+      for(const id of CASE_IDS){const group=items.filter(c=>c.box===id);if(group.length)grid.append(lockerCollection(id,group))}
+    }
+    grid.scrollTop=lockScroll.get(lockCat)||0;
+  }
+  for(const section of grid.querySelectorAll('.lockerCollection')){
+    const open=lockOpen.has(section.dataset.collection);if((section.firstChild.getAttribute('aria-expanded')==='true')!==open)setCollectionOpen(section,open);
+    section.querySelector('.collectionCount').textContent=`${section._items.filter(c=>owns(c.id)).length} / ${section._items.length} owned`;
+  }
+  for(const h of grid.querySelectorAll('.gsec'))if(h._ladder)h.lastChild.textContent=`${locker.st[h._ladder.st]|0} ${h._ladder.unit}`;
+  const look=lockerThumbKey();
+  for(const t of grid.querySelectorAll('.item')){const c=COSBY[t.dataset.item];refreshItemTile(t,c);
+    const cv=t.querySelector('canvas');if((c.cat==='skin'||c.cat==='hat')&&cv._lockerLook!==look){cv._lockerLook=look;
+      if(thumbSeen){cv._c=c;thumbSeen.observe(cv)}else queueThumb(cv,c)}
   }
   syncBg();
   const st=locker.st;$('lockHint').textContent=`Earn a supply case every 3 raids you survive and for every win. Duplicates turn into shards. So far: ${st.raids} raids held, ${st.wins} win${st.wins===1?'':'s'}, ${st.drops} raiders dropped.${locker.cloud?' Saved to your account.':''}`;
@@ -268,7 +315,10 @@ function caseReel(res){
     uiSfx(it.r==='l'||it.r==='e'||it.r==='g'?'win':'restock');if(it.r==='g')uiSfx('kx_bubbles');buzz(it.r==='g'?[40,60,40,60,90]:40);
   },dur*1000+120);
 }
-$('caseEquip').addEventListener('click',()=>{if(caseItem&&owns(caseItem.id)){locker.eq[caseItem.cat]=caseItem.key;saveLocker();cloudEquip(caseItem.id)}$('caseOv').hidden=true;lockCat=caseItem?caseItem.cat:lockCat;renderLocker()});
+$('caseEquip').addEventListener('click',()=>{if(caseItem&&owns(caseItem.id)){locker.eq[caseItem.cat]=caseItem.key;saveLocker();cloudEquip(caseItem.id)}$('caseOv').hidden=true;
+  if(caseItem){lockCat=caseItem.ladder?'ms':caseItem.cat;if(caseItem.box)lockOpen.add(lockCat+':'+caseItem.box)}renderLocker();
+  if(caseItem){const tile=[...$('lockGrid').querySelectorAll('.item')].find(t=>t.dataset.item===caseItem.id);if(tile){tile.scrollIntoView({block:'nearest'});tile.focus({preventScroll:true})}}
+});
 $('caseDone').addEventListener('click',()=>{$('caseOv').hidden=true;renderLocker()});
 
 // a small crate in the case's colour, for the reward cards and the case intro
