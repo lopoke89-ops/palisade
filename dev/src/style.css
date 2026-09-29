@@ -685,9 +685,9 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
 #caseIntro canvas{width:100%;max-width:420px;height:auto;aspect-ratio:480/300}
 #caseIntro small{font-size:9px;letter-spacing:.14em;color:var(--dim)}
 #caseOv.intro .reelWrap{display:none}
-#caseOv{transition:backdrop-filter .6s,background-color .6s}
-#caseOv.blurring{backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);background-color:rgba(8,7,6,.8)}
-@media (prefers-reduced-motion:reduce){#caseOv{transition:none}#caseOv.blurring{backdrop-filter:none}}
+#caseOv{transition:background-color .6s}
+#caseOv.blurring{background-color:rgba(8,7,6,.8)}
+@media (prefers-reduced-motion:reduce){#caseOv{transition:none}}
 /* v0.9.1 performance: slow-moving decorations update a few times a second instead of every frame (each update
    repaints and re-composites the page; on phones that, not the drawing, is what costs), and tiles keep repaints local */
 .item.gold b{animation-timing-function:steps(26)}
