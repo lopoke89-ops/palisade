@@ -20,6 +20,9 @@ fs.writeFileSync(__dirname+'/out/cosmetics_expansion.json',JSON.stringify({...r,
 await p.evaluate(()=>{const P=__pal;P.locker.owned.push(...P.COS.filter(c=>c.cat==='hat').map(c=>c.id));P.locker.eq.skin='sheetghost';P.locker.eq.hat='class';P.showPage('locker')});
 await p.click('#lockTabs [data-cat=hat]');await p.click('#collection-hat-halloween');const tile=p.locator('[data-item="hat:gravecap"]');assert.equal(await tile.getAttribute('aria-disabled'),'true');await tile.evaluate(el=>el.click());assert.equal(await p.evaluate(()=>__pal.locker.eq.hat),'class');
 await p.evaluate(()=>{__pal.locker.eq.skin='std';__pal.renderLocker()});await tile.click();assert.equal(await p.evaluate(()=>__pal.locker.eq.hat),'gravecap');
+// Switching to a special head keeps the hat saved but renders Class Issue, so that tile reads EQUIPPED.
+await p.evaluate(()=>{__pal.locker.eq.skin='sahur';__pal.renderLocker()});
+assert.equal(await p.evaluate(()=>__pal.locker.eq.hat),'gravecap');assert.match(await p.locator('[data-item="hat:class"] i').textContent(),/EQUIPPED/);assert.match(await p.locator('[data-item="hat:gravecap"] i').textContent(),/DOES NOT FIT/);
 // Contact sheet at useful review scale, with the actual shared painter.
 const sheet=await p.evaluate(()=>{const P=__pal,cv=document.createElement('canvas');cv.width=1200;cv.height=750;const x=cv.getContext('2d');x.fillStyle='#202923';x.fillRect(0,0,1200,750);
 const items=[...Object.keys(P.HALLOWEEN_HATS).map(h=>({skin:'std',hat:h,label:P.COSBY['hat:'+h].name})),{skin:'sheetghost',hat:'halo',label:'Sheet Ghost + Halo'},...['soldier','sniper','grenadier','quartermaster'].map(cls=>({skin:'sahur',hat:'class',cls,label:'Sahur / '+cls})),{skin:'sahur',hat:'class',downed:true,label:'Sahur / downed'}];

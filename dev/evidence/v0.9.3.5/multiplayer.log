@@ -1,0 +1,9 @@
+lobby: BIG U · QUARTERMASTER · HOST · YOUROOK · GRENADIERREMOVEDELL · SUPPLY RUNNER · AI
+guest sees classes: Big U:quartermaster, Rook:grenadier ammo 6
+guest shells: host says 2 | guest sees 2 | reload flag on guest 0
+guest calibrated projectiles: 28
+guest down on guest screen: true -> after QM walks over, guest alive: true hp 63
+guest view of bosses {"demolisher":{"boss":"demolisher","states":"0,1","rockets":1,"fires":1,"zaps":0,"slashes":0},"butcher":{"boss":"butcher","states":"2,3,0","rockets":0,"fires":1,"zaps":0,"slashes":0},"storm":{"boss":"storm","states":"0,1","rockets":0,"fires":0,"zaps":1,"slashes":0}}
+guest stun seen: 0.45
+proto 1
+errors: none

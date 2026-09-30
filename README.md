@@ -1,15 +1,14 @@
 PALISADE: phone version with online co-op
 =========================================
 
-CURRENT RELEASE (September 29, 2026): v0.9.3.3 is live at commit 2268c35.
-It keeps milestone cosmetics in MILESTONES and makes case collections collapsible.
+CURRENT RELEASE (September 30, 2026): v0.9.3.4 is live (commit 4033d34).
+It adds full-screen flags, cached scenic detail, and more natural character motion.
 
-LOCAL CANDIDATE: v0.9.3.4 adds full-screen flags, cached scenic detail, and more
-natural character motion. Nine focused checks pass. Commit 854265d is pushed; Pages failed
-on a document encoding issue, now repaired locally for a follow-up push. The live
-site remains v0.9.3.3. No Supabase change is required. Before/after images and animation
-clips, performance results, and background rollback instructions are linked from
-dev/PRESENTATION_2026-09-29.md. See dev/STATUS.md for remaining verification.
+CANDIDATE: v0.9.3.5 is on branch claude/lucid-curie-491na1. It adds solid-color
+cycling Flag Case tracers with faster tracer drawing, six Halloween head pieces, and
+the Ultimate-rarity Tung Tung Tung Sahur skin. Its Supabase migration is already live
+and is safe for older clients. 19 focused checks pass. It uses a new network protocol
+(yard-18), so players need to reload after it goes live. See dev/STATUS.md.
 
 This folder is the whole game as a website. Put it online once and anyone
 can play by opening the link. No app store, no download.

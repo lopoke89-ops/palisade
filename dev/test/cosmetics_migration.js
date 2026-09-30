@@ -1,6 +1,6 @@
 // Runs the real migration in disposable in-memory Postgres. Never connects to live accounts.
 const {PGlite}=require('@electric-sql/pglite'),fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const root=__dirname+'/..',migration=fs.readFileSync(root+'/supabase/migrations/20260930045719_palisade_v0935_cosmetics.sql','utf8'),schema=fs.readFileSync(root+'/supabase/schema.sql','utf8');
+const root=__dirname+'/..',migration=fs.readFileSync(root+'/supabase/migrations/20260930050715_palisade_v0935_cosmetics.sql','utf8'),schema=fs.readFileSync(root+'/supabase/schema.sql','utf8');
 const src=fs.readFileSync(root+'/src/js/18-cosmetics.js','utf8'),catalog=vm.runInNewContext(src.slice(0,src.indexOf('// Saves live in this browser'))+';JSON.stringify({COS,CASES})');
 (async()=>{const db=new PGlite(),id='11111111-1111-4111-8111-111111111111',other='22222222-2222-4222-8222-222222222222';
 await db.exec(`create role anon;create role authenticated;create schema auth;create schema private;
@@ -14,7 +14,7 @@ const newKeys=new Set(['sahur','gravecap','stemband','batcirclet','bonewrap','we
 await db.exec(`insert into public.lockers(user_id,cases,bag) values('${id}',2000,'{"halloween":2000}'),('${other}',20,'{}');`);
 await db.exec(migration);await db.exec(migration); // idempotent data and definitions
 assert.equal((await db.query("select count(*)::int n from public.cosmetics where catalog_version=1")).rows[0].n,7);
-const report={migration:'20260930045719_palisade_v0935_cosmetics',checks:[]};
+const report={migration:'20260930050715_palisade_v0935_cosmetics',checks:[]};
 const check=async(name,sql,fn)=>{const r=await db.query(sql);fn(r);report.checks.push(name)};
 await check('old private helpers still inaccessible',"select has_function_privilege('authenticated','private.shard_value(text)','execute') ok",r=>assert.equal(r.rows[0].ok,false));
 await check('anon cannot call either case API',"select has_function_privilege('anon','public.open_case_of(text,integer)','execute') old,has_function_privilege('anon','public.open_case_v0935(text,integer)','execute') new",r=>assert.deepEqual(r.rows[0],{old:false,new:false}));

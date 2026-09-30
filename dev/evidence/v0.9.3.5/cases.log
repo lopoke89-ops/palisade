@@ -1,0 +1,15 @@
+odds (100k rolls each): {
+  supply: 'u 0.23%, l 3.01%, e 9.84%, r 26.91%, c 60.02% · pool ok',
+  afterglow: 'g 1.01%, l 3.95%, e 12.15%, r 29.93%, c 52.95% · pool ok'
+}
+buttons: OPEN | OPEN (off) | BUY · 10 SHARDS | OPEN (off) | BUY · 12 SHARDS | OPEN (off) | BUY · 10 SHARDS
+after 2 buys: { shards: 3, bag: { afterglow: 2 }, buyOff: true }
+opened afterglow: { eyebrow: 'AFTERGLOW CASE', got: ' / ', bag: { afterglow: 1 } }
+drops: {
+  'base win': 'supply +0, afterglow 47.1%',
+  'base loss': 'supply +0, afterglow 21.1%',
+  'ffa win': 'supply +0, afterglow 47.8%',
+  'ffa loss': 'supply +0, afterglow 20.2%',
+  'coop 5-raid win': 'supply +2, afterglow +0'
+}
+errors: none

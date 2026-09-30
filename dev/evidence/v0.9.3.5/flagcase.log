@@ -1,0 +1,75 @@
+{
+ "basics": {
+  "name": "FLAG CASE",
+  "cost": 10,
+  "weights": {
+   "c": 45,
+   "r": 30,
+   "e": 17,
+   "l": 7,
+   "g": 1
+  },
+  "win": 0.25,
+  "winCase": "flags",
+  "items": 64,
+  "bgs": 32,
+  "trails": 32,
+  "oldOrder": true,
+  "byRarity": {
+   "g": 4,
+   "l": 22,
+   "e": 12,
+   "r": 18,
+   "c": 8
+  },
+  "commons": "f_india,f_israel,f_nkorea,f_russia",
+  "golds": "f_pride,f_progress"
+ },
+ "odds": {
+  "share": {
+   "c": 44.74,
+   "r": 30.51,
+   "e": 17.02,
+   "l": 6.82,
+   "g": 0.91
+  },
+  "expected": {
+   "c": 45,
+   "r": 30,
+   "e": 17,
+   "l": 7,
+   "g": 1
+  },
+  "seen": 64
+ },
+ "drop": {
+  "rate": 0.2475,
+  "added": 990
+ },
+ "open": {
+  "gotNew": true,
+  "dup": true,
+  "shards": 3,
+  "want": 3,
+  "left": 0
+ },
+ "bgs": {
+  "bad": [],
+  "stillOk": true,
+  "movingOk": true,
+  "moving": 13
+ },
+ "box": {
+  "buy": true,
+  "open": true
+ },
+ "bought": {
+  "shards": 0,
+  "bag": 1
+ },
+ "worn": {
+  "bg": "f_pride",
+  "trail": "f_progress"
+ }
+}
+errors: none

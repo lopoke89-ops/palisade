@@ -1,0 +1,29 @@
+1 boot with old save: {"st":"guest","guest":true,"name":null,"msg":"","cases":3,"shards":3,"owned":9,"cloud":{"id":"u1-0000-0000","guest":true},"raids":7,"claims":0,"btn":"GUEST · SAVE YOUR ACCOUNT","lede":"","status":""}
+  server locker got the old save: {"owned":9,"cases":3,"raids":7,"imported":true,"future":true}
+2 bad name -> Usernames are 3 to 16 letters, numbers or _.
+  taken name -> That username is taken
+  name -> Username saved. | btn: GUEST · SAVE YOUR ACCOUNT | cfg name: BigU
+3 open case -> cases 2 owns crown true server cases 2
+  reel shows:  / 
+  equipped on server: crown
+4 offline open -> Opening a case needs a connection. Your cases are safe. | cases still 2
+  offline run: local cases 2 queued claims 1 server cases 2
+  calls since offline: POST /rest/v1/rpc/import_local_save | POST /rest/v1/rpc/set_username | POST /rest/v1/rpc/set_username | POST /rest/v1/rpc/open_case_v0935 | POST /rest/v1/rpc/equip | POST /rest/v1/rpc/claim_match_reward {"busy":false,"st":"guest","t":1204,"booting":false}
+  back online: claims 0 server cases 4 local cases 4 claim sent {"kind":"run","mode":"5","diff":"normal","win":true,"held":5,"raid_from":0,"raid_to":5,"kills":40,"bosses":0,"boss_keys":[],"shard_bosses":0,"salvage":0,"size":"std","duration_s":400,"game_id":"munpivrf-unpry2mmjgt8","joined_s":0,"left_s":400,"left":false,"upgrades":"00000:0","mods":[],"map":"yard","cls":"soldier"}
+4b bought on server: shards 2 bag {"afterglow":1} | game shows 1
+   opened: AFTERGLOW CASE -> Crown / LEGENDARY HEADGEAR · new | owns true
+   pvp win with account: {"txt":{"kind":"match","pending":true,"cases":{},"shards":0,"unlocked":[],"text":"Sending your result to your account…"},"bag":{"afterglow":1},"toast":"CASE DROP+1 AFTERGLOW CASE. Saved to your account."} | claim sent {"kind":"match","pvp":"base","win":true,"kills":4,"duration_s":300,"game_id":"munpj4i1-hkfs252h6bug","mods":[],"joined_s":0,"left_s":300,"map":"yard"}
+5 bad email -> That doesn't look like an email address.
+  link -> Link sent to bigu@example.com. Open it on any device (check spam too), then choose a password there.
+  after link: full Email confirmed. | url hash gone: true | pw box shown: true | page: true
+  short pw -> Pick a longer password: at least 8 characters.
+  pw -> Password saved. Sign in with your email and this password on any device. | pw box hidden: true | btn: SIGNED IN · LOCKER SYNCED
+6 signed out: guest true cases 1 owned 7 | Signed out. Sign back in any time to get your locker.
+  wrong pw -> That email and password don't match.
+  signed in: full BigU cases 4 owned 11 crown true | Signed in. Your locker is loaded. | guest kept: true
+7 forgot w/o email -> Type your email above first, then tap Forgot password.
+  forgot -> If bigu@example.com has an account, a reset link is on its way. Open it, then choose a new password.
+8 revoked: down | Your sign-in ended. Sign in again to get your locker back. | cases 1
+9 reload: guest true btn GUEST · SAVE YOUR ACCOUNT
+10 local copy: { st: 'off', btnHidden: false }
+calls: 45 errors: none

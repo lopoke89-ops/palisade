@@ -1,6 +1,6 @@
 # PALISADE project status
 
-Updated September 29, 2026. This is the current status record for the clone. The older project handoff and v0.9.3 hardening prompt describe a superseded release order.
+Updated September 30, 2026. This is the current status record for the clone. The older project handoff and v0.9.3 hardening prompt describe a superseded release order.
 
 For a consolidated list of what remains from those documents, see the [current project blueprint](PROJECT_BLUEPRINT_2026-09-29.md).
 Big U's latest completed local scope is recorded in the [presentation prompt](plans/backgrounds-and-character-animation-prompt.md). The earlier [cosmetic and hardening prompt](plans/next-cosmetics-and-hardening-prompt.md) remains the record of v0.9.3.2 and its deferred work.
@@ -11,18 +11,29 @@ The Claude audit URL still requires sign-in in the available browser session. Bi
 
 | Item | Current state |
 |---|---|
-| Live release | **v0.9.3.3**: Milestones-only cosmetics and collapsible Locker case collections |
-| Live protocol | `yard-17` / `palisade-yard-17-` |
-| Applied server migration | `palisade_v093_milestones_flags_halloween` (`20260928224258`) |
-| GitHub branch | `main` at `854265d` (`v0.9.3.4 cosmetic tweaks`), pushed by Big U September 29 |
-| Local checkout | `854265d` plus a local blueprint UTF-8 repair and release-record updates |
-| Published build | GitHub Pages displays **v0.9.3.3**; rechecked September 29 during this implementation |
+| Live release | **v0.9.3.4**: full-screen flags, cached scenic depth and natural character motion |
+| Live protocol | `yard-17` / `palisade-yard-17-` (v0.9.3.5 candidate uses `yard-18`) |
+| Applied server migration | `palisade_v0935_cosmetics` (`20260930050715`), additive and backward compatible; see below |
+| GitHub branch | `main` at `4033d34` (v0.9.3.4 plus the UTF-8 repair); v0.9.3.5 candidate on `claude/lucid-curie-491na1` |
+| Published build | GitHub Pages displays **v0.9.3.4** (service worker `palisade-0e4e6153b7`), checked September 30 |
 
 Controller support shipped in v0.9.2.1. The v0.9.3 cosmetics migration is applied and the live case catalog includes Flags. The two proposed new game modes have not shipped; the Nightmare modifier and a future preset definition do not constitute a separate game mode.
 
 Four commits after the v0.9.3 release changed the case intro and reel source (`98bb522`, `4c8dd3d`, `a49df08`, `566e30e`). The v0.9.3.1 release includes those fixes. Their source was compared with the v0.9.3 release on September 29; see [case animation validation](CASE_PERFORMANCE_2026-09-29.md). The reel avoids repeated style reads and its measured CPU use was lower, but intro readings overlapped and Locker readings were higher in the comparison runs. Further profiling and a real-phone comparison are still required before performance sign-off.
 
-## v0.9.3.4 pushed; Pages deployment blocked
+## v0.9.3.5 candidate: cosmetics package (not published)
+
+The implementation record is [COSMETICS_V0935_CHECKPOINT.md](COSMETICS_V0935_CHECKPOINT.md). Flag Case tracers become solid one-color rounds that cycle per trigger pull (Transgender cycles blue-white-pink), with all pellets sharing a color; the index travels with live, start and full-snapshot bullets under protocol `yard-18`. Tracer drawing uses smaller cached stamps, offscreen culling, time-based particle shedding and in-place bullet compaction. Six compact Halloween head pieces are added to the Halloween Case. Special heads block added headwear (Sheet Ghost accepts only Halo); blocked hats stay owned, render as Class Issue, and the Locker shows Class Issue as equipped. Tung Tung Tung Sahur is a full-character Supply Case skin in the new Ultimate rarity (0.25%, 80 duplicate shards, provisional economy).
+
+**Server:** migration `20260930050715_palisade_v0935_cosmetics` is already applied to the live project (the local file was renamed from `20260930045719` to match the live record). Live verification on September 30: the seven items exist at `catalog_version` 1, Supply weights are 59.75/27/10/3/0.25, the rarity check accepts `u`, no player owns a new item yet, `open_case_of` pins old clients to catalog 0 with the old 60/27/10/3 odds, `open_case_v0935` serves catalog 1, anon has no execute grant, and the legacy `open_case` no longer exists. The client never reads `case_types`, so published v0.9.3.4 clients are unaffected. The security advisor reports no new finding from this migration.
+
+**Checks:** build reproduces; 19 focused checks pass in Linux Chromium: `tracer_cycle`, `tracer_network`, `ultimate_cloud`, `cosmetics_expansion`, `cosmetics_migration` (12 PGlite checks), `cosmetics`, `wardrobe3d`, `cosmetic_network`, `flagcase`, `muzzle`, `presentation_posefit`, `locker_fit`, `locker_collections`, `cases`, `accounts`, `csp`, `multiplayer`, `hostcheck`, `room_controls`. The new tests are in the `cosmetics` group. Interleaved three-trial tracer A/B (desktop Chrome, phone viewport): flags 300 median 9.8 → 1.6 ms, p95 16.6 → 2.8 ms; non-flag 300 median 11.1 → 7.5 ms, p95 17.2 → 10.9 ms; GC total 33 → 24 ms. The earlier non-flag p95 regression did not reproduce. Evidence is in `evidence/v0.9.3.5/`. This is not a full-suite or physical-phone result.
+
+**To publish:** merge to `main`; the server side is already in place. Because the protocol changes to `yard-18`, v0.9.3.4 and v0.9.3.5 players cannot share rooms until both reload. Physical-phone review of tracer feel, Sahur and the head pieces remains open.
+
+## v0.9.3.4 published (originally blocked)
+
+The UTF-8 repair was pushed as `4033d34`; Pages now serves v0.9.3.4. The paragraph below is the original September 29 record.
 
 Big U pushed commit `854265d7f529eb14837fcd7e9b8a7e3ba0e25d9b`. [Pages run 36648248102](https://github.com/lopoke89-ops/palisade/actions/runs/36648248102) failed during Jekyll rendering of `dev/PROJECT_BLUEPRINT_2026-09-29.md`: invalid UTF-8 punctuation bytes. Deployment was skipped, and fresh live page/service-worker fetches still return v0.9.3.3. The document encoding is repaired locally; the tracked text files pass strict UTF-8 validation. Commit and push this documentation-only repair, then verify a successful Pages run and the v0.9.3.4 live footer. The game build does not need to be rebuilt for this repair.
 

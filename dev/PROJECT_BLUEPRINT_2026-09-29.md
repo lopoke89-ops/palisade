@@ -6,6 +6,8 @@ Updated September 29, 2026. This is the working summary for the next release pla
 
 Big U supplied an exported copy of the Claude audit at `D:\downloads\Untitled.md`. Its Progress section reaches v0.9.3, not v0.9.3.1; its older v0.9.0 audit and build-order sections are historical. The current release evidence and Big U's latest scope decision above take precedence over that older plan.
 
+**September 30 update:** v0.9.3.4 is live. The v0.9.3.5 cosmetics candidate is complete and awaits merge; its migration (`20260930050715`) is applied live and verified. The Supabase row below and the release order are otherwise unchanged. See [STATUS.md](STATUS.md).
+
 ## Verified position
 
 **Current local work:** v0.9.3.4 is implemented, tested, and pushed as `854265d`. Its Pages build failed on invalid UTF-8 in this document; that encoding is repaired locally and needs a follow-up push. It adds full-screen flags, cached scenic depth and natural character motion. The [presentation report](PRESENTATION_2026-09-29.md) includes evidence and [backup/restore instructions](backups/2026-09-29-v0.9.3.3-presentation/MANIFEST.md). The live release is v0.9.3.3 at `2268c35`, with Milestones-only browsing and collapsible Locker collections. Reward retry/rejoin, import/identity and new modes remain deferred.

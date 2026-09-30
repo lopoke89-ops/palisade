@@ -1,0 +1,484 @@
+{
+  "method": "Three interleaved A/B trials in desktop Chrome; touch 390x844 DPR2 page; 780x844 software canvas; each workload 40 warmups +160 samples with readback. V8 sampling/GC trace cover the entire workload, including cache warmup and page activity. Heap delta is retained heap, not allocation. Not a physical phone or full-game FPS claim.",
+  "results": {
+    "before": {
+      "flags-100": {
+        "medianMs": 5,
+        "p95Ms": 5.699999999953434,
+        "p99Ms": 7.599999999860302,
+        "operationsPerTracer": {
+          "save": 1,
+          "clip": 1,
+          "drawImage": 1,
+          "restore": 1
+        }
+      },
+      "flags-300": {
+        "medianMs": 9.799999999813735,
+        "p95Ms": 16.5999999998603,
+        "p99Ms": 19.5,
+        "operationsPerTracer": {
+          "save": 1,
+          "clip": 1,
+          "drawImage": 1,
+          "restore": 1
+        }
+      },
+      "other-100": {
+        "medianMs": 5.300000000046566,
+        "p95Ms": 6.199999999953434,
+        "p99Ms": 8.399999999906868,
+        "operationsPerTracer": {
+          "save": 1.03,
+          "clip": 1,
+          "drawImage": 1.06,
+          "restore": 1.03,
+          "stroke": 0.36,
+          "fill": 0.45,
+          "fillRect": 0.06
+        }
+      },
+      "other-300": {
+        "medianMs": 11.099999999976717,
+        "p95Ms": 17.199999999953434,
+        "p99Ms": 20.399999999906868,
+        "operationsPerTracer": {
+          "save": 1.03,
+          "clip": 1,
+          "drawImage": 1.06,
+          "restore": 1.03,
+          "stroke": 0.38,
+          "fill": 0.45,
+          "fillRect": 0.06
+        }
+      },
+      "memory": {
+        "sampledAllocatedBytes": 23661576,
+        "elapsedMs": 6574,
+        "gcEvents": 13,
+        "gcTotalMs": 33.406,
+        "gcMaxMs": 20.239
+      }
+    },
+    "after": {
+      "flags-100": {
+        "medianMs": 0.8999999999068677,
+        "p95Ms": 1.1000000000931323,
+        "p99Ms": 1.3000000000465661,
+        "operationsPerTracer": {
+          "save": 1,
+          "fillRect": 2,
+          "restore": 1
+        }
+      },
+      "flags-300": {
+        "medianMs": 1.5999999998603016,
+        "p95Ms": 2.800000000046566,
+        "p99Ms": 4.199999999953434,
+        "operationsPerTracer": {
+          "save": 1,
+          "fillRect": 2,
+          "restore": 1
+        }
+      },
+      "other-100": {
+        "medianMs": 2.800000000046566,
+        "p95Ms": 4.399999999906868,
+        "p99Ms": 5,
+        "operationsPerTracer": {
+          "save": 1.03,
+          "drawImage": 1.06,
+          "restore": 1.03,
+          "clip": 0.03,
+          "fillRect": 0.06
+        }
+      },
+      "other-300": {
+        "medianMs": 7.5,
+        "p95Ms": 10.899999999906868,
+        "p99Ms": 12.700000000186265,
+        "operationsPerTracer": {
+          "save": 1.03,
+          "drawImage": 1.06,
+          "restore": 1.03,
+          "clip": 0.03,
+          "fillRect": 0.06
+        }
+      },
+      "memory": {
+        "sampledAllocatedBytes": 23838812,
+        "elapsedMs": 2804,
+        "gcEvents": 13,
+        "gcTotalMs": 23.875999999999998,
+        "gcMaxMs": 10.875
+      }
+    }
+  },
+  "runs": {
+    "before": [
+      {
+        "flags-100": {
+          "medianMs": 5,
+          "p95Ms": 8.5,
+          "p99Ms": 11,
+          "operationsPerTracer": {
+            "save": 1,
+            "clip": 1,
+            "drawImage": 1,
+            "restore": 1
+          },
+          "heapDeltaBytes": 771146
+        },
+        "flags-300": {
+          "medianMs": 13,
+          "p95Ms": 18.5,
+          "p99Ms": 20.199999999953434,
+          "operationsPerTracer": {
+            "save": 1,
+            "clip": 1,
+            "drawImage": 1,
+            "restore": 1
+          },
+          "heapDeltaBytes": -489395
+        },
+        "other-100": {
+          "medianMs": 6.099999999976717,
+          "p95Ms": 7.900000000023283,
+          "p99Ms": 10.20000000006985,
+          "operationsPerTracer": {
+            "save": 1.03,
+            "clip": 1,
+            "drawImage": 1.06,
+            "restore": 1.03,
+            "stroke": 0.36,
+            "fill": 0.45,
+            "fillRect": 0.06
+          },
+          "heapDeltaBytes": -265251
+        },
+        "other-300": {
+          "medianMs": 11.099999999976717,
+          "p95Ms": 16.899999999906868,
+          "p99Ms": 19,
+          "operationsPerTracer": {
+            "save": 1.03,
+            "clip": 1,
+            "drawImage": 1.06,
+            "restore": 1.03,
+            "stroke": 0.38,
+            "fill": 0.45,
+            "fillRect": 0.06
+          },
+          "heapDeltaBytes": -430880
+        },
+        "memory": {
+          "sampledAllocatedBytes": 26133360,
+          "elapsedMs": 7733,
+          "gcEvents": 13,
+          "gcTotalMs": 28.387999999999998,
+          "gcMaxMs": 12.706
+        }
+      },
+      {
+        "flags-100": {
+          "medianMs": 5,
+          "p95Ms": 5.600000000093132,
+          "p99Ms": 5.899999999906868,
+          "operationsPerTracer": {
+            "save": 1,
+            "clip": 1,
+            "drawImage": 1,
+            "restore": 1
+          },
+          "heapDeltaBytes": 756530
+        },
+        "flags-300": {
+          "medianMs": 9.300000000046566,
+          "p95Ms": 15.400000000139698,
+          "p99Ms": 16.100000000093132,
+          "operationsPerTracer": {
+            "save": 1,
+            "clip": 1,
+            "drawImage": 1,
+            "restore": 1
+          },
+          "heapDeltaBytes": -719191
+        },
+        "other-100": {
+          "medianMs": 4,
+          "p95Ms": 5.399999999906868,
+          "p99Ms": 6.300000000046566,
+          "operationsPerTracer": {
+            "save": 1.03,
+            "clip": 1,
+            "drawImage": 1.06,
+            "restore": 1.03,
+            "stroke": 0.36,
+            "fill": 0.45,
+            "fillRect": 0.06
+          },
+          "heapDeltaBytes": -488971
+        },
+        "other-300": {
+          "medianMs": 11.799999999813735,
+          "p95Ms": 18.800000000046566,
+          "p99Ms": 20.399999999906868,
+          "operationsPerTracer": {
+            "save": 1.03,
+            "clip": 1,
+            "drawImage": 1.06,
+            "restore": 1.03,
+            "stroke": 0.38,
+            "fill": 0.45,
+            "fillRect": 0.06
+          },
+          "heapDeltaBytes": -486808
+        },
+        "memory": {
+          "sampledAllocatedBytes": 23661576,
+          "elapsedMs": 6359,
+          "gcEvents": 13,
+          "gcTotalMs": 33.406,
+          "gcMaxMs": 20.239
+        }
+      },
+      {
+        "flags-100": {
+          "medianMs": 3.6000000000931323,
+          "p95Ms": 5.699999999953434,
+          "p99Ms": 7.599999999860302,
+          "operationsPerTracer": {
+            "save": 1,
+            "clip": 1,
+            "drawImage": 1,
+            "restore": 1
+          },
+          "heapDeltaBytes": 765586
+        },
+        "flags-300": {
+          "medianMs": 9.799999999813735,
+          "p95Ms": 16.5999999998603,
+          "p99Ms": 19.5,
+          "operationsPerTracer": {
+            "save": 1,
+            "clip": 1,
+            "drawImage": 1,
+            "restore": 1
+          },
+          "heapDeltaBytes": -380040
+        },
+        "other-100": {
+          "medianMs": 5.300000000046566,
+          "p95Ms": 6.199999999953434,
+          "p99Ms": 8.399999999906868,
+          "operationsPerTracer": {
+            "save": 1.03,
+            "clip": 1,
+            "drawImage": 1.06,
+            "restore": 1.03,
+            "stroke": 0.36,
+            "fill": 0.45,
+            "fillRect": 0.06
+          },
+          "heapDeltaBytes": -545315
+        },
+        "other-300": {
+          "medianMs": 11,
+          "p95Ms": 17.199999999953434,
+          "p99Ms": 20.699999999953434,
+          "operationsPerTracer": {
+            "save": 1.03,
+            "clip": 1,
+            "drawImage": 1.06,
+            "restore": 1.03,
+            "stroke": 0.38,
+            "fill": 0.45,
+            "fillRect": 0.06
+          },
+          "heapDeltaBytes": -384944
+        },
+        "memory": {
+          "sampledAllocatedBytes": 23416032,
+          "elapsedMs": 6574,
+          "gcEvents": 12,
+          "gcTotalMs": 33.824,
+          "gcMaxMs": 21.712
+        }
+      }
+    ],
+    "after": [
+      {
+        "flags-100": {
+          "medianMs": 0.8999999999068677,
+          "p95Ms": 1,
+          "p99Ms": 1.3000000000465661,
+          "operationsPerTracer": {
+            "save": 1,
+            "fillRect": 2,
+            "restore": 1
+          },
+          "heapDeltaBytes": 1703998
+        },
+        "flags-300": {
+          "medianMs": 2.5,
+          "p95Ms": 2.800000000046566,
+          "p99Ms": 4.699999999953434,
+          "operationsPerTracer": {
+            "save": 1,
+            "fillRect": 2,
+            "restore": 1
+          },
+          "heapDeltaBytes": -1337401
+        },
+        "other-100": {
+          "medianMs": 2.800000000046566,
+          "p95Ms": 4.399999999906868,
+          "p99Ms": 5,
+          "operationsPerTracer": {
+            "save": 1.03,
+            "drawImage": 1.06,
+            "restore": 1.03,
+            "clip": 0.03,
+            "fillRect": 0.06
+          },
+          "heapDeltaBytes": -349524
+        },
+        "other-300": {
+          "medianMs": 7.5,
+          "p95Ms": 9.300000000046566,
+          "p99Ms": 10.5,
+          "operationsPerTracer": {
+            "save": 1.03,
+            "drawImage": 1.06,
+            "restore": 1.03,
+            "clip": 0.03,
+            "fillRect": 0.06
+          },
+          "heapDeltaBytes": -561348
+        },
+        "memory": {
+          "sampledAllocatedBytes": 23577868,
+          "elapsedMs": 2804,
+          "gcEvents": 13,
+          "gcTotalMs": 23.563000000000002,
+          "gcMaxMs": 10.112
+        }
+      },
+      {
+        "flags-100": {
+          "medianMs": 1,
+          "p95Ms": 1.1999999999534339,
+          "p99Ms": 1.2000000001862645,
+          "operationsPerTracer": {
+            "save": 1,
+            "fillRect": 2,
+            "restore": 1
+          },
+          "heapDeltaBytes": 593438
+        },
+        "flags-300": {
+          "medianMs": 1.5,
+          "p95Ms": 2.2999999998137355,
+          "p99Ms": 3.199999999953434,
+          "operationsPerTracer": {
+            "save": 1,
+            "fillRect": 2,
+            "restore": 1
+          },
+          "heapDeltaBytes": 228763
+        },
+        "other-100": {
+          "medianMs": 2.5999999998603016,
+          "p95Ms": 4.300000000046566,
+          "p99Ms": 5,
+          "operationsPerTracer": {
+            "save": 1.03,
+            "drawImage": 1.06,
+            "restore": 1.03,
+            "clip": 0.03,
+            "fillRect": 0.06
+          },
+          "heapDeltaBytes": -323720
+        },
+        "other-300": {
+          "medianMs": 7.5,
+          "p95Ms": 10.899999999906868,
+          "p99Ms": 12.700000000186265,
+          "operationsPerTracer": {
+            "save": 1.03,
+            "drawImage": 1.06,
+            "restore": 1.03,
+            "clip": 0.03,
+            "fillRect": 0.06
+          },
+          "heapDeltaBytes": -1450048
+        },
+        "memory": {
+          "sampledAllocatedBytes": 23903880,
+          "elapsedMs": 2647,
+          "gcEvents": 13,
+          "gcTotalMs": 23.875999999999998,
+          "gcMaxMs": 10.875
+        }
+      },
+      {
+        "flags-100": {
+          "medianMs": 0.8000000000465661,
+          "p95Ms": 1.1000000000931323,
+          "p99Ms": 2.1000000000931323,
+          "operationsPerTracer": {
+            "save": 1,
+            "fillRect": 2,
+            "restore": 1
+          },
+          "heapDeltaBytes": 1237446
+        },
+        "flags-300": {
+          "medianMs": 1.5999999998603016,
+          "p95Ms": 2.800000000046566,
+          "p99Ms": 4.199999999953434,
+          "operationsPerTracer": {
+            "save": 1,
+            "fillRect": 2,
+            "restore": 1
+          },
+          "heapDeltaBytes": -1843645
+        },
+        "other-100": {
+          "medianMs": 3.300000000046566,
+          "p95Ms": 5.100000000093132,
+          "p99Ms": 5.699999999953434,
+          "operationsPerTracer": {
+            "save": 1.03,
+            "drawImage": 1.06,
+            "restore": 1.03,
+            "clip": 0.03,
+            "fillRect": 0.06
+          },
+          "heapDeltaBytes": 1691332
+        },
+        "other-300": {
+          "medianMs": 8.699999999953434,
+          "p95Ms": 14.100000000093132,
+          "p99Ms": 18.600000000093132,
+          "operationsPerTracer": {
+            "save": 1.03,
+            "drawImage": 1.06,
+            "restore": 1.03,
+            "clip": 0.03,
+            "fillRect": 0.06
+          },
+          "heapDeltaBytes": 173536
+        },
+        "memory": {
+          "sampledAllocatedBytes": 23838812,
+          "elapsedMs": 3162,
+          "gcEvents": 14,
+          "gcTotalMs": 32.327,
+          "gcMaxMs": 17.784
+        }
+      }
+    ]
+  },
+  "errors": []
+}

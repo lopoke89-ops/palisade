@@ -10,14 +10,14 @@ $siteDir = (Resolve-Path -LiteralPath (Join-Path $testDir '..\..')).Path
 $outDir = Join-Path $testDir 'out'
 New-Item -ItemType Directory -Path $outDir -Force | Out-Null
 $groups = @{
-  cosmetics = 'locker_fit cosmetics wardrobe3d cosmetic_network'
+  cosmetics = 'locker_fit cosmetics wardrobe3d cosmetic_network tracer_cycle tracer_network ultimate_cloud cosmetics_expansion cosmetics_migration'
   locker = 'locker_collections locker_fit milestones flagcase accounts taborder csp'
   presentation = 'presentation presentation_posefit flagcase wardrobe3d locker_fit muzzle presentation_network cosmetic_network csp'
   music = 'music_routing'
   combat = 'solo bosses multiplayer muzzle rewards_lobby_shotgun'
   host = 'hostcheck room_controls multiplayer'
   smoke = 'solo lobby reel_music csp'
-  all = 'solo bosses multiplayer cases accounts rewards_lobby_shotgun reel_music music_routing v086 v087 muzzle cosmetics locker_fit locker_collections cosmetic_network social_lobby lobby v090 v090_net hostcheck room_controls csp wardrobe3d friends rewards_screen modifiers skilltree rejoin controller taborder milestones flagcase presentation presentation_posefit presentation_network'
+  all = 'solo bosses multiplayer cases accounts rewards_lobby_shotgun reel_music music_routing v086 v087 muzzle cosmetics locker_fit locker_collections cosmetic_network social_lobby lobby v090 v090_net hostcheck room_controls csp wardrobe3d friends rewards_screen modifiers skilltree rejoin controller taborder milestones flagcase presentation presentation_posefit presentation_network tracer_cycle tracer_network ultimate_cloud cosmetics_expansion cosmetics_migration'
 }
 $selectedTests = $(if ($Tests) { $Tests } else { $groups[$Group] }).Split(' ', [System.StringSplitOptions]::RemoveEmptyEntries)
 foreach ($t in $selectedTests) { if ($t -notmatch '^[a-z0-9_]+$' -or -not (Test-Path -LiteralPath (Join-Path $testDir "$t.js"))) { throw "Unknown test: $t" } }

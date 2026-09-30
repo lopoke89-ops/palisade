@@ -3,11 +3,11 @@
 Everything needed to rebuild, test and restore the game. The playable site is the repo's top
 level (built from here); this folder is the source.
 
-Current live status is **v0.9.3.3**, GitHub `main` at `854265d`. The local
-**v0.9.3.4 candidate** adds full-screen flags, cached scenic depth and more natural
-character motion; it is pushed, but Pages failed while rendering the blueprint because of invalid UTF-8.
-The documentation-only repair is local and needs a follow-up push; the live game remains v0.9.3.3. No server migration is required.
-See [STATUS.md](STATUS.md) and the [current blueprint](PROJECT_BLUEPRINT_2026-09-29.md).
+Current live status is **v0.9.3.4**, GitHub `main` at `4033d34`. The **v0.9.3.5 candidate**
+(cycling flag tracers, six Halloween head pieces, the Ultimate Sahur skin) is on
+`claude/lucid-curie-491na1`; its server migration is already applied and backward compatible.
+See [STATUS.md](STATUS.md), the [v0.9.3.5 record](COSMETICS_V0935_CHECKPOINT.md) and the
+[current blueprint](PROJECT_BLUEPRINT_2026-09-29.md). Evidence is under `evidence/v0.9.3.5/`.
 
 The [presentation report](PRESENTATION_2026-09-29.md) records nine focused checks,
 matched captures/clips and the A/B performance comparison. The [dated backup manifest](backups/2026-09-29-v0.9.3.3-presentation/MANIFEST.md)
