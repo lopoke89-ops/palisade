@@ -139,7 +139,7 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
   await H.waitForFunction(() => /^[A-Z0-9]{4}$/.test(document.getElementById('lCode').textContent), null, { timeout: 15000 });
   const code = await H.textContent('#lCode');
   await G.click('[data-nav=multi]'); await G.fill('#mCode', code); await G.click('#joinBtn'); await G.waitForSelector('#pg-lobby:not([hidden])', { timeout: 15000 });
-  await H.click('#lMods [data-mod=weather]'); await H.click('#lMods [data-mod=onejob]'); await H.click('[data-oj=sniper]'); await H.waitForTimeout(700);
+  await H.click('#roomRows [data-setup=mods]'); await H.click('#soloMods [data-mod=weather]'); await H.click('#soloMods [data-mod=onejob]'); await H.click('#setupDone'); await H.click('[data-oj=sniper]'); await H.waitForTimeout(700);
   out.guestRoom = await G.evaluate(() => ({ chips: [...document.querySelectorAll('#lMods .modChip')].map(b => b.dataset.mod), disabled: [...document.querySelectorAll('#lMods .modChip')].every(b => b.disabled), job: document.querySelector('[data-oj].sel')?.dataset.oj }));
   assert.deepEqual(out.guestRoom, { chips: ['weather', 'onejob'], disabled: true, job: 'sniper' });
   await G.click('#lMods .modChip').catch(() => { });   // a guest can't change them
