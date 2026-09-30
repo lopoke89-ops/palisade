@@ -11,9 +11,9 @@ The Claude audit URL still requires sign-in in the available browser session. Bi
 
 | Item | Current state |
 |---|---|
-| Live release | **v0.9.3.8** (published September 30) |
+| Live release | **v0.9.3.9** (published September 30) |
 | Live protocol | `yard-17` / `palisade-yard-17-` (v0.9.3.5 candidate uses `yard-18`) |
-| Applied server migration | `palisade_v0938_all_boss_milestones` (`20260930075446`); before it `palisade_v0936_rejoin_bosses` (`20260930071534`) |
+| Applied server migration | `palisade_v0939_sp_cases` (`20260930084544`); before it `palisade_v0938_all_boss_milestones` (`20260930075446`) |
 | GitHub branch | `main` at `4033d34` (v0.9.3.4 plus the UTF-8 repair); v0.9.3.5 candidate on `claude/lucid-curie-491na1` |
 | Published build | GitHub Pages displays **v0.9.3.4** (service worker `palisade-0e4e6153b7`), checked September 30 |
 
@@ -28,7 +28,7 @@ Work order: [plans/v0.9.3.9-work-order.md](plans/v0.9.3.9-work-order.md). Eviden
 **1. 3 skill points → 1 Supply Case** (no cap, per Big U).
 - *Where:* a new button in the Locker's Supply Case panel shows your points. It works on two taps: the first arms it for 3 s, the second spends.
 - *When it's off:* it is disabled with a reason below 3 points; offline, the points stay and a message explains.
-- *Accounts:* use the new RPC `buy_case_sp` (migration `20261001200000_palisade_v0939_sp_cases.sql`; **needs Big U's approval before it is applied live**). It spends only unspent `sp`, and `sp_total` is unchanged. The live `skill_respec` refunds `skill_spent(skills)`, the tree's own costs, so points traded for cases can never come back through a reset.
+- *Accounts:* use the new RPC `buy_case_sp` (migration `20260930084544_palisade_v0939_sp_cases`, **applied September 30 with Big U's approval**; signed-in players only, anon denied). It spends only unspent `sp`, and `sp_total` is unchanged. The live `skill_respec` refunds `skill_spent(skills)`, the tree's own costs, so points traded for cases can never come back through a reset.
 - *No-account players:* they get the same trade (Big U). They previously earned no skill points at all, so their runs now earn them by the server's rule: 1 per 5 raids held, 1 per boss, including in-between bosses. The skill tree itself stays account-only.
 - *Tests:* `sp_cases_migration` (PGlite: success, no cap, stale rev, fewer than 3 refused while tree points are untouched, respec refunds only the tree, other accounts, banned, signed out, anon denied) and `sp_cases` (account two-tap, repeat, disabled, offline; no-account earning, trade, reload).
 

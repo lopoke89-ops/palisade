@@ -10,7 +10,7 @@ NEXT: v0.9.3.9 is ready for review:
 - A "Show tips during games" setting.
 - The six Halloween Case head pieces rebuilt, plus a fit pass on all hats.
 
-Its server change (buy_case_sp) waits for approval. See dev/STATUS.md.
+Its server change (buy_case_sp) is live. See dev/STATUS.md.
 
 This folder is the whole game as a website. Put it online once and anyone
 can play by opening the link. No app store, no download.
