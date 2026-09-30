@@ -37,7 +37,7 @@ function handle(m, url, h, body) {
   await p.goto('http://localhost:8080/debug.html?debug=1&cloud=1'); await W(1500); await p.mouse.move(600, 400);
   log('account:', await P(() => __pal.acct.state));
   // 1. shotgun: fast clicks vs holding
-  await P(() => __pal.showPage('solo')); await p.click('[data-c=grenadier]'); await p.click('#startBtn'); await W(300);
+  await P(() => __pal.showPage('solo')); await p.click('[data-setup=job]:visible'); await p.click('#setupSheet [data-c=grenadier]'); await p.click('#setupDone'); await p.click('#startBtn'); await W(300);
   log('gun', await P(() => { const g = __pal.player.gun; return { dmg: g.dmg, cd: g.cd, clickCd: g.clickCd, per: g.dmg * g.pellets } }));
   const count = () => P(() => window.__sh || 0);
   await P(() => { window.__sh = 0; const pl = __pal.player; let a = pl.ammo; setInterval(() => { if (pl.ammo < a) window.__sh += a - pl.ammo; a = pl.ammo }, 4) });

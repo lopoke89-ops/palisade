@@ -10,7 +10,7 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
   const H = await b.newPage({ viewport: { width: 1100, height: 760 } }); H.on('pageerror', e => errors.push('H ' + e.message));
   const G = await (await b.newContext({ viewport: { width: 900, height: 700 } })).newPage(); G.on('pageerror', e => errors.push('G ' + e.message));
   await H.goto(`http://localhost:${PORT}/debug.html?${Q}`); await G.goto(`http://localhost:${PORT}/debug.html?${Q}`); await H.waitForTimeout(800);
-  await H.click('[data-nav=multi]'); await H.click('[data-mm=blitz]'); await H.click('#hostBtn');
+  await H.click('[data-nav=multi]'); await H.click('[data-setup=rules]:visible'); await H.click('#setupSheet [data-m5=blitz]'); await H.click('#setupDone'); await H.click('#hostBtn');
   await H.waitForFunction(() => /^[A-Z0-9]{4}$/.test(document.getElementById('lCode').textContent), null, { timeout: 15000 });
   const code = await H.textContent('#lCode');
   await G.click('[data-nav=multi]'); await G.fill('#mCode', code); await G.click('#joinBtn');
@@ -25,6 +25,8 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
   await H.waitForFunction(() => __pal.game.fb && __pal.enemies.some(e => e.type === 'boss'), null, { timeout: 8000 });
   await H.evaluate(() => { const P = __pal, e = P.enemies.find(x => x.type === 'boss'); e.lx = e.x - 6; e.ly = e.y; P.launchArc(e, P.game.Df); P.napalmLand({ x1: 6.5, y1: 6.5 }) });
   await G.waitForFunction(() => __pal.game.fb && __pal.arcs.length > 0 && __pal.fires.some(f => f.nap), null, { timeout: 5000 });
+  // the HUD label is redrawn by the frame loop, a moment after the snapshot lands
+  await G.waitForFunction(() => /BLITZ/.test(document.getElementById('phaseLab').textContent), null, { timeout: 5000 }).catch(() => {});
   out.fb = await G.evaluate(() => { const P = __pal, h = P.game.fb; return { t: Math.round(h.t), n: h.n, max: h.max, bosses: P.enemies.filter(e => e.type === 'boss').map(e => e.boss), label: document.getElementById('phaseLab').textContent } });
   const ht = await H.evaluate(() => Math.round(__pal.game.fb.t));
   assert.ok(Math.abs(out.fb.t - ht) <= 1, 'clock in step'); assert.ok(out.fb.bosses.includes('bluebutcher')); assert.equal(out.fb.max, 10); assert.match(out.fb.label, /BLITZ/);

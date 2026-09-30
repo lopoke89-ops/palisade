@@ -63,7 +63,8 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
   await game();
   out.down = await p.evaluate(() => { const P = __pal, g = P.game, me = P.player; P.qm.max = P.qm.hp = 1e9; P.core.max = P.core.hp = 1e9;
     g.wave = 14; g.phase = 'build'; P.startRaid(); g.fb.t = 60.5; for (let i = 0; i < 30; i++) P.update(1 / 30);
-    me.hp = 1; P.hurtPlayer(me, 5); for (let i = 0; i < 30 * 12; i++) P.update(1 / 30); const r = { downed: me.downed, rt: me.rt > 1e5 };
+    // Delgado is kept across the map, so only a respawn clock could bring you back
+    me.hp = 1; P.hurtPlayer(me, 5); for (let i = 0; i < 30 * 12; i++) { P.qm.x = me.x < P.N / 2 ? P.N - 1.5 : 1.5; P.qm.y = me.y < P.N / 2 ? P.N - 1.5 : 1.5; P.update(1 / 30) } const r = { downed: me.downed, rt: me.rt > 1e5 };
     P.revivePlayer(me); me.max = me.hp = 1e9; const E = g.fb.evac; for (let i = 0; i < 100; i++) { me.x = E.x; me.y = E.y; P.update(1 / 30) } r.out = !!me.out; return r });
   assert.deepEqual(out.down, { downed: true, rt: true, out: true });
   // Double Time: every 20 s, 15 of them; Hot LZ: opens at 0:45, a third smaller

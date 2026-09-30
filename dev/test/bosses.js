@@ -8,7 +8,7 @@ const O = __dirname + '/out';
   const P = f => p.evaluate(f), W = ms => p.waitForTimeout(ms), log = (...a) => console.log(...a);
   const start = async cls => {
     await p.goto('http://localhost:8080/debug.html?debug=1'); await W(700); await p.mouse.move(700, 430);
-    await p.click('[data-go=solo]'); await p.click(`[data-c=${cls}]`); await p.click('#startBtn'); await W(400);
+    await p.click('[data-go=solo]'); await p.click('[data-setup=job]:visible'); await p.click(`#setupSheet [data-c=${cls}]`); await p.click('#setupDone'); await p.click('#startBtn'); await W(400);
   };
 
   // ---------- 1. Grenadier shotgun

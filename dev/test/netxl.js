@@ -7,7 +7,7 @@ const port = process.argv[2] || 8080, page = process.argv[3] || 'debug.html', Q 
   const b = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--disable-features=WebRtcHideLocalIpsWithMdns'] });
   const errs = [], open = async (vp, tag) => { const p = await b.newPage({ viewport: vp }); p.on('pageerror', e => errs.push(tag + ' ' + e.message)); await p.goto(`http://localhost:${port}/${page}?${Q}`); await p.waitForTimeout(600); return p };
   const H = await open({ width: 1280, height: 720 }, 'HOST');
-  await H.click('[data-go=multi]'); await H.fill('#mName', 'Host'); await H.click('[data-mmap=river]'); await H.click('#sizeSeg [data-size=xl]'); await H.click('#hostBtn');
+  await H.click('[data-go=multi]'); await H.fill('#mName', 'Host'); await H.click('[data-setup=map]:visible'); await H.click('[data-mmap=river]'); await H.click('#sizeSeg [data-size=xl]'); await H.click('#setupDone'); await H.click('#hostBtn');
   await H.waitForSelector('#pg-lobby:not([hidden])', { timeout: 10000 }); const code = await H.textContent('#lCode');
   const G = [];
   for (let n = 1; n <= 5; n++) { const g = await open({ width: 400, height: 300 }, 'G' + n); await g.click('[data-go=multi]'); await g.fill('#mName', 'Guest' + n); await g.fill('#mCode', code); await g.click('#joinBtn');

@@ -11,8 +11,8 @@ The Claude audit URL still requires sign-in in the available browser session. Bi
 
 | Item | Current state |
 |---|---|
-| Live release | **v0.9.3.10** (published September 30) |
-| Live protocol | `yard-17` / `palisade-yard-17-` (v0.9.3.5 candidate uses `yard-18`) |
+| Live release | **v0.9.5.0** (menu overhaul; v0.9.4.0 Blitzkrieg Rush before it) |
+| Live protocol | `yard-19` / `palisade-yard-19-` |
 | Applied server migration | `palisade_v0940_blitz` (`20260930141401`); before it `palisade_v0939_sp_cases` (`20260930084544`) |
 | GitHub branch | `main` at `4033d34` (v0.9.3.4 plus the UTF-8 repair); v0.9.3.5 candidate on `claude/lucid-curie-491na1` |
 | Published build | GitHub Pages displays **v0.9.3.4** (service worker `palisade-0e4e6153b7`), checked September 30 |
@@ -20,6 +20,22 @@ The Claude audit URL still requires sign-in in the available browser session. Bi
 Controller support shipped in v0.9.2.1. The v0.9.3 cosmetics migration is applied and the live case catalog includes Flags. The two proposed new game modes have not shipped; the Nightmare modifier and a future preset definition do not constitute a separate game mode.
 
 Four commits after the v0.9.3 release changed the case intro and reel source (`98bb522`, `4c8dd3d`, `a49df08`, `566e30e`). The v0.9.3.1 release includes those fixes. Their source was compared with the v0.9.3 release on September 29; see [case animation validation](CASE_PERFORMANCE_2026-09-29.md). The reel avoids repeated style reads and its measured CPU use was lower, but intro readings overlapped and Locker readings were higher in the comparison runs. Further profiling and a real-phone comparison are still required before performance sign-off.
+
+## v0.9.5.0: Menu overhaul
+
+Big U asked for a full look at every menu page on desktop and phones (portrait and landscape) before changes, then: keep the character centrepiece, one PLAY button with the setup behind it, and a light touch on the Locker. Evidence: `evidence/v0.9.5.0/` (contact sheets at desktop, phone portrait and phone landscape). Review tool: `test/menu_audit.js` (every page at 1440×900, 1280×720, 390×844 and 844×390, with layout measurements). No protocol change (`yard-19`), no server migration.
+
+**PLAY.** The Solo page is now PLAY: the match as four tappable lines (MAP, LENGTH, JOB, MODIFIERS) and one PLAY button. Each line opens the **setup sheet** on its tab (map, rules, job, modifiers). The same sheet serves hosting a room and the room itself (host only), so there is one place to change a match. On desktop the right column shows the new mode (TRY IT), cases ready to open, the next unlock with its progress bar, and skill points (`19c-home.js`).
+
+**MULTIPLAYER and the room.** MULTIPLAYER is two cards: JOIN A CREW (code, JOIN) and HOST A ROOM (co-op, Base Battle, Free-for-all, the same four lines, HOST), then open games. The room puts the code, share link and START first, then the host's lines (read-only for guests), job, crew and chat.
+
+**Nav.** PLAY, MULTIPLAYER, LOCKER, SKILLS, CLASSES, SETTINGS with icons; waiting cases and skill points are badges (the labels no longer change). Phones in portrait get a bottom tab bar with PLAY pinned above it; landscape phones get a slim top bar and a compact 2×2 of lines with PLAY under it.
+
+**Locker (light touch).** Cases you hold come first; empty cases fold to one line with BUY. Milestones are one strip per ladder with an "n / 5 unlocked" count (swipe on a phone), about half the length.
+
+**Settings.** Cards flow into columns without gaps; bigger slider thumbs.
+
+**Tests.** Tests that clicked the moved controls go through the setup sheet. `run_all.sh` now also fails a test that exits non-zero: `v087` had been passing on its printed output since v0.9.1 while one check failed (the end-screen wording changed then; the check now matches it). `blitz_mode` keeps Delgado away while checking the downed evacuation (he could revive you at random); `blitz_network` waits for the guest HUD label to redraw.
 
 ## v0.9.4.0: Blitzkrieg Rush
 

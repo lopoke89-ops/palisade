@@ -53,6 +53,7 @@ function startDemo(){
 // 'main' is the PLAY page now (the lobby with your character on stage); old callers still say 'main'
 const PAGES=['solo','classes','multi','lobby','locker','skills','settings','account'];
 function showPage(p){
+  $('setupSheet').hidden=true;   // v0.9.5: leaving a page closes the match setup
   if(p==='main')p='solo';
   if((p==='multi'||p==='solo')&&(NET.mode==='host'||NET.mode==='guest')&&!NET.inGame)p='lobby';   // in a room, PLAY and MULTIPLAYER both mean the room
   if(p==='multi'&&window.PEER_SRC){needPeer();getIce()}   // warm up online play while they pick a name
@@ -159,6 +160,7 @@ function syncPicks(){
   $('pvDesc').textContent={coop:'Everyone against the raiders, with Delgado. Pick how long and how hard.',
     base:`Two crews, two stakes. ${PVP.truce} seconds of truce to gather and wall in, then knock down theirs. Kills pay salvage for the armory. No raiders, no Delgado.`,
     ffa:`Everyone for themselves in a designed arena whose cover can't be broken. First to ${PVP.ffaGoal} drops, or the most after ${PVP.ffaTime/60} minutes. No building.`}[pick.pvp]||'';
+  if(typeof renderHome==='function')renderHome();
 }
 document.querySelectorAll('[data-pv]').forEach(b=>b.addEventListener('click',()=>{pick.pvp=b.dataset.pv;syncPicks()}));   // the mode is chosen before hosting; the room keeps it
 document.querySelectorAll('[data-m5]').forEach(b=>b.addEventListener('click',()=>{pick.mode=b.dataset.m5;syncPicks();renderMods();showBest()}));
@@ -215,11 +217,12 @@ function renderLobby(){
     if(base)li.style.borderLeftColor=tm.col;else if(pick.pvp==='ffa')li.style.borderLeftColor='#e0664a';ul.append(li)}
   if(pick.pvp==='coop'){const dl=document.createElement('li');dl.className='ai';dl.textContent='DELGADO · SUPPLY RUNNER · AI';ul.append(dl)}
   $('lStart').hidden=!host;$('shareBtn').hidden=false;$('lTeam').hidden=!base;$('lLock').hidden=!host;$('lLock').textContent=NET.roomLocked?'UNLOCK ROOM':'LOCK ROOM';
-  $('lStart').textContent=pick.pvp==='coop'?'RAISE THE FENCE':'START THE FIGHT';
+  $('lStart').textContent=pick.pvp==='coop'?'START':'START THE FIGHT';
   renderMods();
   const len=pick.mode==='endless'?'endless':pick.mode==='blitz'?'Blitzkrieg Rush':pick.mode+' raids',what=pick.pvp==='base'?'Base battle':pick.pvp==='ffa'?'Free-for-all':`Co-op · ${(MAPS[pick.map]||MAPS.yard).name}${pick.size==='xl'?' XL':''} · ${len} · threat: ${DIFF[pick.diff].name.toLowerCase()}`;
   const block=lobbyBlock();
   $('lNote').textContent=host?`${NET.roster.length} of 6 in the room · ${what}. ${block||'Share the code, then start when everyone is in.'}`:`Waiting for the host to start · ${what}.`;
+  if(typeof renderHome==='function')renderHome();
 }
 $('lTeam').addEventListener('click',()=>{initAudio();if(NET.mode==='host'){const r=NET.roster.find(x=>x.id==='host');if(r){r.team=r.team==='b'?'a':'b';broadcastLobby()}}else if(NET.mode==='guest')NET.toHost({t:'team'})});
 // the Multiplayer page needs the matchmaking library; the in-Claude preview doesn't ship it

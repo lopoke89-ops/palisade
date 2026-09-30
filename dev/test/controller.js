@@ -78,7 +78,7 @@ const FAKE = (id) => {
   await press(p, 1); assert.equal((await S(p)).page, 'solo', 'B backs out of settings');
 
   // 2. a raid
-  await p.click('#pg-solo [data-c=soldier]'); await press(p, 12);
+  await p.click('[data-setup=job]:visible'); await p.click('#setupSheet [data-c=soldier]'); await p.click('#setupDone'); await press(p, 12);
   await focusOn(p, '#startBtn'); await press(p, 0); await p.waitForTimeout(500);
   const st = () => p.evaluate(() => { const q = __pal.player; return { phase: __pal.game.phase, x: q.x, y: q.y, aim: q.aim, fire: q.fireIn, auto: q.autoFire, sel: __pal.game.sel, piece: __pal.game.piece,
     build: __pal.cfg ? __pal.cfg.build : null, paused: __pal.game.paused, keys: document.getElementById('keys').textContent } });

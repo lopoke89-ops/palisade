@@ -788,3 +788,162 @@ body.padMenu #menu .panel{padding-bottom:64px}body.pad .padF{scroll-margin:12px 
   body:not(.desk) #top .meter b{font-size:9px}
   body:not(.desk) #top .phase{margin-left:auto}   /* the raid panel stays top-right */
 }
+
+/* ================= v0.9.5 menu overhaul: PLAY with the setup behind it ================= */
+/* the lines that say what you're about to play; each opens the setup sheet at its tab */
+.setupRows{display:grid;gap:6px}
+.setupRow{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"k go" "v go" "s go";gap:1px 10px;align-items:center;width:100%;min-height:62px;height:auto;padding:9px 12px;text-align:left;
+  background:rgba(22,38,48,.92);border:1px solid #3c5360;color:var(--bone);cursor:pointer}
+.setupRow span{grid-area:k;font:600 10px var(--mono);letter-spacing:.16em;color:#9eb1b7}
+.setupRow b{grid-area:v;font:800 19px var(--stencil);letter-spacing:.05em;line-height:1.1;overflow-wrap:anywhere}
+.setupRow small{grid-area:s;font-size:11px;line-height:1.35;color:#a8bec4}
+.setupRow .suGo{grid-area:go;font:400 30px/1 system-ui;font-style:normal;color:var(--warn)}
+.setupRow:hover:not(:disabled),.setupRow:focus-visible{border-color:var(--warn);background:rgba(40,56,52,.95)}
+.setupRow:disabled{cursor:default;opacity:1;background:rgba(16,28,36,.8)}
+#menu .playBtn{min-height:66px;font:900 34px var(--stencil);letter-spacing:.14em;box-shadow:0 6px 24px rgba(239,211,71,.18)}
+.partyControls #pg-solo .playBtn{position:sticky;bottom:0;z-index:2}
+.homeLede{color:#a8bec4}
+/* Multiplayer: join and host as two cards */
+.mpCard{display:grid;gap:10px;padding:12px;border:1px solid #3c5360;background:rgba(12,24,32,.7)}
+.mpCard h3{font:800 14px var(--stencil);letter-spacing:.16em;color:var(--warn);margin:0}
+.mpCard #pvDesc{color:#a8bec4}
+/* the right column of PLAY */
+#partyShell .homeSide{display:none}
+#menu[data-page=solo] #partyShell .homeSide{display:grid}
+.homeSide{align-content:start;gap:10px;min-height:0;overflow:auto;scrollbar-width:thin}
+.homeCard{display:grid;gap:6px;padding:14px;background:rgba(6,15,23,.84);border:1px solid #354b56}
+.homeCard .hcK{font:600 10px var(--mono);letter-spacing:.16em;color:var(--warn)}
+.homeCard b{font:800 22px var(--stencil);letter-spacing:.05em;color:#eef3ed}
+.homeCard p{margin:0;font-size:12px;line-height:1.5;color:#a8bec4}
+.homeCard .ghost{min-height:44px;font-size:14px;margin-top:4px}
+.homeCard.hcMode{border-left:3px solid #e0433a;background:linear-gradient(135deg,rgba(70,16,14,.8),rgba(6,15,23,.84) 70%)}
+.homeCard.hcMode .hcK{color:#ff8a6a}
+.hcChips{display:flex;flex-wrap:wrap;gap:6px}
+.hcChips i{font:700 11px var(--mono);font-style:normal;letter-spacing:.06em;padding:4px 7px;border:1px solid var(--cc);color:var(--cc)}
+.hcBar{display:block;height:10px;margin:2px 0 6px;background:#0c0b09;border:1px solid var(--line)}.hcBar i{display:block;height:100%;background:linear-gradient(90deg,#b98a1c,#f0d16b)}
+/* the room: guests see the host's picks as lines; the host's START sits up top */
+#pg-lobby #lStart{margin:4px 0}
+#lModsBox[hidden]{display:none}
+/* grid per page now that the map lives in the setup sheet */
+#menu[data-page=solo] #partyShell{grid-template-columns:320px minmax(260px,1fr) 300px}
+#menu[data-page=multi] #partyShell,#menu[data-page=lobby] #partyShell{grid-template-columns:340px minmax(260px,1fr)}
+/* ---- the setup sheet ---- */
+.setupSheet{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(4,8,11,.72)}
+.setupSheet[hidden]{display:none}
+.ssCard{display:flex;flex-direction:column;width:min(820px,100%);max-height:calc(var(--appH,100vh) - 48px);background:#0d1b24;border:1px solid #496067;box-shadow:0 24px 80px #000c;--line:#354e59;--dim:#9eb1b7;--bone:#edf1e9;--warn:#efd347}
+.ssHead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px 10px}
+.ssHead h2{font:900 26px var(--stencil);letter-spacing:.06em;color:var(--warn);margin:0}
+.ssHead .go{width:auto;min-width:130px;min-height:46px;font-size:20px}
+.ssTabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:4px;padding:0 16px}
+.ssTabs button{min-height:44px;border:1px solid #3c5360;background:#16283299;color:#cfe0e4;font:800 14px var(--stencil);letter-spacing:.08em}
+.ssTabs button.sel{background:#eaf4ef;color:#142731;border-color:#eaf4ef}
+.ssTabs button[hidden]{display:none}
+.ssBody{overflow:auto;overscroll-behavior:contain;padding:14px 16px 18px;min-height:0}
+.ssSec{display:grid;gap:10px}.ssSec[hidden]{display:none}
+.ssSec h2{font:800 13px var(--stencil);letter-spacing:.16em;color:#b7c9cf;margin:4px 0 0}
+.ssSec .seg button{min-height:48px;font-size:14px}
+.ssSec .mods{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+#ssMap .mapPanel{padding:0;border:0;background:none;overflow:visible}
+#ssMap .socialHead h2{font:800 13px var(--stencil);letter-spacing:.16em;color:#b7c9cf}
+#ssMap .mapCards{grid-template-columns:repeat(3,minmax(0,1fr))}
+#ssMap .mapCard{grid-template-columns:1fr;align-content:start}#ssMap .mapCard canvas{width:100%;height:auto;aspect-ratio:172/116}
+.ssJobs{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px}
+.ssJob{margin:0;padding:8px 10px;border:1px solid #2e434e;background:rgba(10,20,27,.6)}.ssJob.sel{border-color:var(--warn)}
+.ssJob b{display:block;font:800 14px var(--stencil);letter-spacing:.06em}.ssJob span{display:block;font-size:11px;line-height:1.4;color:#a8bec4;margin-top:3px}
+/* ---- the nav: icons only on phones ---- */
+.partyNav .nIco{display:none;font-style:normal}
+.partyNav button{white-space:nowrap}
+/* ---- phones held upright: a bottom tab bar, the stage, then what you're about to play ---- */
+@media (max-width:700px){
+  #menu .panel .accountDock .partyNav{position:fixed;left:0;right:0;bottom:0;z-index:35;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0;margin:0;order:initial;flex-basis:auto;
+    padding:0 max(4px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(4px,env(safe-area-inset-left,0px));background:#0a151cf5;border-top:1px solid #354b56;box-shadow:0 -6px 24px #0008}
+  #menu .panel .accountDock .partyNav strong{display:none}
+  #menu .panel .accountDock .partyNav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:58px;padding:6px 0 4px;font:800 9.5px var(--stencil);letter-spacing:.04em;background:none;color:#aebfc4;border:0;border-top:2px solid transparent}
+  #menu .panel .accountDock .partyNav .nIco{display:block;font-size:17px;line-height:1}
+  #menu .panel .accountDock .partyNav button[aria-current=page]{color:var(--warn);background:rgba(239,211,71,.08);border-top-color:var(--warn)}
+  #menu.partyMenu .panel,#menu.cardMenu .panel{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 76px)}
+  #menu[data-page=solo] #partyShell,#menu[data-page=multi] #partyShell,#menu[data-page=lobby] #partyShell{grid-template-columns:minmax(0,1fr)}
+  #menu[data-page=solo] #partyShell .homeSide{overflow:visible}
+  .setupSheet{padding:0;align-items:stretch}
+  .ssCard{width:100%;max-height:none;height:100%;border:0;padding-top:env(safe-area-inset-top,0px)}
+  .ssTabs{grid-template-columns:repeat(4,minmax(0,1fr));padding:0 12px}.ssTabs button{font-size:12px;letter-spacing:.04em}
+  #ssMap .mapCards{grid-template-columns:minmax(0,1fr)}#ssMap .mapCard{grid-template-columns:110px minmax(0,1fr)}
+  .ssSec .mods{grid-template-columns:minmax(0,1fr)}
+}
+/* ---- tablets and small laptops: the PLAY extras run across the bottom ---- */
+@media (max-width:1100px) and (min-width:701px){
+  #menu[data-page=solo] #partyShell{grid-template-columns:300px minmax(0,1fr)}
+  #menu[data-page=solo] #partyShell .homeSide{grid-column:1/-1;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));overflow:visible}
+}
+/* ---- phones held sideways: one slim bar on top, the setup on the left, your character on the right ---- */
+@media (max-height:500px) and (orientation:landscape){
+  #menu.partyMenu,#menu.cardMenu{padding:0}
+  #menu.partyMenu .panel{height:100%;min-height:0;overflow:hidden;padding:6px max(10px,env(safe-area-inset-right,0px)) 6px max(10px,env(safe-area-inset-left,0px));gap:6px;border:0}
+  #menu.cardMenu .panel{padding:6px max(10px,env(safe-area-inset-right,0px)) 12px max(10px,env(safe-area-inset-left,0px));border:0}
+  #menu .panel .accountDock{flex-wrap:nowrap;gap:6px}
+  #menu .panel .accountDock .partyNav{flex:1 1 auto;order:0;flex-wrap:nowrap;gap:2px;margin:0}
+  #menu .panel .accountDock .partyNav strong{display:none}
+  #menu .panel .accountDock .partyNav button{flex:0 1 auto;font-size:12.5px;padding:4px 7px;min-height:36px}
+  #identityButton{padding:2px;max-width:none}#identityButton>span:first-of-type,#identityButton .identityDot{display:none}#identityAvatar{width:32px;height:32px}
+  #friendsBtn{padding:0 8px;min-height:36px}.fbLab{display:none}
+  .shardWallet{padding:4px 8px;font-size:13px}.shardWallet small{display:none}
+  #menu .panel>#partyShell{flex:1;min-height:0}
+  #partyShell,#menu[data-page] #partyShell{grid-template-columns:minmax(250px,34%) minmax(0,1fr);grid-template-rows:minmax(0,1fr);gap:10px}
+  #menu[data-page=locker] #partyShell{grid-template-columns:minmax(220px,28%) minmax(0,1fr) minmax(260px,36%)}
+  #menu[data-page=locker] #partyShell .lockPanel{grid-column:auto;min-height:0}
+  .lockPanel #lockGrid{overflow:auto}
+  #menu[data-page=solo] #partyShell .homeSide{display:none}
+  .partyControls{max-height:none;overflow:auto;padding:10px}
+  .partyStage,#menu[data-page] .partyStage{min-height:0;grid-row:auto}
+  .partyHero,#menu[data-page] .partyHero{min-height:0}
+  .partySlots{display:none}
+  .partyHint{display:none}
+  .setupRow{min-height:52px;padding:6px 10px}.setupRow b{font-size:16px}.setupRow small{font-size:10px}
+  #menu .playBtn{min-height:52px;font-size:26px}
+  .setupSheet{padding:6px}.ssCard{max-height:100%;height:100%}.ssHead{padding:8px 12px 6px}.ssHead h2{font-size:20px}.ssHead .go{min-height:38px}
+  .ssBody{padding:10px 12px}#ssMap .mapCard canvas{max-height:70px}
+}
+/* v0.9.5 fixes after the first look: PLAY never covers the lines; landscape fits without scrolling */
+@media (max-width:700px){
+  #menu .panel .accountDock .partyNav svg.nIco{display:block;width:19px;height:19px}
+  .partyControls #pg-solo .playBtn{position:fixed;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 66px);z-index:34;min-height:58px;font-size:30px}
+  #menu[data-page=solo].partyMenu .panel{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 148px)}
+  #menu[data-page=solo] #partySubtitle,#menu[data-page=solo] .partyHint{display:none}
+  #menu[data-page=solo] .partyStage{min-height:300px}
+}
+@media (max-height:500px) and (orientation:landscape){
+  .partyControls #pg-solo .playBtn{position:static}
+  #pg-solo>.pt,#pg-solo>.homeLede,#pg-solo>.foot,#pg-solo>.how{display:none}
+  #homeRows{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #homeRows .setupRow{grid-template-areas:"k" "v";grid-template-columns:minmax(0,1fr);min-height:48px}
+  #homeRows .setupRow small,#homeRows .setupRow .suGo{display:none}
+  .partyHeading .eyebrow,#partySubtitle{display:none}
+  #partyTitle{font-size:20px;margin:0}
+}
+.partyNav button{position:relative}
+.partyNav .nBadge{display:inline-block;margin-left:6px;min-width:18px;padding:1px 5px;border-radius:9px;background:var(--gold,#e8c547);color:#12161b;font:700 11px/16px system-ui,sans-serif;font-style:normal;text-align:center;vertical-align:2px}
+.partyNav .nBadge[hidden]{display:none}
+@media (max-width:700px){
+  .partyNav .nBadge{position:absolute;top:5px;left:calc(50% + 6px);margin:0}
+  /* a fade under the pinned PLAY so the lines scroll away beneath it instead of butting into it */
+  .partyControls #pg-solo .playBtn{box-shadow:0 -18px 22px 4px rgba(10,13,17,.92),0 6px 0 #9c8420}
+}
+/* Locker: an empty case folds to its name, one line on how to earn it, and BUY */
+.cbox.empty{padding:6px 8px;background:rgba(20,20,19,.55)}
+.cbox.empty b{font-size:15px;color:var(--dim)}
+.cbox.empty i{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.cbox.empty [data-open]{display:none}
+.cbox.empty .btns{grid-auto-columns:auto;justify-content:start}
+.cbox.empty button{height:32px;min-height:32px;padding:0 12px;font-size:12px}
+/* Milestones: one strip per ladder */
+#lockGrid .msRow{grid-column:1/-1;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(104px,1fr);gap:8px;overflow-x:auto;scroll-snap-type:x proximity;padding-bottom:4px;scrollbar-width:thin}
+#lockGrid .msRow>.item{scroll-snap-align:start}
+#lockGrid .gsec small{margin-left:8px}
+/* Settings: cards flow into columns without gaps; sliders get a thumb you can hit */
+#pg-settings .cards{display:block;columns:3 300px;column-gap:12px}
+#pg-settings .cards>*{break-inside:avoid;margin-bottom:12px}
+#pg-settings input[type=range]{height:36px;min-width:0}
+#pg-settings input[type=range]::-webkit-slider-thumb{width:24px;height:24px}
+/* MULTIPLAYER: the host lines lose their sublines so HOST shows without scrolling */
+#hostRows .setupRow small{display:none}
+#hostRows .setupRow{min-height:48px}

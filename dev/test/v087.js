@@ -12,7 +12,7 @@ const fails = [];
     p.on('pageerror', e => errs.push(e.message + ' ' + (e.stack || '').split('\n')[1]));
     await p.goto('http://localhost:8080/debug.html?debug=1'); await p.waitForTimeout(700);
     await p.mouse.move(800, 450);
-    await p.click('[data-go=solo]'); await p.click(`[data-c=${cls}]`); await p.click('#startBtn'); await p.waitForTimeout(400);
+    await p.click('[data-go=solo]'); await p.click('[data-setup=job]:visible'); await p.click(`#setupSheet [data-c=${cls}]`); await p.click('#setupDone'); await p.click('#startBtn'); await p.waitForTimeout(400);
     return p;
   };
   // records the game time of every bullet the player fires (poll each frame; bullet ids only go up)
@@ -142,7 +142,7 @@ const fails = [];
     console.log('shards', r.table.join('  '));
     console.log('end of a 5-raid win with 137 salvage left:', JSON.stringify(r.once), '| showing the end screen again:', JSON.stringify(r.twice));
     ok(r.table.join() === '0sal/5held=0,19sal/5held=0,20sal/5held=1,137sal/5held=6,250sal/5held=10,250sal/3held=6,1000sal/40held=10,60sal/0held=0', 'conversion table');
-    ok(r.once[0] === 6 && r.once[1] === 17 && /\+6 shards from 120 leftover salvage/.test(r.once[2]), '6 shards, 120 salvage consumed, shown on the end screen');
+    ok(r.once[0] === 6 && r.once[1] === 17 && /\+6 shards from leftover salvage/.test(r.once[2]), '6 shards, 120 salvage consumed, shown on the end screen (wording since v0.9.1)');
     ok(r.twice[0] === 6 && r.twice[1] === 17, 'no double conversion');
     await p.close();
   }

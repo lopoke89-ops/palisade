@@ -7,10 +7,10 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', O = __dirname +
   const H = await mk({ viewport: { width: 1280, height: 720 } }, 'HOST');
   const G = await mk({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 }, 'GUEST');
   await H.goto('http://localhost:8080/debug.html?' + Q); await G.goto('http://localhost:8080/debug.html?' + Q); await H.waitForTimeout(700);
-  await H.click('[data-go=multi]'); await H.fill('#mName', 'Big U'); await H.click('[data-mc=quartermaster]'); await H.click('#hostBtn');
+  await H.click('[data-go=multi]'); await H.fill('#mName', 'Big U'); await H.click('[data-setup=job]:visible'); await H.click('#setupSheet [data-c=quartermaster]'); await H.click('#setupDone'); await H.click('#hostBtn');
   await H.waitForSelector('#pg-lobby:not([hidden])', { timeout: 10000 }); const code = await H.textContent('#lCode');
   await G.click('[data-go=multi]'); await G.screenshot({ path: O + '/m_phone_multi.png' });
-  await G.fill('#mName', 'Rook'); await G.click('[data-mc=grenadier]'); await G.fill('#mCode', code); await G.click('#joinBtn');
+  await G.fill('#mName', 'Rook'); await G.click('[data-setup=job]:visible'); await G.click('#setupSheet [data-c=grenadier]'); await G.click('#setupDone'); await G.fill('#mCode', code); await G.click('#joinBtn');
   await G.waitForSelector('#pg-lobby:not([hidden])', { timeout: 10000 }); await H.waitForTimeout(700);
   console.log('lobby:', await H.textContent('#lList'));
   // Equipping headgear in the locker must update both party previews and the next match.
