@@ -75,9 +75,9 @@ Recheck GitHub `main`, the live footer and the live Supabase migration list befo
   - Extracted players watch from above with a follow camera on a teammate.
   - Your result is locked in as **EVACUATED**.
 - **Time's up:** when the clock hits 0:00, everyone still on the field (standing, downed or dead) is **LEFT BEHIND**.
-- **What the core does during the evac:** proposed: the core no longer decides the result once the evac starts. The Hold is over, and each player's own evac decides their result. Raiders and bosses turn toward the players and the evac site.
-- **Downed players:** a teammate can still revive them in time. Without a revive they're left behind. Nobody can be carried in (see the NO ONE LEFT BEHIND modifier for an optional variant).
-- **Bosses:** spawns continue on the 30-second cadence through the evac (the 4:00 and 4:30 spawns land during it). Bosses alive at 0:00 retreat and don't count as kills.
+- **What the core does during the evac (decided by Big U):** the core no longer decides the result once the evac starts. The Hold is over, and each player's own evac decides their result. Raiders and bosses turn toward the players and the evac site.
+- **Downed players (decided by Big U):** a downed player can still make the evac if a teammate revives them in time. Without a revive they're left behind. There's no carrying mechanic; keep it simple.
+- **Bosses (decided by Big U):** spawns continue on the 30-second cadence through the evac (the 4:00 and 4:30 spawns land during it). Bosses alive at 0:00 retreat and don't count as kills.
 - **Game-over screen:** personal. Show `EVACUATED · VICTORY` or `LEFT BEHIND · HALF REWARDS`, plus a squad list showing who made it.
 - **Leaving mid-evac:** a player who disconnects during the evac and doesn't rejoin and extract in time counts as left behind. A rejoin keeps the clock, so they can still make it (v0.9.3.6 rejoin stash).
 - **Solo:** the same rule. Your single extract decides win or half rewards.
@@ -139,12 +139,14 @@ Art: each variant needs a distinct look that still reads as the same character. 
   - Write the migration from the live function text.
   - PGlite tests: a clean win, a loss at raid 15, too many bosses rejected, rejoin caps, anon denied.
 - **Half rewards for players left behind:** the claim gets a per-player `evac` result (`evacuated` or `left`).
-  - For `left`, the server halves that player's whole match payout: Supply Cases, boss cases, shards and skill points. Round down; proposed minimum 1 of anything that was at least 1.
-  - The player gets no win and no Blitzkrieg bonus.
-  - Boss kills still count toward milestones, because the kills happened.
+  - **Decided by Big U:** for `left`, the server halves **only case rewards and shards**. That means all Supply Cases, boss cases and other case drops, and all shards.
+    - **Rounding:** if the number is odd, round it up by 1, then halve. That's `ceil(n/2)`: 7 → 4, 5 → 3, 1 → 1, 0 → 0, 30 → 15.
+    - Apply it to each case type and to the shard total separately.
+  - **Not halved:** raids held, boss kills, skill points, milestones, per-map/class/boss stats and records. All of these count in full.
+  - The player gets no win (no win stat) and no Blitzkrieg bonus.
   - Do the halving **on the server**, in `claim_match_reward`. The client summary in `18-cosmetics.js` mirrors it for no-account players and for the on-screen summary.
   - The Final Blitz must have reached 1:00 for `evac` to apply. Earlier core losses are normal losses.
-  - PGlite tests: evacuated gets full pay; left behind gets exactly half (rounding checked); a mixed squad pays each player correctly; an `evac` value outside raid 15 is rejected.
+  - PGlite tests: evacuated gets full pay; left behind gets `ceil(n/2)` cases of each type and shards (odd, even, 1 and 0 checked) while raids, boss kills, skill points and stats stay full; a mixed squad pays each player correctly; an `evac` value outside raid 15 is rejected.
 - **Proposed default rewards (to confirm):**
   - Each boss kill pays its case, like other bosses (`bossBox`).
   - Final Blitz bosses pay shards like Boss Rush's in-between bosses (15–30).
@@ -190,7 +192,6 @@ Blitzkrieg Rush gets its own modifier list.
 | `blitzclock` | DOUBLE TIME | Final Blitz bosses arrive every 20 s instead of 30 s (15 bosses instead of 10). The live-boss cap stays. The server boss cap reads the modifier. | +15% |
 | `barrage` | ARTILLERY BARRAGE | During the evac, shells fall across the map, each with a landing marker like the Ferryman's missiles. Nothing dodgeable becomes undodgeable. | +10% |
 | `lockdown` | LOCKDOWN | The armory closes when the Final Blitz starts: no rebuying, restocking or wall repair for the last 5 minutes. | +10% |
-| `noleft` | NO ONE LEFT BEHIND | Players can carry a downed teammate (slower movement) into the evac ring to extract them too. **But** if anyone is left behind, the whole squad gets half rewards. It's the opposite of the default individual rule, and it's opt-in. | +20% |
 | `scorched` | SCORCHED EARTH | Blitzkrieg bosses leave hazards: napalm lasts 15 s instead of 10, arc dust hurts for its 0.5 s, and twin beams scorch the ground briefly. | +10% |
 
 - Keep the total bonus clamp (−15% to +75%) as it is, unless Big U says otherwise.
@@ -198,7 +199,7 @@ Blitzkrieg Rush gets its own modifier list.
 - Tests (`blitz_mods`):
   - The picker shows exactly the kept and new modifiers for `blitz`, and none of the removed ones.
   - `cleanMods` strips removed ids from a saved or network list.
-  - Each new modifier works as described: HOT LZ reveal time and ring size; DOUBLE TIME spawn cadence and boss count; ARTILLERY BARRAGE markers; LOCKDOWN blocks the armory; NO ONE LEFT BEHIND carry, extract and squad-wide halving; SCORCHED EARTH durations.
+  - Each new modifier works as described: HOT LZ reveal time and ring size; DOUBLE TIME spawn cadence and boss count; ARTILLERY BARRAGE markers; LOCKDOWN blocks the armory; SCORCHED EARTH durations.
   - The server reward table matches the client table.
 
 ## Tests (add all to the full list)
@@ -239,7 +240,6 @@ Blitzkrieg Rush gets its own modifier list.
 2. Does the Blue Butcher's arc damage the walls it passes through?
 3. Stormcaller: twin beam replaces the chain jump, or is added to it?
 4. The live-boss cap for the Final Blitz (default 4), and what happens to bosses alive at 0:00.
-5. Evac details: the 2-second extract, the 3-tile ring, and whether the core stops mattering once the evac starts.
-6. Half-reward rounding (round down, minimum 1).
-7. The Blitzkrieg modifier list: which to keep and remove, plus the six new modifiers' names and reward bonuses.
-8. The variant names, and whether Blitzkrieg gets its own cosmetic unlock.
+5. Evac details: the 2-second extract and the 3-tile ring.
+6. The Blitzkrieg modifier list: which to keep and remove, plus the five new modifiers' names and reward bonuses.
+7. The variant names, and whether Blitzkrieg gets its own cosmetic unlock.
