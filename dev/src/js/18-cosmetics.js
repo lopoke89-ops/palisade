@@ -254,9 +254,6 @@ const COS=[
 // st: the locker counter (the server adds to the same one); how(n): what the item says while it's locked.
 const LADDER_RAR=['r','e','l','g'];
 const LADDERS=[
-  // v0.9.4.0: Blitzkrieg Rush. Five steps, every Blitzkrieg boss that goes down in the mode (for everyone in the match)
-  {id:'blitz',kind:'mode',title:'BLITZKRIEG RUSH',st:'mode_blitz_bosses',steps:[10,25,50,75,100],rar:['r','e','e','l','g'],unit:'Blitzkrieg bosses beaten',how:n=>`Beat ${n} bosses in Blitzkrieg Rush`,
-    items:[['hat','devilhorns','Devil Horns'],['trail','bluearc','Blue Arc'],['skin','bluebutcher','Blue Butcher'],['fx','hellportal','Hell Portal'],['skin','demon','Demon']]},
   {id:'butcher',kind:'boss',title:'THE BUTCHER',st:'boss_butcher',steps:[25,50,100,250],unit:'Butchers beaten',how:n=>`Beat the Butcher ${n} times`,
     items:[['skin','butcher','Butcher'],['skin','butcher2','Pale Butcher'],['skin','butcher3','Bloodrage Butcher'],['skin','butcher4','Gilded Butcher']]},
   {id:'demolisher',kind:'boss',title:'THE DEMOLISHER',st:'boss_demolisher',steps:[25,50,100,250],unit:'Demolishers beaten',how:n=>`Beat the Demolisher ${n} times`,
@@ -280,7 +277,10 @@ const LADDERS=[
   {id:'grenadier',kind:'class',title:'GRENADIER',st:'cls_grenadier_raids',steps:[250,500,1000,2500],unit:'raids held as a Grenadier',how:n=>`Hold ${n} raids as a Grenadier`,
     items:[['hat','bombhelm','Blast Helmet'],['trail','fuse','Lit Fuse'],['fx','frag','Frag Burst'],['skin','ggren','Gold Demolitions']]},
   {id:'quartermaster',kind:'class',title:'QUARTERMASTER',st:'cls_quartermaster_raids',steps:[250,500,1000,2500],unit:'raids held as a Quartermaster',how:n=>`Hold ${n} raids as a Quartermaster`,
-    items:[['hat','qmset','Supply Headset'],['trail','supply','Supply Line'],['fx','salvage','Salvage Pop'],['skin','gqm','Gold Quartermaster']]}];
+    items:[['hat','qmset','Supply Headset'],['trail','supply','Supply Line'],['fx','salvage','Salvage Pop'],['skin','gqm','Gold Quartermaster']]},
+  // v0.9.4.0: Blitzkrieg Rush. Five steps, every Blitzkrieg boss that goes down in the mode (for everyone in the match)
+  {id:'blitz',kind:'mode',title:'BLITZKRIEG RUSH',st:'mode_blitz_bosses',steps:[10,25,50,75,100],rar:['r','e','e','l','g'],unit:'Blitzkrieg bosses beaten',how:n=>`Beat ${n} bosses in Blitzkrieg Rush`,
+    items:[['hat','devilhorns','Devil Horns'],['trail','bluearc','Blue Arc'],['skin','bluebutcher','Blue Butcher'],['fx','hellportal','Hell Portal'],['skin','demon','Demon']]}];
 for(const L of LADDERS)L.items.forEach(([cat,key,name],i)=>COS.push({id:cat+':'+key,cat,key,name,r:(L.rar||LADDER_RAR)[i],src:'unlock',box:null,
   need:{[L.st]:L.steps[i]},how:L.how(L.steps[i]),price:null,ladder:L.id}));
 // the Flag Case's tracers (its backgrounds are added with the other backgrounds)
