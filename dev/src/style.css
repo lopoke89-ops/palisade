@@ -928,3 +928,22 @@ body.padMenu #menu .panel{padding-bottom:64px}body.pad .padF{scroll-margin:12px 
   /* a fade under the pinned PLAY so the lines scroll away beneath it instead of butting into it */
   .partyControls #pg-solo .playBtn{box-shadow:0 -18px 22px 4px rgba(10,13,17,.92),0 6px 0 #9c8420}
 }
+/* Locker: an empty case folds to its name, one line on how to earn it, and BUY */
+.cbox.empty{padding:6px 8px;background:rgba(20,20,19,.55)}
+.cbox.empty b{font-size:15px;color:var(--dim)}
+.cbox.empty i{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.cbox.empty [data-open]{display:none}
+.cbox.empty .btns{grid-auto-columns:auto;justify-content:start}
+.cbox.empty button{height:32px;min-height:32px;padding:0 12px;font-size:12px}
+/* Milestones: one strip per ladder */
+#lockGrid .msRow{grid-column:1/-1;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(104px,1fr);gap:8px;overflow-x:auto;scroll-snap-type:x proximity;padding-bottom:4px;scrollbar-width:thin}
+#lockGrid .msRow>.item{scroll-snap-align:start}
+#lockGrid .gsec small{margin-left:8px}
+/* Settings: cards flow into columns without gaps; sliders get a thumb you can hit */
+#pg-settings .cards{display:block;columns:3 300px;column-gap:12px}
+#pg-settings .cards>*{break-inside:avoid;margin-bottom:12px}
+#pg-settings input[type=range]{height:36px;min-width:0}
+#pg-settings input[type=range]::-webkit-slider-thumb{width:24px;height:24px}
+/* MULTIPLAYER: the host lines lose their sublines so HOST shows without scrolling */
+#hostRows .setupRow small{display:none}
+#hostRows .setupRow{min-height:48px}

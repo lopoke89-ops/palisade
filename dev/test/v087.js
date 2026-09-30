@@ -12,7 +12,7 @@ const fails = [];
     p.on('pageerror', e => errs.push(e.message + ' ' + (e.stack || '').split('\n')[1]));
     await p.goto('http://localhost:8080/debug.html?debug=1'); await p.waitForTimeout(700);
     await p.mouse.move(800, 450);
-    await p.click('[data-go=solo]'); await p.click(`[data-c=${cls}]`); await p.click('#startBtn'); await p.waitForTimeout(400);
+    await p.click('[data-go=solo]'); await p.click('[data-setup=job]:visible'); await p.click(`#setupSheet [data-c=${cls}]`); await p.click('#setupDone'); await p.click('#startBtn'); await p.waitForTimeout(400);
     return p;
   };
   // records the game time of every bullet the player fires (poll each frame; bullet ids only go up)

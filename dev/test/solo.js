@@ -6,7 +6,7 @@ const O=__dirname+'/out';
  const errs=[];p.on('pageerror',e=>errs.push(e.message+' '+(e.stack||'').split('\n')[1]));
  await p.goto('http://localhost:8080/debug.html?debug=1');await p.waitForTimeout(800);
  await p.mouse.move(800,450);
- await p.click('[data-go=solo]');await p.click('[data-c=sniper]');await p.click('#startBtn');await p.waitForTimeout(500);
+ await p.click('[data-go=solo]');await p.click('[data-setup=job]:visible'); await p.click('#setupSheet [data-c=sniper]'); await p.click('#setupDone');await p.click('#startBtn');await p.waitForTimeout(500);
  const P=f=>p.evaluate(f);
  console.log('start', await P(()=>({mats:__pal.player.mats,cap:__pal.player.cap,keys:document.getElementById('keys').textContent,sub:document.getElementById('buildSub').textContent})));
  // build a wall and a door

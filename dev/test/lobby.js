@@ -22,14 +22,14 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
   }
   await p.click('[data-nav=settings]'); await p.click('#sDone'); assert.equal(await page(p), 'solo', 'settings DONE returns to PLAY');
   await p.click('[data-nav=locker]'); await p.click('[data-nav=solo]'); assert.equal(await page(p), 'solo', 'from the Locker back to SOLO');
-  assert.equal(await p.textContent('[data-nav=solo]'), 'SOLO', 'the PLAY nav item is now SOLO');
+  assert.equal(await p.textContent('[data-nav=solo]'), 'PLAY', 'the PLAY nav item');
   await p.click('#identityButton'); assert.equal(await page(p), 'account'); await p.click('#pg-account [data-go=main]');
   // 2. PLAY: job, map card, size; the stage title follows
-  await p.click('#pg-solo [data-c=grenadier]'); assert.equal(await p.evaluate(() => __pal.pick.cls), 'grenadier');
-  await p.click('.mapCard[data-map=river]'); await p.click('#sizeSeg [data-size=xl]');
+  await p.click('[data-setup=job]:visible'); await p.click('#setupSheet [data-c=grenadier]'); await p.click('#setupDone'); assert.equal(await p.evaluate(() => __pal.pick.cls), 'grenadier');
+  await p.click('[data-setup=map]:visible'); await p.click('.mapCard[data-map=river]'); await p.click('#sizeSeg [data-size=xl]'); await p.click('#setupDone');
   out.play = await p.evaluate(() => ({ map: __pal.pick.map, size: __pal.pick.size, cards: document.querySelectorAll('.mapCard').length, sel: document.querySelector('.mapCard.sel').dataset.map,
-    title: document.getElementById('partyMode').textContent, soloMap: document.getElementById('soloMap').textContent }));
-  assert.equal(out.play.map, 'river'); assert.equal(out.play.size, 'xl'); assert.equal(out.play.cards, 3); assert.match(out.play.title, /RIVERBEND XL/);
+    title: document.getElementById('partyMode').textContent, mapRow: document.querySelector('#homeRows [data-setup=map] b').textContent }));
+  assert.equal(out.play.map, 'river'); assert.equal(out.play.size, 'xl'); assert.equal(out.play.cards, 3); assert.match(out.play.title, /RIVERBEND XL/); assert.match(out.play.mapRow, /RIVERBEND/i, 'the MAP line shows the pick');
   await p.click('[data-nav=classes]'); out.classesSel = await p.evaluate(() => document.querySelector('#classes .sel').dataset.c); assert.equal(out.classesSel, 'grenadier');
   await p.click('#classes [data-c=sniper]'); assert.equal(await p.evaluate(() => document.getElementById('partyTitle').textContent), 'SNIPER');
   await p.click('#pg-classes [data-go=solo]');
@@ -86,7 +86,7 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
   await q.evaluate(() => __pal.showPage('solo')); await q.screenshot({ path: __dirname + '/out/lobby_phone.png' }); await q.close();
   // 6. online: the host's map and size reach the guest in the lobby and in the run, with the same ground
   const H = await open({ width: 1280, height: 800 }), G = await open({ width: 390, height: 844 }, true);
-  await H.click('[data-nav=multi]'); await H.click('[data-mmap=quarry]'); await H.click('#sizeSeg [data-size=std]'); await H.click('#hostBtn');
+  await H.click('[data-nav=multi]'); await H.click('[data-setup=map]:visible'); await H.click('[data-mmap=quarry]'); await H.click('#sizeSeg [data-size=std]'); await H.click('#setupDone'); await H.click('#hostBtn');
   await H.waitForFunction(() => /^[A-Z0-9]{4}$/.test(document.getElementById('lCode').textContent), null, { timeout: 15000 });
   const code = await H.textContent('#lCode');
   await G.click('[data-nav=multi]'); await G.fill('#mCode', code); await G.click('#joinBtn'); await G.waitForSelector('#pg-lobby:not([hidden])', { timeout: 15000 }); await G.waitForTimeout(600);

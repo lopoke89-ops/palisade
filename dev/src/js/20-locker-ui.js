@@ -194,7 +194,8 @@ function itemTile(c,lazy){
 // one panel per case: how many you hold, OPEN, and BUY for cases that have a shard price
 function renderCaseBoxes(){
   const box=$('caseBoxes');box.textContent='';
-  for(const id of CASE_IDS){const C=CASES[id],n=caseCount(id),d=document.createElement('div');d.className='cbox';d.style.setProperty('--cc',C.col);
+  // cases you hold come first; empty ones fold down to a name, a one-line how-to-earn and BUY
+  for(const id of[...CASE_IDS].sort((x,y)=>(caseCount(y)>0)-(caseCount(x)>0))){const C=CASES[id],n=caseCount(id),d=document.createElement('div');d.className='cbox'+(n<1?' empty':'');d.style.setProperty('--cc',C.col);
     const nm=document.createElement('span');nm.textContent=C.name;const b=document.createElement('b');b.textContent=n;
     const how=document.createElement('i');how.textContent=C.how;const bt=document.createElement('div');bt.className='btns';
     const op=document.createElement('button');op.type='button';op.className='go';op.textContent='OPEN';op.dataset.open=id;op.disabled=n<1||lockBusy;bt.append(op);
@@ -237,8 +238,9 @@ function renderLocker(){
     if(lockRendered)lockScroll.set(lockRendered,grid.scrollTop);
     clearLockerItems(grid);lockRendered=lockCat;
     if(lockCat==='ms'){
+      // one ladder per strip: its five unlocks side by side (swipe on a phone) so the tab is a list of ladders, not a wall of tiles
       for(const L of LADDERS){const h=document.createElement('div');h.className='gsec';h._ladder=L;h.append(document.createTextNode(L.title),document.createElement('small'));grid.append(h);
-        for(const [cat,key]of L.items)grid.append(lockerTile(COSBY[cat+':'+key]))}
+        const row=document.createElement('div');row.className='msRow';for(const [cat,key]of L.items)row.append(lockerTile(COSBY[cat+':'+key]));grid.append(row)}
     }else{
       const items=COS.filter(c=>c.cat===lockCat&&!c.ladder),plain=items.filter(c=>!c.box);
       if(plain.length){const h=document.createElement('div');h.className='gsec';h.textContent='STANDARD & UNLOCKS';grid.append(h);for(const c of plain)grid.append(lockerTile(c))}
@@ -250,7 +252,7 @@ function renderLocker(){
     const open=lockOpen.has(section.dataset.collection);if((section.firstChild.getAttribute('aria-expanded')==='true')!==open)setCollectionOpen(section,open);
     section.querySelector('.collectionCount').textContent=`${section._items.filter(c=>owns(c.id)).length} / ${section._items.length} owned`;
   }
-  for(const h of grid.querySelectorAll('.gsec'))if(h._ladder)h.lastChild.textContent=`${locker.st[h._ladder.st]|0} ${h._ladder.unit}`;
+  for(const h of grid.querySelectorAll('.gsec'))if(h._ladder){const L=h._ladder,got=L.items.filter(([c,k])=>owns(c+':'+k)).length;h.lastChild.textContent=`${locker.st[L.st]|0} ${L.unit} · ${got} / ${L.items.length} unlocked`}
   const look=lockerThumbKey();
   for(const t of grid.querySelectorAll('.item')){const c=COSBY[t.dataset.item];refreshItemTile(t,c);
     const cv=t.querySelector('canvas');if((c.cat==='skin'||c.cat==='hat')&&cv._lockerLook!==look){cv._lockerLook=look;

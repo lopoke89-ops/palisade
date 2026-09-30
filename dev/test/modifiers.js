@@ -19,12 +19,13 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
   // the SOLO page lists the co-op ones and remembers the picks
   await P.click('[data-go=solo]'); await P.waitForTimeout(200);
   out.soloChips = await P.$$eval('#soloMods .modChip', x => x.length); assert.equal(out.soloChips, 10);
-  await P.click('#soloMods [data-mod=alone]'); await P.click('#soloMods [data-mod=adrenaline]');
+  await P.click('[data-setup=mods]:visible'); await P.click('#soloMods [data-mod=alone]'); await P.click('#soloMods [data-mod=adrenaline]'); await P.click('#setupDone');
   out.soloTag = await P.textContent('#soloModTag'); assert.match(out.soloTag, /2 ON · REWARDS \+5%/);
   out.heading = await P.textContent('#partyMods'); assert.match(out.heading, /ON YOUR OWN · ADRENALINE/);
+  out.modRow = await P.textContent('#homeRows [data-setup=mods]'); assert.match(out.modRow, /ON YOUR OWN · ADRENALINE/, 'the MODIFIERS line on PLAY');
   out.bonus = await P.evaluate(() => [__pal.modBonus(['alone', 'adrenaline'], ''), __pal.modBonus(['nopatch', 'alone', 'firestorm', 'laststand', 'elite', 'bossrush', 'weather', 'nightmare', 'berserk'], ''), __pal.modBonus(['adrenaline'], 'ffa')]);
   assert.deepEqual(out.bonus, [5, 75, -15], 'bonus capped at +75%');
-  await P.click('#soloMods [data-mod=alone]'); await P.click('#soloMods [data-mod=adrenaline]');   // off again
+  await P.click('[data-setup=mods]:visible'); await P.click('#soloMods [data-mod=alone]'); await P.click('#soloMods [data-mod=adrenaline]'); await P.click('#setupDone');   // off again
   // a helper: a fresh solo game with these modifiers
   const game = (mods, pvp = '', extra = '') => P.evaluate(([mods, pvp, extra]) => { const P = __pal; P.demo = false; P.pick.mode = '10'; P.pick.diff = 'normal'; P.pick.map = 'yard'; P.pick.size = 'std';
     const roster = pvp ? [{ id: 'solo', name: 'A', cls: 'soldier', cos: '' }, { id: 'b', name: 'B', cls: 'sniper', cos: '' }] : null;
