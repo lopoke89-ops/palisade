@@ -718,7 +718,7 @@ function gunArms(hand,sd,gl,shB,shF,sleeve,nogun,bob,bp=-1,kind='',swing=0){
   if(kind==='zap'){for(const k of[.62,.74,.86]){const c=at(gl*k);disc(c[0],c[1],1.5,'#7fe0ff')}g.globalAlpha=.8;disc(muz[0],muz[1],2.4,'#bff3ff');g.globalAlpha=1}
   limb(shF,at(gl*.42),sleeve,2.6);
 }
-// A soldier, raider or Dell standing at tile (x,y), facing o.aim. Drawn in base pixels, scaled.
+// A soldier, raider or Delgado standing at tile (x,y), facing o.aim. Drawn in base pixels, scaled.
 function drawPerson(x,y,o){
   if(o.mark&&o.detail!==false||o.sahur||o.halloweenHat||o.sheet){
     const [sx,sy]=iso(x,y),sd=wdirToScreen(o.aim),BG=o.big||1;

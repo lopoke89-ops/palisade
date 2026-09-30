@@ -1,14 +1,14 @@
 PALISADE: phone version with online co-op
 =========================================
 
-CURRENT RELEASE (September 30, 2026): v0.9.3.4 is live (commit 4033d34).
-It adds full-screen flags, cached scenic detail, and more natural character motion.
+CURRENT RELEASE (October 1, 2026): v0.9.3.5 is live. v0.9.3.6 is ready to merge:
+- A dropped, reloaded or crashed run is now still paid when the game restarts.
+- Rejoining the same game gets your armory, salvage and kills back.
+- New Settings > Frame rate option (Auto / 30 / 60) to keep phones cooler.
+- Dell is now Delgado.
 
-CANDIDATE: v0.9.3.5 is on branch claude/lucid-curie-491na1. It adds solid-color
-cycling Flag Case tracers with faster tracer drawing, six Halloween head pieces, and
-the Ultimate-rarity Tung Tung Tung Sahur skin. Its Supabase migration is already live
-and is safe for older clients. 19 focused checks pass. It uses a new network protocol
-(yard-18), so players need to reload after it goes live. See dev/STATUS.md.
+A server fix for boss credit after a rejoin, and compensation for the affected
+players, are prepared and waiting for approval (see dev/STATUS.md).
 
 This folder is the whole game as a website. Put it online once and anyone
 can play by opening the link. No app store, no download.
@@ -59,7 +59,7 @@ JOBS, BOSSES AND SALVAGE (v0.8.1)
     damage out to 2.5 tiles, less further out. Six shells, loaded one at a time
     when the tube runs dry, after a second without firing, or with R.
     Three grenades a raid, bigger blasts.
-  - QUARTERMASTER: walk over a downed teammate (or Dell) and they're up
+  - QUARTERMASTER: walk over a downed teammate (or Delgado) and they're up
     instantly with 60% health. Carries 96 of each material, gathers
     faster, repairs cost half. SMG.
   - Bosses: every 5th raid in co-op (5, 10, 15, 20...) has a boss in it,
@@ -143,7 +143,7 @@ MODIFIERS, THE SKILL TREE, CLASS ABILITIES (v0.9.2)
   - MODIFIERS: switch them on under MODIFIERS on the SOLO page, or in the
     room (the host picks; everyone sees them). Only the ones that work in
     the mode you're hosting are listed. Co-op: No Patch-Ups, On Your Own
-    (no Dell), Firestorm, Adrenaline, Last Stand, Elite Raid, Boss Rush,
+    (no Delgado), Firestorm, Adrenaline, Last Stand, Elite Raid, Boss Rush,
     Weather, Nightmare, Berserk. Base Battle and Free-for-all: Adrenaline,
     Weather, Nightmare (night only), Glass Cannon, One Job, Grenade Frenzy,
     plus Scrap Shortage (Base Battle) and Sudden Death (Free-for-all).
@@ -191,7 +191,7 @@ SMOOTHER NIGHTS AND DUSK (v0.8.8)
 ---------------------------------
   - Night raids draw about 30% faster on phones (12.5 to 8.9 ms a
     frame; slowest frames 15.5 to 11.2 ms). The soft pools of light
-    around players, Dell, the core and raiders, and the muzzle and
+    around players, Delgado, the core and raiders, and the muzzle and
     explosion glows, are now stamped from pre-drawn circles instead of
     stretching a small one every frame.
   - Dusk raids draw about 60% faster (14.3 to 5.7 ms a frame): the warm
@@ -379,7 +379,7 @@ PLAYING ONLINE
   - Friends tap MULTIPLAYER, type the code, tap JOIN. Or the host taps
     SHARE INVITE LINK and friends open the link, which fills the code in.
   - Up to 6 players. Before hosting, pick a mode:
-      CO-OP         everyone plus Dell against the raiders.
+      CO-OP         everyone plus Delgado against the raiders.
       BASE BATTLE   two crews (WEST and EAST), a 45-second truce to
                     build, then knock down the other stake. Use SWITCH
                     SIDES in the lobby to pick a crew.

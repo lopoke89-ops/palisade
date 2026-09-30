@@ -1,0 +1,2 @@
+{"setting":{"mode":"30","sel":"30","saved":"30"},"at30":{"fps":30,"label":"30 FPS / 30","simPerReal":1.01},"at60":{"fps":60,"label":"60 FPS / 60","simPerReal":1},"autoDesktopCap":0,"autoTouch":[60,30],"net":{"moved":5.01,"path":[[5.5,12.5],[9.04,8.96]],"rejects":0,"caps":[30,30]}}
+errors: none

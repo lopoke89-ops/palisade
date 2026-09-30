@@ -1,0 +1,27 @@
+{
+  "out": {
+    "390x844": {
+      "lede": "Solo, with Delgado (as in “Dell got you”). Hold the stake through the raids.",
+      "hud": {
+        "lab": "DELGADO",
+        "fits": true
+      },
+      "armory": [
+        "DELGADO"
+      ],
+      "dellLeft": false
+    },
+    "844x390": {
+      "lede": "Solo, with Delgado (as in “Dell got you”). Hold the stake through the raids.",
+      "hud": {
+        "lab": "DELGADO",
+        "fits": true
+      },
+      "armory": [
+        "DELGADO"
+      ],
+      "dellLeft": false
+    }
+  },
+  "errors": []
+}

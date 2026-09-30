@@ -242,8 +242,8 @@ function drawMound(e){const c=iso(e.x,e.y),sw=e.st===4?1.35+Math.sin(game.time*4
   g.save();g.translate(c[0],c[1]);g.scale(sw,sw);oval(0,1*u,18*u,7*u,'rgba(0,0,0,.35)');
   for(let k=0;k<7;k++){const a=k/7*Math.PI*2+t*.3,r=(8+hash(k,e.id)*5)*u;oval(Math.cos(a)*r,Math.sin(a)*r*.45-2*u,(5+hash(k+3,e.id)*3)*u,(3+hash(k+5,e.id)*2)*u,k%2?'#5a4838':'#4a3a2c')}
   oval(0,-4*u,9*u,5*u,'#6b5642');g.restore()}
-function itemQM(q){drawPerson(q.x,q.y,Object.assign({aim:q.aim,walk:q.walk,flash:q.flash>0,tag:'DELL'},QM_LOOK))}
-function itemQMDown(q){drawDowned(q.x,q.y,QM_LOOK,q.revive/2,'DELL · DOWN')}
+function itemQM(q){drawPerson(q.x,q.y,Object.assign({aim:q.aim,walk:q.walk,flash:q.flash>0,tag:'DELGADO'},QM_LOOK))}
+function itemQMDown(q){drawDowned(q.x,q.y,QM_LOOK,q.revive/2,'DELGADO · DOWN')}
 function itemPlayer(o){
   const p=player,PL=playerLook(o),me=o===p,tag=me||players.size<2?null:o.name.toUpperCase();
   if(o._shotDrawUntil>game.time)PL.syncRender=true;

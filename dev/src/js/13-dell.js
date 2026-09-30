@@ -1,5 +1,5 @@
-/* ---------- Dell, the quartermaster ---------- */
-// Dell's pump shotgun: 5 pellets x 6, every 0.8 s, full damage to 2.5 tiles, falling to 55% by 6.
+/* ---------- Delgado, the quartermaster ---------- */
+// Delgado's pump shotgun: 5 pellets x 6, every 0.8 s, full damage to 2.5 tiles, falling to 55% by 6.
 // Each crew-bought level adds 15% damage, 15% reach (falloff and range) and 15% fire rate.
 const DELL_GUN={dmg:6,cd:.8,spread:.2,range:6,speed:24,pellets:5,fall:[2.5,6,.55]};
 function dellGun(){const L=game.dellLv|0,m=1+.15*L,G=DELL_GUN;
@@ -32,7 +32,7 @@ function updateQM(dt){
   for(const w of walls)if(w&&w.skip>0)w.skip-=dt;
   if(!q.alive){
     const helper=nearestPlayer(q,p=>p.alive);
-    if(helper&&dist2(helper,q)<1.0){q.revive+=dt;if(q.revive>=2){q.alive=true;q.hp=q.max*.45;q.revive=0;game.stats.revives++;flt(q.x,q.y,'DELL IS UP','#a9bccb');sfx('revive',q.x,q.y)}}
+    if(helper&&dist2(helper,q)<1.0){q.revive+=dt;if(q.revive>=2){q.alive=true;q.hp=q.max*.45;q.revive=0;game.stats.revives++;flt(q.x,q.y,'DELGADO IS UP','#a9bccb');sfx('revive',q.x,q.y)}}
     else q.revive=Math.max(0,q.revive-dt*.5);
     return;
   }

@@ -111,7 +111,7 @@ const fails = [];
     await q.evaluate(() => { document.getElementById('armory').hidden = false; __pal.renderArmory() }); await q.waitForTimeout(150);
     await q.screenshot({ path: O + '/v087_armory.png' });
     const rows = await q.evaluate(() => [...document.querySelectorAll('#armRows .arow')].map(r => r.querySelector('b').textContent + ':' + r.querySelector('button').textContent));
-    console.log('armory rows', rows.join(' | ')); ok(rows.length === 7 && rows.some(x => x.startsWith('DELL')) && rows.some(x => x.startsWith('REPAIR CORE')), 'armory has DELL and REPAIR CORE rows');
+    console.log('armory rows', rows.join(' | ')); ok(rows.length === 7 && rows.some(x => x.startsWith('DELGADO')) && rows.some(x => x.startsWith('REPAIR CORE')), 'armory has DELGADO and REPAIR CORE rows');
     await q.evaluate(() => { document.getElementById('armory').hidden = true });
     await q.close();
   }

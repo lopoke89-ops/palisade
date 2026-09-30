@@ -75,7 +75,22 @@ function drawCover(i,j,w){
   boxR(i+.03,j+.03,i+.97,j+.97,0,WH,MAT[3].top,MAT[3].l,MAT[3].r);
 }
 function drawDebris(i,j,mat){const m=MAT[mat];for(let q=0;q<3;q++){const a=hash(i+q*17,j),b=hash(i,j+q*29),x=i+.15+a*.55,y=j+.15+b*.55;boxR(x,y,x+.22,y+.18,0,3.5*u,m.top,m.l,m.r)}}
-function label(t,x,y,col,size=11){g.font=`800 ${Math.round(size*u)}px "Big Shoulders Stencil Display", "Arial Narrow", sans-serif`;g.textAlign='center';g.lineWidth=3;g.strokeStyle='rgba(12,10,8,.85)';g.strokeText(t,x,y);g.fillStyle=col;g.fillText(t,x,y)}
+// Labels (name tags, damage numbers, stake names) are cached as small images: outlined text is one of the
+// costlier things to redraw 60 times a second on a phone. Same look as drawing the text directly.
+const LABELS=new Map();
+try{document.fonts.ready.then(()=>LABELS.clear());document.fonts.addEventListener('loadingdone',()=>LABELS.clear())}catch(e){}
+function label(t,x,y,col,size=11){
+  t=String(t);const px=Math.round(size*u),key=t+'|'+col+'|'+px+'|'+DPR;let S=LABELS.get(key);
+  if(S){LABELS.delete(key);LABELS.set(key,S)}   // most recently used last
+  else{
+    const font=`800 ${px}px "Big Shoulders Stencil Display", "Arial Narrow", sans-serif`;g.font=font;
+    const w=Math.ceil(g.measureText(t).width)+6,h=Math.ceil(px*1.5)+6,asc=Math.ceil(px*1.1)+3,cv2=document.createElement('canvas');
+    cv2.width=Math.ceil(w*DPR);cv2.height=Math.ceil(h*DPR);const c=cv2.getContext('2d');c.setTransform(DPR,0,0,DPR,0,0);
+    c.font=font;c.textAlign='center';c.lineWidth=3;c.strokeStyle='rgba(12,10,8,.85)';c.strokeText(t,w/2,asc);c.fillStyle=col;c.fillText(t,w/2,asc);
+    S={cv:cv2,w,h,asc};LABELS.set(key,S);if(LABELS.size>160)LABELS.delete(LABELS.keys().next().value);
+  }
+  g.drawImage(S.cv,x-S.w/2,y-S.asc,S.w,S.h);
+}
 function drawNode(n){
   const {i,j}=n;
   if(n.type===0){

@@ -12,7 +12,7 @@ function computeFlow(){
 }
 function markFlow(){if(!flowDirty){flowDirty=true;flowT=.3}}
 function bestStep(ti,tj){let best=-1,bv=1e12;for(const[di,dj]of D4){const i=ti+di,j=tj+dj;if(!inb(i,j))continue;const k=idx(i,j),v=dist[k]+enterCost(k);if(v<bv){bv=v;best=k}}return best}
-// breadth-first path for Dell: doors are open to our side
+// breadth-first path for Delgado: doors are open to our side
 function teamPath(si,sj,isGoal){
   const s=idx(si,sj);if(isGoal(s))return s;
   const prev=new Int16Array(N*N).fill(-1);prev[s]=s;const q=[s];
@@ -70,7 +70,7 @@ function hurtPlayer(p,d,own){
   if(p.hp<=0){
     const help=anyUp(p),last=hasMod('laststand')&&game.phase==='raid';p.alive=false;p.downed=true;p.hp=0;p.revive=0;p.rt=last?1e6:help?10:4;
     if(p.id===myId)buzz(80);
-    toastTo(p,'DOWN',last?'Last Stand: you\'re down until this raid is broken, unless someone gets you up.':help?'Hang on. Dell or a teammate can pick you up.':'Back at the stake in a few seconds.');
+    toastTo(p,'DOWN',last?'Last Stand: you\'re down until this raid is broken, unless someone gets you up.':help?'Hang on. Delgado or a teammate can pick you up.':'Back at the stake in a few seconds.');
     if(players.size>1)flt(p.x,p.y,`${p.name.toUpperCase()} IS DOWN`,'#d65a3a');
   }
 }
@@ -92,15 +92,15 @@ function revivePlayer(p,by){
   else{flt(p.x,p.y,'REVIVED','#a9bccb');sfx('revive',p.x,p.y)}
   return true;
 }
-// quartermaster: touching a downed teammate (or Dell) gets them straight up, no kneeling
+// quartermaster: touching a downed teammate (or Delgado) gets them straight up, no kneeling
 function medicTouch(p){
   if(!p.C.medic||!p.alive||game.pvp==='ffa')return;
   for(const o of players.values())if(o!==p&&o.downed&&!o.alive&&(!game.pvp||o.team===p.team)&&dist2(o,p)<.8)revivePlayer(o,p);
-  if(!game.pvp&&!qm.alive&&!qm.gone&&dist2(qm,p)<.8){qm.alive=true;qm.hp=qm.max*.6;qm.revive=0;game.stats.revives++;flt(qm.x,qm.y,`DELL IS UP · ${p.name.toUpperCase()}`,'#8fe0a0');sfx('medic',qm.x,qm.y);emit(qm.x,qm.y,WH*.6,'heal');personal(p,'restock')}
+  if(!game.pvp&&!qm.alive&&!qm.gone&&dist2(qm,p)<.8){qm.alive=true;qm.hp=qm.max*.6;qm.revive=0;game.stats.revives++;flt(qm.x,qm.y,`DELGADO IS UP · ${p.name.toUpperCase()}`,'#8fe0a0');sfx('medic',qm.x,qm.y);emit(qm.x,qm.y,WH*.6,'heal');personal(p,'restock')}
 }
 function hurtQM(d){
   const q=qm;if(!q.alive)return;q.hp-=d;q.hurt=0;q.flash=.1;emit(q.x,q.y,16*u,'blood');
-  if(q.hp<=0){q.alive=false;q.hp=0;q.revive=0;flt(q.x,q.y,'DELL IS DOWN','#d65a3a');toastAll('DELL IS DOWN','Stand over him to get him back up.')}
+  if(q.hp<=0){q.alive=false;q.hp=0;q.revive=0;flt(q.x,q.y,'DELGADO IS DOWN','#d65a3a');toastAll('DELGADO IS DOWN','Stand over him to get him back up.')}
 }
 function hurtEnemy(e,d,own){
   e.hp-=d;e.flash=.08;emit(e.x,e.y,15*u,'blood');

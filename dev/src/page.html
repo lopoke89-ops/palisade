@@ -12,7 +12,7 @@
   <div class="vitals">
     <div class="meter" id="hpM"><span class="lab">YOU</span><div class="track"><i id="hpF"></i></div><b id="hpN">100</b></div>
     <div id="mates"></div>
-    <div class="meter" id="qmM"><span class="lab">DELL</span><div class="track"><i id="qmF"></i></div><b id="qmN">90</b></div>
+    <div class="meter" id="qmM"><span class="lab">DELGADO</span><div class="track"><i id="qmF"></i></div><b id="qmN">90</b></div>
     <div class="meter" id="coreM"><span class="lab" id="coreL">CORE</span><div class="track"><i id="coreF"></i></div><b id="coreN">500</b></div>
     <div class="meter" id="core2M" hidden><span class="lab">ENEMY</span><div class="track"><i id="core2F"></i></div><b id="core2N">700</b></div>
   </div>
@@ -136,7 +136,7 @@
 
     <section class="page" id="pg-solo" hidden>
       <h2 class="pt">SOLO</h2>
-      <p class="lede">Solo, with Dell. Hold the stake through the raids.</p>
+      <p class="lede">Solo, with Delgado (as in “Dell got you”). Hold the stake through the raids.</p>
       <h2>YOUR JOB <button class="linkBtn" type="button" data-go="classes">ABOUT THE CLASSES</button></h2>
       <div class="seg jobs"><button data-c="soldier" type="button">SOLDIER</button><button data-c="sniper" type="button">SNIPER</button><button data-c="grenadier" type="button">GRENADIER</button><button data-c="quartermaster" type="button">QUARTERMASTER</button></div>
       <h2>MAP</h2>
@@ -154,12 +154,12 @@
       <p class="note" id="saveNote" hidden></p>
       <details class="how"><summary>HOW TO PLAY</summary>
         <div class="ctrls">
-          <div><h3>TOUCH</h3><p>Left thumb: move<br>Right thumb: aim, push far to fire<br>ROCKET / STEALTH: the soldier's and sniper's ability (co-op)<br>BUILD: place, upgrade or repair the tile you face. DOOR lets you and Dell walk through.</p></div>
+          <div><h3>TOUCH</h3><p>Left thumb: move<br>Right thumb: aim, push far to fire<br>ROCKET / STEALTH: the soldier's and sniper's ability (co-op)<br>BUILD: place, upgrade or repair the tile you face. DOOR lets you and Delgado walk through.</p></div>
           <div><h3>KEYBOARD</h3><p>WASD move · mouse aim<br>Hold click to fire (soldier: bursts) · Space build<br>1 2 3 material · F wall/door<br>G grenade · E armory at the stake<br>Shift sprint (quartermaster) · Q rocket (soldier) or stealth (sniper), co-op · B build kit · Enter start raid · T chat online · Esc pause</p></div>
           <div><h3>CONTROLLER</h3><p>Left stick move · right stick aim · RT fire<br>LT grenade · A build (hold to keep building)<br>B ability, or sprint if your class has no ability · X armory at the stake<br>Y wall/door · d-pad left/right material · d-pad down build kit<br>View start raid · Menu pause. Change any button in Settings.</p></div>
         </div>
       </details>
-      <p class="foot">v0.9.3.5 · phone, desktop and controller · online co-op and PvP for up to six</p>
+      <p class="foot">v0.9.3.6 · phone, desktop and controller · online co-op and PvP for up to six</p>
     </section>
 
     <section class="page" id="pg-classes" hidden>
@@ -247,6 +247,9 @@
           <label class="set"><span>MUSIC</span><input type="range" id="sMus" min="0" max="100" step="5"><b id="sMusV">70%</b></label></div>
         <div class="setCard"><h3>SCREEN</h3>
           <label class="set"><span>SCREEN SHAKE</span><input type="range" id="sShake" min="0" max="100" step="5"><b id="sShakeV">100%</b></label>
+          <div class="set"><span>FRAME RATE</span></div>
+          <div class="seg" id="fpsSeg" role="radiogroup" aria-label="Frame rate"><button data-fpsm="auto" type="button" role="radio">AUTO</button><button data-fpsm="30" type="button" role="radio">30 FPS</button><button data-fpsm="60" type="button" role="radio">60 FPS</button></div>
+          <p class="lede sm" id="fpsNote">Auto runs at 60 and drops to 30 when a phone is working hard or its battery is low. 30 FPS keeps phones coolest.</p>
           <label class="tog"><input type="checkbox" id="sFps"><span>Show frame rate</span></label></div>
         <div class="setCard"><h3>FEEL</h3>
           <label class="tog"><input type="checkbox" id="sHap"><span>Vibration and controller rumble on hits and blasts</span></label></div>
@@ -321,7 +324,7 @@
       <div><dt>Raiders dropped</dt><dd id="sDrop">0</dd></div>
       <div><dt>Walls raised</dt><dd id="sBuilt">0</dd></div>
       <div><dt>Walls lost</dt><dd id="sLost">0</dd></div>
-      <div><dt>Repairs by Dell</dt><dd id="sRep">0</dd></div>
+      <div><dt>Repairs by Delgado</dt><dd id="sRep">0</dd></div>
       <div><dt>Revives</dt><dd id="sRev">0</dd></div>
     </dl>
     <div id="overRewards" class="rwCards" hidden aria-label="Rewards"></div>

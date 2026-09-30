@@ -311,7 +311,7 @@ function crc32(s){let c,crc=~0;for(let i=0;i<s.length;i++){c=(crc^s.charCodeAt(i
 const b64e=s=>btoa(unescape(encodeURIComponent(s))),b64d=s=>decodeURIComponent(escape(atob(s)));
 function exportSave(){
   const L={owned:locker.owned,eq:locker.eq,cases:locker.cases,bag:locker.bag,shards:locker.shards,prog:locker.prog,st:locker.st};
-  const c={name:cfg.name||'',volume:cfg.volume,music:cfg.music,shake:cfg.shake,haptics:cfg.haptics,fps:cfg.fps,build:cfg.build};
+  const c={name:cfg.name||'',volume:cfg.volume,music:cfg.music,shake:cfg.shake,haptics:cfg.haptics,fps:cfg.fps,fpsMode:cfg.fpsMode,build:cfg.build};
   const body=b64e(JSON.stringify({v:1,at:new Date().toISOString(),locker:L,best:loadBest(),cfg:c}));
   return SAVE_TAG+'.'+body+'.'+crc32(body);
 }
@@ -335,7 +335,7 @@ function restoreSave(d){
 }
 function restoreExtras(d){
   if(d.best&&typeof d.best==='object')try{localStorage.setItem(BEST_KEY,JSON.stringify(d.best))}catch(e){}
-  if(d.cfg&&typeof d.cfg==='object'){for(const k of['name','volume','music','shake','haptics','fps','build'])if(d.cfg[k]!==undefined&&typeof d.cfg[k]===typeof cfg[k])cfg[k]=d.cfg[k];saveCfg();applyCfg()}
+  if(d.cfg&&typeof d.cfg==='object'){for(const k of['name','volume','music','shake','haptics','fps','build'])if(d.cfg[k]!==undefined&&typeof d.cfg[k]===typeof cfg[k])cfg[k]=d.cfg[k];if(['auto','30','60'].includes(d.cfg.fpsMode))cfg.fpsMode=d.cfg.fpsMode;saveCfg();applyCfg()}
 }
 let saveMode='',savePending=null;
 function openSaveOv(mode){
@@ -371,19 +371,19 @@ const salvageShards=(sal,held)=>Math.max(0,Math.min(Math.floor(Math.max(0,sal)/S
 // Case (two from the October Butcher), the rest an Afterglow Case; never more bosses than the raids held allow
 // v0.9.2: `from` is the raid count when this player came in; only boss raids after it count
 // v0.9.3: which of the bosses that went down this claim counts (the same cap the server uses)
-function bossCounted(keys,held,from=0){
-  const hi=Math.min(held+1,isFinite(game.waves)?game.waves:1e9),cap=Math.max(0,Math.floor(hi/5)-Math.floor(from/5))*(game.size==='xl'?2:1),out=[];   // XL boss raids have two bosses
+function bossCounted(keys,held,from=0,waves=game.waves,size=game.size){
+  const hi=Math.min(held+1,isFinite(waves)?waves:1e9),cap=Math.max(0,Math.floor(hi/5)-Math.floor(from/5))*(size==='xl'?2:1),out=[];   // XL boss raids have two bosses
   for(const k of keys){if(out.length>=cap)break;if(!BOSSES[k==='butcher_oct'?'butcher':k])continue;out.push(k)}
   return out;
 }
-function bossDrops(keys,held,from=0){
-  const out={};for(const k of bossCounted(keys,held,from)){const box=bossBox(k==='butcher_oct'?'butcher':k);out[box]=(out[box]|0)+(k==='butcher_oct'?2:1)}
+function bossDrops(keys,held,from=0,waves,size){
+  const out={};for(const k of bossCounted(keys,held,from,waves,size)){const box=bossBox(k==='butcher_oct'?'butcher':k);out[box]=(out[box]|0)+(k==='butcher_oct'?2:1)}
   return out;
 }
 // v0.9.3 milestone counters (the server keeps the same ones for accounts): each boss beaten, raids held on each map
 // and raids held as each class (the class you ended the run as)
-function addMilestones(st,keys,held,from,mine,cls,map){
-  for(const k of bossCounted(keys,held,from)){const b='boss_'+(k==='butcher_oct'?'butcher':k);st[b]=(st[b]|0)+1}
+function addMilestones(st,keys,held,from,mine,cls,map,waves,size){
+  for(const k of bossCounted(keys,held,from,waves,size)){const b='boss_'+(k==='butcher_oct'?'butcher':k);st[b]=(st[b]|0)+1}
   if(mine>0){if(MAP_IDS.includes(map))st['map_'+map]=(st['map_'+map]|0)+mine;if(CLASSES[cls])st['cls_'+cls+'_raids']=(st['cls_'+cls+'_raids']|0)+mine}
 }
 // the Flag Case's chance after any win (this browser's own locker; the server rolls for accounts)
@@ -409,30 +409,65 @@ function rewardText(R){
 const mkReward=(kind,o)=>{const R={kind,cases:{},shards:0,unlocked:[],toNext:3-(locker.prog|0),prog:locker.prog|0,...o};R.text=rewardText(R);return R};
 // held = raids held in the whole game; a player who came in late (or came back) is paid from game.joinHeld on.
 // left = they walked out before the end. Everything else about the game rides along for the match record.
-function lockerReward(held,win,kills,left=false){
-  if(demo)return null;
+// The claim for this phone's share of the run so far. Pure: nothing is spent or saved here.
+function runClaim(held,win,kills,left=false){
   const from=Math.min(held,game.joinHeld|0),mine=held-from,pct=modBonus(game.mods,'');
   const sal=Math.max(0,(player&&player.sal)|0),shards=Math.min(salvageShards(sal,mine),Math.floor(SAL_SHARD.max*(100+pct)/100));
-  if(player&&shards)player.sal-=shards*SAL_SHARD.rate;   // what converts is spent, so it can't count twice
   const keys=(game.bossLog||[]).slice(game.joinBoss|0).slice(0,40),sb=Math.max(0,(game.sbN|0)-(game.joinSB|0)),dur=Math.round(game.time-(game.joinT||0));
   const claim={kind:'run',mode:game.mode,diff:pick.diff||'normal',win:!!win,held:mine,raid_from:from,raid_to:held,kills,bosses:keys.length,boss_keys:keys,shard_bosses:sb,
     salvage:sal,size:game.size||'std',duration_s:dur,game_id:game.gid,joined_s:Math.round(game.joinT||0),left_s:Math.round(game.time),left:!!left,
     upgrades:(player?player.upS:'')+':'+(game.dellLv|0),mods:game.mods||[],map:game.map,cls:player?player.cls:pick.cls};
-  if(locker.cloud)return queueClaim(claim);
-  // this browser's own locker (no account): the same rules as the server, minus skill points
-  const st=locker.st,before=locker.cases,drops=bossDrops(keys,held,from),bshards=sb*(15+Math.floor(rnd()*16));
-  locker.shards=(locker.shards|0)+shards+bshards;
-  st.raids+=mine;st.drops+=kills;if(win&&from*2<=game.waves){st.wins++;if(pick.diff==='hard')st.hardWins++}
-  if(game.mode==='endless')st.endless=Math.max(st.endless,held);
-  locker.prog+=Math.floor(mine*(100+pct)/100);locker.cases+=Math.floor(locker.prog/3);locker.prog%=3;
-  if(win&&from*2<=game.waves)locker.cases+=game.waves>=10?2:1;
-  if(game.mode==='endless')locker.cases+=Math.floor(mine/5);
-  for(const id in drops)caseAdd(id,drops[id]);
-  addMilestones(st,keys,held,from,mine,player?player.cls:pick.cls,game.map);
-  const won=win&&from*2<=game.waves?winDrop():{};
-  const got=checkUnlocks();saveLocker();
-  return mkReward('run',{cases:{supply:locker.cases-before,...drops,...won},shards:shards+bshards,bossShards:bshards,unlocked:got.map(c=>c.id)});
+  return {claim,shards};
 }
+function lockerReward(held,win,kills,left=false){
+  if(demo)return null;
+  clearRunDraft();
+  const {claim,shards}=runClaim(held,win,kills,left);
+  if(player&&shards)player.sal-=shards*SAL_SHARD.rate;   // what converts is spent, so it can't count twice
+  if(locker.cloud)return queueClaim(claim);
+  return localRun(claim,shards);
+}
+// this browser's own locker (no account): the same rules as the server, minus skill points
+function localRun(c,shards){
+  const st=locker.st,before=locker.cases,held=c.raid_to,from=c.raid_from,mine=c.held,keys=c.boss_keys||[],sb=c.shard_bosses|0;
+  const waves=c.mode==='endless'?Infinity:+c.mode,pct=modBonus(c.mods||[],''),won=c.win&&from*2<=waves;
+  const drops=bossDrops(keys,held,from,waves,c.size),bshards=sb*(15+Math.floor(rnd()*16));
+  locker.shards=(locker.shards|0)+shards+bshards;
+  st.raids+=mine;st.drops+=c.kills|0;if(won){st.wins++;if(c.diff==='hard')st.hardWins++}
+  if(c.mode==='endless')st.endless=Math.max(st.endless,held);
+  locker.prog+=Math.floor(mine*(100+pct)/100);locker.cases+=Math.floor(locker.prog/3);locker.prog%=3;
+  if(won)locker.cases+=waves>=10?2:1;
+  if(c.mode==='endless')locker.cases+=Math.floor(mine/5);
+  for(const id in drops)caseAdd(id,drops[id]);
+  addMilestones(st,keys,held,from,mine,c.cls,c.map,waves,c.size);
+  const wd=won?winDrop():{};
+  const got=checkUnlocks();saveLocker();
+  return mkReward('run',{cases:{supply:locker.cases-before,...drops,...wd},shards:shards+bshards,bossShards:bshards,unlocked:got.map(c=>c.id)});
+}
+// v0.9.3.6: a co-op/Endless run in progress is written down every few seconds. If the page reloads, the app is
+// killed or the phone dies mid-run, the next start pays what was held (as an early leave) instead of losing it.
+const DRAFT_KEY='palisade.runDraft.v1';
+function runHeldNow(){return game.phase==='build'?game.wave:Math.max(0,game.wave-1)}
+function runDraftDue(){
+  if(demo||!running()||game.pvp||game.phase==='over'||game.rewarded||!player)return false;
+  const held=runHeldNow();
+  return !(held<=(game.joinHeld|0)&&(game.bossLog||[]).length<=(game.joinBoss|0)&&(game.sbN|0)<=(game.joinSB|0));
+}
+function saveRunDraft(){
+  if(!runDraftDue())return;
+  const {claim,shards}=runClaim(runHeldNow(),false,player.kills|0,true);
+  try{localStorage.setItem(DRAFT_KEY,JSON.stringify({uid:locker.cloud?locker.cloud.id:'',at:Date.now(),claim,shards}))}catch(e){}
+}
+function clearRunDraft(){try{localStorage.removeItem(DRAFT_KEY)}catch(e){}}
+// Called once at start-up: an account draft joins the claim queue; a no-account draft pays this browser's locker.
+function recoverRunDraft(){
+  const d=readJSON(DRAFT_KEY).v;if(!d||!d.claim||typeof d.claim!=='object')return null;clearRunDraft();
+  const at=Number(d.at)||0;if(!at||Date.now()-at>30*864e5)return null;
+  if(d.uid){recoverClaim(String(d.uid),d.claim,at);return null}
+  if(locker.cloud)return null;   // a no-account draft never pays an account
+  const R=localRun(d.claim,Math.max(0,d.shards|0));toast('RUN SAVED','Your last run ended early. '+R.text);return R;
+}
+
 // a PvP match counts toward the next case like a raid does; a win is a case outright
 // Base Battle and FFA don't pay Supply cases (those are co-op only). Each match rolls its mode's drop chance for
 // the PvP case instead. With an account the server does the roll and the result arrives a moment later.

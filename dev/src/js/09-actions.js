@@ -20,7 +20,7 @@ function buildEval(p,i,j,sel,door){
   for(const e of enemies)if(near(e)){t.reason='Raider in the way';return t}
   if(!door&&!walls[k]){
     for(const o of players.values())if(o!==p&&(o.alive||o.downed)&&near(o)){t.reason=game.pvp?'Someone is in the way':'Teammate in the way';return t}
-    if(!game.pvp&&near(qm)){t.reason='Dell is standing there';return t}
+    if(!game.pvp&&near(qm)){t.reason='Delgado is standing there';return t}
   }
   const w=walls[k];
   if(!w){t.cost=door?DOOR_COST:WALL_COST;t.act=door?'DOOR':'PLACE'}
@@ -64,7 +64,7 @@ function localBuild(){
   const p=player;if(!p||!p.alive||!cfg.build||game.pvp==='ffa')return;const t=buildTarget(p,game.sel,game.piece==='door');
   if(NET.mode==='guest'){if(!t.ok){sfx('deny',undefined,undefined,true);return}NET.toHost({t:'b',i:t.i,j:t.j,s:game.sel,d:game.piece==='door'});return}
   doBuild(p,t.i,t.j,game.sel,game.piece==='door');
-  if(game.tip===1&&game.stats.built>=3){game.tip=2;setTip('Ring the CORE. Make one tile a DOOR so your crew and Dell can get in and out. Raiders treat doors like walls.')}
+  if(game.tip===1&&game.stats.built>=3){game.tip=2;setTip('Ring the CORE. Make one tile a DOOR so your crew and Delgado can get in and out. Raiders treat doors like walls.')}
 }
 // quartermaster sprint: 1.4x speed for 2.5 s, no shooting while it lasts, then 6 s to recharge
 const SPRINT={mult:1.4,dur:2.5,cd:6};

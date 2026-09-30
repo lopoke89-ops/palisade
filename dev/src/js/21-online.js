@@ -8,7 +8,7 @@ const PROTO='yard-18',ROOM_PREFIX='palisade-yard-18-';
 const ROOM_SESSION=(()=>{let id='';try{id=sessionStorage.getItem('palisade.roomSession')||''}catch(e){}
   if(!/^[0-9a-f]{24}$/.test(id)){id=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');try{sessionStorage.setItem('palisade.roomSession',id)}catch(e){}}
   return id})();
-const NET={mode:'solo',inGame:false,peer:null,code:'',roster:[],conns:new Map(),host:null,fxq:[],snapT:0,snapN:0,lastN:0,inT:0,nextG:1,lastHeard:0,roomLocked:false,banned:new Set(),
+const NET={mode:'solo',inGame:false,peer:null,code:'',roster:[],conns:new Map(),host:null,fxq:[],snapT:0,snapN:0,lastN:0,inT:0,nextG:1,lastHeard:0,roomLocked:false,banned:new Set(),leftBy:new Map(),
   sendTo(id,msg){for(const c of this.conns.values())if(c.pid===id&&c.r&&c.r.open){try{c.r.send(msg)}catch(e){}}},
   sendAll(msg,ch='r'){for(const c of this.conns.values()){const x=c[ch]&&c[ch].open?c[ch]:c.r;if(c.pid&&x&&x.open)try{x.send(msg)}catch(e){}}},
   sendState(msg){let js=null;for(const c of this.conns.values()){if(!c.pid)continue;
@@ -67,7 +67,7 @@ function netReset(){
   if(NET.mode==='host')lobbyUnpublish();
   clearChat();
   try{NET.peer&&NET.peer.destroy()}catch(e){}
-  Object.assign(NET,{mode:'solo',inGame:false,peer:null,code:'',roster:[],host:null,fxq:[],lastN:0,hostMods:[],roomLocked:false,banned:new Set()});NET.conns.clear();myId='solo';
+  Object.assign(NET,{mode:'solo',inGame:false,peer:null,code:'',roster:[],host:null,fxq:[],lastN:0,hostMods:[],roomLocked:false,banned:new Set(),leftBy:new Map()});NET.conns.clear();myId='solo';
 }
 function netLeave(msg){netReset();toMenu();if(msg){showPage('multi');mStatus(msg)}}
 
@@ -127,9 +127,9 @@ function hostData(peerId,d){
     NET.roster.push({id:c.pid,name:c.name,cls:c.cls,cos:c.cos,team,sk:''});checkSkills(c,d.sk);
     c.r.send({t:'welcome',id:c.pid});
     if(NET.inGame){   // dropping into a game already running
-      const p=makePlayer(c.pid,c.name,game.job||c.cls,players.size,c.cos,game.pvp==='base'?team:'',c.sk);kitUp(p);[p.x,p.y]=respawnAt(p);if(game.pvp)p.prot=PVP.prot;if(game.pvp==='base')p.sal=PVP.startSal;if(game.pvp==='ffa')p.mats=[0,0,0];players.set(c.pid,p);
+      const p=makePlayer(c.pid,c.name,game.job||c.cls,players.size,c.cos,game.pvp==='base'?team:'',c.sk);kitUp(p);[p.x,p.y]=respawnAt(p);if(game.pvp)p.prot=PVP.prot;if(game.pvp==='base')p.sal=PVP.startSal;if(game.pvp==='ffa')p.mats=[0,0,0];const back=restoreLeaver(c,p);players.set(c.pid,p);
       c.r.send(startMsg());NET.wlSent=null;NET.piSent=null;
-      toastAll(`${c.name.toUpperCase()} JOINED`,game.pvp==='base'?`Dropped in on ${TEAMS[team].name}.`:game.pvp?'Dropped into the fight.':'Dropped in at the stake.')}
+      toastAll(`${c.name.toUpperCase()} ${back?'IS BACK':'JOINED'}`,back?'Armory and salvage restored.':game.pvp==='base'?`Dropped in on ${TEAMS[team].name}.`:game.pvp?'Dropped into the fight.':'Dropped in at the stake.')}
     broadcastLobby();return;
   }
   if(!c.pid)return;
@@ -177,9 +177,21 @@ function hostDrop(peerId){
   try{c.r&&c.r.close()}catch(e){}try{c.u&&c.u.close()}catch(e){}
   if(!c.pid)return;
   NET.roster=NET.roster.filter(r=>r.id!==c.pid);
-  if(NET.inGame&&players.has(c.pid)){players.delete(c.pid);toastAll(`${c.name.toUpperCase()} LEFT`,'')}
+  if(NET.inGame&&players.has(c.pid)){const p=players.get(c.pid);stashLeaver(c,p);players.delete(c.pid);toastAll(`${c.name.toUpperCase()} LEFT`,'')}
   if(NET.inGame&&!$('pause').hidden)renderPauseCrew();
   broadcastLobby();
+}
+// v0.9.3.6: a player who drops (lost signal, reload, crash) and comes back to the same game keeps their armory,
+// salvage and kills. Keyed by the browser's room session, which survives a reload in the same tab.
+function stashLeaver(c,p){
+  if(!c.session||c.kicked||!p||game.pvp)return;
+  NET.leftBy.set(c.session,{gid:game.gid,cls:p.cls,up:{...p.up},sal:p.sal|0,kills:p.kills|0,deaths:p.deaths|0});
+  if(NET.leftBy.size>12)NET.leftBy.delete(NET.leftBy.keys().next().value);
+}
+function restoreLeaver(c,p){
+  const s=NET.leftBy.get(c.session);if(!s||s.gid!==game.gid||game.pvp)return false;NET.leftBy.delete(c.session);
+  if(s.cls===p.cls){for(const k in p.up)p.up[k]=Math.max(0,Math.min(4,s.up[k]|0));p.upS=upStr(p);refit(p);p.nades=p.maxN}
+  p.sal=Math.max(p.sal|0,s.sal);p.kills=s.kills;p.deaths=s.deaths;return true;
 }
 function hostKick(pid){
   if(NET.mode!=='host'||pid==='host')return;
