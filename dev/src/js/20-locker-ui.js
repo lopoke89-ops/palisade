@@ -160,7 +160,9 @@ function clearLockerItems(root){
   root.replaceChildren();
 }
 function refreshItemTile(d,c){
-  const own=owns(c.id),blocked=c.cat==='hat'&&!headwearAllowed(locker.eq.skin,c.key),eq=locker.eq[c.cat]===c.key&&!blocked;
+  // A blocked hat stays equipped in the save but renders as Class Issue, so that tile shows EQUIPPED.
+  const own=owns(c.id),blocked=c.cat==='hat'&&!headwearAllowed(locker.eq.skin,c.key),
+    eq=!blocked&&(locker.eq[c.cat]===c.key||c.cat==='hat'&&c.key==='class'&&!headwearAllowed(locker.eq.skin,locker.eq.hat));
   d.classList.toggle('lock',!own);d.classList.toggle('eq',eq);
   d.classList.toggle('incompatible',blocked);d.setAttribute('aria-disabled',String(blocked));
   d.querySelector('i').textContent=blocked?'DOES NOT FIT THIS SKIN':eq?'EQUIPPED':own?RAR[c.r].n:c.how;

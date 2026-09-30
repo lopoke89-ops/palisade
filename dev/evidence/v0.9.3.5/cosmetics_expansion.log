@@ -1,0 +1,17 @@
+{
+  hats: [
+    'gravecap',
+    'stemband',
+    'batcirclet',
+    'bonewrap',
+    'webpin',
+    'skullseal'
+  ],
+  skinCount: 73,
+  matrix: 'saved in JSON',
+  haloGapPixels: 16,
+  sahurDistinctPoses: 96,
+  rolls: { c: 47835, r: 21636, e: 7950, l: 2398, u: 181 },
+  failures: []
+}
+errors: none

@@ -1,0 +1,1 @@
+host inputs {"before":{"x":5.5,"y":11.5,"aim":{"x":0.7,"y":-0.7},"nades":2,"rockets":5,"walls":6},"refused":{"x":5.5,"y":11.5,"aim":{"x":0.7,"y":-0.7},"nades":2,"rockets":5,"walls":6,"fire":false},"acceptedAim":true,"acceptedThrow":true,"stoppedRush":true,"honestStep":true} errors: none

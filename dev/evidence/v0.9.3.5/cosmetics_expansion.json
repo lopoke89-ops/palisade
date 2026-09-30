@@ -1,0 +1,608 @@
+{
+  "hats": [
+    "gravecap",
+    "stemband",
+    "batcirclet",
+    "bonewrap",
+    "webpin",
+    "skullseal"
+  ],
+  "skinCount": 73,
+  "matrix": {
+    "sahur": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "std": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "desert": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "urban": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "forest": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "night": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "redcoat": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "tiger": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "arctic": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "gold": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "ghost": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "arcade": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "toxic": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "frost": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "chrome": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "neonops": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "neonpolice": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "neonclown": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "neonknight": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "galaxy": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "holo": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "cyber": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "gclown": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "gpolice": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "gknight": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "pumpkin": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "cobweb": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "skeleton": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "mummy": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "reaper": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "phantom": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "butcher": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "butcher2": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "butcher3": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "butcher4": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "demo": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "demo2": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "demo3": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "demo4": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "storm": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "storm2": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "storm3": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "storm4": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "ferry": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "ferry2": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "ferry3": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "ferry4": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "foreman": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "foreman2": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "foreman3": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "foreman4": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "yard": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "yard2": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "yard3": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "yard4": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "river": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "river2": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "river3": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "river4": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "quarry": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "quarry2": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "quarry3": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "quarry4": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "gsoldier": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "gsniper": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "ggren": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "gqm": {
+      "gravecap": "Allow",
+      "stemband": "Allow",
+      "batcirclet": "Allow",
+      "bonewrap": "Allow",
+      "webpin": "Allow",
+      "skullseal": "Allow"
+    },
+    "sheetghost": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "scarecrow": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "monster": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "clown": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "slasher": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    },
+    "dracula": {
+      "gravecap": "Block",
+      "stemband": "Block",
+      "batcirclet": "Block",
+      "bonewrap": "Block",
+      "webpin": "Block",
+      "skullseal": "Block"
+    }
+  },
+  "haloGapPixels": 16,
+  "sahurDistinctPoses": 96,
+  "rolls": {
+    "c": 47835,
+    "r": 21636,
+    "e": 7950,
+    "l": 2398,
+    "u": 181
+  },
+  "failures": [],
+  "errors": []
+}

@@ -1,0 +1,16 @@
+{
+  "migration": "20260930050715_palisade_v0935_cosmetics",
+  "checks": [
+    "old private helpers still inaccessible",
+    "anon cannot call either case API",
+    "legacy Supply pool excludes Ultimate",
+    "legacy Halloween pool excludes new hats",
+    "all six hats reachable through new API",
+    "Ultimate unlock then duplicate pays 80 once",
+    "stale revision rejected",
+    "failed call and other account unchanged",
+    "empty case rejected",
+    "missing identity rejected",
+    "banned account rejected"
+  ]
+}

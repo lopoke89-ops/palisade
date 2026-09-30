@@ -720,7 +720,7 @@ function gunArms(hand,sd,gl,shB,shF,sleeve,nogun,bob,bp=-1,kind='',swing=0){
 }
 // A soldier, raider or Dell standing at tile (x,y), facing o.aim. Drawn in base pixels, scaled.
 function drawPerson(x,y,o){
-    if(o.mark&&o.detail!==false||o.sahur||o.halloweenHat||o.sheet){
+  if(o.mark&&o.detail!==false||o.sahur||o.halloweenHat||o.sheet){
     const [sx,sy]=iso(x,y),sd=wdirToScreen(o.aim),BG=o.big||1;
     if(o.aura)paintAura(g,o.aura,sx,sy,u*FIG*BG,game.time,o.faded?.5:1,'ground');   // v0.9.3: rings and pools under the figure,
     drawWardrobeCharacter(g,o,wardrobeAimAngle(sd),game.time,u*FIG*BG,sx,sy,o.walk||0);
