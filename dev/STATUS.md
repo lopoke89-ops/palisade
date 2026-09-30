@@ -11,15 +11,48 @@ The Claude audit URL still requires sign-in in the available browser session. Bi
 
 | Item | Current state |
 |---|---|
-| Live release | **v0.9.3.7** (v0.9.3.8 in this change) |
+| Live release | **v0.9.3.9** (published September 30) |
 | Live protocol | `yard-17` / `palisade-yard-17-` (v0.9.3.5 candidate uses `yard-18`) |
-| Applied server migration | `palisade_v0938_all_boss_milestones` (`20260930075446`); before it `palisade_v0936_rejoin_bosses` (`20260930071534`) |
+| Applied server migration | `palisade_v0939_sp_cases` (`20260930084544`); before it `palisade_v0938_all_boss_milestones` (`20260930075446`) |
 | GitHub branch | `main` at `4033d34` (v0.9.3.4 plus the UTF-8 repair); v0.9.3.5 candidate on `claude/lucid-curie-491na1` |
 | Published build | GitHub Pages displays **v0.9.3.4** (service worker `palisade-0e4e6153b7`), checked September 30 |
 
 Controller support shipped in v0.9.2.1. The v0.9.3 cosmetics migration is applied and the live case catalog includes Flags. The two proposed new game modes have not shipped; the Nightmare modifier and a future preset definition do not constitute a separate game mode.
 
 Four commits after the v0.9.3 release changed the case intro and reel source (`98bb522`, `4c8dd3d`, `a49df08`, `566e30e`). The v0.9.3.1 release includes those fixes. Their source was compared with the v0.9.3 release on September 29; see [case animation validation](CASE_PERFORMANCE_2026-09-29.md). The reel avoids repeated style reads and its measured CPU use was lower, but intro readings overlapped and Locker readings were higher in the comparison runs. Further profiling and a real-phone comparison are still required before performance sign-off.
+
+## v0.9.3.9: skill points for cases, landscape HUD, tips toggle, headgear polish
+
+Work order: [plans/v0.9.3.9-work-order.md](plans/v0.9.3.9-work-order.md). Evidence: `evidence/v0.9.3.9/`.
+
+**1. 3 skill points → 1 Supply Case** (no cap, per Big U).
+- *Where:* a new button in the Locker's Supply Case panel shows your points. It works on two taps: the first arms it for 3 s, the second spends.
+- *When it's off:* it is disabled with a reason below 3 points; offline, the points stay and a message explains.
+- *Accounts:* use the new RPC `buy_case_sp` (migration `20260930084544_palisade_v0939_sp_cases`, **applied September 30 with Big U's approval**; signed-in players only, anon denied). It spends only unspent `sp`, and `sp_total` is unchanged. The live `skill_respec` refunds `skill_spent(skills)`, the tree's own costs, so points traded for cases can never come back through a reset.
+- *No-account players:* they get the same trade (Big U). They previously earned no skill points at all, so their runs now earn them by the server's rule: 1 per 5 raids held, 1 per boss, including in-between bosses. The skill tree itself stays account-only.
+- *Tests:* `sp_cases_migration` (PGlite: success, no cap, stale rev, fewer than 3 refused while tree points are untouched, respec refunds only the tree, other accounts, banned, signed out, anon denied) and `sp_cases` (account two-tap, repeat, disabled, offline; no-account earning, trade, reload).
+
+**2. Landscape HUD** (phones in landscape only; portrait and desktop unchanged).
+- *Boss bars:* health is one thin strip across the top centre, with two XL bosses side by side, instead of stacked 32 px cards.
+- *Team bars:* YOU, crewmates, DELGADO and CORE sit compact in the bottom-left corner and ignore touches. The raid panel stays top-right, and the top-left is clear.
+- *Test:* `hud_layout` at 844×390, 932×430, 390×844 and 1280×800 with 6 players and two bosses checks placement and no overlap with the kit or raid panel.
+- *Phone check still needed:* the bars now share the bottom-left with the floating move stick, which draws underneath them.
+
+**3. Show tips during games.** A Settings → Screen toggle (also in the in-game settings panel), on by default, saved and included in export/import. Off hides the how-to tips immediately and in later games. Toasts (boss arrivals, IS BACK, rewards) always show. Test: `tips_toggle`.
+
+**4. Headgear.**
+- *Rebuilt:* the six Halloween Case pieces are now full headwear in the style of the Top Hat, Witch and Pumpkin King, with volume, trim, shading steps and a clear front motif:
+  - Gravestone Cap: a slate cap with a stitched band and visor, and a headstone crest with cross and moss.
+  - Pumpkin Stem Band: a ribbed rind band with a curled stem, leaves and a tendril.
+  - Bat-Notch Circlet: a pewter circlet with a notched-wing bat (glowing eyes) and violet studs.
+  - Bone-Button Wrap: two folded crimson layers, a back knot with trailing ends, and three bone buttons.
+  - Cobweb Brow Pin: a tilted lace pillbox, a cobweb veil over the brow, and a spider brooch.
+  - Crescent Skull Seal: a black-violet diadem with an ivory skull before a glowing gold crescent, and temple gems.
+- *Fit pass on all hats:* the Neon Helmet stripe now follows the helmet's curve (it stuck out at side angles), and the Arcade Cap badge is seated on the crown (it floated).
+- *Tests:* `headgear_fit` checks every hat's pixels stay inside a head window at 8 angles × 3 walk phases. It passes for all hats, and records per-hat area for review. `cosmetics_expansion` now caps the Halloween pieces at the height of our tallest existing hats, replacing the old "compact" limit.
+- *Evidence:* before/after sheets are `headgear_before_*.png` and `headgear_after_*.png`.
+
+Version footer v0.9.3.9; protocol unchanged.
 
 ## v0.9.3.8: every boss kill counts toward milestones
 
@@ -28,7 +61,17 @@ Big U's rule: every boss kill counts toward boss milestones, for everyone in the
 - **In-between bosses** (Boss Rush, Nightmare surprise, the Nightmare + Boss Rush second boss) paid shards and a skill point but no milestone credit, because the game only kept a count. The host now records which boss each one was (`sbLog`) and sends it to guests in snapshots (`sl`). Each player's claim names the in-between bosses killed while they were in the game (`sb_keys`), whoever shot them.
 - **Server:** migration `20260930075446_palisade_v0938_all_boss_milestones` (applied September 30) adds +1 to the matching `boss_*` counter for each *paid* in-between boss. It follows the existing paid cap, not the claimed list. Older clients send no `sb_keys` and are unchanged. The live function matches the file (md5 `a98b0562…`) and grants are unchanged.
 - **No-account players** get the same rule in the browser locker.
-- **Earlier kills** are not backfilled (see below).
+- **Earlier kills: estimated backfill, approved by Big U and applied on September 30** (`supabase/compensation/2026-10-01_v0938_milestone_backfill.sql`, keyed so it can't re-apply). It credits 154 past in-between kills, each pre-migration claim's paid count: Boss Rush raids matched to the map's fixed rotation, and Nightmare surprises spread over the map's three bosses. Verified on the live lockers:
+
+  | Player | Before (Butcher / Demolisher / Ferryman / Foreman / Stormcaller) | After |
+  |---|---|---|
+  | lopoke89 | 17/9/13/3/13 | 38/22/26/6/36 |
+  | kappinkirk | 13/6/13/3/12 | 26/10/22/3/25 |
+  | meezy2greezy | 7/2/5/0/6 | 14/4/10/0/12 |
+  | ethn | 2/2/1/0/1 | 6/8/2/3/7 |
+  | af519126 | 2/1/0/0/0 | 2/2/0/0/1 |
+
+  Unlocked by the backfill: lopoke89 gained the Butcher, Ferryman and Stormcaller skins; kappinkirk gained Butcher and Stormcaller. Each player got one mailbox note.
 - **Tests:** `boss_milestones` (a guest who never fired gets both a regular and a Boss Rush boss in the claim; solo local counter +1) and `rejoin_migration` (milestones for regular and in-between bosses; older client unchanged; milestones follow the paid count; re-apply).
 - **Test fix:** `modifiers` measured Adrenaline speed against wall-clock time and was flaky (a slow first frame shortened the walk). It now measures against game time and gives an exact 1.20×.
 

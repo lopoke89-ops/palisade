@@ -311,7 +311,7 @@ function crc32(s){let c,crc=~0;for(let i=0;i<s.length;i++){c=(crc^s.charCodeAt(i
 const b64e=s=>btoa(unescape(encodeURIComponent(s))),b64d=s=>decodeURIComponent(escape(atob(s)));
 function exportSave(){
   const L={owned:locker.owned,eq:locker.eq,cases:locker.cases,bag:locker.bag,shards:locker.shards,prog:locker.prog,st:locker.st};
-  const c={name:cfg.name||'',volume:cfg.volume,music:cfg.music,shake:cfg.shake,haptics:cfg.haptics,fps:cfg.fps,fpsMode:cfg.fpsMode,build:cfg.build};
+  const c={name:cfg.name||'',volume:cfg.volume,music:cfg.music,shake:cfg.shake,haptics:cfg.haptics,fps:cfg.fps,fpsMode:cfg.fpsMode,tips:cfg.tips,build:cfg.build};
   const body=b64e(JSON.stringify({v:1,at:new Date().toISOString(),locker:L,best:loadBest(),cfg:c}));
   return SAVE_TAG+'.'+body+'.'+crc32(body);
 }
@@ -335,7 +335,7 @@ function restoreSave(d){
 }
 function restoreExtras(d){
   if(d.best&&typeof d.best==='object')try{localStorage.setItem(BEST_KEY,JSON.stringify(d.best))}catch(e){}
-  if(d.cfg&&typeof d.cfg==='object'){for(const k of['name','volume','music','shake','haptics','fps','build'])if(d.cfg[k]!==undefined&&typeof d.cfg[k]===typeof cfg[k])cfg[k]=d.cfg[k];if(['auto','30','60'].includes(d.cfg.fpsMode))cfg.fpsMode=d.cfg.fpsMode;saveCfg();applyCfg()}
+  if(d.cfg&&typeof d.cfg==='object'){for(const k of['name','volume','music','shake','haptics','fps','tips','build'])if(d.cfg[k]!==undefined&&typeof d.cfg[k]===typeof cfg[k])cfg[k]=d.cfg[k];if(['auto','30','60'].includes(d.cfg.fpsMode))cfg.fpsMode=d.cfg.fpsMode;saveCfg();applyCfg()}
 }
 let saveMode='',savePending=null;
 function openSaveOv(mode){
@@ -441,10 +441,13 @@ function localRun(c,shards){
   if(c.mode==='endless')locker.cases+=Math.floor(mine/5);
   for(const id in drops)caseAdd(id,drops[id]);
   addMilestones(st,keys,held,from,mine,c.cls,c.map,waves,c.size);
+  // v0.9.3.9: no-account players earn skill points by the server's rule (1 per 5 raids held, 1 per boss) for the case trade
+  const spGain=Math.floor(((locker.spProg|0)+mine)/5)+bossCounted(keys,held,from,waves,c.size).length+sb;locker.spProg=((locker.spProg|0)+mine)%5;
+  locker.sp=(locker.sp|0)+spGain;locker.spTotal=(locker.spTotal|0)+spGain;
   for(const k of(c.sb_keys||[]).slice(0,sb))if(BOSSES[k]){const b='boss_'+k;st[b]=(st[b]|0)+1}   // v0.9.3.8: every boss kill counts
   const wd=won?winDrop():{};
   const got=checkUnlocks();saveLocker();
-  return mkReward('run',{cases:{supply:locker.cases-before,...drops,...wd},shards:shards+bshards,bossShards:bshards,unlocked:got.map(c=>c.id)});
+  return mkReward('run',{cases:{supply:locker.cases-before,...drops,...wd},shards:shards+bshards,bossShards:bshards,sp:spGain,unlocked:got.map(c=>c.id)});
 }
 // v0.9.3.6: a co-op/Endless run in progress is written down every few seconds. If the page reloads, the app is
 // killed or the phone dies mid-run, the next start pays what was held (as an early leave) instead of losing it.

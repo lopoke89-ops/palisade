@@ -94,7 +94,7 @@ function applyCfg(){
   $('sVol').value=Math.round(cfg.volume*100);$('sVolV').textContent=Math.round(cfg.volume*100)+'%';
   $('sMus').value=Math.round(cfg.music*100);$('sMusV').textContent=Math.round(cfg.music*100)+'%';
   $('sShake').value=Math.round(cfg.shake*100);$('sShakeV').textContent=Math.round(cfg.shake*100)+'%';
-  $('sHap').checked=cfg.haptics;$('sFps').checked=cfg.fps;$('fpsLab').hidden=!cfg.fps;
+  $('sHap').checked=cfg.haptics;$('sFps').checked=cfg.fps;$('fpsLab').hidden=!cfg.fps;$('sTips').checked=cfg.tips!==false;
   if(!['auto','30','60'].includes(cfg.fpsMode))cfg.fpsMode='auto';
   for(const b of document.querySelectorAll('#fpsSeg [data-fpsm]')){const on=b.dataset.fpsm===cfg.fpsMode;b.classList.toggle('sel',on);b.setAttribute('aria-checked',String(on))}
   $('mName').value=cfg.name||'';
@@ -104,6 +104,7 @@ $('sMus').addEventListener('input',e=>{cfg.music=e.target.value/100;applyCfg();s
 $('sShake').addEventListener('input',e=>{cfg.shake=e.target.value/100;applyCfg();saveCfg()});
 $('sHap').addEventListener('change',e=>{cfg.haptics=e.target.checked;saveCfg();if(cfg.haptics)buzz(30)});
 $('sFps').addEventListener('change',e=>{cfg.fps=e.target.checked;applyCfg();saveCfg()});
+$('sTips').addEventListener('change',e=>{cfg.tips=e.target.checked;saveCfg();if(!cfg.tips)setTip('')});
 for(const b of document.querySelectorAll('#fpsSeg [data-fpsm]'))b.addEventListener('click',()=>{cfg.fpsMode=b.dataset.fpsm;FPS_AUTO.drop=false;applyCfg();saveCfg()});
 $('mName').addEventListener('input',e=>{cfg.name=e.target.value.slice(0,12);saveCfg();renderPartyState();renderIdentity()});
 $('mList').addEventListener('change',e=>{cfg.listGame=e.target.checked;saveCfg()});

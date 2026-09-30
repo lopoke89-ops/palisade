@@ -10,14 +10,14 @@ $siteDir = (Resolve-Path -LiteralPath (Join-Path $testDir '..\..')).Path
 $outDir = Join-Path $testDir 'out'
 New-Item -ItemType Directory -Path $outDir -Force | Out-Null
 $groups = @{
-  cosmetics = 'locker_fit cosmetics wardrobe3d cosmetic_network tracer_cycle tracer_network ultimate_cloud cosmetics_expansion cosmetics_migration rejoin_migration rejoin_drop fps_mode delgado touch_lock ingame_settings mod_synergy boss_milestones'
-  locker = 'locker_collections locker_fit milestones flagcase accounts taborder csp'
+  cosmetics = 'locker_fit cosmetics wardrobe3d cosmetic_network tracer_cycle tracer_network ultimate_cloud cosmetics_expansion cosmetics_migration rejoin_migration rejoin_drop fps_mode delgado touch_lock ingame_settings mod_synergy boss_milestones sp_cases sp_cases_migration hud_layout tips_toggle headgear_fit'
+  locker = 'locker_collections locker_fit milestones flagcase accounts taborder csp sp_cases sp_cases_migration'
   presentation = 'presentation presentation_posefit flagcase wardrobe3d locker_fit muzzle presentation_network cosmetic_network csp'
   music = 'music_routing'
-  combat = 'solo bosses multiplayer muzzle rewards_lobby_shotgun touch_lock mod_synergy boss_milestones'
+  combat = 'solo bosses multiplayer muzzle rewards_lobby_shotgun touch_lock mod_synergy boss_milestones sp_cases sp_cases_migration hud_layout tips_toggle headgear_fit'
   host = 'hostcheck room_controls multiplayer rejoin rejoin_drop rejoin_migration'
-  smoke = 'solo lobby reel_music csp fps_mode delgado ingame_settings'
-  all = 'solo bosses multiplayer cases accounts rewards_lobby_shotgun reel_music music_routing v086 v087 muzzle cosmetics locker_fit locker_collections cosmetic_network social_lobby lobby v090 v090_net hostcheck room_controls csp wardrobe3d friends rewards_screen modifiers skilltree rejoin controller taborder milestones flagcase presentation presentation_posefit presentation_network tracer_cycle tracer_network ultimate_cloud cosmetics_expansion cosmetics_migration rejoin_migration rejoin_drop fps_mode delgado touch_lock ingame_settings mod_synergy boss_milestones'
+  smoke = 'solo lobby reel_music csp fps_mode delgado ingame_settings hud_layout tips_toggle'
+  all = 'solo bosses multiplayer cases accounts rewards_lobby_shotgun reel_music music_routing v086 v087 muzzle cosmetics locker_fit locker_collections cosmetic_network social_lobby lobby v090 v090_net hostcheck room_controls csp wardrobe3d friends rewards_screen modifiers skilltree rejoin controller taborder milestones flagcase presentation presentation_posefit presentation_network tracer_cycle tracer_network ultimate_cloud cosmetics_expansion cosmetics_migration rejoin_migration rejoin_drop fps_mode delgado touch_lock ingame_settings mod_synergy boss_milestones sp_cases sp_cases_migration hud_layout tips_toggle headgear_fit'
 }
 $selectedTests = $(if ($Tests) { $Tests } else { $groups[$Group] }).Split(' ', [System.StringSplitOptions]::RemoveEmptyEntries)
 foreach ($t in $selectedTests) { if ($t -notmatch '^[a-z0-9_]+$' -or -not (Test-Path -LiteralPath (Join-Path $testDir "$t.js"))) { throw "Unknown test: $t" } }

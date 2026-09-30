@@ -776,3 +776,14 @@ body.padMenu #menu .panel{padding-bottom:64px}body.pad .padF{scroll-margin:12px 
 #igSet .igCard{max-width:720px;text-align:left;gap:8px}
 #igSet .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin:10px 0 14px}
 #igSet .go{width:100%}
+
+/* v0.9.3.9 landscape phones: team health bars move to the bottom-left corner, compact and see-through to touches,
+   which frees the top-left for play; the boss strip is drawn thin across the top centre. */
+@media (pointer:coarse) and (orientation:landscape) and (max-height:500px){
+  body:not(.desk) #top .vitals{position:fixed;left:max(10px,env(safe-area-inset-left,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 8px);width:188px;gap:3px;
+    padding:5px 7px;background:rgba(12,11,9,.5);pointer-events:none}
+  body:not(.desk) #top .meter{grid-template-columns:50px 1fr 30px;gap:6px}
+  body:not(.desk) #top .meter .lab{font-size:11px}
+  body:not(.desk) #top .meter b{font-size:9px}
+  body:not(.desk) #top .phase{margin-left:auto}   /* the raid panel stays top-right */
+}
