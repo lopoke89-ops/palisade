@@ -58,13 +58,15 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
   assert.ok(out.bgTab.tiles >= 25 && out.bgTab.owned >= 2, 'background tiles');
   await p.locator('#lockGrid .item:not(.lock)').nth(1).click(); out.equipped = await p.evaluate(() => __pal.locker.eq.bg);
   await p.screenshot({ path: __dirname + '/out/lobby_desk.png' });
-  // 4b. the map panel is in the right column on MULTIPLAYER for every mode; PvP hides the XL size
+  // 4b. MULTIPLAYER: the MAP line opens the setup sheet on the map tab for every mode; PvP hides the XL size
   await p.click('[data-nav=multi]');
-  for (const pv of ['coop', 'base', 'ffa']) { await p.click(`[data-pv=${pv}]`); await p.waitForTimeout(120);
-    const o = await p.evaluate(() => ({ panel: getComputedStyle(document.getElementById('mapPanel')).display, cards: document.querySelectorAll('#mapCards .mapCard').length, size: !document.getElementById('sizeBox').hidden, note: !document.getElementById('pvpSizeNote').hidden, tag: document.getElementById('mapSizeTag').textContent }));
-    assert.notEqual(o.panel, 'none', 'map panel on multi/' + pv); assert.equal(o.cards, 3);
-    assert.equal(o.size, pv === 'coop', 'size choice only in co-op'); assert.equal(o.note, pv !== 'coop'); if (pv !== 'coop') assert.equal(o.tag, '16×16') }
-  await p.click('.mapCard[data-map=river]'); assert.equal(await p.evaluate(() => __pal.pick.map), 'river', 'PvP picks a map too');
+  for (const pv of ['coop', 'base', 'ffa']) { await p.click(`[data-pv=${pv}]`); await p.waitForTimeout(120); await p.click('#hostRows [data-setup=map]');
+    const o = await p.evaluate(() => ({ sheet: !document.getElementById('setupSheet').hidden, panel: getComputedStyle(document.getElementById('mapPanel')).display, cards: document.querySelectorAll('#mapCards .mapCard').length, size: !document.getElementById('sizeBox').hidden, note: !document.getElementById('pvpSizeNote').hidden, tag: document.getElementById('mapSizeTag').textContent, rules: !document.querySelector('.ssTabs [data-sst=rules]').hidden }));
+    assert.ok(o.sheet, 'setup sheet on multi/' + pv); assert.notEqual(o.panel, 'none', 'map panel on multi/' + pv); assert.equal(o.cards, 3);
+    assert.equal(o.size, pv === 'coop', 'size choice only in co-op'); assert.equal(o.note, pv !== 'coop'); assert.equal(o.rules, pv === 'coop', 'no length tab in PvP'); if (pv !== 'coop') assert.equal(o.tag, '16×16');
+    if (pv === 'ffa') { await p.click('.mapCard[data-map=river]'); assert.equal(await p.evaluate(() => __pal.pick.map), 'river', 'PvP picks a map too') }
+    await p.click('#setupDone'); assert.equal(await p.evaluate(() => document.getElementById('setupSheet').hidden), true) }
+  assert.match(await p.textContent('#hostRows [data-setup=map] b'), /RIVERBEND/i, 'the MAP line follows the pick');
   await p.click('[data-pv=coop]');
   // 4c. the Friends dropdown on the account badge: opens, tabs, closes on Escape
   await p.click('#friendsBtn'); assert.equal(await p.evaluate(() => document.getElementById('friendsDrop').hidden), false);
