@@ -43,7 +43,7 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  const emit=new Set([o.neon,o.hneon,o.halo,o.visor,o.mask,o.frost,o.spots,
   ...(o.stars?['#f3eaff','#b2b5ff']:[]),...(o.holo?['#b5f5ff']:[]),
   ...(o.shine||o.chrome?['#fff1c1','#ffffff']:[]),...(o.glitter?['#fffbe0']:[]),
-  o.reaper,o.phantom,o.lamp,...(o.halloweenHat==='batcirclet'?['#ff4a5a']:[]),...(o.halloweenHat==='skullseal'?['#ffe39a','#b48cff']:[]),...(o.pumpkin?[o.pking?'#ffb040':'#ffd35a','#ff7a1a']:[]),...(o.wraps?['#ffc94a']:[])].filter(Boolean));
+  o.reaper,o.phantom,o.lamp,...(o.halloweenHat==='batcirclet'?['#ff4a5a']:[]),...(o.halloweenHat==='skullseal'?['#ffe39a','#b48cff']:[]),...(o.pumpkin?[o.pking?'#ffb040':'#ffd35a','#ff7a1a']:[]),...(o.wraps?['#ffc94a']:[]),...(o.demon?[o.demon,'#ffd070']:[])].filter(Boolean));
  const ca=Math.cos(angle),sa=Math.sin(angle),phase=typeof walking==="number"?walking:walking?time*7:0;
  const weight=o.downed?0:o.gaitWeight===undefined?(walking?1:0):o.gaitWeight,dir=o.gaitDir||0;
  const bob=-(1-Math.cos(phase*2))*.14*weight+(o.downed?0:(o.breath||0)*.16),faces=[];
@@ -350,6 +350,14 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
   for(let r=0;r<rings;r++)for(let q=0;q<seg;q++){const a=r*seg+q,b=r*seg+(q+1)%seg;ff.push([a,b,b+seg,a+seg])}
   mesh(v,ff.map(f=>f.slice().reverse()),o.hair,.55);
   if(o.hairGold)for(const x of[-3,1,4])box(x,35.5+bob,1.7,.5,.7,.5,'#fff1b0',.03,1);
+ }else if(o.horns||o.demonHorns){
+  // v0.9.4.0: Devil Horns (the ladder's headgear: red to black, curling up and out) and the Demon's own horns (bigger,
+  // swept back). Each horn is four tapering pieces rooted inside the crown, so no gap shows at any angle.
+  const big=!!o.demonHorns;if(!big)dome('#2a1a14',32.7,4.2,3.6,1.65);
+  const P=big?[[2.1,32.5,.4],[3.7,34.6,-.4],[5,35.9,-2.3],[5,36.8,-4.4],[4.1,37.1,-5.9]]:[[2,32.7,.7],[3.3,34.4,1],[4.3,36,.7],[4.7,37.6,0],[4.5,39,-.8]];
+  const R=big?[1.35,1.1,.85,.55,.14]:[1.05,.86,.64,.4,.08],C=big?[o.demonHorns,'#2e1c14','#3e2818','#5a3a22']:[o.horns,'#5e0e0c','#3a0a08','#1c0606'];
+  for(const sd of[-1,1]){for(let i=0;i<4;i++)beam([sd*P[i][0],P[i][1]+bob,P[i][2]],[sd*P[i+1][0],P[i+1][1]+bob,P[i+1][2]],R[i],C[i],R[i+1],.42);
+   beam([sd*(P[0][0]-.3),P[0][1]+.35+bob,P[0][2]],[sd*(P[0][0]+.45),P[0][1]+.95+bob,P[0][2]+.05],R[0]*1.12,tint(C[0],.7),R[0]*1.05,.3)}   // a ridge where it grows from the head
  }else{
   // Uncovered head remains visible beneath masks and floating accessories.
   if(!(o.bones||o.wraps||o.phantom))dome('#433b2b',32.7,4.2,3.6,1.65);
@@ -370,6 +378,10 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  // Floating Halo is independent of the head branch; the sheet gets a verified clearance.
  if(o.halo){for(let i=0;i<16;i++){const a=i*Math.PI/8,b=(i+1)*Math.PI/8,y=(o.sheet?43:39)+bob+Math.sin(time*2.4)*.35;beam([Math.cos(a)*6,y,Math.sin(a)*4.8],[Math.cos(b)*6,y,Math.sin(b)*4.8],.22,o.halo,.22,.04)}}
  // v0.9.3 add-ons over whatever is on the head
+ if(o.demon){   // v0.9.4.0 Demon: burning eyes under a heavy brow, pointed ears
+  box(0,31.45+bob,3.7,5.2,.7,.9,tint(skin,.55),.2,1.1);for(const x of[-1.45,1.45])box(x,30.75+bob,3.98,1,.62,.16,'#ffd070',.02,1.7);
+  for(const sd of[-1,1])beam([sd*4.3,30.9+bob,.1],[sd*5.9,33+bob,-.6],.62,skin,.06,.3);
+ }
  if(o.pbraid&&o.pcap)box(0,32.75+bob,4.52,7.6,.35,.25,o.pbraid,.05,1.1);
  if(o.lamp&&o.cap){box(0,33.6+bob,4.5,1.7,1.3,.7,'#2a2a28',.2,1);box(0,33.6+bob,4.9,1.2,.9,.15,o.lamp,.03,1.3)}
  if(o.headset){for(const x of[-4.9,4.9])box(x,30.7+bob,.3,1.1,2.5,2.5,'#1e2022',.3);beam([-4.9,32.4+bob,.3],[0,36.2+bob,.3],.35,'#1e2022',.35,.2);beam([0,36.2+bob,.3],[4.9,32.4+bob,.3],.35,'#1e2022',.35,.2);
@@ -393,6 +405,17 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  // Existing skin signatures follow the same rotating surfaces as the clothing.
  const decal=(pts,col,bias=.7)=>mesh(pts.map(p=>[p[0],p[1]+bob,p[2]]),[pts.map((_,i)=>i)],col,.06,bias);
  const chest=(x,y,w,h,col,z=4.06)=>box(x,y+bob,z,w,h,.15,col,.035,.65);
+ if(o.demon){   // v0.9.4.0 Demon: folded wings, a tail, shoulder spikes, claws and ember cracks (all cached; the aura does the moving)
+  const M='#2a0808',bone='#160404',wing=(sd,pts)=>{const v=pts.map(q=>[sd*q[0],q[1]+bob,q[2]]);mesh(v,[[0,1,2],[2,1,0]],M,.4)};
+  for(const sd of[-1,1]){const root=[3,27,-3],tips=[[12.5,33.5,-7],[14,25,-8],[10,17.5,-6.2]];
+   for(let i=0;i<2;i++)wing(sd,[root,tips[i],tips[i+1]]);wing(sd,[root,tips[2],[4,19,-4.2]]);
+   for(const q of tips)beam([sd*root[0],root[1]+bob,root[2]],[sd*q[0],q[1]+bob,q[2]],.45,bone,.12,.25);
+   beam([sd*6.3,26.4+bob,.2],[sd*7.9,29.8+bob,-.5],.78,tint(B,.6),.05,.3);beam([sd*5.6,25.4+bob,1.4],[sd*6.9,27.9+bob,1.2],.5,tint(B,.6),.04,.25)}
+  const tl=[[0,15.4,-3],[0,11.5,-7],[1.6,7.2,-9.3],[3.4,5.2,-8.8]],tr=[1,.8,.55,.35];for(let i=0;i<3;i++)beam([tl[i][0],tl[i][1]+bob,tl[i][2]],[tl[i+1][0],tl[i+1][1]+bob,tl[i+1][2]],tr[i],B,tr[i+1],.35);
+  {const e=tl[3],v=[[e[0]+1.4,e[1]+bob,e[2]+.3],[e[0],e[1]+1.3+bob,e[2]],[e[0]-1.2,e[1]+bob,e[2]-.3],[e[0],e[1]-1.8+bob,e[2]]];mesh(v,[[0,1,2,3],[3,2,1,0]],tint(B,.7),.35)}
+  for(const ha of[haL,haR])for(let k=-1;k<=1;k++)beam([ha[0]+k*.55,ha[1]-.5,ha[2]+.4],[ha[0]+k*.8,ha[1]-1.9,ha[2]+1.6],.26,'#e8d8c0',.03,.12);
+  for(const[x,y,w,h]of[[-2.4,25.3,.28,2.2],[-2,24.1,1.1,.28],[1.8,25.6,.28,1.7],[2.4,24.6,1.3,.26],[.3,26.2,.26,1.2],[-3.6,17.5,.28,1.8],[3.4,18.2,.28,1.5]])box(x,y+bob,y>20?3.78:3.32,w,h,.14,o.demon,.02,1.1)
+ }
  if(o.pack){column(0,21+bob,-4.8,9,8.7,4.2,o.pack,.96,.5);box(0,23.9+bob,-7,7.6,.8,.5,tint(o.pack,.65),.2);box(0,19+bob,-7.1,5,3.6,.7,tint(o.pack,1.06),.25)}
  if(o.bandolier){
   // the grenadier's kit: a chest belt of five green grenades on a strap, and a smaller row on the waist belt
@@ -951,7 +974,14 @@ function drawBossBars(top){
       g.textAlign='right';g.fillStyle='#dcd2ba';g.font='600 9px "IBM Plex Mono", monospace';g.fillText(`${Math.ceil(f*100)}%`,x+w-2,y+8);
       g.fillStyle='#2a2520';g.fillRect(x,y+11,w,4);g.fillStyle=B.col;g.fillRect(x,y+11,w*f,4);if(e.flash>0){g.fillStyle='rgba(255,255,255,.5)';g.fillRect(x,y+11,w*f,4)}});
     g.textAlign='center';return}
-  let y=Math.max(W<700?(hud.topB||top)+10:top+10,(hud.tipB||0)+10);for(const e of enemies){if(e.type!=='boss')continue;if(!BOSSES[e.boss])continue;const B=bossInfo(e.boss);
+  let y=Math.max(W<700?(hud.topB||top)+10:top+10,(hud.tipB||0)+10);
+  if(enemies.filter(e=>e.type==='boss').length>2){   // v0.9.4.0: three or four at once (the Final Blitz) get slim rows
+    for(const e of enemies){if(e.type!=='boss'||!BOSSES[e.boss])continue;const B=bossInfo(e.boss),w=Math.min(440,W-48),x=(W-w)/2,f=Math.max(0,e.hp/e.max);
+      g.fillStyle='rgba(12,10,8,.78)';g.fillRect(x-3,y-3,w+6,20);g.font='800 11px "Big Shoulders Stencil Display", "Arial Narrow", sans-serif';g.textAlign='left';g.fillStyle=B.col;g.fillText(B.name,x+2,y+8);
+      g.textAlign='right';g.fillStyle='#dcd2ba';g.font='600 9px "IBM Plex Mono", monospace';g.fillText(`${Math.ceil(f*100)}%`,x+w-2,y+8);
+      g.fillStyle='#2a2520';g.fillRect(x,y+11,w,4);g.fillStyle=B.col;g.fillRect(x,y+11,w*f,4);if(e.flash>0){g.fillStyle='rgba(255,255,255,.5)';g.fillRect(x,y+11,w*f,4)}y+=23}
+    g.textAlign='center';return}
+  for(const e of enemies){if(e.type!=='boss')continue;if(!BOSSES[e.boss])continue;const B=bossInfo(e.boss);
     const w=Math.min(440,W-48),x=(W-w)/2,f=Math.max(0,e.hp/e.max);
     g.fillStyle='rgba(12,10,8,.8)';g.fillRect(x-3,y-3,w+6,26);
     g.font='800 13px "Big Shoulders Stencil Display", "Arial Narrow", sans-serif';g.textAlign='left';g.fillStyle=B.col;g.fillText(B.name,x+2,y+10);
@@ -1025,6 +1055,7 @@ function buildLook(p,cos){
   else if(H==='jackolantern')o.pumpkin='#e8771e';else if(H==='pumpkinking'){o.pumpkin='#c9561a';o.pking=true}else if(H==='witch')o.witch='#241a30';
   else if(H==='officer'){o.pcap='#34402c';o.pbraid='#e2c25a'}else if(H==='ghood')o.ghood='#55642e';else if(H==='bombhelm')o.bomb='#3e4a38';else if(H==='qmset'){o.cap='#3d4a52';o.headset=true}   // v0.9.3 class rewards
   else if(HALLOWEEN_HATS[H])o.halloweenHat=H;
+  else if(H==='devilhorns')o.horns='#7a1410';   // v0.9.4.0
   else o.helmet=S.hat;
   if(S.headwear&&H==='class'){delete o.helmet;delete o.cap;delete o.boonie;Object.assign(o,S.headwear)}   // v0.9.3: the outfit's own hat (a hard hat, a straw hat…)
   if(S.reaper&&H==='class'){delete o.helmet;delete o.cap;delete o.boonie;o.hood=S.body}

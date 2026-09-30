@@ -24,6 +24,8 @@ function tracerStamp(st,t){
  c.globalCompositeOperation='source-over';
  if(st.pulse||st===TRAILS.plasma||st===TRAILS.aurora){c.strokeStyle=st.pulse?'#fff2fb':'#deffff';c.lineWidth=1.4;c.beginPath();for(let i=1;i<4;i++){const x=i*32;c.moveTo(x,19);c.lineTo(x+3,24);c.lineTo(x,29)}c.stroke()}
  if(st.pk==='star'||st.pk==='cosmic'||st.rgrad){c.fillStyle=st.rgrad?'#fff1ac':'#f4edff';c.beginPath();for(let i=1;i<4;i++){const x=i*35,y=24+(i%2?2:-2),r=i===1?5:3;c.moveTo(x-r,y);c.lineTo(x,y-r);c.lineTo(x+r,y);c.lineTo(x,y+r);c.closePath()}c.fill()}
+ if(st.arc){c.globalCompositeOperation='source-over';for(const[w,col]of[[7,'rgba(40,200,220,.45)'],[3.2,st.c],[1.2,'#eaffff']]){c.strokeStyle=col;c.lineWidth=w;c.beginPath();c.arc(-14,24,26,-.62,.62);c.stroke()}}   // v0.9.4.0 Blue Arc: a crescent at the head
+ if(st.chain){c.strokeStyle='#1a0604';c.lineWidth=2;for(let i=0;i<5;i++){c.beginPath();c.ellipse(18+i*22,24,8,4.2,0,0,Math.PI*2);c.stroke()}}   // Hellfire Chain: links
  if(st.pk==='rock'){c.fillStyle='#d2b8a0';c.strokeStyle='#292322';c.lineWidth=1.5;c.beginPath();for(let i=1;i<4;i++){const x=i*34,y=24+(i%2?4:-4);c.moveTo(x-4,y);c.lineTo(x,y-4);c.lineTo(x+4,y);c.lineTo(x,y+5);c.closePath()}c.fill();c.stroke()}
  TRACE_STAMPS.set(key,cv);if(TRACE_STAMPS.size>64)TRACE_STAMPS.delete(TRACE_STAMPS.keys().next().value);return cv;
 }
@@ -58,7 +60,7 @@ function paintTracer(ctx,x1,y1,x2,y2,st,w,t,heavy,colorIndex=0){
  }else ctx.drawImage(tracerStamp(st,t),0,-height/2,len,height);
  ctx.restore();
 }
-const FINISH_LIFE={sparks:.48,smoke:1.15,confetti:.95,embers:.8,glint:.65,bolt:.48,skull:.95,pixel:.7,frost:.75,gradburst:.75,sunburst:.75,toxic:.85,supernova:.85,glitchout:.6,singularity:.85,shockwave:.7,bubbles:1.2,bats:1,spider:1.1,souls:1.2,rocketburst:.8,reticle:.7,frag:.75,salvage:.95};
+const FINISH_LIFE={sparks:.48,smoke:1.15,confetti:.95,embers:.8,glint:.65,bolt:.48,skull:.95,pixel:.7,frost:.75,gradburst:.75,sunburst:.75,toxic:.85,supernova:.85,glitchout:.6,singularity:.85,shockwave:.7,bubbles:1.2,bats:1,spider:1.1,souls:1.2,rocketburst:.8,reticle:.7,frag:.75,salvage:.95,hellportal:1.15,cinder:.8,tealslash:.6,ashbrand:1,demonclaw:1.1};
 function paintFinish(ctx,key,progress,scale,x,y){
  if(!(key in FINISH_LIFE)||progress<0||progress>=1)return;
  const p=progress,e=1-Math.pow(1-p,3),fade=Math.min(1,(1-p)*2.8),pop=Math.min(1,p*12),tau=Math.PI*2;
@@ -103,6 +105,28 @@ function paintFinish(ctx,key,progress,scale,x,y){
    if(i%3===0){ctx.fillStyle='#b8bcb4';ctx.strokeStyle=ink;ctx.lineWidth=.5;ctx.beginPath();for(let k=0;k<6;k++){const aa=k*Math.PI/3;k?ctx.lineTo(Math.cos(aa)*2.6,Math.sin(aa)*2.6):ctx.moveTo(2.6,0)}ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='#2a2e2a';ctx.beginPath();ctx.arc(0,0,1,0,tau);ctx.fill()}
    else if(i%3===1)path([[-2.4,-.9],[2.4,-.9],[2.4,.9],[-2.4,.9]],'#d8b25a');else path([[-1.4,-1.4],[1.4,-1.4],[1.4,1.4],[-1.4,1.4]],'#8a8e86');ctx.restore()}
   ctx.fillStyle='#8fe0a0';ctx.fillRect(-1,-14-e*10,2,7);ctx.fillRect(-3.5,-11.5-e*10,7,2);break;
+ // v0.9.4.0: Blitzkrieg (the ladder's Hell Portal and the Blitzkrieg Case)
+ case'hellportal':{   // a burning ring tears open on the ground, something dark sinks into it, it snaps shut in embers and smoke
+  const open=p<.72?Math.min(1,p/.18):Math.max(0,1-(p-.72)/.16),R=24*open,fl=.42;glow(34,'#ff3a0a',.55*open+.1);
+  ctx.save();ctx.scale(1,fl);ctx.fillStyle='#0a0204';ctx.beginPath();ctx.arc(0,0,R,0,tau);ctx.fill();
+  for(let i=0;i<3;i++){ctx.strokeStyle=['#ff3a0a','#ff8a2a','#7a0c06'][i];ctx.lineWidth=[2.6,1.2,1.6][i];ctx.beginPath();ctx.arc(0,0,R*(1-i*.22),p*9+i*2,p*9+i*2+4.4);ctx.stroke()}
+  ctx.strokeStyle='#ffb040';ctx.lineWidth=1.6;ctx.beginPath();ctx.arc(0,0,R,0,tau);ctx.stroke();ctx.restore();
+  if(p<.7){const k=Math.min(1,p/.7),h=26*(1-k),w=6*(1-k*.4);ctx.save();ctx.beginPath();ctx.rect(-40,-60,80,60);ctx.clip();ctx.fillStyle='#120608';
+   ctx.beginPath();ctx.ellipse(0,-h*.5+k*10,w,h*.5+2,0,0,tau);ctx.fill();ctx.beginPath();ctx.arc(0,-h-2+k*10,w*.75,0,tau);ctx.fill();ctx.restore()}
+  for(let i=0;i<10;i++){const a=i*.63+p*3,r=R*(.9+.2*Math.sin(i+p*20));if(open<.05)break;line([[Math.cos(a)*r,Math.sin(a)*r*fl],[Math.cos(a)*r*1.15,Math.sin(a)*r*fl-4-i%3*2]],i%2?'#ff8a2a':'#ffd070',1.2)}
+  if(p>.72){const k=(p-.72)/.28;for(let i=0;i<5;i++){ctx.globalAlpha=fade*(1-k)*.45;ctx.fillStyle='#2a1a18';ctx.beginPath();ctx.arc(Math.sin(i*2.3)*10*k,-k*18-i*3,4+k*8,0,tau);ctx.fill()}ctx.globalAlpha=fade*pop;star(0,-2,9*(1-k),'#ffe0a0',k)}break}
+ case'cinder':glow(26,'#ff7a1a',.45);for(let i=0;i<14;i++){const a=i*.9+.3,r=e*(8+i%4*5),xx=Math.cos(a)*r,yy=Math.sin(a)*r*.6-e*10+p*p*16,s=(1-p)*2.6+.8;ctx.fillStyle=mix('#ffd070','#3a1a10',Math.min(1,p*1.4+(i%3)*.1));ctx.fillRect(xx-s/2,yy-s/2,s,s)}star(0,0,8*(1-p),'#ffe0a0',p);break;
+ case'tealslash':{glow(26,'#3ae0e0',.4*(1-p));const sw=-1.9+p*2.6;for(const[w,col]of[[7,'rgba(40,200,220,.35)'],[3.4,'#5af0ff'],[1.2,'#eaffff']]){ctx.strokeStyle=col;ctx.lineWidth=w;ctx.beginPath();ctx.arc(0,-6,20,sw,sw+1.7);ctx.stroke()}
+  for(let i=0;i<9;i++){const a=sw+i*.19,r=20+Math.sin(i*3)*3;ctx.fillStyle=i%2?'#b8fbff':'#5af0ff';ctx.fillRect(Math.cos(a)*r-1,Math.sin(a)*r-6-1+p*6,2,2)}break}
+ case'ashbrand':{const k=Math.min(1,p*4),R=17*k;ctx.save();ctx.scale(1,.45);glow(28,'#ff4a0a',.5*(1-p)+.1);ctx.strokeStyle=mix('#ffd070','#5a1a0a',p);ctx.lineWidth=2;ring(R,ctx.strokeStyle,2);ring(R*.72,ctx.strokeStyle,1);
+  ctx.beginPath();for(let i=0;i<3;i++){const a=-Math.PI/2+i*tau/3;ctx.lineTo(Math.cos(a)*R*.72,Math.sin(a)*R*.72)}ctx.closePath();ctx.stroke();
+  for(let i=0;i<6;i++){const a=i*tau/6+.5;line([[Math.cos(a)*R*.8,Math.sin(a)*R*.8],[Math.cos(a)*R*.95,Math.sin(a)*R*.95]],ctx.strokeStyle,1.6)}ctx.restore();
+  for(let i=0;i<7;i++){const xx=Math.sin(i*2.1)*9,yy=-p*(18+i*4),s=1.6+(i%2);ctx.globalAlpha=fade*pop*Math.min(1,p*3)*.8;ctx.fillStyle=i%2?'#8a8480':'#c8c0b8';ctx.fillRect(xx,yy,s,s*.6)}ctx.globalAlpha=fade*pop;break}
+ case'demonclaw':{const rise=Math.min(1,p/.35),close=p>.35?Math.min(1,(p-.35)/.35):0,sink=p>.7?(p-.7)/.3:0;glow(30,'#c8102e',.45);
+  ctx.save();ctx.scale(1,.42);ctx.fillStyle='rgba(20,4,6,.75)';ctx.beginPath();ctx.arc(0,0,22,0,tau);ctx.fill();ctx.restore();
+  for(let i=0;i<4;i++){const side=i<2?-1:1,off=(i%2?9:15)*side*(1-close*.55),h=30*rise*(1-sink),bend=side*(-6-close*6);
+   ctx.fillStyle=i%2?'#3a0a0e':'#5a1016';ctx.strokeStyle=ink;ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(off-2.6*side,2);ctx.quadraticCurveTo(off,-h*.6,off+bend,-h);ctx.quadraticCurveTo(off+1.4*side,-h*.55,off+2.6*side,2);ctx.closePath();ctx.fill();ctx.stroke();
+   line([[off,-h*.4],[off+bend*.7,-h*.9]],'#ff5a3a',.7)}break}
  case'bubbles':glow(33,gold,.3);for(let i=0;i<9;i++){const a=i*2.4,r=e*(9+i%3*6),xx=Math.cos(a)*r,yy=Math.sin(a)*r*.6-e*(i%4)*6,rr=(3+i%4)*(1-p*.3);ctx.fillStyle='rgba(255,214,92,.13)';ctx.strokeStyle='#ffe598';ctx.lineWidth=.9;ctx.beginPath();ctx.arc(xx,yy,rr,0,tau);ctx.fill();ctx.stroke();ctx.strokeStyle=i%2?'#a4faff':'#ffb4dc';ctx.lineWidth=.5;ctx.beginPath();ctx.arc(xx,yy,rr*.8,.3,2);ctx.stroke();line([[xx-rr*.5,yy-rr*.25],[xx-rr*.25,yy-rr*.5]],'#fffce9',1.2)}for(let i=0;i<4;i++)star(Math.cos(i*1.7)*e*24,Math.sin(i*1.7)*e*16,2.2,'#fff1b6',p);break;
  }
  ctx.restore();
@@ -110,6 +134,8 @@ function paintFinish(ctx,key,progress,scale,x,y){
 function drawFinishEffects(){for(const p of parts)if(p.kind.startsWith('finish:')){const c=iso(p.x,p.y);paintFinish(g,p.kind.slice(7),1-p.life/p.max,u,c[0],c[1]-p.z)}}
 function paintCosmeticParticle(ctx,q,x,y,s,t){
  const a=Math.max(0,q.life/q.max),r=q.size*s,col=q.c1?mix(q.c1,q.c2,Math.round((1-a)*16)/16):q.col;
+ if(q.kind==='rune'){const a=Math.max(0,q.life/q.max),r=q.size*s;ctx.save();ctx.globalAlpha*=Math.min(1,a*1.6);ctx.translate(x,y);ctx.rotate(q.h||0);cosmeticGlow(ctx,0,0,r*2.4,'#ff5a1a',.5);   // v0.9.4.0 Infernal Sigil: a small burning glyph
+  ctx.strokeStyle=a>.5?'#ffe0a0':'#ff7a2a';ctx.lineWidth=Math.max(.6,r*.28);ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.moveTo(0,-r);ctx.lineTo(r*.62,r*.5);ctx.lineTo(-r*.62,r*.5);ctx.closePath();ctx.stroke();ctx.restore();return true}
  if(!['star','cosmic','goldsp','glint','ice','rock','confetti','pix','glitch','nova','grad1','grad2','neon','spark','ember','bolt'].includes(q.kind))return false;
  ctx.save();ctx.globalAlpha*=Math.min(1,a*1.5);ctx.translate(x,y);ctx.fillStyle=col;ctx.strokeStyle='#101810';ctx.lineWidth=Math.max(.35,s*.3);ctx.lineJoin='round';
  if(['spark','ember','bolt'].includes(q.kind)){ctx.strokeStyle=col;ctx.lineWidth=Math.max(.7,r*.55);ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-q.vx*s*.65,q.vz*s*.025);ctx.stroke();ctx.fillStyle='#fff4d6';ctx.fillRect(-r*.16,-r*.16,r*.32,r*.32)}

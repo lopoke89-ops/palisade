@@ -125,6 +125,12 @@ function sfx(name,x,y,noRec,ui){
     case'kx_rocketburst':nz(dest,t,.45,'lowpass',900,.6,.16,120);osc(dest,t,.3,'sine',90,.1,40);break;
     case'kx_reticle':osc(dest,t,.03,'square',1200,.03);osc(dest,t+.05,.25,'sine',1760,.04);osc(dest,t+.05,.25,'sine',2640,.02);break;
     case'kx_frag':nz(dest,t,.1,'highpass',2500,.7,.14);nz(dest,t,.35,'lowpass',700,.7,.12,160);for(let k=0;k<4;k++)nz(dest,t+.08+k*.05,.03,'bandpass',3500+k*400,4,.05);break;
+    // v0.9.4.0 Blitzkrieg: a deep rumbling rift that slams shut; crackling cinders; a bright blade swish; a searing hiss; a low growl and scrape
+    case'kx_hellportal':osc(dest,t,.8,'sawtooth',70,.07,40);nz(dest,t,.7,'lowpass',400,.8,.12,120);nz(dest,t+.75,.12,'lowpass',900,.6,.16,120);break;
+    case'kx_cinder':for(let k=0;k<5;k++)nz(dest,t+k*.04,.03,'bandpass',2000+rnd()*1500,3,.07);nz(dest,t,.3,'lowpass',600,.6,.06);break;
+    case'kx_tealslash':nz(dest,t,.16,'bandpass',3200,1.4,.12,6000);osc(dest,t,.2,'sine',1320,.03,2640);break;
+    case'kx_ashbrand':nz(dest,t,.5,'highpass',2800,.6,.1,1200);osc(dest,t,.3,'triangle',180,.04,90);break;
+    case'kx_demonclaw':osc(dest,t,.5,'sawtooth',55,.08,35);nz(dest,t+.1,.3,'bandpass',900,1.2,.1,300);break;
     case'kx_salvage':[1318,1760,1568,2093].forEach((f,i)=>osc(dest,t+i*.06,.09,'triangle',f,.04));break;
     case'kx_bolt':nz(dest,t,.12,'highpass',3500,.6,.14);osc(dest,t,.1,'square',80,.06,40);break;
     case'kx_skull':osc(dest,t,.4,'triangle',196,.06,147);osc(dest,t,.4,'triangle',233,.04,175);break;

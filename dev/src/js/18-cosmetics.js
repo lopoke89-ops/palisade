@@ -102,15 +102,19 @@ const SKINS={
   monster:{body:'#2b2622',vest:'#3a332b',pants:'#1f1c19',hat:'#1a1614',boonie:'#1a1614',head:'#c9c29a',coat:'#2b2622',stitches:'#2a1d1a',headwear:{mop:'#141210'}},
   clown:{body:'#c8a02a',vest:'#2a2420',pants:'#b08a22',hat:'#ff4fa8',boonie:'#ff4fa8',head:'#f2eee6',stripe:'#1c1814',ruff:'#f0ece0',clownface:true,headwear:{hair:'#ff4fa8'}},
   slasher:{body:'#2a3548',vest:'#1e2636',pants:'#2a3548',hat:'#1a1a18',boonie:'#2a2a24',hockey:'#e8e2cc',headwear:{}},
-  dracula:{body:'#141016',vest:'#7a0f1a',pants:'#141016',hat:'#141016',boonie:'#141016',head:'#e4dccb',cape:'#0e0b10',lining:'#8a0f1f',collar:true,medal:'#e2c25a',headwear:{slick:'#0a0a0c'},aura:'bats'}};
+  dracula:{body:'#141016',vest:'#7a0f1a',pants:'#141016',hat:'#141016',boonie:'#141016',head:'#e4dccb',cape:'#0e0b10',lining:'#8a0f1f',collar:true,medal:'#e2c25a',headwear:{slick:'#0a0a0c'},aura:'bats'},
+  // v0.9.4.0: the BLITZKRIEG RUSH ladder. The Blue Butcher (the boss's own colours), and the Demon: its own body (horns,
+  // wings, tail, claws, ember cracks and burning eyes), so it keeps its horns and takes no other headgear
+  bluebutcher:{body:'#16465a',vest:'#0a2230',pants:'#10212a',hat:'#0c3440',boonie:'#0c3440',apron:'#0e2c38',facewrap:'#0a2a30',neon:'#3ae0e0'},
+  demon:{body:'#3a0e0a',vest:'#1c0806',pants:'#1c0a08',hat:'#1a0806',boonie:'#1a0806',head:'#5a1812',demon:'#ff6a1a',headwear:{demonHorns:'#1e1210'},aura:'demon'}};
 const SKIN_FX=['neon','dots','ruff','badge','plate','stars','holo','spots','frost','glitter','chrome','ribs','web','bones','wraps','reaper','phantom',
-  'apron','facewrap','coat','cape','lining','collar','reflect','waders','charges','medals','ghillie','sheet','stitches','clownface','hockey','sack','patches','straws','medal','aura','sahur'];
+  'apron','facewrap','coat','cape','lining','collar','reflect','waders','charges','medals','ghillie','sheet','stitches','clownface','hockey','sack','patches','straws','medal','aura','sahur','demon'];
 const HALLOWEEN_HATS={gravecap:true,stemband:true,batcirclet:true,bonewrap:true,webpin:true,skullseal:true};
 // Class Issue preserves the skin's own appearance. Unknown or special heads block added headwear.
 function headwearAllowed(skin,hat){
   const S=SKINS[skin];if(!S)return false;if(hat==='class')return true;
   if(S.sheet)return hat==='halo';
-  return !(S.sahur||S.reaper||S.wraps||S.phantom||S.sack||S.hockey||S.clownface||S.ghillie||S.facewrap||S.headwear&&Object.keys(S.headwear).length);
+  return !(S.sahur||S.demon||S.reaper||S.wraps||S.phantom||S.sack||S.hockey||S.clownface||S.ghillie||S.facewrap||S.headwear&&Object.keys(S.headwear).length);
 }
 const TRAILS={std:{c:'rgba(255,236,170,.95)'},green:{c:'#86ff7a'},red:{c:'#ff5a46'},blue:{c:'#9fe8ff'},pink:{c:'#ff5ad8'},
   gold:{c:'#ffd24a',w:1.35,snd:'ts_gold'},plasma:{c:'#7af2ff',w:1.5,glow:'rgba(106,240,255,.3)',len:1.7,snd:'ts_plasma'},rainbow:{rainbow:true,w:1.4,len:2.2,snd:'ts_rainbow'},
@@ -179,6 +183,13 @@ const FLAGS=[
   ['nkorea','North Korea','c',['#024fa2','#ed1c27','#024fa2']]];
 // One color per round, shared by its pellets. Background stripe data stays unchanged.
 for(const[id,,r,b]of FLAGS)TRAILS['f_'+id]={cycle:id==='trans'?['#5bcefa','#ffffff','#f5a9b8']:b,w:1.35,len:1,snd:r==='g'?'ts_grainbow':'ts_grad'};
+// v0.9.4.0 (after the flags, so every older tracer keeps its number): the Blitzkrieg ladder's Blue Arc and the Blitzkrieg Case
+Object.assign(TRAILS,{
+  bluearc:{arc:true,c:'#5af0ff',w:1.6,len:1.6,glow:'rgba(58,224,224,.4)',pk:'tealdust',pr:.9,edge:'#0a5a66',snd:'ts_plasma'},
+  brimstone:{grad:['#ffe14a','#7a0c06'],w:1.4,len:1.5,pk:'ember',pr:.35,snd:'ts_solar'},
+  tealwake:{c:'#5af0ff',w:1.1,len:1.9,glow:'rgba(90,240,255,.25)',pk:'tealdust',pr:.6,snd:'ts_aurora'},
+  hellchain:{bands:['#ffd060','#ff4a0a','#3a0a04','#ff4a0a','#3a0a04'],w:1.8,len:1.9,glow:'rgba(255,74,10,.32)',pk:'flame',pr:.5,chain:true,snd:'ts_solar'},
+  sigil:{grad:['#fff0b0','#ff3a0a'],w:1.9,len:2.1,glow:'rgba(255,58,10,.38)',pk:'rune',pr:.95,head:'#fff8d0',snd:'ts_void'}});
 const TRAIL_IDS=Object.keys(TRAILS),ENEMY_TR={c:'rgba(255,140,90,.95)'};
 function nextTracerColor(from){
   const key=from.cos&&from.cos.trail,st=TRAILS[key];if(!st||!st.cycle)return 0;
@@ -234,12 +245,18 @@ const COS=[
   ['skin','monster',"Frankenstein's Monster",'e','case',null,null,'halloween'],['skin','clown','Scary Clown','e','case',null,null,'halloween'],
   ['trail','blood','Blood Trail','e','case',null,null,'halloween'],
   ['skin','slasher','Hockey-Mask Slasher','l','case',null,null,'halloween'],['skin','dracula','Dracula','l','case',null,null,'halloween'],
-  ['trail','hellfire','Hellfire','l','case',null,null,'halloween']
+  ['trail','hellfire','Hellfire','l','case',null,null,'halloween'],
+  // v0.9.4.0: the Blitzkrieg Case (same list as the database seed)
+  ['trail','brimstone','Brimstone','c','case',null,null,'blitz'],['trail','tealwake','Teal Wake','r','case',null,null,'blitz'],['trail','hellchain','Hellfire Chain','e','case',null,null,'blitz'],['trail','sigil','Infernal Sigil','l','case',null,null,'blitz'],
+  ['fx','cinder','Cinder Burst','c','case',null,null,'blitz'],['fx','tealslash','Teal Slash','r','case',null,null,'blitz'],['fx','ashbrand','Brand of Ash','e','case',null,null,'blitz'],['fx','demonclaw','Demon Claw','l','case',null,null,'blitz']
 ].map(([cat,key,name,r,src,need,how,box])=>{box=src==='case'?box||'supply':null;return{id:cat+':'+key,cat,key,name,r,src,box,need:need||null,how:how||(box?'Found in '+CASES[box].short:''),price:null}});
 // v0.9.3 milestone ladders: four items each (rare, epic, legendary, gold) that unlock as one counter climbs.
 // st: the locker counter (the server adds to the same one); how(n): what the item says while it's locked.
 const LADDER_RAR=['r','e','l','g'];
 const LADDERS=[
+  // v0.9.4.0: Blitzkrieg Rush. Five steps, every Blitzkrieg boss that goes down in the mode (for everyone in the match)
+  {id:'blitz',kind:'mode',title:'BLITZKRIEG RUSH',st:'mode_blitz_bosses',steps:[10,25,50,75,100],rar:['r','e','e','l','g'],unit:'Blitzkrieg bosses beaten',how:n=>`Beat ${n} bosses in Blitzkrieg Rush`,
+    items:[['hat','devilhorns','Devil Horns'],['trail','bluearc','Blue Arc'],['skin','bluebutcher','Blue Butcher'],['fx','hellportal','Hell Portal'],['skin','demon','Demon']]},
   {id:'butcher',kind:'boss',title:'THE BUTCHER',st:'boss_butcher',steps:[25,50,100,250],unit:'Butchers beaten',how:n=>`Beat the Butcher ${n} times`,
     items:[['skin','butcher','Butcher'],['skin','butcher2','Pale Butcher'],['skin','butcher3','Bloodrage Butcher'],['skin','butcher4','Gilded Butcher']]},
   {id:'demolisher',kind:'boss',title:'THE DEMOLISHER',st:'boss_demolisher',steps:[25,50,100,250],unit:'Demolishers beaten',how:n=>`Beat the Demolisher ${n} times`,
@@ -264,7 +281,7 @@ const LADDERS=[
     items:[['hat','bombhelm','Blast Helmet'],['trail','fuse','Lit Fuse'],['fx','frag','Frag Burst'],['skin','ggren','Gold Demolitions']]},
   {id:'quartermaster',kind:'class',title:'QUARTERMASTER',st:'cls_quartermaster_raids',steps:[250,500,1000,2500],unit:'raids held as a Quartermaster',how:n=>`Hold ${n} raids as a Quartermaster`,
     items:[['hat','qmset','Supply Headset'],['trail','supply','Supply Line'],['fx','salvage','Salvage Pop'],['skin','gqm','Gold Quartermaster']]}];
-for(const L of LADDERS)L.items.forEach(([cat,key,name],i)=>COS.push({id:cat+':'+key,cat,key,name,r:LADDER_RAR[i],src:'unlock',box:null,
+for(const L of LADDERS)L.items.forEach(([cat,key,name],i)=>COS.push({id:cat+':'+key,cat,key,name,r:(L.rar||LADDER_RAR)[i],src:'unlock',box:null,
   need:{[L.st]:L.steps[i]},how:L.how(L.steps[i]),price:null,ladder:L.id}));
 // the Flag Case's tracers (its backgrounds are added with the other backgrounds)
 for(const[id,name,r]of FLAGS)COS.push({id:'trail:f_'+id,cat:'trail',key:'f_'+id,name:name+' Flag',r,src:'case',box:'flags',need:null,how:'Found in '+CASES.flags.short,price:null});

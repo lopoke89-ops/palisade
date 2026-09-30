@@ -57,6 +57,12 @@ function killFxAt(x,y,id){
     case'skull':flt(x,y,'☠','#efe6d2');for(let n=0;n<6;n++)emit(x,y,WH*.6,'spark');break;
     // Halloween Case
     case'bats':E(11,'bat',.55);E(3,'smoke',.3);break;
+    // v0.9.4.0: Blitzkrieg
+    case'hellportal':E(10,'ember',.3);E(4,'smoke',.25);ringFx(x,y,0,1.1,.5,'#ffb040','#7a0c06',2.4);ringFx(x,y,1.2,0,.9,'#ff3a0a','#1a0204',2);break;
+    case'cinder':E(12,'ember',.5);E(3,'smoke',.4);break;
+    case'tealslash':E(12,'tealdust',.6);break;
+    case'ashbrand':E(6,'ember',.3);E(5,'smoke',.3);ringFx(x,y,0,.9,.45,'#ffd070','#5a1a0a',1.8);break;
+    case'demonclaw':E(8,'ember',.4);ringFx(x,y,1,0,.6,'#c8102e','#1a0204',2.2);addShake(x,y,3);break;
     case'spider':E(1,'spider',0);ringFx(x,y,0,.75,.7,'#f0f0f8','#8a8aa0',1.1);ringFx(x,y,0,.45,.55,'#f0f0f8','#8a8aa0',.8);break;
     case'souls':E(4,'soul',.35);E(10,'gflame',.25);ringFx(x,y,0,1.3,.7,'#c8ffe0','#1ee860',2.2);addFlash({x,y,life:.2,max:.2,r:.9});break;
     // v0.9.3 class rewards
@@ -308,7 +314,7 @@ function openCaseUI(id='supply'){
   const intro=caseIntro(id);
   let roll;
   if(locker.cloud){lockWait(true);
-    roll=rpc('open_case_v0935',{p_case:id}).then(r=>{lockWait(false);
+    roll=rpc('open_case_v094',{p_case:id}).then(r=>{lockWait(false);
       if(!r.ok){lockMsg(r.status?sbErr(r):'Opening a case needs a connection. Your cases are safe.');renderLocker();return null}
       const s=r.j.item,it=COSBY[s.id]||{...COSBY['fx:none'],id:s.id,name:s.name,r:s.rarity};
       takeLocker(r.j.locker);renderLocker();return{it,dup:!!r.j.dup,box:id}})}

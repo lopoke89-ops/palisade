@@ -3,7 +3,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
 (async()=>{const b=await chromium.launch({executablePath:process.env.CHROMIUM||undefined}),p=await b.newPage({viewport:{width:390,height:844},reducedMotion:'reduce'}),errors=[],calls=[];
 let locker={owned:['skin:std','hat:class','hat:cap','trail:std','fx:none'],eq:{skin:'std',hat:'class',trail:'std',fx:'none'},cases:2,bag:{},shards:0,prog:0,st:{},rev:1,imported:true};
 p.on('pageerror',e=>errors.push(e.message));await p.route('https://puvjfhwxigxjpsvdwrwf.supabase.co/**',async route=>{const req=route.request(),name=new URL(req.url()).pathname.split('/').pop(),body=req.postDataJSON()||{};calls.push(name);let data={};
-if(name==='open_case_v0935'){assert.equal(body.p_case,'supply');const dup=locker.owned.includes('skin:sahur');locker.cases--;if(dup)locker.shards+=80;else locker.owned.push('skin:sahur');data={case:'supply',item:{id:'skin:sahur',cat:'skin',key:'sahur',name:'Tung Tung Tung Sahur',rarity:'u'},dup,locker};}
+if(name==='open_case_v0935'||name==='open_case_v094'){assert.equal(body.p_case,'supply');const dup=locker.owned.includes('skin:sahur');locker.cases--;if(dup)locker.shards+=80;else locker.owned.push('skin:sahur');data={case:'supply',item:{id:'skin:sahur',cat:'skin',key:'sahur',name:'Tung Tung Tung Sahur',rarity:'u'},dup,locker};}
 else if(name==='equip'){assert.equal(body.p_item,'skin:sahur');locker.eq.skin='sahur';data=locker;}
 else if(name==='get_my_locker')data=locker;
 await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(data)});});

@@ -21,6 +21,39 @@ Controller support shipped in v0.9.2.1. The v0.9.3 cosmetics migration is applie
 
 Four commits after the v0.9.3 release changed the case intro and reel source (`98bb522`, `4c8dd3d`, `a49df08`, `566e30e`). The v0.9.3.1 release includes those fixes. Their source was compared with the v0.9.3 release on September 29; see [case animation validation](CASE_PERFORMANCE_2026-09-29.md). The reel avoids repeated style reads and its measured CPU use was lower, but intro readings overlapped and Locker readings were higher in the comparison runs. Further profiling and a real-phone comparison are still required before performance sign-off.
 
+## v0.9.4.0: Blitzkrieg Rush (candidate, not merged)
+
+Work order: [plans/blitzkrieg-rush-work-order.md](plans/blitzkrieg-rush-work-order.md). Evidence: `evidence/v0.9.4.0/`. Protocol **`yard-19`** (new bosses, shots, the Final Blitz clock and the evacuation are in the packets; older copies can't join).
+
+**The mode.** A new length, BLITZKRIEG, on the Solo and Multiplayer pages (co-op, every map and size).
+- 15 raids, each a notch harder than 10-raid mode (`waveEff`, raider health +8.5% a raid).
+- Raids 5 and 10 bring the map's bosses as their Blitzkrieg variants (XL: two).
+- **Raid 15 is the Final Blitz:** a 5:00 clock with a Blitzkrieg boss every 30 s, cycling through all five (10 in all), at most **4 alive** (the rest wait their turn). Final Blitz bosses have 85% of a normal boss's health. Raiders keep coming in small groups. The boss bars switch to slim rows when 3 or 4 are up (portrait), side by side in landscape.
+- **The evacuation (the last 60 s):** a green 3-tile ring opens a good run from the core, clear of rock, water and nodes (`evacSpot`, the same on every screen). An off-screen arrow points to it.
+  - Stand in it for **3 s**, on your feet, to get out. Leaving resets the count. You then watch your crew from above.
+  - Downed players don't respawn during the evacuation: a teammate (or Delgado) has to pick them up in time.
+  - The core no longer decides the result once the evacuation starts. A core loss before it is a normal squad loss.
+  - At 0:00, anyone still on the field is **left behind**: they lose and keep half their cases and shards (odd counts round up first, `ceil(n/2)`). Raids, boss kills, skill points and milestones are never halved. Squadmates who made it still win.
+  - Bosses still alive at 0:00 retreat and don't count. If everyone is out, or nobody is left standing to revive the rest, it ends early.
+  - The game-over screen is personal (EVACUATED · VICTORY or LEFT BEHIND · HALF REWARDS) with who made it out.
+- **The five Blitzkrieg bosses** (their own names, the base boss's rig, 2 Blitzkrieg Cases each):
+  - **The Harbinger** (Ferryman): 3 missiles in a high arc (4 below half health), each showing its landing ring for its whole ~1.6 s flight. On maps without a river he fires from a fixed spot at the edge. Still puts boarding crews ashore.
+  - **The Blue Butcher**: a teal lane, then a glowing arc that **breaks every wood and brick wall** it passes, hurts everyone it crosses once, and stops at metal after a heavy hit. Its blue dust is gone in about 0.5 s. The charge still happens, at half the rate.
+  - **The Arsonist** (Demolisher): an aim line with four rings, then a chain of four napalm bottles. Each patch burns **10 s**; napalm burns brick at regular fire's rate and **metal at twice it** (regular fire doesn't burn metal at all).
+  - **The Tempest** (Stormcaller): **the Stormcaller's shot, exactly, twice**, side by side. Both on you is double.
+  - **The Bulldozer** (Foreman): no digging. A lane, then a charge faster than the Butcher's. Anything solid stops him; a wall takes a heavy hit (wood and brick break) and he is **dazed 3 s**.
+- **Modifiers:** Blitzkrieg Rush has its own list. Kept: No Patch-Ups, On Your Own, Firestorm, Adrenaline, Last Stand, Elite Raid, Weather, Nightmare (no surprise bosses here), Berserk. Removed: Boss Rush. New: Hot LZ (+15%: opens at 0:45, ring a third smaller), Double Time (+15%: every 20 s, 15 bosses), Artillery Barrage (+10%: marked shells during the evacuation), Lockdown (+10%: the armory is shut for the build before raid 15 — the armory only opens between raids, so it can't close "during" the Final Blitz — and Delgado stops fixing walls in it), Scorched Earth (+10%: napalm 15 s, the arc's dust burns, twin beams scorch the ground).
+
+**Rewards.**
+- Every Blitzkrieg boss (raids 5/10 and the Final Blitz) pays everyone **2 Blitzkrieg Cases**. Final Blitz bosses also pay 15-30 shards and a skill point each. Making the evacuation pays 1 more Blitzkrieg Case and 25 shards (proposed defaults; Big U can change them). A 15-raid win's 2 Supply Cases apply to evacuees.
+- **BLITZKRIEG RUSH ladder** (Locker → Milestones): Blitzkrieg bosses killed in the mode, credited to everyone in the match: 10 Devil Horns (Rare), 25 Blue Arc tracer (Epic), 50 Blue Butcher skin (Epic), 75 Hell Portal kill effect (Legendary), 100 Demon skin (Gold: its own body with horns, folded wings, tail, claws, ember cracks, burning eyes and an ember aura; it takes no other headgear). Each Blitzkrieg boss also counts for its base boss's ladder.
+- **Blitzkrieg Case** (14 shards): tracers Brimstone, Teal Wake, Hellfire Chain, Infernal Sigil; kill effects Cinder Burst, Teal Slash, Brand of Ash, Demon Claw; backgrounds Scorched Front (Epic, still) and **Hellgate** (Gold, animated: a gate with a turning hellfire vortex; every 6 s the Blue Butcher's arc cuts a teal rift across the sky that seals again; a boss shows in the fire). Hellgate's still parts are one cached layer; each frame draws three rotated vortex sprites, one glow, the arc and about 40 embers.
+- **Server:** migration `99990000000000_palisade_v0940_blitz.sql` (**not applied — needs Big U's approval**, then renamed to its live version). It adds `match_results.fb_n`/`evac`, `private.blitz_base`, the Blitzkrieg modifier prices, the case and its 15 items (catalog 2, opened by the new `open_case_v094`), and mode `blitz` in `claim_match_reward` (built from the live v0.9.3.8 text). Older clients and other modes are unchanged. The new client opens cases through `open_case_v094`, so **the migration must be live before this build is**.
+
+**Tests (all new ones pass):** `blitz_mode` (setup, the 30 s beat, the cap of 4, evac timing and ring, extract/reset, left behind, core rules, downed + revive, Double Time and Hot LZ, the evac spot on every map and size, the menu), `blitz_bosses` (one check per attack), `blitz_network` (host/guest parity, per-player results, the rejoin stash keeps "out", guest rewards), `blitz_milestones` (ladder, half rewards and rounding, caps, shared credit, modifier list, Lockdown, horns on the Demon), `blitz_reward_migration` (PGlite: evac, left behind, rounding, caps, repeat claims, other modes unchanged, modifier prices, catalog, grants). Contact sheets: `blitz_sheet.js`.
+
+**Not done / to check on a phone:** raiders don't re-target the evac site during the evacuation (bosses already go for players); performance of a six-player Final Blitz still needs a `stress.js` run and a phone heat check.
+
 ## Quick cleanup (October 1, no game change)
 
 - **Site exposure:** GitHub Pages was publishing the whole repository, so `dev/` (source, tests, status notes, backups, compensation scripts) and a 9.4 MB `.wav` master were downloadable from the live site. The new `_config.yml` excludes `dev/` and `README.md` from Pages; the game at the root is unchanged. This also stops Pages rendering the dev notes, which is what broke the v0.9.3.4 deploy.
