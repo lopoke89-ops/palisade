@@ -77,20 +77,21 @@ function localNade(){
 }
 // one pull of the trigger: a shotgun throws an even fan of pellets (a little jitter so it isn't a grid)
 function shoot(p,G,late){
-  const a=Math.atan2(p.aim.y,p.aim.x),P=G.pellets|0;
-  if(P>1)for(let i=0;i<P;i++)fire(p,a+(i/(P-1)-.5)*G.spread+(rnd()-.5)*G.spread*.3,0,G,late,i>0);
-  else fire(p,a+(rnd()-.5)*G.spread,0,G,late);
+  const a=Math.atan2(p.aim.y,p.aim.x),P=G.pellets|0,tc=nextTracerColor(p);
+  if(P>1)for(let i=0;i<P;i++)fire(p,a+(i/(P-1)-.5)*G.spread+(rnd()-.5)*G.spread*.3,0,G,late,i>0,tc);
+  else fire(p,a+(rnd()-.5)*G.spread,0,G,late,false,tc);
 }
 // pellets lose punch with distance: full damage to fall[0] tiles, down to fall[2] of it by fall[1]
 function bdmg(b){if(!b.fall)return b.dmg;const[a,z,m]=b.fall,d=b.dist;return b.dmg*(d<=a?1:d>=z?m:1-(1-m)*(d-a)/(z-a))}
 // late = seconds ago the shot was due (a slow frame can owe one); the bullet starts that much further along
-function fire(from,ang,team,gun,late=0,quiet=false){
+function fire(from,ang,team,gun,late=0,quiet=false,tc=nextTracerColor(from)){
   const ahead=.33+gun.speed*clamp(late,0,.25);
   const own=from===qm?'dell':(from.id!==undefined&&players.get(from.id)===from?from.id:null);
   const visual=wardrobeShotVisual(from,ang,gun);if(visual)from._shotDrawUntil=game.time+.08;
   bullets.push({visual,id:++bulletSeq,pt:from.team||'',x:from.x+Math.cos(ang)*ahead,y:from.y+Math.sin(ang)*ahead,vx:Math.cos(ang)*gun.speed,vy:Math.sin(ang)*gun.speed,team,dmg:gun.dmg,dist:ahead-.33,over:gun.over!==false,skipped:false,last:-1,range:gun.range,pierce:gun.pierce||0,heavy:!!gun.pierce,
-    own,tr:own&&own!=='dell'?Math.max(0,TRAIL_IDS.indexOf(from.cos.trail)):0,fall:gun.fall||null,pel:gun.pellets>1});
-  {const B=bullets[bullets.length-1];rec(['b',B.id,r2(B.x),r2(B.y),r2(B.vx),r2(B.vy),B.team,B.heavy?1:0,B.tr|0,r2(B.range-B.dist),B.visual,B.visual?B.own:null])}
+    own,tr:own&&own!=='dell'?Math.max(0,TRAIL_IDS.indexOf(from.cos.trail)):0,tc,fall:gun.fall||null,pel:gun.pellets>1});
+  rec(bulletEvent(bullets[bullets.length-1]));
   if(!quiet)addFlash({x:from.x+Math.cos(ang)*.4,y:from.y+Math.sin(ang)*.4,life:.06,max:.06,r:gun.pellets>1?1.3:.9,muzzle:true,visual:visual?visual.slice(2):null});
 }
+function bulletEvent(b){return ['b',b.id,r2(b.x),r2(b.y),r2(b.vx),r2(b.vy),b.team,b.heavy?1:0,b.tr|0,r2(b.range-b.dist),b.visual,b.visual?b.own:null,b.tc|0]}
 

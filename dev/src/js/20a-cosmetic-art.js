@@ -9,17 +9,22 @@ function tracerStamp(st,t){
  let id=TRACE_KEYS.get(st);if(id===undefined){id=TRAIL_IDS.findIndex(k=>TRAILS[k]===st);TRACE_KEYS.set(st,id)}
  const phase=st.rgrad||st.rainbow?Math.floor(((t*2)%12+12)%12):0,key=id+':'+phase;
  let cv=TRACE_STAMPS.get(key);if(cv)return cv;
- cv=document.createElement('canvas');cv.width=192;cv.height=48;const c=cv.getContext('2d');
+ cv=document.createElement('canvas');cv.width=96;cv.height=24;const c=cv.getContext('2d');c.scale(.5,.5);
  const colors=st.rgrad||st.rainbow?Array.from({length:5},(_,i)=>'hsl('+(phase*30+i*65)+',100%,70%)'):st.grad||[st.c||st.head||'#ffecaa',st.c||'#ffb44a'];
  const gr=c.createLinearGradient(0,0,192,0);
  if(st.bands){const n=st.bands.length,L=.64;st.bands.forEach((col,i)=>{gr.addColorStop(i/n*L,col);gr.addColorStop(Math.min(1,(i+1)/n*L-.001),col)});gr.addColorStop(1,st.bands[n-1])}   // hard-edged stripes over the visible length
  else colors.forEach((col,i)=>gr.addColorStop(i/(colors.length-1),col));
  const shape=()=>{c.beginPath();c.moveTo(0,24);c.lineTo(7,17);c.lineTo(35,18);c.lineTo(190,24);c.lineTo(35,30);c.lineTo(7,31);c.closePath()};
- c.shadowColor=st.edge||colors[0];c.shadowBlur=12;c.fillStyle=gr;shape();c.fill();c.globalAlpha=.24;shape();c.fill();c.globalAlpha=1;c.shadowBlur=0;
+ c.shadowColor=st.edge||colors[0];c.shadowBlur=6;c.fillStyle=gr;shape();c.fill();c.globalAlpha=.24;shape();c.fill();c.globalAlpha=1;c.shadowBlur=0;
  c.strokeStyle=st.edge||'rgba(7,10,8,.55)';c.lineWidth=st.edge?4:1.3;shape();c.stroke();c.fillStyle=st.edge?'#10071c':gr;c.fill();
  if(!st.edge){c.fillStyle=st.rgrad?'#fff4b2':'#f8ffff';c.beginPath();c.moveTo(0,24);c.lineTo(10,22.7);c.lineTo(145,24);c.lineTo(10,25.3);c.closePath();c.fill()}
  else{c.strokeStyle='#e1bbff';c.lineWidth=1;c.beginPath();c.moveTo(1,23);c.lineTo(45,19);c.lineTo(140,23);c.stroke()}
  const fade=c.createLinearGradient(0,0,192,0);fade.addColorStop(0,'#fff');fade.addColorStop(.64,'#fff');fade.addColorStop(1,'transparent');c.globalCompositeOperation='destination-in';c.fillStyle=fade;c.fillRect(0,0,192,48);
+ // Small decorative marks belong to the cached frame, not a new path on every live bullet.
+ c.globalCompositeOperation='source-over';
+ if(st.pulse||st===TRAILS.plasma||st===TRAILS.aurora){c.strokeStyle=st.pulse?'#fff2fb':'#deffff';c.lineWidth=1.4;c.beginPath();for(let i=1;i<4;i++){const x=i*32;c.moveTo(x,19);c.lineTo(x+3,24);c.lineTo(x,29)}c.stroke()}
+ if(st.pk==='star'||st.pk==='cosmic'||st.rgrad){c.fillStyle=st.rgrad?'#fff1ac':'#f4edff';c.beginPath();for(let i=1;i<4;i++){const x=i*35,y=24+(i%2?2:-2),r=i===1?5:3;c.moveTo(x-r,y);c.lineTo(x,y-r);c.lineTo(x+r,y);c.lineTo(x,y+r);c.closePath()}c.fill()}
+ if(st.pk==='rock'){c.fillStyle='#d2b8a0';c.strokeStyle='#292322';c.lineWidth=1.5;c.beginPath();for(let i=1;i<4;i++){const x=i*34,y=24+(i%2?4:-4);c.moveTo(x-4,y);c.lineTo(x,y-4);c.lineTo(x+4,y);c.lineTo(x,y+5);c.closePath()}c.fill();c.stroke()}
  TRACE_STAMPS.set(key,cv);if(TRACE_STAMPS.size>64)TRACE_STAMPS.delete(TRACE_STAMPS.keys().next().value);return cv;
 }
 // Cache the two color channels; chromatic splitting adds no per-shot canvas allocation.
@@ -29,12 +34,18 @@ function glitchChannel(col){
  const c=cv.getContext('2d');c.drawImage(source,0,0);c.globalCompositeOperation='source-in';c.fillStyle=col;c.fillRect(0,0,cv.width,cv.height);
  TRACE_STAMPS.set(key,cv);if(TRACE_STAMPS.size>64)TRACE_STAMPS.delete(TRACE_STAMPS.keys().next().value);return cv;
 }
-function paintTracer(ctx,x1,y1,x2,y2,st,w,t,heavy){
- const len=Math.hypot(x2-x1,y2-y1);if(len<.01)return;
+function paintTracer(ctx,x1,y1,x2,y2,st,w,t,heavy,colorIndex=0){
+ const len=Math.min(Math.hypot(x2-x1,y2-y1),w*(st.cycle?10:22));if(len<.01)return;
  ctx.save();ctx.translate(x1,y1);ctx.rotate(Math.atan2(y2-y1,x2-x1));
+ if(st.cycle){
+  const col=st.cycle[(Math.max(0,colorIndex|0))%st.cycle.length];
+  // A thin contrast edge keeps black/white rounds legible without glow or particles.
+  ctx.fillStyle=col==='#000000'||col==='#2c2c2c'?'#a6aaa5':'#20251f';ctx.fillRect(0,-w*.62,len,w*1.24);
+  ctx.fillStyle=col;ctx.fillRect(0,-w*.4,len,w*.8);ctx.restore();return;
+ }
  if(st===ENEMY_TR){ctx.strokeStyle=st.c;ctx.lineWidth=w;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(len,0);ctx.stroke();ctx.restore();return}
  const width=w*(st.pulse?1+.16*Math.sin(t*28):1),height=width*6.5;
- ctx.beginPath();ctx.rect(0,-height/2,len,height);ctx.clip();
+ if(st.glitch){ctx.beginPath();ctx.rect(0,-height/2,len,height);ctx.clip()}
  // The stamp is confined to the calibrated segment, including its soft tail.
  if(st.glitch){
   const tear=Math.floor(t*13)%7===0,split=width*(1.05+.22*Math.sin(t*19)+(tear?.35:0)),drift=Math.min(width*.65,len*.08);
@@ -45,9 +56,6 @@ function paintTracer(ctx,x1,y1,x2,y2,st,w,t,heavy){
   ctx.drawImage(tracerStamp(st,t),0,-height*.32,len,height*.64);
   if(tear)for(let i=0;i<2;i++){ctx.fillStyle=i?'#24eaff':'#ff285b';ctx.fillRect(len*(.28+i*.28),(i?1:-1)*split,Math.min(len*.17,width*5),width*.42)}
  }else ctx.drawImage(tracerStamp(st,t),0,-height/2,len,height);
- if(st.pulse||st===TRAILS.plasma||st===TRAILS.aurora){ctx.strokeStyle=st.pulse?'#fff2fb':'#deffff';ctx.globalAlpha*=.7;ctx.lineWidth=Math.max(.5,width*.22);for(let i=1;i<4;i++){const xx=len*i/5;ctx.beginPath();ctx.moveTo(xx,-width*.7);ctx.lineTo(xx+width*.5,0);ctx.lineTo(xx,width*.7);ctx.stroke()}}
- if(st.pk==='star'||st.pk==='cosmic'||st.rgrad){ctx.fillStyle=st.rgrad?'#fff1ac':'#f4edff';for(let i=1;i<4;i++){const xx=len*(i*.21),yy=Math.sin(i*2+t*5)*width*.55,rr=width*(i===1?.65:.4);ctx.beginPath();ctx.moveTo(xx-rr,yy);ctx.lineTo(xx,yy-rr);ctx.lineTo(xx+rr,yy);ctx.lineTo(xx,yy+rr);ctx.closePath();ctx.fill()}}
- if(st.pk==='rock'){ctx.fillStyle='#d2b8a0';ctx.strokeStyle='#292322';ctx.lineWidth=.6;for(let i=1;i<4;i++){const xx=len*i/5,yy=(i%2?1:-1)*width*.7;ctx.beginPath();ctx.moveTo(xx-width*.7,yy);ctx.lineTo(xx,yy-width*.55);ctx.lineTo(xx+width*.5,yy);ctx.lineTo(xx,yy+width*.7);ctx.closePath();ctx.fill();ctx.stroke()}}
  ctx.restore();
 }
 const FINISH_LIFE={sparks:.48,smoke:1.15,confetti:.95,embers:.8,glint:.65,bolt:.48,skull:.95,pixel:.7,frost:.75,gradburst:.75,sunburst:.75,toxic:.85,supernova:.85,glitchout:.6,singularity:.85,shockwave:.7,bubbles:1.2,bats:1,spider:1.1,souls:1.2,rocketburst:.8,reticle:.7,frag:.75,salvage:.95};

@@ -4,7 +4,7 @@
 // they talk directly. Each guest opens 'r' (reliable: hello, build, grenade, and every
 // one-off event: sounds, particles, bullets, toasts, wall changes), 'u' (fast: movement in),
 // and 'st' (never resent: game state out, 15 times a second).
-const PROTO='yard-17',ROOM_PREFIX='palisade-yard-17-';
+const PROTO='yard-18',ROOM_PREFIX='palisade-yard-18-';
 const ROOM_SESSION=(()=>{let id='';try{id=sessionStorage.getItem('palisade.roomSession')||''}catch(e){}
   if(!/^[0-9a-f]{24}$/.test(id)){id=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');try{sessionStorage.setItem('palisade.roomSession',id)}catch(e){}}
   return id})();
@@ -109,7 +109,7 @@ function checkSkills(c,claimed){
   rpc('skills_of',{p_uid:c.uid}).then(r=>{if(!r.ok||!r.j||typeof r.j!=='object')return;const t={};
     for(const S of SKILLS)t[S.id]=Math.min(want[S.id]|0,r.j[S.id]|0);put(skillStr(parseSkills(skillStr(t)),want.molOff))}).catch(()=>{});
 }
-const startMsg=()=>({t:'start',roster:rosterNow(),diff:pick.diff,mode:game.mode,pvp:game.pvp,map:game.map,size:game.size,oct:game.oct?1:0,gid:game.gid,mods:game.mods,job:game.job});
+const startMsg=()=>({t:'start',roster:rosterNow(),diff:pick.diff,mode:game.mode,pvp:game.pvp,map:game.map,size:game.size,oct:game.oct?1:0,gid:game.gid,mods:game.mods,job:game.job,shots:bullets.filter(b=>!b.dead).map(bulletEvent)});
 const lighterSide=list=>{let a=0,b=0;for(const r of list)if(r.team==='b')b++;else a++;return a<=b?'a':'b'};
 function hostData(peerId,d){
   const c=NET.conns.get(peerId);if(!c||c.kicked||!d||typeof d!=='object'||Array.isArray(d)||typeof d.t!=='string')return;c.heard=performance.now();
@@ -306,7 +306,7 @@ function makeSnap(withWalls){
     nd:flat(nodes,n=>[n.amt|0,n.locked?1:0]),fo:floodOn?1:0};
   if(game.bossLog&&game.bossLog.length)s.bl=game.bossLog;   // which bosses fell (each player's rewards are worked out on their own phone)
   if(terrLog.length)s.tr=terrLog;   // ground that changed (pits, a rammed bridge): a few numbers
-  if(withWalls)s.wl=encodeWalls();
+  if(withWalls){s.wl=encodeWalls();s.bu=bullets.filter(b=>!b.dead).map(bulletEvent)}
   return s;
 }
 
@@ -336,7 +336,7 @@ function guestData(d){
     case'welcome':myId=d.id;NET.mode='guest';mStatus('');showLobby();break;
     case'lobby':NET.roster=d.roster;NET.code=d.code;NET.roomLocked=!!d.locked;pick.diff=d.diff;if(d.mode)pick.mode=d.mode;pick.pvp=d.pvp||'coop';NET.hostMods=cleanMods(d.mods,pick.pvp);pick.job=CLASSES[d.job]?d.job:pick.job;if(d.map)pick.map=MAP_IDS.includes(d.map)?d.map:'yard';if(d.size)pick.size=d.size==='xl'?'xl':'std';if(!NET.inGame)renderLobby();break;
     case'start':pick.diff=d.diff;if(d.mode)pick.mode=d.mode;pick.pvp=d.pvp||'coop';pick.map=MAP_IDS.includes(d.map)?d.map:'yard';pick.size=d.size==='xl'?'xl':'std';pick.oct=!!d.oct;demo=false;
-      newGame(d.roster,d.pvp||'',{gid:d.gid,mods:d.mods,job:d.job,guest:true});NET.lastN=0;NET.inGame=true;enterGame();modsToast();break;
+      newGame(d.roster,d.pvp||'',{gid:d.gid,mods:d.mods,job:d.job,guest:true});replayFx(d.shots||[]);NET.lastN=0;NET.inGame=true;enterGame();modsToast();break;
     case'ping':break;
     case's':if(NET.inGame&&d.n>NET.lastN){NET.lastN=d.n;applySnap(d)}break;
     case'x':if(NET.inGame){if(d.pi)applyInfo(d.pi);if(d.wl)decodeWalls(d.wl);if(d.wd)applyWallDiff(d.wd);replayFx(d.fx||[])}break;
@@ -379,7 +379,7 @@ function applySnap(s){
     Object.assign(e,{type:bk?'boss':c,boss:bk||undefined,big:!!bk,raft:bk==='ferryman',burrow:bk==='foreman'&&(v('st')===2||v('st')===4),tx:v('x'),ty:v('y'),aim:{x:v('ax'),y:v('ay')},hp:v('hp'),max:1,planted:!!v('plant'),st:v('st'),stF:v('stF'),lx:v('lx'),ly:v('ly')});enemies.push(e)}
   rockets=[];for(let o=0;o<(s.rk||[]).length;o+=4)rockets.push({x:s.rk[o],y:s.rk[o+1],vx:s.rk[o+2],vy:s.rk[o+3]});
   fires=[];for(let o=0;o<(s.fz||[]).length;o+=4)fires.push({x:s.fz[o],y:s.fz[o+1],t:s.fz[o+2],r:s.fz[o+3],max:4});
-  if(s.bu){bullets=[];for(let o=0;o<s.bu.length;o+=7)bullets.push({x:s.bu[o],y:s.bu[o+1],vx:s.bu[o+2],vy:s.bu[o+3],team:s.bu[o+4],heavy:!!s.bu[o+5],tr:s.bu[o+6]|0})}
+  if(s.bu){bullets.length=0;for(const e of s.bu)addGuestBullet(e)}
   lobs=[];for(let o=0;o<s.lo.length;o+=8)lobs.push({x0:s.lo[o],y0:s.lo[o+1],x1:s.lo[o+2],y1:s.lo[o+3],t:s.lo[o+4],T:s.lo[o+5],R:s.lo[o+6],k:s.lo[o+7]});
   charges=[];for(let o=0;o<s.ch.length;o+=3)charges.push({x:s.ch[o],y:s.ch[o+1],fuse:s.ch[o+2]});
   sacks=[];for(let o=0;o<s.sa.length;o+=2)sacks.push({x:s.sa[o],y:s.sa[o+1]});
@@ -393,8 +393,9 @@ function applySnap(s){
 // Optional tail fields keep old shot events readable; no simulation data depends on them.
 function cosmeticPoint(v,n){return Array.isArray(v)&&v.length===n&&v.every(Number.isFinite)?v:null}
 function addGuestBullet(e){
+ if(bullets.some(b=>b.id===e[1]))return; // start snapshot and queued reliable shot may overlap
  const visual=cosmeticPoint(e[10],4),owner=visual&&players.get(e[11]);if(owner)owner._shotDrawUntil=game.time+.08;
- if(bullets.length<300)bullets.push({id:e[1],x:e[2],y:e[3],vx:e[4],vy:e[5],team:e[6],heavy:!!e[7],tr:e[8],left:e[9],visual});
+ if(bullets.length<300)bullets.push({id:e[1],x:e[2],y:e[3],vx:e[4],vy:e[5],team:e[6],heavy:!!e[7],tr:e[8],tc:Math.max(0,e[12]|0),left:e[9],visual});
 }
 function replayFx(list){
   replaying=true;
@@ -402,7 +403,7 @@ function replayFx(list){
     case'e':for(let n=e[6]||1;n>0;n--)emit(e[1],e[2],e[3]*u,e[4],e[5]);break;
     case'E':emitSpread(e[1],e[2],e[3],e[4]*u,e[5]*u,e[6],e[7],e[8]);break;
     case'b':addGuestBullet(e);break;
-    case'bx':{const gone=new Set(e.slice(1));bullets=bullets.filter(b=>!gone.has(b.id));break}
+    case'bx':{const gone=new Set(e.slice(1));for(const b of bullets)if(gone.has(b.id))b.dead=true;compactBullets();break}
     case's':sfx(e[1],e[2]===null?undefined:e[2],e[3]===null?undefined:e[3],true);break;
     case'f':flt(e[1],e[2],e[3],e[4]);break;
     case'k':addShake(e[1],e[2],e[3]);break;
@@ -425,7 +426,7 @@ function guestUpdate(dt){
   smooth(qm);qm.flash=Math.max(0,qm.flash-dt);
   for(const e of enemies){smooth(e);e.flash=Math.max(0,e.flash-dt)}
   for(const b of bullets){b.x+=b.vx*dt;b.y+=b.vy*dt;if(b.left!==undefined){b.left-=Math.hypot(b.vx,b.vy)*dt;if(b.left<=0||!inb(b.x|0,b.y|0))b.dead=true}}
-  if(bullets.some(b=>b.dead))bullets=bullets.filter(b=>!b.dead);
+  compactBullets();
   for(const l of lobs)l.t=Math.min(l.T,l.t+dt);
   for(const r of rockets){r.x+=r.vx*dt;r.y+=r.vy*dt}for(const f of fires)f.t-=dt;
   for(const e of enemies)if(e.st&&e.stF>0)e.stF=Math.max(0,e.stF-dt/1.1);
