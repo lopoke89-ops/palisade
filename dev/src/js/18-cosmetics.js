@@ -414,7 +414,8 @@ function runClaim(held,win,kills,left=false){
   const from=Math.min(held,game.joinHeld|0),mine=held-from,pct=modBonus(game.mods,'');
   const sal=Math.max(0,(player&&player.sal)|0),shards=Math.min(salvageShards(sal,mine),Math.floor(SAL_SHARD.max*(100+pct)/100));
   const keys=(game.bossLog||[]).slice(game.joinBoss|0).slice(0,40),sb=Math.max(0,(game.sbN|0)-(game.joinSB|0)),dur=Math.round(game.time-(game.joinT||0));
-  const claim={kind:'run',mode:game.mode,diff:pick.diff||'normal',win:!!win,held:mine,raid_from:from,raid_to:held,kills,bosses:keys.length,boss_keys:keys,shard_bosses:sb,
+  const sbKeys=(game.sbLog||[]).slice(game.joinSB|0).slice(0,40);   // v0.9.3.8: in-between bosses count toward boss milestones
+  const claim={kind:'run',mode:game.mode,diff:pick.diff||'normal',win:!!win,held:mine,raid_from:from,raid_to:held,kills,bosses:keys.length,boss_keys:keys,shard_bosses:sb,sb_keys:sbKeys,
     salvage:sal,size:game.size||'std',duration_s:dur,game_id:game.gid,joined_s:Math.round(game.joinT||0),left_s:Math.round(game.time),left:!!left,
     upgrades:(player?player.upS:'')+':'+(game.dellLv|0),mods:game.mods||[],map:game.map,cls:player?player.cls:pick.cls};
   return {claim,shards};
@@ -440,6 +441,7 @@ function localRun(c,shards){
   if(c.mode==='endless')locker.cases+=Math.floor(mine/5);
   for(const id in drops)caseAdd(id,drops[id]);
   addMilestones(st,keys,held,from,mine,c.cls,c.map,waves,c.size);
+  for(const k of(c.sb_keys||[]).slice(0,sb))if(BOSSES[k]){const b='boss_'+k;st[b]=(st[b]|0)+1}   // v0.9.3.8: every boss kill counts
   const wd=won?winDrop():{};
   const got=checkUnlocks();saveLocker();
   return mkReward('run',{cases:{supply:locker.cases-before,...drops,...wd},shards:shards+bshards,bossShards:bshards,unlocked:got.map(c=>c.id)});

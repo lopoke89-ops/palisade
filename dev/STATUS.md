@@ -11,15 +11,28 @@ The Claude audit URL still requires sign-in in the available browser session. Bi
 
 | Item | Current state |
 |---|---|
-| Live release | **v0.9.3.6** (v0.9.3.7 in this change) |
+| Live release | **v0.9.3.7** (v0.9.3.8 in this change) |
 | Live protocol | `yard-17` / `palisade-yard-17-` (v0.9.3.5 candidate uses `yard-18`) |
-| Applied server migration | `palisade_v0936_rejoin_bosses` (`20260930071534`); previously `palisade_v0935_cosmetics` (`20260930050715`) |
+| Applied server migration | `palisade_v0938_all_boss_milestones` (`20260930075446`); before it `palisade_v0936_rejoin_bosses` (`20260930071534`) |
 | GitHub branch | `main` at `4033d34` (v0.9.3.4 plus the UTF-8 repair); v0.9.3.5 candidate on `claude/lucid-curie-491na1` |
 | Published build | GitHub Pages displays **v0.9.3.4** (service worker `palisade-0e4e6153b7`), checked September 30 |
 
 Controller support shipped in v0.9.2.1. The v0.9.3 cosmetics migration is applied and the live case catalog includes Flags. The two proposed new game modes have not shipped; the Nightmare modifier and a future preset definition do not constitute a separate game mode.
 
 Four commits after the v0.9.3 release changed the case intro and reel source (`98bb522`, `4c8dd3d`, `a49df08`, `566e30e`). The v0.9.3.1 release includes those fixes. Their source was compared with the v0.9.3 release on September 29; see [case animation validation](CASE_PERFORMANCE_2026-09-29.md). The reel avoids repeated style reads and its measured CPU use was lower, but intro readings overlapped and Locker readings were higher in the comparison runs. Further profiling and a real-phone comparison are still required before performance sign-off.
+
+## v0.9.3.8: every boss kill counts toward milestones
+
+Big U's rule: every boss kill counts toward boss milestones, for everyone in the match, not just whoever landed the last hit.
+- **Regular bosses** (raids 5, 10, 15…, and XL partners) already credited everyone in the match through the shared boss log. That is unchanged.
+- **In-between bosses** (Boss Rush, Nightmare surprise, the Nightmare + Boss Rush second boss) paid shards and a skill point but no milestone credit, because the game only kept a count. The host now records which boss each one was (`sbLog`) and sends it to guests in snapshots (`sl`). Each player's claim names the in-between bosses killed while they were in the game (`sb_keys`), whoever shot them.
+- **Server:** migration `20260930075446_palisade_v0938_all_boss_milestones` (applied September 30) adds +1 to the matching `boss_*` counter for each *paid* in-between boss. It follows the existing paid cap, not the claimed list. Older clients send no `sb_keys` and are unchanged. The live function matches the file (md5 `a98b0562…`) and grants are unchanged.
+- **No-account players** get the same rule in the browser locker.
+- **Earlier kills** are not backfilled (see below).
+- **Tests:** `boss_milestones` (a guest who never fired gets both a regular and a Boss Rush boss in the claim; solo local counter +1) and `rejoin_migration` (milestones for regular and in-between bosses; older client unchanged; milestones follow the paid count; re-apply).
+- **Test fix:** `modifiers` measured Adrenaline speed against wall-clock time and was flaky (a slow first frame shortened the walk). It now measures against game time and gives an exact 1.20×.
+
+Version footer v0.9.3.8. Protocol unchanged: `sl` is an extra snapshot field that older clients ignore.
 
 ## v0.9.3.7: touch auto-lock, in-game settings, Nightmare + Boss Rush
 

@@ -1,0 +1,33 @@
+{
+  "out": {
+    "mods": [
+      "bossrush"
+    ],
+    "guestLogs": {
+      "bossLog": [
+        "butcher"
+      ],
+      "sbLog": [
+        "demolisher"
+      ],
+      "sbN": 1,
+      "joinSB": 0
+    },
+    "claim": {
+      "boss_keys": [
+        "butcher"
+      ],
+      "sb_keys": [
+        "demolisher"
+      ],
+      "shard_bosses": 1
+    },
+    "solo": {
+      "gained": 1,
+      "sbLog": [
+        "storm"
+      ]
+    }
+  },
+  "errors": []
+}

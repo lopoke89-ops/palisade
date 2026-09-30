@@ -55,7 +55,8 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
   // 5. Adrenaline: 20% faster (movement is worked out on each player's own phone)
   const walk = async mods => { await game(mods); return P.evaluate(() => new Promise(res => { const P = __pal, p = P.player; [p.x, p.y] = [2.5, 2.5];
     for (let k = 0; k < P.N * P.N; k++) if (P.walls[k]) P.walls[k] = null; window.dispatchEvent(new KeyboardEvent('keydown', { key: 'd' }));
-    const x0 = p.x, y0 = p.y; setTimeout(() => { window.dispatchEvent(new KeyboardEvent('keyup', { key: 'd' })); res(Math.hypot(p.x - x0, p.y - y0)) }, 600) })) };
+    // speed per second of game time: a slow first frame (caches warming up) can't shorten the walk
+    const x0 = p.x, y0 = p.y, t0 = P.game.time; setTimeout(() => { window.dispatchEvent(new KeyboardEvent('keyup', { key: 'd' })); res(Math.hypot(p.x - x0, p.y - y0) / Math.max(.05, P.game.time - t0)) }, 600) })) };
   out.walkOff = await walk([]); out.walkOn = await walk(['adrenaline']);
   assert.ok(out.walkOn / out.walkOff > 1.12 && out.walkOn / out.walkOff < 1.3, 'adrenaline ~1.2x: ' + out.walkOn / out.walkOff);
   // 6. Last Stand: down in a raid stays down until the raid is broken (a teammate or Dell can still help)

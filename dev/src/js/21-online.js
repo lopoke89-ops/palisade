@@ -317,7 +317,8 @@ function makeSnap(withWalls){
     ch:flat(charges,c=>[r2(c.x),r2(c.y),r2(c.fuse)]),
     sa:flat(sacks,k=>[r2(k.x),r2(k.y)]),
     nd:flat(nodes,n=>[n.amt|0,n.locked?1:0]),fo:floodOn?1:0};
-  if(game.bossLog&&game.bossLog.length)s.bl=game.bossLog;   // which bosses fell (each player's rewards are worked out on their own phone)
+  if(game.bossLog&&game.bossLog.length)s.bl=game.bossLog;
+  if(game.sbLog&&game.sbLog.length)s.sl=game.sbLog;   // v0.9.3.8: which in-between bosses fell (boss milestones for everyone)   // which bosses fell (each player's rewards are worked out on their own phone)
   if(terrLog.length)s.tr=terrLog;   // ground that changed (pits, a rammed bridge): a few numbers
   if(withWalls){s.wl=encodeWalls();s.bu=bullets.filter(b=>!b.dead).map(bulletEvent)}
   return s;
@@ -400,7 +401,7 @@ function applySnap(s){
   for(let i=0;i<nodes.length&&i*2<s.nd.length;i++){nodes[i].amt=s.nd[i*2];nodes[i].locked=!!s.nd[i*2+1]}
   if(s.wl)decodeWalls(s.wl);
   if(s.tr&&s.tr.length!==terrLog.length){applyTerrLog(s.tr);terrLog=s.tr.slice()}
-  floodOn=!!s.fo;if(s.bl)game.bossLog=s.bl.slice(0,40);
+  floodOn=!!s.fo;if(s.bl)game.bossLog=s.bl.slice(0,40);if(Array.isArray(s.sl))game.sbLog=s.sl.slice(0,100);
   replayFx(s.fx||[]);
   if(game.phase==='over'&&!wasOver)showOver();
 }

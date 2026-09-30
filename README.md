@@ -1,17 +1,14 @@
 PALISADE: phone version with online co-op
 =========================================
 
-CURRENT RELEASE (October 1, 2026): v0.9.3.6 is live. Runs are kept through drops and
-rejoins, there is a Frame rate setting (Auto / 30 / 60), and Dell is now Delgado.
+CURRENT RELEASE (October 1, 2026): v0.9.3.7 is live:
+- On a touch screen, grenades and rockets lock onto the nearest raider.
+- SETTINGS in a match opens an in-game panel.
+- With Nightmare and Boss Rush both on, a Boss Rush raid can bring a second boss.
 
-NEXT: v0.9.3.7 is ready to merge:
-- On a touch screen, grenades and rockets lock onto the nearest raider 6+ tiles
-  away with a clear line.
-- SETTINGS in a match opens an in-game panel, not the main menu.
-- With Nightmare and Boss Rush both on, a Boss Rush raid can bring a second boss
-  (1 in 12).
-
-See dev/STATUS.md and dev/OPTIMIZATION_AUDIT_2026-10-01.md.
+NEXT: v0.9.3.8 is ready to merge. Every boss kill, including Boss Rush and
+Nightmare bosses, now counts toward boss milestones for everyone in the match.
+The server side is already live. See dev/STATUS.md.
 
 This folder is the whole game as a website. Put it online once and anyone
 can play by opening the link. No app store, no download.
