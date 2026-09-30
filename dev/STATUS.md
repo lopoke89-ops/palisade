@@ -11,7 +11,7 @@ The Claude audit URL still requires sign-in in the available browser session. Bi
 
 | Item | Current state |
 |---|---|
-| Live release | **v0.9.3.7** (v0.9.3.8 in this change) |
+| Live release | **v0.9.3.8** (published September 30) |
 | Live protocol | `yard-17` / `palisade-yard-17-` (v0.9.3.5 candidate uses `yard-18`) |
 | Applied server migration | `palisade_v0938_all_boss_milestones` (`20260930075446`); before it `palisade_v0936_rejoin_bosses` (`20260930071534`) |
 | GitHub branch | `main` at `4033d34` (v0.9.3.4 plus the UTF-8 repair); v0.9.3.5 candidate on `claude/lucid-curie-491na1` |
@@ -28,7 +28,17 @@ Big U's rule: every boss kill counts toward boss milestones, for everyone in the
 - **In-between bosses** (Boss Rush, Nightmare surprise, the Nightmare + Boss Rush second boss) paid shards and a skill point but no milestone credit, because the game only kept a count. The host now records which boss each one was (`sbLog`) and sends it to guests in snapshots (`sl`). Each player's claim names the in-between bosses killed while they were in the game (`sb_keys`), whoever shot them.
 - **Server:** migration `20260930075446_palisade_v0938_all_boss_milestones` (applied September 30) adds +1 to the matching `boss_*` counter for each *paid* in-between boss. It follows the existing paid cap, not the claimed list. Older clients send no `sb_keys` and are unchanged. The live function matches the file (md5 `a98b0562…`) and grants are unchanged.
 - **No-account players** get the same rule in the browser locker.
-- **Earlier kills** are not backfilled (see below).
+- **Earlier kills: estimated backfill, approved by Big U and applied on September 30** (`supabase/compensation/2026-10-01_v0938_milestone_backfill.sql`, keyed so it can't re-apply). It credits 154 past in-between kills, each pre-migration claim's paid count: Boss Rush raids matched to the map's fixed rotation, and Nightmare surprises spread over the map's three bosses. Verified on the live lockers:
+
+  | Player | Before (Butcher / Demolisher / Ferryman / Foreman / Stormcaller) | After |
+  |---|---|---|
+  | lopoke89 | 17/9/13/3/13 | 38/22/26/6/36 |
+  | kappinkirk | 13/6/13/3/12 | 26/10/22/3/25 |
+  | meezy2greezy | 7/2/5/0/6 | 14/4/10/0/12 |
+  | ethn | 2/2/1/0/1 | 6/8/2/3/7 |
+  | af519126 | 2/1/0/0/0 | 2/2/0/0/1 |
+
+  Unlocked by the backfill: lopoke89 gained the Butcher, Ferryman and Stormcaller skins; kappinkirk gained Butcher and Stormcaller. Each player got one mailbox note.
 - **Tests:** `boss_milestones` (a guest who never fired gets both a regular and a Boss Rush boss in the claim; solo local counter +1) and `rejoin_migration` (milestones for regular and in-between bosses; older client unchanged; milestones follow the paid count; re-apply).
 - **Test fix:** `modifiers` measured Adrenaline speed against wall-clock time and was flaky (a slow first frame shortened the walk). It now measures against game time and gives an exact 1.20×.
 
