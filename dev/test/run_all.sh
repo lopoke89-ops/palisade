@@ -7,6 +7,11 @@
 # and prints PASS/FAIL. The accounts and rewards tests fake Supabase, so no internet is needed.
 # Set CHROMIUM=/path/to/chromium to use a specific browser (the tests read it).
 cd "$(dirname "$0")"; mkdir -p out; OUT=$(pwd)/out
+# If Playwright's own browser build isn't installed (its version moved ahead), fall back to an installed Chromium.
+if [ -z "$CHROMIUM" ] && ! node -e "process.exit(require('fs').existsSync(require('playwright').chromium.executablePath())?0:1)" 2>/dev/null; then
+  for c in /opt/pw-browsers/chromium-*/chrome-linux/chrome /usr/bin/chromium /usr/bin/chromium-browser /usr/bin/google-chrome; do [ -x "$c" ] && CHROMIUM=$c; done
+  [ -n "$CHROMIUM" ] && export CHROMIUM && echo "Using installed browser: $CHROMIUM"
+fi
 ROOT=$(cd ../.. && pwd)
 curl -s -o /dev/null localhost:8080/ || (cd "$ROOT" && setsid nohup python3 -m http.server 8080 > "$OUT/http.log" 2>&1 < /dev/null &)
 curl -s -o /dev/null localhost:9000/ || (setsid nohup node peer-server.js > out/peer.log 2>&1 < /dev/null &)

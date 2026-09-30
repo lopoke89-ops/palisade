@@ -1,0 +1,5 @@
+# GitHub Pages publishes only the game (the repo root). The developer folder (source, tests, notes, backups, audio
+# masters) stays in the repository but is not served on the site.
+exclude:
+  - dev
+  - README.md

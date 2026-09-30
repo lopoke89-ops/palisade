@@ -2,6 +2,8 @@
 
 Everything needed to rebuild, test and restore the game. The playable site is the repo's top
 level (built from here); this folder is the source.
+This folder is **not published** on GitHub Pages (`_config.yml` excludes it). Audio masters live in `audio/masters/`.
+Tests find an installed Chromium automatically if Playwright's own browser build is missing.
 
 Current live status is **v0.9.3.6** (run progress kept through drops and rejoins, Auto/30/60 frame rate,
 Delgado, and the rejoin boss-credit migration `20260930071534`). **v0.9.3.7** is ready to merge: touch
