@@ -78,7 +78,7 @@ function drawPrompts(p){
   if(!p||!p.alive)return;
   if(canShop(p)&&$('armory').hidden){const c=stakeOf(p),s=iso(c.i+.5,c.j+.5);keyCap(s[0],s[1]-WH*1.15-(game.pvp==='base'?66:52)*u,ctl('','E',padKey('armory')),touchMode&&!padMode?'TAP ARMORY':'ARMORY',null)}
   for(const o of players.values())if(o!==p&&o.downed&&(!game.pvp||(game.pvp==='base'&&o.team===p.team))){const d=dist2(o,p);if(d<2.2){const s=iso(o.x,o.y);keyCap(s[0],s[1]-34*u,'',d<1?'REVIVING · STAY CLOSE':'STAND CLOSE TO REVIVE','#a9bccb')}}
-  if(!qm.gone&&!qm.alive&&dist2(qm,p)<2.2){const s=iso(qm.x,qm.y);keyCap(s[0],s[1]-34*u,'',dist2(qm,p)<1?'REVIVING DELL':'STAND CLOSE TO REVIVE DELL','#a9bccb')}
+  if(!qm.gone&&!qm.alive&&dist2(qm,p)<2.2){const s=iso(qm.x,qm.y);keyCap(s[0],s[1]-34*u,'',dist2(qm,p)<1?'REVIVING DELGADO':'STAND CLOSE TO REVIVE DELGADO','#a9bccb')}
 }
 function drawCrosshair(p){
   let sx,sy,hot=false,faint=false;
@@ -406,7 +406,7 @@ function renderArmory(){
     btn.addEventListener('click',()=>{initAudio();if(NET.mode==='guest'){NET.toHost({t:'u',k});btn.disabled=true}else if(buyUpgrade(p,k))renderArmory()});
     row.append(b,btn,pips,i);box.append(row)};
   const L=game.dellLv|0;
-  if(!qm.gone)extra(DELL_UP.name,L,DELL_UP.what,L>=4?'MAXED':DELL_UP.cost[L]+' SAL',L>=4||p.sal<DELL_UP.cost[L]||!canShop(p),`Dell level ${L} of 4. ${L>=4?'Maxed':'Costs '+DELL_UP.cost[L]+' salvage'}`,'dell');
+  if(!qm.gone)extra(DELL_UP.name,L,DELL_UP.what,L>=4?'MAXED':DELL_UP.cost[L]+' SAL',L>=4||p.sal<DELL_UP.cost[L]||!canShop(p),`Delgado level ${L} of 4. ${L>=4?'Maxed':'Costs '+DELL_UP.cost[L]+' salvage'}`,'dell');
   const c=hasMod('nopatch')?null:cores[0];   // No Patch-Ups: no core repair
   if(c){const hp=Math.max(0,Math.ceil(c.hp)),full=c.hp>=c.max,cost=coreFixCost(p);
     extra('REPAIR CORE',-1,`Core ${hp} / ${c.max}. Each repair restores up to ${CORE_FIX.hp}.${p.C.repair?' Half price for you.':''}`,full?'FULL':cost+' SAL',full||c.hp<=0||p.sal<cost||!canShop(p),full?'Core is at full health':`Repair core, ${cost} salvage`,'core')}

@@ -27,7 +27,7 @@ const CLASSES={
   sniper:{name:'SNIPER',hp:90,nades:2,build:1,cap:[64,64,64],blast:1,nadeCd:1,spd:1.1,gun:{dmg:47,cd:.7,spread:.02,range:16,speed:34,pierce:2,snd:'sniper',bolt:true}},
   // pump shotgun: 7 pellets in a tight, even pattern, full damage out to 2.5 tiles, half by 7; a 6-shell tube loaded one shell at a time
   grenadier:{name:'GRENADIER',hp:105,nades:3,build:1,cap:[64,64,64],blast:1.25,nadeCd:.6,spd:.9,gun:{dmg:12,cd:.5,clickCd:.12,spread:.15,range:7.2,speed:24,snd:'shotgun',bolt:true,pump:true,pellets:7,fall:[2.5,7,.55],mag:6,reload:.42}},
-  // support: walking over a downed teammate (or Dell) gets them straight up; bigger packs, faster gathering, half-price repairs
+  // support: walking over a downed teammate (or Delgado) gets them straight up; bigger packs, faster gathering, half-price repairs
   quartermaster:{name:'QUARTERMASTER',hp:110,nades:2,build:.85,cap:[96,96,96],blast:1,nadeCd:1,gather:.72,repair:.5,medic:true,spd:1,sprint:true,gun:{dmg:7,cd:.085,spread:.15,range:8.5,speed:22,snd:'smg'}}
 };
 const CLASS_IDS=Object.keys(CLASSES);

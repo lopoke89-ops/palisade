@@ -5,13 +5,13 @@
 // ids are sent over the network and stored with results: never rename one, only add.
 const MODS=[
   {id:'nopatch',name:'NO PATCH-UPS',what:'No core repair at the armory. Walls can still be fixed.',modes:['coop'],bonus:10},
-  {id:'alone',name:'ON YOUR OWN',what:'No Dell. Nobody hands out materials, fixes walls or picks you up but your crew.',modes:['coop'],bonus:20},
+  {id:'alone',name:'ON YOUR OWN',what:'No Delgado. Nobody hands out materials, fixes walls or picks you up but your crew.',modes:['coop'],bonus:20},
   {id:'firestorm',name:'FIRESTORM',what:'More firebrands from raid 1. Bigger, longer fires, and walls burn down faster.',modes:['coop'],bonus:10},
   {id:'adrenaline',name:'ADRENALINE',what:'Everyone moves 20% faster. Lowers rewards a little.',modes:['coop','base','ffa'],bonus:-15},
-  {id:'laststand',name:'LAST STAND',what:'Go down in a raid and you stay down until it ends, unless a teammate, Dell or a quartermaster gets you up.',modes:['coop'],bonus:10},
+  {id:'laststand',name:'LAST STAND',what:'Go down in a raid and you stay down until it ends, unless a teammate, Delgado or a quartermaster gets you up.',modes:['coop'],bonus:10},
   {id:'elite',name:'ELITE RAID',what:'No riflemen: every raider is a special. Spotters mark you for the grenadiers and firebrands instead.',modes:['coop'],bonus:15},
   {id:'bossrush',name:'BOSS RUSH',what:'A boss every other raid. The extra bosses pay 15-30 shards each; raids 5, 10, 15 keep their case.',modes:['coop'],bonus:10},
-  {id:'weather',name:'WEATHER',what:'A storm every other raid (every 40 s in PvP). It slows everyone, raiders and Dell too; players lose 1 health every 2 s in it.',modes:['coop','base','ffa'],bonus:10},
+  {id:'weather',name:'WEATHER',what:'A storm every other raid (every 40 s in PvP). It slows everyone, raiders and Delgado too; players lose 1 health every 2 s in it.',modes:['coop','base','ffa'],bonus:10},
   {id:'nightmare',name:'NIGHTMARE',what:'Always night. Raiders move, spot and fire faster, and any raid without a boss has a 1-in-12 surprise boss (15-30 shards). PvP: night only.',modes:['coop','base','ffa'],bonus:15},
   {id:'berserk',name:'BERSERK',what:'Bosses attack about a third more often. Their warnings are just as long, and they move no faster.',modes:['coop'],bonus:10},
   {id:'glass',name:'GLASS CANNON',what:'Everyone deals 50% more damage and has 30% less health.',modes:['base','ffa'],bonus:0},

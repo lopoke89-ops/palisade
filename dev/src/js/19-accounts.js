@@ -120,6 +120,11 @@ function queueClaim(c){
   flushClaims().then(()=>{if(claims.includes(q)&&game.claimAt===q.at&&game.phase==='over')$('overLoot').textContent=flushWhy==='wait'?'Saving to your account in a few seconds…':flushWhy==='later'?'Kept on this device. It saves to your account in a few minutes (results can\'t add up to more play time than real time).':'No connection right now. Your result is kept on this device and reaches your account when you\'re back online.'});
   return {kind:c.kind,pending:true,cases:{},shards:0,unlocked:[],text:'Sending your result to your account…'};
 }
+// v0.9.3.6: a run that ended in a reload or crash rejoins the queue in time order (recoverRunDraft)
+function recoverClaim(uid,c,at){
+  if(claims.some(q=>q.uid===uid&&q.at===at))return;
+  claims.push({...c,uid,at});claims.sort((a,b)=>a.at-b.at);saveClaims();if(acct.s)flushClaims();
+}
 function flushClaims(){
   if(flushing)return flushing;if(!claims.length||!acct.s)return Promise.resolve();
   const run=async()=>{

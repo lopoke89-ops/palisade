@@ -4,8 +4,8 @@ let rockets=[],fires=[],zaps=[],slashes=[],rings=[],chains=[];   // boss rockets
 let players=new Map(),myId='solo',nextId=1;   // every soldier in the yard; `player` is the one on this phone
 let game={phase:'title',paused:false,time:0,wave:0,sel:0,piece:'wall',stats:{dropped:0,built:0,lost:0,repairs:0,revives:0}};
 let pick={cls:'soldier',diff:'normal',mode:'5',pvp:'coop',map:'yard',size:'std',oct:false};
-let demo=false,demoT=0,demoAcc=0;   // the menu's live background: Dell alone against demo raids
-const cfg={volume:.8,music:.7,shake:1,haptics:true,fps:false,name:'',build:true};
+let demo=false,demoT=0,demoAcc=0;   // the menu's live background: Delgado alone against demo raids
+const cfg={volume:.8,music:.7,shake:1,haptics:true,fps:false,fpsMode:'auto',name:'',build:true};
 try{Object.assign(cfg,JSON.parse(localStorage.getItem('palisade.cfg.v1')||'{}'))}catch(e){}
 function saveCfg(){try{localStorage.setItem('palisade.cfg.v1',JSON.stringify(cfg))}catch(e){}}
 const light={L:.12,r:28,g:34,b:44,warm:0};
@@ -47,9 +47,9 @@ const UPG=[
   {k:'g',name:'RANGE',what:'+12% reach and bullet speed per level',cost:[15,35,60,100]},
   {k:'a',name:'ARMOR',what:'+15% max health per level',cost:[20,45,80,130]},
   {k:'n',name:'GRENADES',what:'+1 grenade each raid, bigger blasts',cost:[15,35,60,100]}];
-// co-op / Endless only. Dell's level is shared by the whole crew; anyone can buy the next one.
+// co-op / Endless only. Delgado's level is shared by the whole crew; anyone can buy the next one.
 // +15% damage, range and fire rate per level, added (not multiplied): level 4 = +60% each.
-const DELL_UP={name:'DELL',what:'+15% damage, range and fire rate per level. Shared by the whole crew.',cost:[30,60,100,150]};
+const DELL_UP={name:'DELGADO',what:'+15% damage, range and fire rate per level. Shared by the whole crew.',cost:[30,60,100,150]};
 // the core doesn't heal on its own: 25 salvage (13 for the quartermaster) buys back up to 50 health
 const CORE_FIX={hp:50,cost:25};
 const coreFixCost=p=>Math.ceil(CORE_FIX.cost*(p.C.repair||1));
@@ -90,7 +90,7 @@ function buyDell(p){
   const L=game.dellLv|0;
   if(game.pvp||!canShop(p)||L>=4||p.sal<DELL_UP.cost[L])return false;
   p.sal-=DELL_UP.cost[L];game.dellLv=L+1;
-  toastAll(`DELL · LEVEL ${L+1}`,`${p.name} upgraded Dell's shotgun: +${15*(L+1)}% damage, range and fire rate.`);personal(p,'restock');return true;
+  toastAll(`DELGADO · LEVEL ${L+1}`,`${p.name} upgraded Delgado's shotgun: +${15*(L+1)}% damage, range and fire rate.`);personal(p,'restock');return true;
 }
 // who gets paid for a kill; bullets and grenades remember whose they were
 function award(own,e){
@@ -136,7 +136,7 @@ function newGame(roster,pvp='',opt={}){
   coreK=cores.length?idx(core.i,core.j):-1;
   game.dellLv=0;
   qm={x:3.5+off[0],y:11.5+off[1],hp:180,max:180,alive:true,revive:0,aim:{x:1,y:0},cd:0,sup:8,gt:0,work:0,job:'',next:-1,pathT:0,scanT:0,foe:null,walk:0,flash:0,mats:[24,0,0],hurt:9};
-  if(pvp||mods.includes('alone'))Object.assign(qm,{alive:false,gone:true,x:-9,y:-9});   // Dell sits PvP (and On Your Own) out
+  if(pvp||mods.includes('alone'))Object.assign(qm,{alive:false,gone:true,x:-9,y:-9});   // Delgado sits PvP (and On Your Own) out
   enemies=[];bullets=[];lobs=[];charges=[];parts=[];flashes=[];floats=[];sacks=[];rockets=[];fires=[];zaps=[];slashes=[];rings=[];chains=[];
   const mode=['5','10','endless'].includes(pick.mode)?pick.mode:'5';
   game={phase:pvp==='ffa'?'raid':'build',paused:false,wave:0,timer:pvp==='base'?PVP.truce:pvp==='ffa'?PVP.ffaTime:40+Df.build,queue:[],qn:0,spawnT:0,sel:game.sel||0,piece:'wall',time:0,tip:0,gathered:0,C:player.C,Df,
@@ -154,6 +154,6 @@ function newGame(roster,pvp='',opt={}){
   if(pvp==='base'){const me=TEAMS[player.team],them=TEAMS[player.team==='a'?'b':'a'];game.tip=9;
     setTip(`You're ${me.name}. Truce for ${PVP.truce} seconds: gather and wall in your stake. Then knock down the ${them.name} stake. ${ctl('ARMORY','E',padKey('armory'))} at your stake spends salvage.`)}
   else if(pvp==='ffa'){game.tip=9;setTip(`Free-for-all. First to ${PVP.ffaGoal} drops wins. The cover can't be broken.`)}
-  else setTip(touchMode?'Stand next to a wood pile to gather. Dell is gathering too.':'Walk next to a wood pile to gather. Dell is gathering too.');
+  else setTip(touchMode?'Stand next to a wood pile to gather. Delgado is gathering too.':'Walk next to a wood pile to gather. Delgado is gathering too.');
 }
 

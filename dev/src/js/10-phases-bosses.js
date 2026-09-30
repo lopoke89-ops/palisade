@@ -17,9 +17,9 @@ function startBuild(dur){
   game.phase='build';game.timer=dur;
   const pay=8+game.wave;for(const p of players.values())p.sal+=pay;
   for(const p of players.values()){p.nades=Math.max(p.nades,p.maxN);if(p.downed){p.alive=true;p.downed=false;p.revive=0}p.hp=p.max;p.stun=0;if(p.gun.mag){p.ammo=p.gun.mag;p.rl=0}}
-  if(!qm.alive&&!qm.gone){qm.alive=true;[qm.x,qm.y]=spawnNearCore();flt(qm.x,qm.y,'DELL IS BACK','#a9bccb')}qm.hp=qm.max;
+  if(!qm.alive&&!qm.gone){qm.alive=true;[qm.x,qm.y]=spawnNearCore();flt(qm.x,qm.y,'DELGADO IS BACK','#a9bccb')}qm.hp=qm.max;
   game.wx=0;refillAbilities();
-  let note=qm.gone?'Grenades refilled.':'Grenades refilled. Dell will head out for materials.';
+  let note=qm.gone?'Grenades refilled.':'Grenades refilled. Delgado will head out for materials.';
   for(const n of nodes)if(n.locked&&n.unlock===game.wave+1){n.locked=false;note=n.type===1?'A brick kiln is lit. Brick soaks rifle fire.':'Scrap metal is open. It shrugs off bullets.'}
   if(game.wave===2)note+=' Breachers join the next raid. Shoot them before they reach a wall.';
   if(todStage(game.wave+1)===2&&todStage(game.wave)!==2)note+=isFinite(game.waves)&&game.wave+1>=game.waves?' The last raid comes at night.':' The next raid comes at night.';
@@ -258,7 +258,7 @@ function endGame(win){
   showOver();
 }
 function setStats(pairs){const rows=[...document.querySelectorAll('#over .stats>div')];rows.forEach((d,i)=>{const pr=pairs[i];d.hidden=!pr;if(pr){d.children[0].textContent=pr[0];d.children[1].textContent=pr[1]}})}
-const COOP_STATS=['Raids survived','Raiders dropped','Walls raised','Walls lost','Repairs by Dell','Revives'];
+const COOP_STATS=['Raids survived','Raiders dropped','Walls raised','Walls lost','Repairs by Delgado','Revives'];
 function showPvpOver(){
   const win=!!game.won,P=[...players.values()],me=player,S=game.stats;sfx(win?'win':'lose',undefined,undefined,true);
   $('overTitle').textContent=win?'VICTORY':'DEFEAT';$('overTitle').className=win?'':'lost';

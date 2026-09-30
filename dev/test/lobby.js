@@ -52,6 +52,8 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
   await p.evaluate(() => { __pal.locker.eq.bg = 'yard'; __pal.showPage('solo') }); assert.equal(await p.evaluate(() => document.getElementById('lobbyBg').hidden), false, 'always a background');
   await p.evaluate(() => { __pal.locker.eq.bg = 'campfire'; __pal.showPage('solo') });
   await p.click('[data-nav=locker]'); await p.click('#lockTabs [data-cat=bg]'); await p.waitForTimeout(200);
+  // since v0.9.3.3 case collections start collapsed and build their tiles when opened
+  await p.evaluate(() => { for (const b of document.querySelectorAll('#lockGrid [id^=collection-bg-]')) if (b.getAttribute('aria-expanded') !== 'true') b.click() }); await p.waitForTimeout(200);
   out.bgTab = await p.evaluate(() => ({ tiles: document.querySelectorAll('#lockGrid .item').length, owned: document.querySelectorAll('#lockGrid .item:not(.lock)').length }));
   assert.ok(out.bgTab.tiles >= 25 && out.bgTab.owned >= 2, 'background tiles');
   await p.locator('#lockGrid .item:not(.lock)').nth(1).click(); out.equipped = await p.evaluate(() => __pal.locker.eq.bg);
