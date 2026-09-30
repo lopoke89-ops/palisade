@@ -4,23 +4,31 @@
 // shipped in. The game code checks game.mods through hasMod(); nothing else needs to know the list.
 // ids are sent over the network and stored with results: never rename one, only add.
 const MODS=[
-  {id:'nopatch',name:'NO PATCH-UPS',what:'No core repair at the armory. Walls can still be fixed.',modes:['coop'],bonus:10},
-  {id:'alone',name:'ON YOUR OWN',what:'No Delgado. Nobody hands out materials, fixes walls or picks you up but your crew.',modes:['coop'],bonus:20},
-  {id:'firestorm',name:'FIRESTORM',what:'More firebrands from raid 1. Bigger, longer fires, and walls burn down faster.',modes:['coop'],bonus:10},
-  {id:'adrenaline',name:'ADRENALINE',what:'Everyone moves 20% faster. Lowers rewards a little.',modes:['coop','base','ffa'],bonus:-15},
-  {id:'laststand',name:'LAST STAND',what:'Go down in a raid and you stay down until it ends, unless a teammate, Delgado or a quartermaster gets you up.',modes:['coop'],bonus:10},
-  {id:'elite',name:'ELITE RAID',what:'No riflemen: every raider is a special. Spotters mark you for the grenadiers and firebrands instead.',modes:['coop'],bonus:15},
+  {id:'nopatch',name:'NO PATCH-UPS',what:'No core repair at the armory. Walls can still be fixed.',modes:['coop','blitz'],bonus:10},
+  {id:'alone',name:'ON YOUR OWN',what:'No Delgado. Nobody hands out materials, fixes walls or picks you up but your crew.',modes:['coop','blitz'],bonus:20},
+  {id:'firestorm',name:'FIRESTORM',what:'More firebrands from raid 1. Bigger, longer fires, and walls burn down faster.',modes:['coop','blitz'],bonus:10},
+  {id:'adrenaline',name:'ADRENALINE',what:'Everyone moves 20% faster. Lowers rewards a little.',modes:['coop','blitz','base','ffa'],bonus:-15},
+  {id:'laststand',name:'LAST STAND',what:'Go down in a raid and you stay down until it ends, unless a teammate, Delgado or a quartermaster gets you up.',modes:['coop','blitz'],bonus:10},
+  {id:'elite',name:'ELITE RAID',what:'No riflemen: every raider is a special. Spotters mark you for the grenadiers and firebrands instead.',modes:['coop','blitz'],bonus:15},
   {id:'bossrush',name:'BOSS RUSH',what:'A boss every other raid. The extra bosses pay 15-30 shards each; raids 5, 10, 15 keep their case.',modes:['coop'],bonus:10},
-  {id:'weather',name:'WEATHER',what:'A storm every other raid (every 40 s in PvP). It slows everyone, raiders and Delgado too; players lose 1 health every 2 s in it.',modes:['coop','base','ffa'],bonus:10},
-  {id:'nightmare',name:'NIGHTMARE',what:'Always night. Raiders move, spot and fire faster, and any raid without a boss has a 1-in-12 surprise boss (15-30 shards). With Boss Rush on too, each Boss Rush boss raid has a 1-in-12 chance of a second boss. PvP: night only.',modes:['coop','base','ffa'],bonus:15},
-  {id:'berserk',name:'BERSERK',what:'Bosses attack about a third more often. Their warnings are just as long, and they move no faster.',modes:['coop'],bonus:10},
+  {id:'weather',name:'WEATHER',what:'A storm every other raid (every 40 s in PvP). It slows everyone, raiders and Delgado too; players lose 1 health every 2 s in it.',modes:['coop','blitz','base','ffa'],bonus:10},
+  {id:'nightmare',name:'NIGHTMARE',what:'Always night. Raiders move, spot and fire faster, and any raid without a boss has a 1-in-12 surprise boss (15-30 shards). With Boss Rush on too, each Boss Rush boss raid has a 1-in-12 chance of a second boss. PvP: night only. Blitzkrieg Rush: night and faster raiders, no surprise bosses.',modes:['coop','blitz','base','ffa'],bonus:15},
+  {id:'berserk',name:'BERSERK',what:'Bosses attack about a third more often. Their warnings are just as long, and they move no faster.',modes:['coop','blitz'],bonus:10},
   {id:'glass',name:'GLASS CANNON',what:'Everyone deals 50% more damage and has 30% less health.',modes:['base','ffa'],bonus:0},
   {id:'onejob',name:'ONE JOB',what:'The host picks one job for everyone. No job changes.',modes:['base','ffa'],bonus:0},
   {id:'scrap',name:'SCRAP SHORTAGE',what:'Kills pay half the salvage.',modes:['base'],bonus:0},
   {id:'frenzy',name:'GRENADE FRENZY',what:'A grenade comes back every 6 s, and blasts are a third bigger.',modes:['base','ffa'],bonus:0},
-  {id:'sudden',name:'SUDDEN DEATH',what:'The last minute: every drop counts double and nobody gets spawn protection.',modes:['ffa'],bonus:0}];
+  {id:'sudden',name:'SUDDEN DEATH',what:'The last minute: every drop counts double and nobody gets spawn protection.',modes:['ffa'],bonus:0},
+  // v0.9.4.0: Blitzkrieg Rush only
+  {id:'hotlz',name:'HOT LZ',what:'The evac site opens at 0:45 instead of 1:00, and the ring is a third smaller.',modes:['blitz'],bonus:15},
+  {id:'blitzclock',name:'DOUBLE TIME',what:'Final Blitz bosses come every 20 s instead of 30 s: 15 of them, not 10. Still 4 at a time at most.',modes:['blitz'],bonus:15},
+  {id:'barrage',name:'ARTILLERY BARRAGE',what:'Shells fall across the map during the evacuation. Each one shows where it lands first.',modes:['blitz'],bonus:10},
+  {id:'lockdown',name:'LOCKDOWN',what:'The armory is shut for the last build before the Final Blitz (no upgrades, no core repair), and Delgado stops fixing walls once it starts.',modes:['blitz'],bonus:10},
+  {id:'scorched',name:'SCORCHED EARTH',what:'Napalm burns 15 s instead of 10, the Blue Butcher\'s arc dust burns for its half second, and twin beams scorch the ground.',modes:['blitz'],bonus:10}];
 const MODBY=Object.fromEntries(MODS.map(m=>[m.id,m]));
-const modMode=pvp=>pvp==='base'||pvp==='ffa'?pvp:'coop';
+// v0.9.4.0: 'blitz' is its own modifier list (Blitzkrieg Rush). pvp here is '' / 'coop' (co-op), 'blitz', 'base' or 'ffa'.
+const modMode=pvp=>pvp==='base'||pvp==='ffa'||pvp==='blitz'?pvp:'coop';
+const coopMods=()=>pick.mode==='blitz'?'blitz':'coop';   // the co-op list that applies to the run being set up
 // keep only known modifiers that work in this mode, in list order, no repeats
 const cleanMods=(list,pvp)=>{const want=new Set(Array.isArray(list)?list:[]),m=modMode(pvp);return MODS.filter(x=>want.has(x.id)&&x.modes.includes(m)).map(x=>x.id)};
 const hasMod=id=>!!(game&&game.mods&&game.mods.includes(id));

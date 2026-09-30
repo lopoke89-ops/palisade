@@ -37,7 +37,7 @@ function partyInvite(){
 }
 function renderPartyState(){
  if(!$('partyShell')||$('partyShell').hidden)return;
- {const pg=$('menu').dataset.page,m=pg==='solo'?myMods('coop'):pg==='lobby'?roomMods():[],el=$('partyMods'),t=m.length?'MODIFIERS · '+modNames(m).join(' · '):'';el.hidden=!t;if(el.textContent!==t)el.textContent=t}
+ {const pg=$('menu').dataset.page,m=pg==='solo'?myMods(coopMods()):pg==='lobby'?roomMods():[],el=$('partyMods'),t=m.length?'MODIFIERS · '+modNames(m).join(' · '):'';el.hidden=!t;if(el.textContent!==t)el.textContent=t}
  const room=inRoom(),rows=partyRows(),me=rows.find(r=>r.id===myId)||rows[0],pg=$('menu').dataset.page,C=CLASSES[pick.cls]||CLASSES.soldier,M=MAPS[pick.map]||MAPS.yard;
  if(pg==='locker'){const eq=locker.eq,nm=(c,k)=>(COSBY[c+':'+k]||{name:k}).name;
   $('partyMode').textContent='LOCKER';$('partyTitle').textContent='YOUR KIT';$('partySubtitle').textContent=`${nm('skin',eq.skin)} · ${nm('hat',eq.hat)} · ${nm("trail",eq.trail)}${/tracer/i.test(nm("trail",eq.trail))?"":" tracer"} · ${nm('fx',eq.fx)}`;
@@ -323,26 +323,27 @@ const renderPlayPanel=renderMapPanel;
 /* ---- v0.9.2: modifiers. The host picks them on the SOLO page or in the room; guests see the host's picks. ---- */
 // saved per mode (cfg.mods = {coop:[…], base:[…], ffa:[…]}); only the ones that work in that mode are ever used
 const myMods=m=>cleanMods((cfg.mods||{})[m],m==='coop'?'':m);
-const roomMods=()=>NET.mode==='guest'?(NET.hostMods||[]):myMods(modMode(pick.pvp));
+const roomKind=()=>pick.pvp==='base'||pick.pvp==='ffa'?pick.pvp:coopMods();   // v0.9.4.0: Blitzkrieg Rush has its own list
+const roomMods=()=>NET.mode==='guest'?(NET.hostMods||[]):myMods(roomKind());
 function toggleMod(m,id){
-  if(NET.mode==='guest')return;const all=Object.assign({coop:[],base:[],ffa:[]},cfg.mods||{}),cur=new Set(all[m]||[]);
+  if(NET.mode==='guest')return;const all=Object.assign({coop:[],blitz:[],base:[],ffa:[]},cfg.mods||{}),cur=new Set(all[m]||[]);
   if(cur.has(id))cur.delete(id);else cur.add(id);all[m]=cleanMods([...cur],m==='coop'?'':m);cfg.mods=all;saveCfg();
   renderMods();showBest();if(NET.mode==='host')broadcastLobby();renderPartyState();
 }
-const modPct=list=>{const b=modBonus(list,'');return b?`REWARDS ${b>0?'+':''}${b}%`:''};
+const modPct=list=>{const b=modBonus(list,coopMods()==='blitz'?'blitz':'');return b?`REWARDS ${b>0?'+':''}${b}%`:''};
 function modBox(box,m,on,edit){
   const key=m+'|'+on.join()+'|'+edit;if(box.dataset.key===key)return;box.dataset.key=key;box.textContent='';
   for(const M of MODS){if(!M.modes.includes(m))continue;const sel=on.includes(M.id);if(!edit&&!sel)continue;
     const b=document.createElement('button');b.type='button';b.className='modChip'+(sel?' sel':'');b.dataset.mod=M.id;b.setAttribute('aria-pressed',sel?'true':'false');b.disabled=!edit;
     const n=document.createElement('b');n.textContent=M.name;const w=document.createElement('span');w.textContent=M.what;b.append(n,w);
-    if(m==='coop'&&M.bonus){const r=document.createElement('i');r.textContent=(M.bonus>0?'+':'')+M.bonus+'%';r.className=M.bonus>0?'up':'down';b.append(r)}
+    if((m==='coop'||m==='blitz')&&M.bonus){const r=document.createElement('i');r.textContent=(M.bonus>0?'+':'')+M.bonus+'%';r.className=M.bonus>0?'up':'down';b.append(r)}
     if(edit)b.addEventListener('click',()=>{initAudio();toggleMod(m,M.id)});box.append(b)}
   if(!box.children.length){const p=document.createElement('p');p.className='lede sm';p.textContent=edit?'No modifiers for this mode.':'No modifiers. The host picks them.';box.append(p)}
 }
 function renderMods(){
-  if($('soloMods')){const on=myMods('coop');modBox($('soloMods'),'coop',on,true);$('soloModTag').textContent=on.length?`${on.length} ON${modPct(on)?' · '+modPct(on):''}`:''}
-  if($('lMods')){const m=modMode(pick.pvp),on=roomMods(),host=NET.mode!=='guest';modBox($('lMods'),m,on,host);
-    $('lModTag').textContent=on.length?`${on.length} ON${m==='coop'&&modPct(on)?' · '+modPct(on):''}`:'';
+  if($('soloMods')){const k=coopMods(),on=myMods(k);modBox($('soloMods'),k,on,true);$('soloModTag').textContent=on.length?`${on.length} ON${modPct(on)?' · '+modPct(on):''}`:''}
+  if($('lMods')){const m=roomKind(),on=roomMods(),host=NET.mode!=='guest';modBox($('lMods'),m,on,host);
+    $('lModTag').textContent=on.length?`${on.length} ON${(m==='coop'||m==='blitz')&&modPct(on)?' · '+modPct(on):''}`:'';
     const oj=on.includes('onejob');$('lOneJob').hidden=!oj;$('lJobs').classList.toggle('locked',oj);
     document.querySelectorAll('[data-oj]').forEach(b=>{b.classList.toggle('sel',b.dataset.oj===pick.job);b.disabled=!host})}
 }

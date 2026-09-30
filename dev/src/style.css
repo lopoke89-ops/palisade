@@ -29,6 +29,7 @@ button:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
 .phaseRow{display:flex;align-items:center;gap:10px}
 #phaseLab{font-family:var(--stencil);font-weight:900;font-size:22px;letter-spacing:.06em;line-height:1}
 #phaseLab.raid{color:var(--rust)}
+#phaseLab.evac{color:#8aff9a}
 #pauseBtn{pointer-events:auto;width:30px;height:30px;background:rgba(27,24,20,.8);border:1px solid var(--line);font-family:var(--stencil);font-weight:900;font-size:14px;letter-spacing:.1em;padding:0}
 #phaseVal{font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums}
 #skipBtn{pointer-events:auto;margin-top:6px;background:transparent;border:1px solid var(--warn);color:var(--warn);

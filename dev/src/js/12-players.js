@@ -9,13 +9,15 @@ function update(dt){
   else if(game.phase==='build'){game.timer-=dt;if(game.timer<=0)startRaid()}
   else{
     if(game.queue.length){game.spawnT-=dt;if(game.spawnT<=0){spawnEnemy(game.queue.shift());game.spawnT=game.spawnGap||1.1}}
-    else if(!enemies.length&&!charges.length&&!rockets.length){if(game.wave>=game.waves){endGame(true);return}startBuild(24+game.Df.build)}
+    if(game.fb){fbTick(dt);if(game.phase==='over')return}   // v0.9.4.0: the Final Blitz runs on its clock, not on an empty field
+    else if(!game.queue.length&&!enemies.length&&!charges.length&&!rockets.length){if(game.wave>=game.waves){endGame(true);return}startBuild(24+game.Df.build)}
   }
   if(flowDirty){flowT-=dt;if(flowT<=0){computeFlow();flowDirty=false}}
   for(const p of players.values())simPlayer(p,dt);
-  updateQM(dt);updateEnemies(dt);updateBullets(dt);updateLobs(dt);updateCharges(dt);updateRockets(dt);updateWalls(dt);updateNodes(dt);
+  updateQM(dt);updateEnemies(dt);updateBullets(dt);updateLobs(dt);updateCharges(dt);updateRockets(dt);updateArcs(dt);updateWalls(dt);updateNodes(dt);
   if(game.pvp==='base'){for(const c of cores)if(c.hp<=0&&game.phase!=='over'){c.hp=0;explode(c.i+.5,c.j+.5,1.8,1.3);endPvp(c.team==='a'?'b':'a');return}}
-  else if(!game.pvp&&core.hp<=0&&game.phase!=='over'){core.hp=0;explode(core.i+.5,core.j+.5,1.8,1.3);endGame(false)}
+  else if(!game.pvp&&core.hp<=0&&game.phase!=='over'&&!(game.fb&&game.fb.evac)){   // once the evacuation starts, the core no longer decides it
+   core.hp=0;explode(core.i+.5,core.j+.5,1.8,1.3);endGame(false)}
 }
 function assist(d){
   let best=null,ba=.32;const a0=Math.atan2(d.y,d.x),p=player;

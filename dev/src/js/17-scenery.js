@@ -226,8 +226,9 @@ const ECOL={rifle:'#d65a3a',gren:'#e2b436',breach:'#ff8a5a',shield:'#9aa4ae',med
 function itemEnemy(e){
   if(e.type==='boss'){const B=BOSSES[e.boss];if(!B)return;const I=bossInfo(e.boss);
     if(e.burrow||(e.boss==='foreman'&&(e.st===2||e.st===4))){drawMound(e);return}
-    if(B.raft)drawRaft(e);
-    drawPerson(e.x,e.y,Object.assign({aim:e.aim,walk:B.raft?0:e.walk,flash:e.flash>0,hp:e.hp/e.max,big:1.45,tag:I.name,tagCol:I.col,swing:e.boss==='butcher'?e.st|0:0},I.look));return}
+    const rf=B.raft&&e.raft!==false;if(rf)drawRaft(e);const kb=bossBase(e.boss);
+    drawPerson(e.x,e.y,Object.assign({aim:e.aim,walk:rf?0:e.walk,flash:e.flash>0,hp:e.hp/e.max,big:1.45,tag:I.name,tagCol:I.col,swing:kb==='butcher'&&e.st<5?e.st|0:e.boss==='bluebutcher'&&e.st===5?1:0},I.look));
+    if(e.boss==='bulldozer'&&e.st===6)drawDazed(e);return}
   drawPerson(e.x,e.y,Object.assign({aim:e.aim,walk:e.walk,flash:e.flash>0,hp:e.hp/e.max},LOOK[e.type]||LOOK.rifle,{satchel:e.type==='breach'&&!e.planted},e.type==='shield'?{big:1.1}:null));
   if(e.type==='medic'&&game.phase==='raid'){const c=iso(e.x,e.y);g.strokeStyle='rgba(143,224,160,.35)';g.lineWidth=1.2*u;g.beginPath();g.ellipse(c[0],c[1],TW2*2.6,TH2*2.6,0,0,Math.PI*2);g.stroke()}   // his healing reach
 }
@@ -264,6 +265,7 @@ function render(dt){
   if(!caches||caches.key!==cacheKey())makeCaches();
   fadeT-=dt;if(fadeT<=0){fadeT=.1;updateFades()}
   let fx=p.x,fy=p.y,cxF=W<760?.4:.5,cyF=.52; // keep the east approach clear of the kit column on phones
+  if(p.out&&!demo){const s=spectateTarget(p);fx=s.x;fy=s.y}   // v0.9.4.0: out of the Final Blitz, you watch your crew
   if(demo){const t=game.time*.07;fx=core.i+2.5+Math.cos(t)*2.5;fy=core.j-2+Math.sin(t)*2;cxF=.5;cyF=W>700?.5:.3}
   const tx=W*cxF-(fx-fy)*TW2,ty=H*cyF-(fx+fy)*TH2;
   camSX+=(tx-camSX)*.14;camSY+=(ty-camSY)*.14;
@@ -295,12 +297,13 @@ function render(dt){
   for(const b of bullets)drawTracer(b);
   if(playing()&&touchMode&&!padMode&&p.alive&&!game.pvp){const e=lockNow(p);if(e)drawLock(e)}
   g.lineCap='butt';
-  for(const l of lobs){const t=l.t/l.T,x=l.x0+(l.x1-l.x0)*t,y=l.y0+(l.y1-l.y0)*t,z=Math.sin(Math.PI*t)*(40+Math.hypot(l.x1-l.x0,l.y1-l.y0)*9)*u+WH*.5*(1-t);
+  for(const l of lobs){if(l.t<0)continue;const t=l.t/l.T,x=l.x0+(l.x1-l.x0)*t,y=l.y0+(l.y1-l.y0)*t,z=Math.sin(Math.PI*t)*((l.k===3||l.k===5?90:40)+Math.hypot(l.x1-l.x0,l.y1-l.y0)*9)*u+WH*.5*(1-t);
     const c=iso(x,y);g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(c[0],c[1],3*u,1.5*u,0,0,Math.PI*2);g.fill();
     if(l.k===1){g.fillStyle='#2f6a3a';g.fillRect(c[0]-2*u,c[1]-z-3*u,4*u,6*u);g.fillStyle='#ffb040';g.beginPath();g.arc(c[0],c[1]-z-4.5*u,1.8*u+Math.sin(game.time*30)*.6*u,0,Math.PI*2);g.fill()}   // fire bottle
+    else if(l.k>=3&&l.k<=5){drawBlitzLob(l,c,z,t)}   // v0.9.4.0: missile, napalm bottle, artillery shell
     else if(l.k===2){g.fillStyle='#6f695f';g.strokeStyle=OUT;g.lineWidth=1.2*u;g.beginPath();g.moveTo(c[0]-7*u,c[1]-z);g.lineTo(c[0]-4*u,c[1]-z-6*u);g.lineTo(c[0]+6*u,c[1]-z-5*u);g.lineTo(c[0]+7*u,c[1]-z+2*u);g.lineTo(c[0]-2*u,c[1]-z+4*u);g.closePath();g.fill();g.stroke()}   // rock slab
     else{g.fillStyle='#262219';g.beginPath();g.arc(c[0],c[1]-z,3*u,0,Math.PI*2);g.fill()}
-    const e=iso(l.x1,l.y1);g.strokeStyle=l.k===1?'rgba(255,150,50,.6)':l.k===2?'rgba(255,177,58,.65)':'rgba(214,90,58,.55)';g.lineWidth=1.2*u;g.beginPath();g.ellipse(e[0],e[1],TW2*l.R*.9*(1-t*.3),TH2*l.R*.9*(1-t*.3),0,0,Math.PI*2);g.stroke()}
+    const e=iso(l.x1,l.y1);g.strokeStyle=l.k===1?'rgba(255,150,50,.6)':l.k===2?'rgba(255,177,58,.65)':l.k===4?'rgba(255,90,26,.7)':l.k===3||l.k===5?`rgba(255,60,40,${.55+.35*Math.sin(game.time*18)})`:'rgba(214,90,58,.55)';g.lineWidth=(l.k===3||l.k===5?2:1.2)*u;g.beginPath();g.ellipse(e[0],e[1],TW2*l.R*.9*(1-t*.3),TH2*l.R*.9*(1-t*.3),0,0,Math.PI*2);g.stroke()}
   PM('parts');for(const q of parts){if(q.kind.startsWith('finish:'))continue;const c=iso(q.x,q.y),a=Math.max(0,q.life/q.max);
     if(q.kind==='bubble'){const r=q.size*u*(1.25-a*.25),cx=c[0]+Math.sin(game.time*4+q.h)*2*u,cy=c[1]-q.z;g.globalAlpha=Math.min(1,a*1.8);
       g.fillStyle='rgba(255,226,130,.16)';g.beginPath();g.arc(cx,cy,r,0,Math.PI*2);g.fill();g.lineWidth=1.3*u;g.strokeStyle='#ffd24a';g.stroke();
@@ -333,7 +336,7 @@ function render(dt){
   g.globalCompositeOperation='source-over';
   drawStorm(dt);drawVignette(demo);PM('floats');
   for(const f of floats){const c=iso(f.x,f.y),a=f.life/f.max;g.globalAlpha=Math.min(1,a*2);label(f.t,c[0],c[1]-WH*1.5-(1-a)*24*u,f.col,11);g.globalAlpha=1}
-  PM('ui');if(playing()&&!overlayOpen())drawPrompts(p);
+  PM('ui');if(playing()&&!overlayOpen())drawPrompts(p);if(game.fb&&!demo)drawEvacHud();
   if(playing()&&p.alive&&!overlayOpen()){drawCrosshair(p);drawShells(p)}
   const top=110;
   for(const e of game.pvp&&!demo?foes():enemies){const c=iso(e.x,e.y);if(c[0]>14&&c[0]<W-14&&c[1]>top&&c[1]<H-14)continue;

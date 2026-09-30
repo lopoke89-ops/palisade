@@ -708,14 +708,14 @@ function drawWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
 // 'zap' lightning rifle, 'sword' (swing: 0 rest, 1 wind-up, 2 charge wind-up, 3 charging)
 function gunArms(hand,sd,gl,shB,shF,sleeve,nogun,bob,bp=-1,kind='',swing=0){
   if(nogun){limb(shB,[shB[0],-13.5+bob],sleeve,2.6);limb(shF,[shF[0],-13.5+bob],sleeve,2.6);return}
-  if(kind==='sword'||kind==='swordp'){const pk=kind==='swordp';
+  if(kind==='sword'||kind==='swordp'||kind==='swordb'){const pk=kind==='swordp',bl=kind==='swordb';
     const sx=sd.x>=0?1:-1,a=swing===1?Math.atan2(-1,sx*.35):swing===2?Math.atan2(-.35,sx):swing===3?Math.atan2(sd.y,sd.x):Math.atan2(sd.y+.7,sd.x),c=Math.cos(a),n=Math.sin(a);
     limb(shB,hand,sleeve,2.6);limb(shF,hand,sleeve,2.6);
     const tip=[hand[0]+c*25,hand[1]+n*25],base=[hand[0]+c*2,hand[1]+n*2];
-    if(swing===1||swing===2){g.globalAlpha=.55;seg(base,tip,pk?'#ff8a2a':'#ff4a32',6);g.globalAlpha=1}
-    if(pk){g.globalAlpha=.3+.15*Math.sin(game.time*11);seg(base,tip,'#ff9a3a',5);g.globalAlpha=1}
+    if(swing===1||swing===2){g.globalAlpha=.55;seg(base,tip,bl?'#3ae0e0':pk?'#ff8a2a':'#ff4a32',6);g.globalAlpha=1}
+    if(pk||bl){g.globalAlpha=.3+.15*Math.sin(game.time*11);seg(base,tip,bl?'#5af0ff':'#ff9a3a',5);g.globalAlpha=1}
     seg([hand[0]-c*4,hand[1]-n*4],base,OUT,3.4);seg([hand[0]-c*4,hand[1]-n*4],base,'#3a2a1a',2);
-    seg(base,tip,OUT,3.8);seg(base,tip,pk?'#ffb070':'#d9dee0',2.2);seg([base[0]+c*6,base[1]+n*6],tip,pk?'#fff0c8':'#ffffff',.7);
+    seg(base,tip,OUT,3.8);seg(base,tip,bl?'#7af4ff':pk?'#ffb070':'#d9dee0',2.2);seg([base[0]+c*6,base[1]+n*6],tip,bl?'#e8ffff':pk?'#fff0c8':'#ffffff',.7);
     seg([base[0]-n*4,base[1]+c*4],[base[0]+n*4,base[1]-c*4],OUT,2.8);seg([base[0]-n*3.4,base[1]+c*3.4],[base[0]+n*3.4,base[1]-c*3.4],'#8a6a36',1.6);return}
   if(kind==='shield'){   // riot shield on the front arm, pistol in the other hand
     limb(shB,hand,sleeve,2.6);const pm=[hand[0]+sd.x*6,hand[1]+sd.y*6];seg(hand,pm,OUT,3.6);seg(hand,pm,'#2b2823',2.2);
@@ -895,22 +895,24 @@ function drawDowned(x,y,o,prog,tag){
 /* ---------- boss effects: drawn over the night lighting so a warning is never lost in the dark ---------- */
 function bossLine(x0,y0,x1,y1,z){const a=iso(x0,y0),b=iso(x1,y1);g.beginPath();g.moveTo(a[0],a[1]-z);g.lineTo(b[0],b[1]-z);g.stroke()}
 function drawBossFx(){
-  const ch=WH*.55,t=game.time,pulse=.55+.45*Math.sin(t*22);
-  for(const f of fires){const c=iso(f.x,f.y),a=Math.min(1,f.t)*(.34+.1*Math.sin(t*9+f.x*3)),fr=(f.r||.9)/.9;g.fillStyle=`rgba(255,110,40,${a})`;g.beginPath();g.ellipse(c[0],c[1],TW2*.95*fr,TH2*.95*fr,0,0,Math.PI*2);g.fill()}
+  const ch=WH*.55,t=game.time,pulse=.55+.45*Math.sin(t*22);drawEvacGround(t);
+  for(const f of fires){const c=iso(f.x,f.y),a=Math.min(1,f.t)*(.34+.1*Math.sin(t*9+f.x*3)),fr=(f.r||.9)/.9;if(f.nap){drawNapalm(f,c,a,fr,t);continue}g.fillStyle=`rgba(255,110,40,${a})`;g.beginPath();g.ellipse(c[0],c[1],TW2*.95*fr,TH2*.95*fr,0,0,Math.PI*2);g.fill()}
   // spotters: a red laser while they line up (st 1), solid with a mark over the soldier once they have them (st 2)
   for(const e of enemies){if(e.type!=='spotter'||!e.st)continue;const a=iso(e.x,e.y),b=iso(e.lx,e.ly);g.strokeStyle=e.st===2?'rgba(255,60,50,.75)':`rgba(255,60,50,${.25+.3*pulse})`;g.lineWidth=(e.st===2?1.3:.9)*u;
     g.beginPath();g.moveTo(a[0],a[1]-ch);g.lineTo(b[0],b[1]-ch);g.stroke();
     if(e.st===2){const y=b[1]-WH*1.9,s=5*u;g.fillStyle='#ff4a3a';g.beginPath();g.moveTo(b[0],y-s);g.lineTo(b[0]+s*.7,y);g.lineTo(b[0],y+s);g.lineTo(b[0]-s*.7,y);g.closePath();g.fill()}}
   for(const c of chains){const a=iso(c.x0,c.y0),b=iso(c.x1,c.y1),k=c.life/c.max;g.strokeStyle=`rgba(200,205,200,${k})`;g.lineWidth=2.2*u;g.setLineDash([4*u,2*u]);g.beginPath();g.moveTo(a[0],a[1]-ch);g.lineTo(b[0],b[1]-ch*.8);g.stroke();g.setLineDash([])}
   for(const e of enemies){if(e.type!=='boss'||!e.st)continue;const f=NET.mode==='guest'?(e.stF||0):Math.max(0,e.stT/e.stM);
-    if(e.boss==='demolisher'){const a=Math.atan2(e.ly-e.y,e.lx-e.x),L=Math.hypot(e.lx-e.x,e.ly-e.y);
+    if(BOSSES[e.boss]&&BOSSES[e.boss].base&&drawBlitzFx(e,f,pulse,ch))continue;   // v0.9.4.0: a Blitzkrieg variant's own warnings
+    const kb=bossBase(e.boss);
+    if(kb==='demolisher'){const a=Math.atan2(e.ly-e.y,e.lx-e.x),L=Math.hypot(e.lx-e.x,e.ly-e.y);
       g.setLineDash([7*u,5*u]);g.lineWidth=2.2*u;g.strokeStyle=`rgba(255,60,40,${.5+.45*pulse})`;
       for(const o of e.st===2?[-.3,0,.3]:[0]){const qx=e.x+Math.cos(a+o)*L,qy=e.y+Math.sin(a+o)*L,q=iso(qx,qy);bossLine(e.x,e.y,qx,qy,ch*1.2);
         g.beginPath();g.ellipse(q[0],q[1],TW2*1.5*(1.15-f*.15),TH2*1.5*(1.15-f*.15),0,0,Math.PI*2);g.stroke()}
       g.setLineDash([])}
-    else if(e.boss==='butcher'&&e.st===1){const a0=Math.atan2(e.aim.y,e.aim.x);g.fillStyle=`rgba(255,50,40,${.18+.2*pulse})`;g.beginPath();const c0=iso(e.x,e.y);g.moveTo(c0[0],c0[1]);
+    else if(kb==='butcher'&&e.st===1){const a0=Math.atan2(e.aim.y,e.aim.x);g.fillStyle=`rgba(255,50,40,${.18+.2*pulse})`;g.beginPath();const c0=iso(e.x,e.y);g.moveTo(c0[0],c0[1]);
       for(let k=0;k<=10;k++){const a=a0+(k/10-.5)*2.4,c=iso(e.x+Math.cos(a)*1.5,e.y+Math.sin(a)*1.5);g.lineTo(c[0],c[1])}g.closePath();g.fill()}
-    else if(e.boss==='butcher'&&e.st===2){const dx=e.lx-e.x,dy=e.ly-e.y,l=Math.hypot(dx,dy)||1,nx=-dy/l*.45,ny=dx/l*.45,P=[[e.x+nx,e.y+ny],[e.lx+nx,e.ly+ny],[e.lx-nx,e.ly-ny],[e.x-nx,e.y-ny]].map(q=>iso(q[0],q[1]));
+    else if(kb==='butcher'&&e.st===2){const dx=e.lx-e.x,dy=e.ly-e.y,l=Math.hypot(dx,dy)||1,nx=-dy/l*.45,ny=dx/l*.45,P=[[e.x+nx,e.y+ny],[e.lx+nx,e.ly+ny],[e.lx-nx,e.ly-ny],[e.x-nx,e.y-ny]].map(q=>iso(q[0],q[1]));
       g.fillStyle=`rgba(255,50,40,${.16+.22*pulse})`;g.strokeStyle=`rgba(255,80,60,${.6+.3*pulse})`;g.lineWidth=1.6*u;g.beginPath();P.forEach((q,i)=>i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.closePath();g.fill();g.stroke()}
     else if(e.boss==='ferryman'&&e.st===1){g.setLineDash([3*u,4*u]);g.lineCap='round';g.lineWidth=2.2*u;g.strokeStyle=`rgba(95,214,196,${.5+.45*pulse})`;bossLine(e.x,e.y,e.lx,e.ly,ch);g.setLineDash([]);g.lineCap='butt';
       const q=iso(e.lx,e.ly);g.strokeStyle=`rgba(95,214,196,${.6+.3*pulse})`;g.lineWidth=1.6*u;g.beginPath();g.ellipse(q[0],q[1],TW2*.6,TH2*.6,0,0,Math.PI*2);g.stroke()}
@@ -919,7 +921,7 @@ function drawBossFx(){
     else if(e.boss==='foreman'&&e.st===3){const dx=e.lx-e.x,dy=e.ly-e.y,l=Math.hypot(dx,dy)||1,nx=-dy/l*.5,ny=dx/l*.5,P=[[e.x+nx,e.y+ny],[e.lx+nx,e.ly+ny],[e.lx-nx,e.ly-ny],[e.x-nx,e.y-ny]].map(q=>iso(q[0],q[1]));
       g.fillStyle=`rgba(255,150,40,${.16+.22*pulse})`;g.strokeStyle=`rgba(255,177,58,${.6+.3*pulse})`;g.lineWidth=1.6*u;g.beginPath();P.forEach((q,i)=>i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.closePath();g.fill();g.stroke()}
     else if(e.boss==='foreman'&&e.st===4){const q=iso(e.x,e.y);g.strokeStyle=`rgba(255,70,40,${.6+.4*pulse})`;g.lineWidth=2.4*u;g.beginPath();g.ellipse(q[0],q[1],TW2*1.4,TH2*1.4,0,0,Math.PI*2);g.stroke()}
-    else if(e.boss==='storm'){const dx=e.lx-e.x,dy=e.ly-e.y,l=Math.hypot(dx,dy)||1,ex=clamp(e.x+dx/l*12,0,N),ey=clamp(e.y+dy/l*12,0,N),locked=f<.36;
+    else if(kb==='storm'){const dx=e.lx-e.x,dy=e.ly-e.y,l=Math.hypot(dx,dy)||1,ex=clamp(e.x+dx/l*12,0,N),ey=clamp(e.y+dy/l*12,0,N),locked=f<.36;
       g.lineCap='round';g.strokeStyle=locked?`rgba(235,250,255,${.55+.45*pulse})`:'rgba(127,224,255,.7)';g.lineWidth=(1+2.4*(1-f))*u;bossLine(e.x,e.y,ex,ey,ch*1.2);g.lineCap='butt'}}
   for(const r of rockets){const c=iso(r.x,r.y),sd=wdirToScreen({x:r.vx,y:r.vy}),z=c[1]-ch,L=7*u;
     g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(c[0],c[1],5*u,2.4*u,0,0,Math.PI*2);g.fill();
@@ -927,6 +929,7 @@ function drawBossFx(){
     g.strokeStyle='#5d6450';g.lineWidth=3.6*u;g.stroke();g.lineCap='butt';
     g.globalCompositeOperation='lighter';const R=9*u*(1+.2*Math.sin(t*40));g.drawImage(SOFT.glow,c[0]-sd.x*L*1.3-R,z-sd.y*L*1.3-R,R*2,R*2);g.globalCompositeOperation='source-over'}
   g.globalCompositeOperation='lighter';g.lineCap='round';g.lineJoin='round';
+  drawArcs(t,ch);
   for(const zp of zaps){const a=zp.life/zp.max,P=zp.pts;
     for(let i=0;i+3<P.length;i+=2){const A=iso(P[i],P[i+1]),B=iso(P[i+2],P[i+3]),ax=A[0],ay=A[1]-ch*1.2,bx=B[0],by=B[1]-ch,d=Math.hypot(bx-ax,by-ay),n=Math.max(3,Math.round(d/(14*u))),nx=-(by-ay)/(d||1),ny=(bx-ax)/(d||1),pts=[[ax,ay]];
       for(let k=1;k<n;k++){const o=(rnd()-.5)*12*u;pts.push([ax+(bx-ax)*k/n+nx*o,ay+(by-ay)*k/n+ny*o])}pts.push([bx,by]);

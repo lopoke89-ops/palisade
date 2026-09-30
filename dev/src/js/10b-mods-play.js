@@ -9,7 +9,7 @@ const nightmare=()=>hasMod('nightmare');
 // Boss Rush: the even raids that don't already have one; Nightmare: 1 in 12 on any raid without one.
 // These in-between bosses pay 15-30 shards each instead of a case.
 function extraBoss(w){
-  if(bossOf(w))return'';const L=(MAP&&MAP.bosses)||BOSS_ORDER;
+  if(bossOf(w)||blitz())return'';   // Blitzkrieg Rush has the Final Blitz insteadconst L=(MAP&&MAP.bosses)||BOSS_ORDER;
   if(hasMod('bossrush')&&w%2===0)return L[(w/2)%L.length];
   if(nightmare()&&rnd()<1/12)return L[Math.floor(rnd()*L.length)];
   return'';

@@ -15,7 +15,10 @@ const CASES={
     how:'Dropped by the Butcher and the Ferryman. Or 12 shards.'},
   // v0.9.3: flags as lobby backgrounds and tracers. drop.win: the chance for everyone in the game after any win
   flags:{name:'FLAG CASE',short:'Flag Cases',col:'#5ab0ff',weights:{c:45,r:30,e:17,l:7,g:1},cost:10,drop:{win:.25},
-    how:'A 25% chance for everyone after any win, co-op or PvP. Or 10 shards.'}
+    how:'A 25% chance for everyone after any win, co-op or PvP. Or 10 shards.'},
+  // v0.9.4.0: Blitzkrieg Rush. Hellfire and the Blue Butcher's arc: tracers, kill effects and two lobby backgrounds
+  blitz:{name:'BLITZKRIEG CASE',short:'Blitzkrieg Cases',col:'#e0433a',weights:{c:45,r:32,e:16,l:6,g:1},cost:14,
+    how:'Blitzkrieg Rush only: two for everyone each time a Blitzkrieg boss goes down, and one more for making the evacuation. Or 14 shards.'}
 };
 const CASE_IDS=Object.keys(CASES),pvpCase=m=>CASE_IDS.find(id=>CASES[id].drop&&CASES[id].drop[m]),bossCase=()=>CASE_IDS.find(id=>CASES[id].drop&&CASES[id].drop.boss),winCase=()=>CASE_IDS.find(id=>CASES[id].drop&&CASES[id].drop.win);
 const SKINS={
@@ -377,15 +380,22 @@ function bossCounted(keys,held,from=0,waves=game.waves,size=game.size){
   return out;
 }
 function bossDrops(keys,held,from=0,waves,size){
-  const out={};for(const k of bossCounted(keys,held,from,waves,size)){const box=bossBox(k==='butcher_oct'?'butcher':k);out[box]=(out[box]|0)+(k==='butcher_oct'?2:1)}
+  const out={};for(const k of bossCounted(keys,held,from,waves,size)){const box=bossBox(k==='butcher_oct'?'butcher':k);out[box]=(out[box]|0)+(k==='butcher_oct'?2:BOSSES[k].cases||1)}
   return out;
 }
 // v0.9.3 milestone counters (the server keeps the same ones for accounts): each boss beaten, raids held on each map
 // and raids held as each class (the class you ended the run as)
 function addMilestones(st,keys,held,from,mine,cls,map,waves,size){
-  for(const k of bossCounted(keys,held,from,waves,size)){const b='boss_'+(k==='butcher_oct'?'butcher':k);st[b]=(st[b]|0)+1}
+  for(const k of bossCounted(keys,held,from,waves,size))bossMilestone(st,k==='butcher_oct'?'butcher':k);
   if(mine>0){if(MAP_IDS.includes(map))st['map_'+map]=(st['map_'+map]|0)+mine;if(CLASSES[cls])st['cls_'+cls+'_raids']=(st['cls_'+cls+'_raids']|0)+mine}
 }
+// v0.9.4.0: a Blitzkrieg boss counts for the boss it comes from (a Blue Butcher is a Butcher) and for the BLITZKRIEG RUSH ladder
+function bossMilestone(st,k){if(!BOSSES[k])return;const b='boss_'+bossBase(k);st[b]=(st[b]|0)+1;if(BOSSES[k].base)st.mode_blitz_bosses=(st.mode_blitz_bosses|0)+1}
+// Blitzkrieg Rush: players left behind at the evacuation keep half their cases and half their shards, odd counts rounded
+// up first (7 -> 4). Raids, boss kills, skill points and milestones are never halved.
+const halfUp=n=>Math.ceil(Math.max(0,n|0)/2);
+const BLITZ_EVAC={cases:1,shards:25};   // making the evacuation: one more Blitzkrieg Case and 25 shards
+const fbCap=(c)=>(c.raid_to|0)>=BLITZ.waves?((c.mods||[]).includes('blitzclock')?BLITZ.maxDT:BLITZ.max):0;
 // the Flag Case's chance after any win (this browser's own locker; the server rolls for accounts)
 function winDrop(){const id=winCase();if(!id||rnd()>=CASES[id].drop.win)return{};caseAdd(id,1);return{[id]:1}}
 // Rewards come back as data (for the reward cards) with a sentence alongside (toasts, older screens):
@@ -395,9 +405,10 @@ function rewardText(R){
   const bits=[],pl=(n,w)=>`${n} ${w}${n===1?'':'s'}`;
   if(R.pending)return R.text||'Sending your result to your account…';
   if(R.kind==='run'){
+    if(R.left)bits.push('Left behind: half your cases and shards');
     if(R.cases.supply>0)bits.push(`+${pl(R.cases.supply,'supply case')}`);
     for(const id in R.cases)if(id!=='supply'&&R.cases[id]>0&&CASES[id])bits.push(`+${R.cases[id]} ${CASES[id].name.toLowerCase()}${R.cases[id]>1?'s':''} ${CASES[id].drop&&CASES[id].drop.win?'for the win':'from bosses'}`);
-    if(R.bossShards>0)bits.push(`+${pl(R.bossShards,'shard')} from in-between bosses`);
+    if(R.bossShards>0)bits.push(`+${pl(R.bossShards,'shard')} from ${R.blitzShards?'bosses and the evac':'in-between bosses'}`);
     if(R.shards-(R.bossShards|0)>0)bits.push(`+${pl(R.shards-(R.bossShards|0),'shard')} from leftover salvage`);
     if(R.sp>0)bits.push(`+${pl(R.sp,'skill point')}`);
     bits.push(`${pl(R.toNext,'more raid')} to the next supply case`);
@@ -411,13 +422,16 @@ const mkReward=(kind,o)=>{const R={kind,cases:{},shards:0,unlocked:[],toNext:3-(
 // left = they walked out before the end. Everything else about the game rides along for the match record.
 // The claim for this phone's share of the run so far. Pure: nothing is spent or saved here.
 function runClaim(held,win,kills,left=false){
-  const from=Math.min(held,game.joinHeld|0),mine=held-from,pct=modBonus(game.mods,'');
+  const res=blitzResult(player);if(res){held=BLITZ.waves;win=res==='evac'}   // v0.9.4.0: once the evac site is open, raid 15 counts as held; making it out is the win
+  const from=Math.min(held,game.joinHeld|0),mine=held-from,pct=modBonus(game.mods,game.mode==='blitz'?'blitz':'');
   const sal=Math.max(0,(player&&player.sal)|0),shards=Math.min(salvageShards(sal,mine),Math.floor(SAL_SHARD.max*(100+pct)/100));
   const keys=(game.bossLog||[]).slice(game.joinBoss|0).slice(0,40),sb=Math.max(0,(game.sbN|0)-(game.joinSB|0)),dur=Math.round(game.time-(game.joinT||0));
   const sbKeys=(game.sbLog||[]).slice(game.joinSB|0).slice(0,40);   // v0.9.3.8: in-between bosses count toward boss milestones
+  const fbKeys=(game.fbLog||[]).slice(game.joinFB|0).slice(0,20);   // v0.9.4.0: the Final Blitz bosses
   const claim={kind:'run',mode:game.mode,diff:pick.diff||'normal',win:!!win,held:mine,raid_from:from,raid_to:held,kills,bosses:keys.length,boss_keys:keys,shard_bosses:sb,sb_keys:sbKeys,
     salvage:sal,size:game.size||'std',duration_s:dur,game_id:game.gid,joined_s:Math.round(game.joinT||0),left_s:Math.round(game.time),left:!!left,
     upgrades:(player?player.upS:'')+':'+(game.dellLv|0),mods:game.mods||[],map:game.map,cls:player?player.cls:pick.cls};
+  if(game.mode==='blitz'){claim.fb_keys=fbKeys;claim.evac=res}
   return {claim,shards};
 }
 function lockerReward(held,win,kills,left=false){
@@ -430,8 +444,9 @@ function lockerReward(held,win,kills,left=false){
 }
 // this browser's own locker (no account): the same rules as the server, minus skill points
 function localRun(c,shards){
-  const st=locker.st,before=locker.cases,held=c.raid_to,from=c.raid_from,mine=c.held,keys=c.boss_keys||[],sb=c.shard_bosses|0;
-  const waves=c.mode==='endless'?Infinity:+c.mode,pct=modBonus(c.mods||[],''),won=c.win&&from*2<=waves;
+  const st=locker.st,held=c.raid_to,from=c.raid_from,mine=c.held,keys=c.boss_keys||[],sb=c.shard_bosses|0,BZ=c.mode==='blitz';
+  const b0={bag:{...locker.bag},cases:locker.cases,shards:locker.shards|0};   // v0.9.4.0: what this run adds, for the reward cards and halving
+  const waves=c.mode==='endless'?Infinity:BZ?BLITZ.waves:+c.mode,pct=modBonus(c.mods||[],BZ?'blitz':''),won=c.win&&from*2<=waves&&(!BZ||c.evac==='evac');
   const drops=bossDrops(keys,held,from,waves,c.size),bshards=sb*(15+Math.floor(rnd()*16));
   locker.shards=(locker.shards|0)+shards+bshards;
   st.raids+=mine;st.drops+=c.kills|0;if(won){st.wins++;if(c.diff==='hard')st.hardWins++}
@@ -442,12 +457,23 @@ function localRun(c,shards){
   for(const id in drops)caseAdd(id,drops[id]);
   addMilestones(st,keys,held,from,mine,c.cls,c.map,waves,c.size);
   // v0.9.3.9: no-account players earn skill points by the server's rule (1 per 5 raids held, 1 per boss) for the case trade
-  const spGain=Math.floor(((locker.spProg|0)+mine)/5)+bossCounted(keys,held,from,waves,c.size).length+sb;locker.spProg=((locker.spProg|0)+mine)%5;
-  locker.sp=(locker.sp|0)+spGain;locker.spTotal=(locker.spTotal|0)+spGain;
+  let spGain=Math.floor(((locker.spProg|0)+mine)/5)+bossCounted(keys,held,from,waves,c.size).length+sb;locker.spProg=((locker.spProg|0)+mine)%5;
   for(const k of(c.sb_keys||[]).slice(0,sb))if(BOSSES[k]){const b='boss_'+k;st[b]=(st[b]|0)+1}   // v0.9.3.8: every boss kill counts
+  let fshards=0;
+  if(BZ){   // v0.9.4.0: Final Blitz bosses (2 Blitzkrieg Cases, 15-30 shards and a skill point each), the evacuation bonus, then halving
+    const fk=(c.fb_keys||[]).filter(k=>BOSSES[k]&&BOSSES[k].base).slice(0,fbCap(c));
+    for(const k of fk){caseAdd('blitz',BOSSES[k].cases||2);fshards+=15+Math.floor(rnd()*16);bossMilestone(st,k)}
+    spGain+=fk.length;
+    if(won){caseAdd('blitz',BLITZ_EVAC.cases);fshards+=BLITZ_EVAC.shards}
+    locker.shards+=fshards;
+  }
+  locker.sp=(locker.sp|0)+spGain;locker.spTotal=(locker.spTotal|0)+spGain;
   const wd=won?winDrop():{};
+  if(BZ&&c.evac==='left'){locker.cases-=Math.floor((locker.cases-b0.cases)/2);for(const id in locker.bag)locker.bag[id]-=Math.floor(((locker.bag[id]|0)-(b0.bag[id]|0))/2);locker.shards-=Math.floor((locker.shards-b0.shards)/2)}
+  const cases={supply:locker.cases-b0.cases};for(const id in locker.bag){const d=(locker.bag[id]|0)-(b0.bag[id]|0);if(d>0)cases[id]=d}
   const got=checkUnlocks();saveLocker();
-  return mkReward('run',{cases:{supply:locker.cases-before,...drops,...wd},shards:shards+bshards,bossShards:bshards,sp:spGain,unlocked:got.map(c=>c.id)});
+  const allShards=locker.shards-b0.shards;
+  return mkReward('run',{cases,shards:allShards,bossShards:Math.min(allShards,bshards+fshards),sp:spGain,unlocked:got.map(c=>c.id),left:BZ&&c.evac==='left',blitzShards:BZ});
 }
 // v0.9.3.6: a co-op/Endless run in progress is written down every few seconds. If the page reloads, the app is
 // killed or the phone dies mid-run, the next start pays what was held (as an early leave) instead of losing it.
@@ -456,7 +482,7 @@ function runHeldNow(){return game.phase==='build'?game.wave:Math.max(0,game.wave
 function runDraftDue(){
   if(demo||!running()||game.pvp||game.phase==='over'||game.rewarded||!player)return false;
   const held=runHeldNow();
-  return !(held<=(game.joinHeld|0)&&(game.bossLog||[]).length<=(game.joinBoss|0)&&(game.sbN|0)<=(game.joinSB|0));
+  return !(held<=(game.joinHeld|0)&&(game.bossLog||[]).length<=(game.joinBoss|0)&&(game.sbN|0)<=(game.joinSB|0)&&(game.fbLog||[]).length<=(game.joinFB|0)&&!blitzResult(player));
 }
 function saveRunDraft(){
   if(!runDraftDue())return;
@@ -496,7 +522,7 @@ function claimReward(c,j){
   else if(j.case_id)cases[j.case_id]=j.cases_granted|0;
   const prog=(j.locker&&j.locker.prog)|0,ids=Array.isArray(j.unlocked_ids)?j.unlocked_ids:(j.unlocked||[]).map(n=>(COS.find(x=>x.name===n)||{id:n}).id);
   const R={kind:c.kind,cases,shards:j.shards|0,unlocked:ids,prog,toNext:j.to_next!==undefined?j.to_next|0:3-prog,cloud:true,chance:j.chance||0,missCase:c.kind==='match'&&!(j.cases_granted>0)?j.case_id:'',
-    bossShards:j.boss_shards|0,sp:j.skill_points|0,spToNext:j.sp_to_next|0};
+    bossShards:j.boss_shards|0,sp:j.skill_points|0,spToNext:j.sp_to_next|0,left:!!j.left_behind,blitzShards:c.mode==='blitz'};
   R.text=rewardText(R);return R;
 }
 const claimText=(c,j)=>claimReward(c,j).text;

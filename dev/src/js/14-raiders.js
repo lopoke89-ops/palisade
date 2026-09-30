@@ -115,7 +115,7 @@ function updateBullets(dt){
 }
 // Compact in place: no replacement array on every simulation tick.
 function compactBullets(){let n=0;for(let i=0;i<bullets.length;i++)if(!bullets[i].dead)bullets[n++]=bullets[i];bullets.length=n}
-function updateLobs(dt){for(const l of lobs){l.t+=dt;if(l.t>=l.T){l.dead=true;if(l.k===1)bottleLand(l);else if(l.k===2)slabLand(l);else{explode(l.x1,l.y1,l.R,l.power,l.own);if(l.own)molotovAt(l)}}}lobs=lobs.filter(l=>!l.dead)}
+function updateLobs(dt){for(const l of lobs){l.t+=dt;if(l.t>=l.T){l.dead=true;if(l.k===1)bottleLand(l);else if(l.k===2)slabLand(l);else if(l.k===4)napalmLand(l);else if(l.k===3||l.k===5)explode(l.x1,l.y1,l.R,l.power,null,true);else{explode(l.x1,l.y1,l.R,l.power,l.own);if(l.own)molotovAt(l)}}}lobs=lobs.filter(l=>!l.dead)}
 // a firebrand's bottle: burning ground for 5 s (it hurts people standing in it) and any wood within a tile catches
 // Firestorm: the patch burns 8 s instead of 5 and is half again as wide, and catches wood further out
 function bottleLand(l){
@@ -147,7 +147,7 @@ function localAmbience(dt){
   for(const kiln of nodes)if(kiln.type===1&&!kiln.locked&&rnd()<dt*1.2)ambient(kiln.i+.68,kiln.j+.28,WH*2,'smoke');
   for(const r of rockets){if(rnd()<dt*30)ambient(r.x,r.y,WH*.55,'smoke');if(rnd()<dt*25)ambient(r.x,r.y,WH*.55,'ember')}
   for(const f of fires){if(rnd()<dt*16)ambient(f.x+(rnd()-.5)*1.1,f.y+(rnd()-.5)*1.1,WH*.2,'flame')}
-  for(const e of enemies)if(e.type==='boss'&&e.boss==='storm'&&rnd()<dt*6)ambient(e.x+(rnd()-.5)*.5,e.y+(rnd()-.5)*.5,WH*(.3+rnd()*.8),'arc');
+  for(const e of enemies)if(e.type==='boss'&&bossBase(e.boss)==='storm'&&rnd()<dt*6)ambient(e.x+(rnd()-.5)*.5,e.y+(rnd()-.5)*.5,WH*(.3+rnd()*.8),'arc');
 }
 function ambient(x,y,z,kind){replaying=true;try{emit(x,y,z,kind)}finally{replaying=false}}
 // count an effect list down and drop what has run out, in place (no new array every frame)

@@ -12,8 +12,8 @@ function qmJob(){
   const down=nearestPlayer(q,p=>p.downed);
   if(down){const tk=tileOf(down);return{name:'revive',who:down,goal:k=>k===tk,pt:down,near:.9}}
   // burning or battered walls inside the compound
-  let best=null,bs=1e9;
-  for(let k=0;k<N*N;k++){const w=walls[k];if(!w||w.skip>0)continue;const i=k%N,j=(k/N)|0;
+  let best=null,bs=1e9;const lock=hasMod('lockdown')&&!!game.fb;   // v0.9.4.0 Lockdown: no wall repairs in the Final Blitz
+  for(let k=0;k<N*N;k++){const w=walls[k];if(lock||!w||w.skip>0)continue;const i=k%N,j=(k/N)|0;
     if(Math.max(Math.abs(i-core.i),Math.abs(j-core.j))>6)continue;
     if(!(w.fire>0||w.hp/w.max<.7))continue;if(q.mats[w.mat]<MAT[w.mat].rep&&!(w.fire>0))continue;
     const s=Math.hypot(i+.5-q.x,j+.5-q.y)-(w.fire>0?4:0);if(s<bs){bs=s;best=k}}
