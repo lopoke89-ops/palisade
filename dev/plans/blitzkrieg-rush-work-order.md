@@ -152,8 +152,45 @@ Art: each variant needs a distinct look that still reads as the same character. 
   - Final Blitz bosses pay shards like Boss Rush's in-between bosses (15–30).
   - Evacuating pays a **Blitzkrieg bonus**: one extra case and a shards bonus.
   - All boss kills count toward milestones for everyone in the match.
-- New stats/milestones (optional; Big U to decide): Blitzkrieg wins (evacuations), times left behind, and Final Blitz bosses killed. Possibly an exclusive cosmetic unlock (e.g. "Win Blitzkrieg Rush").
+- New stats (for the record, no rewards attached): Blitzkrieg wins (evacuations) and times left behind. The milestone ladder is in section 4b.
 - Local (no-account) lockers follow the same rules in `18-cosmetics.js`.
+
+## 4b. Milestone ladder: BLITZKRIEG RUSH (decided by Big U)
+A new milestone category in the Locker, titled with the game mode's name: **BLITZKRIEG RUSH**. It sits next to the boss, map and class ladders in `LADDERS` (`18-cosmetics.js`), with a new `kind:'mode'`.
+
+**The counter:** total boss kills in Blitzkrieg Rush. Add a new locker stat, `mode_blitz_bosses`.
+- Every Blitzkrieg boss kill counts for **everyone in the match**, not just the last hit. That covers the raid 5 and 10 bosses and every Final Blitz boss, following the v0.9.3.8 rule.
+- Left-behind players still count their kills in full (section 4: kills are never halved).
+- Bosses that retreat at 0:00 don't count.
+- These kills also add to the normal per-boss counters (`boss_butcher` etc.). Proposed default: yes, a Blue Butcher kill also counts as a Butcher kill.
+
+**Steps: 10 / 25 / 50 / 75 / 100 boss kills.** That's five steps, where current ladders have four.
+- Give each ladder its own rarity list, instead of the shared `LADDER_RAR=['r','e','l','g']`.
+- Check that the Locker milestone card, the "closest milestone" hint (`20-locker-ui.js`) and progress bars handle five steps.
+
+**Rewards** (order and rarity proposed; the five items are Big U's):
+
+| Step | Reward | Slot | Rarity | Design brief |
+|---|---|---|---|---|
+| 10 | **Devil Horns** | Headgear | Rare | Two curved horns, dark red to black with a glossy highlight. Built from `column`/`dome`/`mesh` like the other hats. Must pass the v0.9.3.9 `headgear_fit` checks on every class, angle and walking pose. |
+| 25 | **Blue Arc** | Tracer | Epic | Bullets fly as the Blue Butcher's glowing blue/teal crescent arc, leaving the same blue dust trail that fades in about 0.5 s. Mirror the boss attack's look, at bullet scale. |
+| 50 | **Blue Butcher** | Skin | Epic | The player version of the Blitzkrieg Blue Butcher: his blue/teal palette, apron and face wrap. Built like the existing Butcher milestone skins (`butcher`…`butcher4`). |
+| 75 | **Hell Portal** | Kill FX | Legendary | A demonic portal: a glowing red/orange ring tears open under the enemy, and the body sinks and is swallowed. Then it snaps shut with embers and a puff of dark smoke. About 1 s total, drawn with shapes like Spider Drop and Soul Harvest. Keep particle counts within the current kill-FX budget. |
+| 100 | **Demon** | Skin (unique body style) | Gold | A demonic, scary body style, not just a recolor. It gets its own silhouette, the way Tung Tung Tung Sahur, Sheet Ghost and Frankenstein's Monster have special bodies. Proposed look: charred red-black skin, glowing ember cracks, a clawed silhouette, a horned demonic head with glowing eyes, and a subtle ember aura (`16b-auras.js`, drawn over the cached figure so it adds no per-frame repaint). |
+
+- **Horns on the Demon:** the Demon body has built-in horns, so it's a special head. Add it to `headwearAllowed` like other special heads: added headwear is blocked, and Devil Horns don't stack on it.
+- **Art rules:**
+  - All five follow the v0.9.3.9 quality bar: study the best existing pieces.
+  - Keep the cached-frame architecture and add no per-frame cost.
+  - Show matched contact sheets in Locker thumbnails and at gameplay scale from all angles. Save them to `dev/evidence/v0.9.4.0/`.
+  - Get Big U's sign-off on previews **before** making any art official, like the v0.9.3.10 hat pass.
+- **Server** (same migration as section 4, needs approval):
+  - `claim_match_reward` adds Blitzkrieg boss kills to `mode_blitz_bosses` for every player in the match, with the usual rejoin caps.
+  - `private.apply_unlocks` grants the five items at 10 / 25 / 50 / 75 / 100.
+  - Seed the five cosmetic ids the same way the existing ladder items are.
+  - PGlite tests: each step unlocks exactly at its threshold; kills from left-behind players count; retreated bosses don't; the counter never goes backwards.
+- **No-account players:** the same counter and unlocks in the local locker (`18-cosmetics.js`).
+- **Cosmetic network:** all five items must show correctly to other players online. Extend `cosmetic_network`, `wardrobe3d`, `locker_fit` and `presentation_posefit` to include them.
 
 ## 5. Modifiers for Blitzkrieg Rush
 Blitzkrieg Rush gets its own modifier list.
@@ -224,6 +261,7 @@ Blitzkrieg Rush gets its own modifier list.
 - **`blitz_network`:** host/client parity (including the evac site, extract progress and per-player results), and rejoin mid-Final Blitz and mid-evac.
 - **`blitz_reward_migration`:** PGlite server tests, including half rewards and the new modifier bonuses.
 - **`blitz_mods`:** see section 5.
+- **`blitz_milestones`:** the BLITZKRIEG RUSH ladder shows five steps (10/25/50/75/100); a kill counts for everyone in the match; each reward unlocks at its step, locally and via the account mock; Devil Horns can't be worn with the Demon body.
 - **Visual:** a boss contact sheet with all five variants, plus Final Blitz and evac screenshots at 390×844 and 844×390 (ring, arrow, extract fill, both game-over screens).
 - **Performance:** a `stress.js` Final Blitz run, numbers recorded in the evidence folder.
 
@@ -242,4 +280,5 @@ Blitzkrieg Rush gets its own modifier list.
 4. The live-boss cap for the Final Blitz (default 4), and what happens to bosses alive at 0:00.
 5. Evac details: the 2-second extract and the 3-tile ring.
 6. The Blitzkrieg modifier list: which to keep and remove, plus the five new modifiers' names and reward bonuses.
-7. The variant names, and whether Blitzkrieg gets its own cosmetic unlock.
+7. The variant names.
+8. Milestone reward order and rarity (section 4b table), and whether Blitzkrieg boss kills also count toward the normal per-boss ladders.
