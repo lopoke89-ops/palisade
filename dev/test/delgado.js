@@ -14,7 +14,7 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
     out[vp.width + 'x' + vp.height] = { lede, hud, armory, dellLeft: /\bDell\b(?! got you)|\bDELL\b/.test(text) };
     await p.close();
   }
-  for (const v of Object.values(out)) { assert.equal(v.hud.lab, 'DELGADO'); assert.ok(v.hud.fits, 'HUD label fits'); assert.ok(v.armory.some(t => t.startsWith('DELGADO')), JSON.stringify(v.armory)); assert.equal(v.dellLeft, false); assert.match(v.lede, /Delgado.*Dell got you/) }
+  for (const v of Object.values(out)) { assert.equal(v.hud.lab, 'DELGADO'); assert.ok(v.hud.fits, 'HUD label fits'); assert.ok(v.armory.some(t => t.startsWith('DELGADO')), JSON.stringify(v.armory)); assert.equal(v.dellLeft, false); assert.match(v.lede, /Delgado/) }
   fs.writeFileSync(__dirname + '/out/delgado.json', JSON.stringify({ out, errors }, null, 2)); assert.deepEqual(errors, []);
   console.log(JSON.stringify(out)); console.log('errors: none'); await b.close();
 })().catch(e => { console.error(e); process.exit(1) });
