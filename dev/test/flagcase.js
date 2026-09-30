@@ -50,14 +50,14 @@ const OLD_TRAILS = ['std', 'green', 'red', 'blue', 'pink', 'gold', 'plasma', 'ra
   });
   assert.ok(out.open.gotNew); assert.ok(out.open.dup); assert.equal(out.open.shards, out.open.want);
 
-  // every flag background draws (a flag's pixels differ from the sky); common/rare/epic are stills, legendary/gold wave
+  // Every full-screen flag draws a nonempty, opaque design; presentation.js covers responsive edges and emblems.
   out.bgs = await p.evaluate(() => {
     const P = __pal, bad = [], still = [], moving = [];
     for (const [id, , r] of P.FLAGS) {
       const B = P.BGS['f_' + id], cv = document.createElement('canvas'); cv.width = 480; cv.height = 270; const x = cv.getContext('2d');
       try { P.drawBg('f_' + id, x, 480, 270, 1) } catch (e) { bad.push(id + ': ' + e.message); continue }
-      const d = x.getImageData(240, 90, 1, 1).data, sky = x.getImageData(20, 200, 1, 1).data;
-      if (Math.abs(d[0] - sky[0]) + Math.abs(d[1] - sky[1]) + Math.abs(d[2] - sky[2]) < 30) bad.push(id + ': no flag');
+      const colours=new Set();for(let yy=15;yy<270;yy+=30)for(let xx=15;xx<480;xx+=30){const d=x.getImageData(xx,yy,1,1).data;if(d[3]!==255)bad.push(id+': transparent field');colours.add([d[0]>>4,d[1]>>4,d[2]>>4].join(','))}
+      if(colours.size<2)bad.push(id+': empty design');
       (B.still === undefined ? moving : still).push(r);
     }
     return { bad, stillOk: still.every(r => 'cre'.includes(r)), movingOk: moving.every(r => 'lg'.includes(r)), moving: moving.length };

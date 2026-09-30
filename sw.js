@@ -1,6 +1,6 @@
 // Keeps a copy of the game on the phone so solo works with no signal.
 // The version below changes every time the game is rebuilt, which swaps in the new copy.
-const V='palisade-82c5871c8e';
+const V='palisade-0e4e6153b7';
 const FILES=['./','index.html','peerjs.min.js','manifest.webmanifest','icon-192.png','icon-512.png','apple-touch-icon.png','big-shoulders-stencil-display-600.woff2','big-shoulders-stencil-display-800.woff2','big-shoulders-stencil-display-900.woff2','ibm-plex-mono-400.woff2','ibm-plex-mono-600.woff2'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting()))});
 // music is big and rarely changes, so it lives in its own cache that survives game updates (saved the first time it plays)

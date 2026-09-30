@@ -3,19 +3,18 @@
 Everything needed to rebuild, test and restore the game. The playable site is the repo's top
 level (built from here); this folder is the source.
 
-Current live status is **v0.9.3.2**. See [STATUS.md](STATUS.md) for the exact GitHub,
-build, server, and test state. The [v0.9.3.1 implementation prompt](plans/v0.9.3.1-polish-music-safe-hardening.md)
-records this patch's scope; the [broader hardening brief](plans/v0.9.3.1-hardening.md)
-remains background and backlog. The release includes the post-v0.9.3 case animation
-optimizations, but their real-phone performance still needs validation.
-Use the [current project blueprint](PROJECT_BLUEPRINT_2026-09-29.md) to plan the next work from today's baseline.
-The [cosmetic and independent-hardening prompt](plans/next-cosmetics-and-hardening-prompt.md)
-records the scope of this release and its remaining real-device and live-service checks.
+Current live status is **v0.9.3.3**, GitHub `main` at `2268c35`. The local
+**v0.9.3.4 candidate** adds full-screen flags, cached scenic depth and more natural
+character motion; it is uncommitted and unpublished. No server migration is required.
+See [STATUS.md](STATUS.md) and the [current blueprint](PROJECT_BLUEPRINT_2026-09-29.md).
 
-The local **v0.9.3.3 candidate** implements the [Locker collections prompt](plans/locker-collections-ui-prompt.md):
-Milestones-only browsing for ladder cosmetics, lazy collapsible case collections, and preserved
-equip focus/scroll. It is uncommitted and unpublished. See [Locker validation](LOCKER_UI_2026-09-29.md)
-for focused checks, captures, and the phone-sized comparison.
+The [presentation report](PRESENTATION_2026-09-29.md) records nine focused checks,
+matched captures/clips and the A/B performance comparison. The [dated backup manifest](backups/2026-09-29-v0.9.3.3-presentation/MANIFEST.md)
+preserves original sources and explains individual scenic rollback. Review captures
+live under `evidence/v0.9.3.4/`; these development files are not shipped assets or offline-cache entries.
+The existing [Locker report](LOCKER_UI_2026-09-29.md) records v0.9.3.3, which Big U has published.
+The [broader hardening brief](plans/v0.9.3.1-hardening.md) is backlog context;
+reward retry/rejoin, import/identity and new modes remain deferred.
 
 ```
 dev/
@@ -69,7 +68,7 @@ set `PAGE` to each build's debug page and run both on the same machine for compa
 
 `run_targeted.sh` serves the built site on localhost:8080, starts a PeerJS server on :9000,
 and runs a small group. Choose `cosmetics` for model/art changes, `locker` for collection UI,
-milestone/catalog browsing and equip changes, `music` for audio changes,
+milestone/catalog browsing and equip changes, `presentation` for background/character/muzzle changes, `music` for audio changes,
 `combat` for weapon and gunplay changes, `host` for guest input/network validation, or `smoke`
 for a quick open/lobby/audio check. The `all` group or `run_all.sh` runs every browser test.
 `TESTS="cosmetics wardrobe3d" ./run_all.sh` remains available for an exact selection.
@@ -79,6 +78,14 @@ Run broader checks only when shared code or a failing targeted check gives a rea
 screenshots go to `dev/test/out/`. The account and reward tests fake Supabase, so they don't
 touch real players. New behavior without an existing relevant test warrants a focused regression
 check, not an automatic full-suite run.
+
+For this slice: `powershell -File .\run_targeted.ps1 -Group presentation` runs nine checks.
+`presentation_capture.js` saves catalogue sheets and an eight-second pose clip; set `BASELINE=1`
+to capture a saved baseline build from ignored `out/presentation-baseline.html`.
+`presentation_perf.js` compares that saved baseline with the current minified debug build in one browser.
+Both utilities are opt-in; the regular regression suite has 35 tests.
+`python dev/test/presentation_restore_fixture.py` (from the repo root) prepares the opt-in
+`presentation_restore` check; it also needs the saved v0.9.3.3 debug build in the baseline path above.
 
 ## Publish
 

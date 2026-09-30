@@ -2,11 +2,18 @@
    Chosen in the Locker, drawn behind your character in the lobby. Each one is a static layer (drawn once per screen
    size and cached) plus a light animated layer. draw(x,w,h,t): x is a 2D context already scaled to CSS pixels, t seconds.
    src: free / unlock (need: a stat goal, like the other unlocks) / case (found in that case). */
-const BG_CACHE=new Map();
+const BG_CACHE=new Map(),BG_CACHE_LIMIT=48*1024*1024;
+let bgCacheBytes=0;
 function bgLayer(key,w,h,paint){
-  const k=key+'|'+(w|0)+'x'+(h|0),dp=Math.min(2,window.devicePixelRatio||1);let c=BG_CACHE.get(k);if(c)return c;
-  if(BG_CACHE.size>12)BG_CACHE.clear();
-  c=document.createElement('canvas');c.width=Math.ceil(w*dp);c.height=Math.ceil(h*dp);const x=c.getContext('2d');x.scale(dp,dp);paint(x,w,h);BG_CACHE.set(k,c);return c;
+  // Bound both raster resolution and retained memory; resizing / collection thumbnails must not flush every scene.
+  const dp=Math.min(1.5,window.devicePixelRatio||1,Math.sqrt(4*1024*1024/(w*h))),k=key+'|'+w+'x'+h+'@'+dp;
+  let c=BG_CACHE.get(k);if(c){BG_CACHE.delete(k);BG_CACHE.set(k,c);return c}
+  c=document.createElement('canvas');c.width=Math.ceil(w*dp);c.height=Math.ceil(h*dp);const x=c.getContext('2d');x.scale(c.width/w,c.height/h);paint(x,w,h);
+  // Bake scenic detail into an existing layer when possible: no additional full-screen blit per animated frame.
+  if(BG_DEPTH_LAYER[key]&&BG_REFINEMENTS[BG_DEPTH_LAYER[key]])bgScenicDetail(BG_DEPTH_LAYER[key],x,w,h);
+  const bytes=c.width*c.height*4;
+  while(BG_CACHE.size&&(BG_CACHE.size>=24||bgCacheBytes+bytes>BG_CACHE_LIMIT)){const first=BG_CACHE.keys().next().value,old=BG_CACHE.get(first);bgCacheBytes-=old.width*old.height*4;BG_CACHE.delete(first)}
+  BG_CACHE.set(k,c);bgCacheBytes+=bytes;return c;
 }
 const bgBlit=(x,c,w,h)=>x.drawImage(c,0,0,w,h);
 // a rounded rectangle path (the built-in one isn't in Safari before iOS 16)
@@ -196,12 +203,11 @@ const BG_CASE={
       const fog=bgBlob('rgba(160,20,30,.4)');for(let i=0;i<5;i++){const cx=((t*12+i*170)%(w+320))-160;x.globalAlpha=.6;x.drawImage(fog,cx-150,h*(.78+.05*(i%2))-35,300,70)}x.globalAlpha=1}}
 };
 for(const k in BG_CASE)BGS[k]=Object.assign({src:'case'},BG_CASE[k]);
-/* ---- v0.9.3: the Flag Case. Each flag hangs on a pole in a dark sky, sized so the whole flag shows on a phone
-   held upright as well as on a wide screen. Common, Rare and Epic flags are still pictures (one frozen moment of
-   the wave, drawn once and cached); Legendary and Gold ones wave. The flat flag is drawn once per size, then laid
-   down in thin vertical strips, each lifted and shaded by the wave. */
+/* Full-bleed flags: fields adapt to the viewport, emblems use a uniform unit.
+   The original flag geometry remains the source of truth; no generated flag artwork. */
 function star5(x,cx,cy,r,col,rot=-Math.PI/2){x.fillStyle=col;x.beginPath();for(let i=0;i<10;i++){const a=rot+i*Math.PI/5,rr=i%2?r*.382:r;i?x.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr):x.moveTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr)}x.closePath();x.fill()}
 function drawFlag(x,id,W,H){
+  const U=Math.min(H,W/1.5),tri=Math.min(H*.866,W*.56);
   const hw=(pairs)=>{const tot=pairs.reduce((a,p)=>a+p[1],0);let y=0;for(const[c,n]of pairs){x.fillStyle=c;x.fillRect(0,Math.floor(y),W,Math.ceil(H*n/tot)+1);y+=H*n/tot}};
   const hs=cols=>hw(cols.map(c=>[c,1])),vs=(cols,wt)=>{const w=wt||cols.map(()=>1),tot=w.reduce((a,b)=>a+b,0);let px=0;cols.forEach((c,i)=>{x.fillStyle=c;x.fillRect(Math.floor(px),0,Math.ceil(W*w[i]/tot)+1,H);px+=W*w[i]/tot})};
   const poly=(pts,c)=>{x.fillStyle=c;x.beginPath();pts.forEach((p,i)=>i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]));x.closePath();x.fill()};
@@ -209,55 +215,54 @@ function drawFlag(x,id,W,H){
   const F=Object.fromEntries(FLAGS.map(f=>[f[0],f[3]])),B=F[id];
   switch(id){
     case'progress':{hs(['#e40303','#ff8c00','#ffed00','#008026','#004dff','#750787']);const b=W*.062;
-      [['#000000',4],['#613915',3],['#5bcefa',2],['#f5a9b8',1],['#ffffff',0]].forEach(([c,k])=>{const d=b*k;poly([[0,0],[d,0],[d+H/2,H/2],[d,H],[0,H]],c)});break}
+      [['#000000',4],['#613915',3],['#5bcefa',2],['#f5a9b8',1],['#ffffff',0]].forEach(([c,k])=>{const d=b*k;poly([[0,0],[d,0],[d+Math.min(H/2,W*.32),H/2],[d,H],[0,H]],c)});break}
     case'bi':hw([['#d60270',2],['#9b4f96',1],['#0038a8',2]]);break;
-    case'intersex':x.fillStyle='#ffd800';x.fillRect(0,0,W,H);x.strokeStyle='#7902aa';x.lineWidth=H*.075;x.beginPath();x.arc(W/2,H/2,H*.22,0,Math.PI*2);x.stroke();break;
+    case'intersex':x.fillStyle='#ffd800';x.fillRect(0,0,W,H);x.strokeStyle='#7902aa';x.lineWidth=U*.075;x.beginPath();x.arc(W/2,H/2,U*.22,0,Math.PI*2);x.stroke();break;
     case'usa':{for(let i=0;i<13;i++){x.fillStyle=i%2?'#ffffff':'#b22234';x.fillRect(0,Math.floor(i*H/13),W,Math.ceil(H/13)+1)}const cw=W*.4,ch=H*7/13;x.fillStyle='#3c3b6e';x.fillRect(0,0,cw,ch);
-      for(let r=0;r<9;r++){const n=r%2?5:6;for(let k=0;k<n;k++)star5(x,cw*((r%2?2:1)+k*2)/12,ch*(r+1)/10,ch*.042,'#ffffff')}break}
-    case'mexico':vs(B);x.fillStyle='#8a5a2a';x.beginPath();x.ellipse(W/2,H*.47,H*.09,H*.12,0,0,Math.PI*2);x.fill();x.strokeStyle='#2e7a3a';x.lineWidth=H*.025;x.beginPath();x.arc(W/2,H*.5,H*.15,Math.PI*.15,Math.PI*.85);x.stroke();
-      x.fillStyle='#5a3a1a';x.beginPath();x.ellipse(W/2-H*.05,H*.4,H*.035,H*.05,-.5,0,Math.PI*2);x.fill();break;
-    case'brazil':{x.fillStyle='#009c3b';x.fillRect(0,0,W,H);poly([[W*.085,H/2],[W/2,H*.085],[W*.915,H/2],[W/2,H*.915]],'#ffdf00');const r=H*.25;disc(W/2,H/2,r,'#002776');
+      for(let r=0;r<9;r++){const n=r%2?5:6;for(let k=0;k<n;k++)star5(x,cw*((r%2?2:1)+k*2)/12,ch*(r+1)/10,Math.min(ch*.042,cw*.035),'#ffffff')}break}
+    case'mexico':vs(B);x.fillStyle='#8a5a2a';x.beginPath();x.ellipse(W/2,H*.5-U*.03,U*.09,U*.12,0,0,Math.PI*2);x.fill();x.strokeStyle='#2e7a3a';x.lineWidth=U*.025;x.beginPath();x.arc(W/2,H*.5,U*.15,Math.PI*.15,Math.PI*.85);x.stroke();
+      x.fillStyle='#5a3a1a';x.beginPath();x.ellipse(W/2-U*.05,H*.5-U*.1,U*.035,U*.05,-.5,0,Math.PI*2);x.fill();break;
+    case'brazil':{x.fillStyle='#009c3b';x.fillRect(0,0,W,H);poly([[W/2-U*.6225,H/2],[W/2,H/2-U*.415],[W/2+U*.6225,H/2],[W/2,H/2+U*.415]],'#ffdf00');const r=U*.25;disc(W/2,H/2,r,'#002776');
       x.save();x.beginPath();x.arc(W/2,H/2,r,0,Math.PI*2);x.clip();x.strokeStyle='#ffffff';x.lineWidth=r*.16;x.beginPath();x.arc(W/2-r*.3,H/2+r*1.6,r*1.9,-Math.PI*.68,-Math.PI*.28);x.stroke();x.restore();
       for(let i=0;i<9;i++)disc(W/2+(hash(i,71)-.5)*r*1.3,H/2+r*.15+hash(i,72)*r*.6,r*.03,'#ffffff');break}
-    case'japan':x.fillStyle='#ffffff';x.fillRect(0,0,W,H);disc(W/2,H/2,H*.3,'#bc002d');break;
-    case'skorea':{x.fillStyle='#ffffff';x.fillRect(0,0,W,H);const R=H/4,th=Math.atan2(H,W);x.save();x.translate(W/2,H/2);x.rotate(th);
+    case'japan':x.fillStyle='#ffffff';x.fillRect(0,0,W,H);disc(W/2,H/2,U*.3,'#bc002d');break;
+    case'skorea':{x.fillStyle='#ffffff';x.fillRect(0,0,W,H);const R=U/4,th=Math.atan2(1,1.5);x.save();x.translate(W/2,H/2);x.rotate(th);
       x.fillStyle='#cd2e3a';x.beginPath();x.arc(0,0,R,Math.PI,0);x.fill();x.fillStyle='#0047a0';x.beginPath();x.arc(0,0,R,0,Math.PI);x.fill();
       x.fillStyle='#cd2e3a';x.beginPath();x.arc(R/2,0,R/2,0,Math.PI);x.fill();x.fillStyle='#0047a0';x.beginPath();x.arc(-R/2,0,R/2,Math.PI,0);x.fill();x.restore();
       const bar=(solid)=>{if(solid)x.fillRect(-R*.5,0,R,R*.12);else{x.fillRect(-R*.5,0,R*.44,R*.12);x.fillRect(R*.06,0,R*.44,R*.12)}};
       for(const[ang,pat]of[[Math.PI+th,[1,1,1]],[-th,[0,1,0]],[th,[0,0,0]],[Math.PI-th,[1,0,1]]]){x.save();x.translate(W/2+Math.cos(ang)*R*1.8,H/2+Math.sin(ang)*R*1.8);x.rotate(ang+Math.PI/2);x.fillStyle='#000000';
         pat.forEach((sd,k)=>{x.save();x.translate(0,(k-1)*R*.2-R*.06);bar(sd);x.restore()});x.restore()}break}
-    case'puertorico':{for(let i=0;i<5;i++){x.fillStyle=i%2?'#ffffff':'#ed0000';x.fillRect(0,Math.floor(i*H/5),W,Math.ceil(H/5)+1)}poly([[0,0],[H*.866,H/2],[0,H]],'#0050f0');star5(x,H*.29,H/2,H*.13,'#ffffff');break}
-    case'canada':{vs(B,[1,2,1]);x.save();x.translate(W/2,H*.55);const k=H*.0065;x.scale(k,k);
+    case'puertorico':{for(let i=0;i<5;i++){x.fillStyle=i%2?'#ffffff':'#ed0000';x.fillRect(0,Math.floor(i*H/5),W,Math.ceil(H/5)+1)}poly([[0,0],[tri,H/2],[0,H]],'#0050f0');star5(x,tri/3,H/2,Math.min(U*.13,tri*.2),'#ffffff');break}
+    case'canada':{vs(B,[1,2,1]);x.save();x.translate(W/2,H*.55);const k=U*.0065;x.scale(k,k);
       poly([[0,-48],[8,-32],[16,-38],[12,-16],[26,-26],[30,-18],[44,-22],[38,-6],[46,-2],[22,14],[26,24],[3,20],[3,40],[-3,40],[-3,20],[-26,24],[-22,14],[-46,-2],[-38,-6],[-44,-22],[-30,-18],[-26,-26],[-12,-16],[-16,-38],[-8,-32]],'#d52b1e');x.restore();break}
     case'uk':{x.fillStyle='#012169';x.fillRect(0,0,W,H);x.lineCap='butt';const ln=(w,c,a,b)=>{x.strokeStyle=c;x.lineWidth=w;x.beginPath();x.moveTo(...a);x.lineTo(...b);x.stroke()};
-      for(const[a,b]of[[[0,0],[W,H]],[[W,0],[0,H]]]){ln(H*.2,'#ffffff',a,b);ln(H*.067,'#c8102e',a,b)}ln(H/3,'#ffffff',[W/2,0],[W/2,H]);ln(H/3,'#ffffff',[0,H/2],[W,H/2]);ln(H*.2,'#c8102e',[W/2,0],[W/2,H]);ln(H*.2,'#c8102e',[0,H/2],[W,H/2]);break}
+      for(const[a,b]of[[[0,0],[W,H]],[[W,0],[0,H]]]){ln(U*.2,'#ffffff',a,b);ln(U*.067,'#c8102e',a,b)}ln(U/3,'#ffffff',[W/2,0],[W/2,H]);ln(U/3,'#ffffff',[0,H/2],[W,H/2]);ln(U*.2,'#c8102e',[W/2,0],[W/2,H]);ln(U*.2,'#c8102e',[0,H/2],[W,H/2]);break}
     case'france':case'italy':case'ireland':vs(B);break;
-    case'spain':hw([['#aa151b',1],['#f1bf00',2],['#aa151b',1]]);x.fillStyle='#aa151b';x.fillRect(W*.26,H*.37,W*.09,H*.26);x.fillStyle='#f1bf00';x.fillRect(W*.275,H*.39,W*.03,H*.1);x.fillStyle='#c8b8a0';x.fillRect(W*.235,H*.35,W*.015,H*.3);x.fillRect(W*.36,H*.35,W*.015,H*.3);break;
-    case'argentina':{hs(B);x.strokeStyle='#f6b40e';x.lineWidth=H*.012;for(let i=0;i<16;i++){const a=i*Math.PI/8;x.beginPath();x.moveTo(W/2+Math.cos(a)*H*.085,H/2+Math.sin(a)*H*.085);x.lineTo(W/2+Math.cos(a)*H*.14,H/2+Math.sin(a)*H*.14);x.stroke()}disc(W/2,H/2,H*.08,'#f6b40e');break}
-    case'philippines':{hs(['#0038a8','#ce1126']);poly([[0,0],[H*.866,H/2],[0,H]],'#ffffff');const sx=H*.29,sy=H/2;x.strokeStyle='#fcd116';x.lineWidth=H*.02;
-      for(let i=0;i<8;i++){const a=i*Math.PI/4;x.beginPath();x.moveTo(sx+Math.cos(a)*H*.07,sy+Math.sin(a)*H*.07);x.lineTo(sx+Math.cos(a)*H*.13,sy+Math.sin(a)*H*.13);x.stroke()}
-      disc(sx,sy,H*.065,'#fcd116');for(const[a,b]of[[H*.07,H*.09],[H*.07,H*.91],[H*.74,H/2]])star5(x,a,b,H*.04,'#fcd116');break}
-    case'india':{hs(B);x.strokeStyle='#000080';x.lineWidth=H*.012;x.beginPath();x.arc(W/2,H/2,H*.14,0,Math.PI*2);x.stroke();for(let i=0;i<24;i++){const a=i*Math.PI/12;x.beginPath();x.moveTo(W/2,H/2);x.lineTo(W/2+Math.cos(a)*H*.14,H/2+Math.sin(a)*H*.14);x.stroke()}disc(W/2,H/2,H*.025,'#000080');break}
-    case'israel':{x.fillStyle='#ffffff';x.fillRect(0,0,W,H);x.fillStyle='#0038b8';x.fillRect(0,H*.1,W,H*.15);x.fillRect(0,H*.75,W,H*.15);x.strokeStyle='#0038b8';x.lineWidth=H*.03;x.lineJoin='miter';
-      for(const rot of[-Math.PI/2,Math.PI/2]){x.beginPath();for(let i=0;i<3;i++){const a=rot+i*Math.PI*2/3;i?x.lineTo(W/2+Math.cos(a)*H*.19,H/2+Math.sin(a)*H*.19):x.moveTo(W/2+Math.cos(a)*H*.19,H/2+Math.sin(a)*H*.19)}x.closePath();x.stroke()}break}
-    case'nkorea':hw([['#024fa2',6],['#ffffff',1],['#ed1c27',15],['#ffffff',1],['#024fa2',6]]);disc(W*.36,H/2,H*.19,'#ffffff');star5(x,W*.36,H/2,H*.18,'#ed1c27');break;
+    case'spain':{hw([['#aa151b',1],['#f1bf00',2],['#aa151b',1]]);const cx=W*.31,cy=H*.5;x.fillStyle='#aa151b';x.fillRect(cx-U*.0675,cy-U*.13,U*.135,U*.26);x.fillStyle='#f1bf00';x.fillRect(cx-U*.045,cy-U*.11,U*.045,U*.1);x.fillStyle='#c8b8a0';x.fillRect(cx-U*.105,cy-U*.15,U*.0225,U*.3);x.fillRect(cx+U*.0825,cy-U*.15,U*.0225,U*.3);break}
+    case'argentina':{hs(B);x.strokeStyle='#f6b40e';x.lineWidth=U*.012;for(let i=0;i<16;i++){const a=i*Math.PI/8;x.beginPath();x.moveTo(W/2+Math.cos(a)*U*.085,H/2+Math.sin(a)*U*.085);x.lineTo(W/2+Math.cos(a)*U*.14,H/2+Math.sin(a)*U*.14);x.stroke()}disc(W/2,H/2,U*.08,'#f6b40e');break}
+    case'philippines':{hs(['#0038a8','#ce1126']);poly([[0,0],[tri,H/2],[0,H]],'#ffffff');const sx=tri/3,sy=H/2;x.strokeStyle='#fcd116';x.lineWidth=U*.02;
+      for(let i=0;i<8;i++){const a=i*Math.PI/4;x.beginPath();x.moveTo(sx+Math.cos(a)*U*.07,sy+Math.sin(a)*U*.07);x.lineTo(sx+Math.cos(a)*U*.13,sy+Math.sin(a)*U*.13);x.stroke()}
+      disc(sx,sy,U*.065,'#fcd116');for(const[a,b]of[[tri*.08,H*.09],[tri*.08,H*.91],[tri*.85,H/2]])star5(x,a,b,U*.04,'#fcd116');break}
+    case'india':{hs(B);x.strokeStyle='#000080';x.lineWidth=U*.012;x.beginPath();x.arc(W/2,H/2,U*.14,0,Math.PI*2);x.stroke();for(let i=0;i<24;i++){const a=i*Math.PI/12;x.beginPath();x.moveTo(W/2,H/2);x.lineTo(W/2+Math.cos(a)*U*.14,H/2+Math.sin(a)*U*.14);x.stroke()}disc(W/2,H/2,U*.025,'#000080');break}
+    case'israel':{x.fillStyle='#ffffff';x.fillRect(0,0,W,H);x.fillStyle='#0038b8';x.fillRect(0,H*.1,W,H*.15);x.fillRect(0,H*.75,W,H*.15);x.strokeStyle='#0038b8';x.lineWidth=U*.03;x.lineJoin='miter';
+      for(const rot of[-Math.PI/2,Math.PI/2]){x.beginPath();for(let i=0;i<3;i++){const a=rot+i*Math.PI*2/3;i?x.lineTo(W/2+Math.cos(a)*U*.19,H/2+Math.sin(a)*U*.19):x.moveTo(W/2+Math.cos(a)*U*.19,H/2+Math.sin(a)*U*.19)}x.closePath();x.stroke()}break}
+    case'nkorea':hw([['#024fa2',6],['#ffffff',1],['#ed1c27',15],['#ffffff',1],['#024fa2',6]]);disc(W*.36,H/2,U*.19,'#ffffff');star5(x,W*.36,H/2,U*.18,'#ed1c27');break;
     default:hs(B||['#888888']);
   }
 }
 function flagScene(x,w,h,t,id,moving){
-  bgBlit(x,bgLayer('flagsky',w,h,(x,w,h)=>{vgrad(x,w,h,[[0,'#0b0f14'],[.6,'#151b22'],[1,'#1e252c']]);for(let i=0;i<60;i++){x.globalAlpha=.25+.5*hash(i,91);x.fillStyle='#dfe6ee';x.fillRect(hash(i,92)*w,hash(i,93)*h*.6,1,1)}x.globalAlpha=1;
-    const gr=x.createRadialGradient(w/2,h*.36,0,w/2,h*.36,Math.max(w,h)*.6);gr.addColorStop(0,'rgba(255,245,220,.08)');gr.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=gr;x.fillRect(0,0,w,h);
-    x.fillStyle='#0a0d10';x.fillRect(0,h*.9,w,h*.1)}),w,h);
-  const fw=Math.round(Math.min(w*.84,h*.6*1.5)),fh=Math.round(fw/1.5),fx=Math.round((w-fw)/2+fw*.02),fy=Math.round(h*.1);
-  // the pole, with a gold finial
-  x.fillStyle='#2e2a24';x.fillRect(fx-7,fy-10,5,h*.9-fy+10);x.fillStyle='#8a7a52';x.fillRect(fx-6,fy-10,1.5,h*.9-fy+10);x.fillStyle='#e2c25a';x.beginPath();x.arc(fx-4.5,fy-13,5,0,Math.PI*2);x.fill();
-  const flat=bgLayer('flag:'+id,fw,fh,(c,W,H)=>drawFlag(c,id,W,H)),dp=flat.width/fw,N=Math.max(40,Math.min(120,Math.round(fw/5))),sw=fw/N;
-  // strips snap to whole pixels (fractional edges showed as thin seams); the source strip is taken a pixel wider
-  for(let i=0;i<N;i++){const k=i/N,ph=t*2.1-i*.26,off=Math.round(Math.sin(ph)*fh*.045*(.2+k)),sh=Math.cos(ph)*(.2+k*.8),x0=Math.round(i*sw),x1=Math.round((i+1)*sw),sx0=Math.floor(x0*dp);
-    x.drawImage(flat,sx0,0,Math.min(flat.width-sx0,Math.ceil((x1-x0)*dp)+1),flat.height,fx+x0,fy+off,x1-x0+(i<N-1?1:0),fh);
-    x.fillStyle=sh>0?`rgba(255,255,255,${.07*sh})`:`rgba(0,0,0,${-.2*sh})`;x.fillRect(fx+x0,fy+off,x1-x0,fh)}
-  // a soft shadow along the pole's edge
-  const sg=x.createLinearGradient(fx,0,fx+fw*.08,0);sg.addColorStop(0,'rgba(0,0,0,.35)');sg.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=sg;x.fillRect(fx,fy,fw*.08,fh);
+  const flat=bgLayer('flag:'+id,w,h,(c,W,H)=>{
+    drawFlag(c,id,W,H);
+    // A light fabric finish leaves all field colours recognizable and the menus readable.
+    const shade=c.createLinearGradient(0,0,0,H);shade.addColorStop(0,'rgba(5,10,18,.13)');shade.addColorStop(.45,'rgba(5,10,18,.03)');shade.addColorStop(1,'rgba(5,10,18,.22)');c.fillStyle=shade;c.fillRect(0,0,W,H);
+  });
+  bgBlit(x,flat,w,h);
+  // Moving light across unbroken cloth, rather than displaced strips: no seams or exposed edges.
+  const phase=moving&&!reduceMotion()?t*.48:0,band=w*.24;
+  for(let i=-1;i<6;i++){
+    const px=((i/5+phase*.07)%1.4-.2)*w,gr=x.createLinearGradient(px,0,px+band,0);
+    gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(.35,'rgba(0,0,0,.075)');gr.addColorStop(.65,'rgba(255,255,255,.055)');gr.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gr;x.fillRect(px,0,band,h);
+  }
 }
 for(const[id,name,r]of FLAGS){const moving=r==='l'||r==='g';BGS['f_'+id]=Object.assign({name:name+' Flag',r,src:'case',box:'flags',draw(x,w,h,t){flagScene(x,w,h,t,id,moving)}},moving?{}:{still:0})}
 // the one call the lobby and the Locker use: still backgrounds are drawn once and reused

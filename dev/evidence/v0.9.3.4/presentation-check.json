@@ -1,0 +1,33 @@
+{
+  "flags": {
+    "bad": [],
+    "counts": {
+      "static": 76,
+      "moving": 52
+    },
+    "cache": {
+      "entries": 9,
+      "bytes": 47239200,
+      "limit": 50331648
+    }
+  },
+  "reduced": {
+    "bad": [],
+    "breath": 0
+  },
+  "motion": {
+    "bad": [],
+    "remoteMinimumWeight": 1,
+    "strafe": -0.7853981633974483,
+    "cache": {
+      "workers": 2,
+      "completed": 40,
+      "pending": 0,
+      "busy": 0,
+      "entries": 42,
+      "bytes": 954472
+    },
+    "soakMs": 858.3000000044703
+  },
+  "errors": []
+}

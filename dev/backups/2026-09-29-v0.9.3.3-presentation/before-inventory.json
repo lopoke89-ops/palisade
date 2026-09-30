@@ -1,0 +1,458 @@
+[
+  {
+    "id": "campfire",
+    "name": "Campfire Dusk",
+    "rarity": "c",
+    "static": false,
+    "source": "free",
+    "case": null
+  },
+  {
+    "id": "nightwatch",
+    "name": "Night Watch",
+    "rarity": "c",
+    "static": false,
+    "source": "free",
+    "case": null
+  },
+  {
+    "id": "dawn",
+    "name": "First Light",
+    "rarity": "r",
+    "static": false,
+    "source": "unlock",
+    "case": null
+  },
+  {
+    "id": "aurora",
+    "name": "Aurora",
+    "rarity": "e",
+    "static": false,
+    "source": "unlock",
+    "case": null
+  },
+  {
+    "id": "emberfield",
+    "name": "Ember Field",
+    "rarity": "r",
+    "static": false,
+    "source": "unlock",
+    "case": null
+  },
+  {
+    "id": "crimson",
+    "name": "Crimson Smoke",
+    "rarity": "e",
+    "static": false,
+    "source": "unlock",
+    "case": null
+  },
+  {
+    "id": "neongrid",
+    "name": "Neon Grid",
+    "rarity": "l",
+    "static": false,
+    "source": "unlock",
+    "case": null
+  },
+  {
+    "id": "goldrush",
+    "name": "Gold Rush",
+    "rarity": "l",
+    "static": false,
+    "source": "unlock",
+    "case": null
+  },
+  {
+    "id": "harvestmoon",
+    "name": "Harvest Moon",
+    "rarity": "r",
+    "static": true,
+    "source": "case",
+    "case": "halloween"
+  },
+  {
+    "id": "hauntedfog",
+    "name": "Haunted Fog",
+    "rarity": "e",
+    "static": true,
+    "source": "case",
+    "case": "halloween"
+  },
+  {
+    "id": "fieldmap",
+    "name": "Field Map",
+    "rarity": "r",
+    "static": true,
+    "source": "case",
+    "case": "supply"
+  },
+  {
+    "id": "sandbags",
+    "name": "Sandbag Line",
+    "rarity": "r",
+    "static": true,
+    "source": "case",
+    "case": "supply"
+  },
+  {
+    "id": "dogtags",
+    "name": "Dog Tags",
+    "rarity": "e",
+    "static": true,
+    "source": "case",
+    "case": "supply"
+  },
+  {
+    "id": "watchtower",
+    "name": "Watchtower",
+    "rarity": "e",
+    "static": true,
+    "source": "case",
+    "case": "supply"
+  },
+  {
+    "id": "searchlight",
+    "name": "Searchlight",
+    "rarity": "l",
+    "static": false,
+    "source": "case",
+    "case": "supply"
+  },
+  {
+    "id": "sunsetfade",
+    "name": "Sunset Fade",
+    "rarity": "r",
+    "static": true,
+    "source": "case",
+    "case": "afterglow"
+  },
+  {
+    "id": "lagoonwaves",
+    "name": "Lagoon",
+    "rarity": "r",
+    "static": true,
+    "source": "case",
+    "case": "afterglow"
+  },
+  {
+    "id": "nebula",
+    "name": "Nebula",
+    "rarity": "e",
+    "static": true,
+    "source": "case",
+    "case": "afterglow"
+  },
+  {
+    "id": "arcade",
+    "name": "Arcade",
+    "rarity": "e",
+    "static": true,
+    "source": "case",
+    "case": "afterglow"
+  },
+  {
+    "id": "neonpulse",
+    "name": "Neon Pulse",
+    "rarity": "l",
+    "static": false,
+    "source": "case",
+    "case": "afterglow"
+  },
+  {
+    "id": "eventhorizon",
+    "name": "Event Horizon",
+    "rarity": "l",
+    "static": false,
+    "source": "case",
+    "case": "afterglow"
+  },
+  {
+    "id": "goldaurora",
+    "name": "Gold Aurora",
+    "rarity": "g",
+    "static": false,
+    "source": "case",
+    "case": "afterglow"
+  },
+  {
+    "id": "graveyard",
+    "name": "Graveyard",
+    "rarity": "r",
+    "static": true,
+    "source": "case",
+    "case": "halloween"
+  },
+  {
+    "id": "witchbrew",
+    "name": "Witch's Brew",
+    "rarity": "e",
+    "static": true,
+    "source": "case",
+    "case": "halloween"
+  },
+  {
+    "id": "bloodmoon",
+    "name": "Blood Moon",
+    "rarity": "l",
+    "static": false,
+    "source": "case",
+    "case": "halloween"
+  },
+  {
+    "id": "f_pride",
+    "name": "Rainbow Pride Flag",
+    "rarity": "g",
+    "static": false,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_progress",
+    "name": "Progress Pride Flag",
+    "rarity": "g",
+    "static": false,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_trans",
+    "name": "Transgender Flag",
+    "rarity": "l",
+    "static": false,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_bi",
+    "name": "Bisexual Flag",
+    "rarity": "l",
+    "static": false,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_lesbian",
+    "name": "Lesbian Flag",
+    "rarity": "l",
+    "static": false,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_gay",
+    "name": "Gay Men Flag",
+    "rarity": "l",
+    "static": false,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_pan",
+    "name": "Pansexual Flag",
+    "rarity": "l",
+    "static": false,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_nonbinary",
+    "name": "Nonbinary Flag",
+    "rarity": "l",
+    "static": false,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_ace",
+    "name": "Asexual Flag",
+    "rarity": "l",
+    "static": false,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_aro",
+    "name": "Aromantic Flag",
+    "rarity": "l",
+    "static": false,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_fluid",
+    "name": "Genderfluid Flag",
+    "rarity": "l",
+    "static": false,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_agender",
+    "name": "Agender Flag",
+    "rarity": "l",
+    "static": false,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_intersex",
+    "name": "Intersex Flag",
+    "rarity": "l",
+    "static": false,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_usa",
+    "name": "United States Flag",
+    "rarity": "e",
+    "static": true,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_mexico",
+    "name": "Mexico Flag",
+    "rarity": "e",
+    "static": true,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_brazil",
+    "name": "Brazil Flag",
+    "rarity": "e",
+    "static": true,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_japan",
+    "name": "Japan Flag",
+    "rarity": "e",
+    "static": true,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_skorea",
+    "name": "South Korea Flag",
+    "rarity": "e",
+    "static": true,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_puertorico",
+    "name": "Puerto Rico Flag",
+    "rarity": "e",
+    "static": true,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_canada",
+    "name": "Canada Flag",
+    "rarity": "r",
+    "static": true,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_uk",
+    "name": "United Kingdom Flag",
+    "rarity": "r",
+    "static": true,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_germany",
+    "name": "Germany Flag",
+    "rarity": "r",
+    "static": true,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_france",
+    "name": "France Flag",
+    "rarity": "r",
+    "static": true,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_italy",
+    "name": "Italy Flag",
+    "rarity": "r",
+    "static": true,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_spain",
+    "name": "Spain Flag",
+    "rarity": "r",
+    "static": true,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_ireland",
+    "name": "Ireland Flag",
+    "rarity": "r",
+    "static": true,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_argentina",
+    "name": "Argentina Flag",
+    "rarity": "r",
+    "static": true,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_philippines",
+    "name": "Philippines Flag",
+    "rarity": "r",
+    "static": true,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_india",
+    "name": "India Flag",
+    "rarity": "c",
+    "static": true,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_israel",
+    "name": "Israel Flag",
+    "rarity": "c",
+    "static": true,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_russia",
+    "name": "Russia Flag",
+    "rarity": "c",
+    "static": true,
+    "source": "case",
+    "case": "flags"
+  },
+  {
+    "id": "f_nkorea",
+    "name": "North Korea Flag",
+    "rarity": "c",
+    "static": true,
+    "source": "case",
+    "case": "flags"
+  }
+]

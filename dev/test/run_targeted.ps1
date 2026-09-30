@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('cosmetics','locker','music','combat','host','smoke','all')]
+  [ValidateSet('cosmetics','locker','presentation','music','combat','host','smoke','all')]
   [string]$Group = 'smoke',
   [string]$Tests = ''
 )
@@ -12,11 +12,12 @@ New-Item -ItemType Directory -Path $outDir -Force | Out-Null
 $groups = @{
   cosmetics = 'locker_fit cosmetics wardrobe3d cosmetic_network'
   locker = 'locker_collections locker_fit milestones flagcase accounts taborder csp'
+  presentation = 'presentation presentation_posefit flagcase wardrobe3d locker_fit muzzle presentation_network cosmetic_network csp'
   music = 'music_routing'
   combat = 'solo bosses multiplayer muzzle rewards_lobby_shotgun'
   host = 'hostcheck room_controls multiplayer'
   smoke = 'solo lobby reel_music csp'
-  all = 'solo bosses multiplayer cases accounts rewards_lobby_shotgun reel_music music_routing v086 v087 muzzle cosmetics locker_fit locker_collections cosmetic_network social_lobby lobby v090 v090_net hostcheck room_controls csp wardrobe3d friends rewards_screen modifiers skilltree rejoin controller taborder milestones flagcase'
+  all = 'solo bosses multiplayer cases accounts rewards_lobby_shotgun reel_music music_routing v086 v087 muzzle cosmetics locker_fit locker_collections cosmetic_network social_lobby lobby v090 v090_net hostcheck room_controls csp wardrobe3d friends rewards_screen modifiers skilltree rejoin controller taborder milestones flagcase presentation presentation_posefit presentation_network'
 }
 $selectedTests = $(if ($Tests) { $Tests } else { $groups[$Group] }).Split(' ', [System.StringSplitOptions]::RemoveEmptyEntries)
 foreach ($t in $selectedTests) { if ($t -notmatch '^[a-z0-9_]+$' -or -not (Test-Path -LiteralPath (Join-Path $testDir "$t.js"))) { throw "Unknown test: $t" } }
@@ -42,9 +43,13 @@ try {
   Push-Location $testDir
   try {
     foreach ($t in $selectedTests) {
-      $result = & node "$t.js" 2>&1 | Out-String
+      # Windows PowerShell turns native stderr into ErrorRecords. Capture a failed assertion in its log
+      # and continue the selected tests instead of terminating the runner before the log is written.
+      $previousErrorAction = $ErrorActionPreference
+      try { $ErrorActionPreference = 'Continue'; $result = & node "$t.js" 2>&1 | Out-String; $testExitCode = $LASTEXITCODE }
+      finally { $ErrorActionPreference = $previousErrorAction }
       $result | Set-Content -LiteralPath (Join-Path $outDir "$t.log")
-      if ($LASTEXITCODE -eq 0 -and $result -match '(?i)errors?:?\s*(none|\[\])|ERRS \[\]' -and $result -notmatch '(?i)Error:|TypeError|timed out') {
+      if ($testExitCode -eq 0 -and $result -match '(?i)errors?:?\s*(none|\[\])|ERRS \[\]' -and $result -notmatch '(?i)Error:|TypeError|timed out') {
         Write-Output "PASS  $t"
       } else {
         Write-Output "FAIL  $t  (see out/$t.log)"

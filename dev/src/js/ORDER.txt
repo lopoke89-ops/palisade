@@ -22,6 +22,7 @@
 17-scenery.js   forest, fence and cached scenery, frame render
 18-cosmetics.js   cosmetics, locker data, cases, save backup
 18b-backgrounds.js   lobby backgrounds (free, milestone and case)
+18c-background-depth.js   cached scenic finishing layers; per-ID art rollback
 19-accounts.js   accounts, cloud locker, claims, open games list
 19b-social-lobby.js   account identity, saved players and multiplayer character stage
 20-locker-ui.js   drawing cosmetics, locker screen, armory screen

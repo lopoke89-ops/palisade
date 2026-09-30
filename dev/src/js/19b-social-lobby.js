@@ -67,7 +67,8 @@ const STAGE={wide:{me:[500,722,13.4],others:[[250,660,8.2],[762,660,8.2],[88,612
 const stageMe=L=>$('menu').dataset.page==='locker'?[L.me[0],Math.min(L.me[1],780-L.me[2]*11-8),L.me[2]]:L.me;
 let stageLay='',stageLayW=-1;   // read the stage width only when the window size changes (reading it every frame forces a layout)
 const stageLayout=()=>{if(stageLayW!==innerWidth||!stageLay){stageLayW=innerWidth;stageLay=$('partyHero').clientWidth<520?'phone':'wide'}return stageLay};
-const stageAngle=(i,t)=>i<0?.35+Math.sin(t/4.5)*.16:[.62,-.62,.5,-.5,.1][i]||0;
+const stageBreath=t=>reduceMotion()?0:Math.round(Math.sin(t*1.35)*4)/4;
+const stageAngle=(i,t)=>i<0?.35+(reduceMotion()?0:Math.sin(t/4.5)*.09):[.62,-.62,.5,-.5,.1][i]||0;
 function stagePlate(x,px,py,name,sub,scale){
  const f=Math.round(scale*2.9);x.save();x.font=`800 ${f}px 'Big Shoulders Stencil Display',sans-serif`;const w=Math.max(x.measureText(name).width,f*3.2)+f*1.1,h=f*1.9;
  x.fillStyle='#12222bd8';x.strokeStyle='#718b8f';x.lineWidth=2;x.beginPath();x.rect(px-w/2,py,w,h);x.fill();x.stroke();
@@ -94,11 +95,11 @@ function drawPartyPreview(now){
   }
  }
  // front layer: you, turning in 2° steps; animated outfits tick at 10 a second
- if(!me)return;const lk=look(me),ang=stageAngle(-1,t),step=Math.round(ang*90/Math.PI)*Math.PI/90;
- const animated=lk.stars||lk.holo||lk.glitter||lk.halo||lk.glitchm,tick=animated?Math.floor(t*10)/10:lk.pking?Math.floor(t*6)%4:0;
+ if(!me)return;const lk=Object.assign(look(me),{breath:stageBreath(t)}),ang=stageAngle(-1,t),step=Math.round(ang*90/Math.PI)*Math.PI/90;
+ const animated=lk.stars||lk.holo||lk.glitter||lk.halo||lk.glitchm,tick=reduceMotion()?0:animated?Math.floor(t*10)/10:lk.pking?Math.floor(t*6)%4:0;
  // v0.9.3: an outfit effect moves at 12 frames a second over a copy of the figure (the figure is only repainted when it turns)
  const aura=lk.aura&&!reduceMotion()?lk.aura:'',at=aura?Math.floor(t*12)/12:0;
- const charSig=sig+'|'+me.cls+me.cos+'|'+step.toFixed(4)+'|'+tick,meSig=charSig+'|'+at;
+ const charSig=sig+'|'+me.cls+me.cos+'|'+step.toFixed(4)+'|'+tick+'|'+lk.breath,meSig=charSig+'|'+at;
  if(meSig===partyMeSig)return;partyMeSig=meSig;partyPaintAt=now;
  const cv=$('partyMe'),x=cv.getContext('2d'),[mx,my,ms]=stageMe(L);
  if(!lk.aura){x.clearRect(0,0,cv.width,cv.height);paintWardrobeCharacter(x,lk,step,tick,ms,mx,my-4,false);return}
@@ -114,13 +115,13 @@ function drawPartyPreview(now){
 let stageFxAt=0,stageFxOn=false;
 function drawStageFx(now){
  const on=stageVisible()&&$('menu').dataset.page==='locker';
- if(!on){if(stageFxOn){stageFxOn=false;const c=$('partyFx');c.getContext('2d').clearRect(0,0,c.width,c.height)}return}
+ if(!on||reduceMotion()){if(stageFxOn){stageFxOn=false;const c=$('partyFx');c.getContext('2d').clearRect(0,0,c.width,c.height)}return}
  // one quick shot every 1.3 s; between shots the layer is left alone (clearing a stage-sized layer costs as much as drawing)
  const ph=(now%1300)/1300,live=ph>.05&&ph<.4;
  if(!live){if(stageFxOn){stageFxOn=false;const c=$('partyFx');c.getContext('2d').clearRect(0,0,c.width,c.height)}return}
  if(now-stageFxAt<33)return;stageFxAt=now;stageFxOn=true;
  const cv=$('partyFx'),x=cv.getContext('2d');x.clearRect(0,0,cv.width,cv.height);
- const L=STAGE[stageLayout()],[mx,my,ms]=stageMe(L),lk=lookOf(locker.eq,pick.cls),ang=stageAngle(-1,now/1000),step=Math.round(ang*90/Math.PI)*Math.PI/90;
+ const L=STAGE[stageLayout()],[mx,my,ms]=stageMe(L),lk=Object.assign(lookOf(locker.eq,pick.cls),{breath:stageBreath(now/1000)}),ang=stageAngle(-1,now/1000),step=Math.round(ang*90/Math.PI)*Math.PI/90;
  const m=paintWardrobeCharacter(null,lk,step,0,1,0,0,false),tip=[mx+m.tip[0]*ms,my-4+m.tip[1]*ms],dx=m.tip[0]-m.root[0],dy=m.tip[1]-m.root[1],dl=Math.hypot(dx,dy)||1,sd={x:dx/dl,y:dy/dl};
  const st=TRAILS[locker.eq.trail]||TRAILS.std,d0=(ph-.05)/.35*560,len=90*(st.len||1);
  traceSeg(x,tip[0]+sd.x*d0,tip[1]+sd.y*d0,tip[0]+sd.x*Math.max(0,d0-len),tip[1]+sd.y*Math.max(0,d0-len),st,8*(st.w||1),now/1000,false);

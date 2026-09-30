@@ -1,0 +1,194 @@
+{
+  "method": "Desktop Chrome, emulated 390x844 DPR 2 touch context; CSS-size software canvases, 20 warmups + 140 timed draw/readback iterations. No CPU throttle. Not physical-phone frame times.",
+  "results": {
+    "before": {
+      "draw": {
+        "campfire 390x844": {
+          "coldMs": 19.3,
+          "medianMs": 0.3,
+          "p95Ms": 0.4
+        },
+        "hauntedfog 390x844": {
+          "coldMs": 5.7,
+          "medianMs": 0.2,
+          "p95Ms": 0.3
+        },
+        "eventhorizon 390x844": {
+          "coldMs": 36.4,
+          "medianMs": 0.7,
+          "p95Ms": 0.9
+        },
+        "f_progress 390x844": {
+          "coldMs": 28.9,
+          "medianMs": 0.7,
+          "p95Ms": 0.8
+        },
+        "f_japan 390x844": {
+          "coldMs": 3.8,
+          "medianMs": 0.2,
+          "p95Ms": 0.3
+        },
+        "campfire 844x390": {
+          "coldMs": 3.3,
+          "medianMs": 0.3,
+          "p95Ms": 0.4
+        },
+        "hauntedfog 844x390": {
+          "coldMs": 4,
+          "medianMs": 0.2,
+          "p95Ms": 0.3
+        },
+        "eventhorizon 844x390": {
+          "coldMs": 28.3,
+          "medianMs": 0.7,
+          "p95Ms": 0.9
+        },
+        "f_progress 844x390": {
+          "coldMs": 5.3,
+          "medianMs": 0.7,
+          "p95Ms": 0.8
+        },
+        "f_japan 844x390": {
+          "coldMs": 3,
+          "medianMs": 0.2,
+          "p95Ms": 0.3
+        },
+        "campfire 1280x800": {
+          "coldMs": 8,
+          "medianMs": 0.3,
+          "p95Ms": 0.4
+        },
+        "hauntedfog 1280x800": {
+          "coldMs": 7.4,
+          "medianMs": 0.2,
+          "p95Ms": 0.3
+        },
+        "eventhorizon 1280x800": {
+          "coldMs": 20.4,
+          "medianMs": 1.5,
+          "p95Ms": 1.9
+        },
+        "f_progress 1280x800": {
+          "coldMs": 7,
+          "medianMs": 1,
+          "p95Ms": 1.3
+        },
+        "f_japan 1280x800": {
+          "coldMs": 7.5,
+          "medianMs": 0.2,
+          "p95Ms": 0.4
+        }
+      },
+      "uncachedKnight": {
+        "medianMs": 3.8000000044703484,
+        "p95Ms": 4.699999995529652
+      },
+      "backgroundCache": null,
+      "poseCache": {
+        "workers": 0,
+        "completed": 0,
+        "pending": 0,
+        "busy": 0,
+        "entries": 38,
+        "bytes": 901080
+      }
+    },
+    "after": {
+      "draw": {
+        "campfire 390x844": {
+          "coldMs": 4.5,
+          "medianMs": 0.4,
+          "p95Ms": 0.9
+        },
+        "hauntedfog 390x844": {
+          "coldMs": 12.5,
+          "medianMs": 0.6,
+          "p95Ms": 0.7
+        },
+        "eventhorizon 390x844": {
+          "coldMs": 31.3,
+          "medianMs": 1.6,
+          "p95Ms": 2.4
+        },
+        "f_progress 390x844": {
+          "coldMs": 52.1,
+          "medianMs": 0.4,
+          "p95Ms": 0.5
+        },
+        "f_japan 390x844": {
+          "coldMs": 3.6,
+          "medianMs": 0.3,
+          "p95Ms": 0.4
+        },
+        "campfire 844x390": {
+          "coldMs": 6.2,
+          "medianMs": 0.3,
+          "p95Ms": 0.5
+        },
+        "hauntedfog 844x390": {
+          "coldMs": 5.8,
+          "medianMs": 0.3,
+          "p95Ms": 0.4
+        },
+        "eventhorizon 844x390": {
+          "coldMs": 4.9,
+          "medianMs": 1.5,
+          "p95Ms": 2.1
+        },
+        "f_progress 844x390": {
+          "coldMs": 3.5,
+          "medianMs": 0.3,
+          "p95Ms": 0.5
+        },
+        "f_japan 844x390": {
+          "coldMs": 3.3,
+          "medianMs": 0.2,
+          "p95Ms": 0.4
+        },
+        "campfire 1280x800": {
+          "coldMs": 10.2,
+          "medianMs": 0.3,
+          "p95Ms": 0.4
+        },
+        "hauntedfog 1280x800": {
+          "coldMs": 9,
+          "medianMs": 0.3,
+          "p95Ms": 0.4
+        },
+        "eventhorizon 1280x800": {
+          "coldMs": 15.5,
+          "medianMs": 1.7,
+          "p95Ms": 2.1
+        },
+        "f_progress 1280x800": {
+          "coldMs": 6.4,
+          "medianMs": 0.4,
+          "p95Ms": 0.5
+        },
+        "f_japan 1280x800": {
+          "coldMs": 7.1,
+          "medianMs": 0.3,
+          "p95Ms": 0.4
+        }
+      },
+      "uncachedKnight": {
+        "medianMs": 3.899999998509884,
+        "p95Ms": 4.5
+      },
+      "backgroundCache": {
+        "entries": 5,
+        "bytes": 46080000,
+        "limit": 50331648
+      },
+      "poseCache": {
+        "workers": 2,
+        "completed": 36,
+        "pending": 0,
+        "busy": 0,
+        "entries": 38,
+        "bytes": 889768
+      }
+    }
+  },
+  "errors": []
+}

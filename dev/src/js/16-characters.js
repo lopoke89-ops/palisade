@@ -14,6 +14,7 @@ function neonSeg(a,b,col){const A=g.globalAlpha;g.globalAlpha=A*.32;seg(a,b,col,
 // butt: how far in front of the chest the stock starts; stock/recv: [length, height, width, colour]; grip: rear hand;
 // fore/foreL: where the front hand holds and how long the fore-end is; barrel: radius. The painter and the muzzle
 // measurement both read this, so a new held item only needs a row here.
+function createWardrobeRenderer(){
 const WEAPON_TABLE={
  carbine:{x:5.9,y:21.9,butt:4.3,stock:[4.2,2.4,1.8,'#3e4336'],recv:[5.2,2.3,1.85,'#303b3b'],grip:5.3,mag:[1.6,3,1.3],magZ:6.6,fore:9.6,foreL:3.8,foreC:'#4a5040',barrel:.55},
  rifle:{x:5.9,y:21.9,butt:4.3,stock:[4.6,2.5,1.75,'#4d3a26'],stockY:-.1,recv:[5.4,2.1,1.75,'#2e3431'],grip:5.6,fore:10.2,foreL:4.4,foreC:'#5a4430',barrel:.5,scope:true},
@@ -28,6 +29,12 @@ function reach(S,H,L1,L2,pole){
  let p=pole.map((v,i)=>v-dir[i]*pd);const pl=Math.hypot(...p)||1;p=p.map(v=>v/pl);
  return [0,1,2].map(i=>S[i]+dir[i]*a+p[i]*h);
 }
+// 60% planted travel / 40% lifted recovery. Height never falls below the resting sole.
+function wardrobeStep(phase,side,weight=1,dir=0){
+ const f=((phase/(Math.PI*2)+(side<0?.5:0))%1+1)%1,stance=f<.6,q=stance?f/.6:(f-.6)/.4;
+ const stride=(stance?1-2*q:-1+2*q*q*(3-2*q))*2.15*weight,lift=stance?0:Math.sin(q*Math.PI)**2*1.35*weight;
+ return {x:side*3.1+Math.sin(dir)*stride,z:Math.cos(dir)*stride,lift,stance};
+}
 function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  const compact=scale<=6;
  // Outfit details are independent of the separately equipped headgear.
@@ -37,7 +44,10 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
   ...(o.stars?['#f3eaff','#b2b5ff']:[]),...(o.holo?['#b5f5ff']:[]),
   ...(o.shine||o.chrome?['#fff1c1','#ffffff']:[]),...(o.glitter?['#fffbe0']:[]),
   o.reaper,o.phantom,o.lamp,...(o.pumpkin?[o.pking?'#ffb040':'#ffd35a','#ff7a1a']:[]),...(o.wraps?['#ffc94a']:[])].filter(Boolean));
- const ca=Math.cos(angle),sa=Math.sin(angle),phase=typeof walking==="number"?walking:walking?time*7:0,bob=Math.abs(Math.sin(phase))*.45,faces=[];
+ const ca=Math.cos(angle),sa=Math.sin(angle),phase=typeof walking==="number"?walking:walking?time*7:0;
+ const weight=o.downed?0:o.gaitWeight===undefined?(walking?1:0):o.gaitWeight,dir=o.gaitDir||0;
+ const bob=-(1-Math.cos(phase*2))*.14*weight+(o.downed?0:(o.breath||0)*.16),faces=[];
+ const leg=side=>{const step=wardrobeStep(phase,side,weight,dir),ankle=[step.x,3.2+step.lift,step.z],hip=[side*2.6,14.4+bob,0];return {...step,ankle,hip,knee:reach(hip,ankle,6,6,[0,0,1])}};
  const hex=c=>{const m=/^#([0-9a-f]{6})$/i.exec(c||'');return m?m[1].match(/../g).map(s=>parseInt(s,16)):[90,95,75]};
  const tint=(c,k)=>{const v=hex(c);return '#'+v.map(x=>Math.max(0,Math.min(255,Math.round(x*k))).toString(16).padStart(2,'0')).join('')};
  const project=p=>{const d=-p[0]*sa+p[2]*ca;return [p[0]*ca+p[2]*sa,-p[1]+d*.32,d+p[1]*.32]};
@@ -80,13 +90,11 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  if(!ctx)return {tip:project([gunX,gunY+bob,gunZ+gl+2.4-kick]),root:project([gunX,gunY+bob,0])};
  // A planted stance, shaped thighs, separate knees and substantial boots.
  for(const side of[-1,1]){
-  const stride=walking?Math.sin(phase+ (side<0?Math.PI:0))*2.2:0;
-  const x=side*3.1;
-  column(x,2+stride*.12,1.05+stride,4.3,3.1,6.1,'#35362e',.87);
-  box(x, .7+stride*.12,1.2+stride,4.35,.85,6.25,'#202722',.3);
-  beam([x,3.2, stride],[x,8.1, stride*.6],1.7,T,2);
-  beam([x,8.1,stride*.6],[side*2.6,14.4+bob,0],2.05,T,2.35);
-  column(x,8.1,stride*.6+1.75,2.8,3.2,1.25,tint(T,.75),.88,.32);
+  const L=leg(side),{x,z,lift,ankle,knee,hip}=L;
+  column(x,2+lift,1.05+z,4.3,3.1,6.1,'#35362e',.87);
+  box(x,.7+lift,1.2+z,4.35,.85,6.25,'#202722',.3);
+  beam(ankle,knee,1.7,T,2);beam(knee,hip,2.05,T,2.35);
+  column(knee[0],knee[1],knee[2]+1.75,2.8,3.2,1.25,tint(T,.75),.88,.32);
   box(side*4.7,11.7+bob,0,1.5,3.3,2.75,tint(T,1.1),.3);
  }
  column(0,15+bob,0,9.1,3.8,5.2,B,1.06);
@@ -360,10 +368,10 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
    const p=[[x,y+1.3,z],[x+1.1,y,z],[x,y-1.3,z],[x-1.1,y,z]];decal(z>0?p.slice().reverse():p,'#f3d677',.85);
   }
   for(const side of[-1,1]){
-   const step=walking?Math.sin(phase+(side<0?Math.PI:0))*2.2:0;
-   column(side*3.1,5.3,step*.82,4.25,1.6,4.15,'#fff1c9',1,.3);
+   const L=leg(side),step=L.z;
+   column(L.ankle[0]+(L.knee[0]-L.ankle[0])*.3,5.3+L.lift*.7,step+(L.knee[2]-step)*.3,4.25,1.6,4.15,'#fff1c9',1,.3);
    for(const z of[-2.4,2.6])for(const y of[10.3,12.8]){
-    const x=side*3.1,p=[[x,y+1.1,z],[x+.95,y,z],[x,y-1.1,z],[x-.95,y,z]];decal(z>0?p.slice().reverse():p,'#67293b',.8);
+    const f=(y-8)/6,x=L.knee[0]+(L.hip[0]-L.knee[0])*f,zz=z+L.knee[2]*(1-f),p=[[x,y+1.1,zz],[x+.95,y,zz],[x,y-1.1,zz],[x-.95,y,zz]];decal(z>0?p.slice().reverse():p,'#67293b',.8);
    }
    box(side*6.85,23.4+bob,2,1.7,2.8,.45,'#67293b',.25);
    ball(side*6.85,23.5+bob,2.5,.65,'#fff1c9');
@@ -377,7 +385,7 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
   const shield=[[-4.1,25.4,4.7],[-1,25.4,4.7],[-1.25,23.3,4.7],[-2.55,22.6,4.7],[-3.85,23.3,4.7]];
   decal(shield.slice().reverse(),'#202b40',1);chest(-2.55,24.1,1.25,1.5,'#fff1c1',4.87);
   chest(2.5,24.7,1.8,.55,'#fff1c1',4.8);
-  for(const side of[-1,1]){const step=walking?Math.sin(phase+(side<0?Math.PI:0))*2.2:0;box(side*4.7,10.8+bob,step*.35,.25,5.8,1,'#e6c65c',.12);box(side*3.1,3.5+step*.12,2.6+step,3.3,1.2,1.7,'#202b40',.25)}
+  for(const side of[-1,1]){const L=leg(side),step=L.z;beam([L.knee[0]+side*1.9,L.knee[1],L.knee[2]],[L.hip[0]+side*1.9,L.hip[1],L.hip[2]],.2,'#e6c65c',.2,.12);box(L.x,3.5+L.lift,2.6+step,3.3,1.2,1.7,'#202b40',.25)}
   box(0,15.8+bob,3.45,9,1.4,.55,'#202b40',.3);box(0,15.8+bob,3.8,1.6,1.1,.25,'#fff1c1',.2);
   for(const x of[-2.8,2.8])box(x,14.7+bob,3.2,1.8,2.2,1.3,'#202b40',.3);
   box(0,23+bob,-3.9,6.2,3.8,.35,'#26334b',.3);box(0,23+bob,-4.15,3.8,.6,.2,'#f0cf5c',.1);
@@ -385,12 +393,12 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  if(goldKnight){
   // Articulated gold plate over dark mail, with an ivory heraldic center.
   for(const side of[-1,1]){
-   const step=walking?Math.sin(phase+(side<0?Math.PI:0))*2.2:0;
+   const L=leg(side),step=L.z;
    column(side*6.5,26+bob,0,5.7,2.8,5.2,'#f0cf5c',.72,.55);
    box(side*6.5,25.2+bob,2.7,4,.8,.35,'#8a6a1c',.2);
-   column(side*3.1,6.1,step*.78,4.4,5.5,4.7,'#d4ae45',.84,.45);
-   column(side*3.1,9,1.65+step*.5,4.2,2.6,2.2,'#f0cf5c',.7,.4);
-   box(side*3.1,5.9,2.45+step*.78,.45,4,.25,'#fff1c1',.06);
+   beam(L.ankle,L.knee,2.2,'#d4ae45',2,.45);
+   column(L.knee[0],L.knee[1]+.7,L.knee[2]+1.65,4.2,2.6,2.2,'#f0cf5c',.7,.4);
+   beam([L.ankle[0],L.ankle[1]+.6,L.ankle[2]+2.25],[L.knee[0],L.knee[1]-.8,L.knee[2]+2.1],.18,'#fff1c1',.18,.06);
    for(const z of[-3.25,3.3])column(side*2.8,13.5+bob,z,4.35,3.4,1,'#e2bd52',.85,.4);
   }
   chest(0,23.6,6.8,4.4,'#d4ae45',4.65);
@@ -411,10 +419,10 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  if(o.web)for(const z of[4.85,-4.2]){const c=[-1,22.5];for(let k=0;k<6;k++){const a=k*Math.PI/3;strip(c,[c[0]+Math.cos(a)*5,c[1]+Math.sin(a)*4.4],.34,z,o.web)}
   for(const r of[1.8,3.6])for(let k=0;k<6;k++){const a0=k*Math.PI/3,a1=a0+Math.PI/3;strip([c[0]+Math.cos(a0)*r,c[1]+Math.sin(a0)*r*.88],[c[0]+Math.cos(a1)*r,c[1]+Math.sin(a1)*r*.88],.28,z,o.web)}}
  if(o.bones){for(const z of[4.85,-4.2]){strip([0,26.2],[0,16.4],.8,z,o.bones);for(const [y,w]of[[24.6,4.2],[23,4.5],[21.4,4.3],[19.9,3.6]])for(const s of[-1,1])strip([s*.4,y],[s*w,y-.9],.6,z,o.bones)}
-  strip([-2.4,16.2],[2.4,16.2],1,4.85,o.bones);for(const side of[-1,1])for(const [y0,y1]of[[4.5,7.6],[8.8,13.6]])box(side*3.1,(y0+y1)/2+bob*(y0>8?1:0),1.9,.7,y1-y0,.3,o.bones,.02,.6);
+  strip([-2.4,16.2],[2.4,16.2],1,4.85,o.bones);for(const side of[-1,1]){const L=leg(side);for(const [a,b]of [[L.ankle,L.knee],[L.knee,L.hip]])beam([a[0],a[1]+.5,a[2]+1.9],[b[0],b[1]-.5,b[2]+1.9],.33,o.bones,.33,.02)}
   for(const x of[-1.45,1.45])box(x,30.8+bob,3.95,1.6,1.4,.25,'#15110e',.02,1.6);box(0,29.6+bob,3.95,.6,.8,.25,'#15110e',.02,1.6);for(let k=-2;k<=2;k++)box(k*.7,28.4+bob,3.95,.35,.9,.25,'#15110e',.02,1.6)}
  if(o.wraps){for(let y=15.2;y<=26;y+=1.9)column(0,y+bob,.1,10.9,.55,6.9,o.wraps,1,.18);
-  for(const side of[-1,1])for(const y of[5.5,7.4,10.4,12.6])column(side*3.1,y+(y>9?bob:0),.6,4.6,.5,4.4,o.wraps,1,.14);
+  for(const side of[-1,1]){const L=leg(side);for(const [a,b]of [[L.ankle,L.knee],[L.knee,L.hip]])for(const f of [.3,.7])column(a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f,a[2]+(b[2]-a[2])*f+.6,4.6,.5,4.4,o.wraps,1,.14)}
   for(const y of[29,30.3,32.6])column(0,y+bob,.2,7.8,.55,6.9,o.wraps,1,.16);for(const x of[-1.45,1.45])box(x,31.4+bob,3.95,.9,.45,.2,'#ffc94a',.02,1.6)}
  if(o.reaper){column(0,7.6,0,13.6,13.6,8.6,B,.62,.5);column(0,1.3,0,14,.8,9,tint(B,.7),1,.3)}
  if(o.phantom){for(const [i,x]of[[0,-3],[1,0],[2,3]]){const sw=Math.sin(i*2.1)*1.6;beam([x,14.4+bob,0],[x+sw,8,1],1.6,o.phantom,.9,.2);beam([x+sw,8,1],[x-sw*.6,2.5,-.5],.9,o.phantom,.15,.15)}
@@ -436,7 +444,7 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  if(o.patches){chest(-2.3,23.8,2.3,2.3,'#6a4a8a',4.98);chest(2.5,19.4,2,2.1,'#8a3a2a',4.98);chest(-2.3,23.8,2.6,.18,'#2a2014',5.05);chest(2.5,19.4,.18,2.4,'#2a2014',5.05);box(0,21+bob,-3.95,2.4,2.4,.15,'#5a6a3a',.035,.65)}
  if(o.straws){for(let i=0;i<6;i++){const a=i*Math.PI/3;beam([Math.cos(a)*2.4,27.4+bob,Math.sin(a)*2],[Math.cos(a)*3.6,26.4+bob,Math.sin(a)*3],.2,o.straws,.05,.05)}
   for(const [el,ha]of[[elL,haL],[elR,haR]]){const w=ha.map((v,i)=>v+(el[i]-v)*.16);for(const d of[[1,0,0],[-1,0,0],[0,1,0]])beam(w,w.map((v,i)=>v+d[i]*1.4),.18,o.straws,.05,.05)}
-  for(const s of[-1,1])for(const d of[-1,1])beam([s*3.1,3.6,0],[s*3.1+d*1.3,2.8,d*.6],.2,o.straws,.05,.05)}
+  for(const s of[-1,1]){const L=leg(s);for(const d of[-1,1])beam([L.x,3.6+L.lift,L.z],[L.x+d*1.3,2.8+L.lift,L.z+d*.6],.2,o.straws,.05,.05)}}
  if(o.glitter){
   for(let i=0;i<4;i++){const phase=(time*1.1+i*.29+i*.13)%1;if(phase>.3)continue;const r=Math.sin(phase/.3*Math.PI)*1.2,x=-3+i*2,y=22+(i%2)*3;
    chest(x,y,r*2,.17,'#fffbe0',4.9);chest(x,y,.17,r*2,'#fffbe0',4.9)}
@@ -484,6 +492,11 @@ ctx.beginPath();ctx.ellipse(0,1.1,10.5,4,0,0,Math.PI*2);ctx.fill();
 }
 
 
+// Serialize this complete closure for workers: minification can rename every internal dependency safely.
+return {paintWardrobeCharacter,wardrobeStep};
+}
+const {paintWardrobeCharacter,wardrobeStep}=createWardrobeRenderer();
+
 // Compensate for the model's flattened depth before aligning it with the screen aim.
 function wardrobeAimAngle(sd){return Math.atan2(sd.x,sd.y/.32)}
 function wardrobeBarrel(o,sd,walk=0){
@@ -495,7 +508,7 @@ function wardrobeBarrel(o,sd,walk=0){
 // Cosmetic coordinates only: collision position, speed, spread, damage and range stay untouched.
 function wardrobeShotVisual(from,ang,gun){
  if(from.id===undefined||players.get(from.id)!==from)return null;
- const look=Object.assign(playerLook(from),{bolt:gun.bolt?0:-1}),barrel=wardrobeBarrel(look,wdirToScreen(from.aim),from.walk||0);
+ const look=Object.assign(playerLook(from),{bolt:gun.bolt?0:-1}),barrel=wardrobeBarrel(look,wdirToScreen(from.aim),look.walk??from.walk??0);
  const tip=barrel.tip.map(v=>v*FIG),root=barrel.root.map(v=>v*FIG);
  const vx=(Math.cos(ang)-Math.sin(ang))*32,vy=(Math.cos(ang)+Math.sin(ang))*16;
  const along=((tip[0]-root[0])*vx+(tip[1]-root[1])*vy)/(vx*vx+vy*vy);
@@ -530,7 +543,7 @@ function startWardrobeWorkers(){
  if(wardrobeWorkers!==null)return wardrobeWorkers.length>0;
  wardrobeWorkers=[];
  if(typeof Worker==='undefined'||typeof OffscreenCanvas==='undefined'||typeof ImageBitmap==='undefined')return false;
- const source="const WEAPON_TABLE="+JSON.stringify(WEAPON_TABLE)+";"+weaponKind.toString()+";"+reach.toString()+";const paint="+paintWardrobeCharacter.toString()+";"+"\n const stage=new OffscreenCanvas(1,1),ctx=stage.getContext('2d',{willReadFrequently:true}),out=new OffscreenCanvas(1,1),outctx=out.getContext('2d',{willReadFrequently:true});\n onmessage=e=>{const j=e.data;\n try{\n  const w=72*j.r,h=72*j.r;\n  if(stage.width!==w||stage.height!==h){stage.width=w;stage.height=h}else ctx.clearRect(0,0,w,h);\n  const bounds=paint(ctx,j.pose,j.heading*Math.PI/180,j.tick,j.r,36*j.r,54*j.r,j.gait*Math.PI*2/24);\n  if(out.width!==bounds.w*j.r||out.height!==bounds.h*j.r){out.width=bounds.w*j.r;out.height=bounds.h*j.r}\n  outctx.drawImage(stage,(36+bounds.left)*j.r,(54+bounds.top)*j.r,out.width,out.height,0,0,out.width,out.height);\n  const bitmap=out.transferToImageBitmap();postMessage({key:j.key,actor:j.actor,bounds,bitmap},[bitmap]);\n }catch(error){postMessage({failed:true,actor:j.actor})}\n };\n postMessage({ready:true});";
+ const source="const paint=("+createWardrobeRenderer.toString()+")().paintWardrobeCharacter;"+"\n const stage=new OffscreenCanvas(1,1),ctx=stage.getContext('2d',{willReadFrequently:true}),out=new OffscreenCanvas(1,1),outctx=out.getContext('2d',{willReadFrequently:true});\n onmessage=e=>{const j=e.data;\n try{\n  const w=72*j.r,h=72*j.r;\n  if(stage.width!==w||stage.height!==h){stage.width=w;stage.height=h}else ctx.clearRect(0,0,w,h);\n  const bounds=paint(ctx,j.pose,j.heading*Math.PI/180,j.tick,j.r,36*j.r,54*j.r,j.gait*Math.PI*2/24);\n  if(out.width!==bounds.w*j.r||out.height!==bounds.h*j.r){out.width=bounds.w*j.r;out.height=bounds.h*j.r}\n  outctx.drawImage(stage,(36+bounds.left)*j.r,(54+bounds.top)*j.r,out.width,out.height,0,0,out.width,out.height);\n  const bitmap=out.transferToImageBitmap();postMessage({key:j.key,actor:j.actor,bounds,bitmap},[bitmap]);\n }catch(error){postMessage({failed:true,actor:j.actor})}\n };\n postMessage({ready:true});";
  try{
   wardrobeWorkerURL=URL.createObjectURL(new Blob([source],{type:'text/javascript'}));
   const n=(navigator.hardwareConcurrency||2)>=4?2:1;let ready=0;
@@ -576,7 +589,7 @@ function drawWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  if(pose.bolt!==undefined)pose.bolt=Math.round(pose.bolt*24)/24;
  const tr=ctx.getTransform(),dpr=Math.min(3,Math.max(1,Math.hypot(tr.a,tr.b))),r=Math.ceil(scale*Math.min(dpr,2));   // 2x is plenty for these sprites; 3x made big previews ~1 MB each and overflowed the cache
  const key=Object.keys(pose).filter(k=>!WARDROBE_OMIT.has(k)).sort().map(k=>k+':'+pose[k]).join('|')+';'+heading+';'+gait+';'+tick+';'+r;
- const actor=Object.keys(pose).filter(k=>!WARDROBE_OMIT.has(k)&&k!=='bolt').sort().map(k=>k+':'+pose[k]).join('|')+';'+(o.tag||'self')+';'+r;
+ const actor=Object.keys(pose).filter(k=>!WARDROBE_OMIT.has(k)&&!['bolt','gaitWeight','gaitDir','breath'].includes(k)).sort().map(k=>k+':'+pose[k]).join('|')+';'+(o.tag||'self')+';'+r;
  let entry=WARDROBE_CACHE.get(key);
  if(!entry&&scale<=3&&!o.syncRender&&!o.flash&&!o.downed&&startWardrobeWorkers()){
   const previous=WARDROBE_CACHE.get(WARDROBE_RECENT.get(actor));
@@ -868,10 +881,28 @@ const LOOK={
   spotter:{body:'#4a4a36',vest:'#2a2a1e',pants:'#2b2420',head:'#a98262',boonie:'#8a2a22',bandana:'#a8342a',gl:8},
   fire:{body:'#6a3a1e',vest:'#2a1a10',pants:'#231c19',head:'#a07a5c',wrap:'#d06a1e',pack:'#3a2a1a',weapon:'bottle'}
 };
+// Render-only motion follows displacement, including remote snapshots. No input, simulation or wire fields change.
+const PLAYER_PRESENTATION=new WeakMap();
+function presentationMotion(p){
+ if(!Number.isFinite(p.x)||!Number.isFinite(p.y))return {};
+ const now=game.time;let m=PLAYER_PRESENTATION.get(p);
+ if(!m||now<m.at||now-m.at>1){m={x:p.x,y:p.y,at:now,moved:now-1,weight:0,strength:0,phase:0,dx:0,dy:1};PLAYER_PRESENTATION.set(p,m)}
+ const dt=now-m.at;
+ if(dt>0){
+  // Network interpolation approaches its target asymptotically. Tiny residual drift is not another full step.
+  const dx=p.x-m.x,dy=p.y-m.y,d=Math.hypot(dx,dy),valid=d>Math.max(.0001,dt*.12)&&d<2;
+  if(valid){m.phase=(m.phase+d*3)%(Math.PI*2);m.moved=now;m.strength=Math.min(1,d/dt/1.4);m.dx=dx/d;m.dy=dy/d}
+  const target=p.downed||p.alive===false?0:now-m.moved<.085?m.strength:0;
+  m.weight+=(target-m.weight)*(1-Math.exp(-dt/(target?.075:.085)));
+  m.x=p.x;m.y=p.y;m.at=now;
+ }
+ const aim=p.aim||{x:0,y:1},dir=wardrobeAimAngle(wdirToScreen({x:m.dx,y:m.dy}))-wardrobeAimAngle(wdirToScreen(aim));
+ return {walk:m.phase,gaitWeight:Math.round(m.weight*4)/4,gaitDir:Math.round(dir/(Math.PI/4))*Math.PI/4};
+}
 function playerLook(p){
   const cos=p.cos||DEFAULT_COS,C0=p.C||CLASSES[p.cls]||CLASSES.soldier,lk=cos.skin+'|'+cos.hat+'|'+C0.name;
   if(p._lk!==lk){p._lv=buildLook(p,cos);p._lk=lk}
-  return Object.assign({},p._lv);
+  return Object.assign({},p._lv,presentationMotion(p));
 }
 function buildLook(p,cos){
   const S=SKINS[cos.skin]||SKINS.std;

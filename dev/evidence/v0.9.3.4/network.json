@@ -1,0 +1,13 @@
+{
+  "hostDisplacement": 1.9799999999999993,
+  "hostWeight": 1,
+  "remoteWeight": 1,
+  "remoteStopped": 0,
+  "guestDisplacement": 1.9800000000000029,
+  "hostSawGuestStop": 0,
+  "productionWorkers": {
+    "completed": 56,
+    "failed": 0
+  },
+  "errors": []
+}
