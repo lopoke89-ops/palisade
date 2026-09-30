@@ -6,7 +6,7 @@ case "${1:-}" in
   locker) tests='locker_collections locker_fit milestones flagcase accounts taborder csp sp_cases sp_cases_migration' ;;
   presentation) tests='presentation presentation_posefit flagcase wardrobe3d locker_fit muzzle presentation_network cosmetic_network csp' ;;
   music) tests='music_routing' ;;
-  combat) tests='solo bosses multiplayer muzzle rewards_lobby_shotgun touch_lock mod_synergy boss_milestones' ;;
+  combat) tests='solo bosses multiplayer muzzle rewards_lobby_shotgun touch_lock mod_synergy boss_milestones blitz_mode blitz_bosses blitz_network blitz_milestones' ;;
   host) tests='hostcheck room_controls multiplayer rejoin rejoin_drop rejoin_migration' ;;
   smoke) tests='solo lobby reel_music csp fps_mode delgado ingame_settings hud_layout tips_toggle' ;;
   all) exec "$(dirname "$0")/run_all.sh" ;;

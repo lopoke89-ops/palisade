@@ -89,6 +89,7 @@ const AURAS={
   gsoldier:[{p:'pool',col:'#ffd24a',a:.22},{p:'ring',col:'#ffd24a'},{p:'glow',col:'#fff0a0',a:.16},{p:'orbit',n:3,col:'#fff0b0',size:1.5,glow:true},{p:'rise',n:6,cols:GOLDS,shape:'star',sp:.45}],
   gsniper:[{p:'pool',col:'#e0c060',a:.2},{p:'ring',col:'#e0c060'},{p:'rise',n:7,cols:['#c9d86a','#e0c060','#8aa83f'],shape:'leaf',sp:.35,size:1.3},{p:'twinkle',n:5}],
   ggren:[{p:'pool',col:'#ffb040',a:.28},{p:'ring',col:'#ffb040'},{p:'pulse',col:'#ffd070',every:2.2},{p:'sparks',n:6,cols:['#fff6c8','#ffb040'],x:0,y:15,dir:-1.3},{p:'rise',n:6,cols:GOLDS,sp:.5}],
+  demon:[{p:'pool',col:'#ff3a0a',a:.34},{p:'ring',col:'#ff7a1a'},{p:'glow',col:'#ff2a0a',a:.18,y:22},{p:'rise',n:9,cols:['#ff4a1a','#ffb040','#ffe0a0'],sp:.6,size:1.3},{p:'smoke',n:3,x:0,y:36,col:'#2a1612'}],   // v0.9.4.0 Demon
   gqm:[{p:'pool',col:'#e6c65c',a:.22},{p:'ring',col:'#e6c65c'},{p:'orbit',n:4,col:'#fff6c8',shape:'dot',size:1.2,glow:true,sp:1},{p:'rise',n:6,cols:['#9fe8b0','#fff6c8'],shape:'star',sp:.45}]
 };
 // part: which pieces to draw. 'ground': what lies under the figure (drawn before it); 'top': the rest.

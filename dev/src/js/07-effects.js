@@ -25,6 +25,8 @@ function emit(x,y,z,kind,mat){
     case'shell':p.col=rnd()<.5?'#d8b25a':'#b8913e';p.vx=(rnd()-.5)*1.4;p.vy=(rnd()-.5)*1.4;p.vz=80+rnd()*50;p.grav=300;p.life=p.max=.7;p.size=1.8;break;
     case'glint':p.col=rnd()<.5?'#bfe9ff':'#ffffff';p.vx*=3.2;p.vy*=3.2;p.vz=60+rnd()*90;p.life=p.max=.4;p.size=1.8;break;
     case'hull':p.col=rnd()<.5?'#b8322a':'#8e2620';p.vx=(rnd()-.5)*1.4;p.vy=(rnd()-.5)*1.4;p.vz=80+rnd()*50;p.grav=300;p.life=p.max=.8;p.size=2.4;break;
+    case'rune':p.col='#ffb040';p.vx*=.25;p.vy*=.25;p.vz=4+rnd()*8;p.grav=-6;p.life=p.max=.75+rnd()*.2;p.size=2.6;p.h=rnd()*6.28;break;   // v0.9.4.0 Infernal Sigil
+    case'tealdust':p.col=rnd()<.5?'#5af0ff':'#b8fbff';p.vx*=.35;p.vy*=.35;p.vz=6+rnd()*14;p.grav=-12;p.life=p.max=.4+rnd()*.12;p.size=2.6;break;   // v0.9.4.0: the Blue Butcher's arc (gone in about half a second)
     case'star':p.col=rnd()<.6?'#fffbe8':'#ffe9a0';p.vx*=.4;p.vy*=.4;p.vz=8+rnd()*10;p.grav=0;p.life=p.max=.55+rnd()*.3;p.size=2;break;
     case'cosmic':p.col=['#c07aff','#6a8aff','#ff8ad8','#ffffff'][Math.floor(rnd()*4)];p.vx*=.5;p.vy*=.5;p.vz=4+rnd()*10;p.grav=-6;p.life=p.max=.7;p.size=1.8;break;
     case'rock':p.col=rnd()<.5?'#8a7e70':'#6a5e52';p.vx*=1.2;p.vy*=1.2;p.vz=18+rnd()*20;p.grav=160;p.life=p.max=.6;p.size=2.4;break;

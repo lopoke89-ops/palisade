@@ -11,7 +11,7 @@ function todStage(stage){
   if(!isFinite(W)){const c=((stage-1)%6+6)%6;return c>4.5?2:c>2.5?1:0}
   return stage>W-(W>=10?1.5:.5)?2:stage>W*.5?1:0;
 }
-const waveEff=()=>game.mode==='endless'?1+(game.wave-1)*.55:game.wave;
+const waveEff=()=>game.mode==='endless'?1+(game.wave-1)*.55:game.mode==='blitz'?game.wave*1.2+1:game.wave;   // Blitzkrieg Rush: every raid a notch harder
 const raidName=w=>isFinite(game.waves)?`RAID ${w} OF ${game.waves}`:`RAID ${w}`;
 function startBuild(dur){
   game.phase='build';game.timer=dur;
@@ -28,6 +28,7 @@ function startBuild(dur){
 function startRaid(){
   if(game.pvp){startBattle();return}
   game.wave++;game.phase='raid';setTip('');closeArmory();
+  if(blitz()&&game.wave>=BLITZ.waves){game.bossShare=1;stormRaid();sfx('siren');game.flood={t:0,warned:false};startFinalBlitz();return}   // v0.9.4.0: the Final Blitz
   const k=Math.floor(waveEff()),Df=game.Df,P=Math.max(1,players.size),q=[];
   // a bigger crew mostly means more riflemen; grenadiers and breachers grow much more slowly
   const boss=bossOf(game.wave),boss2=boss&&N>16?bossPartner(game.wave):'',xb=boss?'':extraBoss(game.wave),xb2=xb?nightmareSecond(game.wave,xb):'',W=modWaveMix(waveMix(k,P,Df.extra,!!(boss||xb)),k);
@@ -111,9 +112,9 @@ const BOSS_VARIANTS={
 
 // each map has its own boss order (MAPS[..].bosses); the Yard's is the old default
 const BOSS_ORDER=['butcher','demolisher','storm'];
-const bossOf=w=>{if(w%5!==0)return'';const L=(MAP&&MAP.bosses)||BOSS_ORDER;return L[(w/5-1)%L.length]};
+const bossOf=w=>{if(w%5!==0)return'';const L=(MAP&&MAP.bosses)||BOSS_ORDER,k=L[(w/5-1)%L.length];return blitz()?(w>=BLITZ.waves?'':blitzBoss(k)):k};   // Blitzkrieg Rush: its own bosses; raid 15 is the Final Blitz
 // XL boss raids bring a second boss: the next different one in the map's pool
-const bossPartner=w=>{const L=(MAP&&MAP.bosses)||BOSS_ORDER,i=(w/5-1)%L.length;for(let j=1;j<L.length;j++){const k=L[(i+j)%L.length];if(k!==L[i])return k}return''};
+const bossPartner=w=>{const L=(MAP&&MAP.bosses)||BOSS_ORDER,i=(w/5-1)%L.length;for(let j=1;j<L.length;j++){const k=L[(i+j)%L.length];if(k!==L[i])return blitz()?blitzBoss(k):k}return''};
 // enemy health: the map's multiplier (Yard 1, Riverbend 1.05, Quarry 1.1) and +10% on XL. Damage is never scaled.
 const mapHp=()=>((MAP&&MAP.hp)||1)*(N>16?1.1:1);
 const XL_BOSS_SHARE=.9;   // each of the two XL bosses has 90% of a normal boss's health
@@ -121,26 +122,27 @@ const ETYPES={rifle:{hp:36,speed:1.5},gren:{hp:46,speed:1.25},breach:{hp:30,spee
   shield:{hp:66,speed:1.15},medic:{hp:34,speed:1.55},spotter:{hp:30,speed:1.45},fire:{hp:40,speed:1.4}};
 // type codes for the network: never reorder, only add to the end
 const ECODE=['rifle','gren','breach','boss:demolisher','boss:butcher','boss:storm','shield','medic','spotter','fire','boss:ferryman','boss:foreman'];
-function spawnBoss(key,sb,second=false){
+function spawnBoss(key,sb,second=false,fb=false){
   if(key==='ferryman'&&!(game.lay&&game.lay.raftAt&&game.lay.raftAt.length))key='butcher';   // no river, no raft
   const B=BOSSES[key];if(!B)return;let x=0,y=0;
-  const at=key==='ferryman'?game.lay.raftAt:(game.lay&&game.lay.bossAt)||[];
+  const at=(key==='ferryman'||key==='harbinger')&&game.lay.raftAt&&game.lay.raftAt.length?game.lay.raftAt:(game.lay&&game.lay.bossAt)||[];
   for(let a=0;a<40&&at.length;a++){const t=at[Math.floor(rnd()*at.length)];if(!solidTile(t[0],t[1])){x=t[0]+.5;y=t[1]+.5;break}}
   if(!x){const t=spawnTile();if(t){x=t[0]+.5;y=t[1]+.5}else{x=N-.5;y=6.5}}
-  const P=Math.max(1,players.size),hp=B.hp*game.Df.hp*(1+.35*(P-1))*(1+.25*Math.floor(Math.max(0,game.wave-5)/15))*mapHp()*(game.bossShare||1);
-  const e={id:nextId++,type:'boss',boss:key,big:true,x,y,hp,max:hp,cd:2.2,walk:0,aim:{x:-1,y:0},flash:0,speed:B.speed,scanT:0,foe:null,planted:false,st:0,stT:0,stM:1,lx:x,ly:y,shots:0,ab:3,sw:0,sb:!!sb};
+  const P=Math.max(1,players.size),hp=B.hp*game.Df.hp*(1+.35*(P-1))*(1+.25*Math.floor(Math.max(0,game.wave-5)/15))*mapHp()*(game.bossShare||1)*(fb?BLITZ.fbHp:1);
+  const e={id:nextId++,type:'boss',boss:key,big:true,x,y,hp,max:hp,cd:2.2,walk:0,aim:{x:-1,y:0},flash:0,speed:B.speed,scanT:0,foe:null,planted:false,st:0,stT:0,stM:1,lx:x,ly:y,shots:0,ab:3,sw:0,sb:!!sb,fb:!!fb};
   if(B.raft){e.raft=true;e.ab=9;e.crews=0;e.pathT=0;e.next=-1}
   if(key==='foreman'){e.ab=5;e.cd=2.5}
+  blitzSpawnFix(e,key);
   enemies.push(e);
-  const I=bossInfo(key);sfx('horn');addShake(x,y,8);toastAll(second?'NIGHTMARE · SECOND BOSS · '+I.name:sb&&nightmare()&&!hasMod('bossrush')?'SURPRISE · '+I.name:I.name,B.intro);
+  const I=bossInfo(key);sfx('horn');addShake(x,y,8);if(fb){toastAll(`BLITZ · ${game.fb.n+1}/${game.fb.max} · ${I.name}`,B.intro);return}toastAll(second?'NIGHTMARE · SECOND BOSS · '+I.name:sb&&nightmare()&&!hasMod('bossrush')?'SURPRISE · '+I.name:I.name,B.intro);
 }
 function bossDown(e,own){
   const B=BOSSES[e.boss],I=bossInfo(e.boss),p=own&&own!=='dell'?players.get(own):null,share=p?15:20;game.bosses++;
-  const oct=game.oct&&e.boss==='butcher'&&!e.sb;if(e.sb){game.sbN=(game.sbN|0)+1;if(game.sbLog.length<100)game.sbLog.push(e.boss)}else game.bossLog.push(oct?'butcher_oct':e.boss);   // v0.9.3.8: in-between bosses are named too, for milestones
+  const oct=game.oct&&e.boss==='butcher'&&!e.sb;if(e.fb){if(game.fbLog.length<20)game.fbLog.push(e.boss)}else if(e.sb){game.sbN=(game.sbN|0)+1;if(game.sbLog.length<100)game.sbLog.push(e.boss)}else game.bossLog.push(oct?'butcher_oct':e.boss);   // v0.9.4.0: Final Blitz bosses have their own list   // v0.9.3.8: in-between bosses are named too, for milestones
   for(const o of players.values())o.sal+=o===p?B.bounty:share;
   flt(e.x,e.y-.4,p?`+${B.bounty} SALVAGE`:`+${share} SALVAGE EACH`,'#e2b436');
   for(let n=0;n<26;n++)emit(e.x,e.y,WH*.8,n%2?'fire':'spark');addShake(e.x,e.y,11);sfx('bigboom',e.x,e.y);
-  const bc=bossBox(e.boss),n=oct?2:1,cn=e.sb?' +15-30 shards each, added when the run ends (or when you leave it).':CASES[bc]?` +${n} ${CASES[bc].name.replace(' CASE',n>1?' Cases':' Case')} each, added when the run ends (or when you leave it).`:'';
+  const bc=bossBox(e.boss),n=oct?2:B.cases||1,cn=e.fb?` +${n} ${CASES[bc].name.replace(' CASE',' Cases')} and 15-30 shards each, added when the run ends.`:e.sb?' +15-30 shards each, added when the run ends (or when you leave it).':CASES[bc]?` +${n} ${CASES[bc].name.replace(' CASE',n>1?' Cases':' Case')} each, added when the run ends (or when you leave it).`:'';
   toastAll(`${I.name} IS DOWN`,(p?`${p.name} landed it: +${B.bounty} salvage. Everyone else +${share}.`:`+${share} salvage each.`)+cn);
 }
 // the Demolisher: plants his feet, shows a red line for a second, then sends a slow rocket down it. Every third
@@ -221,6 +223,7 @@ function lightning(e,Df){
       if(!nb)break;done.add(nb);hurtAlly(nb,18*Df.dmg);stunAlly(nb,.5);pts.push(nb.x,nb.y);from=nb}}
   zapFx(pts);sfx('zap',x,y);addShake(x,y,7);addFlash({x,y,life:.2,max:.2,r:1.7});
   for(let n=0;n<8;n++)emit(x,y,WH*.6,'arc');
+  return{x,y};
 }
 function stunAlly(a,t){if(a!==qm){a.stun=Math.max(a.stun||0,t);if(a.id)personal(a,'zap')}}
 function zapFx(pts){rec(['z',...pts.map(r2)]);zaps.push({pts,life:.38,max:.38})}
@@ -240,6 +243,7 @@ function updateRockets(dt){
   for(const f of fires){f.t-=dt;f.tick-=dt;
     if(f.tick<=0){f.tick=.45;const R=f.r||.9;
       if(f.pl){for(const e of enemies)if(!e.dead&&!e.burrow&&Math.hypot(e.x-f.x,e.y-f.y)<R)hurtEnemy(e,e.type==='boss'?5:9,f.own);continue}   // Molotov fire: raiders only, never your walls
+      if(f.nap){napalmTick(f);continue}   // v0.9.4.0: the Arsonist's napalm
       for(const a of allies())if(a.alive&&Math.hypot(a.x-f.x,a.y-f.y)<R)hurtAlly(a,6*game.Df.dmg);
       const w=walls[idx(Math.floor(f.x),Math.floor(f.y))];if(w&&w.mat===0&&!(w.fire>0))w.fire=hasMod('firestorm')?8:5}}
   fires=fires.filter(f=>f.t>0);
@@ -249,7 +253,7 @@ function spawnEnemy(type){
   const t=spawnTile();if(!t)return;spawnEnemyAt(type,t[0]+.5,t[1]+.5);
 }
 function spawnEnemyAt(type,x,y){
-  const T=ETYPES[type]||ETYPES.rifle,s=(1+(game.mode==='endless'?.045:.07)*(game.wave-1))*game.Df.hp*mapHp();
+  const T=ETYPES[type]||ETYPES.rifle,s=(1+(game.mode==='endless'?.045:game.mode==='blitz'?.085:.07)*(game.wave-1))*game.Df.hp*mapHp();
   const e={id:nextId++,type,x,y,hp:T.hp*s,max:T.hp*s,cd:1+rnd(),walk:rnd()*6,aim:{x:-1,y:0},flash:0,speed:T.speed,scanT:0,foe:null,planted:false};
   if(type==='medic')e.ab=1.5;if(type==='spotter'){e.st=0;e.stT=0;e.stM=1;e.lx=x;e.ly=y}
   enemies.push(e);return e;
@@ -288,10 +292,11 @@ function showOver(){closeGameSettings(false);
   const win=!!game.won;sfx(win?'win':'lose',undefined,undefined,true);
   $('overTitle').textContent=win?'CLAIM HELD':'CLAIM LOST';$('overTitle').className=win?'':'lost';
   const crew=players.size>1?` · CREW OF ${players.size}`:'',W=game.waves,endless=!isFinite(W);
-  const held=win?W:Math.max(0,game.wave-1),S=game.stats;
+  const res=blitzResult(player),held=win||res?W:Math.max(0,game.wave-1),S=game.stats;
   $('overEyebrow').textContent=`${player.C.name} · ${game.Df.name} · ${endless?'ENDLESS':W+' RAIDS'}${crew} · ${win?`ALL ${W} RAIDS BROKEN`:endless?`${held} RAIDS HELD`:`STAKE FELL IN RAID ${game.wave}`}${game.mods.length?' · '+modNames(game.mods).join(' + '):''}`;
   $('overLede').textContent=win?'The stake is still standing. Try it with less wood and more nerve, or turn the threat up.':endless?`Endless only ends one way. ${held} raids is the number to beat.`:'They got to the core. Look at where they broke in. That hole is the lesson.';
   const loot=game.rewarded?null:lockerReward(held,win,player.kills|0);game.rewarded=true;
+  if(res)blitzOverText(res,crew);   // v0.9.4.0: your own evacuation result
   if(loot){$('overLoot').textContent=loot.text;$('overLoot').hidden=false;showRewards(loot)}else{$('overLoot').hidden=true;showRewards(null)}
   $('sWaves').textContent=held;$('sDrop').textContent=S.dropped;$('sBuilt').textContent=S.built;$('sLost').textContent=S.lost;$('sRep').textContent=S.repairs;$('sRev').textContent=S.revives;
   if(NET.mode==='solo')saveBest(held,S.dropped);

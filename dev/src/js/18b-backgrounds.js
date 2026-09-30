@@ -200,9 +200,66 @@ const BG_CASE={
         x.fillStyle='rgba(90,0,8,.45)';for(const[a,b,r]of[[-24,-12,15],[18,14,11],[-6,28,8],[26,-26,7]]){x.beginPath();x.arc(mx+a,my+b,r,0,Math.PI*2);x.fill()}bgTrees(x,w,h,h*.84,'#070103',81)}),w,h);
       for(let i=0;i<9;i++){const an=t*(.8+i*.07)+i*.7,rx=w*.5+Math.cos(an)*(90+i*9),ry=h*.32+Math.sin(an*1.3)*(40+i*5),f=Math.sin(t*20+i*2)*4;x.strokeStyle='#070103';x.lineWidth=2;
         x.beginPath();x.moveTo(rx-8,ry-f);x.lineTo(rx-3,ry);x.lineTo(rx,ry-2);x.lineTo(rx+3,ry);x.lineTo(rx+8,ry-f);x.stroke()}
-      const fog=bgBlob('rgba(160,20,30,.4)');for(let i=0;i<5;i++){const cx=((t*12+i*170)%(w+320))-160;x.globalAlpha=.6;x.drawImage(fog,cx-150,h*(.78+.05*(i%2))-35,300,70)}x.globalAlpha=1}}
+      const fog=bgBlob('rgba(160,20,30,.4)');for(let i=0;i<5;i++){const cx=((t*12+i*170)%(w+320))-160;x.globalAlpha=.6;x.drawImage(fog,cx-150,h*(.78+.05*(i%2))-35,300,70)}x.globalAlpha=1}},
+  // ---- v0.9.4.0 Blitzkrieg Case
+  scorched:{name:'Scorched Front',r:'e',box:'blitz',still:0,
+    draw(x,w,h){vgrad(x,w,h,[[0,'#1a0f10'],[.42,'#5a2414'],[.62,'#c0561e'],[.66,'#3a1a12'],[1,'#120a08']]);
+      const smoke=bgBlob('rgba(30,20,20,.85)'),glow=bgBlob('rgba(255,120,40,.7)');
+      for(let i=0;i<5;i++){const cx=w*(.12+.2*i+hash(i,91)*.06),by=h*.64;for(let k=0;k<6;k++){x.globalAlpha=.5-k*.06;x.drawImage(smoke,cx-40-k*14+Math.sin(k+i)*10,by-60-k*48,80+k*28,70+k*20)}}x.globalAlpha=1;
+      x.fillStyle='#0d0806';x.beginPath();x.moveTo(0,h*.66);for(let px=0;px<=w;px+=w/24){const q=px/w,hh=(q>.28&&q<.72?h*.12:h*.05)*(q>.28&&q<.72&&Math.floor(q*24)%2?1.25:1)+hash(Math.floor(q*24),92)*h*.03;x.lineTo(px,h*.66-hh)}x.lineTo(w,h);x.lineTo(0,h);x.closePath();x.fill();   // the broken fort
+      for(let i=0;i<9;i++){const fx=w*hash(i,93),fy=h*(.6+.06*hash(i,94));x.globalAlpha=.7;x.drawImage(glow,fx-30,fy-24,60,40);x.globalAlpha=1;x.fillStyle=i%2?'#ffb040':'#ff6a1a';x.beginPath();x.moveTo(fx-5,fy+4);x.quadraticCurveTo(fx,fy-14-hash(i,95)*10,fx+5,fy+4);x.fill()}
+      x.fillStyle='rgba(255,140,60,.08)';for(let k=0;k<6;k++)x.fillRect(0,h*.57+k*5,w,2);   // heat haze
+      for(let i=0;i<60;i++){x.globalAlpha=.3+.6*hash(i,96);x.fillStyle=i%3?'#ff8a3a':'#ffd06a';x.fillRect(hash(i,97)*w,hash(i,98)*h*.8,1.6,1.6)}x.globalAlpha=1}},
+  hellgate:{name:'Hellgate',r:'g',box:'blitz',
+    // The showcase: a colossal gate with a turning hellfire vortex, and every few seconds the Blue Butcher's arc cuts a
+    // teal rift across the sky that seals again. Everything that doesn't move is one cached layer; each frame draws the
+    // vortex (three rotated sprites), one pulse glow, the arc sweep and about 40 embers: no full-screen gradients.
+    draw(x,w,h,t){const gx=w*.5,gy=h*.5,G=Math.min(w*.5,h*.86);
+      bgBlit(x,bgLayer('hellgate',w,h,(x,w,h)=>hellgateScene(x,w,h)),w,h);
+      const pulse=.5+.5*Math.sin(t*1.7),vr=G*.3,vy=gy-G*.06;
+      x.save();x.globalCompositeOperation='lighter';x.globalAlpha=.5+.3*pulse;x.drawImage(bgBlob('rgba(255,60,20,.8)'),gx-vr*1.9,vy-vr*1.9,vr*3.8,vr*3.8);
+      for(let k=0;k<3;k++){x.save();x.globalAlpha=.55-.12*k;x.translate(gx,vy);x.rotate(t*(.35+k*.22)*(k%2?-1:1));x.scale(1,.92);x.drawImage(hellSpiral(k),-vr,-vr,vr*2,vr*2);x.restore()}
+      x.restore();
+      const ph=(t%7)/7;if(ph>.62&&ph<.78){const k=(ph-.62)/.16,bi=Math.floor(t/7)%5;x.globalAlpha=Math.sin(k*Math.PI)*.55;hellSilhouette(x,gx,vy+vr*.35,vr*.62,bi);x.globalAlpha=1}   // a Blitzkrieg boss shows in the fire
+      const sw=(t%6)/6;if(sw<.32){const k=sw/.32,ax=-w*.1+w*1.2*k,ay=h*(.18+.1*Math.sin(k*Math.PI));   // the arc sweeps across the sky...
+        x.save();x.globalCompositeOperation='lighter';for(const[lw,col]of[[16,'rgba(40,200,220,.25)'],[7,'rgba(90,240,255,.8)'],[2.4,'#eaffff']]){x.strokeStyle=col;x.lineWidth=lw;x.beginPath();x.arc(ax-40,ay,70,-.75,.75);x.stroke()}
+        x.globalAlpha=.8;x.strokeStyle='rgba(90,240,255,.6)';x.lineWidth=2;x.beginPath();x.moveTo(-w*.1,h*.2);for(let q=0;q<=k;q+=.05)x.lineTo(-w*.1+w*1.2*q,h*(.18+.1*Math.sin(q*Math.PI)));x.stroke();x.restore()}
+      else if(sw<.5){const k=(sw-.32)/.18;x.save();x.globalCompositeOperation='lighter';x.globalAlpha=(1-k)*.7;x.strokeStyle='rgba(90,240,255,.7)';x.lineWidth=3*(1-k)+.5;x.beginPath();   // ...and the rift seals
+        for(let q=0;q<=1;q+=.04){const px=-w*.1+w*1.2*q,py=h*(.18+.1*Math.sin(q*Math.PI))+Math.sin(q*40+t*9)*2*(1-k);q?x.lineTo(px,py):x.moveTo(px,py)}x.stroke();x.restore()}
+      for(let i=0;i<40;i++){const p2=(t*.1*(0.5+hash(i,101))+hash(i,102))%1,ex=hash(i,103)*w+Math.sin(t*1.6+i)*12,ey=h*(1.02-p2*.95);   // embers and ash rising
+        x.globalAlpha=Math.sin(p2*Math.PI)*.9;x.fillStyle=i%5===0?'#bdb4ac':i%3?'#ff7a2a':'#ffd070';x.fillRect(ex,ey,i%4?1.6:2.4,i%4?1.6:2.4)}x.globalAlpha=1}}
 };
 for(const k in BG_CASE)BGS[k]=Object.assign({src:'case'},BG_CASE[k]);
+// v0.9.4.0 Hellgate: the still layer (sky, mountains, the gate with its burning veins, the ruins in front)
+function hellgateScene(x,w,h){
+  vgrad(x,w,h,[[0,'#050103'],[.45,'#2a0608'],[.6,'#6a1a0c'],[.64,'#1a0606'],[1,'#080203']]);
+  const gx=w*.5,gy=h*.5,G=Math.min(w*.5,h*.86),hz=h*.62;
+  x.fillStyle='#120406';x.beginPath();x.moveTo(0,hz);for(let px=0;px<=w;px+=w/30){x.lineTo(px,hz-h*(.05+.09*hash(Math.round(px/w*30),111))-(Math.abs(px-gx)<G*.7?0:h*.03))}x.lineTo(w,hz+2);x.lineTo(0,hz+2);x.closePath();x.fill();
+  const vr=G*.3,vy=gy-G*.06;const gr=x.createRadialGradient(gx,vy,0,gx,vy,vr);gr.addColorStop(0,'#ffb040');gr.addColorStop(.35,'#c8200a');gr.addColorStop(1,'#1a0204');x.fillStyle=gr;x.beginPath();x.arc(gx,vy,vr,0,Math.PI*2);x.fill();
+  // the gate: two pillars, a pointed arch, horned finials; black rock with burning veins
+  const pw=G*.13,px0=gx-vr-pw*.75,px1=gx+vr-pw*.25,top=vy-vr*1.25;x.fillStyle='#231012';
+  for(const px of[px0,px1]){x.fillRect(px,top,pw,hz-top+h*.03);x.beginPath();x.moveTo(px-pw*.2,top);x.lineTo(px+pw*.5,top-G*.12);x.lineTo(px+pw*1.2,top);x.closePath();x.fill()}
+  x.beginPath();x.moveTo(px0,top+G*.04);x.quadraticCurveTo(gx,vy-vr*2.1,px1+pw,top+G*.04);x.lineTo(px1+pw,top+G*.14);x.quadraticCurveTo(gx,vy-vr*1.55,px0,top+G*.14);x.closePath();x.fill();
+  for(const sd of[-1,1]){x.beginPath();x.moveTo(gx+sd*vr*.3,vy-vr*1.45);x.quadraticCurveTo(gx+sd*vr*.9,vy-vr*2.1,gx+sd*vr*1.3,vy-vr*1.95);x.quadraticCurveTo(gx+sd*vr*.8,vy-vr*1.8,gx+sd*vr*.5,vy-vr*1.36);x.closePath();x.fill()}
+  x.fillStyle='rgba(255,90,40,.18)';for(const px of[px0,px1])x.fillRect(px+pw*.82,top,pw*.18,hz-top);   // rim light from the fire
+  x.strokeStyle='rgba(255,110,30,.75)';x.lineWidth=1.4;x.lineJoin='round';
+  for(let i=0;i<14;i++){const pl=i%2?px0:px1,sx=pl+pw*(.2+.6*hash(i,112)),sy=top+(hz-top)*hash(i,113);x.beginPath();x.moveTo(sx,sy);let cx=sx,cy=sy;for(let k=0;k<4;k++){cx+=(hash(i*7+k,114)-.5)*pw*.5;cy+=G*.05*(hash(i*7+k,115)+.3);x.lineTo(clamp(cx,pl+2,pl+pw-2),cy)}x.stroke()}
+  x.strokeStyle='rgba(255,150,60,.5)';x.lineWidth=2.2;x.beginPath();x.arc(gx,vy,vr+2,0,Math.PI*2);x.stroke();
+  // ruined battlements in front, and the burning ground
+  x.fillStyle='#050203';for(const[sx,sw2,sh]of[[0,w*.24,h*.2],[w*.78,w*.22,h*.23]]){x.beginPath();x.moveTo(sx,h);x.lineTo(sx,h-sh);for(let q=0;q<6;q++){const qx=sx+sw2*q/6;x.lineTo(qx,h-sh-(q%2?0:h*.035)-hash(q+sx,116)*h*.02);x.lineTo(qx+sw2/6,h-sh-(q%2?0:h*.035))}x.lineTo(sx+sw2,h-sh*.6+hash(sx,117)*h*.05);x.lineTo(sx+sw2,h);x.closePath();x.fill()}
+  x.strokeStyle='rgba(255,90,20,.45)';x.lineWidth=1.3;for(let i=0;i<8;i++){const sx=w*hash(i,118),sy=h*(.72+.22*hash(i,119));x.beginPath();x.moveTo(sx,sy);x.lineTo(sx+(hash(i,120)-.5)*60,sy+8+hash(i,121)*14);x.stroke()}
+}
+// three hellfire spiral sprites for the Hellgate vortex, painted once
+const HELL_SP=[];
+function hellSpiral(k){if(HELL_SP[k])return HELL_SP[k];const c=document.createElement('canvas');c.width=c.height=192;const x=c.getContext('2d');x.translate(96,96);
+  const cols=[['rgba(255,190,80,.9)','rgba(255,90,20,.7)'],['rgba(255,120,40,.8)','rgba(180,20,10,.6)'],['rgba(255,220,140,.7)','rgba(255,70,20,.5)']][k];
+  for(let arm=0;arm<3;arm++){x.beginPath();for(let q=0;q<=60;q++){const a=arm*Math.PI*2/3+q*.09+k,r=4+q*1.45;q?x.lineTo(Math.cos(a)*r,Math.sin(a)*r):x.moveTo(Math.cos(a)*r,Math.sin(a)*r)}x.strokeStyle=cols[arm%2];x.lineWidth=5-k;x.lineCap='round';x.stroke()}
+  HELL_SP[k]=c;return c}
+// one of the five Blitzkrieg bosses as a dark shape in the fire (sword, launcher, lightning rifle, missiles, drill)
+function hellSilhouette(x,cx,by,s,i){x.fillStyle='#0a0204';x.beginPath();x.ellipse(cx,by-s*.62,s*.16,s*.16,0,0,Math.PI*2);x.fill();
+  x.beginPath();x.moveTo(cx-s*.24,by-s*.46);x.lineTo(cx+s*.24,by-s*.46);x.lineTo(cx+s*.18,by);x.lineTo(cx-s*.18,by);x.closePath();x.fill();
+  x.strokeStyle='#0a0204';x.lineWidth=s*.07;x.lineCap='round';x.beginPath();
+  if(i===0){x.moveTo(cx+s*.2,by-s*.4);x.lineTo(cx+s*.62,by-s*.95)}else if(i===1||i===3){x.moveTo(cx-s*.1,by-s*.5);x.lineTo(cx+s*.6,by-s*.6)}else if(i===2){x.moveTo(cx+s*.1,by-s*.3);x.lineTo(cx+s*.62,by-s*.42)}else{x.moveTo(cx+s*.2,by-s*.28);x.lineTo(cx+s*.55,by-s*.2)}x.stroke()}
 /* Full-bleed flags: fields adapt to the viewport, emblems use a uniform unit.
    The original flag geometry remains the source of truth; no generated flag artwork. */
 function star5(x,cx,cy,r,col,rot=-Math.PI/2){x.fillStyle=col;x.beginPath();for(let i=0;i<10;i++){const a=rot+i*Math.PI/5,rr=i%2?r*.382:r;i?x.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr):x.moveTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr)}x.closePath();x.fill()}

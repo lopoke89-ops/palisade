@@ -71,7 +71,8 @@ const abilRockets=p=>p.cls==='soldier'&&!game.pvp?ABIL.rocket.stock+((p.perk||PE
 const BURST_N=[3,5,7,9,9],burstN=p=>BURST_N[Math.min(4,p.up.d|0)],burstGap=p=>Math.max(.2,.4-.05*(p.up.d|0));
 const upStr=p=>UPG.map(x=>p.up[x.k]).join('');
 const nearStake=p=>{const c=stakeOf(p);return!!c&&Math.hypot(p.x-(c.i+.5),p.y-(c.j+.5))<2.7};
-const shopOpen=p=>!!p&&p.alive&&(game.pvp==='base'?game.phase!=='over':!game.pvp&&game.phase==='build');
+const lockdown=()=>hasMod('lockdown')&&game.mode==='blitz'&&game.wave>=BLITZ.waves-1;   // v0.9.4.0: the armory is shut before the Final Blitz
+const shopOpen=p=>!!p&&p.alive&&!lockdown()&&(game.pvp==='base'?game.phase!=='over':!game.pvp&&game.phase==='build');
 const canShop=p=>shopOpen(p)&&nearStake(p);
 function buyUpgrade(p,k){
   if(k==='core')return repairCore(p);
@@ -105,7 +106,7 @@ const newGid=()=>{const A='abcdefghijkmnpqrstuvwxyz23456789';let s='';for(let i=
 function newGame(roster,pvp='',opt={}){
   roster=roster||[{id:myId,name:myName(),cls:pick.cls,cos:cosStr(myCos()),sk:mySkills()}];
   pvp=pvp==='base'||pvp==='ffa'?pvp:'';
-  const mods=cleanMods(opt.mods,pvp),job=mods.includes('onejob')&&CLASSES[opt.job]?opt.job:'';
+  const mods=cleanMods(opt.mods,pvp||(pick.mode==='blitz'?'blitz':'')),job=mods.includes('onejob')&&CLASSES[opt.job]?opt.job:'';
   if(job)roster=roster.map(r=>({...r,cls:job}));
   const Df=pvp?DIFF.normal:DIFF[pick.diff]||DIFF.normal;
   const L=layMap(pick.map,pick.size,pvp);   // sets the size (N) and the terrain first
@@ -137,13 +138,13 @@ function newGame(roster,pvp='',opt={}){
   game.dellLv=0;
   qm={x:3.5+off[0],y:11.5+off[1],hp:180,max:180,alive:true,revive:0,aim:{x:1,y:0},cd:0,sup:8,gt:0,work:0,job:'',next:-1,pathT:0,scanT:0,foe:null,walk:0,flash:0,mats:[24,0,0],hurt:9};
   if(pvp||mods.includes('alone'))Object.assign(qm,{alive:false,gone:true,x:-9,y:-9});   // Delgado sits PvP (and On Your Own) out
-  enemies=[];bullets=[];lobs=[];charges=[];parts=[];flashes=[];floats=[];sacks=[];rockets=[];fires=[];zaps=[];slashes=[];rings=[];chains=[];
-  const mode=['5','10','endless'].includes(pick.mode)?pick.mode:'5';
+  enemies=[];bullets=[];lobs=[];charges=[];parts=[];flashes=[];floats=[];sacks=[];rockets=[];fires=[];zaps=[];slashes=[];rings=[];chains=[];arcs=[];arcHaz.length=0;
+  const mode=['5','10','endless','blitz'].includes(pick.mode)?pick.mode:'5';
   game={phase:pvp==='ffa'?'raid':'build',paused:false,wave:0,timer:pvp==='base'?PVP.truce:pvp==='ffa'?PVP.ffaTime:40+Df.build,queue:[],qn:0,spawnT:0,sel:game.sel||0,piece:'wall',time:0,tip:0,gathered:0,C:player.C,Df,
-    mode,waves:mode==='endless'?Infinity:+mode,rewarded:false,bosses:0,pvp,goal:PVP.ffaGoal,winner:'',
+    mode,waves:mode==='endless'?Infinity:mode==='blitz'?BLITZ.waves:+mode,rewarded:false,bosses:0,pvp,goal:PVP.ffaGoal,winner:'',
     stats:{dropped:0,built:0,lost:0,repairs:0,revives:0},
     map:MAP_IDS.includes(pick.map)?pick.map:'yard',size:N>16?'xl':'std',lay:L,flood:{t:0,warned:false},bossLog:[],oct:!!pick.oct,
-    gid:String(opt.gid||newGid()).slice(0,40),mods,job,sbN:0,sbLog:[],wx:0,wxT:0,sd:false,
+    gid:String(opt.gid||newGid()).slice(0,40),mods,job,sbN:0,sbLog:[],fbLog:[],fb:null,joinFB:0,wx:0,wxT:0,sd:false,
     joinHeld:opt.guest?null:0,joinT:0,joinBoss:0,joinSB:0};   // join*: where this phone came in (guests learn it from the first state packet)
   for(const p of players.values())kitUp(p);
   for(const p of players.values()){if(pvp==='base')p.sal=PVP.startSal;if(pvp==='ffa'){p.mats=[0,0,0];p.prot=PVP.prot}}
