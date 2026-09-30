@@ -18,7 +18,8 @@ curl -s -o /dev/null localhost:9000/ || (setsid nohup node peer-server.js > out/
 sleep 1.5
 fail=0
 for t in ${TESTS:-solo bosses multiplayer cases accounts rewards_lobby_shotgun reel_music music_routing v086 v087 muzzle cosmetics locker_fit locker_collections cosmetic_network social_lobby lobby v090 v090_net hostcheck room_controls csp wardrobe3d friends rewards_screen modifiers skilltree rejoin controller taborder milestones flagcase presentation presentation_posefit presentation_network tracer_cycle tracer_network ultimate_cloud cosmetics_expansion cosmetics_migration rejoin_migration rejoin_drop fps_mode delgado touch_lock ingame_settings mod_synergy boss_milestones sp_cases sp_cases_migration hud_layout tips_toggle headgear_fit blitz_mode blitz_bosses blitz_network blitz_milestones blitz_reward_migration}; do
-  out=$(timeout 300 node $t.js 2>&1); echo "$out" > out/$t.log
-  if echo "$out" | grep -qiE "errors?:? *(none|\[\])|ERRS \[\]" && ! echo "$out" | grep -qiE "Error:|TypeError|timed out"; then echo "PASS  $t"; else echo "FAIL  $t  (see out/$t.log)"; fail=1; fi
+  out=$(timeout 300 node $t.js 2>&1); rc=$?; echo "$out" > out/$t.log
+  # a test that exits non-zero failed, whatever it printed
+  if [ $rc -eq 0 ] && echo "$out" | grep -qiE "errors?:? *(none|\[\])|ERRS \[\]" && ! echo "$out" | grep -qiE "Error:|TypeError|timed out"; then echo "PASS  $t"; else echo "FAIL  $t  (see out/$t.log)"; fail=1; fi
 done
 exit $fail
