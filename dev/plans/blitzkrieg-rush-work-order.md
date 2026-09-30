@@ -51,10 +51,10 @@ Recheck GitHub `main`, the live footer and the live Supabase migration list befo
   - A 5-minute survival battle with a big on-screen countdown.
   - A new boss spawns every 30 seconds (10 bosses in total, the first at 0:00), cycling through the Blitzkrieg variants of all 5 bosses.
   - Normal raiders keep coming alongside the bosses. Tune the numbers so it doesn't flood.
-  - Show a distinct toast for each spawn (e.g. `BLITZ · 3/10 · THE BLUE BUTCHER`).
+  - Show a distinct toast for each spawn (e.g. `BLITZ · 3/10 · THE TEMPEST`).
   - **Phase A, the Hold (5:00 → 1:00):** defend the core. If the core falls here, everyone loses, the same as today.
   - **Phase B, the Evacuation (the last 60 seconds, 1:00 → 0:00):** see section 1b.
-- **Performance:** many bosses at once is new. Cap how many can be alive at once (proposed: 4; extra spawns wait until one dies).
+- **Performance:** many bosses at once is new. Cap how many can be alive at once. **Decided by Big U: 4 max**, so the boss bars at the top don't clutter. Extra spawns wait until one dies.
   - Measure frame cost with `dev/test/stress.js` for a 6-player Final Blitz at 390×844.
   - Keep six-player Final Blitz frame cost within about 20% of today's six-player Endless raid 20 (8.7 ms median render).
 - **HUD:** the compact landscape boss bar from v0.9.3.9 must handle several bosses. Show the soonest-to-die boss plus a `+N` count, or stack tightly. It must not overlap the sticks, kit or team bars; extend `hud_layout`.
@@ -65,12 +65,12 @@ Recheck GitHub `main`, the live footer and the live Supabase migration list befo
 - This affects **only that player**. Squadmates who made it still win with full rewards.
 
 **How it works:**
-- **Site:** at 1:00 an evac site opens at a spot away from the core, marked by a flare. Proposed: a landing-zone ring about 3 tiles across, with green smoke and a rotor sound.
+- **Site:** at 1:00 an evac site opens at a spot away from the core, marked by a flare. **Decided by Big U:** a landing-zone ring 3 tiles across, with green smoke and a rotor sound.
   - Choose the spot from a per-map list of evac points. Add `evacAt` to each map in `06b-maps.js`, next to `bossAt` and `raftAt`.
   - Pick the spot the host chooses, deterministically, so every client agrees.
   - It must be reachable on foot from the core on every map: over the Riverbend bridges, and up the Quarry ramps.
 - **Guidance:** an `EVACUATE` toast, the countdown turning green, and an off-screen arrow pointing to the site for every player. Add a short sound cue at 1:00, 0:30 and 0:10.
-- **Extracting:** stand inside the ring, **alive and not downed**, for 2 seconds to extract. Show a fill ring while it counts.
+- **Extracting:** stand inside the ring, **alive and not downed**, for **3 seconds** (decided by Big U) to extract. Show a fill ring while it counts.
   - Once extracted, you leave the field safely: no more damage or targeting.
   - Extracted players watch from above with a follow camera on a teammate.
   - Your result is locked in as **EVACUATED**.
@@ -89,41 +89,41 @@ Each variant is its own boss key (e.g. `blitz_ferryman`) with its own name, colo
 - They appear **only** in Blitzkrieg Rush.
 - Every attack needs a clear telegraph, like the existing bosses (a red line, blue line or chain line).
 - Every effect must be host-authoritative and replicate to clients.
-- Proposed names below; Big U can rename.
+- **Decided by Big U:** each variant has its **own name**, different from its base boss. Names below are proposed (Big U can rename); the Blue Butcher is Big U's.
+- **Decided by Big U:** each Blitzkrieg boss drops **2 cases** instead of 1 (see section 4c).
 
-1. **The Ferryman: missile barge.**
+1. **The Harbinger** (Ferryman variant): missile barge.
    - Stays on his raft.
    - Launches missiles in a high, visible arc.
    - Each missile shows a landing marker (a growing circle) for long enough that a moving, alert player can always step out.
    - Readable, dodgeable, punishing when ignored. Tune the flight time so the dodge is fair even on phones.
    - Raftless maps: the current code turns the Ferryman into the Butcher when there's no river. Here he fires from a fixed spot at the map edge instead.
-2. **The Blue Butcher: magic arc attack.**
+2. **The Blue Butcher** (Butcher variant): magic arc attack.
    - The whole Butcher palette turns blue/teal.
    - New attack: he swipes his sword and launches a glowing blue/teal crescent arc.
-     - It travels in a straight line and **passes through brick walls** (and weaker materials) without stopping.
+     - It travels in a straight line and **goes through brick walls with ease** (and weaker materials) without stopping.
+     - **Decided by Big U:** it **breaks** the walls it passes through. Brick and weaker walls in its path are destroyed. Metal: proposed heavy damage, but the arc stops there. Confirm with Big U during the preview.
      - It still damages players it crosses.
-     - Decide with Big U whether it also damages the walls it passes through. Proposed default: light damage.
    - The arc leaves a trail of blue dust that fades in about **0.5 s**. It's purely visual: particles only, no lingering hitbox.
    - Telegraph: a short wind-up with a teal lane flash before the swipe.
    - Keep his charge attack, but at a lower rate so the arc is his signature move.
-3. **The Demolisher: napalm.**
+3. **The Arsonist** (Demolisher variant): napalm.
    - Aims (show the aim line), then fires a **chain of Molotovs** that land in a line, each leaving burning ground.
    - Each fire lasts **10 seconds**.
    - Burns through **metal walls faster than regular fire does**. Metal normally resists fire, so napalm is the counter to metal forts. Suggested: 2× regular fire damage on metal, normal on other materials; tune and document.
    - Burning ground hurts players standing in it. Use the existing `fires` list if it fits; otherwise add a napalm type.
    - Mind the fire count: cap simultaneous napalm patches and measure.
-4. **The Stormcaller: twin beam.**
-   - Fires **two parallel beams** at once, each with its own blue telegraph line.
-   - Being hit by both deals **double** the normal Stormcaller shot damage; one beam alone deals the normal amount.
-   - Keep the chain-jump behavior, or replace it with the twin beam. Proposed: replace, so one attack stays readable.
-5. **The Foreman: rampage.**
+4. **The Tempest** (Stormcaller variant): twin beam.
+   - **Decided by Big U:** each beam is **exactly his regular lightning shot**, including its telegraph line, damage and jump-between-players behavior. He just fires **two of them at once**, side by side.
+   - Being hit by both deals double damage; one beam alone deals the normal amount.
+5. **The Bulldozer** (Foreman variant): rampage.
    - **No more digging.** He stays above ground and charges players quickly (faster than the Butcher's charge).
    - When he runs into a **wall**, he's **dazed for about 3 seconds**: stars or spin particles, stopped, open to damage.
    - The wall takes heavy impact damage. That's the trade-off: walls stop him but get hurt.
    - Telegraph: a short dust-kick wind-up and a charge lane before each run.
    - He sets up again after the daze.
 
-Art: each variant needs a distinct look that still reads as the same character. The Blue Butcher is fully blue/teal; the others get a Blitzkrieg trim, for example hazard stripes, a glowing accent, or a darker palette. Add all five to the boss contact sheet and save before/after images.
+Art: each variant needs a distinct look that still reads as a relative of its base boss. The Blue Butcher is fully blue/teal; the others get a Blitzkrieg trim, for example hazard stripes, a glowing accent, or a darker palette. Add all five to the boss contact sheet and save before/after images.
 
 ## 3. Network
 - The new boss keys, the napalm and missile projectiles, the arc, the twin beam and the daze state all change what packets carry. This means a protocol bump to **`yard-19`**.
@@ -148,7 +148,7 @@ Art: each variant needs a distinct look that still reads as the same character. 
   - The Final Blitz must have reached 1:00 for `evac` to apply. Earlier core losses are normal losses.
   - PGlite tests: evacuated gets full pay; left behind gets `ceil(n/2)` cases of each type and shards (odd, even, 1 and 0 checked) while raids, boss kills, skill points and stats stay full; a mixed squad pays each player correctly; an `evac` value outside raid 15 is rejected.
 - **Proposed default rewards (to confirm):**
-  - Each boss kill pays its case, like other bosses (`bossBox`).
+  - **Decided by Big U:** each Blitzkrieg boss kill pays **2 cases** (section 4c), halved for left-behind players like every other case.
   - Final Blitz bosses pay shards like Boss Rush's in-between bosses (15–30).
   - Evacuating pays a **Blitzkrieg bonus**: one extra case and a shards bonus.
   - All boss kills count toward milestones for everyone in the match.
@@ -162,13 +162,13 @@ A new milestone category in the Locker, titled with the game mode's name: **BLIT
 - Every Blitzkrieg boss kill counts for **everyone in the match**, not just the last hit. That covers the raid 5 and 10 bosses and every Final Blitz boss, following the v0.9.3.8 rule.
 - Left-behind players still count their kills in full (section 4: kills are never halved).
 - Bosses that retreat at 0:00 don't count.
-- These kills also add to the normal per-boss counters (`boss_butcher` etc.). Proposed default: yes, a Blue Butcher kill also counts as a Butcher kill.
+- **Decided by Big U:** these kills also add to the normal per-boss counters. A Blue Butcher kill counts as a Butcher kill, a Tempest kill as a Stormcaller kill, and so on.
 
 **Steps: 10 / 25 / 50 / 75 / 100 boss kills.** That's five steps, where current ladders have four.
 - Give each ladder its own rarity list, instead of the shared `LADDER_RAR=['r','e','l','g']`.
 - Check that the Locker milestone card, the "closest milestone" hint (`20-locker-ui.js`) and progress bars handle five steps.
 
-**Rewards** (order and rarity proposed; the five items are Big U's):
+**Rewards** (items, order and rarity approved by Big U):
 
 | Step | Reward | Slot | Rarity | Design brief |
 |---|---|---|---|---|
@@ -191,6 +191,43 @@ A new milestone category in the Locker, titled with the game mode's name: **BLIT
   - PGlite tests: each step unlocks exactly at its threshold; kills from left-behind players count; retreated bosses don't; the counter never goes backwards.
 - **No-account players:** the same counter and unlocks in the local locker (`18-cosmetics.js`).
 - **Cosmetic network:** all five items must show correctly to other players online. Extend `cosmetic_network`, `wardrobe3d`, `locker_fit` and `presentation_posefit` to include them.
+
+## 4c. The Blitzkrieg Case (themed kill FX, tracers and backgrounds)
+**Big U's request:** more kill FX, tracers and backgrounds in the same theme as the ladder rewards (demonic, hellfire, the Blue Butcher's blue/teal arc).
+- **Proposed source:** a new **BLITZKRIEG CASE**. It's what Blitzkrieg bosses drop: 2 per boss kill.
+- Build it like the Halloween and Afterglow cases:
+  - Add an entry in `CASES` (`18-cosmetics.js`) with its name, color, rarity weights and shard cost.
+  - Add its items to `COS` with `box:'blitz'`.
+  - Add its art and case-opening reel, plus a server seed in the same migration (cases, bag key, `open_case` pool).
+- The five ladder rewards (section 4b) stay **exclusive to the milestone ladder**. They are never in the case.
+- Themed items (proposed names and rarities; Big U to adjust):
+
+| Slot | Item | Rarity | Design brief |
+|---|---|---|---|
+| Tracer | **Brimstone** | Common | Dark red round with a sulfur-yellow core and faint smoke. |
+| Tracer | **Teal Wake** | Rare | A thin teal streak with sparkle dust (a cheaper cousin of the Blue Arc ladder tracer). |
+| Tracer | **Hellfire Chain** | Epic | Linked flaming chain segments that flicker along the path. |
+| Tracer | **Infernal Sigil** | Legendary | The round leaves small glowing runes that fade out one after another. |
+| Kill FX | **Cinder Burst** | Common | The enemy bursts into falling cinders. |
+| Kill FX | **Teal Slash** | Rare | A blue/teal crescent slash cuts across the enemy, leaving blue dust. |
+| Kill FX | **Brand of Ash** | Epic | A burning sigil stamps the ground and the body crumbles to ash. |
+| Kill FX | **Demon Claw** | Legendary | Giant spectral claws rise out of the ground and drag the enemy down. |
+| Background | **Scorched Front** | Epic | A burning battlefield at dusk: ruined fort, ember rain, heat haze. |
+| Background | **Hellgate** | Gold (the showcase) | See the brief below. |
+
+- **Hellgate background** (Big U: "very unique, animated, runs well"):
+  - **The scene:** a colossal demonic gate at the horizon, carved from black rock with glowing ember veins. Inside it, a slowly turning red/orange vortex.
+  - **The Blue Butcher's arc:** every few seconds, a blue/teal arc sweeps across the sky and cuts a teal rift that seals shut again.
+  - **Foreground:** ruined battlements, drifting embers and ash rising, and distant silhouettes of the Blitzkrieg bosses flashing in the vortex's pulses.
+  - **Uniqueness:** no other background mixes two light sources (hellfire red + arc teal). Make the arc sweep the signature moment.
+  - **Performance (hard rule):** follow the `18b-backgrounds.js` contract.
+    - All rock, gate, ruins and sky gradient go in the **static cached layer** (`bgLayer`), drawn once per screen size.
+    - The animated layer draws only: the vortex (a few rotated pre-rendered sprites), up to about 40 ember and ash particles, the arc sweep (one path plus a short dust trail) and one pulse glow using `bgBlob`.
+    - No full-screen gradients or `shadowBlur` per frame.
+    - Freeze a good `still` frame for Locker thumbnails.
+    - Measure the animated layer's frame time at 390×844 (3×) and 844×390 against the existing animated backgrounds. It must be no slower than the most expensive current one. Record the numbers in the evidence folder.
+- **Rewards and halving:** the 2 cases per Blitzkrieg boss count as case rewards, so they're halved for left-behind players (`ceil(n/2)`).
+- **Tests:** extend `cases` and `caseperf` with the Blitzkrieg Case (pool, weights, opening, no ladder items inside). Add the new background to the background thumbnail and performance checks, and add every new tracer and kill FX to the cosmetic contact sheet and `cosmetic_network`.
 
 ## 5. Modifiers for Blitzkrieg Rush
 Blitzkrieg Rush gets its own modifier list.
@@ -274,11 +311,9 @@ Blitzkrieg Rush gets its own modifier list.
 6. Record everything in `STATUS.md`, and ask Big U for a phone playtest of the Final Blitz, including heat at 30/60 FPS.
 
 ## Open decisions for Big U (ask before building these parts)
-1. Rewards for a win and for each Final Blitz boss (section 4 defaults).
-2. Does the Blue Butcher's arc damage the walls it passes through?
-3. Stormcaller: twin beam replaces the chain jump, or is added to it?
-4. The live-boss cap for the Final Blitz (default 4), and what happens to bosses alive at 0:00.
-5. Evac details: the 2-second extract and the 3-tile ring.
-6. The Blitzkrieg modifier list: which to keep and remove, plus the five new modifiers' names and reward bonuses.
-7. The variant names.
-8. Milestone reward order and rarity (section 4b table), and whether Blitzkrieg boss kills also count toward the normal per-boss ladders.
+1. The evacuation bonus (proposed: 1 extra case plus shards) and Final Blitz boss shards (proposed: 15–30 each), from section 4.
+2. Blue Butcher's arc against metal walls: heavy damage and stops (proposed), or breaks metal too?
+3. Bosses alive at 0:00 retreat and don't count (proposed).
+4. The Blitzkrieg modifier list: which to keep and remove, plus the five new modifiers' names and reward bonuses.
+5. The variant names: Harbinger, Blue Butcher, Arsonist, Tempest, Bulldozer (proposed).
+6. The Blitzkrieg Case: is that where the themed items go, what do the 2 boss cases drop (proposed: 2 Blitzkrieg Cases), plus item names and rarities (section 4c).
