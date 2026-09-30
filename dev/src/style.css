@@ -770,3 +770,9 @@ body.padMenu #menu .panel{padding-bottom:64px}body.pad .padF{scroll-margin:12px 
 .item.incompatible .art { opacity:.5; }
 .item.incompatible i { color:#b6a89a; }
 #caseName.ultimate { color:#ff9260; }
+
+/* v0.9.3.7 in-game settings: the setting cards in a scrolling overlay card */
+#igSet{background:rgba(12,11,9,.96);align-items:start}
+#igSet .igCard{max-width:720px;text-align:left;gap:8px}
+#igSet .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin:10px 0 14px}
+#igSet .go{width:100%}

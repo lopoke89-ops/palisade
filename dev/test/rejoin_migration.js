@@ -59,6 +59,9 @@ const total=(a,b)=>({bosses:(a.bonuses||[]).reduce((s,x)=>s+x.n,0)+(b?(b.bonuses
   ok('a boss paid before leaving is not paid again',after.C.bosses===1,after.C);
   ok('uninterrupted XL Boss Rush game unchanged',JSON.stringify(after.D)===JSON.stringify(before.D)&&after.D.bosses===2&&after.D.sb===2,{before:before.D,after:after.D});
   ok('XL rejoin pays both raid-5 bosses',after.E.bosses===2&&before.E.bosses===0,{before:before.E,after:after.E});
+  // v0.9.3.7 synergy: Boss Rush + Nightmare with a second in-between boss on raids 2 and 4 (4 in-between bosses in 5 raids)
+  {const db=await fresh(migration);const r=await claim(db,'gG',{raid_from:0,raid_to:5,held:5,boss_keys:['butcher'],shard_bosses:4,mods:['bossrush','nightmare'],duration_s:420});
+   ok('four in-between bosses in five Nightmare + Boss Rush raids are all paid',r.shard_bosses===4&&r.boss_shards>=60,r);await db.close()}
   // Fallback: the first claim written by the old function (no boss_n), the second after migrating.
   {const db=await fresh();await claim(db,'gF',{raid_from:0,raid_to:4,held:4,left:true,boss_keys:['butcher'],duration_s:260});await db.exec(migration);
    const b=await claim(db,'gF',{raid_from:4,raid_to:5,held:1,boss_keys:['butcher'],duration_s:90});ok('older rows fall back to their bonus count',total(b).bosses===0,b);

@@ -73,6 +73,7 @@ function netLeave(msg){netReset();toMenu();if(msg){showPage('multi');mStatus(msg
 
 // ---------- host ----------
 async function netHost(){
+  if(inRun()&&$('menu').hidden)return;   // v0.9.3.7: never host or join over a live run
   if(!onlineOK()){mStatus('Getting online play ready…');if(!await needPeer()){mStatus(PEER_FAIL);return}if(NET.mode!=='solo')return}
   if(NET.mode==='opening'||NET.mode==='joining')return;   // already on its way
   pick.diff=pick.diff||'normal';mStatus('Opening a room…');NET.mode='opening';
@@ -324,6 +325,7 @@ function makeSnap(withWalls){
 
 // ---------- guest ----------
 async function netJoin(code){
+  if(inRun()&&$('menu').hidden)return;   // v0.9.3.7: never host or join over a live run
   if(!onlineOK()){mStatus('Getting online play ready…');if(!await needPeer()){mStatus(PEER_FAIL);return}if(NET.mode!=='solo')return}
   code=String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
   if(code.length!==4){mStatus('Room codes are 4 letters and numbers.');return}

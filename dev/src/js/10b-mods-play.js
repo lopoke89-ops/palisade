@@ -14,6 +14,13 @@ function extraBoss(w){
   if(nightmare()&&rnd()<1/12)return L[Math.floor(rnd()*L.length)];
   return'';
 }
+// v0.9.3.7 synergy: with Nightmare and Boss Rush both on, every Boss Rush boss raid also has Nightmare's 1-in-12 chance
+// of a second in-between boss (a different one where the map has more than one). Host/solo only; guests see the spawn.
+function nightmareSecond(w,first){
+  if(!(hasMod('bossrush')&&nightmare()&&w%2===0&&!bossOf(w)))return'';
+  if(!(game.forceSecond||rnd()<1/12))return'';
+  const L=(MAP&&MAP.bosses)||BOSS_ORDER,alt=L.filter(k=>k!==first);return alt.length?alt[Math.floor(rnd()*alt.length)]:first;
+}
 // Elite Raid: riflemen become specials (in turn: shieldbearer, grenadier, firebrand, medic, breacher);
 // Firestorm: about twice the firebrands, from raid 1
 function modWaveMix(W,k){
@@ -65,8 +72,9 @@ function simAbility(p,dt){
 function abState(p){p.ab=!hasAbility(p)?0:p.cls==='soldier'?p.rk|0:p.stl>0?Math.ceil(p.stl*10):-Math.ceil(p.stlCd||0)}
 const stealthed=p=>!!p&&!game.pvp&&p.cls==='sniper'&&(NET.mode==='guest'?p.ab>0:p.stl>0);
 function localAbility(){
-  const p=player;if(!p||!p.alive||!hasAbility(p))return;let tx,ty;
-  if(!touchMode&&!padMode&&mouse.seen){const w=screenToWorld(mouse.x,mouse.y+WH*.55);tx=w.x;ty=w.y}else{tx=p.x+p.aim.x*6;ty=p.y+p.aim.y*6}
+  const p=player;if(!p||!p.alive||!hasAbility(p))return;let tx,ty;const L=p.cls==='soldier'?touchLock(p,'rocket'):null;
+  if(L){tx=L.x;ty=L.y}
+  else if(!touchMode&&!padMode&&mouse.seen){const w=screenToWorld(mouse.x,mouse.y+WH*.55);tx=w.x;ty=w.y}else{tx=p.x+p.aim.x*6;ty=p.y+p.aim.y*6}
   if(NET.mode==='guest'){if(p.cls==='soldier'&&p.ab<=0||p.cls==='sniper'&&p.ab!==0){sfx('deny',undefined,undefined,true);return}NET.toHost({t:'ab',x:r2(tx),y:r2(ty)});return}
   useAbility(p,tx,ty);
 }

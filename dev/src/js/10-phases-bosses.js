@@ -30,17 +30,19 @@ function startRaid(){
   game.wave++;game.phase='raid';setTip('');closeArmory();
   const k=Math.floor(waveEff()),Df=game.Df,P=Math.max(1,players.size),q=[];
   // a bigger crew mostly means more riflemen; grenadiers and breachers grow much more slowly
-  const boss=bossOf(game.wave),boss2=boss&&N>16?bossPartner(game.wave):'',xb=boss?'':extraBoss(game.wave),W=modWaveMix(waveMix(k,P,Df.extra,!!(boss||xb)),k);
+  const boss=bossOf(game.wave),boss2=boss&&N>16?bossPartner(game.wave):'',xb=boss?'':extraBoss(game.wave),xb2=xb?nightmareSecond(game.wave,xb):'',W=modWaveMix(waveMix(k,P,Df.extra,!!(boss||xb)),k);
   game.bossShare=boss2?XL_BOSS_SHARE:1;stormRaid();
   for(let n=0;n<W.rifle;n++)q.push('rifle');
   for(const t of['gren','fire','shield','medic','spotter','breach'])for(let n=0;n<W[t];n++)q.splice(1+Math.floor(rnd()*q.length),0,t);
   if(boss)q.splice(Math.max(2,Math.floor(q.length*.45)),0,'boss:'+boss);
   if(boss2)q.splice(Math.max(4,Math.floor(q.length*.62)),0,'boss:'+boss2);
   if(xb)q.splice(Math.max(2,Math.floor(q.length*.45)),0,'boss:'+xb+':sb');   // an in-between boss (Boss Rush, Nightmare): pays shards
+  if(xb2)q.splice(Math.max(4,Math.floor(q.length*.7)),0,'boss:'+xb2+':sb2');   // v0.9.3.7 Nightmare + Boss Rush: a second one
   game.queue=q;game.spawnT=.8;game.spawnGap=Math.max(.5,1.1-.1*(P-1))*(N>16?.85:1);sfx('siren');game.flood={t:0,warned:false};
   const bits=[`${W.rifle} riflemen`];
   for(const t of['gren','breach','shield','medic','spotter','fire'])if(W[t])bits.push(`${W[t]} ${W[t]>1?ENAMES[t][1]:ENAMES[t][0]}`);
   const B=boss?bossInfo(boss):xb&&hasMod('bossrush')?bossInfo(xb):null,B2=boss2?bossInfo(boss2):null;   // Nightmare's surprise boss stays a surprise
+  if(xb2)game.nmSecond=(game.nmSecond|0)+1;
   toastAll(B?`${raidName(game.wave)} · ${B2?'TWO BOSSES':'BOSS'}`:raidName(game.wave),`${bits.join(', ')}${B?(B2?', '+B.name+' and '+B2.name:' and '+B.name):''} coming ${(MAP||MAPS.yard).from}${todStage(game.wave)===2&&!(MAP&&MAP.night)?' in the dark':''}.`);
 }
 // Who comes in a raid. k is the raid's strength (raid number; in Endless it climbs faster), P the crew size.
@@ -119,7 +121,7 @@ const ETYPES={rifle:{hp:36,speed:1.5},gren:{hp:46,speed:1.25},breach:{hp:30,spee
   shield:{hp:66,speed:1.15},medic:{hp:34,speed:1.55},spotter:{hp:30,speed:1.45},fire:{hp:40,speed:1.4}};
 // type codes for the network: never reorder, only add to the end
 const ECODE=['rifle','gren','breach','boss:demolisher','boss:butcher','boss:storm','shield','medic','spotter','fire','boss:ferryman','boss:foreman'];
-function spawnBoss(key,sb){
+function spawnBoss(key,sb,second=false){
   if(key==='ferryman'&&!(game.lay&&game.lay.raftAt&&game.lay.raftAt.length))key='butcher';   // no river, no raft
   const B=BOSSES[key];if(!B)return;let x=0,y=0;
   const at=key==='ferryman'?game.lay.raftAt:(game.lay&&game.lay.bossAt)||[];
@@ -130,7 +132,7 @@ function spawnBoss(key,sb){
   if(B.raft){e.raft=true;e.ab=9;e.crews=0;e.pathT=0;e.next=-1}
   if(key==='foreman'){e.ab=5;e.cd=2.5}
   enemies.push(e);
-  const I=bossInfo(key);sfx('horn');addShake(x,y,8);toastAll(sb&&nightmare()&&!hasMod('bossrush')?'SURPRISE · '+I.name:I.name,B.intro);
+  const I=bossInfo(key);sfx('horn');addShake(x,y,8);toastAll(second?'NIGHTMARE · SECOND BOSS · '+I.name:sb&&nightmare()&&!hasMod('bossrush')?'SURPRISE · '+I.name:I.name,B.intro);
 }
 function bossDown(e,own){
   const B=BOSSES[e.boss],I=bossInfo(e.boss),p=own&&own!=='dell'?players.get(own):null,share=p?15:20;game.bosses++;
@@ -243,7 +245,7 @@ function updateRockets(dt){
   fires=fires.filter(f=>f.t>0);
 }
 function spawnEnemy(type){
-  if(type.startsWith('boss:')){const[,k,sb]=type.split(':');spawnBoss(k,sb==='sb');return}
+  if(type.startsWith('boss:')){const[,k,sb]=type.split(':');spawnBoss(k,sb==='sb'||sb==='sb2',sb==='sb2');return}
   const t=spawnTile();if(!t)return;spawnEnemyAt(type,t[0]+.5,t[1]+.5);
 }
 function spawnEnemyAt(type,x,y){
@@ -280,7 +282,7 @@ function showPvpOver(){
   $('againBtn').hidden=NET.mode==='guest';$('overWait').hidden=NET.mode!=='guest';
   setTimeout(()=>{if(game.phase==='over')$('over').hidden=false},900);
 }
-function showOver(){
+function showOver(){closeGameSettings(false);
   if(game.pvp){showPvpOver();return}
   setStats(COOP_STATS.map(t=>[t,0]));
   const win=!!game.won;sfx(win?'win':'lose',undefined,undefined,true);
@@ -297,6 +299,7 @@ function showOver(){
   setTimeout(()=>{if(game.phase==='over')$('over').hidden=false},win?600:900);
 }
 function togglePause(){
+  if(!$('igSet').hidden){closeGameSettings();return}   // pause/Escape from in-game settings goes back to the pause menu
   const open=$('pause').hidden;
   if(NET.mode==='solo')game.paused=open;
   $('pause').hidden=!open;$('pauseJobs').hidden=game.pvp!=='ffa';if(game.pvp==='ffa')syncJobPick();
