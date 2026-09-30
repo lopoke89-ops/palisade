@@ -1,6 +1,6 @@
 # PALISADE v0.9.3.4 — presentation implementation and validation
 
-**Implemented locally September 29, 2026. Uncommitted and unpublished.** Baseline: `2268c3560019175107a468c9db0500f820568d12`, v0.9.3.3. GitHub `main` matched that commit before implementation, and the live GitHub Pages footer still displayed v0.9.3.3 at the end of this work. Big U handles publication. This report records the executed [presentation prompt](plans/backgrounds-and-character-animation-prompt.md).
+**Implemented September 29, 2026; pushed as `854265d`. Pages deployment failed, so the update is not live yet.** See [the current deployment record](STATUS.md#v0934-pushed-pages-deployment-blocked). Baseline: `2268c3560019175107a468c9db0500f820568d12`, v0.9.3.3. GitHub `main` matched that commit before implementation, and the live GitHub Pages footer still displayed v0.9.3.3 at the end of this work. Big U handles publication. This report records the executed [presentation prompt](plans/backgrounds-and-character-animation-prompt.md).
 
 ## What changed
 

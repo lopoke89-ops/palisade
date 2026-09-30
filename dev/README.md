@@ -3,9 +3,10 @@
 Everything needed to rebuild, test and restore the game. The playable site is the repo's top
 level (built from here); this folder is the source.
 
-Current live status is **v0.9.3.3**, GitHub `main` at `2268c35`. The local
+Current live status is **v0.9.3.3**, GitHub `main` at `854265d`. The local
 **v0.9.3.4 candidate** adds full-screen flags, cached scenic depth and more natural
-character motion; it is uncommitted and unpublished. No server migration is required.
+character motion; it is pushed, but Pages failed while rendering the blueprint because of invalid UTF-8.
+The documentation-only repair is local and needs a follow-up push; the live game remains v0.9.3.3. No server migration is required.
 See [STATUS.md](STATUS.md) and the [current blueprint](PROJECT_BLUEPRINT_2026-09-29.md).
 
 The [presentation report](PRESENTATION_2026-09-29.md) records nine focused checks,

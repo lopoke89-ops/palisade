@@ -14,15 +14,17 @@ The Claude audit URL still requires sign-in in the available browser session. Bi
 | Live release | **v0.9.3.3**: Milestones-only cosmetics and collapsible Locker case collections |
 | Live protocol | `yard-17` / `palisade-yard-17-` |
 | Applied server migration | `palisade_v093_milestones_flags_halloween` (`20260928224258`) |
-| GitHub branch | `main` at `2268c35` (`v0.9.3.3 Milestone cosmetics`), pushed by Big U September 29 |
-| Local checkout | `2268c35` plus the uncommitted v0.9.3.4 presentation candidate |
+| GitHub branch | `main` at `854265d` (`v0.9.3.4 cosmetic tweaks`), pushed by Big U September 29 |
+| Local checkout | `854265d` plus a local blueprint UTF-8 repair and release-record updates |
 | Published build | GitHub Pages displays **v0.9.3.3**; rechecked September 29 during this implementation |
 
 Controller support shipped in v0.9.2.1. The v0.9.3 cosmetics migration is applied and the live case catalog includes Flags. The two proposed new game modes have not shipped; the Nightmare modifier and a future preset definition do not constitute a separate game mode.
 
 Four commits after the v0.9.3 release changed the case intro and reel source (`98bb522`, `4c8dd3d`, `a49df08`, `566e30e`). The v0.9.3.1 release includes those fixes. Their source was compared with the v0.9.3 release on September 29; see [case animation validation](CASE_PERFORMANCE_2026-09-29.md). The reel avoids repeated style reads and its measured CPU use was lower, but intro readings overlapped and Locker readings were higher in the comparison runs. Further profiling and a real-phone comparison are still required before performance sign-off.
 
-## Local v0.9.3.4 presentation candidate (unpublished)
+## v0.9.3.4 pushed; Pages deployment blocked
+
+Big U pushed commit `854265d7f529eb14837fcd7e9b8a7e3ba0e25d9b`. [Pages run 36648248102](https://github.com/lopoke89-ops/palisade/actions/runs/36648248102) failed during Jekyll rendering of `dev/PROJECT_BLUEPRINT_2026-09-29.md`: invalid UTF-8 punctuation bytes. Deployment was skipped, and fresh live page/service-worker fetches still return v0.9.3.3. The document encoding is repaired locally; the tracked text files pass strict UTF-8 validation. Commit and push this documentation-only repair, then verify a successful Pages run and the v0.9.3.4 live footer. The game build does not need to be rebuilt for this repair.
 
 All 32 Flag Case backgrounds now fill their canvases with responsive fields and proportional emblems. 24 scenic backgrounds receive cached, theme-specific finishing layers; Arcade retains its original pixel-art composition. The old sources and matched before captures are preserved in the [backup manifest](backups/2026-09-29-v0.9.3.3-presentation/MANIFEST.md), with a per-background restore path. No image downloads were introduced.
 

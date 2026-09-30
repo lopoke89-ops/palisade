@@ -5,8 +5,9 @@ CURRENT RELEASE (September 29, 2026): v0.9.3.3 is live at commit 2268c35.
 It keeps milestone cosmetics in MILESTONES and makes case collections collapsible.
 
 LOCAL CANDIDATE: v0.9.3.4 adds full-screen flags, cached scenic detail, and more
-natural character motion. Nine focused checks pass. This candidate is uncommitted
-and unpublished; no Supabase change is required. Before/after images and animation
+natural character motion. Nine focused checks pass. Commit 854265d is pushed; Pages failed
+on a document encoding issue, now repaired locally for a follow-up push. The live
+site remains v0.9.3.3. No Supabase change is required. Before/after images and animation
 clips, performance results, and background rollback instructions are linked from
 dev/PRESENTATION_2026-09-29.md. See dev/STATUS.md for remaining verification.
 
