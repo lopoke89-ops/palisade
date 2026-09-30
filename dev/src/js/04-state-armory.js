@@ -143,7 +143,7 @@ function newGame(roster,pvp='',opt={}){
     mode,waves:mode==='endless'?Infinity:+mode,rewarded:false,bosses:0,pvp,goal:PVP.ffaGoal,winner:'',
     stats:{dropped:0,built:0,lost:0,repairs:0,revives:0},
     map:MAP_IDS.includes(pick.map)?pick.map:'yard',size:N>16?'xl':'std',lay:L,flood:{t:0,warned:false},bossLog:[],oct:!!pick.oct,
-    gid:String(opt.gid||newGid()).slice(0,40),mods,job,sbN:0,wx:0,wxT:0,sd:false,
+    gid:String(opt.gid||newGid()).slice(0,40),mods,job,sbN:0,sbLog:[],wx:0,wxT:0,sd:false,
     joinHeld:opt.guest?null:0,joinT:0,joinBoss:0,joinSB:0};   // join*: where this phone came in (guests learn it from the first state packet)
   for(const p of players.values())kitUp(p);
   for(const p of players.values()){if(pvp==='base')p.sal=PVP.startSal;if(pvp==='ffa'){p.mats=[0,0,0];p.prot=PVP.prot}}

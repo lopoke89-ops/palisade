@@ -136,7 +136,7 @@ function spawnBoss(key,sb,second=false){
 }
 function bossDown(e,own){
   const B=BOSSES[e.boss],I=bossInfo(e.boss),p=own&&own!=='dell'?players.get(own):null,share=p?15:20;game.bosses++;
-  const oct=game.oct&&e.boss==='butcher'&&!e.sb;if(e.sb)game.sbN=(game.sbN|0)+1;else game.bossLog.push(oct?'butcher_oct':e.boss);
+  const oct=game.oct&&e.boss==='butcher'&&!e.sb;if(e.sb){game.sbN=(game.sbN|0)+1;if(game.sbLog.length<100)game.sbLog.push(e.boss)}else game.bossLog.push(oct?'butcher_oct':e.boss);   // v0.9.3.8: in-between bosses are named too, for milestones
   for(const o of players.values())o.sal+=o===p?B.bounty:share;
   flt(e.x,e.y-.4,p?`+${B.bounty} SALVAGE`:`+${share} SALVAGE EACH`,'#e2b436');
   for(let n=0;n<26;n++)emit(e.x,e.y,WH*.8,n%2?'fire':'spark');addShake(e.x,e.y,11);sfx('bigboom',e.x,e.y);

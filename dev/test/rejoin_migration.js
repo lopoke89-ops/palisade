@@ -3,6 +3,7 @@
 const {PGlite}=require('@electric-sql/pglite'),fs=require('node:fs'),assert=require('node:assert/strict');
 const root=__dirname+'/..',live=fs.readFileSync(root+'/supabase/snapshots/claim_match_reward_live_2026-09-30.sql','utf8');
 const migration=fs.readFileSync(root+'/supabase/migrations/20260930071534_palisade_v0936_rejoin_bosses.sql','utf8');
+const v0938=fs.readFileSync(root+'/supabase/migrations/20260930075446_palisade_v0938_all_boss_milestones.sql','utf8');
 const U='11111111-1111-4111-8111-111111111111';
 const base=`create role anon;create role authenticated;create schema auth;create schema private;
 create table auth.users(id uuid primary key);create table public.profiles(id uuid primary key,banned boolean default false);
@@ -62,6 +63,16 @@ const total=(a,b)=>({bosses:(a.bonuses||[]).reduce((s,x)=>s+x.n,0)+(b?(b.bonuses
   // v0.9.3.7 synergy: Boss Rush + Nightmare with a second in-between boss on raids 2 and 4 (4 in-between bosses in 5 raids)
   {const db=await fresh(migration);const r=await claim(db,'gG',{raid_from:0,raid_to:5,held:5,boss_keys:['butcher'],shard_bosses:4,mods:['bossrush','nightmare'],duration_s:420});
    ok('four in-between bosses in five Nightmare + Boss Rush raids are all paid',r.shard_bosses===4&&r.boss_shards>=60,r);await db.close()}
+  // v0.9.3.8: every paid in-between boss counts toward its milestone; unpaid ones (over the cap) and old clients don't
+  {const db=await fresh(migration);await db.exec(v0938);
+   const st=async()=> (await db.query(`select st from public.lockers where user_id='${U}'`)).rows[0].st;
+   const r=await claim(db,'gH',{raid_from:0,raid_to:5,held:5,boss_keys:['butcher'],shard_bosses:2,sb_keys:['demolisher','storm'],mods:['bossrush'],duration_s:400});
+   let m=await st();ok('regular and in-between bosses all count toward milestones',m.boss_butcher===1&&m.boss_demolisher===1&&m.boss_storm===1&&r.shard_bosses===2,m);
+   const o=await claim(db,'gI',{raid_from:0,raid_to:5,held:5,boss_keys:[],shard_bosses:2,mods:['bossrush'],duration_s:400});m=await st();
+   ok('an older client without sb_keys gets shards but no in-between milestone',o.shard_bosses===2&&!m.boss_demolisher&&!m.boss_storm,m);
+   const c=await claim(db,'gJ',{raid_from:0,raid_to:3,held:3,boss_keys:[],shard_bosses:5,sb_keys:['storm','storm','storm','storm','storm'],mods:['bossrush'],duration_s:300});m=await st();
+   ok('milestones follow the paid count (2), not the claimed list (5)',c.shard_bosses===2&&m.boss_storm===2,{paid:c.shard_bosses,m});
+   await db.exec(v0938);ok('v0.9.3.8 migration re-applies cleanly',true);await db.close()}
   // Fallback: the first claim written by the old function (no boss_n), the second after migrating.
   {const db=await fresh();await claim(db,'gF',{raid_from:0,raid_to:4,held:4,left:true,boss_keys:['butcher'],duration_s:260});await db.exec(migration);
    const b=await claim(db,'gF',{raid_from:4,raid_to:5,held:1,boss_keys:['butcher'],duration_s:90});ok('older rows fall back to their bonus count',total(b).bosses===0,b);
