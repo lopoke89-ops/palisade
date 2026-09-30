@@ -21,6 +21,14 @@ Controller support shipped in v0.9.2.1. The v0.9.3 cosmetics migration is applie
 
 Four commits after the v0.9.3 release changed the case intro and reel source (`98bb522`, `4c8dd3d`, `a49df08`, `566e30e`). The v0.9.3.1 release includes those fixes. Their source was compared with the v0.9.3 release on September 29; see [case animation validation](CASE_PERFORMANCE_2026-09-29.md). The reel avoids repeated style reads and its measured CPU use was lower, but intro readings overlapped and Locker readings were higher in the comparison runs. Further profiling and a real-phone comparison are still required before performance sign-off.
 
+## Quick cleanup (October 1, no game change)
+
+- **Site exposure:** GitHub Pages was publishing the whole repository, so `dev/` (source, tests, status notes, backups, compensation scripts) and a 9.4 MB `.wav` master were downloadable from the live site. The new `_config.yml` excludes `dev/` and `README.md` from Pages; the game at the root is unchanged. This also stops Pages rendering the dev notes, which is what broke the v0.9.3.4 deploy.
+- **Music master:** `palisade inbetween raid music.wav` moved to `dev/audio/masters/` (kept in the repo, no longer published).
+- **Dead code:** deleted `dev/src/palisade-outdated.html` (314 KB; still in git history).
+- **Test runner:** `run_all.sh`, which `run_targeted.sh` also uses, falls back to an installed Chromium when Playwright's own browser build is missing, so tests run without setting `CHROMIUM`.
+- **Still for Big U:** turn on leaked-password protection in the Supabase dashboard (Authentication → Passwords).
+
 ## v0.9.3.10: hat fixes (Big U's review)
 
 - **Boonie and Witch hat gap.** Painting the head cyan showed the "gap" was the face showing through the front of the brim. The canvas painter orders each flat face by its average depth, and a wide brim's average is the head's centre, so the face was painted over the brim's front. Both brims are now the outlined disk plus 12 unoutlined ring slices, starting at the crown or cone edge, that sort by their own position (`brim()` in the character painter).

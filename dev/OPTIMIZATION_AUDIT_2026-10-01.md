@@ -10,10 +10,10 @@ This covers the whole project after v0.9.3.7. Every finding was measured or read
 | # | Finding | Impact | Effort | Risk | Recommendation |
 |---|---|---|---|---|---|
 | 1 | World-object drawing ("items") is still 45–50% of frame time | High on phones | Medium | Low | Profile the per-character draw path next |
-| 2 | 9.4 MB `palisade inbetween raid music.wav` is published at the site root | Medium: deploy size, anyone can download it | Trivial | None | Move it to `dev/audio/` (masters) |
-| 3 | `dev/src/palisade-outdated.html` (314 KB) is dead | Low: repo clarity | Trivial | None | Delete (it's in git history) |
+| 2 | ✅ Done (Oct 1): 9.4 MB `palisade inbetween raid music.wav` was published at the site root; also the whole `dev/` folder was public | Medium: deploy size, anyone can download it | Trivial | None | Move it to `dev/audio/` (masters) |
+| 3 | ✅ Done (Oct 1): `dev/src/palisade-outdated.html` (314 KB) was dead | Low: repo clarity | Trivial | None | Delete (it's in git history) |
 | 4 | `schema.sql` is out of date (e.g. its `claim_match_reward` predates the live one) | High for disaster recovery | Medium | Low | Regenerate a full schema dump from the live project |
-| 5 | Test runner and Playwright version mismatch | Medium: every fresh setup fails at first | Trivial | None | Pin Playwright to the installed browser, or document `CHROMIUM=` |
+| 5 | ✅ Done (Oct 1): test runner and Playwright version mismatch | Medium: every fresh setup fails at first | Trivial | None | Pin Playwright to the installed browser, or document `CHROMIUM=` |
 | 6 | 15 SECURITY DEFINER RPCs exposed to `authenticated` (advisor WARN) | Low: intended API design | Medium | Medium | Keep; add a test that each checks `require_user` and bounds its inputs |
 | 7 | Leaked-password protection is off in Supabase Auth | Low–medium | Trivial | None | Turn it on in the dashboard |
 | 8 | Two unindexed foreign keys and one unused index | Negligible at 43 players | Trivial | Low | Revisit at thousands of rows |
