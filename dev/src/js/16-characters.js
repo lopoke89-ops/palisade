@@ -183,6 +183,15 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
   const ff=[];for(let j=0;j<rings.length-1;j++)for(let i=0;i<N;i++)ff.push([j*N+i,j*N+(i+1)%N,(j+1)*N+(i+1)%N,(j+1)*N+i]);
   ff.push(Array.from({length:N},(_,i)=>(rings.length-1)*N+i));mesh(v,ff.map(f=>f.slice().reverse()),col,.6);
  }
+ // v0.9.3.9b: a wide brim drawn as one disk sorts behind the face (its average depth is the head's centre), so the
+ // face painted over the brim's front and showed as a gap. The brim is the outlined disk plus 12 unoutlined ring slices
+ // that each sort by their own position, so the front of the brim is painted over the face.
+ function brim(y,w,h,d,col,outline,ix,iz){   // ix/iz: the crown's half-width/depth where the brim meets it
+  column(0,y,0,w,h,d,col,1,outline);
+  const N=12,rx=w/2*.985,rz=d/2*.985,yb=y-h/2,yt=y+h/2,P=(t,out,yy)=>[Math.cos(t)*(out?rx:ix),yy,Math.sin(t)*(out?rz:iz)];
+  for(let k=0;k<N;k++){const t0=k*Math.PI*2/N,t1=(k+1)*Math.PI*2/N,v=[P(t0,0,yb),P(t0,1,yb),P(t1,1,yb),P(t1,0,yb),P(t0,0,yt),P(t0,1,yt),P(t1,1,yt),P(t1,0,yt)];
+   mesh(v,[[6,5,4,7],[1,2,3,0],[5,6,2,1]],col,.001)}
+ }
  function ball(x,y,z,r,c){column(x,y,z,r*1.8,r*1.65,r*1.8,c,.75,.35)}
  if(o.sahur){
   const eye=(x,y,rx,ry,z,col,bias=1.2)=>{const v=[];for(let i=0;i<12;i++){const a=i*Math.PI/6;v.push([x+Math.cos(a)*rx,y+Math.sin(a)*ry+bob,z])}mesh(v,[v.map((_,i)=>i)],col,.08,bias)};
@@ -214,9 +223,9 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
    for(const [i,x,z]of[[0,-1.8,.6],[1,0,-.2],[2,1.8,.5]])beam([x,cy+RY-.3+bob,z],[x*.8,cy+RY-.3+bob+f[i],z],.8,i===1?'#ffd24a':'#ff7a1a',.05,.1)}
  }else if(o.witch){
   // wide brim, a cone in three stacked pieces that bends back, a purple band with a gold buckle
-  column(0,32.5+bob,0,15.5,.8,13.5,o.witch,1,.4);column(0,34.45+bob,0,8.6,3.7,7.8,o.witch,.72,.45);
+  brim(32.5+bob,15.5,.8,13.5,o.witch,.4,4.65,4.15);column(0,34.45+bob,0,8.6,3.7,7.8,o.witch,.72,.45);
   column(0,37.4+bob,-.6,6,2.6,5.4,o.witch,.62,.4);beam([0,38.6+bob,-1],[-.6,41.2+bob,-3.4],1.7,o.witch,.25,.35);
-  column(0,33.2+bob,0,8.8,1.1,8,'#6a2a8a',1,.2);box(0,33.2+bob,4.05,1.8,1.3,.3,'#e2c25a',.15,1);box(0,33.2+bob,4.2,.8,.6,.2,'#6a2a8a',.02,1.2);
+  column(0,33.45+bob,0,8.8,1.1,8,'#6a2a8a',1,.2);box(0,33.45+bob,4.05,1.8,1.3,.3,'#e2c25a',.15,1);box(0,33.45+bob,4.2,.8,.6,.2,'#6a2a8a',.02,1.2);   // v0.9.3.9b: band rests on the brim
  }else if(o.hood){
   // a deep hood with the face lost in shadow and two glowing eyes
   dome(o.hood,29.2,5.4,5.1,7.2);column(0,29.4+bob,-.6,11,4.6,10,o.hood,.95,.45);box(0,28.4+bob,-4.4,8.6,6.4,1,o.hood,.35);
@@ -228,8 +237,13 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
   // v0.9.3.9: the six Halloween Case pieces rebuilt as full headwear (volume, trim, shading steps, a clear front motif),
   // matching the Top Hat / Witch / Pumpkin King standard. Every part sits on or inside the head silhouette.
   const h=o.halloweenHat,ivory='#e9dfc5',hair=()=>dome('#433b2b',32.7,4.2,3.6,1.65);
-  const bone=(x,y,z,len,ang=0)=>{const dx=Math.cos(ang)*len/2,dy=Math.sin(ang)*len/2;beam([x-dx,y-dy+bob,z],[x+dx,y+dy+bob,z],.17,ivory,.17,.08);
-   for(const e of[-1,1])for(const f of[-1,1])ball(x+e*dx-f*Math.sin(ang)*.16,y+e*dy+f*Math.cos(ang)*.16+bob,z,.2,ivory)};
+  // v0.9.3.9b: a flat cartoon bone (straight shaft, two round knobs at each end), outlined, facing out from the band
+  // at angle th around the head. len is the whole length; w the shaft width.
+  const bone=(th,y,len,w=.42)=>{const n=[Math.sin(th),0,Math.cos(th)],t=[Math.cos(th),0,-Math.sin(th)],c=[n[0]*5.42,y+bob,n[2]*4.74],
+    r=w*.95,hx=len/2-r,pts=[],arc=(cx,cy,a0,a1)=>{for(let k=0;k<=6;k++){const a=a0+(a1-a0)*k/6;pts.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r])}};
+   arc(hx,r*.78,Math.PI*.95,-Math.PI*.35);arc(hx,-r*.78,Math.PI*.35,-Math.PI*.95);   // right end: upper knob, lower knob
+   arc(-hx,-r*.78,-Math.PI*.05,-Math.PI*1.35+Math.PI*2);arc(-hx,r*.78,Math.PI*.65,Math.PI*.05);   // left end
+   const v=pts.map(([u,q])=>{const f=th+u/5.1;return[Math.sin(f)*5.46,c[1]+q,Math.cos(f)*4.78]});mesh(v,[v.map((_,k)=>v.length-1-k)],ivory,.16,1.2)};   // wrapped around the band's curve
   if(h==='gravecap'){
    // slate cap with a stitched band, a short visor and a little headstone (engraved cross, moss) rising from the front
    dome('#3a3843',32,5.1,4.5,3.9);column(0,32.45+bob,0,10.5,1.1,9.1,'#2a2830',1,.32);
@@ -258,7 +272,7 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
    // a crimson head wrap in two folded layers, knotted at the back with trailing ends, fastened by three bone buttons
    dome('#7a2d3a',31.9,5.25,4.55,3.5);column(0,32.4+bob,0,10.6,1.3,9.2,'#6a2230',1,.32);column(0,33.85+bob,-.25,9.7,1,8.5,'#8a3444',.9,.26);
    ball(0,33.2+bob,-4.45,.9,'#6a2230');beam([-.3,32.8+bob,-4.65],[-1.15,30.2+bob,-5.35],.55,'#7a2d3a',.3,.3);beam([.4,32.8+bob,-4.6],[1.35,30.7+bob,-5.15],.5,'#7a2d3a',.28,.3);
-   bone(-2.35,32.45,4.05,1.25,.35);bone(0,32.45,4.72,1.35,0);bone(2.35,32.45,4.05,1.25,-.35);
+   bone(0,32.7,5,.7);
   }else if(h==='webpin'){
    // a tilted black-lace pillbox on one side, a cobweb veil fanned over the brow, pinned with an orange spider brooch
    hair();column(1.9,34.35+bob,.5,4.3,1.35,3.7,'#1f1b24',.9,.36);column(1.9,33.9+bob,.5,4.4,.36,3.8,'#6b1f2e',1,.1);
@@ -270,10 +284,10 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
   }else if(h==='skullseal'){
    // a black-violet diadem with gold trim: an ivory skull seal before a glowing gold crescent, violet gems at the temples
    hair();column(0,33+bob,0,9.6,1.4,8.7,'#2b1f38',1,.36);column(0,32.3+bob,0,9.66,.14,8.76,'#b8943a',1,.06);
-   for(let k=0;k<7;k++){const a0=Math.PI*(.12+k*.76/7),a1=Math.PI*(.12+(k+1)*.76/7),r=2.25,t=1-Math.abs(k-3)/3.5;
-    beam([Math.cos(a0)*r,35.25+Math.sin(a0)*r*.95+bob,3.25],[Math.cos(a1)*r,35.25+Math.sin(a1)*r*.95+bob,3.25],.14+.3*t,'#ffe39a',.14+.3*(1-Math.abs(k+1-3)/3.5),.12)}
-   ball(0,34.3+bob,4.25,.98,ivory);box(0,33.38+bob,4.35,1.15,.5,.75,ivory,.12);
-   for(const sd of[-1,1])box(sd*.36,34.25+bob,5.02,.38,.36,.1,'#1b1520',.02,1.6);box(0,33.82+bob,5.04,.16,.2,.08,'#1b1520',.02,1.6);box(0,33.36+bob,4.74,.9,.07,.05,'#1b1520',.02,1.6);
+   for(let k=0;k<7;k++){const a0=Math.PI*(.12+k*.76/7),a1=Math.PI*(.12+(k+1)*.76/7),r=2.65,t=1-Math.abs(k-3)/3.5;
+    beam([Math.cos(a0)*r,35.45+Math.sin(a0)*r*.95+bob,3.2],[Math.cos(a1)*r,35.45+Math.sin(a1)*r*.95+bob,3.2],.14+.3*t,'#ffe39a',.14+.3*(1-Math.abs(k+1-3)/3.5),.12)}
+   ball(0,34.45+bob,4.3,1.24,ivory);box(0,33.25+bob,4.42,1.45,.62,.92,ivory,.12);
+   for(const sd of[-1,1])box(sd*.46,34.4+bob,5.4,.48,.46,.1,'#1b1520',.02,1.6);box(0,33.82+bob,5.42,.2,.26,.08,'#1b1520',.02,1.6);box(0,33.22+bob,4.9,1.15,.08,.05,'#1b1520',.02,1.6);
    for(const sd of[-1,1]){column(sd*3.35,33+bob,3.15,.75,.75,.45,'#b48cff',.8,.12);beam([sd*1.3,33+bob,4.3],[sd*2.9,33+bob,3.5],.16,'#d9b44a',.16,.1)}
   }
  }else if(o.hardhat){
@@ -306,7 +320,7 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
   dome(o.cap,32,4.8,4.2,3.3);box(0,32+bob,4.7,8,.5,4.4,tint(o.cap,.85),.4);
   if(o.capPix){box(0,33.45+bob,3.95,1.6,1.4,.3,o.capPix,.03,1);box(1.2,32.95+bob,4.05,.6,.6,.2,o.capPix,.03,1)}   // v0.9.3.9: seated on the crown, not floating
  }else if(o.boonie){
-  column(0,32.1+bob,0,14,.9,12,o.boonie,1,.45);dome(tint(o.boonie,.9),32.2,4.5,3.9,3.1);column(0,33+bob,0,9.3,.85,8,tint(o.boonie,.64),1,.2);
+  brim(32.1+bob,14,.9,12,o.boonie,.45,4.9,4.3);dome(tint(o.boonie,.9),32.2,4.7,4.1,3.1);column(0,33+bob,.1,9.6,.85,8.4,tint(o.boonie,.64),1,.2);
  }else if(o.beanie){
   dome(o.beanie,31.9,5.1,4.3,4.7);column(0,32.3+bob,0,10.3,1.5,8.8,tint(o.beanie,.75),1,.32);ball(0,37.1+bob,0,1.3,o.beanie);
  }else if(o.beret){

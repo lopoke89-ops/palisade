@@ -11,7 +11,7 @@ The Claude audit URL still requires sign-in in the available browser session. Bi
 
 | Item | Current state |
 |---|---|
-| Live release | **v0.9.3.9** (published September 30) |
+| Live release | **v0.9.3.10** (published September 30) |
 | Live protocol | `yard-17` / `palisade-yard-17-` (v0.9.3.5 candidate uses `yard-18`) |
 | Applied server migration | `palisade_v0939_sp_cases` (`20260930084544`); before it `palisade_v0938_all_boss_milestones` (`20260930075446`) |
 | GitHub branch | `main` at `4033d34` (v0.9.3.4 plus the UTF-8 repair); v0.9.3.5 candidate on `claude/lucid-curie-491na1` |
@@ -20,6 +20,16 @@ The Claude audit URL still requires sign-in in the available browser session. Bi
 Controller support shipped in v0.9.2.1. The v0.9.3 cosmetics migration is applied and the live case catalog includes Flags. The two proposed new game modes have not shipped; the Nightmare modifier and a future preset definition do not constitute a separate game mode.
 
 Four commits after the v0.9.3 release changed the case intro and reel source (`98bb522`, `4c8dd3d`, `a49df08`, `566e30e`). The v0.9.3.1 release includes those fixes. Their source was compared with the v0.9.3 release on September 29; see [case animation validation](CASE_PERFORMANCE_2026-09-29.md). The reel avoids repeated style reads and its measured CPU use was lower, but intro readings overlapped and Locker readings were higher in the comparison runs. Further profiling and a real-phone comparison are still required before performance sign-off.
+
+## v0.9.3.10: hat fixes (Big U's review)
+
+- **Boonie and Witch hat gap.** Painting the head cyan showed the "gap" was the face showing through the front of the brim. The canvas painter orders each flat face by its average depth, and a wide brim's average is the head's centre, so the face was painted over the brim's front. Both brims are now the outlined disk plus 12 unoutlined ring slices, starting at the crown or cone edge, that sort by their own position (`brim()` in the character painter).
+  - The Witch band and buckle were raised to rest on the brim (they sat inside it).
+  - The Boonie crown and band are slightly wider to cover the head's corners.
+  - Evidence: `gap_check_before.png` and `gap_check_after.png`.
+- **Bone-Button Wrap.** The three small bone buttons read as blobs. There is now one large flat cartoon bone (straight shaft, two round knobs at each end, outlined) across the front of the wrap. Evidence: `bone_wrap_final.png` and `bone_wrap_final_gamesize.png`.
+- **Crescent Skull Seal.** The skull is about 25% larger (bigger eye sockets, nose and jaw), and the gold crescent is enlarged to frame it.
+- **Checks:** `headgear_fit`, `cosmetics_expansion`, `wardrobe3d`, `locker_fit`, `presentation_posefit`, `cosmetic_network`, `cosmetics`, `flagcase` and `csp` all pass. No server or protocol change.
 
 ## v0.9.3.9: skill points for cases, landscape HUD, tips toggle, headgear polish
 
