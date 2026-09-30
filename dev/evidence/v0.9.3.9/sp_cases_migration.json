@@ -1,0 +1,16 @@
+{
+  "migration": "20261001200000_palisade_v0939_sp_cases.sql",
+  "checks": [
+    "migration applies and re-applies",
+    "3 SP buys one Supply Case",
+    "no cap: repeated purchases",
+    "stale revision refused",
+    "tree spend works alongside",
+    "fewer than 3 unspent SP refused (tree points untouched)",
+    "reset refunds only the tree (3), never the 15 traded",
+    "other accounts untouched",
+    "banned account refused",
+    "missing identity refused",
+    "anon denied, signed-in allowed"
+  ]
+}

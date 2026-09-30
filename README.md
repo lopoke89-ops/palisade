@@ -1,14 +1,16 @@
 PALISADE: phone version with online co-op
 =========================================
 
-CURRENT RELEASE (October 1, 2026): v0.9.3.7 is live:
-- On a touch screen, grenades and rockets lock onto the nearest raider.
-- SETTINGS in a match opens an in-game panel.
-- With Nightmare and Boss Rush both on, a Boss Rush raid can bring a second boss.
+CURRENT RELEASE (October 1, 2026): v0.9.3.8 is live. Every boss kill counts toward
+boss milestones for everyone in the match.
 
-NEXT: v0.9.3.8 is ready to merge. Every boss kill, including Boss Rush and
-Nightmare bosses, now counts toward boss milestones for everyone in the match.
-The server side is already live. See dev/STATUS.md.
+NEXT: v0.9.3.9 is ready for review:
+- Trade 3 skill points for a Supply Case (no cap; players without accounts too).
+- A cleaner landscape HUD: a thin boss strip, and team bars in the bottom-left.
+- A "Show tips during games" setting.
+- The six Halloween Case head pieces rebuilt, plus a fit pass on all hats.
+
+Its server change (buy_case_sp) waits for approval. See dev/STATUS.md.
 
 This folder is the whole game as a website. Put it online once and anyone
 can play by opening the link. No app store, no download.

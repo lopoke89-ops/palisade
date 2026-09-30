@@ -1,0 +1,30 @@
+{
+  "out": {
+    "label": "BUY · 3 SKILL POINTS (7)",
+    "account": {
+      "sp": 1,
+      "cases": 2
+    },
+    "title": "You have 1 skill point. Earn them by holding raids (1 per 5) and beating bosses.",
+    "offline": {
+      "sp": 4,
+      "cases": 2
+    },
+    "earn": {
+      "gained": 2,
+      "total": 2
+    },
+    "local": {
+      "sp": 0,
+      "cases": 2
+    },
+    "afterReload": {
+      "sp": 0,
+      "cases": 2
+    }
+  },
+  "calls": [
+    "buy_case_sp"
+  ],
+  "errors": []
+}

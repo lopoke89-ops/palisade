@@ -193,6 +193,9 @@ function renderCaseBoxes(){
     const how=document.createElement('i');how.textContent=C.how;const bt=document.createElement('div');bt.className='btns';
     const op=document.createElement('button');op.type='button';op.className='go';op.textContent='OPEN';op.dataset.open=id;op.disabled=n<1||lockBusy;bt.append(op);
     if(C.cost){const buy=document.createElement('button');buy.type='button';buy.className='ghost';buy.textContent=`BUY · ${C.cost} SHARDS`;buy.dataset.buy=id;buy.disabled=locker.shards<C.cost||lockBusy;bt.append(buy)}
+    if(id==='supply'){const sp=locker.sp|0,s=document.createElement('button');s.type='button';s.className='ghost spBuy';s.dataset.spbuy='1';s.disabled=sp<SP_CASE||lockBusy;   // v0.9.3.9
+      const armed=Date.now()-spArmed<3000;s.textContent=armed?`TAP AGAIN · SPEND ${SP_CASE} SKILL POINTS`:`BUY · ${SP_CASE} SKILL POINTS (${sp})`;
+      s.title=sp<SP_CASE?`You have ${sp} skill point${sp===1?'':'s'}. Earn them by holding raids (1 per 5) and beating bosses.`:`Trade ${SP_CASE} unspent skill points for a Supply Case`;s.setAttribute('aria-label',s.textContent+'. '+s.title);bt.append(s)}
     d.append(nm,b,how,bt);box.append(d)}
   $('shardTxt').textContent=`${locker.shards} shard${locker.shards===1?'':'s'} · duplicates and leftover run salvage turn into shards`;
 }
@@ -252,10 +255,20 @@ function renderLocker(){
 }
 document.querySelectorAll('#lockTabs button').forEach(b=>b.addEventListener('click',()=>{lockCat=b.dataset.cat;renderLocker()}));
 let lockBusy=false;
+// v0.9.3.9: 3 unspent skill points buy a Supply Case (no cap). Tap twice: the first tap arms it for 3 s.
+// A skill-tree reset refunds only the tree's own costs, so points traded here never come back.
+const SP_CASE=3;let spArmed=0;
+function buyCaseSP(){
+  if((locker.sp|0)<SP_CASE||lockBusy)return;
+  if(Date.now()-spArmed>=3000){spArmed=Date.now();renderCaseBoxes();setTimeout(()=>{if(spArmed&&Date.now()-spArmed>=3000){spArmed=0;renderCaseBoxes()}},3050);return}
+  spArmed=0;
+  if(locker.cloud){lockWait(true);rpc('buy_case_sp',{}).then(r=>{lockWait(false);if(r.ok){takeLocker(r.j);renderLocker();uiSfx('restock');if(typeof renderAcct==='function')renderAcct()}else lockMsg(r.status?sbErr(r):'Trading skill points needs a connection. Your points are safe.')});return}
+  locker.sp-=SP_CASE;caseAdd('supply',1);saveLocker();renderLocker();uiSfx('restock');
+}
 function buyCase(id){const C=CASES[id];if(!C||!C.cost||locker.shards<C.cost)return;
   if(locker.cloud){lockWait(true);rpc('buy_case',{p_case:id}).then(r=>{lockWait(false);if(r.ok){takeLocker(r.j);renderLocker();uiSfx('restock')}else lockMsg(r.status?sbErr(r):'Buying a case needs a connection. Your shards are safe.')});return}
   locker.shards-=C.cost;caseAdd(id,1);saveLocker();renderLocker();uiSfx('restock')}
-$('caseBoxes').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;initAudio();if(b.dataset.open)openCaseUI(b.dataset.open);else if(b.dataset.buy)buyCase(b.dataset.buy)});
+$('caseBoxes').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;initAudio();if(b.dataset.open)openCaseUI(b.dataset.open);else if(b.dataset.buy)buyCase(b.dataset.buy);else if(b.dataset.spbuy)buyCaseSP()});
 function lockMsg(t){$('lockMsg').textContent=t||''}
 function lockWait(on){lockBusy=on;renderCaseBoxes();lockMsg(on?'Talking to the quartermaster…':'')}
 function cloudEquip(id){if(!locker.cloud)return;rpc('equip',{p_item:id}).then(r=>{if(r.ok)takeLocker(r.j);else if(r.status&&r.status!==401)syncLocker()})}

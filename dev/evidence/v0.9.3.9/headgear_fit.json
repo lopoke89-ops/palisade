@@ -1,0 +1,47 @@
+{
+  "out": {
+    "outside": [],
+    "halloweenArea": {
+      "gravecap": 31,
+      "stemband": 54,
+      "batcirclet": 51,
+      "bonewrap": 63,
+      "webpin": 57,
+      "skullseal": 76
+    },
+    "medianOtherArea": 69
+  },
+  "all": {
+    "gravecap": 31,
+    "stemband": 54,
+    "batcirclet": 51,
+    "bonewrap": 63,
+    "webpin": 57,
+    "skullseal": 76,
+    "cap": 40,
+    "beanie": 58,
+    "boonie": 61,
+    "wrap": 68,
+    "beret": 66,
+    "tophat": 111,
+    "crown": 72,
+    "headband": 53,
+    "acap": 69,
+    "nhelm": 63,
+    "pcap": 83,
+    "ledmask": 74,
+    "visor": 67,
+    "clownhair": 104,
+    "glitch": 137,
+    "gclownhair": 104,
+    "ghelm": 101,
+    "jackolantern": 109,
+    "witch": 104,
+    "pumpkinking": 116,
+    "officer": 60,
+    "ghood": 43,
+    "bombhelm": 35,
+    "qmset": 44
+  },
+  "errors": []
+}

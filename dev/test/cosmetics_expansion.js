@@ -5,7 +5,9 @@ const r=await p.evaluate(()=>{const P=__pal,failures=[],hats=Object.keys(P.HALLO
 const cv=document.createElement('canvas');cv.width=300;cv.height=320;const x=cv.getContext('2d',{willReadFrequently:true});
 const draw=(look,a=0,t=0,phase=0)=>{x.clearRect(0,0,300,320);const bounds=P.paintWardrobeCharacter(x,look,a,t,4,150,240,phase);const pixels=x.getImageData(0,0,300,320).data;return{bounds,pixels}};
 for(const skin of skins){matrix[skin]={};for(const h of allHats){const yes=P.headwearAllowed(skin,h.key);if(hats.includes(h.key))matrix[skin][h.key]=yes?'Allow':'Block';if(!yes){const a=P.lookOf({skin,hat:h.key},'soldier'),z=P.lookOf({skin,hat:'class'},'soldier');if(JSON.stringify(a)!==JSON.stringify(z))failures.push('blocked render '+skin+' '+h.key)}}}
-for(const hat of hats){if(!P.COSBY['hat:'+hat]||P.COSBY['hat:'+hat].box!=='halloween')failures.push('catalog '+hat);for(let a=0;a<Math.PI*2;a+=Math.PI/8){const look=P.lookOf({skin:'std',hat},'soldier'),d=draw(look,a);if(d.bounds.top < -39)failures.push('tall headwear '+hat)}}
+// v0.9.3.9: the pieces were rebuilt as full headwear; they must stay no taller than our tallest existing hats (Top Hat, Witch)
+let tallest=0;for(const ref of['tophat','witch'])for(let a=0;a<Math.PI*2;a+=Math.PI/8)tallest=Math.min(tallest,draw(P.lookOf({skin:'std',hat:ref},'soldier'),a).bounds.top);
+for(const hat of hats){if(!P.COSBY['hat:'+hat]||P.COSBY['hat:'+hat].box!=='halloween')failures.push('catalog '+hat);for(let a=0;a<Math.PI*2;a+=Math.PI/8){const look=P.lookOf({skin:'std',hat},'soldier'),d=draw(look,a);if(d.bounds.top < tallest)failures.push('taller than the Top Hat/Witch '+hat)}}
 let haloGap=100;
 for(let a=0;a<Math.PI*2;a+=Math.PI/8)for(const t of [0,.65,1.95]){const base=P.lookOf({skin:'sheetghost',hat:'class'},'soldier'),plain=draw(base,a,t),halo=draw(P.lookOf({skin:'sheetghost',hat:'halo'},'soldier'),a,t);let ghostTop=320,ringBottom=-1;
 for(let y=0;y<320;y++)for(let q=0;q<300;q++){const k=(y*300+q)*4;if(plain.pixels[k+3]>40)ghostTop=Math.min(ghostTop,y);if(halo.pixels[k+3]>40&&plain.pixels[k+3]<=40)ringBottom=Math.max(ringBottom,y)}

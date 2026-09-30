@@ -21,6 +21,39 @@ Controller support shipped in v0.9.2.1. The v0.9.3 cosmetics migration is applie
 
 Four commits after the v0.9.3 release changed the case intro and reel source (`98bb522`, `4c8dd3d`, `a49df08`, `566e30e`). The v0.9.3.1 release includes those fixes. Their source was compared with the v0.9.3 release on September 29; see [case animation validation](CASE_PERFORMANCE_2026-09-29.md). The reel avoids repeated style reads and its measured CPU use was lower, but intro readings overlapped and Locker readings were higher in the comparison runs. Further profiling and a real-phone comparison are still required before performance sign-off.
 
+## v0.9.3.9: skill points for cases, landscape HUD, tips toggle, headgear polish
+
+Work order: [plans/v0.9.3.9-work-order.md](plans/v0.9.3.9-work-order.md). Evidence: `evidence/v0.9.3.9/`.
+
+**1. 3 skill points → 1 Supply Case** (no cap, per Big U).
+- *Where:* a new button in the Locker's Supply Case panel shows your points. It works on two taps: the first arms it for 3 s, the second spends.
+- *When it's off:* it is disabled with a reason below 3 points; offline, the points stay and a message explains.
+- *Accounts:* use the new RPC `buy_case_sp` (migration `20261001200000_palisade_v0939_sp_cases.sql`; **needs Big U's approval before it is applied live**). It spends only unspent `sp`, and `sp_total` is unchanged. The live `skill_respec` refunds `skill_spent(skills)`, the tree's own costs, so points traded for cases can never come back through a reset.
+- *No-account players:* they get the same trade (Big U). They previously earned no skill points at all, so their runs now earn them by the server's rule: 1 per 5 raids held, 1 per boss, including in-between bosses. The skill tree itself stays account-only.
+- *Tests:* `sp_cases_migration` (PGlite: success, no cap, stale rev, fewer than 3 refused while tree points are untouched, respec refunds only the tree, other accounts, banned, signed out, anon denied) and `sp_cases` (account two-tap, repeat, disabled, offline; no-account earning, trade, reload).
+
+**2. Landscape HUD** (phones in landscape only; portrait and desktop unchanged).
+- *Boss bars:* health is one thin strip across the top centre, with two XL bosses side by side, instead of stacked 32 px cards.
+- *Team bars:* YOU, crewmates, DELGADO and CORE sit compact in the bottom-left corner and ignore touches. The raid panel stays top-right, and the top-left is clear.
+- *Test:* `hud_layout` at 844×390, 932×430, 390×844 and 1280×800 with 6 players and two bosses checks placement and no overlap with the kit or raid panel.
+- *Phone check still needed:* the bars now share the bottom-left with the floating move stick, which draws underneath them.
+
+**3. Show tips during games.** A Settings → Screen toggle (also in the in-game settings panel), on by default, saved and included in export/import. Off hides the how-to tips immediately and in later games. Toasts (boss arrivals, IS BACK, rewards) always show. Test: `tips_toggle`.
+
+**4. Headgear.**
+- *Rebuilt:* the six Halloween Case pieces are now full headwear in the style of the Top Hat, Witch and Pumpkin King, with volume, trim, shading steps and a clear front motif:
+  - Gravestone Cap: a slate cap with a stitched band and visor, and a headstone crest with cross and moss.
+  - Pumpkin Stem Band: a ribbed rind band with a curled stem, leaves and a tendril.
+  - Bat-Notch Circlet: a pewter circlet with a notched-wing bat (glowing eyes) and violet studs.
+  - Bone-Button Wrap: two folded crimson layers, a back knot with trailing ends, and three bone buttons.
+  - Cobweb Brow Pin: a tilted lace pillbox, a cobweb veil over the brow, and a spider brooch.
+  - Crescent Skull Seal: a black-violet diadem with an ivory skull before a glowing gold crescent, and temple gems.
+- *Fit pass on all hats:* the Neon Helmet stripe now follows the helmet's curve (it stuck out at side angles), and the Arcade Cap badge is seated on the crown (it floated).
+- *Tests:* `headgear_fit` checks every hat's pixels stay inside a head window at 8 angles × 3 walk phases. It passes for all hats, and records per-hat area for review. `cosmetics_expansion` now caps the Halloween pieces at the height of our tallest existing hats, replacing the old "compact" limit.
+- *Evidence:* before/after sheets are `headgear_before_*.png` and `headgear_after_*.png`.
+
+Version footer v0.9.3.9; protocol unchanged.
+
 ## v0.9.3.8: every boss kill counts toward milestones
 
 Big U's rule: every boss kill counts toward boss milestones, for everyone in the match, not just whoever landed the last hit.
