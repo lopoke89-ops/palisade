@@ -29,6 +29,7 @@ function syncPartyShell(){
  if(on){renderIdentity();renderPartyState();partyPaintAt=0;partySig='';partyMeSig='';stageLay=''}
  if(!FR.timer&&socialAccount()){friendsPoll();friendsTick()}
  if(on&&MAP_PAGES.includes(pg))renderMapPanel();
+ if(typeof renderHome==='function')renderHome();
 }
 function partyRows(){return inRoom()?NET.roster:[{id:myId,name:myName(),cls:pick.cls,cos:cosStr(locker.eq)}]}
 function partyInvite(){
@@ -315,7 +316,7 @@ function renderMapPanel(){
   t.append(nm,bl,bs);b.append(cv,t);b.setAttribute('aria-pressed',pick.map===id?'true':'false');b.disabled=guest&&pick.map!==id;b.addEventListener('click',()=>pickMap(id));box.append(b)}}
  $('mapSizeTag').textContent=size==='xl'?'24×24':'16×16';$('sizeBox').hidden=!!pv;$('pvpSizeNote').hidden=!pv;$('mapHostNote').hidden=!guest;
  document.querySelectorAll('#sizeSeg button').forEach(b=>b.disabled=guest);
- const M=MAPS[pick.map]||MAPS.yard;$('soloMap').textContent=`${M.name} · ${pick.size==='xl'?'XL 24×24':'16×16'}${M.night?' · always night':''}`;
+ if(typeof renderHome==='function')renderHome();   // v0.9.5: the PLAY lines show the map
 }
 const renderPlayPanel=renderMapPanel;
 
@@ -323,6 +324,7 @@ const renderPlayPanel=renderMapPanel;
 /* ---- v0.9.2: modifiers. The host picks them on the SOLO page or in the room; guests see the host's picks. ---- */
 // saved per mode (cfg.mods = {coop:[…], base:[…], ffa:[…]}); only the ones that work in that mode are ever used
 const myMods=m=>cleanMods((cfg.mods||{})[m],m==='coop'?'':m);
+const SETUP={kind:'home'};   // v0.9.5: which match the setup sheet is changing: 'home' (PLAY), 'host' (before hosting) or 'room'
 const roomKind=()=>pick.pvp==='base'||pick.pvp==='ffa'?pick.pvp:coopMods();   // v0.9.4.0: Blitzkrieg Rush has its own list
 const roomMods=()=>NET.mode==='guest'?(NET.hostMods||[]):myMods(roomKind());
 function toggleMod(m,id){
@@ -341,11 +343,12 @@ function modBox(box,m,on,edit){
   if(!box.children.length){const p=document.createElement('p');p.className='lede sm';p.textContent=edit?'No modifiers for this mode.':'No modifiers. The host picks them.';box.append(p)}
 }
 function renderMods(){
-  if($('soloMods')){const k=coopMods(),on=myMods(k);modBox($('soloMods'),k,on,true);$('soloModTag').textContent=on.length?`${on.length} ON${modPct(on)?' · '+modPct(on):''}`:''}
+  if($('soloMods')){const k=!$('setupSheet').hidden&&SETUP.kind!=='home'?roomKind():coopMods(),on=myMods(k);modBox($('soloMods'),k,on,true);$('soloModTag').textContent=on.length?`${on.length} ON${modPct(on)?' · '+modPct(on):''}`:''}
   if($('lMods')){const m=roomKind(),on=roomMods(),host=NET.mode!=='guest';modBox($('lMods'),m,on,host);
     $('lModTag').textContent=on.length?`${on.length} ON${(m==='coop'||m==='blitz')&&modPct(on)?' · '+modPct(on):''}`:'';
     const oj=on.includes('onejob');$('lOneJob').hidden=!oj;$('lJobs').classList.toggle('locked',oj);
     document.querySelectorAll('[data-oj]').forEach(b=>{b.classList.toggle('sel',b.dataset.oj===pick.job);b.disabled=!host})}
+  if(typeof renderHome==='function')renderHome();
 }
 function modsToast(){if(game.mods&&game.mods.length)toast('MODIFIERS',modNames(game.mods).join(' · ')+(game.job?` · everyone is a ${CLASSES[game.job].name.toLowerCase()}`:''))}
 

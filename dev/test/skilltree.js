@@ -46,7 +46,7 @@ const rpc = {
   out.card = await p.evaluate(() => [...document.querySelectorAll('#overRewards .rwSkill small')].map(s => s.textContent)); assert.deepEqual(out.card, ['SKILL POINTS']);
   out.loot = await p.textContent('#overLoot'); assert.match(out.loot, /\+3 skill points/);
   await p.evaluate(() => __pal.toMenu());
-  out.nav = await p.textContent('#navSkills'); assert.equal(out.nav, 'SKILLS · 3');
+  out.nav = await p.textContent('#navSkills .nBadge'); assert.equal(out.nav, '3');
   // 2. the SKILLS page
   await p.click('#navSkills'); await p.waitForSelector('#pg-skills:not([hidden])');
   out.page = await p.evaluate(() => ({ pts: document.getElementById('skPts').textContent, rows: document.querySelectorAll('#skTree .skRow').length, lede: document.getElementById('skLede').textContent }));

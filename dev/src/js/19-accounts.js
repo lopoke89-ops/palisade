@@ -191,8 +191,10 @@ async function endSession(msg){
 
 // ---- the account page
 function mainLabels(){
-  const lb=$('navLocker'),n=allCases();if(lb)lb.textContent=n?`LOCKER · ${n}`:'LOCKER';
-  const sk=$('navSkills'),pts=locker.cloud?locker.sp|0:0;if(sk)sk.textContent=pts?`SKILLS · ${pts}`:'SKILLS';   // points waiting to be spent
+  // the count sits in a badge on the tab so the icon and label stay put
+  const navBadge=(b,n)=>{if(!b)return;const e=b.querySelector('.nBadge');if(e){e.hidden=!n;e.textContent=n>99?'99+':String(n)}b.setAttribute('aria-label',b.querySelector('.nLbl').textContent+(n?`, ${n} waiting`:''))};
+  const lb=$('navLocker'),n=allCases();navBadge(lb,n);
+  const sk=$('navSkills'),pts=locker.cloud?locker.sp|0:0;navBadge(sk,pts);   // points waiting to be spent
   if(!$('pg-skills').hidden)renderSkills();
   renderIdentity();   // the account button (top right) shows who you are and whether the account is saved
 }

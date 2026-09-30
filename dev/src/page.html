@@ -55,7 +55,7 @@
 <div id="menu">
   <div class="panel">
     <header class="accountDock">
-      <nav class="partyNav" aria-label="Lobby navigation"><strong>PALI<span class="cut">SADE</span></strong><button type="button" data-go="solo" data-nav="solo">SOLO</button><button type="button" data-go="multi" data-nav="multi">MULTIPLAYER</button><button type="button" data-go="classes" data-nav="classes">CLASSES</button><button type="button" data-go="locker" data-nav="locker" id="navLocker">LOCKER</button><button type="button" data-go="skills" data-nav="skills" id="navSkills">SKILLS</button><button type="button" data-go="settings" data-nav="settings">SETTINGS</button></nav>
+      <nav class="partyNav" aria-label="Lobby navigation"><strong>PALI<span class="cut">SADE</span></strong><button type="button" data-go="solo" data-nav="solo"><svg class="nIco" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M6 4l10 6-10 6z" fill="currentColor"/></svg>PLAY</button><button type="button" data-go="multi" data-nav="multi"><svg class="nIco" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><circle cx="7" cy="6" r="3"/><path d="M1.5 17c.6-3.4 2.8-5.2 5.5-5.2s4.9 1.8 5.5 5.2"/><circle cx="14.2" cy="5.6" r="2.4"/><path d="M13.6 10.2c2.6-.3 4.4 1.5 4.9 4.8"/></svg>MULTIPLAYER</button><button type="button" data-go="locker" data-nav="locker" id="navLocker"><svg class="nIco" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="3" y="6" width="14" height="11"/><path d="M3 10h14M8 10v2h4v-2M6 6l1.5-3h5L14 6"/></svg><span class="nLbl">LOCKER</span><em class="nBadge" hidden></em></button><button type="button" data-go="skills" data-nav="skills" id="navSkills"><svg class="nIco" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M10 2.5l2.2 4.8 5.1.6-3.8 3.5 1 5.1L10 14l-4.5 2.5 1-5.1-3.8-3.5 5.1-.6z"/></svg><span class="nLbl">SKILLS</span><em class="nBadge" hidden></em></button><button type="button" data-go="classes" data-nav="classes"><svg class="nIco" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M10 2.5l6.5 2.5v5c0 4-2.8 6.6-6.5 7.8C6.3 16.6 3.5 14 3.5 10V5z"/></svg>CLASSES</button><button type="button" data-go="settings" data-nav="settings"><svg class="nIco" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><circle cx="10" cy="10" r="3"/><path d="M10 2v3M10 15v3M2 10h3M15 10h3M4.3 4.3l2.1 2.1M13.6 13.6l2.1 2.1M4.3 15.7l2.1-2.1M13.6 6.4l2.1-2.1"/></svg>SETTINGS</button></nav>
       <div class="friendsWrap"><button id="friendsBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="friendsDrop" aria-label="Friends"><svg viewBox="0 0 20 16" width="20" height="16" aria-hidden="true"><circle cx="7" cy="5" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M1.5 15c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="14.2" cy="4.6" r="2.4" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M13.6 9.2c2.6-.3 4.4 1.4 4.9 4.6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="fbLab">FRIENDS</span><b id="friendsDot" class="fDot" hidden>0</b></button>
       <div id="friendsDrop" class="friendsDrop" hidden role="dialog" aria-label="Friends">
         <div class="fdTabs" role="tablist"><button type="button" role="tab" data-ft="friends" aria-selected="true">FRIENDS <b id="fdFriendsN">0</b></button><button type="button" role="tab" data-ft="requests" aria-selected="false">REQUESTS <b id="fdReqN" class="fCnt" hidden>0</b></button><button type="button" role="tab" data-ft="mail" aria-selected="false">MAILBOX <b id="fdMailN" class="fCnt" hidden>0</b></button></div>
@@ -95,11 +95,39 @@
         <p class="socialCaption" id="sizeNote">XL: a bigger yard and about 40% more raiders.</p></div>
         <p class="socialCaption" id="pvpSizeNote" hidden>PvP is always 16×16.</p>
       </aside>
+      <aside class="homeSide" id="homeSide" aria-label="Progress and news"></aside>
     </section>
     <div class="eyebrow">FIELD TEST 03 · LUMBER YARD</div>
     <h1>PALI<span class="cut">SADE</span></h1>
     <p class="tag">Neighbors with rifles and a deadline.</p>
 
+    <div id="setupSheet" class="setupSheet" hidden role="dialog" aria-modal="true" aria-labelledby="setupTitle">
+      <div class="ssCard">
+        <header class="ssHead"><h2 id="setupTitle">MATCH SETUP</h2><button class="go" id="setupDone" type="button">DONE</button></header>
+        <div class="ssTabs" role="tablist"><button type="button" role="tab" data-sst="map">MAP</button><button type="button" role="tab" data-sst="rules">LENGTH</button><button type="button" role="tab" data-sst="job">JOB</button><button type="button" role="tab" data-sst="mods">MODIFIERS</button></div>
+        <div class="ssBody">
+          <section class="ssSec" data-ss="map" id="ssMap"></section>
+          <section class="ssSec" data-ss="rules">
+            <h2>LENGTH</h2>
+            <div class="seg" id="modes"><button data-m5="5" type="button">5 RAIDS</button><button data-m5="10" type="button">10 RAIDS</button><button data-m5="endless" type="button">ENDLESS</button><button data-m5="blitz" type="button" class="blitzSeg">BLITZKRIEG</button></div>
+            <p class="lede sm blitzNote" hidden>15 hard raids, then the Final Blitz: 5 minutes with a new boss every 30 seconds. The last minute is the evacuation: reach the evac site yourself, or leave with half your cases and shards.</p>
+            <h2>THREAT</h2>
+            <div class="seg" id="diff"><button data-d="easy" type="button">EASY</button><button data-d="normal" class="sel" type="button">NORMAL</button><button data-d="hard" type="button">HARD</button></div>
+            <p class="lede sm" id="ssPvpNote" hidden>Base Battle and Free-for-all have no length or threat: they play until a stake falls, or to the score.</p>
+          </section>
+          <section class="ssSec" data-ss="job">
+            <h2>YOUR JOB <button class="linkBtn" type="button" data-go="classes">ABOUT THE CLASSES</button></h2>
+            <div class="seg jobs"><button data-c="soldier" type="button">SOLDIER</button><button data-c="sniper" type="button">SNIPER</button><button data-c="grenadier" type="button">GRENADIER</button><button data-c="quartermaster" type="button">QUARTERMASTER</button></div>
+            <div class="ssJobs" id="ssJobs"></div>
+          </section>
+          <section class="ssSec" data-ss="mods">
+            <h2>MODIFIERS <span class="modTag" id="soloModTag"></span></h2>
+            <p class="lede sm">Harder rules pay more rewards. The host's picks apply to everyone in a room.</p>
+            <div class="mods" id="soloMods"></div>
+          </section>
+        </div>
+      </div>
+    </div>
     <section class="page cardPage" id="pg-account" hidden>
       <h2 class="pt">ACCOUNT</h2>
       <div class="acHead"><canvas id="acAvatar" width="160" height="160" aria-hidden="true"></canvas><div><b id="acName">PLAYER</b><span id="acState">LOCAL PROFILE</span><p class="lede" id="aLede"></p></div></div>
@@ -135,21 +163,11 @@
     </section>
 
     <section class="page" id="pg-solo" hidden>
-      <h2 class="pt">SOLO</h2>
-      <p class="lede">Solo, with Delgado (as in “Dell got you”). Hold the stake through the raids.</p>
-      <h2>YOUR JOB <button class="linkBtn" type="button" data-go="classes">ABOUT THE CLASSES</button></h2>
-      <div class="seg jobs"><button data-c="soldier" type="button">SOLDIER</button><button data-c="sniper" type="button">SNIPER</button><button data-c="grenadier" type="button">GRENADIER</button><button data-c="quartermaster" type="button">QUARTERMASTER</button></div>
-      <h2>MAP</h2>
-      <p class="lede sm" id="soloMap">The Yard · 16×16</p>
-      <h2>LENGTH</h2>
-      <div class="seg" id="modes"><button data-m5="5" type="button">5 RAIDS</button><button data-m5="10" type="button">10 RAIDS</button><button data-m5="endless" type="button">ENDLESS</button><button data-m5="blitz" type="button" class="blitzSeg">BLITZKRIEG</button></div>
-      <p class="lede sm blitzNote" hidden>15 hard raids, then the Final Blitz: 5 minutes with a new boss every 30 seconds. The last minute is the evacuation: reach the evac site yourself, or leave with half your cases and shards.</p>
-      <h2>THREAT</h2>
-      <div class="seg" id="diff"><button data-d="easy" type="button">EASY</button><button data-d="normal" class="sel" type="button">NORMAL</button><button data-d="hard" type="button">HARD</button></div>
-      <h2>MODIFIERS <span class="modTag" id="soloModTag"></span></h2>
-      <div class="mods" id="soloMods"></div>
+      <h2 class="pt">SOLO RUN</h2>
+      <p class="lede sm homeLede">You and Delgado hold the stake. Tap a line to change it.</p>
+      <div class="setupRows" id="homeRows"></div>
       <div id="best" hidden></div>
-      <button class="go" id="startBtn" type="button">RAISE THE FENCE</button>
+      <button class="go playBtn" id="startBtn" type="button">PLAY</button>
       <p class="install" id="installTip" hidden>Play it like an app: tap <b>Share</b> <span aria-hidden="true">⎙</span> at the bottom of Safari, then <b>Add to Home Screen</b>.</p>
       <button class="ghost" id="installBtn" type="button" hidden>INSTALL AS AN APP</button>
       <p class="note" id="saveNote" hidden></p>
@@ -177,49 +195,51 @@
 
     <section class="page" id="pg-multi" hidden>
       <h2 class="pt">MULTIPLAYER</h2>
-      <p class="lede">Create a room or join your crew.</p>
       <p class="note" id="mOffline" hidden>Online play needs the hosted copy of the game (the web link, or the icon on your home screen). This preview can't reach the internet, so solo only here.</p>
       <label class="set"><span>YOUR NAME</span><input type="text" id="mName" maxlength="12" placeholder="Big U" autocomplete="nickname" spellcheck="false"></label>
-      <h2>YOUR JOB</h2>
-      <div class="seg jobs"><button data-mc="soldier" type="button">SOLDIER</button><button data-mc="sniper" type="button">SNIPER</button><button data-mc="grenadier" type="button">GRENADIER</button><button data-mc="quartermaster" type="button">QUARTERMASTER</button></div>
-      <h2>HOST A GAME · MODE</h2>
-      <div class="seg" id="pvSeg"><button data-pv="coop" type="button">CO-OP</button><button data-pv="base" type="button">BASE BATTLE</button><button data-pv="ffa" type="button">FREE-FOR-ALL</button></div>
-      <p class="lede" id="pvDesc" style="font-size:12px;color:var(--dim)"></p>
-      <div id="coopOpts" class="page" style="gap:8px">
-      <h2>LENGTH AND THREAT</h2>
-      <div class="seg"><button data-mm="5" type="button">5 RAIDS</button><button data-mm="10" type="button">10 RAIDS</button><button data-mm="endless" type="button">ENDLESS</button><button data-mm="blitz" type="button" class="blitzSeg">BLITZKRIEG</button></div>
-      <p class="lede sm blitzNote" hidden>15 hard raids, then the Final Blitz: 5 minutes with a new boss every 30 seconds. The last minute is the evacuation: reach the evac site yourself, or leave with half your cases and shards.</p>
-      <div class="seg"><button data-md="easy" type="button">EASY</button><button data-md="normal" type="button">NORMAL</button><button data-md="hard" type="button">HARD</button></div>
+      <div class="mpCard">
+        <h3>JOIN A CREW</h3>
+        <div class="join"><input type="text" id="mCode" maxlength="4" placeholder="CODE" autocapitalize="characters" autocomplete="off" spellcheck="false" aria-label="Room code"><button class="go" id="joinBtn" type="button">JOIN</button></div>
+        <p class="status" id="mStatus" role="status"></p>
       </div>
-      <label class="tog" id="mListRow"><input type="checkbox" id="mList"><span>List my game in Open Games</span></label>
-      <button class="go" id="hostBtn" type="button">HOST</button>
+      <div class="mpCard">
+        <h3>HOST A ROOM</h3>
+        <div class="seg" id="pvSeg"><button data-pv="coop" type="button">CO-OP</button><button data-pv="base" type="button">BASE BATTLE</button><button data-pv="ffa" type="button">FREE-FOR-ALL</button></div>
+        <p class="lede sm" id="pvDesc"></p>
+        <div class="setupRows" id="hostRows"></div>
+        <label class="tog" id="mListRow"><input type="checkbox" id="mList"><span>List my game in Open Games</span></label>
+        <button class="go" id="hostBtn" type="button">HOST</button>
+      </div>
       <h2>OPEN GAMES</h2>
       <div class="lobList" id="lobList" aria-live="polite"></div>
-      <h2>JOIN A GAME</h2>
-      <div class="join"><input type="text" id="mCode" maxlength="4" placeholder="CODE" autocapitalize="characters" autocomplete="off" spellcheck="false" aria-label="Room code"><button class="go" id="joinBtn" type="button">JOIN</button></div>
-      <p class="status" id="mStatus" role="status"></p>
       <details class="how"><summary>IF IT WON'T CONNECT</summary>
-        <p class="lede" style="font-size:12px;color:var(--dim);margin-top:8px">Phones connect straight to each other. Most home Wi-Fi is fine; some cellular networks block it. If a join hangs, put the host (or everyone) on Wi-Fi. Keep the host's screen on. If the host's phone locks, the game ends for everyone.</p>
+        <p class="lede sm" style="margin-top:8px">Phones connect straight to each other. Most home Wi-Fi is fine; some cellular networks block it. If a join hangs, put the host (or everyone) on Wi-Fi. Keep the host's screen on. If the host's phone locks, the game ends for everyone.</p>
       </details>
+      <div hidden aria-hidden="true">   <!-- v0.9.5: the old job, length and threat pickers stay in step with the setup sheet but aren't shown -->
+        <div class="seg jobs"><button data-mc="soldier" type="button" tabindex="-1">SOLDIER</button><button data-mc="sniper" type="button" tabindex="-1">SNIPER</button><button data-mc="grenadier" type="button" tabindex="-1">GRENADIER</button><button data-mc="quartermaster" type="button" tabindex="-1">QUARTERMASTER</button></div>
+        <div id="coopOpts"><div class="seg"><button data-mm="5" type="button" tabindex="-1">5</button><button data-mm="10" type="button" tabindex="-1">10</button><button data-mm="endless" type="button" tabindex="-1">E</button><button data-mm="blitz" type="button" tabindex="-1">B</button></div>
+        <div class="seg"><button data-md="easy" type="button" tabindex="-1">E</button><button data-md="normal" type="button" tabindex="-1">N</button><button data-md="hard" type="button" tabindex="-1">H</button></div></div>
+      </div>
     </section>
 
     <section class="page" id="pg-lobby" hidden>
-      <h2 class="pt">LOBBY</h2>
+      <h2 class="pt">ROOM</h2>
       <div class="code"><span>ROOM CODE</span><b id="lCode">····</b></div>
       <button class="ghost" id="shareBtn" type="button">SHARE INVITE LINK</button>
+      <button class="go playBtn" id="lStart" type="button" hidden>START</button>
+      <p class="lede" id="lNote"></p>
+      <div class="setupRows" id="roomRows"></div>
       <h2>YOUR JOB</h2>
       <div class="seg jobs" id="lJobs"><button data-lc="soldier" type="button">SOLDIER</button><button data-lc="sniper" type="button">SNIPER</button><button data-lc="grenadier" type="button">GRENADIER</button><button data-lc="quartermaster" type="button">QUARTERMASTER</button></div>
+      <div id="lOneJob" hidden><h2>ONE JOB · EVERYONE PLAYS</h2><div class="seg jobs"><button data-oj="soldier" type="button">SOLDIER</button><button data-oj="sniper" type="button">SNIPER</button><button data-oj="grenadier" type="button">GRENADIER</button><button data-oj="quartermaster" type="button">QUARTERMASTER</button></div></div>
       <h2>CREW</h2>
       <ul class="roster" id="lList"></ul>
+      <button class="ghost" id="lTeam" type="button" hidden>SWITCH SIDES</button>
       <button class="ghost" id="lLock" type="button" hidden>LOCK ROOM</button>
-      <p class="lede" id="lNote"></p>
-      <h2>MODIFIERS <span class="modTag" id="lModTag"></span></h2>
-      <div class="mods" id="lMods"></div>
-      <div id="lOneJob" hidden><h2>ONE JOB · EVERYONE PLAYS</h2><div class="seg jobs"><button data-oj="soldier" type="button">SOLDIER</button><button data-oj="sniper" type="button">SNIPER</button><button data-oj="grenadier" type="button">GRENADIER</button><button data-oj="quartermaster" type="button">QUARTERMASTER</button></div></div>
+      <div id="lModsBox"><h2>MODIFIERS <span class="modTag" id="lModTag"></span></h2>
+      <div class="mods" id="lMods"></div></div>
       <h2>CHAT</h2>
       <div class="lchat"><ol id="lChatLog" aria-live="polite"></ol><form id="lChatForm" autocomplete="off"><input id="lChatIn" type="text" maxlength="120" enterkeyhint="send" placeholder="Say hi" aria-label="Chat message" spellcheck="false"><button class="go" type="submit">SEND</button></form></div>
-      <button class="ghost" id="lTeam" type="button" hidden>SWITCH SIDES</button>
-      <button class="go" id="lStart" type="button" hidden>RAISE THE FENCE</button>
       <button class="ghost" id="lLeave" type="button">LEAVE</button>
     </section>
 
