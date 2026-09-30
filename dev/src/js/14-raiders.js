@@ -111,8 +111,10 @@ function updateBullets(dt){
     }
   }
   {const hit=[];for(const b of bullets)if(b.dead&&!b.spent&&b.id)hit.push(b.id);if(hit.length)rec(['bx',...hit])}   // guests expire misses on their own
-  bullets=bullets.filter(b=>!b.dead);
+  compactBullets();
 }
+// Compact in place: no replacement array on every simulation tick.
+function compactBullets(){let n=0;for(let i=0;i<bullets.length;i++)if(!bullets[i].dead)bullets[n++]=bullets[i];bullets.length=n}
 function updateLobs(dt){for(const l of lobs){l.t+=dt;if(l.t>=l.T){l.dead=true;if(l.k===1)bottleLand(l);else if(l.k===2)slabLand(l);else{explode(l.x1,l.y1,l.R,l.power,l.own);if(l.own)molotovAt(l)}}}lobs=lobs.filter(l=>!l.dead)}
 // a firebrand's bottle: burning ground for 5 s (it hurts people standing in it) and any wood within a tile catches
 // Firestorm: the patch burns 8 s instead of 5 and is half again as wide, and catches wood further out

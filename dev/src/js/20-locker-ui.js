@@ -5,23 +5,28 @@ function drawFig(ctx,w,h,look,sc,aim,cy){
   try{drawPerson(0,0,Object.assign({aim:aim||{x:.9,y:.25},walk:0},look))}finally{g=kg;u=ku;camX=kx;camY=ky}
 }
 // The painter shares the exact calibrated head/tail segment with gameplay and previews.
-function traceSeg(ctx,x1,y1,x2,y2,st,w,t,heavy){paintTracer(ctx,x1,y1,x2,y2,st,w,t,heavy)}
+function traceSeg(ctx,x1,y1,x2,y2,st,w,t,heavy,tc=0){paintTracer(ctx,x1,y1,x2,y2,st,w,t,heavy,tc)}
 // A tracer stays on the firing ray at weapon height; its tail cannot draw inside the barrel.
-function tracerPoints(b,L){
- const a=iso(b.x,b.y),c=iso(b.x-b.vx*L,b.y-b.vy*L),v=b.visual;
- if(!v)return {head:[a[0],a[1]-WH*.62],tail:[c[0],c[1]-WH*.62]};
+function tracerPoints(b,L,out={head:[0,0],tail:[0,0]}){
+ const a=out.head,c=out.tail,v=b.visual;
+ a[0]=(b.x-b.y)*TW2+camX;a[1]=(b.x+b.y)*TH2+camY;
+ c[0]=a[0]-(b.vx-b.vy)*L*TW2;c[1]=a[1]-(b.vx+b.vy)*L*TH2;
+ if(!v){a[1]-=WH*.62;c[1]-=WH*.62;return out}
  a[0]+=v[0]*u;a[1]+=v[1]*u;c[0]+=v[0]*u;c[1]+=v[1]*u;
- const m=iso(v[2],v[3]),dx=(b.vx-b.vy)*TW2,dy=(b.vx+b.vy)*TH2;
- if((a[0]-m[0])*dx+(a[1]-m[1])*dy<=0)return null;
- if((c[0]-m[0])*dx+(c[1]-m[1])*dy<0){c[0]=m[0];c[1]=m[1]}
- return {head:a,tail:c};
+ const mx=(v[2]-v[3])*TW2+camX,my=(v[2]+v[3])*TH2+camY,dx=(b.vx-b.vy)*TW2,dy=(b.vx+b.vy)*TH2;
+ if((a[0]-mx)*dx+(a[1]-my)*dy<=0)return null;
+ if((c[0]-mx)*dx+(c[1]-my)*dy<0){c[0]=mx;c[1]=my}
+ return out;
 }
+const TRACER_POINTS={head:[0,0],tail:[0,0]};
 function drawTracer(b){
- const st=b.team===0?(TRAILS[TRAIL_IDS[b.tr|0]]||TRAILS.std):ENEMY_TR,L=.018*(st.len||1),points=tracerPoints(b,L);
+ const st=b.team===0?(TRAILS[TRAIL_IDS[b.tr|0]]||TRAILS.std):ENEMY_TR,L=.018*Math.min(st.len||1,2),points=tracerPoints(b,L,TRACER_POINTS);
  if(!points)return;
  const a=points.head,c=points.tail;
- traceSeg(g,a[0],a[1],c[0],c[1],st,(b.heavy?2.6:1.8)*u*(st.w||1),game.time,b.heavy);
- if(st.pk&&rnd()<st.pr*.6&&parts.length<520){const h=WH*.62,p=screenToWorld(c[0],c[1]+h);ambient(p.x,p.y,h,st.pk)}
+ const pad=24*u;if(Math.max(a[0],c[0])<-pad||Math.min(a[0],c[0])>W+pad||Math.max(a[1],c[1])<-pad||Math.min(a[1],c[1])>H+pad)return;
+ traceSeg(g,a[0],a[1],c[0],c[1],st,(b.heavy?2.6:1.8)*u*(st.w||1),game.time,b.heavy,b.tc|0);
+ // Time-based shedding avoids higher particle cost on faster displays.
+ if(st.pk&&game.time>=(b.nextTrailFx||0)&&parts.length<520){b.nextTrailFx=game.time+.08;if(rnd()<st.pr){const h=WH*.62,p=screenToWorld(c[0],c[1]+h);ambient(p.x,p.y,h,st.pk)}}
 }
 
 function killFx(x,y,id){
@@ -113,7 +118,7 @@ function figFrame(look,part){
 function drawIcon(cv2,c){
   const x=cv2.getContext('2d'),S=cv2.width;x.clearRect(0,0,S,S);
   if(c.cat==='skin'||c.cat==='hat'){
-    const look=lookOf(c.cat==='skin'?{...locker.eq,skin:c.key}:{...locker.eq,hat:c.key},pick.cls),key=c.id+'|'+pick.cls+'|'+(c.cat==='hat'?locker.eq.skin:locker.eq.hat)+'|'+S;
+    const look=lookOf(c.cat==='skin'?{...locker.eq,skin:c.key}:{...locker.eq,skin:headwearAllowed(locker.eq.skin,c.key)?locker.eq.skin:'std',hat:c.key},pick.cls),key=c.id+'|'+pick.cls+'|'+(c.cat==='hat'?locker.eq.skin:locker.eq.hat)+'|'+S;
     let img=THUMB_CACHE.get(key);
     if(!img){const f=figFrame(look,c.cat),pad=c.cat==='hat'?1.18:1.1,sc=S/(f.s*pad);img=document.createElement('canvas');img.width=img.height=S;
       const ic=img.getContext('2d'),au=c.cat==='skin'&&look.aura;   // v0.9.3: one moment of the outfit's moving effect
@@ -128,6 +133,7 @@ function drawIcon(cv2,c){
       img=document.createElement('canvas');img.width=img.height=S;img.getContext('2d').drawImage(o,(w-S)/2,0,S,S,0,0,S,S);THUMB_CACHE.set(key,img)}
     x.drawImage(img,0,0);return}
   if(c.cat==='trail'){const st=TRAILS[c.key];x.fillStyle='#0c0b09';x.fillRect(0,0,S,S);
+    if(st.cycle){for(let k=0;k<Math.min(3,st.cycle.length);k++)traceSeg(x,S*(.12+k*.27),S*.72,S*(.28+k*.27),S*.33,st,S*.04,0,false,k);return}
     for(const k of[0,1])traceSeg(x,S*(.2+k*.2),S*(.8-k*.12),S*(.62+k*.2),S*(.3-k*.12),st,S*.05*(st.w||1),k*.4,false);return}
   x.fillStyle='#0c0b09';x.fillRect(0,0,S,S);
   if(c.key==='none'){x.strokeStyle='#6e7568';x.lineWidth=S*.025;x.beginPath();x.arc(S/2,S/2,S*.2,0,Math.PI*2);x.moveTo(S*.36,S*.64);x.lineTo(S*.64,S*.36);x.stroke()}
@@ -154,11 +160,12 @@ function clearLockerItems(root){
   root.replaceChildren();
 }
 function refreshItemTile(d,c){
-  const own=owns(c.id),eq=locker.eq[c.cat]===c.key;
+  const own=owns(c.id),blocked=c.cat==='hat'&&!headwearAllowed(locker.eq.skin,c.key),eq=locker.eq[c.cat]===c.key&&!blocked;
   d.classList.toggle('lock',!own);d.classList.toggle('eq',eq);
-  d.querySelector('i').textContent=eq?'EQUIPPED':own?RAR[c.r].n:c.how;
+  d.classList.toggle('incompatible',blocked);d.setAttribute('aria-disabled',String(blocked));
+  d.querySelector('i').textContent=blocked?'DOES NOT FIT THIS SKIN':eq?'EQUIPPED':own?RAR[c.r].n:c.how;
   const pr=!own&&c.src==='unlock'&&c.need?needProgress(c.need):null;
-  d.setAttribute('aria-label',`${c.name}, ${RAR[c.r].n.toLowerCase()} ${CATN[c.cat].toLowerCase()}, ${eq?'equipped':own?'owned':'locked: '+c.how+(pr?`, ${pr.have} of ${pr.need}`:'')}`);
+  d.setAttribute('aria-label',`${c.name}, ${RAR[c.r].n.toLowerCase()} ${CATN[c.cat].toLowerCase()}, ${blocked?'does not fit this skin':eq?'equipped':own?'owned':'locked: '+c.how+(pr?`, ${pr.have} of ${pr.need}`:'')}`);
   let bar=d.querySelector('.iprog');
   if(pr){if(!bar){bar=document.createElement('span');bar.className='iprog';bar.append(document.createElement('small'));d.append(bar)}
     bar.style.setProperty('--p',Math.round(pr.have/pr.need*100)+'%');bar.firstChild.textContent=`${pr.have} / ${pr.need}`;
@@ -171,6 +178,7 @@ function itemTile(c,lazy){
   if(lazy){if(thumbSeen){cv2._c=c;thumbSeen.observe(cv2)}else queueThumb(cv2,c)}else drawIcon(cv2,c);
   const b=document.createElement('b');b.textContent=c.name;const i=document.createElement('i');
   if(c.r==='g')d.classList.add('gold');
+  if(c.r==='u')d.classList.add('ultimate');
   d.append(art,b,i);
   refreshItemTile(d,c);
   return d;
@@ -189,7 +197,7 @@ function renderCaseBoxes(){
 // v0.9.3: how far a counter has got toward an unlock's goal (the first counter it needs)
 function needProgress(need){const k=Object.keys(need)[0];if(!k)return null;const n=need[k];return{key:k,have:Math.min(n,locker.st[k]|0),need:n}}
 function lockerTile(c){
-  const t=itemTile(c,true);t.addEventListener('click',()=>{if(!owns(c.id))return;locker.eq[c.cat]=c.key;saveLocker();renderLocker();cloudEquip(c.id)});return t;
+  const t=itemTile(c,true);t.addEventListener('click',()=>{if(!owns(c.id))return;if(c.cat==='hat'&&!headwearAllowed(locker.eq.skin,c.key)){toast('HEADGEAR DOES NOT FIT','Choose a skin with a standard head shape.');return}locker.eq[c.cat]=c.key;saveLocker();renderLocker();cloudEquip(c.id)});return t;
 }
 function setCollectionOpen(section,open){
   const button=section.firstChild,body=section.lastChild,key=section.dataset.collection;
@@ -285,7 +293,7 @@ function openCaseUI(id='supply'){
   const intro=caseIntro(id);
   let roll;
   if(locker.cloud){lockWait(true);
-    roll=rpc('open_case_of',{p_case:id}).then(r=>{lockWait(false);
+    roll=rpc('open_case_v0935',{p_case:id}).then(r=>{lockWait(false);
       if(!r.ok){lockMsg(r.status?sbErr(r):'Opening a case needs a connection. Your cases are safe.');renderLocker();return null}
       const s=r.j.item,it=COSBY[s.id]||{...COSBY['fx:none'],id:s.id,name:s.name,r:s.rarity};
       takeLocker(r.j.locker);renderLocker();return{it,dup:!!r.j.dup,box:id}})}
@@ -309,13 +317,13 @@ function caseReel(res){
     if(p<1)requestAnimationFrame(tick)};requestAnimationFrame(tick);
   setTimeout(()=>{
     const it=res.it,R=RAR[it.r];caseItem=it;
-    $('caseName').textContent=it.name;$('caseName').style.color=R.col;$('caseName').classList.toggle('gold',it.r==='g');
+    $('caseName').textContent=it.name;$('caseName').style.color=R.col;$('caseName').classList.toggle('gold',it.r==='g');$('caseName').classList.toggle('ultimate',it.r==='u');
     $('caseSub').textContent=`${R.n} ${CATN[it.cat]}`+(res.dup?` · already owned, +${R.sh} shard${R.sh>1?'s':''}`:' · new');
-    $('caseResult').hidden=false;$('caseEquip').hidden=locker.eq[it.cat]===it.key;$('caseDone').hidden=false;
-    uiSfx(it.r==='l'||it.r==='e'||it.r==='g'?'win':'restock');if(it.r==='g')uiSfx('kx_bubbles');buzz(it.r==='g'?[40,60,40,60,90]:40);
+    $('caseResult').hidden=false;$('caseEquip').hidden=locker.eq[it.cat]===it.key||it.cat==='hat'&&!headwearAllowed(locker.eq.skin,it.key);$('caseDone').hidden=false;
+    uiSfx('legu'.includes(it.r)?'win':'restock');if(it.r==='g')uiSfx('kx_bubbles');buzz(it.r==='g'||it.r==='u'?[40,60,40,60,90]:40);
   },dur*1000+120);
 }
-$('caseEquip').addEventListener('click',()=>{if(caseItem&&owns(caseItem.id)){locker.eq[caseItem.cat]=caseItem.key;saveLocker();cloudEquip(caseItem.id)}$('caseOv').hidden=true;
+$('caseEquip').addEventListener('click',()=>{if(caseItem&&owns(caseItem.id)&&(caseItem.cat!=='hat'||headwearAllowed(locker.eq.skin,caseItem.key))){locker.eq[caseItem.cat]=caseItem.key;saveLocker();cloudEquip(caseItem.id)}$('caseOv').hidden=true;
   if(caseItem){lockCat=caseItem.ladder?'ms':caseItem.cat;if(caseItem.box)lockOpen.add(lockCat+':'+caseItem.box)}renderLocker();
   if(caseItem){const tile=[...$('lockGrid').querySelectorAll('.item')].find(t=>t.dataset.item===caseItem.id);if(tile){tile.scrollIntoView({block:'nearest'});tile.focus({preventScroll:true})}}
 });

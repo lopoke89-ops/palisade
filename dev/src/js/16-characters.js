@@ -91,12 +91,25 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  // A planted stance, shaped thighs, separate knees and substantial boots.
  for(const side of[-1,1]){
   const L=leg(side),{x,z,lift,ankle,knee,hip}=L;
+  if(o.sahur){
+   column(x,1.5+lift,1.05+z,3.4,2.2,5.3,'#9a6033',.85,.4);
+   beam(ankle,knee,.95,B,1.05,.3);beam(knee,hip,1.05,B,1.2,.3);continue;
+  }
   column(x,2+lift,1.05+z,4.3,3.1,6.1,'#35362e',.87);
   box(x,.7+lift,1.2+z,4.35,.85,6.25,'#202722',.3);
   beam(ankle,knee,1.7,T,2);beam(knee,hip,2.05,T,2.35);
   column(knee[0],knee[1],knee[2]+1.75,2.8,3.2,1.25,tint(T,.75),.88,.32);
   box(side*4.7,11.7+bob,0,1.5,3.3,2.75,tint(T,1.1),.3);
  }
+ if(o.sahur){
+  // One continuous wooden silhouette, kept inside the existing pose frame.
+  column(0,24.7+bob,0,9.5,22.6,7.6,B,.98,.5);
+  for(const [x,y,h]of[[-2.6,24,8],[1.7,20.4,9],[-.3,28,5],[3.3,27,10]])
+   beam([x,y-h/2+bob,3.84],[x+.25,y+h/2+bob,3.84],.09,'#8b552f',.07,.03);
+  for(const side of[-1,1])beam([side*4.77,17+bob,-1],[side*4.77,32+bob,-.7],.1,'#8b552f',.08,.03);
+  // A stowed wooden beater leaves both hands free for the equipped class weapon.
+  beam([-5,15+bob,-2.8],[-6.5,27+bob,-2.8],.5,'#734724',.9,.25);
+ }else{
  column(0,15+bob,0,9.1,3.8,5.2,B,1.06);
  column(0,21.2+bob,0,10.2,10.8,5.6,B,1.15);
  // Plate carrier has its own thickness, shoulder straps and three magazine pouches.
@@ -112,6 +125,7 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  // Small collar separates the head from the vest.
  column(0,27+bob,0,4.5,2.8,3.6,skin,1,.32);
  box(-1.65,26.1+bob,2,2,1.7,2,tint(B,.85),.3);box(1.65,26.1+bob,2,2,1.7,2,tint(B,.85),.3);
+ }
 
  // Arms: a two-bone reach from the shoulder to where each hand holds the gun (weapon table), with the elbows
  // bent down and out so the upper arms stay outside the chest and the gun sits clear in front of it.
@@ -121,9 +135,9 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  const haR=o.nogun?[6.3,16+bob,1]:[gunX+.2+(sniper?pull*1.6:0),gunY-1.6+bob+(sniper?pull:0),gunZ+W.grip-kick-(sniper?pull*1.5:0)];
  const elL=o.nogun?[-6.8,20.4+bob,2.2]:reach(shL,haL,8.2,12.6,[-.75,-1,.1]),elR=o.nogun?[7.1,20.8+bob,2.6]:reach(shR,haR,7.4,7.8,[.8,-1,-.35]);
  for(const [sh,el,ha]of [[shL,elL,haL],[shR,elR,haR]]){
-  beam(sh,el,2,B,1.7);beam(el,ha,1.65,B,1.42);
+  beam(sh,el,o.sahur?1.1:2,B,o.sahur?1:1.7);beam(el,ha,o.sahur?1:1.65,B,o.sahur?.9:1.42);
   if(o.reaper){beam(sh,el,2.7,B,2.5,.4);beam(el,ha.map((v,i)=>v+(el[i]-v)*.3),2.5,B,2.6,.4)}
-  beam(ha.map((v,i)=>v+(el[i]-v)*.13),ha,1.5,'#363b2b',1.48,.35);
+  beam(ha.map((v,i)=>v+(el[i]-v)*.13),ha,o.sahur?1.1:1.5,o.sahur?'#bf834b':'#363b2b',o.sahur?1.05:1.48,.35);
  }
  box(6.8,24.3+bob,1.8,1.65,1.8,.5,o.mark||'#dcb647',.2);
  box(8.05,24+bob,.1,.22,1.6,2,o.mark||'#dcb647',.15);
@@ -153,7 +167,7 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  // small meshes break through when the head turns or an item sits close to the face.
  const faceCovered=!!(o.hood||o.sheet||o.pumpkin||o.glitchm||o.mask||o.visor||o.hockey||o.sack||o.facewrap||o.khelm||o.bomb||o.clownface);
  // Angular cheek and jaw planes, ears and a shaped helmet instead of a flat circle.
- if(!o.pumpkin&&!o.sheet){   // a pumpkin (or a ghost's sheet) replaces the head entirely (no ears or face poking through it)
+ if(!o.pumpkin&&!o.sheet&&!o.sahur){   // special heads replace the ordinary ears and face
  column(0,30.1+bob,.2,7.2,6.4,6.3,skin,1.13,.6);
  column(-4.05,30.5+bob,.15,1.15,2.25,2,skin,1,.3);column(4.05,30.5+bob,.15,1.15,2.25,2,skin,1,.3);
  if(!faceCovered){
@@ -170,7 +184,18 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
   ff.push(Array.from({length:N},(_,i)=>(rings.length-1)*N+i));mesh(v,ff.map(f=>f.slice().reverse()),col,.6);
  }
  function ball(x,y,z,r,c){column(x,y,z,r*1.8,r*1.65,r*1.8,c,.75,.35)}
- if(o.pumpkin){
+ if(o.sahur){
+  const eye=(x,y,rx,ry,z,col,bias=1.2)=>{const v=[];for(let i=0;i<12;i++){const a=i*Math.PI/6;v.push([x+Math.cos(a)*rx,y+Math.sin(a)*ry+bob,z])}mesh(v,[v.map((_,i)=>i)],col,.08,bias)};
+  for(const x of[-1.9,1.9]){
+   eye(x,31.1,1.2,1.48,4.32,'#efe7ce');
+   eye(x+.18,31.05,.48,.83,4.42,'#281b13',1.4);
+   eye(x-.04,31.48,.16,.23,4.52,'#fff9e8',1.6);
+   beam([x-1.1,33.02+bob,3.94],[x+.9,33.25+bob,3.94],.17,'#604021',.13,.06);
+  }
+  column(0,29.6+bob,4.05,1.1,2.3,1.35,'#ba8047',.8,.13);
+  box(0,27.9+bob,3.94,3.5,.8,.22,'#4c2c19',.08,1);
+  box(0,28.16+bob,4.08,2.6,.22,.12,'#ead5af',.02,1);
+ }else if(o.pumpkin){
   // a ribbed pumpkin replaces the head; the carved face glows (the Pumpkin King's flames flicker over 4 cached frames)
   const pc=o.pumpkin,glowC=o.pking?'#ffb040':'#ffd35a';
   // The gourd replaces the whole head; cover the normal cheek and crown silhouette at every angle.
@@ -199,6 +224,35 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  }else if(o.sheet){
   // v0.9.3 Sheet Ghost: the sheet comes up over the head, with two cut-out eyes
   dome(o.sheet,26.3,5.9,5.2,9.4);for(const x of[-1.5,1.5])box(x,31.4+bob,4.72,1.25,1.9,.3,'#121014',.02,1.6);
+ }else if(o.halloweenHat){
+  const h=o.halloweenHat,ink='#27232c',ivory='#e9dfc5';
+  if(h==='gravecap'){
+   dome('#35323b',32.5,4.35,3.95,2.5);column(0,32.65+bob,0,8.7,.6,7.9,'#24222a',1,.22);
+   column(0,33.65+bob,4.02,1.8,1.6,.26,'#bcbdb4',.82,.12);box(0,33.75+bob,4.2,1,.18,.1,ink,.01,1);
+  }else{
+   dome('#433b2b',32.7,4.2,3.6,1.65);
+   if(h==='stemband'){
+    column(0,32.8+bob,0,8.7,.65,7.9,'#355332',1,.2);
+    beam([0,34+bob,0],[.45,35.3+bob,-.15],.48,'#db852f',.3,.18);
+    box(-.85,34.65+bob,.25,1.3,.35,1.15,'#73974b',.12);
+   }else if(h==='batcirclet'){
+    column(0,32.8+bob,0,8.7,.7,7.9,'#34243f',1,.2);
+    for(const x of[-3,3])beam([x,33+bob,.2],[x*.95,35.4+bob,.1],.85,'#3c2b4d',.08,.18);
+    box(0,32.95+bob,4.05,1.2,.6,.2,'#b48ace',.02,1);
+   }else if(h==='bonewrap'){
+    column(0,32.6+bob,0,8.6,1,7.9,'#792d3a',1,.2);
+    for(const x of[-1.55,1.55]){box(x,32.6+bob,4.06,1.7,.38,.2,ivory,.05,1);for(const d of[-.75,.75])column(x+d,32.6+bob,4.12,.46,.7,.3,ivory,1,.05)}
+   }else if(h==='webpin'){
+    box(1.5,32.6+bob,3.95,3,1.85,.28,ink,.13,1);
+    for(const dx of[-.8,0,.8])box(1.5+dx,32.65+bob,4.28,.18,1.45,.12,ivory,.01,1.5);
+    for(const dy of[-.4,.25])box(1.5,32.65+dy+bob,4.3,2,.16,.12,ivory,.01,1.5);
+    column(2.6,32+bob,4.32,.75,.75,.25,'#df853a',1,.03);
+   }else if(h==='skullseal'){
+    column(0,32.95+bob,4,3.4,1.7,.25,ivory,.7,.12);
+    box(0,33.4+bob,4.18,2.1,.8,.12,'#433b2b',.03,1);
+    column(0,32.5+bob,4.25,1.15,1,.2,'#765389',.8,.04);for(const x of[-.22,.22])box(x,32.65+bob,4.39,.18,.18,.08,ivory,.01,1);
+   }
+  }
  }else if(o.hardhat){
   // v0.9.3 Foreman: a hard hat with a full brim and a ridge
   dome(o.hardhat,32,5.1,4.6,4.4);column(0,32.1+bob,.5,11.2,.45,10.4,tint(o.hardhat,.88),1,.4);beam([0,36.2+bob,-3.3],[0,36.2+bob,3.3],.55,tint(o.hardhat,1.12),.55,.3);
@@ -265,7 +319,6 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
   if(o.mask){column(0,30.4+bob,1,8.6,5.4,7.5,'#15151a',1,.4);for(const x of[-1.8,1.8])box(x,31+bob,4.9,1.5,.85,.3,o.mask,.03,1)}
   if(o.visor){box(0,31.2+bob,4.3,8.8,2.5,.9,'#101014',.32,1);box(0,31.2+bob,4.82,7.8,.65,.15,o.visor,.03,1)}
   if(o.headband){column(0,32.2+bob,0,9,.65,7.8,o.headband,1,.15);beam([-4.2,32.2+bob,-1],[-5.7,28.7+bob,-3.6],.35,o.headband,.2,.15)}
-  if(o.halo){for(let i=0;i<16;i++){const a=i*Math.PI/8,b=(i+1)*Math.PI/8,y=39+bob+Math.sin(time*2.4)*.35;beam([Math.cos(a)*6,y,Math.sin(a)*4.8],[Math.cos(b)*6,y,Math.sin(b)*4.8],.22,o.halo,.22,.04)}}
   if(o.glitchm){
    const cs=['#ff3a6a','#3affd8','#6a8aff','#ffe03a','#f3f0ff'],f=Math.floor(time*10);
    box(0,31.5+bob,.2,9.4,9.4,9.4,'#161923',.65);
@@ -277,12 +330,14 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
    }
   }
  }
+ // Floating Halo is independent of the head branch; the sheet gets a verified clearance.
+ if(o.halo){for(let i=0;i<16;i++){const a=i*Math.PI/8,b=(i+1)*Math.PI/8,y=(o.sheet?43:39)+bob+Math.sin(time*2.4)*.35;beam([Math.cos(a)*6,y,Math.sin(a)*4.8],[Math.cos(b)*6,y,Math.sin(b)*4.8],.22,o.halo,.22,.04)}}
  // v0.9.3 add-ons over whatever is on the head
  if(o.pbraid&&o.pcap)box(0,32.75+bob,4.52,7.6,.35,.25,o.pbraid,.05,1.1);
  if(o.lamp&&o.cap){box(0,33.6+bob,4.5,1.7,1.3,.7,'#2a2a28',.2,1);box(0,33.6+bob,4.9,1.2,.9,.15,o.lamp,.03,1.3)}
  if(o.headset){for(const x of[-4.9,4.9])box(x,30.7+bob,.3,1.1,2.5,2.5,'#1e2022',.3);beam([-4.9,32.4+bob,.3],[0,36.2+bob,.3],.35,'#1e2022',.35,.2);beam([0,36.2+bob,.3],[4.9,32.4+bob,.3],.35,'#1e2022',.35,.2);
   beam([4.9,29.8+bob,1.2],[2,28.6+bob,3.9],.18,'#1e2022',.18,.1);ball(1.8,28.6+bob,4,.4,'#2a2c2e')}
- if(!o.pumpkin&&!o.sheet){
+ if(!o.pumpkin&&!o.sheet&&!o.sahur){
   if(o.facewrap){box(0,29.2+bob,.35,7.9,2.5,7.4,o.facewrap,.3,.8);box(0,29.3+bob,-3.55,1.2,1,.6,o.facewrap,.2,.9);beam([0,29.3+bob,-3.6],[-.8,26.8+bob,-4.2],.3,o.facewrap,.2,.15);beam([0,29.3+bob,-3.6],[.9,27+bob,-4.3],.3,o.facewrap,.2,.15)}
   if(o.hockey){box(0,30.5+bob,3.85,6.2,5.8,.55,o.hockey,.25,1.2);column(0,31.2+bob,.2,7.7,.35,6.8,'#26221c',1,.1);
    for(const x of[-1.45,1.45])box(x,31.2+bob,4.14,1.3,.9,.08,'#15110e',.02,1.8);
@@ -665,7 +720,7 @@ function gunArms(hand,sd,gl,shB,shF,sleeve,nogun,bob,bp=-1,kind='',swing=0){
 }
 // A soldier, raider or Dell standing at tile (x,y), facing o.aim. Drawn in base pixels, scaled.
 function drawPerson(x,y,o){
-  if(o.mark&&o.detail!==false){
+    if(o.mark&&o.detail!==false||o.sahur||o.halloweenHat||o.sheet){
     const [sx,sy]=iso(x,y),sd=wdirToScreen(o.aim),BG=o.big||1;
     if(o.aura)paintAura(g,o.aura,sx,sy,u*FIG*BG,game.time,o.faded?.5:1,'ground');   // v0.9.3: rings and pools under the figure,
     drawWardrobeCharacter(g,o,wardrobeAimAngle(sd),game.time,u*FIG*BG,sx,sy,o.walk||0);
@@ -911,7 +966,7 @@ function buildLook(p,cos){
   const C=p.C||CLASSES[p.cls]||CLASSES.soldier;
   if(C.name==='SNIPER'){o.gl=19}else if(C.name==='GRENADIER'){o.pack='#4a3a26';o.bandolier=true;o.gl=15;o.weapon='sg'}
   else if(C.name==='QUARTERMASTER'){o.pack='#5a4a30';o.cross=true;o.gl=11}
-  const H=cos.hat;
+  const H=headwearAllowed(cos.skin,cos.hat)?cos.hat:'class';
   if(H==='class'){if(C.name==='SNIPER')o.boonie=S.boonie||'#5b5a3c';else if(C.name==='QUARTERMASTER')o.cap=S.hat;else o.helmet=S.hat}
   else if(H==='cap')o.cap=S.hat;else if(H==='boonie')o.boonie=S.boonie||'#5b5a3c';else if(H==='beanie')o.beanie='#6b2f2a';
   else if(H==='beret')o.beret='#7a1f24';else if(H==='wrap')o.wrap='#a8342a';else if(H==='tophat')o.tophat='#1c1a1a';else if(H==='crown')o.crown='#e2c25a';
@@ -920,6 +975,7 @@ function buildLook(p,cos){
   else if(H==='halo')o.halo='#fff0a0';else if(H==='glitch')o.glitchm=true;else if(H==='gclownhair'){o.hair='#f0cf5c';o.hairGold=true}else if(H==='ghelm')o.khelm='#e6c65c';
   else if(H==='jackolantern')o.pumpkin='#e8771e';else if(H==='pumpkinking'){o.pumpkin='#c9561a';o.pking=true}else if(H==='witch')o.witch='#241a30';
   else if(H==='officer'){o.pcap='#34402c';o.pbraid='#e2c25a'}else if(H==='ghood')o.ghood='#55642e';else if(H==='bombhelm')o.bomb='#3e4a38';else if(H==='qmset'){o.cap='#3d4a52';o.headset=true}   // v0.9.3 class rewards
+  else if(HALLOWEEN_HATS[H])o.halloweenHat=H;
   else o.helmet=S.hat;
   if(S.headwear&&H==='class'){delete o.helmet;delete o.cap;delete o.boonie;Object.assign(o,S.headwear)}   // v0.9.3: the outfit's own hat (a hard hat, a straw hat…)
   if(S.reaper&&H==='class'){delete o.helmet;delete o.cap;delete o.boonie;o.hood=S.body}

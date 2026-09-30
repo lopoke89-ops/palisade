@@ -1,3 +1,1 @@
-{ "name": "palisade-tests", "private": true,
-  "description": "Browser tests for PALISADE. npm install, then ./run_all.sh from this folder.",
-  "dependencies": { "playwright": "^1.47.0", "peer": "^1.0.2", "terser": "^5.31.0" } }
+{"name":"palisade-tests","private":true,"description":"Browser tests for PALISADE. npm install, then ./run_all.sh from this folder.","dependencies":{"peer":"^1.0.2","playwright":"^1.47.0","terser":"^5.31.0"},"devDependencies":{"@electric-sql/pglite":"0.5.8"}}

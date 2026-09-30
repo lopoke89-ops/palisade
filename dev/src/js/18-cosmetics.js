@@ -2,11 +2,11 @@
 // Everything here is cosmetic. Items unlock by playing or come out of supply cases earned in
 // play. Each item carries price:null so a store can be added later; grant() is the only way
 // anything is added to a locker, so a purchase would go through the same door.
-const RAR={c:{n:'COMMON',col:'#9a958a',sh:1},r:{n:'RARE',col:'#4f95e0',sh:3},e:{n:'EPIC',col:'#b168e0',sh:8},l:{n:'LEGENDARY',col:'#e2b436',sh:20},g:{n:'GOLD',col:'#ffe27a',sh:40}};
+const RAR={c:{n:'COMMON',col:'#9a958a',sh:1},r:{n:'RARE',col:'#4f95e0',sh:3},e:{n:'EPIC',col:'#b168e0',sh:8},l:{n:'LEGENDARY',col:'#e2b436',sh:20},g:{n:'GOLD',col:'#ffe27a',sh:40},u:{n:'ULTIMATE',col:'#ff9260',sh:80}};
 // Every case in the game. Accounts use the server's copy of this table (case_types), which is the one that counts;
 // this one drives the locker screen and players with no account. A new case = a new entry here + items with its box.
 const CASES={
-  supply:{name:'SUPPLY CASE',short:'Supply Cases',col:'#e2b436',weights:{c:60,r:27,e:10,l:3},cost:null,
+  supply:{name:'SUPPLY CASE',short:'Supply Cases',col:'#e2b436',weights:{c:59.75,r:27,e:10,l:3,u:.25},cost:null,
     how:'Co-op and Endless only: one every 3 raids you hold, plus wins.'},
   afterglow:{name:'AFTERGLOW CASE',short:'Afterglow Cases',col:'#ff5ad8',weights:{c:53,r:30,e:12,l:4,g:1},cost:10,
     drop:{base:{win:.45,loss:.2},ffa:{win:.5,loss:.2},boss:{each:1}},
@@ -19,6 +19,7 @@ const CASES={
 };
 const CASE_IDS=Object.keys(CASES),pvpCase=m=>CASE_IDS.find(id=>CASES[id].drop&&CASES[id].drop[m]),bossCase=()=>CASE_IDS.find(id=>CASES[id].drop&&CASES[id].drop.boss),winCase=()=>CASE_IDS.find(id=>CASES[id].drop&&CASES[id].drop.win);
 const SKINS={
+  sahur:{body:'#b77942',vest:'#a56b37',pants:'#a86e39',head:'#c58b50',hat:'#b77942',sahur:true,headwear:{}},
   std:{body:'#b9aa82',vest:'#4d6b47',pants:'#4a4636',hat:'#4a5238'},
   desert:{body:'#d2bd92',vest:'#9c8456',pants:'#7c6a4a',hat:'#8e7b55',boonie:'#a58f62'},
   urban:{body:'#a3a6a6',vest:'#4f5456',pants:'#3f4345',hat:'#5c6163',boonie:'#5c6163'},
@@ -100,7 +101,14 @@ const SKINS={
   slasher:{body:'#2a3548',vest:'#1e2636',pants:'#2a3548',hat:'#1a1a18',boonie:'#2a2a24',hockey:'#e8e2cc',headwear:{}},
   dracula:{body:'#141016',vest:'#7a0f1a',pants:'#141016',hat:'#141016',boonie:'#141016',head:'#e4dccb',cape:'#0e0b10',lining:'#8a0f1f',collar:true,medal:'#e2c25a',headwear:{slick:'#0a0a0c'},aura:'bats'}};
 const SKIN_FX=['neon','dots','ruff','badge','plate','stars','holo','spots','frost','glitter','chrome','ribs','web','bones','wraps','reaper','phantom',
-  'apron','facewrap','coat','cape','lining','collar','reflect','waders','charges','medals','ghillie','sheet','stitches','clownface','hockey','sack','patches','straws','medal','aura'];
+  'apron','facewrap','coat','cape','lining','collar','reflect','waders','charges','medals','ghillie','sheet','stitches','clownface','hockey','sack','patches','straws','medal','aura','sahur'];
+const HALLOWEEN_HATS={gravecap:true,stemband:true,batcirclet:true,bonewrap:true,webpin:true,skullseal:true};
+// Class Issue preserves the skin's own appearance. Unknown or special heads block added headwear.
+function headwearAllowed(skin,hat){
+  const S=SKINS[skin];if(!S)return false;if(hat==='class')return true;
+  if(S.sheet)return hat==='halo';
+  return !(S.sahur||S.reaper||S.wraps||S.phantom||S.sack||S.hockey||S.clownface||S.ghillie||S.facewrap||S.headwear&&Object.keys(S.headwear).length);
+}
 const TRAILS={std:{c:'rgba(255,236,170,.95)'},green:{c:'#86ff7a'},red:{c:'#ff5a46'},blue:{c:'#9fe8ff'},pink:{c:'#ff5ad8'},
   gold:{c:'#ffd24a',w:1.35,snd:'ts_gold'},plasma:{c:'#7af2ff',w:1.5,glow:'rgba(106,240,255,.3)',len:1.7,snd:'ts_plasma'},rainbow:{rainbow:true,w:1.4,len:2.2,snd:'ts_rainbow'},
   // Afterglow Case tracers. grad: head→tail colours; pk/pr: particles shed along the way; head: a bright tip; core: white centre line
@@ -166,10 +174,22 @@ const FLAGS=[
   ['israel','Israel','c',['#0038b8','#ffffff','#0038b8']],
   ['russia','Russia','c',['#ffffff','#0039a6','#d52b1e']],
   ['nkorea','North Korea','c',['#024fa2','#ed1c27','#024fa2']]];
-for(const[id,,r,b]of FLAGS)TRAILS['f_'+id]=Object.assign({bands:b,w:1.5,len:1.8,snd:r==='g'?'ts_grainbow':'ts_grad'},
-  r==='l'||r==='g'?{glow:'rgba(255,255,255,.22)',w:1.6}:{},r==='g'?{pk:'goldsp',pr:.7,len:2.2}:{});
+// One color per round, shared by its pellets. Background stripe data stays unchanged.
+for(const[id,,r,b]of FLAGS)TRAILS['f_'+id]={cycle:id==='trans'?['#5bcefa','#ffffff','#f5a9b8']:b,w:1.35,len:1,snd:r==='g'?'ts_grainbow':'ts_grad'};
 const TRAIL_IDS=Object.keys(TRAILS),ENEMY_TR={c:'rgba(255,140,90,.95)'};
+function nextTracerColor(from){
+  const key=from.cos&&from.cos.trail,st=TRAILS[key];if(!st||!st.cycle)return 0;
+  if(from.trCycleKey!==key){from.trCycleKey=key;from.trCycleNext=0}
+  const n=from.trCycleNext||0;from.trCycleNext=(n+1)%st.cycle.length;return n;
+}
 const COS=[
+  ['skin','sahur','Tung Tung Tung Sahur','u','case',null,null,'supply'],
+  ['hat','gravecap','Gravestone Cap','c','case',null,null,'halloween'],
+  ['hat','stemband','Pumpkin Stem Band','c','case',null,null,'halloween'],
+  ['hat','batcirclet','Bat-Notch Circlet','r','case',null,null,'halloween'],
+  ['hat','bonewrap','Bone-Button Wrap','r','case',null,null,'halloween'],
+  ['hat','webpin','Cobweb Brow Pin','e','case',null,null,'halloween'],
+  ['hat','skullseal','Crescent Skull Seal','l','case',null,null,'halloween'],
   ['skin','std','Standard Issue','c','free'],['skin','desert','Desert','c','unlock',{raids:3},'Survive 3 raids'],
   ['skin','urban','Urban Grey','c','unlock',{wins:1},'Win any run'],['skin','forest','Deep Woods','r','case'],['skin','night','Nightwatch','r','case'],
   ['skin','redcoat','Redcoat','r','case'],['skin','tiger','Tigerstripe','e','case'],['skin','arctic','Arctic','e','case'],

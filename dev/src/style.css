@@ -764,3 +764,9 @@ body.padMenu #menu .panel{padding-bottom:64px}body.pad .padF{scroll-margin:12px 
 .item .iprog::before{content:'';position:absolute;left:0;top:0;bottom:0;width:var(--p,0%);background:var(--rc,#e2b436);opacity:.55}
 .item .iprog small{position:relative;display:block;font-size:8.5px;line-height:10px;color:var(--bone);letter-spacing:.03em}
 .rwMile small{max-width:220px}
+
+/* v0.9.3.5: static rarity/compatibility cues; no extra animation work. */
+.item.ultimate { border-color:#ff9260; box-shadow:inset 0 0 0 1px #82402d; }
+.item.incompatible .art { opacity:.5; }
+.item.incompatible i { color:#b6a89a; }
+#caseName.ultimate { color:#ff9260; }

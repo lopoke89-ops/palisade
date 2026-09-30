@@ -57,7 +57,7 @@ const uiSfx=n=>sfx(n,undefined,undefined,true,true);
 // the case reel: a soft click and a small beep as each item crosses the marker, higher for rarer items
 function caseTick(r){
   if(!AC)return;const t=AC.currentTime;if(t-(caseTick.t||0)<.028)return;caseTick.t=t;
-  nz(master,t,.012,'highpass',5200,.8,.14);osc(master,t,.05,'sine',({c:880,r:1040,e:1240,l:1480,g:1760})[r]||880,.045);
+  nz(master,t,.012,'highpass',5200,.8,.14);osc(master,t,.05,'sine',({c:880,r:1040,e:1240,l:1480,g:1760,u:2093})[r]||880,.045);
 }
 function envG(t0,a,d,peak){const gg=AC.createGain();gg.gain.setValueAtTime(.0001,t0);gg.gain.exponentialRampToValueAtTime(Math.max(peak,.0002),t0+a);gg.gain.exponentialRampToValueAtTime(.0001,t0+a+d);return gg}
 function nz(dest,t0,dur,type,f,q,peak,fEnd){const s=AC.createBufferSource();s.buffer=NB;const fl=AC.createBiquadFilter();fl.type=type;fl.frequency.setValueAtTime(f,t0);if(fEnd)fl.frequency.exponentialRampToValueAtTime(fEnd,t0+dur);fl.Q.value=q;const gg=envG(t0,.003,dur,peak);s.connect(fl);fl.connect(gg);gg.connect(dest);s.start(t0,rnd()*1.5);s.stop(t0+dur+.05)}
