@@ -7,8 +7,8 @@ CURRENT RELEASE (October 1, 2026): v0.9.3.5 is live. v0.9.3.6 is ready to merge:
 - New Settings > Frame rate option (Auto / 30 / 60) to keep phones cooler.
 - Dell is now Delgado.
 
-A server fix for boss credit after a rejoin, and compensation for the affected
-players, are prepared and waiting for approval (see dev/STATUS.md).
+The server fix for boss credit after a rejoin is live, and the affected
+player was compensated (see dev/STATUS.md).
 
 This folder is the whole game as a website. Put it online once and anyone
 can play by opening the link. No app store, no download.

@@ -5,8 +5,7 @@ level (built from here); this folder is the source.
 
 Current live status is **v0.9.3.5**. **v0.9.3.6** is ready to merge. It keeps run progress through drops,
 reloads and rejoins, adds the Auto/30/60 frame-rate setting, and renames Dell to Delgado. Its server
-migration (rejoin boss credit) and the player compensation script are in `supabase/` and are **not
-applied** until Big U approves. See [STATUS.md](STATUS.md) and the
+migration (rejoin boss credit, `20260930071534`) and the approved compensation are **applied**. See [STATUS.md](STATUS.md) and the
 [work order](plans/v0.9.3.6-v0.9.3.7-work-order.md). Evidence is under `evidence/v0.9.3.6/`.
 
 The [presentation report](PRESENTATION_2026-09-29.md) records nine focused checks,

@@ -13,7 +13,7 @@ The Claude audit URL still requires sign-in in the available browser session. Bi
 |---|---|
 | Live release | **v0.9.3.5** (v0.9.3.6 in this change) |
 | Live protocol | `yard-17` / `palisade-yard-17-` (v0.9.3.5 candidate uses `yard-18`) |
-| Applied server migration | `palisade_v0935_cosmetics` (`20260930050715`), additive and backward compatible; see below |
+| Applied server migration | `palisade_v0936_rejoin_bosses` (`20260930071534`); previously `palisade_v0935_cosmetics` (`20260930050715`) |
 | GitHub branch | `main` at `4033d34` (v0.9.3.4 plus the UTF-8 repair); v0.9.3.5 candidate on `claude/lucid-curie-491na1` |
 | Published build | GitHub Pages displays **v0.9.3.4** (service worker `palisade-0e4e6153b7`), checked September 30 |
 
@@ -27,7 +27,7 @@ Four commits after the v0.9.3 release changed the case intro and reel source (`9
 - *What already worked:* a clean leave or disconnect sends an early-leave claim, and the v0.9.2 server rule pays only raids the player was present for, never twice.
 - *Loss 1, client:* a reload, crash or killed app sent nothing, so the raids before the drop were lost. The client now saves a run draft every 3 s and on backgrounding, and sends it as an early-leave claim on the next start. Accounts use the normal claim queue; no-account players are paid into the browser locker. Test: `rejoin_drop`.
 - *Loss 2, host:* a returning player started with a fresh armory. The host now keeps a dropped player's armory, salvage and kills for the game, keyed by the tab's room session, and restores them on rejoin ("IS BACK"). Test: `rejoin_drop`.
-- *Loss 3, server:* `claim_match_reward` capped bosses per claim from the previous claim's raid + 1, so a boss (or Boss Rush/Nightmare in-between boss) on the first raid after a rejoin was paid to nobody. Migration `20261001000000_palisade_v0936_rejoin_bosses.sql` caps bosses over the player's whole stay minus earlier claims, and records `boss_n`. The pre-change live function is saved in `supabase/snapshots/`. Test: `rejoin_migration` runs the same claims through the live function (bug reproduced) and the migration (fixed; uninterrupted games unchanged; no double pay; old-row fallback; re-apply). **Not applied live: awaiting Big U's approval.**
+- *Loss 3, server:* `claim_match_reward` capped bosses per claim from the previous claim's raid + 1, so a boss (or Boss Rush/Nightmare in-between boss) on the first raid after a rejoin was paid to nobody. Migration `20260930071534_palisade_v0936_rejoin_bosses.sql` caps bosses over the player's whole stay minus earlier claims, and records `boss_n`. The pre-change live function is saved in `supabase/snapshots/`. Test: `rejoin_migration` runs the same claims through the live function (bug reproduced) and the migration (fixed; uninterrupted games unchanged; no double pay; old-row fallback; re-apply). **Applied live on September 30 with Big U's approval** as `20260930071534`. The function contains the fix, the `boss_n` column exists, grants are unchanged (authenticated, postgres, service_role), and the security advisor shows no new finding.
 - *Affected players found:* the table below. The kappinkirk cases match a hard drop: the claim starts mid-game with no earlier claim, and in `mulw1qg2` their previous FFA with the same partner ended three minutes before the run started. Please confirm with the player if possible. Supply case counts can differ by ±1 because teammates' case progress carries over differently.
 
 | Player | Game | What was lost | Proposed grant |
@@ -36,7 +36,7 @@ Four commits after the v0.9.3 release changed the case intro and reel source (`9
 | kappinkirk | `mulw1qg2` 10-raid XL, Riverbend | raids 1-6: 2 Ferryman, 3 in-between bosses | 3 Supply, 2 Halloween, 69 shards, 6 skill points; raids/map/class +6; boss_ferryman +2 |
 | meezy2greezy | `mulv3e8h` 10-raid XL, The Yard | raid 7 (21 s disconnect); armory reset | 1 Supply; raids/map/class +1 |
 
-The script `supabase/compensation/2026-10-01_v0936_rejoin.sql` applies exactly this. It sends each player a mailbox note, and it is keyed so a second run grants nothing (tested in PGlite). **Not applied.**
+**Big U approved kappinkirk's two grants only; meezy2greezy was not compensated.** The script `supabase/compensation/2026-10-01_v0936_rejoin.sql` was applied on September 30. Verified before and after on the live locker: Supply 0 → 13, Halloween 0 → 6, shards 6 → 213, skill points 58 → 77 (total 124 → 143); raids 430 → 450; Riverbend and soldier raids +20; Ferryman 9 → 13; Butcher 11 → 13; player_stats raids 416 → 436. Two mailbox notes were sent. The grant is keyed, so re-running it pays nothing.
 
 **2. Frame rate and performance.**
 - *Setting:* Settings → Screen → Frame rate: Auto, 30 FPS or 60 FPS. Auto runs at 60 on phones and drops to 30 for the rest of the run when frames average over 12 ms or the battery is at or below 30% and not charging. On desktops Auto is uncapped.

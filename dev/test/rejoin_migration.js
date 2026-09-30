@@ -2,7 +2,7 @@
 // Postgres with the live table shapes. Never connects to live accounts. node rejoin_migration.js
 const {PGlite}=require('@electric-sql/pglite'),fs=require('node:fs'),assert=require('node:assert/strict');
 const root=__dirname+'/..',live=fs.readFileSync(root+'/supabase/snapshots/claim_match_reward_live_2026-09-30.sql','utf8');
-const migration=fs.readFileSync(root+'/supabase/migrations/20261001000000_palisade_v0936_rejoin_bosses.sql','utf8');
+const migration=fs.readFileSync(root+'/supabase/migrations/20260930071534_palisade_v0936_rejoin_bosses.sql','utf8');
 const U='11111111-1111-4111-8111-111111111111';
 const base=`create role anon;create role authenticated;create schema auth;create schema private;
 create table auth.users(id uuid primary key);create table public.profiles(id uuid primary key,banned boolean default false);
@@ -79,6 +79,6 @@ const total=(a,b)=>({bosses:(a.bonuses||[]).reduce((s,x)=>s+x.n,0)+(b?(b.bonuses
   const n=(await db.query('select count(*)::int n from public.notifications')).rows[0].n,ps=(await db.query(`select raids from public.player_stats where user_id='${A}'`)).rows[0].raids;
   assert.deepEqual({cases:a.cases,hal:a.bag.halloween,shards:a.shards,sp:a.sp,raids:a.st.raids,river:a.st.map_river,cls:a.st.cls_soldier_raids,fer:a.st.boss_ferryman,but:a.st.boss_butcher,ps},
     {cases:13,hal:6,shards:220,sp:61,raids:422,river:20,cls:20,fer:9,but:2,ps:422});
-  assert.deepEqual({cases:b.cases,raids:b.st.raids,yard:b.st.map_yard},{cases:20,raids:276,yard:1});assert.equal(n,3);
+  assert.deepEqual({cases:b.cases,raids:b.st.raids},{cases:19,raids:275});assert.equal(n,2);   // meezy2greezy not part of the approved grant
   await db.close();console.log('compensation script: exact grants once, repeat grants nothing');console.log('errors: none');
 })().catch(e=>{console.error(e);process.exit(1)});
