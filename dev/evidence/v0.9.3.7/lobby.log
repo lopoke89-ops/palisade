@@ -1,0 +1,17 @@
+Error: Expected values to be loosely deep-equal:
+
+{
+  cards: 1,
+  menu: false,
+  page: 'solo',
+  running: true
+}
+
+should loosely deep-equal
+
+{
+  cards: 5,
+  menu: true,
+  page: 'settings',
+  running: true
+}

@@ -39,11 +39,11 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
     water: [...__pal.terr].filter(t => t === 1).length }));
   assert.deepEqual([out.run.map, out.run.size, out.run.N, out.run.cls, out.run.menu, out.run.bg], ['river', 'xl', 24, 'sniper', true, true]);
   assert.ok(out.run.water > 30, 'river has water');
-  // Settings still opens from the pause menu over the running game, and DONE goes back to the pause menu
+  // v0.9.3.7: Settings from the pause menu opens the in-game panel (never the main menu), and BACK returns to the pause menu
   await p.keyboard.press('Escape'); await p.click('#pSetBtn');
-  out.pauseSettings = await p.evaluate(() => ({ page: document.getElementById('menu').dataset.page, menu: !document.getElementById('menu').hidden, cards: document.querySelectorAll('#pg-settings .setCard').length, running: __pal.game.phase !== 'over' }));
-  assert.deepEqual(out.pauseSettings, { page: 'settings', menu: true, cards: 5, running: true });   // v0.9.2.1: + the controller card
-  await p.click('#sDone'); assert.equal(await p.evaluate(() => !document.getElementById('pause').hidden && document.getElementById('menu').hidden), true, 'back to the pause menu');
+  out.pauseSettings = await p.evaluate(() => ({ ig: !document.getElementById('igSet').hidden, menu: !document.getElementById('menu').hidden, cards: document.querySelectorAll('#igCards .setCard').length, running: __pal.game.phase !== 'over' }));
+  assert.deepEqual(out.pauseSettings, { ig: true, menu: false, cards: 4, running: true });   // sound, screen, feel, controller (save backup stays on the menu page)
+  await p.click('#igDone'); assert.equal(await p.evaluate(() => !document.getElementById('pause').hidden && document.getElementById('menu').hidden && document.querySelectorAll('#pg-settings .setCard').length === 5), true, 'back to the pause menu, cards home');
   await p.click('#resumeBtn');
   await p.evaluate(() => __pal.toMenu()); await p.waitForTimeout(300);
   out.back = await p.evaluate(() => ({ page: document.getElementById('menu').dataset.page, bg: document.getElementById('lobbyBg').hidden, demoMap: __pal.game.map, N: __pal.N }));

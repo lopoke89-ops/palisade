@@ -1,0 +1,22 @@
+{"reach":{"yard:std":{"raiders":22,"stuck":0},"yard:xl":{"raiders":34,"stuck":0},"river:std":{"raiders":20,"stuck":0},"river:xl":{"raiders":35,"stuck":0},"quarry:std":{"raiders":6,"stuck":0},"quarry:xl":{"raiders":6,"stuck":0}},"river":{"buildOnWater":"Can't build on water","floodedAt3":true,"buildOnFlooded":"Flooded. Wait for the water to drop","noFloodBefore3":true}}
+Error: Expected values to be loosely deep-equal:
+
+{
+  build: 'That is the fence line',
+  grenadeLeavesIt: false,
+  night: 0,
+  pit: false,
+  solid: true,
+  wallGone: false
+}
+
+should loosely deep-equal
+
+{
+  build: "That's a pit now",
+  grenadeLeavesIt: true,
+  night: 2,
+  pit: true,
+  solid: true,
+  wallGone: true
+}
