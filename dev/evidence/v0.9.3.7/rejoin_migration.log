@@ -1,0 +1,63 @@
+compensation script: exact grants once, repeat grants nothing
+errors: none
+{
+ "checks": [
+  "live function reproduces the lost raid-5 boss after a rejoin",
+  "migration pays the raid-5 boss after a rejoin",
+  "live function reproduces the lost Boss Rush boss after a rejoin",
+  "migration pays both Boss Rush bosses across the rejoin",
+  "a boss paid before leaving is not paid again",
+  "uninterrupted XL Boss Rush game unchanged",
+  "XL rejoin pays both raid-5 bosses",
+  "four in-between bosses in five Nightmare + Boss Rush raids are all paid",
+  "older rows fall back to their bonus count",
+  "boss_n recorded for new claims only",
+  "migration re-applies cleanly",
+  "anon still cannot claim"
+ ],
+ "before": {
+  "A": {
+   "bosses": 0,
+   "sb": 0
+  },
+  "B": {
+   "bosses": 1,
+   "sb": 1
+  },
+  "C": {
+   "bosses": 1,
+   "sb": 0
+  },
+  "D": {
+   "bosses": 2,
+   "sb": 2
+  },
+  "E": {
+   "bosses": 0,
+   "sb": 0
+  }
+ },
+ "after": {
+  "A": {
+   "bosses": 1,
+   "sb": 0
+  },
+  "B": {
+   "bosses": 1,
+   "sb": 2
+  },
+  "C": {
+   "bosses": 1,
+   "sb": 0
+  },
+  "D": {
+   "bosses": 2,
+   "sb": 2
+  },
+  "E": {
+   "bosses": 2,
+   "sb": 0
+  }
+ }
+}
+errors: none

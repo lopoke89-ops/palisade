@@ -65,5 +65,5 @@ function toggleBuild(){if(game.pvp==='ffa')return;cfg.build=!cfg.build;saveCfg()
 tapBtn($('bmBtn'),live(toggleBuild));tapBtn($('armBtn'),live(()=>tryArmory()));
 const playing=()=>!demo&&(game.phase==='build'||game.phase==='raid');
 const running=()=>game.phase==='build'||game.phase==='raid';
-const overlayOpen=()=>game.paused||!$('pause').hidden||!$('menu').hidden||!$('armory').hidden;
+const overlayOpen=()=>game.paused||!$('pause').hidden||!$('igSet').hidden||!$('menu').hidden||!$('armory').hidden;
 

@@ -13,7 +13,8 @@ const PORT = process.env.PORT || 8080;
   // helpers inside the page: start a run on a map, keep everyone alive, step the game
   await E(() => {
     const P = __pal; let s = 11; Math.random = () => (s = (s * 16807) % 2147483647) / 2147483647;
-    window.run = (map, size = 'std', mode = '10') => { P.pick.map = map; P.pick.size = size; P.pick.mode = mode; P.pick.diff = 'normal'; P.showPage('solo'); document.getElementById('startBtn').click(); return P.game };
+    window.run = (map, size = 'std', mode = '10') => { if (!P.demo && document.getElementById('menu').hidden) P.toMenu();   // v0.9.3.7: a new run starts from the menu
+      P.pick.map = map; P.pick.size = size; P.pick.mode = mode; P.pick.diff = 'normal'; P.showPage('solo'); document.getElementById('startBtn').click(); return P.game };
     window.imm = () => { for (const q of P.players.values()) { q.max = 1e9; q.hp = 1e9 } P.core.max = 1e9; P.core.hp = 1e9; P.qm.hp = 1e9 };
     window.step = (n, keep = true) => { for (let i = 0; i < n; i++) { if (keep) imm(); P.update(1 / 30) } };
     window.clearField = () => { for (const e of P.enemies) e.dead = true; P.update(1 / 30); P.game.queue = []; P.lobs.length = 0 };

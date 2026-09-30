@@ -1,0 +1,47 @@
+{
+  "out": {
+    "open390": {
+      "ig": true,
+      "menu": false,
+      "pause": false,
+      "fps": true,
+      "vol": true,
+      "save": false,
+      "start": false,
+      "host": false,
+      "join": false,
+      "locker": false,
+      "paused": true
+    },
+    "back390": {
+      "ig": false,
+      "pause": true,
+      "cardsHome": true
+    },
+    "open1280": {
+      "ig": true,
+      "menu": false,
+      "pause": false,
+      "fps": true,
+      "vol": true,
+      "save": false,
+      "start": false,
+      "host": false,
+      "join": false,
+      "locker": false,
+      "paused": true
+    },
+    "back1280": {
+      "ig": false,
+      "pause": true,
+      "cardsHome": true
+    },
+    "menuPage": true,
+    "online": {
+      "hostTimeAdvanced": 1.22,
+      "note": "The raid keeps going for everyone else while you change settings.",
+      "hostCanHost": false
+    }
+  },
+  "errors": []
+}

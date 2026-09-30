@@ -159,7 +159,7 @@
           <div><h3>CONTROLLER</h3><p>Left stick move · right stick aim · RT fire<br>LT grenade · A build (hold to keep building)<br>B ability, or sprint if your class has no ability · X armory at the stake<br>Y wall/door · d-pad left/right material · d-pad down build kit<br>View start raid · Menu pause. Change any button in Settings.</p></div>
         </div>
       </details>
-      <p class="foot">v0.9.3.6 · phone, desktop and controller · online co-op and PvP for up to six</p>
+      <p class="foot">v0.9.3.7 · phone, desktop and controller · online co-op and PvP for up to six</p>
     </section>
 
     <section class="page" id="pg-classes" hidden>
@@ -257,7 +257,7 @@
           <p class="lede sm" id="padStatus">No controller found. Plug one in or pair it, then press any button on it.</p>
           <div class="padMap" id="padMap"></div>
           <button class="ghost" id="padReset" type="button">RESET BUTTONS</button></div>
-        <div class="setCard"><h3>SAVE BACKUP</h3>
+        <div class="setCard" id="saveSet"><h3>SAVE BACKUP</h3>
           <p class="lede sm">Your locker is saved in this browser and stays through game updates. Export a backup to move it to another device, or to restore it if this browser's data is cleared.</p>
           <div class="saveRow"><button class="ghost" id="sExport" type="button">EXPORT SAVE</button><button class="ghost" id="sImport" type="button">IMPORT SAVE</button></div></div>
       </div>
@@ -276,6 +276,17 @@
     <div id="padCard" class="padCard" hidden></div>
     <button class="ghost" id="pSetBtn" type="button">SETTINGS</button>
     <button class="ghost" id="quitBtn" type="button">ABANDON THE CLAIM</button>
+  </div>
+</div>
+
+<!-- v0.9.3.7: settings opened during a run. The same setting cards move in here, so the main menu (which can start
+     or host another game) never opens over a live run. -->
+<div class="overlay" id="igSet" hidden role="dialog" aria-labelledby="igSetTitle">
+  <div class="card igCard">
+    <div class="eyebrow" id="igSetTitle">SETTINGS · IN GAME</div>
+    <p class="lede sm" id="igSetNote"></p>
+    <div class="cards" id="igCards"></div>
+    <button class="go" id="igDone" type="button">BACK TO THE PAUSE MENU</button>
   </div>
 </div>
 

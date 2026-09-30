@@ -8,6 +8,8 @@ Big U supplied an exported copy of the Claude audit at `D:\downloads\Untitled.md
 
 **September 30 update:** v0.9.3.4 is live. The v0.9.3.5 cosmetics candidate is complete and awaits merge; its migration (`20260930050715`) is applied live and verified. The Supabase row below and the release order are otherwise unchanged. See [STATUS.md](STATUS.md).
 
+**October 1 update:** v0.9.3.6 is live: run progress survives drops and rejoins, the Auto/30/60 frame rate, Delgado, and the rejoin boss-credit migration `20260930071534` plus approved compensation. v0.9.3.7 adds touch auto-lock, in-game settings and the Nightmare + Boss Rush synergy. The current next-work order is at the end of [the optimization audit](OPTIMIZATION_AUDIT_2026-10-01.md): physical-phone pass, quick hygiene, a current schema dump with SQL tests, reward retry idempotency and import/identity, a frame-cost pass, then game-mode planning.
+
 ## Verified position
 
 **Current local work:** v0.9.3.4 is implemented, tested, and pushed as `854265d`. Its Pages build failed on invalid UTF-8 in this document; that encoding is repaired locally and needs a follow-up push. It adds full-screen flags, cached scenic depth and natural character motion. The [presentation report](PRESENTATION_2026-09-29.md) includes evidence and [backup/restore instructions](backups/2026-09-29-v0.9.3.3-presentation/MANIFEST.md). The live release is v0.9.3.3 at `2268c35`, with Milestones-only browsing and collapsible Locker collections. Reward retry/rejoin, import/identity and new modes remain deferred.

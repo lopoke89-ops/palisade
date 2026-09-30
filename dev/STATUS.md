@@ -11,7 +11,7 @@ The Claude audit URL still requires sign-in in the available browser session. Bi
 
 | Item | Current state |
 |---|---|
-| Live release | **v0.9.3.5** (v0.9.3.6 in this change) |
+| Live release | **v0.9.3.6** (v0.9.3.7 in this change) |
 | Live protocol | `yard-17` / `palisade-yard-17-` (v0.9.3.5 candidate uses `yard-18`) |
 | Applied server migration | `palisade_v0936_rejoin_bosses` (`20260930071534`); previously `palisade_v0935_cosmetics` (`20260930050715`) |
 | GitHub branch | `main` at `4033d34` (v0.9.3.4 plus the UTF-8 repair); v0.9.3.5 candidate on `claude/lucid-curie-491na1` |
@@ -20,6 +20,20 @@ The Claude audit URL still requires sign-in in the available browser session. Bi
 Controller support shipped in v0.9.2.1. The v0.9.3 cosmetics migration is applied and the live case catalog includes Flags. The two proposed new game modes have not shipped; the Nightmare modifier and a future preset definition do not constitute a separate game mode.
 
 Four commits after the v0.9.3 release changed the case intro and reel source (`98bb522`, `4c8dd3d`, `a49df08`, `566e30e`). The v0.9.3.1 release includes those fixes. Their source was compared with the v0.9.3 release on September 29; see [case animation validation](CASE_PERFORMANCE_2026-09-29.md). The reel avoids repeated style reads and its measured CPU use was lower, but intro readings overlapped and Locker readings were higher in the comparison runs. Further profiling and a real-phone comparison are still required before performance sign-off.
+
+## v0.9.3.7: touch auto-lock, in-game settings, Nightmare + Boss Rush
+
+**1. Touch auto-lock.** On a touch screen (not mouse or controller, not PvP), a grenade or rocket locks onto the nearest raider at least 6 tiles away with nothing solid in between. That rules out walls (including your own adjacent wall), the stake, rock and closed nodes. Grenades lock within 8 tiles (6.5 throw plus blast), rockets within 12. With no valid target, aim is manual as before. Gold corner brackets mark the target. A guest's locked throw reaches the host as an ordinary target point, so host validation is unchanged. Test: `touch_lock` (ignores a raider at 3 tiles and one behind a wall; grenade and rocket both head at the clear raider; mouse is never assisted; guest path).
+
+**2. In-game settings.** SETTINGS from the pause menu now opens an overlay over the game instead of the main menu. The main menu had let a player start a match or host a lobby mid-run. The same setting cards move into the overlay and back, so each control keeps one id and handler. Save Backup stays on the menu page. Pause/Escape or BACK returns to the pause menu; solo stays paused; online, the raid keeps going. As defense in depth, start, host and join are refused during a live run. Test: `ingame_settings` (phone and desktop, keyboard and button paths, deep-link start refused, online host time advances).
+
+**3. Nightmare + Boss Rush synergy.** With both on, each Boss Rush boss raid also rolls 1 in 12 for a second in-between boss. It is a different boss where the map has more than one, announced as "NIGHTMARE · SECOND BOSS". Odd raids keep Nightmare's normal surprise roll; regular boss raids and either modifier alone are unchanged.
+- *Rewards:* it pays like any in-between boss (15-30 shards) and, like them, stays out of boss milestones. The live server cap already counts every non-5th raid when Nightmare is on, so no migration was needed (checked in `rejoin_migration`: four in-between bosses in five raids are all paid). **Big U: say if the second boss should pay differently or count toward milestones.**
+- Test: `mod_synergy` (8.3% over 24,000 rolls, always a different boss, never with one modifier, odd or regular raids; a forced roll spawns both, announces, and pays 2).
+
+Version footer v0.9.3.7; protocol unchanged (`yard-18`).
+
+The whole-project audit is in [OPTIMIZATION_AUDIT_2026-10-01.md](OPTIMIZATION_AUDIT_2026-10-01.md).
 
 ## v0.9.3.6: rejoin progress, frame rate, Delgado
 

@@ -69,9 +69,30 @@ function localBuild(){
 // quartermaster sprint: 1.4x speed for 2.5 s, no shooting while it lasts, then 6 s to recharge
 const SPRINT={mult:1.4,dur:2.5,cd:6};
 function localSprint(){const p=player;if(!p||!p.alive||!p.C.sprint||demo||(p.sprCd||0)>0)return;const L=(p.perk||PERK0).stride|0;p.sprT=SPRINT.dur+.6*L;p.sprCd=p.sprT+SPRINT.cd-L}   // Long Stride: longer, and back sooner
+// v0.9.3.7 touch aim assist: on a touch screen a grenade or rocket locks onto the nearest raider at least 6 tiles away
+// with nothing solid in between, so the blast can't land on your own walls or crew by accident. Mouse and controller
+// aim stay manual, PvP stays manual, and the host checks the throw exactly as before (it is just a target point).
+const LOCK={min:6,nade:8,rocket:12,every:.15};
+function lockClear(x0,y0,x1,y1){
+  const d=Math.hypot(x1-x0,y1-y0),st=Math.ceil(d/.2),k0=idx(x0|0,y0|0),k1=idx(x1|0,y1|0);
+  for(let s=1;s<st;s++){const t=s/st,x=x0+(x1-x0)*t,y=y0+(y1-y0)*t,i=x|0,j=y|0;if(!inb(i,j))return false;const k=idx(i,j);if(k===k0||k===k1)continue;
+    if(walls[k]||coreKs.has(k)||terrShot(terr[k]))return false;const n=nodeAt(i,j);if(n&&n.solid)return false}
+  return true;
+}
+function touchLock(p,kind){
+  if(!touchMode||padMode||game.pvp||!p||!p.alive)return null;
+  const max=LOCK[kind]||LOCK.nade;let best=null,bd=1e9;
+  for(const e of enemies){if(e.dead||!(e.hp>0)||e.burrow)continue;const d=Math.hypot(e.x-p.x,e.y-p.y);if(d<LOCK.min||d>max||d>=bd)continue;
+    if(lockClear(p.x,p.y,e.x,e.y)){best=e;bd=d}}
+  return best;
+}
+// what the marker shows: the rocket's target when a rocket is ready, otherwise the grenade's
+function lockKind(p){return p.cls==='soldier'&&hasAbility(p)&&(NET.mode==='guest'?p.ab>0:p.rk>0&&!(p.rkCd>0))?'rocket':p.nades>0?'nade':''}
+function lockNow(p){const L=game.lockC||(game.lockC={t:-1,e:null});if(game.time-L.t>=LOCK.every||game.time<L.t){L.t=game.time;const k=lockKind(p);L.e=k?touchLock(p,k):null}return L.e}
 function localNade(){
-  const p=player;if(!p||!p.alive)return;let tx,ty;
-  if(!touchMode&&!padMode&&mouse.seen){const w=screenToWorld(mouse.x,mouse.y+WH*.55);tx=w.x;ty=w.y}else{tx=p.x+p.face.x*5;ty=p.y+p.face.y*5}
+  const p=player;if(!p||!p.alive)return;let tx,ty;const L=touchLock(p,'nade');
+  if(L){tx=L.x;ty=L.y}
+  else if(!touchMode&&!padMode&&mouse.seen){const w=screenToWorld(mouse.x,mouse.y+WH*.55);tx=w.x;ty=w.y}else{tx=p.x+p.face.x*5;ty=p.y+p.face.y*5}
   if(NET.mode==='guest'){if(p.nades<=0){sfx('deny',undefined,undefined,true);return}NET.toHost({t:'n',x:r2(tx),y:r2(ty)});return}
   throwNade(p,tx,ty);
 }

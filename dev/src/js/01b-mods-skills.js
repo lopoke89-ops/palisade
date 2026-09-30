@@ -12,7 +12,7 @@ const MODS=[
   {id:'elite',name:'ELITE RAID',what:'No riflemen: every raider is a special. Spotters mark you for the grenadiers and firebrands instead.',modes:['coop'],bonus:15},
   {id:'bossrush',name:'BOSS RUSH',what:'A boss every other raid. The extra bosses pay 15-30 shards each; raids 5, 10, 15 keep their case.',modes:['coop'],bonus:10},
   {id:'weather',name:'WEATHER',what:'A storm every other raid (every 40 s in PvP). It slows everyone, raiders and Delgado too; players lose 1 health every 2 s in it.',modes:['coop','base','ffa'],bonus:10},
-  {id:'nightmare',name:'NIGHTMARE',what:'Always night. Raiders move, spot and fire faster, and any raid without a boss has a 1-in-12 surprise boss (15-30 shards). PvP: night only.',modes:['coop','base','ffa'],bonus:15},
+  {id:'nightmare',name:'NIGHTMARE',what:'Always night. Raiders move, spot and fire faster, and any raid without a boss has a 1-in-12 surprise boss (15-30 shards). With Boss Rush on too, each Boss Rush boss raid has a 1-in-12 chance of a second boss. PvP: night only.',modes:['coop','base','ffa'],bonus:15},
   {id:'berserk',name:'BERSERK',what:'Bosses attack about a third more often. Their warnings are just as long, and they move no faster.',modes:['coop'],bonus:10},
   {id:'glass',name:'GLASS CANNON',what:'Everyone deals 50% more damage and has 30% less health.',modes:['base','ffa'],bonus:0},
   {id:'onejob',name:'ONE JOB',what:'The host picks one job for everyone. No job changes.',modes:['base','ffa'],bonus:0},

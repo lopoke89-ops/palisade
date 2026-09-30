@@ -252,6 +252,13 @@ function itemPlayer(o){
   if(o.alive)drawPerson(o.x,o.y,Object.assign({aim:o.aim,walk:o.walk,flash:o.flash>0,tag,tagCol:game.pvp?teamCol(o):SLOTCOL[o.slot%6],faded:o.prot>0||stealthed(o),hp:game.pvp&&!me&&o.hp<o.max?o.hp/o.max:undefined},PL));
   else drawDowned(o.x,o.y,PL,o.revive/2.2,me?(o.rt>1e5?'DOWN · UNTIL THE RAID IS BROKEN':`DOWN · ${Math.ceil(o.rt)}`):`${o.name.toUpperCase()} · DOWN`);
 }
+// v0.9.3.7: corner brackets on the raider a touch grenade or rocket will lock onto
+function drawLock(e){
+  const c=iso(e.x,e.y),r=(e.big?16:11)*u,cy=c[1]-WH*.55*(e.big?1.4:1),k=r*.45,pulse=1+.08*Math.sin(game.time*8);
+  g.save();g.strokeStyle='#ffd24a';g.lineWidth=2*u;g.globalAlpha=.9;g.beginPath();
+  for(const [sx,sy] of [[-1,-1],[1,-1],[1,1],[-1,1]]){const x=c[0]+sx*r*pulse,y=cy+sy*r*pulse;g.moveTo(x-sx*k,y);g.lineTo(x,y);g.lineTo(x,y-sy*k)}
+  g.stroke();g.restore();
+}
 function render(dt){
   PM('pre');const p=player;
   if(!caches||caches.key!==cacheKey())makeCaches();
@@ -286,6 +293,7 @@ function render(dt){
   RI.a.fill(null,0,RI.n);PM('bullets');
   g.lineCap='round';
   for(const b of bullets)drawTracer(b);
+  if(playing()&&touchMode&&!padMode&&p.alive&&!game.pvp){const e=lockNow(p);if(e)drawLock(e)}
   g.lineCap='butt';
   for(const l of lobs){const t=l.t/l.T,x=l.x0+(l.x1-l.x0)*t,y=l.y0+(l.y1-l.y0)*t,z=Math.sin(Math.PI*t)*(40+Math.hypot(l.x1-l.x0,l.y1-l.y0)*9)*u+WH*.5*(1-t);
     const c=iso(x,y);g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(c[0],c[1],3*u,1.5*u,0,0,Math.PI*2);g.fill();

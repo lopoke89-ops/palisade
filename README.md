@@ -1,14 +1,17 @@
 PALISADE: phone version with online co-op
 =========================================
 
-CURRENT RELEASE (October 1, 2026): v0.9.3.5 is live. v0.9.3.6 is ready to merge:
-- A dropped, reloaded or crashed run is now still paid when the game restarts.
-- Rejoining the same game gets your armory, salvage and kills back.
-- New Settings > Frame rate option (Auto / 30 / 60) to keep phones cooler.
-- Dell is now Delgado.
+CURRENT RELEASE (October 1, 2026): v0.9.3.6 is live. Runs are kept through drops and
+rejoins, there is a Frame rate setting (Auto / 30 / 60), and Dell is now Delgado.
 
-The server fix for boss credit after a rejoin is live, and the affected
-player was compensated (see dev/STATUS.md).
+NEXT: v0.9.3.7 is ready to merge:
+- On a touch screen, grenades and rockets lock onto the nearest raider 6+ tiles
+  away with a clear line.
+- SETTINGS in a match opens an in-game panel, not the main menu.
+- With Nightmare and Boss Rush both on, a Boss Rush raid can bring a second boss
+  (1 in 12).
+
+See dev/STATUS.md and dev/OPTIMIZATION_AUDIT_2026-10-01.md.
 
 This folder is the whole game as a website. Put it online once and anyone
 can play by opening the link. No app store, no download.
