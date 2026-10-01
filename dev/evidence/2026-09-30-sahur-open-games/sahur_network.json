@@ -1,0 +1,15 @@
+{
+  "stage": {
+    "cos": "sahur|devilhorns|std|none",
+    "slots": 2
+  },
+  "game": {
+    "skin": "sahur",
+    "hat": "devilhorns",
+    "sahur": true,
+    "horns": "#7a1410",
+    "demon": false,
+    "demonHorns": false
+  },
+  "errors": []
+}

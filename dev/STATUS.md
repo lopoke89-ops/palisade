@@ -11,15 +11,23 @@ The Claude audit URL still requires sign-in in the available browser session. Bi
 
 | Item | Current state |
 |---|---|
-| Live release | **v0.9.5.0** (menu overhaul; v0.9.4.0 Blitzkrieg Rush before it) |
+| Source release | **v0.9.5.1** (Sahur headgear and Open Games visibility) |
 | Live protocol | `yard-19` / `palisade-yard-19-` |
 | Applied server migration | `palisade_v0940_blitz` (`20260930141401`); before it `palisade_v0939_sp_cases` (`20260930084544`) |
-| GitHub branch | `main` at `4033d34` (v0.9.3.4 plus the UTF-8 repair); v0.9.3.5 candidate on `claude/lucid-curie-491na1` |
-| Published build | GitHub Pages displays **v0.9.3.4** (service worker `palisade-0e4e6153b7`), checked September 30 |
+| GitHub branch | `main` at `a325765` before the v0.9.5.1 release commit, checked September 30 |
+| Published build | GitHub Pages footer displayed **v0.9.5.0**, protocol `yard-19`, before the v0.9.5.1 push |
 
 Controller support shipped in v0.9.2.1. The v0.9.3 cosmetics migration is applied and the live case catalog includes Flags. The two proposed new game modes have not shipped; the Nightmare modifier and a future preset definition do not constitute a separate game mode.
 
 Four commits after the v0.9.3 release changed the case intro and reel source (`98bb522`, `4c8dd3d`, `a49df08`, `566e30e`). The v0.9.3.1 release includes those fixes. Their source was compared with the v0.9.3 release on September 29; see [case animation validation](CASE_PERFORMANCE_2026-09-29.md). The reel avoids repeated style reads and its measured CPU use was lower, but intro readings overlapped and Locker readings were higher in the comparison runs. Further profiling and a real-phone comparison are still required before performance sign-off.
+
+## v0.9.5.1: Sahur hats and Open Games visibility
+
+The work order is [plans/ttts-hats-and-open-games-prompt.md](plans/ttts-hats-and-open-games-prompt.md); measurements, contact sheets and focused test results are in [evidence/2026-09-30-sahur-open-games/](evidence/2026-09-30-sahur-open-games/). No protocol or server change was needed.
+
+Sahur accepts Crown, Top Hat, Cyber Visor, Neon Headband, Police Cap, Halo, Witch Hat and Devil Horns. Its face previously occupied an exclusive painter branch, so simply allowing the hats would still hide them. The painter now keeps the face and renders permitted headgear in its existing cached frame, with a Sahur-only lift to the log crown, a brow-level visor/headband and extra thumbnail margin. Class Issue and other special-skin restrictions remain as before. The network cosmetic string and protocol are unchanged.
+
+The Open Games list was present and refreshing, but a mocked valid row began below the clipped control column at all four audit sizes (zero visible pixels until scrolling). The existing list now precedes the host form; on a portrait phone the controls precede the character stage. A server-unavailable message no longer describes the list as empty. The existing publish, protocol filter and join-disable rules are unchanged.
 
 ## v0.9.5.0: Menu overhaul
 

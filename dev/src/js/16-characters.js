@@ -47,6 +47,7 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  const ca=Math.cos(angle),sa=Math.sin(angle),phase=typeof walking==="number"?walking:walking?time*7:0;
  const weight=o.downed?0:o.gaitWeight===undefined?(walking?1:0):o.gaitWeight,dir=o.gaitDir||0;
  const bob=-(1-Math.cos(phase*2))*.14*weight+(o.downed?0:(o.breath||0)*.16),faces=[];
+ let sahurHatLift=0;
  const leg=side=>{const step=wardrobeStep(phase,side,weight,dir),ankle=[step.x,3.2+step.lift,step.z],hip=[side*2.6,14.4+bob,0];return {...step,ankle,hip,knee:reach(hip,ankle,6,6,[0,0,1])}};
  const hex=c=>{const m=/^#([0-9a-f]{6})$/i.exec(c||'');return m?m[1].match(/../g).map(s=>parseInt(s,16)):[90,95,75]};
  const tint=(c,k)=>{const v=hex(c);return '#'+v.map(x=>Math.max(0,Math.min(255,Math.round(x*k))).toString(16).padStart(2,'0')).join('')};
@@ -54,6 +55,7 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
  const sub=(a,b)=>a.map((v,i)=>v-b[i]);
  function mesh(v,ff,col,outline=.55,bias=0){
+  if(sahurHatLift)v=v.map(q=>[q[0],q[1]+sahurHatLift,q[2]]);
   if(o.downed)v=v.map(q=>[q[1]*.8-14,q[2]*.8+4,q[0]*.8]);
   const vis=[],projected=v.map(project);
   for(const ids of ff){
@@ -204,7 +206,12 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
   column(0,29.6+bob,4.05,1.1,2.3,1.35,'#ba8047',.8,.13);
   box(0,27.9+bob,3.94,3.5,.8,.22,'#4c2c19',.08,1);
   box(0,28.16+bob,4.08,2.6,.22,.12,'#ead5af',.02,1);
- }else if(o.pumpkin){
+ }
+ // Sahur's log reaches y=36. Move only its worn headgear to that crown. The visor
+ // stays across the painted brow; the headband sits just above it. In the downed
+ // projection its thin band needs the exposed crown edge or the log hides it.
+ sahurHatLift=o.sahur?(o.visor?0:o.headband?(o.downed?5:1.5):o.halo?0:3.5):0;
+ if(o.pumpkin){
   // a ribbed pumpkin replaces the head; the carved face glows (the Pumpkin King's flames flicker over 4 cached frames)
   const pc=o.pumpkin,glowC=o.pking?'#ffb040':'#ffd35a';
   // The gourd replaces the whole head; cover the normal cheek and crown silhouette at every angle.
@@ -353,16 +360,17 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  }else if(o.horns||o.demonHorns){
   // v0.9.4.0: Devil Horns (the ladder's headgear: red to black, curling up and out) and the Demon's own horns (bigger,
   // swept back). Each horn is four tapering pieces rooted inside the crown, so no gap shows at any angle.
-  const big=!!o.demonHorns;if(!big)dome('#2a1a14',32.7,4.2,3.6,1.65);
+  const big=!!o.demonHorns;if(!big&&!o.sahur)dome('#2a1a14',32.7,4.2,3.6,1.65);
   const P=big?[[2.1,32.5,.4],[3.7,34.6,-.4],[5,35.9,-2.3],[5,36.8,-4.4],[4.1,37.1,-5.9]]:[[2,32.7,.7],[3.3,34.4,1],[4.3,36,.7],[4.7,37.6,0],[4.5,39,-.8]];
   const R=big?[1.35,1.1,.85,.55,.14]:[1.05,.86,.64,.4,.08],C=big?[o.demonHorns,'#2e1c14','#3e2818','#5a3a22']:[o.horns,'#5e0e0c','#3a0a08','#1c0606'];
   for(const sd of[-1,1]){for(let i=0;i<4;i++)beam([sd*P[i][0],P[i][1]+bob,P[i][2]],[sd*P[i+1][0],P[i+1][1]+bob,P[i+1][2]],R[i],C[i],R[i+1],.42);
    beam([sd*(P[0][0]-.3),P[0][1]+.35+bob,P[0][2]],[sd*(P[0][0]+.45),P[0][1]+.95+bob,P[0][2]+.05],R[0]*1.12,tint(C[0],.7),R[0]*1.05,.3)}   // a ridge where it grows from the head
  }else{
   // Uncovered head remains visible beneath masks and floating accessories.
-  if(!(o.bones||o.wraps||o.phantom))dome('#433b2b',32.7,4.2,3.6,1.65);
+  if(!(o.bones||o.wraps||o.phantom||o.sahur))dome('#433b2b',32.7,4.2,3.6,1.65);
   if(o.mask){column(0,30.4+bob,1,8.6,5.4,7.5,'#15151a',1,.4);for(const x of[-1.8,1.8])box(x,31+bob,4.9,1.5,.85,.3,o.mask,.03,1)}
-  if(o.visor){box(0,31.2+bob,4.3,8.8,2.5,.9,'#101014',.32,1);box(0,31.2+bob,4.82,7.8,.65,.15,o.visor,.03,1)}
+  if(o.visor){if(o.sahur){box(0,32+bob,4.34,8.8,.85,.65,'#593447',.22,1);box(0,32+bob,4.72,7.8,.32,.15,o.visor,.03,1)}
+   else{box(0,31.2+bob,4.3,8.8,2.5,.9,'#101014',.32,1);box(0,31.2+bob,4.82,7.8,.65,.15,o.visor,.03,1)}}
   if(o.headband){column(0,32.2+bob,0,9,.65,7.8,o.headband,1,.15);beam([-4.2,32.2+bob,-1],[-5.7,28.7+bob,-3.6],.35,o.headband,.2,.15)}
   if(o.glitchm){
    const cs=['#ff3a6a','#3affd8','#6a8aff','#ffe03a','#f3f0ff'],f=Math.floor(time*10);
@@ -375,8 +383,9 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
    }
   }
  }
+ sahurHatLift=0;
  // Floating Halo is independent of the head branch; the sheet gets a verified clearance.
- if(o.halo){for(let i=0;i<16;i++){const a=i*Math.PI/8,b=(i+1)*Math.PI/8,y=(o.sheet?43:39)+bob+Math.sin(time*2.4)*.35;beam([Math.cos(a)*6,y,Math.sin(a)*4.8],[Math.cos(b)*6,y,Math.sin(b)*4.8],.22,o.halo,.22,.04)}}
+ if(o.halo){for(let i=0;i<16;i++){const a=i*Math.PI/8,b=(i+1)*Math.PI/8,y=(o.sheet?43:o.sahur?42:39)+bob+Math.sin(time*2.4)*.35;beam([Math.cos(a)*6,y,Math.sin(a)*4.8],[Math.cos(b)*6,y,Math.sin(b)*4.8],.22,o.halo,.22,.04)}}
  // v0.9.3 add-ons over whatever is on the head
  if(o.demon){   // v0.9.4.0 Demon: burning eyes under a heavy brow, pointed ears
   box(0,31.45+bob,3.7,5.2,.7,.9,tint(skin,.55),.2,1.1);for(const x of[-1.45,1.45])box(x,30.75+bob,3.98,1,.62,.16,'#ffd070',.02,1.7);

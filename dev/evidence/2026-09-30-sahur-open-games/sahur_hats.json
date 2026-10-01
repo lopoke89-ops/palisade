@@ -1,0 +1,17 @@
+{
+  "allowed": [
+    "class",
+    "tophat",
+    "crown",
+    "headband",
+    "pcap",
+    "visor",
+    "halo",
+    "witch",
+    "devilhorns"
+  ],
+  "combinations": 192,
+  "smallestDiff": 110,
+  "fail": [],
+  "errors": []
+}

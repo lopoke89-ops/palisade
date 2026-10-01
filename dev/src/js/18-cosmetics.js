@@ -110,11 +110,13 @@ const SKINS={
 const SKIN_FX=['neon','dots','ruff','badge','plate','stars','holo','spots','frost','glitter','chrome','ribs','web','bones','wraps','reaper','phantom',
   'apron','facewrap','coat','cape','lining','collar','reflect','waders','charges','medals','ghillie','sheet','stitches','clownface','hockey','sack','patches','straws','medal','aura','sahur','demon'];
 const HALLOWEEN_HATS={gravecap:true,stemband:true,batcirclet:true,bonewrap:true,webpin:true,skullseal:true};
+const SAHUR_HATS=new Set(['crown','tophat','visor','headband','pcap','halo','witch','devilhorns']);
 // Class Issue preserves the skin's own appearance. Unknown or special heads block added headwear.
 function headwearAllowed(skin,hat){
   const S=SKINS[skin];if(!S)return false;if(hat==='class')return true;
   if(S.sheet)return hat==='halo';
-  return !(S.sahur||S.demon||S.reaper||S.wraps||S.phantom||S.sack||S.hockey||S.clownface||S.ghillie||S.facewrap||S.headwear&&Object.keys(S.headwear).length);
+  if(S.sahur)return SAHUR_HATS.has(hat);
+  return !(S.demon||S.reaper||S.wraps||S.phantom||S.sack||S.hockey||S.clownface||S.ghillie||S.facewrap||S.headwear&&Object.keys(S.headwear).length);
 }
 const TRAILS={std:{c:'rgba(255,236,170,.95)'},green:{c:'#86ff7a'},red:{c:'#ff5a46'},blue:{c:'#9fe8ff'},pink:{c:'#ff5ad8'},
   gold:{c:'#ffd24a',w:1.35,snd:'ts_gold'},plasma:{c:'#7af2ff',w:1.5,glow:'rgba(106,240,255,.3)',len:1.7,snd:'ts_plasma'},rainbow:{rainbow:true,w:1.4,len:2.2,snd:'ts_rainbow'},

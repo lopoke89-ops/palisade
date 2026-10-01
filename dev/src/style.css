@@ -906,6 +906,8 @@ body.padMenu #menu .panel{padding-bottom:64px}body.pad .padF{scroll-margin:12px 
 /* v0.9.5 fixes after the first look: PLAY never covers the lines; landscape fits without scrolling */
 @media (max-width:700px){
   #menu .panel .accountDock .partyNav svg.nIco{display:block;width:19px;height:19px}
+  #menu[data-page=multi] .partyControls{grid-row:1}
+  #menu[data-page=multi] .partyStage{grid-row:2}
   .partyControls #pg-solo .playBtn{position:fixed;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 66px);z-index:34;min-height:58px;font-size:30px}
   #menu[data-page=solo].partyMenu .panel{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 148px)}
   #menu[data-page=solo] #partySubtitle,#menu[data-page=solo] .partyHint{display:none}

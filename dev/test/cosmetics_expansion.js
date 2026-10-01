@@ -4,7 +4,9 @@ await p.goto('http://localhost:8080/debug.html?debug=1');await p.waitForFunction
 const r=await p.evaluate(()=>{const P=__pal,failures=[],hats=Object.keys(P.HALLOWEEN_HATS),allHats=P.COS.filter(c=>c.cat==='hat'),skins=Object.keys(P.SKINS),matrix={};
 const cv=document.createElement('canvas');cv.width=300;cv.height=320;const x=cv.getContext('2d',{willReadFrequently:true});
 const draw=(look,a=0,t=0,phase=0)=>{x.clearRect(0,0,300,320);const bounds=P.paintWardrobeCharacter(x,look,a,t,4,150,240,phase);const pixels=x.getImageData(0,0,300,320).data;return{bounds,pixels}};
-for(const skin of skins){matrix[skin]={};for(const h of allHats){const yes=P.headwearAllowed(skin,h.key);if(hats.includes(h.key))matrix[skin][h.key]=yes?'Allow':'Block';if(!yes){const a=P.lookOf({skin,hat:h.key},'soldier'),z=P.lookOf({skin,hat:'class'},'soldier');if(JSON.stringify(a)!==JSON.stringify(z))failures.push('blocked render '+skin+' '+h.key)}}}
+for(const skin of skins){matrix[skin]={};for(const h of allHats){const yes=P.headwearAllowed(skin,h.key);if(hats.includes(h.key)||skin==='sahur')matrix[skin][h.key]=yes?'Allow':'Block';if(!yes){const a=P.lookOf({skin,hat:h.key},'soldier'),z=P.lookOf({skin,hat:'class'},'soldier');if(JSON.stringify(a)!==JSON.stringify(z))failures.push('blocked render '+skin+' '+h.key)}}}
+const sahurHats=['crown','tophat','visor','headband','pcap','halo','witch','devilhorns'];
+if(JSON.stringify(Object.keys(matrix.sahur).filter(k=>matrix.sahur[k]==='Allow').sort())!==JSON.stringify(['class',...sahurHats].sort()))failures.push('Sahur eight-hat compatibility');
 // v0.9.3.9: the pieces were rebuilt as full headwear; they must stay no taller than our tallest existing hats (Top Hat, Witch)
 let tallest=0;for(const ref of['tophat','witch'])for(let a=0;a<Math.PI*2;a+=Math.PI/8)tallest=Math.min(tallest,draw(P.lookOf({skin:'std',hat:ref},'soldier'),a).bounds.top);
 for(const hat of hats){if(!P.COSBY['hat:'+hat]||P.COSBY['hat:'+hat].box!=='halloween')failures.push('catalog '+hat);for(let a=0;a<Math.PI*2;a+=Math.PI/8){const look=P.lookOf({skin:'std',hat},'soldier'),d=draw(look,a);if(d.bounds.top < tallest)failures.push('taller than the Top Hat/Witch '+hat)}}

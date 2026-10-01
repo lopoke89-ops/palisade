@@ -5,11 +5,9 @@ level (built from here); this folder is the source.
 This folder is **not published** on GitHub Pages (`_config.yml` excludes it). Audio masters live in `audio/masters/`.
 Tests find an installed Chromium automatically if Playwright's own browser build is missing.
 
-Current live status is **v0.9.3.6** (run progress kept through drops and rejoins, Auto/30/60 frame rate,
-Delgado, and the rejoin boss-credit migration `20260930071534`). **v0.9.3.7** is ready to merge: touch
-auto-lock for grenades and rockets, in-game settings, and the Nightmare + Boss Rush second boss. See
-[STATUS.md](STATUS.md), the [work order](plans/v0.9.3.6-v0.9.3.7-work-order.md) and the
-[optimization audit](OPTIMIZATION_AUDIT_2026-10-01.md). Evidence is under `evidence/v0.9.3.6/` and `evidence/v0.9.3.7/`.
+Current source release is **v0.9.5.1**: eight selected hats fit Tung Tung Tung Sahur,
+and Open Games is visible when entering Multiplayer. The network protocol remains `yard-19`.
+See [STATUS.md](STATUS.md) and the [release evidence](evidence/2026-09-30-sahur-open-games/README.md).
 
 The [presentation report](PRESENTATION_2026-09-29.md) records nine focused checks,
 matched captures/clips and the A/B performance comparison. The [dated backup manifest](backups/2026-09-29-v0.9.3.3-presentation/MANIFEST.md)

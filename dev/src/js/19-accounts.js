@@ -284,7 +284,7 @@ async function refreshLobbies(){
   const box=$('lobList'),same=k=>{if(box.dataset.k===k)return true;box.dataset.k=k;return false},
     say=t=>{if(same('say:'+t))return;box.textContent='';const p=document.createElement('p');p.className='lobEmpty';p.textContent=t;box.append(p)};
   if(!cloudOn){say('The Open Games list works on the web version of the game.');return}
-  if(!acct.s){say(acct.state==='down'?'Can\'t reach the game server right now, so the list is empty. Joining by code still works.':'Connecting…');return}
+  if(!acct.s){say(acct.state==='down'?'Can\'t reach the game server right now. Joining by code still works.':'Connecting…');return}
   if(lobBusy)return;lobBusy=true;
   let r={ok:false,status:0};if(await freshToken())r=await sbFetch(`/rest/v1/lobbies?select=code,name,mode,length,diff,players,in_game&proto=eq.${PROTO}&order=updated_at.desc&limit=30`);
   lobBusy=false;

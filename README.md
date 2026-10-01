@@ -1,16 +1,9 @@
 PALISADE: phone version with online co-op
 =========================================
 
-CURRENT RELEASE (October 1, 2026): v0.9.3.8 is live. Every boss kill counts toward
-boss milestones for everyone in the match.
-
-NEXT: v0.9.3.9 is ready for review:
-- Trade 3 skill points for a Supply Case (no cap; players without accounts too).
-- A cleaner landscape HUD: a thin boss strip, and team bars in the bottom-left.
-- A "Show tips during games" setting.
-- The six Halloween Case head pieces rebuilt, plus a fit pass on all hats.
-
-Its server change (buy_case_sp) is live. See dev/STATUS.md.
+CURRENT RELEASE: v0.9.5.1. Tung Tung Tung Sahur can wear eight
+selected hats, and Open Games is visible on the Multiplayer page. The network protocol
+remains yard-19. See dev/STATUS.md and dev/evidence/2026-09-30-sahur-open-games/.
 
 This folder is the whole game as a website. Put it online once and anyone
 can play by opening the link. No app store, no download.

@@ -126,7 +126,7 @@ function drawIcon(cv2,c){
   if(c.cat==='skin'||c.cat==='hat'){
     const look=lookOf(c.cat==='skin'?{...locker.eq,skin:c.key}:{...locker.eq,skin:headwearAllowed(locker.eq.skin,c.key)?locker.eq.skin:'std',hat:c.key},pick.cls),key=c.id+'|'+pick.cls+'|'+(c.cat==='hat'?locker.eq.skin:locker.eq.hat)+'|'+S;
     let img=THUMB_CACHE.get(key);
-    if(!img){const f=figFrame(look,c.cat),pad=c.cat==='hat'?1.18:1.1,sc=S/(f.s*pad);img=document.createElement('canvas');img.width=img.height=S;
+    if(!img){const f=figFrame(look,c.cat),pad=c.cat==='hat'?(look.sahur?1.32:1.18):1.1,sc=S/(f.s*pad);img=document.createElement('canvas');img.width=img.height=S;
       const ic=img.getContext('2d'),au=c.cat==='skin'&&look.aura;   // v0.9.3: one moment of the outfit's moving effect
       if(au)paintAura(ic,au,S/2-f.cx*sc,S/2-f.cy*sc,sc,1.3,1,'ground');
       paintWardrobeCharacter(ic,look,THUMB_ANG,0,sc,S/2-f.cx*sc,S/2-f.cy*sc,false);
