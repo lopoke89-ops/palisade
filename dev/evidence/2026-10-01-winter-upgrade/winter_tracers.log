@@ -1,0 +1,134 @@
+{
+  particles: {
+    auroralance: {
+      kind: 'snowdust',
+      count: 94,
+      colors: [Array],
+      wanted: undefined,
+      life: 0.32
+    },
+    solsticecomet: {
+      kind: 'yulelight',
+      count: 93,
+      colors: [Array],
+      wanted: undefined,
+      life: 0.38
+    },
+    f_pride: {
+      kind: 'flagmote',
+      count: 76,
+      colors: [Array],
+      wanted: '#ffed00',
+      life: 0.3
+    }
+  },
+  overlap: [
+    {
+      w: 2,
+      t: 0,
+      sharedArea: 0.9468085106382979,
+      split: 0.136,
+      drift: 0.1
+    },
+    {
+      w: 2,
+      t: 0.18,
+      sharedArea: 0.967741935483871,
+      split: 0.11560280527483001,
+      drift: 0.1
+    },
+    {
+      w: 2,
+      t: 0.44,
+      sharedArea: 0.9468085106382979,
+      split: 0.13399490124228744,
+      drift: 0.1
+    },
+    {
+      w: 2,
+      t: 0.88,
+      sharedArea: 0.967741935483871,
+      split: 0.10643338647678612,
+      drift: 0.1
+    },
+    {
+      w: 2,
+      t: 1.3,
+      sharedArea: 0.967741935483871,
+      split: 0.11329022534282829,
+      drift: 0.1
+    },
+    {
+      w: 4,
+      t: 0,
+      sharedArea: 0.8697916666666666,
+      split: 0.272,
+      drift: 0.2
+    },
+    {
+      w: 4,
+      t: 0.18,
+      sharedArea: 0.8837209302325582,
+      split: 0.23120561054966002,
+      drift: 0.2
+    },
+    {
+      w: 4,
+      t: 0.44,
+      sharedArea: 0.8727272727272727,
+      split: 0.2679898024845749,
+      drift: 0.2
+    },
+    {
+      w: 4,
+      t: 0.88,
+      sharedArea: 0.8911917098445595,
+      split: 0.21286677295357223,
+      drift: 0.2
+    },
+    {
+      w: 4,
+      t: 1.3,
+      sharedArea: 0.8860103626943006,
+      split: 0.22658045068565658,
+      drift: 0.2
+    },
+    {
+      w: 7,
+      t: 0,
+      sharedArea: 0.9042709867452136,
+      split: 0.47600000000000003,
+      drift: 0.2
+    },
+    {
+      w: 7,
+      t: 0.18,
+      sharedArea: 0.9230769230769231,
+      split: 0.404609818461905,
+      drift: 0.2
+    },
+    {
+      w: 7,
+      t: 0.44,
+      sharedArea: 0.9069423929098966,
+      split: 0.46898215434800605,
+      drift: 0.2
+    },
+    {
+      w: 7,
+      t: 0.88,
+      sharedArea: 0.9292035398230089,
+      split: 0.3725168526687514,
+      drift: 0.2
+    },
+    {
+      w: 7,
+      t: 1.3,
+      sharedArea: 0.9230769230769231,
+      split: 0.396515788699899,
+      drift: 0.2
+    }
+  ]
+}
+errors: none
+

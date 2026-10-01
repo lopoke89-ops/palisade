@@ -1,0 +1,3574 @@
+{
+  "project": "puvjfhwxigxjpsvdwrwf",
+  "verified": "2026-10-01",
+  "migration": "20261001214620_winter_models",
+  "items": [
+    {
+      "id": "bg:arcade",
+      "box": "afterglow",
+      "cat": "bg",
+      "key": "arcade",
+      "src": "case",
+      "name": "Arcade",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:aurora",
+      "box": null,
+      "cat": "bg",
+      "key": "aurora",
+      "src": "unlock",
+      "name": "Aurora",
+      "need": {
+        "wins": 10
+      },
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:aurorafrostpeak",
+      "box": "winter",
+      "cat": "bg",
+      "key": "aurorafrostpeak",
+      "src": "case",
+      "name": "Aurora Over Frostpeak",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 2
+    },
+    {
+      "id": "bg:bloodmoon",
+      "box": "halloween",
+      "cat": "bg",
+      "key": "bloodmoon",
+      "src": "case",
+      "name": "Blood Moon",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:campfire",
+      "box": null,
+      "cat": "bg",
+      "key": "campfire",
+      "src": "free",
+      "name": "Campfire Dusk",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:crimson",
+      "box": null,
+      "cat": "bg",
+      "key": "crimson",
+      "src": "unlock",
+      "name": "Crimson Smoke",
+      "need": {
+        "drops": 500
+      },
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:dawn",
+      "box": null,
+      "cat": "bg",
+      "key": "dawn",
+      "src": "unlock",
+      "name": "First Light",
+      "need": {
+        "wins": 1
+      },
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:dogtags",
+      "box": "supply",
+      "cat": "bg",
+      "key": "dogtags",
+      "src": "case",
+      "name": "Dog Tags",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:emberfield",
+      "box": null,
+      "cat": "bg",
+      "key": "emberfield",
+      "src": "unlock",
+      "name": "Ember Field",
+      "need": {
+        "drops": 100
+      },
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:eventhorizon",
+      "box": "afterglow",
+      "cat": "bg",
+      "key": "eventhorizon",
+      "src": "case",
+      "name": "Event Horizon",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_ace",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_ace",
+      "src": "case",
+      "name": "Asexual Flag",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_agender",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_agender",
+      "src": "case",
+      "name": "Agender Flag",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_argentina",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_argentina",
+      "src": "case",
+      "name": "Argentina Flag",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_aro",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_aro",
+      "src": "case",
+      "name": "Aromantic Flag",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_bi",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_bi",
+      "src": "case",
+      "name": "Bisexual Flag",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_brazil",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_brazil",
+      "src": "case",
+      "name": "Brazil Flag",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_canada",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_canada",
+      "src": "case",
+      "name": "Canada Flag",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_fluid",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_fluid",
+      "src": "case",
+      "name": "Genderfluid Flag",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_france",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_france",
+      "src": "case",
+      "name": "France Flag",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_gay",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_gay",
+      "src": "case",
+      "name": "Gay Men Flag",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_germany",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_germany",
+      "src": "case",
+      "name": "Germany Flag",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_india",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_india",
+      "src": "case",
+      "name": "India Flag",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_intersex",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_intersex",
+      "src": "case",
+      "name": "Intersex Flag",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_ireland",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_ireland",
+      "src": "case",
+      "name": "Ireland Flag",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_israel",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_israel",
+      "src": "case",
+      "name": "Israel Flag",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_italy",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_italy",
+      "src": "case",
+      "name": "Italy Flag",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_japan",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_japan",
+      "src": "case",
+      "name": "Japan Flag",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_lesbian",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_lesbian",
+      "src": "case",
+      "name": "Lesbian Flag",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_mexico",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_mexico",
+      "src": "case",
+      "name": "Mexico Flag",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_nkorea",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_nkorea",
+      "src": "case",
+      "name": "North Korea Flag",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_nonbinary",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_nonbinary",
+      "src": "case",
+      "name": "Nonbinary Flag",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_pan",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_pan",
+      "src": "case",
+      "name": "Pansexual Flag",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_philippines",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_philippines",
+      "src": "case",
+      "name": "Philippines Flag",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_pride",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_pride",
+      "src": "case",
+      "name": "Rainbow Pride Flag",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_progress",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_progress",
+      "src": "case",
+      "name": "Progress Pride Flag",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_puertorico",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_puertorico",
+      "src": "case",
+      "name": "Puerto Rico Flag",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_russia",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_russia",
+      "src": "case",
+      "name": "Russia Flag",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_skorea",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_skorea",
+      "src": "case",
+      "name": "South Korea Flag",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_spain",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_spain",
+      "src": "case",
+      "name": "Spain Flag",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_trans",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_trans",
+      "src": "case",
+      "name": "Transgender Flag",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_uk",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_uk",
+      "src": "case",
+      "name": "United Kingdom Flag",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:f_usa",
+      "box": "flags",
+      "cat": "bg",
+      "key": "f_usa",
+      "src": "case",
+      "name": "United States Flag",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:fieldmap",
+      "box": "supply",
+      "cat": "bg",
+      "key": "fieldmap",
+      "src": "case",
+      "name": "Field Map",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:frozenriver",
+      "box": "winter",
+      "cat": "bg",
+      "key": "frozenriver",
+      "src": "case",
+      "name": "Frozen River Crossing",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 2
+    },
+    {
+      "id": "bg:goldaurora",
+      "box": "afterglow",
+      "cat": "bg",
+      "key": "goldaurora",
+      "src": "case",
+      "name": "Gold Aurora",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:goldrush",
+      "box": null,
+      "cat": "bg",
+      "key": "goldrush",
+      "src": "unlock",
+      "name": "Gold Rush",
+      "need": {
+        "hardWins": 3
+      },
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:graveyard",
+      "box": "halloween",
+      "cat": "bg",
+      "key": "graveyard",
+      "src": "case",
+      "name": "Graveyard",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:harvestmoon",
+      "box": "halloween",
+      "cat": "bg",
+      "key": "harvestmoon",
+      "src": "case",
+      "name": "Harvest Moon",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:hauntedfog",
+      "box": "halloween",
+      "cat": "bg",
+      "key": "hauntedfog",
+      "src": "case",
+      "name": "Haunted Fog",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:hellgate",
+      "box": "blitz",
+      "cat": "bg",
+      "key": "hellgate",
+      "src": "case",
+      "name": "Hellgate",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 2
+    },
+    {
+      "id": "bg:lagoonwaves",
+      "box": "afterglow",
+      "cat": "bg",
+      "key": "lagoonwaves",
+      "src": "case",
+      "name": "Lagoon",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:lanternoutpost",
+      "box": "winter",
+      "cat": "bg",
+      "key": "lanternoutpost",
+      "src": "case",
+      "name": "Lanternlit Outpost",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 2
+    },
+    {
+      "id": "bg:midnightevac",
+      "box": "winter",
+      "cat": "bg",
+      "key": "midnightevac",
+      "src": "case",
+      "name": "Midnight Evacuation",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 2
+    },
+    {
+      "id": "bg:nebula",
+      "box": "afterglow",
+      "cat": "bg",
+      "key": "nebula",
+      "src": "case",
+      "name": "Nebula",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:neongrid",
+      "box": null,
+      "cat": "bg",
+      "key": "neongrid",
+      "src": "unlock",
+      "name": "Neon Grid",
+      "need": {
+        "drops": 1000
+      },
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:neonpulse",
+      "box": "afterglow",
+      "cat": "bg",
+      "key": "neonpulse",
+      "src": "case",
+      "name": "Neon Pulse",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:nightwatch",
+      "box": null,
+      "cat": "bg",
+      "key": "nightwatch",
+      "src": "free",
+      "name": "Night Watch",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:sandbags",
+      "box": "supply",
+      "cat": "bg",
+      "key": "sandbags",
+      "src": "case",
+      "name": "Sandbag Line",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:scorched",
+      "box": "blitz",
+      "cat": "bg",
+      "key": "scorched",
+      "src": "case",
+      "name": "Scorched Front",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 2
+    },
+    {
+      "id": "bg:searchlight",
+      "box": "supply",
+      "cat": "bg",
+      "key": "searchlight",
+      "src": "case",
+      "name": "Searchlight",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:skistation",
+      "box": "winter",
+      "cat": "bg",
+      "key": "skistation",
+      "src": "case",
+      "name": "Abandoned Ski Station",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 2
+    },
+    {
+      "id": "bg:snowquarry",
+      "box": "winter",
+      "cat": "bg",
+      "key": "snowquarry",
+      "src": "case",
+      "name": "Snowed-In Quarry",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 2
+    },
+    {
+      "id": "bg:summitcommand",
+      "box": "winter",
+      "cat": "bg",
+      "key": "summitcommand",
+      "src": "case",
+      "name": "Summit Command",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 2
+    },
+    {
+      "id": "bg:sunsetfade",
+      "box": "afterglow",
+      "cat": "bg",
+      "key": "sunsetfade",
+      "src": "case",
+      "name": "Sunset Fade",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:watchtower",
+      "box": "supply",
+      "cat": "bg",
+      "key": "watchtower",
+      "src": "case",
+      "name": "Watchtower",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:whiteouttower",
+      "box": "winter",
+      "cat": "bg",
+      "key": "whiteouttower",
+      "src": "case",
+      "name": "Whiteout Watchtower",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 2
+    },
+    {
+      "id": "bg:winterdepot",
+      "box": "winter",
+      "cat": "bg",
+      "key": "winterdepot",
+      "src": "case",
+      "name": "Winter Supply Depot",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 2
+    },
+    {
+      "id": "bg:witchbrew",
+      "box": "halloween",
+      "cat": "bg",
+      "key": "witchbrew",
+      "src": "case",
+      "name": "Witch's Brew",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "bg:yulehangar",
+      "box": "winter",
+      "cat": "bg",
+      "key": "yulehangar",
+      "src": "case",
+      "name": "Yuletide Hangar",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 2
+    },
+    {
+      "id": "fx:ashbrand",
+      "box": "blitz",
+      "cat": "fx",
+      "key": "ashbrand",
+      "src": "case",
+      "name": "Brand of Ash",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 2
+    },
+    {
+      "id": "fx:bats",
+      "box": "halloween",
+      "cat": "fx",
+      "key": "bats",
+      "src": "case",
+      "name": "Bat Swarm",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "fx:bolt",
+      "box": "supply",
+      "cat": "fx",
+      "key": "bolt",
+      "src": "case",
+      "name": "Lightning",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "fx:borealiscollapse",
+      "box": "winter",
+      "cat": "fx",
+      "key": "borealiscollapse",
+      "src": "case",
+      "name": "Borealis Collapse",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 2
+    },
+    {
+      "id": "fx:bubbles",
+      "box": "afterglow",
+      "cat": "fx",
+      "key": "bubbles",
+      "src": "case",
+      "name": "Gold Bubbles",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 0
+    },
+    {
+      "id": "fx:cinder",
+      "box": "blitz",
+      "cat": "fx",
+      "key": "cinder",
+      "src": "case",
+      "name": "Cinder Burst",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 2
+    },
+    {
+      "id": "fx:confetti",
+      "box": "supply",
+      "cat": "fx",
+      "key": "confetti",
+      "src": "case",
+      "name": "Confetti",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "fx:demonclaw",
+      "box": "blitz",
+      "cat": "fx",
+      "key": "demonclaw",
+      "src": "case",
+      "name": "Demon Claw",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 2
+    },
+    {
+      "id": "fx:embers",
+      "box": null,
+      "cat": "fx",
+      "key": "embers",
+      "src": "unlock",
+      "name": "Embers",
+      "need": {
+        "hardWins": 1
+      },
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "fx:frag",
+      "box": null,
+      "cat": "fx",
+      "key": "frag",
+      "src": "unlock",
+      "name": "Frag Burst",
+      "need": {
+        "cls_grenadier_raids": 1000
+      },
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "fx:frost",
+      "box": "afterglow",
+      "cat": "fx",
+      "key": "frost",
+      "src": "case",
+      "name": "Frost Shatter",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "fx:frostfracture",
+      "box": "winter",
+      "cat": "fx",
+      "key": "frostfracture",
+      "src": "case",
+      "name": "Frost Fracture",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 2
+    },
+    {
+      "id": "fx:glint",
+      "box": "supply",
+      "cat": "fx",
+      "key": "glint",
+      "src": "case",
+      "name": "Ice Glint",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "fx:glitchout",
+      "box": "afterglow",
+      "cat": "fx",
+      "key": "glitchout",
+      "src": "case",
+      "name": "Glitch Out",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "fx:gradburst",
+      "box": "afterglow",
+      "cat": "fx",
+      "key": "gradburst",
+      "src": "case",
+      "name": "Violet Fade",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "fx:hellportal",
+      "box": null,
+      "cat": "fx",
+      "key": "hellportal",
+      "src": "unlock",
+      "name": "Hell Portal",
+      "need": {
+        "mode_blitz_bosses": 75
+      },
+      "rarity": "l",
+      "catalog_version": 2
+    },
+    {
+      "id": "fx:none",
+      "box": null,
+      "cat": "fx",
+      "key": "none",
+      "src": "free",
+      "name": "Standard",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "fx:ornamentpop",
+      "box": "winter",
+      "cat": "fx",
+      "key": "ornamentpop",
+      "src": "case",
+      "name": "Ornament Pop",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 2
+    },
+    {
+      "id": "fx:pixel",
+      "box": "afterglow",
+      "cat": "fx",
+      "key": "pixel",
+      "src": "case",
+      "name": "Pixel Pop",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "fx:reticle",
+      "box": null,
+      "cat": "fx",
+      "key": "reticle",
+      "src": "unlock",
+      "name": "Reticle",
+      "need": {
+        "cls_sniper_raids": 1000
+      },
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "fx:rocketburst",
+      "box": null,
+      "cat": "fx",
+      "key": "rocketburst",
+      "src": "unlock",
+      "name": "Rocket Burst",
+      "need": {
+        "cls_soldier_raids": 1000
+      },
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "fx:salvage",
+      "box": null,
+      "cat": "fx",
+      "key": "salvage",
+      "src": "unlock",
+      "name": "Salvage Pop",
+      "need": {
+        "cls_quartermaster_raids": 1000
+      },
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "fx:shockwave",
+      "box": "afterglow",
+      "cat": "fx",
+      "key": "shockwave",
+      "src": "case",
+      "name": "Neon Shockwave",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "fx:singularity",
+      "box": "afterglow",
+      "cat": "fx",
+      "key": "singularity",
+      "src": "case",
+      "name": "Singularity",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "fx:skull",
+      "box": "supply",
+      "cat": "fx",
+      "key": "skull",
+      "src": "case",
+      "name": "Skull Pop",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "fx:smoke",
+      "box": "supply",
+      "cat": "fx",
+      "key": "smoke",
+      "src": "case",
+      "name": "Smoke Puff",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "fx:snowpuff",
+      "box": "winter",
+      "cat": "fx",
+      "key": "snowpuff",
+      "src": "case",
+      "name": "Snow Puff",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 2
+    },
+    {
+      "id": "fx:solsticenova",
+      "box": "winter",
+      "cat": "fx",
+      "key": "solsticenova",
+      "src": "case",
+      "name": "Solstice Supernova",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 2
+    },
+    {
+      "id": "fx:souls",
+      "box": "halloween",
+      "cat": "fx",
+      "key": "souls",
+      "src": "case",
+      "name": "Soul Harvest",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "fx:sparks",
+      "box": "supply",
+      "cat": "fx",
+      "key": "sparks",
+      "src": "case",
+      "name": "Sparks",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "fx:spider",
+      "box": "halloween",
+      "cat": "fx",
+      "key": "spider",
+      "src": "case",
+      "name": "Spider Drop",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "fx:sunburst",
+      "box": "afterglow",
+      "cat": "fx",
+      "key": "sunburst",
+      "src": "case",
+      "name": "Sunset Burst",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "fx:supernova",
+      "box": "afterglow",
+      "cat": "fx",
+      "key": "supernova",
+      "src": "case",
+      "name": "Supernova",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "fx:tealslash",
+      "box": "blitz",
+      "cat": "fx",
+      "key": "tealslash",
+      "src": "case",
+      "name": "Teal Slash",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 2
+    },
+    {
+      "id": "fx:toxic",
+      "box": "afterglow",
+      "cat": "fx",
+      "key": "toxic",
+      "src": "case",
+      "name": "Toxic Splash",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "fx:winterbloom",
+      "box": "winter",
+      "cat": "fx",
+      "key": "winterbloom",
+      "src": "case",
+      "name": "Winter Bloom",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 2
+    },
+    {
+      "id": "hat:acap",
+      "box": "afterglow",
+      "cat": "hat",
+      "key": "acap",
+      "src": "case",
+      "name": "Arcade Cap",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "hat:aurorahalo",
+      "box": "winter",
+      "cat": "hat",
+      "key": "aurorahalo",
+      "src": "case",
+      "name": "Aurora Halo",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 2
+    },
+    {
+      "id": "hat:batcirclet",
+      "box": "halloween",
+      "cat": "hat",
+      "key": "batcirclet",
+      "src": "case",
+      "name": "Bat-Notch Circlet",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 1
+    },
+    {
+      "id": "hat:beanie",
+      "box": null,
+      "cat": "hat",
+      "key": "beanie",
+      "src": "unlock",
+      "name": "Beanie",
+      "need": {
+        "raids": 10
+      },
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "hat:beret",
+      "box": "supply",
+      "cat": "hat",
+      "key": "beret",
+      "src": "case",
+      "name": "Beret",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "hat:bombhelm",
+      "box": null,
+      "cat": "hat",
+      "key": "bombhelm",
+      "src": "unlock",
+      "name": "Blast Helmet",
+      "need": {
+        "cls_grenadier_raids": 250
+      },
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "hat:bonewrap",
+      "box": "halloween",
+      "cat": "hat",
+      "key": "bonewrap",
+      "src": "case",
+      "name": "Bone-Button Wrap",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 1
+    },
+    {
+      "id": "hat:boonie",
+      "box": "supply",
+      "cat": "hat",
+      "key": "boonie",
+      "src": "case",
+      "name": "Boonie",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "hat:cap",
+      "box": null,
+      "cat": "hat",
+      "key": "cap",
+      "src": "free",
+      "name": "Ball Cap",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "hat:class",
+      "box": null,
+      "cat": "hat",
+      "key": "class",
+      "src": "free",
+      "name": "Class Issue",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "hat:clownhair",
+      "box": "afterglow",
+      "cat": "hat",
+      "key": "clownhair",
+      "src": "case",
+      "name": "Neon Clown Hair",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "hat:crown",
+      "box": "supply",
+      "cat": "hat",
+      "key": "crown",
+      "src": "case",
+      "name": "Crown",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "hat:devilhorns",
+      "box": null,
+      "cat": "hat",
+      "key": "devilhorns",
+      "src": "unlock",
+      "name": "Devil Horns",
+      "need": {
+        "mode_blitz_bosses": 10
+      },
+      "rarity": "r",
+      "catalog_version": 2
+    },
+    {
+      "id": "hat:gclownhair",
+      "box": "afterglow",
+      "cat": "hat",
+      "key": "gclownhair",
+      "src": "case",
+      "name": "Gold Clown Hair",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 0
+    },
+    {
+      "id": "hat:ghelm",
+      "box": "afterglow",
+      "cat": "hat",
+      "key": "ghelm",
+      "src": "case",
+      "name": "Gold Knight Helm",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 0
+    },
+    {
+      "id": "hat:ghood",
+      "box": null,
+      "cat": "hat",
+      "key": "ghood",
+      "src": "unlock",
+      "name": "Ghillie Hood",
+      "need": {
+        "cls_sniper_raids": 250
+      },
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "hat:glitch",
+      "box": "afterglow",
+      "cat": "hat",
+      "key": "glitch",
+      "src": "case",
+      "name": "Glitch Head",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "hat:gravecap",
+      "box": "halloween",
+      "cat": "hat",
+      "key": "gravecap",
+      "src": "case",
+      "name": "Gravestone Cap",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 1
+    },
+    {
+      "id": "hat:halo",
+      "box": "afterglow",
+      "cat": "hat",
+      "key": "halo",
+      "src": "case",
+      "name": "Halo",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "hat:headband",
+      "box": "afterglow",
+      "cat": "hat",
+      "key": "headband",
+      "src": "case",
+      "name": "Neon Headband",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "hat:icinghelm",
+      "box": "winter",
+      "cat": "hat",
+      "key": "icinghelm",
+      "src": "case",
+      "name": "Icing Helmet",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 2
+    },
+    {
+      "id": "hat:jackolantern",
+      "box": "halloween",
+      "cat": "hat",
+      "key": "jackolantern",
+      "src": "case",
+      "name": "Jack-o'-Lantern",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "hat:ledmask",
+      "box": "afterglow",
+      "cat": "hat",
+      "key": "ledmask",
+      "src": "case",
+      "name": "LED Mask",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "hat:nhelm",
+      "box": "afterglow",
+      "cat": "hat",
+      "key": "nhelm",
+      "src": "case",
+      "name": "Neon Helmet",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "hat:officer",
+      "box": null,
+      "cat": "hat",
+      "key": "officer",
+      "src": "unlock",
+      "name": "Officer's Cap",
+      "need": {
+        "cls_soldier_raids": 250
+      },
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "hat:pcap",
+      "box": "afterglow",
+      "cat": "hat",
+      "key": "pcap",
+      "src": "case",
+      "name": "Police Cap",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "hat:pinecrown",
+      "box": "winter",
+      "cat": "hat",
+      "key": "pinecrown",
+      "src": "case",
+      "name": "Evergreen Crown",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 2
+    },
+    {
+      "id": "hat:pumpkinking",
+      "box": "halloween",
+      "cat": "hat",
+      "key": "pumpkinking",
+      "src": "case",
+      "name": "Pumpkin King",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "hat:qmset",
+      "box": null,
+      "cat": "hat",
+      "key": "qmset",
+      "src": "unlock",
+      "name": "Supply Headset",
+      "need": {
+        "cls_quartermaster_raids": 250
+      },
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "hat:rescuehood",
+      "box": "winter",
+      "cat": "hat",
+      "key": "rescuehood",
+      "src": "case",
+      "name": "Rescue Hood",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 2
+    },
+    {
+      "id": "hat:rimecrest",
+      "box": "winter",
+      "cat": "hat",
+      "key": "rimecrest",
+      "src": "case",
+      "name": "Rime Crest",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 2
+    },
+    {
+      "id": "hat:shako",
+      "box": "winter",
+      "cat": "hat",
+      "key": "shako",
+      "src": "case",
+      "name": "Parade Shako",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 2
+    },
+    {
+      "id": "hat:skullseal",
+      "box": "halloween",
+      "cat": "hat",
+      "key": "skullseal",
+      "src": "case",
+      "name": "Crescent Skull Seal",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 1
+    },
+    {
+      "id": "hat:snowgoggles",
+      "box": "winter",
+      "cat": "hat",
+      "key": "snowgoggles",
+      "src": "case",
+      "name": "Snowline Goggles",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 2
+    },
+    {
+      "id": "hat:stemband",
+      "box": "halloween",
+      "cat": "hat",
+      "key": "stemband",
+      "src": "case",
+      "name": "Pumpkin Stem Band",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 1
+    },
+    {
+      "id": "hat:surveyhelm",
+      "box": "winter",
+      "cat": "hat",
+      "key": "surveyhelm",
+      "src": "case",
+      "name": "Surveyor Helmet",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 2
+    },
+    {
+      "id": "hat:tophat",
+      "box": "supply",
+      "cat": "hat",
+      "key": "tophat",
+      "src": "case",
+      "name": "Top Hat",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "hat:ushanka",
+      "box": "winter",
+      "cat": "hat",
+      "key": "ushanka",
+      "src": "case",
+      "name": "Ranger Ushanka",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 2
+    },
+    {
+      "id": "hat:visor",
+      "box": "afterglow",
+      "cat": "hat",
+      "key": "visor",
+      "src": "case",
+      "name": "Cyber Visor",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "hat:webpin",
+      "box": "halloween",
+      "cat": "hat",
+      "key": "webpin",
+      "src": "case",
+      "name": "Cobweb Brow Pin",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 1
+    },
+    {
+      "id": "hat:witch",
+      "box": "halloween",
+      "cat": "hat",
+      "key": "witch",
+      "src": "case",
+      "name": "Witch Hat",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "hat:wrap",
+      "box": "supply",
+      "cat": "hat",
+      "key": "wrap",
+      "src": "case",
+      "name": "Head Wrap",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "hat:yulecap",
+      "box": "winter",
+      "cat": "hat",
+      "key": "yulecap",
+      "src": "case",
+      "name": "Quartermaster Cap",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 2
+    },
+    {
+      "id": "skin:arcade",
+      "box": "afterglow",
+      "cat": "skin",
+      "key": "arcade",
+      "src": "case",
+      "name": "Arcade",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:arctic",
+      "box": "supply",
+      "cat": "skin",
+      "key": "arctic",
+      "src": "case",
+      "name": "Arctic",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:aurorasovereign",
+      "box": null,
+      "cat": "skin",
+      "key": "aurorasovereign",
+      "src": "unlock",
+      "name": "Aurora Sovereign",
+      "need": {
+        "map_frost": 2500
+      },
+      "rarity": "g",
+      "catalog_version": 2
+    },
+    {
+      "id": "skin:bluebutcher",
+      "box": null,
+      "cat": "skin",
+      "key": "bluebutcher",
+      "src": "unlock",
+      "name": "Blue Butcher",
+      "need": {
+        "mode_blitz_bosses": 50
+      },
+      "rarity": "e",
+      "catalog_version": 2
+    },
+    {
+      "id": "skin:butcher",
+      "box": null,
+      "cat": "skin",
+      "key": "butcher",
+      "src": "unlock",
+      "name": "Butcher",
+      "need": {
+        "boss_butcher": 25
+      },
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:butcher2",
+      "box": null,
+      "cat": "skin",
+      "key": "butcher2",
+      "src": "unlock",
+      "name": "Pale Butcher",
+      "need": {
+        "boss_butcher": 50
+      },
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:butcher3",
+      "box": null,
+      "cat": "skin",
+      "key": "butcher3",
+      "src": "unlock",
+      "name": "Bloodrage Butcher",
+      "need": {
+        "boss_butcher": 100
+      },
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:butcher4",
+      "box": null,
+      "cat": "skin",
+      "key": "butcher4",
+      "src": "unlock",
+      "name": "Gilded Butcher",
+      "need": {
+        "boss_butcher": 250
+      },
+      "rarity": "g",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:chrome",
+      "box": "afterglow",
+      "cat": "skin",
+      "key": "chrome",
+      "src": "case",
+      "name": "Chrome",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:clown",
+      "box": "halloween",
+      "cat": "skin",
+      "key": "clown",
+      "src": "case",
+      "name": "Scary Clown",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:cobweb",
+      "box": "halloween",
+      "cat": "skin",
+      "key": "cobweb",
+      "src": "case",
+      "name": "Cobweb",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:cyber",
+      "box": "afterglow",
+      "cat": "skin",
+      "key": "cyber",
+      "src": "case",
+      "name": "Cyberpunk",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:demo",
+      "box": null,
+      "cat": "skin",
+      "key": "demo",
+      "src": "unlock",
+      "name": "Demolisher",
+      "need": {
+        "boss_demolisher": 25
+      },
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:demo2",
+      "box": null,
+      "cat": "skin",
+      "key": "demo2",
+      "src": "unlock",
+      "name": "Desert Demolisher",
+      "need": {
+        "boss_demolisher": 50
+      },
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:demo3",
+      "box": null,
+      "cat": "skin",
+      "key": "demo3",
+      "src": "unlock",
+      "name": "Live-Fuse Demolisher",
+      "need": {
+        "boss_demolisher": 100
+      },
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:demo4",
+      "box": null,
+      "cat": "skin",
+      "key": "demo4",
+      "src": "unlock",
+      "name": "Gilded Demolisher",
+      "need": {
+        "boss_demolisher": 250
+      },
+      "rarity": "g",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:demon",
+      "box": null,
+      "cat": "skin",
+      "key": "demon",
+      "src": "unlock",
+      "name": "Demon",
+      "need": {
+        "mode_blitz_bosses": 100
+      },
+      "rarity": "g",
+      "catalog_version": 2
+    },
+    {
+      "id": "skin:desert",
+      "box": null,
+      "cat": "skin",
+      "key": "desert",
+      "src": "unlock",
+      "name": "Desert",
+      "need": {
+        "raids": 3
+      },
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:dracula",
+      "box": "halloween",
+      "cat": "skin",
+      "key": "dracula",
+      "src": "case",
+      "name": "Dracula",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:evergreen",
+      "box": null,
+      "cat": "skin",
+      "key": "evergreen",
+      "src": "unlock",
+      "name": "Evergreen Sentinel",
+      "need": {
+        "boss_rime": 50
+      },
+      "rarity": "e",
+      "catalog_version": 2
+    },
+    {
+      "id": "skin:ferry",
+      "box": null,
+      "cat": "skin",
+      "key": "ferry",
+      "src": "unlock",
+      "name": "Ferryman",
+      "need": {
+        "boss_ferryman": 25
+      },
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:ferry2",
+      "box": null,
+      "cat": "skin",
+      "key": "ferry2",
+      "src": "unlock",
+      "name": "Blackwater Ferryman",
+      "need": {
+        "boss_ferryman": 50
+      },
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:ferry3",
+      "box": null,
+      "cat": "skin",
+      "key": "ferry3",
+      "src": "unlock",
+      "name": "Drowned Ferryman",
+      "need": {
+        "boss_ferryman": 100
+      },
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:ferry4",
+      "box": null,
+      "cat": "skin",
+      "key": "ferry4",
+      "src": "unlock",
+      "name": "Gilded Ferryman",
+      "need": {
+        "boss_ferryman": 250
+      },
+      "rarity": "g",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:foreman",
+      "box": null,
+      "cat": "skin",
+      "key": "foreman",
+      "src": "unlock",
+      "name": "Foreman",
+      "need": {
+        "boss_foreman": 25
+      },
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:foreman2",
+      "box": null,
+      "cat": "skin",
+      "key": "foreman2",
+      "src": "unlock",
+      "name": "Night-Shift Foreman",
+      "need": {
+        "boss_foreman": 50
+      },
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:foreman3",
+      "box": null,
+      "cat": "skin",
+      "key": "foreman3",
+      "src": "unlock",
+      "name": "Sparking Foreman",
+      "need": {
+        "boss_foreman": 100
+      },
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:foreman4",
+      "box": null,
+      "cat": "skin",
+      "key": "foreman4",
+      "src": "unlock",
+      "name": "Gilded Foreman",
+      "need": {
+        "boss_foreman": 250
+      },
+      "rarity": "g",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:forest",
+      "box": "supply",
+      "cat": "skin",
+      "key": "forest",
+      "src": "case",
+      "name": "Deep Woods",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:frost",
+      "box": "afterglow",
+      "cat": "skin",
+      "key": "frost",
+      "src": "case",
+      "name": "Frostbite",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:galaxy",
+      "box": "afterglow",
+      "cat": "skin",
+      "key": "galaxy",
+      "src": "case",
+      "name": "Galaxy",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:gclown",
+      "box": "afterglow",
+      "cat": "skin",
+      "key": "gclown",
+      "src": "case",
+      "name": "Gold Clown",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:ggren",
+      "box": null,
+      "cat": "skin",
+      "key": "ggren",
+      "src": "unlock",
+      "name": "Gold Demolitions",
+      "need": {
+        "cls_grenadier_raids": 2500
+      },
+      "rarity": "g",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:ghost",
+      "box": null,
+      "cat": "skin",
+      "key": "ghost",
+      "src": "unlock",
+      "name": "Ghost",
+      "need": {
+        "endless": 15
+      },
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:gildedfrostborn",
+      "box": "winter",
+      "cat": "skin",
+      "key": "gildedfrostborn",
+      "src": "case",
+      "name": "Gilded Frostborn",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 3
+    },
+    {
+      "id": "skin:gingergren",
+      "box": "winter",
+      "cat": "skin",
+      "key": "gingergren",
+      "src": "case",
+      "name": "Gingerbread Grenadier",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 2
+    },
+    {
+      "id": "skin:gknight",
+      "box": "afterglow",
+      "cat": "skin",
+      "key": "gknight",
+      "src": "case",
+      "name": "Gold Metal Knight",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:glacierengineer",
+      "box": null,
+      "cat": "skin",
+      "key": "glacierengineer",
+      "src": "unlock",
+      "name": "Glacier Engineer",
+      "need": {
+        "map_frost": 1000
+      },
+      "rarity": "l",
+      "catalog_version": 2
+    },
+    {
+      "id": "skin:gold",
+      "box": "supply",
+      "cat": "skin",
+      "key": "gold",
+      "src": "case",
+      "name": "Gilded",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:gpolice",
+      "box": "afterglow",
+      "cat": "skin",
+      "key": "gpolice",
+      "src": "case",
+      "name": "Gold Police",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:gqm",
+      "box": null,
+      "cat": "skin",
+      "key": "gqm",
+      "src": "unlock",
+      "name": "Gold Quartermaster",
+      "need": {
+        "cls_quartermaster_raids": 2500
+      },
+      "rarity": "g",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:gsniper",
+      "box": null,
+      "cat": "skin",
+      "key": "gsniper",
+      "src": "unlock",
+      "name": "Gold Ghillie",
+      "need": {
+        "cls_sniper_raids": 2500
+      },
+      "rarity": "g",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:gsoldier",
+      "box": null,
+      "cat": "skin",
+      "key": "gsoldier",
+      "src": "unlock",
+      "name": "Gold Commander",
+      "need": {
+        "cls_soldier_raids": 2500
+      },
+      "rarity": "g",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:holo",
+      "box": "afterglow",
+      "cat": "skin",
+      "key": "holo",
+      "src": "case",
+      "name": "Hologram",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:monster",
+      "box": "halloween",
+      "cat": "skin",
+      "key": "monster",
+      "src": "case",
+      "name": "Frankenstein's Monster",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:mummy",
+      "box": "halloween",
+      "cat": "skin",
+      "key": "mummy",
+      "src": "case",
+      "name": "Mummy",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:neonclown",
+      "box": "afterglow",
+      "cat": "skin",
+      "key": "neonclown",
+      "src": "case",
+      "name": "Neon Clown",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:neonknight",
+      "box": "afterglow",
+      "cat": "skin",
+      "key": "neonknight",
+      "src": "case",
+      "name": "Neon Knight",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:neonops",
+      "box": "afterglow",
+      "cat": "skin",
+      "key": "neonops",
+      "src": "case",
+      "name": "Neon Ops",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:neonpolice",
+      "box": "afterglow",
+      "cat": "skin",
+      "key": "neonpolice",
+      "src": "case",
+      "name": "Neon Police",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:night",
+      "box": "supply",
+      "cat": "skin",
+      "key": "night",
+      "src": "case",
+      "name": "Nightwatch",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:nutcracker",
+      "box": null,
+      "cat": "skin",
+      "key": "nutcracker",
+      "src": "unlock",
+      "name": "Nutcracker Vanguard",
+      "need": {
+        "boss_rime": 100
+      },
+      "rarity": "l",
+      "catalog_version": 2
+    },
+    {
+      "id": "skin:phantom",
+      "box": "halloween",
+      "cat": "skin",
+      "key": "phantom",
+      "src": "case",
+      "name": "Phantom",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:polarrescue",
+      "box": null,
+      "cat": "skin",
+      "key": "polarrescue",
+      "src": "unlock",
+      "name": "Polar Rescue",
+      "need": {
+        "boss_rime": 25
+      },
+      "rarity": "r",
+      "catalog_version": 2
+    },
+    {
+      "id": "skin:pumpkin",
+      "box": "halloween",
+      "cat": "skin",
+      "key": "pumpkin",
+      "src": "case",
+      "name": "Pumpkin Patch",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:quarry",
+      "box": null,
+      "cat": "skin",
+      "key": "quarry",
+      "src": "unlock",
+      "name": "Quarry Hand",
+      "need": {
+        "map_quarry": 250
+      },
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:quarry2",
+      "box": null,
+      "cat": "skin",
+      "key": "quarry2",
+      "src": "unlock",
+      "name": "Oil-Drum Hand",
+      "need": {
+        "map_quarry": 500
+      },
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:quarry3",
+      "box": null,
+      "cat": "skin",
+      "key": "quarry3",
+      "src": "unlock",
+      "name": "Ashfall Hand",
+      "need": {
+        "map_quarry": 1000
+      },
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:quarry4",
+      "box": null,
+      "cat": "skin",
+      "key": "quarry4",
+      "src": "unlock",
+      "name": "Golden Quarry",
+      "need": {
+        "map_quarry": 2500
+      },
+      "rarity": "g",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:reaper",
+      "box": "halloween",
+      "cat": "skin",
+      "key": "reaper",
+      "src": "case",
+      "name": "Grim Reaper",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:redcoat",
+      "box": "supply",
+      "cat": "skin",
+      "key": "redcoat",
+      "src": "case",
+      "name": "Redcoat",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:rednosedemolisher",
+      "box": "winter",
+      "cat": "skin",
+      "key": "rednosedemolisher",
+      "src": "case",
+      "name": "Rednose Demolisher",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 3
+    },
+    {
+      "id": "skin:rimewarden",
+      "box": null,
+      "cat": "skin",
+      "key": "rimewarden",
+      "src": "unlock",
+      "name": "Rimebound Warden",
+      "need": {
+        "boss_rime": 250
+      },
+      "rarity": "g",
+      "catalog_version": 2
+    },
+    {
+      "id": "skin:river",
+      "box": null,
+      "cat": "skin",
+      "key": "river",
+      "src": "unlock",
+      "name": "River Rat",
+      "need": {
+        "map_river": 250
+      },
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:river2",
+      "box": null,
+      "cat": "skin",
+      "key": "river2",
+      "src": "unlock",
+      "name": "Silt Rat",
+      "need": {
+        "map_river": 500
+      },
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:river3",
+      "box": null,
+      "cat": "skin",
+      "key": "river3",
+      "src": "unlock",
+      "name": "Rain Rat",
+      "need": {
+        "map_river": 1000
+      },
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:river4",
+      "box": null,
+      "cat": "skin",
+      "key": "river4",
+      "src": "unlock",
+      "name": "Golden River",
+      "need": {
+        "map_river": 2500
+      },
+      "rarity": "g",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:sahur",
+      "box": "supply",
+      "cat": "skin",
+      "key": "sahur",
+      "src": "case",
+      "name": "Tung Tung Tung Sahur",
+      "need": null,
+      "rarity": "u",
+      "catalog_version": 1
+    },
+    {
+      "id": "skin:scarecrow",
+      "box": "halloween",
+      "cat": "skin",
+      "key": "scarecrow",
+      "src": "case",
+      "name": "Scarecrow",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:sheetghost",
+      "box": "halloween",
+      "cat": "skin",
+      "key": "sheetghost",
+      "src": "case",
+      "name": "Sheet Ghost",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:skeleton",
+      "box": "halloween",
+      "cat": "skin",
+      "key": "skeleton",
+      "src": "case",
+      "name": "Skeleton",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:slasher",
+      "box": "halloween",
+      "cat": "skin",
+      "key": "slasher",
+      "src": "case",
+      "name": "Hockey-Mask Slasher",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:snowline",
+      "box": null,
+      "cat": "skin",
+      "key": "snowline",
+      "src": "unlock",
+      "name": "Snowline Scout",
+      "need": {
+        "map_frost": 250
+      },
+      "rarity": "r",
+      "catalog_version": 2
+    },
+    {
+      "id": "skin:std",
+      "box": null,
+      "cat": "skin",
+      "key": "std",
+      "src": "free",
+      "name": "Standard Issue",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:storm",
+      "box": null,
+      "cat": "skin",
+      "key": "storm",
+      "src": "unlock",
+      "name": "Stormcaller",
+      "need": {
+        "boss_storm": 25
+      },
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:storm2",
+      "box": null,
+      "cat": "skin",
+      "key": "storm2",
+      "src": "unlock",
+      "name": "Violet Stormcaller",
+      "need": {
+        "boss_storm": 50
+      },
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:storm3",
+      "box": null,
+      "cat": "skin",
+      "key": "storm3",
+      "src": "unlock",
+      "name": "Crackling Stormcaller",
+      "need": {
+        "boss_storm": 100
+      },
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:storm4",
+      "box": null,
+      "cat": "skin",
+      "key": "storm4",
+      "src": "unlock",
+      "name": "Gilded Stormcaller",
+      "need": {
+        "boss_storm": 250
+      },
+      "rarity": "g",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:summitranger",
+      "box": null,
+      "cat": "skin",
+      "key": "summitranger",
+      "src": "unlock",
+      "name": "Summit Ranger",
+      "need": {
+        "map_frost": 500
+      },
+      "rarity": "e",
+      "catalog_version": 2
+    },
+    {
+      "id": "skin:tiger",
+      "box": "supply",
+      "cat": "skin",
+      "key": "tiger",
+      "src": "case",
+      "name": "Tigerstripe",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:toxic",
+      "box": "afterglow",
+      "cat": "skin",
+      "key": "toxic",
+      "src": "case",
+      "name": "Toxic Waste",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:urban",
+      "box": null,
+      "cat": "skin",
+      "key": "urban",
+      "src": "unlock",
+      "name": "Urban Grey",
+      "need": {
+        "wins": 1
+      },
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:yard",
+      "box": null,
+      "cat": "skin",
+      "key": "yard",
+      "src": "unlock",
+      "name": "Yard Hand",
+      "need": {
+        "map_yard": 250
+      },
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:yard2",
+      "box": null,
+      "cat": "skin",
+      "key": "yard2",
+      "src": "unlock",
+      "name": "Harvest Hand",
+      "need": {
+        "map_yard": 500
+      },
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:yard3",
+      "box": null,
+      "cat": "skin",
+      "key": "yard3",
+      "src": "unlock",
+      "name": "Firefly Hand",
+      "need": {
+        "map_yard": 1000
+      },
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:yard4",
+      "box": null,
+      "cat": "skin",
+      "key": "yard4",
+      "src": "unlock",
+      "name": "Golden Yard",
+      "need": {
+        "map_yard": 2500
+      },
+      "rarity": "g",
+      "catalog_version": 0
+    },
+    {
+      "id": "skin:yulemaw",
+      "box": "winter",
+      "cat": "skin",
+      "key": "yulemaw",
+      "src": "case",
+      "name": "Yulemaw",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 3
+    },
+    {
+      "id": "skin:yuletideqm",
+      "box": "winter",
+      "cat": "skin",
+      "key": "yuletideqm",
+      "src": "case",
+      "name": "Yuletide Quartermaster",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 2
+    },
+    {
+      "id": "trail:asteroid",
+      "box": "afterglow",
+      "cat": "trail",
+      "key": "asteroid",
+      "src": "case",
+      "name": "Asteroid Belt",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:aurora",
+      "box": "afterglow",
+      "cat": "trail",
+      "key": "aurora",
+      "src": "case",
+      "name": "Aurora",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:auroralance",
+      "box": "winter",
+      "cat": "trail",
+      "key": "auroralance",
+      "src": "case",
+      "name": "Aurora Lance",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 2
+    },
+    {
+      "id": "trail:blackhole",
+      "box": "afterglow",
+      "cat": "trail",
+      "key": "blackhole",
+      "src": "case",
+      "name": "Event Horizon",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:blood",
+      "box": "halloween",
+      "cat": "trail",
+      "key": "blood",
+      "src": "case",
+      "name": "Blood Trail",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:blue",
+      "box": "supply",
+      "cat": "trail",
+      "key": "blue",
+      "src": "case",
+      "name": "Ice Round",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:bluearc",
+      "box": null,
+      "cat": "trail",
+      "key": "bluearc",
+      "src": "unlock",
+      "name": "Blue Arc",
+      "need": {
+        "mode_blitz_bosses": 25
+      },
+      "rarity": "e",
+      "catalog_version": 2
+    },
+    {
+      "id": "trail:brimstone",
+      "box": "blitz",
+      "cat": "trail",
+      "key": "brimstone",
+      "src": "case",
+      "name": "Brimstone",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 2
+    },
+    {
+      "id": "trail:candle",
+      "box": "halloween",
+      "cat": "trail",
+      "key": "candle",
+      "src": "case",
+      "name": "Candle Flicker",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:candycorn",
+      "box": "halloween",
+      "cat": "trail",
+      "key": "candycorn",
+      "src": "case",
+      "name": "Candy Corn",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:candyline",
+      "box": "winter",
+      "cat": "trail",
+      "key": "candyline",
+      "src": "case",
+      "name": "Candyline",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 2
+    },
+    {
+      "id": "trail:comet",
+      "box": "afterglow",
+      "cat": "trail",
+      "key": "comet",
+      "src": "case",
+      "name": "Comet",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_ace",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_ace",
+      "src": "case",
+      "name": "Asexual Flag",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_agender",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_agender",
+      "src": "case",
+      "name": "Agender Flag",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_argentina",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_argentina",
+      "src": "case",
+      "name": "Argentina Flag",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_aro",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_aro",
+      "src": "case",
+      "name": "Aromantic Flag",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_bi",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_bi",
+      "src": "case",
+      "name": "Bisexual Flag",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_brazil",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_brazil",
+      "src": "case",
+      "name": "Brazil Flag",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_canada",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_canada",
+      "src": "case",
+      "name": "Canada Flag",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_fluid",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_fluid",
+      "src": "case",
+      "name": "Genderfluid Flag",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_france",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_france",
+      "src": "case",
+      "name": "France Flag",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_gay",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_gay",
+      "src": "case",
+      "name": "Gay Men Flag",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_germany",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_germany",
+      "src": "case",
+      "name": "Germany Flag",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_india",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_india",
+      "src": "case",
+      "name": "India Flag",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_intersex",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_intersex",
+      "src": "case",
+      "name": "Intersex Flag",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_ireland",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_ireland",
+      "src": "case",
+      "name": "Ireland Flag",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_israel",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_israel",
+      "src": "case",
+      "name": "Israel Flag",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_italy",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_italy",
+      "src": "case",
+      "name": "Italy Flag",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_japan",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_japan",
+      "src": "case",
+      "name": "Japan Flag",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_lesbian",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_lesbian",
+      "src": "case",
+      "name": "Lesbian Flag",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_mexico",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_mexico",
+      "src": "case",
+      "name": "Mexico Flag",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_nkorea",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_nkorea",
+      "src": "case",
+      "name": "North Korea Flag",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_nonbinary",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_nonbinary",
+      "src": "case",
+      "name": "Nonbinary Flag",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_pan",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_pan",
+      "src": "case",
+      "name": "Pansexual Flag",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_philippines",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_philippines",
+      "src": "case",
+      "name": "Philippines Flag",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_pride",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_pride",
+      "src": "case",
+      "name": "Rainbow Pride Flag",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_progress",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_progress",
+      "src": "case",
+      "name": "Progress Pride Flag",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_puertorico",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_puertorico",
+      "src": "case",
+      "name": "Puerto Rico Flag",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_russia",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_russia",
+      "src": "case",
+      "name": "Russia Flag",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_skorea",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_skorea",
+      "src": "case",
+      "name": "South Korea Flag",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_spain",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_spain",
+      "src": "case",
+      "name": "Spain Flag",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_trans",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_trans",
+      "src": "case",
+      "name": "Transgender Flag",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_uk",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_uk",
+      "src": "case",
+      "name": "United Kingdom Flag",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:f_usa",
+      "box": "flags",
+      "cat": "trail",
+      "key": "f_usa",
+      "src": "case",
+      "name": "United States Flag",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:fuse",
+      "box": null,
+      "cat": "trail",
+      "key": "fuse",
+      "src": "unlock",
+      "name": "Lit Fuse",
+      "need": {
+        "cls_grenadier_raids": 500
+      },
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:galaxy",
+      "box": "afterglow",
+      "cat": "trail",
+      "key": "galaxy",
+      "src": "case",
+      "name": "Galaxy",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:ghostfire",
+      "box": "halloween",
+      "cat": "trail",
+      "key": "ghostfire",
+      "src": "case",
+      "name": "Ghostfire",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:glaciershard",
+      "box": "winter",
+      "cat": "trail",
+      "key": "glaciershard",
+      "src": "case",
+      "name": "Glacier Shard",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 2
+    },
+    {
+      "id": "trail:glitch",
+      "box": "afterglow",
+      "cat": "trail",
+      "key": "glitch",
+      "src": "case",
+      "name": "Glitch Line",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:gold",
+      "box": "supply",
+      "cat": "trail",
+      "key": "gold",
+      "src": "case",
+      "name": "Gold Round",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:grainbow",
+      "box": "afterglow",
+      "cat": "trail",
+      "key": "grainbow",
+      "src": "case",
+      "name": "Gold Rainbow",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:green",
+      "box": null,
+      "cat": "trail",
+      "key": "green",
+      "src": "unlock",
+      "name": "Green Tracer",
+      "need": {
+        "drops": 50
+      },
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:hairline",
+      "box": null,
+      "cat": "trail",
+      "key": "hairline",
+      "src": "unlock",
+      "name": "Hairline",
+      "need": {
+        "cls_sniper_raids": 500
+      },
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:heat",
+      "box": "afterglow",
+      "cat": "trail",
+      "key": "heat",
+      "src": "case",
+      "name": "Heatwave",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:hellchain",
+      "box": "blitz",
+      "cat": "trail",
+      "key": "hellchain",
+      "src": "case",
+      "name": "Hellfire Chain",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 2
+    },
+    {
+      "id": "trail:hellfire",
+      "box": "halloween",
+      "cat": "trail",
+      "key": "hellfire",
+      "src": "case",
+      "name": "Hellfire",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:lagoon",
+      "box": "afterglow",
+      "cat": "trail",
+      "key": "lagoon",
+      "src": "case",
+      "name": "Lagoon Fade",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:nebula",
+      "box": "afterglow",
+      "cat": "trail",
+      "key": "nebula",
+      "src": "case",
+      "name": "Nebula",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:neonpulse",
+      "box": "afterglow",
+      "cat": "trail",
+      "key": "neonpulse",
+      "src": "case",
+      "name": "Neon Pulse",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:pink",
+      "box": "supply",
+      "cat": "trail",
+      "key": "pink",
+      "src": "case",
+      "name": "Neon",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:plasma",
+      "box": "supply",
+      "cat": "trail",
+      "key": "plasma",
+      "src": "case",
+      "name": "Plasma",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:poison",
+      "box": "halloween",
+      "cat": "trail",
+      "key": "poison",
+      "src": "case",
+      "name": "Poison Apple",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:polarspark",
+      "box": "winter",
+      "cat": "trail",
+      "key": "polarspark",
+      "src": "case",
+      "name": "Polar Spark",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 2
+    },
+    {
+      "id": "trail:rainbow",
+      "box": "supply",
+      "cat": "trail",
+      "key": "rainbow",
+      "src": "case",
+      "name": "Prism",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:red",
+      "box": "supply",
+      "cat": "trail",
+      "key": "red",
+      "src": "case",
+      "name": "Hot Red",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:rocket",
+      "box": null,
+      "cat": "trail",
+      "key": "rocket",
+      "src": "unlock",
+      "name": "Rocket Trail",
+      "need": {
+        "cls_soldier_raids": 500
+      },
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:sigil",
+      "box": "blitz",
+      "cat": "trail",
+      "key": "sigil",
+      "src": "case",
+      "name": "Infernal Sigil",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 2
+    },
+    {
+      "id": "trail:snowstreak",
+      "box": "winter",
+      "cat": "trail",
+      "key": "snowstreak",
+      "src": "case",
+      "name": "Snowstreak",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 2
+    },
+    {
+      "id": "trail:solar",
+      "box": "afterglow",
+      "cat": "trail",
+      "key": "solar",
+      "src": "case",
+      "name": "Solar Flare",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:solsticecomet",
+      "box": "winter",
+      "cat": "trail",
+      "key": "solsticecomet",
+      "src": "case",
+      "name": "Solstice Comet",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 2
+    },
+    {
+      "id": "trail:starlight",
+      "box": "afterglow",
+      "cat": "trail",
+      "key": "starlight",
+      "src": "case",
+      "name": "Starlight",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:std",
+      "box": null,
+      "cat": "trail",
+      "key": "std",
+      "src": "free",
+      "name": "Standard Tracer",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:sunset",
+      "box": "afterglow",
+      "cat": "trail",
+      "key": "sunset",
+      "src": "case",
+      "name": "Sunset Fade",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:supply",
+      "box": null,
+      "cat": "trail",
+      "key": "supply",
+      "src": "unlock",
+      "name": "Supply Line",
+      "need": {
+        "cls_quartermaster_raids": 500
+      },
+      "rarity": "e",
+      "catalog_version": 0
+    },
+    {
+      "id": "trail:tealwake",
+      "box": "blitz",
+      "cat": "trail",
+      "key": "tealwake",
+      "src": "case",
+      "name": "Teal Wake",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 2
+    }
+  ]
+}

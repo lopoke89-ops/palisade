@@ -2,7 +2,7 @@
 // host and solo: the real simulation
 function update(dt){
   updateParticles(dt);
-  if(!running()||game.paused||(NET.mode==='guest'&&NET.inGame))return;
+  if(!running()||game.phase==='over'||game.paused||(NET.mode==='guest'&&NET.inGame))return;
   if(demo&&game.phase==='build'&&game.timer>8)game.timer=8;
   game.time+=dt;for(const c of cores)c.flash=Math.max(0,c.flash-dt);updateFlood(dt);if(!game.pvp&&game.phase==='raid')stormTick(dt);
   if(game.pvp){updatePvp(dt);if(game.phase==='over')return}
@@ -10,7 +10,7 @@ function update(dt){
   else{
     if(game.queue.length){game.spawnT-=dt;if(game.spawnT<=0){spawnEnemy(game.queue.shift());game.spawnT=game.spawnGap||1.1}}
     if(game.fb){fbTick(dt);if(game.phase==='over')return}   // v0.9.4.0: the Final Blitz runs on its clock, not on an empty field
-    else if(!game.queue.length&&!enemies.length&&!charges.length&&!rockets.length){if(game.wave>=game.waves){endGame(true);return}if(!campaignAdvance())startBuild(24+game.Df.build)}
+    else if(!game.queue.length&&!enemies.length&&!charges.length&&!rockets.length){qm.completedRaids=Math.max(qm.completedRaids||0,game.wave);if(game.wave>=game.waves){endGame(true);return}if(!campaignAdvance())startBuild(24+game.Df.build)}
   }
   if(flowDirty){flowT-=dt;if(flowT<=0){computeFlow();flowDirty=false}}
   for(const p of players.values())simPlayer(p,dt);
@@ -18,6 +18,7 @@ function update(dt){
   if(game.pvp==='base'){for(const c of cores)if(c.hp<=0&&game.phase!=='over'){c.hp=0;explode(c.i+.5,c.j+.5,1.8,1.3);endPvp(c.team==='a'?'b':'a');return}}
   else if(!game.pvp&&core.hp<=0&&game.phase!=='over'&&!(game.fb&&game.fb.evac)){   // once the evacuation starts, the core no longer decides it
    core.hp=0;explode(core.i+.5,core.j+.5,1.8,1.3);endGame(false)}
+  if(game.phase!=='over')checkDeadEnd();
 }
 function assist(d){
   let best=null,ba=.32;const a0=Math.atan2(d.y,d.x),p=player;
@@ -26,7 +27,7 @@ function assist(d){
 }
 // this phone's thumbs/keys drive this phone's soldier (on every kind of phone)
 function controlLocal(dt){
-  const p=player;if(!p||demo)return;p.fireIn=false;
+  const p=player;if(!p||demo)return;p.fireIn=false;if(game.phase==='over')return;
   if(!p.alive||overlayOpen()||chatOpen())return;
   let mx=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),my=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
   if(stickMove.id!==null){mx+=stickMove.vx;my+=stickMove.vy}

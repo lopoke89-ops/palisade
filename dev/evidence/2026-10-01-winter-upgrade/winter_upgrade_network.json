@@ -1,0 +1,44 @@
+{
+  "state": {
+    "id": 1,
+    "left": 19
+  },
+  "rewards": {
+    "shards": 0,
+    "core": 500
+  },
+  "final": {
+    "shards": 0,
+    "core": 500
+  },
+  "modifiers": {
+    "mods": [
+      "alone",
+      "laststand"
+    ],
+    "qmGone": true,
+    "crew": [
+      {
+        "down": true,
+        "rt": 1000000
+      },
+      {
+        "down": true,
+        "rt": 1000000
+      },
+      {
+        "down": true,
+        "rt": 1000000
+      }
+    ],
+    "ended": true
+  },
+  "checks": [
+    "Gold model and skin aura replicated",
+    "host command authority",
+    "construction schedule on late join",
+    "shield wear and break replicated",
+    "dead-end reason, screen sequence and reward idempotency"
+  ],
+  "errors": []
+}

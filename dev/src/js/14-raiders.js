@@ -1,4 +1,12 @@
 /* ---------- raiders ---------- */
+const RIOT_SHIELD_HITS=20;
+function shieldBulletHit(e,b){
+ if(NET.mode==='guest'||e.shieldBroken||b.shieldContact===e.id)return false;
+ if(e.shieldHitsLeft===undefined){e.shieldHitsMax=RIOT_SHIELD_HITS;e.shieldHitsLeft=RIOT_SHIELD_HITS}
+ b.shieldContact=e.id;e.shieldHitsLeft=Math.max(0,e.shieldHitsLeft-1);
+ if(!e.shieldHitsLeft){e.shieldBroken=true;for(let n=0;n<6;n++)emit(e.x,e.y,WH*.5,'spark');sfx('collapse',e.x,e.y);flt(e.x,e.y,'SHIELD BROKEN','#d9e9e6')}
+ return true;
+}
 function lookAhead(e){
   let ti=e.x|0,tj=e.y|0;
   for(let s=0;s<8;s++){
@@ -49,7 +57,7 @@ function updateEnemies(dt){
       // at a wall he bashes it. The shield stops bullets from the front (updateBullets); blasts still hurt.
       if(e.foe){const a=aimAt(e.foe.x,e.foe.y);if(e.cd<=0&&dist2(e.foe,e)<6.5){fire(e,a+(rnd()-.5)*.22,1,{dmg:6*Df.dmg,speed:20,range:7},0);e.cd=1.1+rnd()*.5;sfx('rifle',e.x,e.y)}}
       if(tgt&&heightDist(tgt.x,tgt.y,e.x,e.y)<1.3){if(!e.foe)aimAt(tgt.x,tgt.y);engaging=true;
-        if(e.cd<=0){e.cd=1.2;const k=idx(Math.floor(tgt.x),Math.floor(tgt.y));if(walls[k])damageWall(k,16*MAT[walls[k].mat].bullet);else if(coreKs.has(k))hurtStake(stakeAt(k),6*Df.dmg);sfx('hit1',tgt.x,tgt.y)}}
+        if(e.cd<=0){e.cd=1.2;const k=idx(Math.floor(tgt.x),Math.floor(tgt.y));if(e.shieldBroken){const a=aimAt(tgt.x,tgt.y);fire(e,a,1,{dmg:6*Df.dmg,speed:20,range:7},0);sfx('rifle',e.x,e.y)}else{if(walls[k])damageWall(k,16*MAT[walls[k].mat].bullet);else if(coreKs.has(k))hurtStake(stakeAt(k),6*Df.dmg);sfx('hit1',tgt.x,tgt.y)}}}
     }else if(e.type==='medic'){
       // field medic: hangs back behind the nearest raider and patches up everyone near him every 1.6 s
       e.ab-=dt;let buddy=null,bb=1e9;for(const o of enemies)if(o!==e&&!o.dead&&o.type!=='medic'&&!o.burrow){const d=dist2(o,e);if(d<bb){bb=d;buddy=o}}
@@ -131,7 +139,7 @@ function updateBullets(dt){
       if(game.pvp){for(const o of players.values())if(o.alive&&!(o.prot>0)&&o.id!==b.own&&(game.pvp==='ffa'||o.team!==b.pt)&&Math.hypot(o.x-b.x,o.y-b.y)<.3){hurtPlayer(o,bdmg(b)*(b.heavy?PVP.snipe:PVP.dmg),b.own);feelHit(b.own,b.heavy);b.dead=true;break}}
       else if(b.team===0){for(const e of enemies)if(!e.dead&&!e.burrow&&bulletAtActor(b,e)&&Math.hypot(e.x-b.x,e.y-b.y)<(e.big?.55:.34)){
           // a shieldbearer's shield covers his front (about 130°): the round sparks off it
-          let shield=1;if(e.type==='shield'){const l=Math.hypot(b.vx,b.vy)||1;if(-(b.vx*e.aim.x+b.vy*e.aim.y)/l>.42){const ap=b.ammo&&b.ammo.find(x=>x[0]==='ap');if(!ap){hitFx(b.x,b.y,2);sfx('shieldhit',b.x,b.y);if(!b.pel||!b.felt){b.felt=1;feelHit(b.own,false)}b.dead=true;break}shield=[.5,.6,.7,.85,1][ap[1]]||.5}}
+          let shield=1;if(e.type==='shield'&&!e.shieldBroken){const l=Math.hypot(b.vx,b.vy)||1;if(-(b.vx*e.aim.x+b.vy*e.aim.y)/l>.42){shieldBulletHit(e,b);const ap=b.ammo&&b.ammo.find(x=>x[0]==='ap');if(!ap){hitFx(b.x,b.y,2);sfx('shieldhit',b.x,b.y);if(!b.pel||!b.felt){b.felt=1;feelHit(b.own,false)}b.dead=true;break}shield=[.5,.6,.7,.85,1][ap[1]]||.5}}
           hurtEnemy(e,bdmg(b)*shield,b.own);ammoHit(e,b);if(!b.pel||!b.felt){b.felt=1;feelHit(b.own,b.heavy)}b.dead=true;break}}
       else{for(const a of allies())if(a.alive&&bulletAtActor(b,a)&&Math.hypot(a.x-b.x,a.y-b.y)<.3){hurtAlly(a,b.dmg*(a===qm?.7:1));b.dead=true;break}}
     }
@@ -175,7 +183,7 @@ function localAmbience(dt){
   for(const f of fires){if(rnd()<dt*16)ambient(f.x+(rnd()-.5)*1.1,f.y+(rnd()-.5)*1.1,WH*.2,'flame')}
   for(const e of enemies)if(e.type==='boss'&&bossBase(e.boss)==='storm'&&rnd()<dt*6)ambient(e.x+(rnd()-.5)*.5,e.y+(rnd()-.5)*.5,WH*(.3+rnd()*.8),'arc');
 }
-function ambient(x,y,z,kind){replaying=true;try{emit(x,y,z,kind)}finally{replaying=false}}
+function ambient(x,y,z,kind){replaying=true;try{return emit(x,y,z,kind)}finally{replaying=false}}
 // count an effect list down and drop what has run out, in place (no new array every frame)
 function ageOut(a,dt){let j=0;for(let i=0;i<a.length;i++){const v=a[i];v.life-=dt;if(v.life>0)a[j++]=v}a.length=j}
 const dropDead=a=>{let j=0;for(let i=0;i<a.length;i++){const v=a[i];if(!v.dead)a[j++]=v}a.length=j};

@@ -14,6 +14,7 @@ function todStage(stage){
 const waveEff=()=>game.mode==='endless'?1+(game.wave-1)*.55:game.mode==='blitz'?game.wave*1.2+1:game.wave;   // Blitzkrieg Rush: every raid a notch harder
 const raidName=w=>campaign()?(w>=13?'WHITEOUT · FINAL EVAC':`CHAPTER ${campaignChapter(w)+1} · RAID ${(w-1)%3+1}/3`):isFinite(game.waves)?`RAID ${w} OF ${game.waves}`:`RAID ${w}`;
 function startBuild(dur){
+  qm.completedRaids=Math.max(qm.completedRaids||0,game.wave);qm.planT=0;qm.commandJob=null;
   game.phase='build';game.timer=dur;game.prepEpoch=(game.prepEpoch||0)+1;
   const pay=8+game.wave;for(const p of players.values())p.sal+=pay;
   for(const p of players.values()){p.nades=Math.max(p.nades,p.maxN);if(p.downed){p.alive=true;p.downed=false;p.revive=0}p.hp=p.max;p.stun=0;if(p.gun.mag){p.ammo=p.gun.mag;p.rl=0}}
@@ -259,9 +260,12 @@ function spawnEnemyAt(type,x,y){
   const T=ETYPES[type]||ETYPES.rifle,s=(1+(game.mode==='endless'?.045:game.mode==='blitz'?.085:.07)*(game.wave-1))*game.Df.hp*mapHp();
   const e={id:nextId++,type,x,y,hp:T.hp*s,max:T.hp*s,cd:1+rnd(),walk:rnd()*6,aim:{x:-1,y:0},flash:0,speed:T.speed,scanT:0,foe:null,planted:false};
   if(type==='medic')e.ab=1.5;if(type==='spotter'){e.st=0;e.stT=0;e.stM=1;e.lx=x;e.ly=y}
+  if(type==='shield')Object.assign(e,{shieldHitsMax:RIOT_SHIELD_HITS,shieldHitsLeft:RIOT_SHIELD_HITS,shieldBroken:false});
   enemies.push(e);return e;
 }
-function endGame(win){
+function endGame(win,reason=''){
+  if(game.phase==='over')return;
+  game.endReason=reason;game.endDeadline=performance.now()+(reason==='deadend'?2100:0);
   game.phase='over';game.won=win;bullets=[];lobs=[];rockets=[];fires=[];
   if(demo){demoT=0;return}
   showOver();
@@ -297,14 +301,15 @@ function showOver(){closeGameSettings(false);
   const crew=players.size>1?` · CREW OF ${players.size}`:'',W=game.waves,endless=!isFinite(W);
   const res=blitzResult(player),held=win||res?W:Math.max(0,game.wave-1),S=game.stats;
   $('overEyebrow').textContent=`${player.C.name} · ${game.Df.name} · ${campaign()?'OPERATION WHITEOUT':endless?'ENDLESS':W+' RAIDS'}${crew} · ${win?`ALL ${W} RAIDS BROKEN`:endless?`${held} RAIDS HELD`:`STAKE FELL IN RAID ${game.wave}`}${game.mods.length?' · '+modNames(game.mods).join(' + '):''}`;
-  $('overLede').textContent=win?'The stake is still standing. Try it with less wood and more nerve, or turn the threat up.':endless?`Endless only ends one way. ${held} raids is the number to beat.`:'They got to the core. Look at where they broke in. That hole is the lesson.';
+  $('overLede').textContent=game.endReason==='deadend'?'The crew could not recover. No one left could get them back up.':win?'The stake is still standing. Try it with less wood and more nerve, or turn the threat up.':endless?`Endless only ends one way. ${held} raids is the number to beat.`:'They got to the core. Look at where they broke in. That hole is the lesson.';
   const loot=game.rewarded?null:lockerReward(held,win,player.kills|0);game.rewarded=true;
   if(res)blitzOverText(res,crew);   // v0.9.4.0: your own evacuation result
   if(loot){$('overLoot').textContent=loot.text;$('overLoot').hidden=false;showRewards(loot)}else{$('overLoot').hidden=true;showRewards(null)}
   $('sWaves').textContent=held;$('sDrop').textContent=S.dropped;$('sBuilt').textContent=S.built;$('sLost').textContent=S.lost;$('sRep').textContent=S.repairs;$('sRev').textContent=S.revives;
   if(NET.mode==='solo')saveBest(held,S.dropped);
   $('againBtn').hidden=NET.mode==='guest';$('overWait').hidden=NET.mode!=='guest';
-  setTimeout(()=>{if(game.phase==='over')$('over').hidden=false},win?600:900);
+  if(game.endReason==='deadend'){if(!res)$('overEyebrow').textContent=$('overEyebrow').textContent.replace(`STAKE FELL IN RAID ${game.wave}`,`CREW LOST IN RAID ${game.wave}`);showDeadEnd()}
+  else{const run=game;setTimeout(()=>{if(game===run&&game.phase==='over')$('over').hidden=false},win?600:900)}
 }
 function togglePause(){
   if(dropOpen()){closeFriends();return}

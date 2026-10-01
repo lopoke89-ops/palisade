@@ -6,7 +6,7 @@ await p.click('[data-go=solo]');await p.click('#startBtn');
 const result=await p.evaluate(()=>{const P=__pal,who=P.player,failures=[];P.game.paused=true;P.NET.mode='host';P.NET.inGame=true;
 const reset=(trail)=>{P.bullets.length=0;P.NET.fxq=[];who.cos.trail=trail;delete who.trCycleKey;delete who.trCycleNext;who.aim={x:1,y:0}};
 for(const [id,,,bands]of P.FLAGS){reset('f_'+id);const st=P.TRAILS['f_'+id],want=id==='trans'?['#5bcefa','#ffffff','#f5a9b8']:bands;
-if(JSON.stringify(st.cycle)!==JSON.stringify(want)||st.bands||st.pk)failures.push('catalog '+id);
+if(JSON.stringify(st.cycle)!==JSON.stringify(want)||st.bands||!!st.pk!==['l','g'].includes(P.COSBY['trail:f_'+id].r))failures.push('catalog '+id);
 for(let i=0;i<want.length*2+1;i++)P.shoot(who,who.gun,0);
 if(P.bullets.some((b,i)=>b.tc!==i%want.length))failures.push('sequence '+id);
 }

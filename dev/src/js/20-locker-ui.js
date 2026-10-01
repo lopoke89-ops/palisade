@@ -27,7 +27,13 @@ function drawTracer(b){
  const pad=24*u;if(Math.max(a[0],c[0])<-pad||Math.min(a[0],c[0])>W+pad||Math.max(a[1],c[1])<-pad||Math.min(a[1],c[1])>H+pad)return;
  traceSeg(g,a[0],a[1],c[0],c[1],st,(b.heavy?2.6:1.8)*u*(st.w||1),game.time,b.heavy,b.tc|0);
  // Time-based shedding avoids higher particle cost on faster displays.
- if(st.pk&&game.time>=(b.nextTrailFx||0)&&parts.length<520){b.nextTrailFx=game.time+.08;if(rnd()<st.pr){const h=WH*.62,p=screenToWorld(c[0],c[1]+h);ambient(p.x,p.y,h,st.pk)}}
+ if(st.pk&&!reduceMotion()&&game.time>=(b.nextTrailFx||0)&&parts.length<520){b.nextTrailFx=game.time+(FPS_AUTO.drop||cfg.fpsMode==='30'?.16:.08);if(rnd()<st.pr){
+  const travel=Math.hypot((b.vx-b.vy)*TW2,(b.vx+b.vy)*TH2-(b.zSlope||0)*Math.hypot(b.vx,b.vy)*heightPx()),tailL=Math.min(L,Math.hypot(a[0]-c[0],a[1]-c[1])/(travel||1));
+  let px=b.x-b.vx*tailL,py=b.y-b.vy*tailL;const shift=(c[0]-iso(px,py)[0])/(2*TW2);px+=shift;py-=shift;
+  const z=iso(px,py)[1]-c[1],p=ambient(px,py,z,st.pk);
+  if(p&&st.cycle)p.col=st.cycle[(b.tc|0)%st.cycle.length];
+  if(p&&st.pk==='yulelight'){p.col=['#ef5462','#65c780','#ffe09a','#a6e8ff'][(b.trailLightNext||0)%4];b.trailLightNext=(b.trailLightNext||0)+1}
+ }}
 }
 
 function killFx(x,y,id){
@@ -318,7 +324,7 @@ function openCaseUI(id='supply'){
   const intro=caseIntro(id);
   let roll;
   if(locker.cloud){lockWait(true);
-    roll=rpc('open_case_v094',{p_case:id}).then(r=>{lockWait(false);
+    roll=rpc('open_case_v0961',{p_case:id}).then(r=>{lockWait(false);
       if(!r.ok){lockMsg(r.status?sbErr(r):'Opening a case needs a connection. Your cases are safe.');renderLocker();return null}
       const s=r.j.item,it=COSBY[s.id]||{...COSBY['fx:none'],id:s.id,name:s.name,r:s.rarity};
       takeLocker(r.j.locker);renderLocker();return{it,dup:!!r.j.dup,box:id}})}

@@ -1,0 +1,3 @@
+{"rules":{"rate":0.0813,"different":true,"odd":"","regular":""},"only_bossrush":0,"only_nightmare":0,"raid":{"queue":["boss:demolisher:sb","boss:storm:sb2"],"bosses":[["demolisher",true],["storm",true]],"second":true,"sbPaid":2,"bossLog":0},"desc":"Always night. Raiders move, spot and fire faster, and any raid without a boss has a 1-in-12 surprise boss (15-30 shards). With Boss Rush on too, each Boss Rush boss raid has a 1-in-12 chance of a second boss. PvP: night only. Blitzkrieg Rush: night and faster raiders, no surprise bosses."}
+errors: none
+

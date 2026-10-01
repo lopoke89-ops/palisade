@@ -42,6 +42,7 @@ addEventListener('keydown',e=>{
   else if(k==='r')localReload();
   else if(k==='enter'&&game.phase==='build'&&NET.mode!=='guest')startRaid();
   else if(k==='b')toggleBuild();
+  else if(k==='h')setQMMode(qm.mode==='defend'?'follow':'defend');
   else if(k==='u'||k==='e')tryArmory();
   if(['arrowup','arrowdown','arrowleft','arrowright'].includes(k))e.preventDefault();
 });

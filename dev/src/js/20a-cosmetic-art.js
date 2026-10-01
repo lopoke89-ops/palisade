@@ -5,20 +5,21 @@ function cosmeticGlow(ctx,x,y,r,col,alpha=1){
  if(!cv){cv=document.createElement('canvas');cv.width=cv.height=64;const c=cv.getContext('2d'),gr=c.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,col);gr.addColorStop(.2,col);gr.addColorStop(1,'transparent');c.fillStyle=gr;c.fillRect(0,0,64,64);FX_GLOWS.set(col,cv);if(FX_GLOWS.size>32)FX_GLOWS.delete(FX_GLOWS.keys().next().value)}
  ctx.save();ctx.globalAlpha*=alpha;ctx.drawImage(cv,x-r,y-r,r*2,r*2);ctx.restore();
 }
-function tracerStamp(st,t){
+function tracerStamp(st,t,colorIndex=0){
  let id=TRACE_KEYS.get(st);if(id===undefined){id=TRAIL_IDS.findIndex(k=>TRAILS[k]===st);TRACE_KEYS.set(st,id)}
- const phase=st.rgrad||st.rainbow?Math.floor(((t*2)%12+12)%12):0,key=id+':'+phase;
+ const phase=st.rgrad||st.rainbow?Math.floor(((t*2)%12+12)%12):0,key=id+':'+phase+(st.cycle?':'+(colorIndex%st.cycle.length):'');
  let cv=TRACE_STAMPS.get(key);if(cv)return cv;
  cv=document.createElement('canvas');cv.width=96;cv.height=24;const c=cv.getContext('2d');c.scale(.5,.5);
- const colors=st.rgrad||st.rainbow?Array.from({length:5},(_,i)=>'hsl('+(phase*30+i*65)+',100%,70%)'):st.grad||[st.c||st.head||'#ffecaa',st.c||'#ffb44a'];
+ const cycleColor=st.cycle&&st.cycle[(Math.max(0,colorIndex|0))%st.cycle.length];
+ const colors=cycleColor?[cycleColor,cycleColor]:st.rgrad||st.rainbow?Array.from({length:5},(_,i)=>'hsl('+(phase*30+i*65)+',100%,70%)'):st.grad||[st.c||st.head||'#ffecaa',st.c||'#ffb44a'];
  const gr=c.createLinearGradient(0,0,192,0);
  if(st.bands){const n=st.bands.length,L=.64;st.bands.forEach((col,i)=>{gr.addColorStop(i/n*L,col);gr.addColorStop(Math.min(1,(i+1)/n*L-.001),col)});gr.addColorStop(1,st.bands[n-1])}   // hard-edged stripes over the visible length
  else colors.forEach((col,i)=>gr.addColorStop(i/(colors.length-1),col));
  const shape=()=>{c.beginPath();c.moveTo(0,24);c.lineTo(7,17);c.lineTo(35,18);c.lineTo(190,24);c.lineTo(35,30);c.lineTo(7,31);c.closePath()};
  c.shadowColor=st.edge||colors[0];c.shadowBlur=6;c.fillStyle=gr;shape();c.fill();c.globalAlpha=.24;shape();c.fill();c.globalAlpha=1;c.shadowBlur=0;
- c.strokeStyle=st.edge||'rgba(7,10,8,.55)';c.lineWidth=st.edge?4:1.3;shape();c.stroke();c.fillStyle=st.edge?'#10071c':gr;c.fill();
- if(!st.edge){c.fillStyle=st.rgrad?'#fff4b2':'#f8ffff';c.beginPath();c.moveTo(0,24);c.lineTo(10,22.7);c.lineTo(145,24);c.lineTo(10,25.3);c.closePath();c.fill()}
- else{c.strokeStyle='#e1bbff';c.lineWidth=1;c.beginPath();c.moveTo(1,23);c.lineTo(45,19);c.lineTo(140,23);c.stroke()}
+ c.strokeStyle=cycleColor&&(cycleColor==='#000000'||cycleColor==='#2c2c2c')?'#a6aaa5':st.edge||'rgba(7,10,8,.55)';c.lineWidth=st.edge?4:cycleColor?2.5:1.3;shape();c.stroke();c.fillStyle=st.edge?'#10071c':gr;c.fill();
+ if(!st.edge&&!cycleColor){c.fillStyle=st.rgrad?'#fff4b2':'#f8ffff';c.beginPath();c.moveTo(0,24);c.lineTo(10,22.7);c.lineTo(145,24);c.lineTo(10,25.3);c.closePath();c.fill()}
+ else if(st.edge){c.strokeStyle='#e1bbff';c.lineWidth=1;c.beginPath();c.moveTo(1,23);c.lineTo(45,19);c.lineTo(140,23);c.stroke()}
  const fade=c.createLinearGradient(0,0,192,0);fade.addColorStop(0,'#fff');fade.addColorStop(.64,'#fff');fade.addColorStop(1,'transparent');c.globalCompositeOperation='destination-in';c.fillStyle=fade;c.fillRect(0,0,192,48);
  // Small decorative marks belong to the cached frame, not a new path on every live bullet.
  c.globalCompositeOperation='source-over';
@@ -37,28 +38,36 @@ function glitchChannel(col){
  const c=cv.getContext('2d');c.drawImage(source,0,0);c.globalCompositeOperation='source-in';c.fillStyle=col;c.fillRect(0,0,cv.width,cv.height);
  TRACE_STAMPS.set(key,cv);if(TRACE_STAMPS.size>64)TRACE_STAMPS.delete(TRACE_STAMPS.keys().next().value);return cv;
 }
+const GLITCH_GEOMETRY={};
+function glitchGeometry(width,len,t){const tear=Math.floor(t*13)%7===0;
+ GLITCH_GEOMETRY.tear=tear;GLITCH_GEOMETRY.split=width*(.06+.008*Math.sin(t*19)+(tear?.008:0));GLITCH_GEOMETRY.drift=Math.min(width*.05,len*.005);return GLITCH_GEOMETRY;
+}
 function paintTracer(ctx,x1,y1,x2,y2,st,w,t,heavy,colorIndex=0){
- const len=Math.min(Math.hypot(x2-x1,y2-y1),w*(st.cycle?10:22));if(len<.01)return;
+ const len=Math.min(Math.hypot(x2-x1,y2-y1),w*22);if(len<.01)return;
  ctx.save();ctx.translate(x1,y1);ctx.rotate(Math.atan2(y2-y1,x2-x1));
+ // Bulbs and premium motes remain inside even a one-pixel muzzle segment.
+ ctx.beginPath();ctx.rect(0,-w*8,len,w*16);ctx.clip();
  if(st.cycle){
   const col=st.cycle[(Math.max(0,colorIndex|0))%st.cycle.length];
-  // A thin contrast edge keeps black/white rounds legible without glow or particles.
-  ctx.fillStyle=col==='#000000'||col==='#2c2c2c'?'#a6aaa5':'#20251f';ctx.fillRect(0,-w*.62,len,w*1.24);
-  ctx.fillStyle=col;ctx.fillRect(0,-w*.4,len,w*.8);ctx.restore();return;
+  ctx.drawImage(tracerStamp(st,t,colorIndex),0,-w*3.25,len,w*6.5);
+  if(st.premium){ctx.fillStyle=col;ctx.strokeStyle=col==='#000000'||col==='#2c2c2c'?'#a6aaa5':'#20251f';ctx.lineWidth=Math.max(.4,w*.2);for(let i=0;i<(st.premium==='g'?3:2);i++){ctx.beginPath();ctx.arc(len*(.6+i*.16),(i%2?1:-1)*w*.6,w*.22,0,Math.PI*2);ctx.fill();ctx.stroke()}}
+  ctx.restore();return;
  }
  if(st===ENEMY_TR){ctx.strokeStyle=st.c;ctx.lineWidth=w;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(len,0);ctx.stroke();ctx.restore();return}
  const width=w*(st.pulse?1+.16*Math.sin(t*28):1),height=width*6.5;
  if(st.glitch){ctx.beginPath();ctx.rect(0,-height/2,len,height);ctx.clip()}
  // The stamp is confined to the calibrated segment, including its soft tail.
  if(st.glitch){
-  const tear=Math.floor(t*13)%7===0,split=width*(1.05+.22*Math.sin(t*19)+(tear?.35:0)),drift=Math.min(width*.65,len*.08);
+  const {tear,split,drift}=glitchGeometry(width,len,t);
   // Color fringes travel with the shot and remain inside the calibrated head/tail clip.
   ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha*=.88;
   ctx.drawImage(glitchChannel('#ff285b'),drift,-height/2-split,len,height);
   ctx.drawImage(glitchChannel('#24eaff'),-drift,-height/2+split,len,height);ctx.restore();
-  ctx.drawImage(tracerStamp(st,t),0,-height*.32,len,height*.64);
+  ctx.drawImage(tracerStamp(st,t),0,-height/2,len,height);
   if(tear)for(let i=0;i<2;i++){ctx.fillStyle=i?'#24eaff':'#ff285b';ctx.fillRect(len*(.28+i*.28),(i?1:-1)*split,Math.min(len*.17,width*5),width*.42)}
  }else ctx.drawImage(tracerStamp(st,t),0,-height/2,len,height);
+ if(st.winter==='solsticecomet'){for(let i=0;i<4;i++){const x=len*(.45+i*.15),col=['#ef5462','#65c780','#ffe09a','#a6e8ff'][i];ctx.strokeStyle='#41644d';ctx.lineWidth=Math.max(.4,w*.22);ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,w*.7);ctx.stroke();ctx.fillStyle=col;ctx.beginPath();ctx.ellipse(x,w*.9,w*.32,w*.48,0,0,Math.PI*2);ctx.fill()}}
+ if(st.winter==='auroralance'){ctx.fillStyle='#e2f5fa';ctx.globalAlpha*=.5;for(let i=0;i<4;i++){ctx.beginPath();ctx.arc(len*(.55+i*.12),(i%2?1:-1)*w*.5,w*.18,0,Math.PI*2);ctx.fill()}}
  ctx.restore();
 }
 const FINISH_LIFE={sparks:.48,smoke:1.15,confetti:.95,embers:.8,glint:.65,bolt:.48,skull:.95,pixel:.7,frost:.75,gradburst:.75,sunburst:.75,toxic:.85,supernova:.85,glitchout:.6,singularity:.85,shockwave:.7,bubbles:1.2,bats:1,spider:1.1,souls:1.2,rocketburst:.8,reticle:.7,frag:.75,salvage:.95,hellportal:1.15,cinder:.8,tealslash:.6,ashbrand:1,demonclaw:1.1};
@@ -136,6 +145,11 @@ function paintFinish(ctx,key,progress,scale,x,y){
 function drawFinishEffects(){for(const p of parts)if(p.kind.startsWith('finish:')){const c=iso(p.x,p.y);paintFinish(g,p.kind.slice(7),1-p.life/p.max,u,c[0],c[1]-p.z)}}
 function paintCosmeticParticle(ctx,q,x,y,s,t){
  const a=Math.max(0,q.life/q.max),r=q.size*s,col=q.c1?mix(q.c1,q.c2,Math.round((1-a)*16)/16):q.col;
+ if(q.kind==='snowdust'||q.kind==='yulelight'||q.kind==='flagmote'){
+  ctx.save();ctx.globalAlpha*=a;ctx.fillStyle=col;ctx.strokeStyle=col==='#000000'||col==='#2c2c2c'?'#a6aaa5':'#293a35';ctx.lineWidth=Math.max(.35,s*.35);
+  ctx.beginPath();ctx.ellipse(x,y,r*.7,r*(q.kind==='yulelight'?1:.7),0,0,Math.PI*2);ctx.fill();if(q.kind!=='snowdust')ctx.stroke();
+  if(q.kind==='yulelight'){ctx.fillStyle='#5c785d';ctx.fillRect(x-r*.35,y-r*1.4,r*.7,r*.45)}ctx.restore();return true;
+ }
  if(q.kind==='rune'){const a=Math.max(0,q.life/q.max),r=q.size*s;ctx.save();ctx.globalAlpha*=Math.min(1,a*1.6);ctx.translate(x,y);ctx.rotate(q.h||0);cosmeticGlow(ctx,0,0,r*2.4,'#ff5a1a',.5);   // v0.9.4.0 Infernal Sigil: a small burning glyph
   ctx.strokeStyle=a>.5?'#ffe0a0':'#ff7a2a';ctx.lineWidth=Math.max(.6,r*.28);ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.moveTo(0,-r);ctx.lineTo(r*.62,r*.5);ctx.lineTo(-r*.62,r*.5);ctx.closePath();ctx.stroke();ctx.restore();return true}
  if(!['star','cosmic','goldsp','glint','ice','rock','confetti','pix','glitch','nova','grad1','grad2','neon','spark','ember','bolt'].includes(q.kind))return false;

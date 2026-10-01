@@ -102,6 +102,7 @@ function hud(dt){
   if($('tipText').textContent&&(game.pvp==='ffa'&&game.time>9||game.pvp==='base'&&game.phase==='raid'))setTip('');
   const PV=game.pvp,clock=t=>{const s=Math.max(0,Math.ceil(t));return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`};
   $('qmM').hidden=!!PV||!!qm.gone;$('coreM').hidden=PV==='ffa';$('core2M').hidden=PV!=='base';$('board').hidden=PV!=='ffa';$('salv').hidden=PV==='ffa';
+  syncQMControls();
   if(!PV){$('qmF').style.transform=`scaleX(${Math.max(0,qm.hp/qm.max)})`;txt($('qmN'),qm.alive?String(Math.ceil(qm.hp)):'DOWN');cls($('qmM'),'alarm',!qm.alive)}
   if(PV!=='ffa'){txt($('coreL'),PV?'STAKE':'CORE');$('coreF').style.transform=`scaleX(${Math.max(0,core.hp/core.max)})`;txt($('coreN'),String(Math.max(0,Math.ceil(core.hp))));
     cls($('coreM'),'alarm',core.flash>0||core.hp/core.max<.3);$('coreF').style.background=PV?(TEAMS[p.team]||TEAMS.a).col:''}

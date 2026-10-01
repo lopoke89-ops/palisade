@@ -4,7 +4,7 @@
 // they talk directly. Each guest opens 'r' (reliable: hello, build, grenade, and every
 // one-off event: sounds, particles, bullets, toasts, wall changes), 'u' (fast: movement in),
 // and 'st' (never resent: game state out, 15 times a second).
-const PROTO='yard-21',ROOM_PREFIX='palisade-yard-21-';   // elevation, chapter epochs and winter hazards
+const PROTO='yard-22',ROOM_PREFIX='palisade-yard-22-';   // shield impacts, Delgado orders and terminal end reason
 const ROOM_SESSION=(()=>{let id='';try{id=sessionStorage.getItem('palisade.roomSession')||''}catch(e){}
   if(!/^[0-9a-f]{24}$/.test(id)){id=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');try{sessionStorage.setItem('palisade.roomSession',id)}catch(e){}}
   return id})();
@@ -297,7 +297,7 @@ const PL_INFO=[['id',p=>p.id],['name',p=>p.name],['cls',p=>p.cls],['slot',p=>p.s
 // enemies: the boss-only fields sit last and trailing zeros are dropped, so a plain raider sends 7 numbers, not 12
 const EN_STATE=[['id',e=>e.id],['type',e=>ECODE.indexOf(e.type==='boss'?'boss:'+e.boss:e.type)],['x',e=>r2(e.x)],['y',e=>r2(e.y)],['ax',e=>r2(e.aim.x)],['ay',e=>r2(e.aim.y)],
   ['hp',e=>r2(e.hp/e.max)],['plant',e=>e.planted?1:0],['st',e=>e.st||0],['stF',e=>e.st?r2(Math.max(0,e.stT/e.stM)):0],['lx',e=>r2(e.lx||0)],['ly',e=>r2(e.ly||0)],
-  ['burn',e=>r2(e.burnT||0)],['slow',e=>r2(e.slowT||0)],['slowPct',e=>r2(e.slowPct||0)],['z',e=>r2(heightAt(e.x,e.y))]];
+  ['burn',e=>r2(e.burnT||0)],['slow',e=>r2(e.slowT||0)],['slowPct',e=>r2(e.slowPct||0)],['z',e=>r2(heightAt(e.x,e.y))],['shieldLeft',e=>e.shieldHitsLeft||0],['shieldMax',e=>e.shieldHitsMax||0],['shieldBroken',e=>e.shieldBroken?1:0]];
 const fieldIdx=L=>Object.fromEntries(L.map((f,i)=>[f[0],i])),PS=fieldIdx(PL_STATE),PI=fieldIdx(PL_INFO);
 const packRow=(L,x)=>L.map(f=>f[1](x)),packTrim=(L,x)=>{const r=packRow(L,x);while(r.length>1&&r[r.length-1]===0)r.pop();return r},PE=fieldIdx(EN_STATE);
 // player info that changed since it was last sent (all of it after a reset: game start, someone dropping in)
@@ -319,7 +319,7 @@ function applyInfo(rows){
 function makeSnap(withWalls){
   const S=game.stats,flat=(a,f)=>{const o=[];for(const x of a)o.push(...f(x));return o};
   const s={t:'s',n:NET.snapN,ph:game.phase,w:game.wave,bk:game.bosses|0,tm:r2(game.timer),q:game.queue.length,tt:r2(game.time),won:game.won?1:0,wn:game.winner||'',
-    sb:game.sbN|0,wx:game.wx?1:0,sd:game.sd?1:0,
+    sb:game.sbN|0,wx:game.wx?1:0,sd:game.sd?1:0,er:game.endReason||'',ed:r2(Math.max(0,((game.endDeadline||0)-performance.now())/1000)),qc:[qm.mode||'follow',qm.completedRaids||0,qm.layoutSize||4,qm.status||''],
     cs:flat(cores,c=>[r2(c.hp),c.max,c.flash>0?1:0]),st:[S.dropped,S.built,S.lost,S.repairs,S.revives],
     pl:[...players.values()].map(p=>packRow(PL_STATE,p)),
     qm:[r2(qm.x),r2(qm.y),r2(qm.aim.x),r2(qm.aim.y),Math.ceil(qm.hp),qm.max,qm.alive?1:0,r2(qm.revive),game.dellLv|0],
@@ -383,6 +383,8 @@ function applySnap(s){
   const wasOver=game.phase==='over';
   game.phase=s.ph;game.wave=s.w;game.timer=s.tm;game.bosses=s.bk|0;game.qn=s.q;game.won=!!s.won;game.winner=s.wn||'';
   game.sbN=s.sb|0;game.wx=s.wx?1:0;game.sd=!!s.sd;
+  game.endReason=s.er||'';if(!wasOver&&s.ph==='over')game.endDeadline=performance.now()+Math.max(0,s.ed||0)*1000;
+  if(s.qc){qm.mode=s.qc[0];qm.completedRaids=s.qc[1];qm.layoutSize=s.qc[2];qm.status=s.qc[3]}
   if(game.joinHeld==null){game.joinHeld=s.ph==='build'||s.ph==='over'&&s.won?s.w:Math.max(0,s.w-1);game.joinT=s.tt;game.joinBoss=(s.bl||[]).length;game.joinSB=s.sb|0;game.joinFB=(s.fl||[]).length}   // where this phone came in
   if(game.pvp)game.won=game.pvp==='base'?!!player&&player.team===game.winner:myId===game.winner;
   if(Math.abs(game.time-s.tt)>1)game.time=s.tt;
@@ -410,7 +412,7 @@ function applySnap(s){
     if(!e)e={id,x:v('x'),y:v('y'),walk:rnd()*6,flash:0,max:1,hp:1};
     if(v('hp')<e.hp-.001)e.flash=.08;
     const c=ECODE[v('type')]||'rifle',bk=c.startsWith('boss:')?c.slice(5):'';
-    Object.assign(e,{type:bk?'boss':c,boss:bk||undefined,big:!!bk,raft:!!(BOSSES[bk]&&BOSSES[bk].raft)&&waterK(idx(clamp(Math.floor(v('x')),0,N-1),clamp(Math.floor(v('y')),0,N-1))),burrow:bk==='foreman'&&(v('st')===2||v('st')===4),tx:v('x'),ty:v('y'),aim:{x:v('ax'),y:v('ay')},hp:v('hp'),max:1,planted:!!v('plant'),st:v('st'),stF:v('stF'),lx:v('lx'),ly:v('ly'),burnT:v('burn'),slowT:v('slow'),slowPct:v('slowPct'),z:v('z')});enemies.push(e)}
+    Object.assign(e,{type:bk?'boss':c,boss:bk||undefined,big:!!bk,raft:!!(BOSSES[bk]&&BOSSES[bk].raft)&&waterK(idx(clamp(Math.floor(v('x')),0,N-1),clamp(Math.floor(v('y')),0,N-1))),burrow:bk==='foreman'&&(v('st')===2||v('st')===4),tx:v('x'),ty:v('y'),aim:{x:v('ax'),y:v('ay')},hp:v('hp'),max:1,planted:!!v('plant'),st:v('st'),stF:v('stF'),lx:v('lx'),ly:v('ly'),burnT:v('burn'),slowT:v('slow'),slowPct:v('slowPct'),z:v('z'),shieldHitsLeft:v('shieldLeft'),shieldHitsMax:v('shieldMax'),shieldBroken:!!v('shieldBroken')});enemies.push(e)}
   frostFields=(s.ice||[]).map(f=>({x:f[0],y:f[1],t:f[2],z:f[3],r:.72,k:idx(Math.floor(f[0]),Math.floor(f[1]))}));
   rockets=[];for(let o=0;o<(s.rk||[]).length;o+=4)rockets.push({x:s.rk[o],y:s.rk[o+1],vx:s.rk[o+2],vy:s.rk[o+3]});
   fires=[];for(let o=0;o<(s.fz||[]).length;o+=5)fires.push({x:s.fz[o],y:s.fz[o+1],t:s.fz[o+2],r:s.fz[o+3],nap:s.fz[o+4]|0,max:4});

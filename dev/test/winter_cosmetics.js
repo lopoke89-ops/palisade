@@ -12,6 +12,6 @@ const {chromium}=require('playwright'),fs=require('node:fs'),assert=require('nod
   // Every headgear is exercised in all classes, angles and downed poses using the worker-compatible rig.
   out.poses=0;for(const [skin,hat]of P.WINTER_PAIRS.map(p=>[p[0],p[2]]).concat(P.WINTER_PAIRS.map(p=>['sahur',p[2]])))for(const cls of Object.keys(P.CLASSES))for(let a=0;a<8;a++)for(const downed of[false,true]){P.paintWardrobeCharacter(bc,{...P.lookOf({skin,hat},cls),downed},a*Math.PI/4,0,1.4,100,125,false);out.poses++}
   return out;
- });assert.deepEqual(result.counts,{skin:10,hat:10,trail:6,fx:6,bg:10});assert.equal(result.animated,4);assert.equal(result.goldTrail,2);assert.equal(result.goldFX,2);assert.equal(result.items.length,42);result.fit.forEach(r=>{assert.ok(r.allowed);assert.equal(r.field,r.hat)});result.motion.forEach(r=>assert.equal(r.changed,r.animated));assert.deepEqual(errs,[]);
+ });assert.deepEqual(result.counts,{skin:13,hat:10,trail:6,fx:6,bg:10});assert.equal(result.animated,4);assert.equal(result.goldTrail,2);assert.equal(result.goldFX,2);assert.equal(result.items.length,45);result.fit.forEach(r=>{assert.ok(r.allowed);assert.equal(r.field,r.hat)});result.motion.forEach(r=>assert.equal(r.changed,r.animated));assert.deepEqual(errs,[]);
  await page.screenshot({path:__dirname+'/out/winter_collection.png'});fs.writeFileSync(__dirname+'/out/winter_cosmetics.json',JSON.stringify(result,null,2));await browser.close();console.log({counts:result.counts,poses:result.poses});console.log('errors: none');
 })().catch(e=>{console.error(e);process.exit(1)});

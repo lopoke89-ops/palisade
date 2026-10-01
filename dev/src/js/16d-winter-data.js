@@ -12,6 +12,11 @@ const WINTER_PAIRS=[
   ['aurorasovereign','Aurora Sovereign','aurorahalo','Aurora Halo','g','g','#343c65','#65cfc6','#263553','map_frost',2500]
 ];
 const WINTER_HATS=Object.fromEntries(WINTER_PAIRS.map(p=>[p[2],p]));
+const WINTER_MODELS=[
+ ['yulemaw','Yulemaw','e','#4d913e','#a83c43','#386e32','A shaggy green Christmas monster with a hunched fur mantle, oversized hands and a red winter coat.'],
+ ['rednosedemolisher','Rednose Demolisher','l','#9c6945','#384f41','#62482f','A bipedal reindeer with branching antlers, a luminous red nose, split hooves and hip-mounted grenades.'],
+ ['gildedfrostborn','Gilded Frostborn','g','#b9e4f0','#557f9f','#789cba','A slender frost spirit with sculpted ice hair, a crystalline winter coat, gold trim and drifting Christmas snow.']
+];
 const WINTER_TRACERS=[['snowstreak','Snowstreak','r','#e7f5ff'],['glaciershard','Glacier Shard','r','#9fddf1'],['candyline','Candyline','e','#ed7a8b'],['polarspark','Polar Spark','l','#b4eafb'],['auroralance','Aurora Lance','g','#84ffd9'],['solsticecomet','Solstice Comet','g','#ffeab0']];
 const WINTER_FX=[['snowpuff','Snow Puff','r'],['frostfracture','Frost Fracture','r'],['ornamentpop','Ornament Pop','e'],['winterbloom','Winter Bloom','l'],['borealiscollapse','Borealis Collapse','g'],['solsticenova','Solstice Supernova','g']];
 const WINTER_BG=[['summitcommand','Summit Command','c',false],['frozenriver','Frozen River Crossing','r',false],['snowquarry','Snowed-In Quarry','r',false],['skistation','Abandoned Ski Station','e',false],['winterdepot','Winter Supply Depot','c',false],['lanternoutpost','Lanternlit Outpost','e',false],['aurorafrostpeak','Aurora Over Frostpeak','l',true],['whiteouttower','Whiteout Watchtower','e',true],['yulehangar','Yuletide Hangar','l',true],['midnightevac','Midnight Evacuation','g',true]];

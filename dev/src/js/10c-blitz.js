@@ -86,7 +86,7 @@ function evacTick(dt){
       if(Math.hypot(tx-E.x,ty-E.y)>E.r+.4)lobs.push({x0:tx-2.5,y0:ty-2.5,x1:tx,y1:ty,t:0,T:1.6,R:1.3,power:game.Df.dmg*.9,k:5})}}}
   // everyone is out, or nobody left standing (Delgado included) to pick the downed up: the clock doesn't need to run out
   let up=0,left=0;for(const p of players.values())if(!p.out){left++;if(p.alive)up++}
-  if(!left||!up&&!qm.alive)finishBlitz();
+  if(!left)finishBlitz();else if(!up)checkDeadEnd();
 }
 function extract(p){
   p.out=true;p.ev=BLITZ.hold;p.alive=false;p.downed=false;p.stun=0;p.tp++;

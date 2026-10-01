@@ -7,6 +7,10 @@ Big U's latest completed local scope is recorded in the [presentation prompt](pl
 
 The Claude audit URL still requires sign-in in the available browser session. Big U supplied an exported copy at `D:\downloads\Untitled.md`, which was read on September 29. Its newest Progress entry is v0.9.3, so its release claims are superseded by the verified v0.9.3.3 release below. The external artifact itself was not edited here.
 
+## v0.9.6.1 local implementation
+
+The [winter upgrade work order](plans/winter-cosmetics-dell-and-dead-end-work-order.md) is implemented in the checkout, with 36 affected suites passing and a complete 311-entry four-angle catalog. Source/build protocol is yard-22. The `20261001214620_winter_models` migration is live; the game changes are ready for review. See [completion and performance evidence](evidence/2026-10-01-winter-upgrade/README.md) and [catalog index](catalog/cosmetics/README.md). The published release below remains the earlier release record.
+
 ## Live and local
 
 | Item | Current state |

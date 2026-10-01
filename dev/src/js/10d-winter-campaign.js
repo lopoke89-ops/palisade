@@ -17,7 +17,7 @@ function changeChapter(ch,guest=false){
   let s=0;for(const p of players.values()){
     const spot=spawnNearCore();p.x=spot[0]+(s%2)*.3;p.y=spot[1]+Math.floor(s/2)*.22;p.z=heightAt(p.x,p.y);p.tp++;p.tx=p.x;p.ty=p.y;s++;
   }
-  [qm.x,qm.y]=spawnNearCore();qm.z=heightAt(qm.x,qm.y);qm.tx=qm.x;qm.ty=qm.y;qm.next=-1;qm.pathT=0;qm.job='';qm.foe=null;
+  [qm.x,qm.y]=spawnNearCore();qm.z=heightAt(qm.x,qm.y);qm.tx=qm.x;qm.ty=qm.y;qm.next=-1;qm.pathT=0;qm.job='';qm.foe=null;qm.layoutAnchor='';qm.commandJob=null;qm.planT=0;
   caches=null;TERR_SPR.clear();computeFlow();flowDirty=false;NET.wlSent=null;NET.piSent=null;
   if(!guest)toastAll(`CHAPTER ${ch+1} · ${MAP.name}`,CAMPAIGN.story[ch]+' Your upgrades and supplies travel with you. Summit/core damage carries forward.');
 }

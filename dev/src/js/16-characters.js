@@ -97,6 +97,13 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
    column(x,1.5+lift,1.05+z,3.4,2.2,5.3,'#9a6033',.85,.4);
    beam(ankle,knee,.95,B,1.05,.3);beam(knee,hip,1.05,B,1.2,.3);continue;
   }
+  if(o.winterModel){
+   const monster=o.winterModel==='yulemaw',deer=o.winterModel==='rednosedemolisher',r=monster?2.6:deer?1.4:1.15;
+   beam(ankle,knee,r,T,r*1.1);beam(knee,hip,r*1.1,T,r*1.3);
+   if(deer){for(const s of[-1,1])box(x+s*.8,1.8+lift,z+1,1.45,2.6,4,'#292b27',.3)}
+   else column(x,1.8+lift,z+1,monster?6:3.2,2.8,monster?6:4.6,monster?'#427d37':'#d6f4fa',.8,.35);
+   continue;
+  }
   column(x,2+lift,1.05+z,4.3,3.1,6.1,'#35362e',.87);
   box(x,.7+lift,1.2+z,4.35,.85,6.25,'#202722',.3);
   beam(ankle,knee,1.7,T,2);beam(knee,hip,2.05,T,2.35);
@@ -111,6 +118,22 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
   for(const side of[-1,1])beam([side*4.77,17+bob,-1],[side*4.77,32+bob,-.7],.1,'#8b552f',.08,.03);
   // A stowed wooden beater leaves both hands free for the equipped class weapon.
   beam([-5,15+bob,-2.8],[-6.5,27+bob,-2.8],.5,'#734724',.9,.25);
+ }else if(o.winterModel){
+  if(o.winterModel==='yulemaw'){
+   column(0,18.8+bob,-.7,13.5,13.5,9,B,.95);column(0,23+bob,-1.6,15,9,10,V,1.1);
+   column(0,26+bob,-1.2,16.4,2.7,10.7,'#efe5cb',1,.4);column(0,14.7+bob,-.2,13.8,2.5,9,'#eee4cc',1,.35);
+   for(const side of[-1,1])for(let n=0;n<3;n++)beam([side*(5+n),25+bob,-3],[side*(6+n),21-n+bob,-4],1.2,B,.15,.3);
+   for(const y of[19,22])box(0,y+bob,4.3,1.5,1.5,.6,'#d2b257',.2);
+  }else if(o.winterModel==='rednosedemolisher'){
+   column(0,20+bob,0,8.7,14,6.4,B,1.25);column(0,22+bob,-.1,9.2,7.5,7,V,1);
+   beam([-4,26+bob,3.5],[3,15+bob,3.8],.4,'#4c3b28',.4,.15);box(0,16+bob,0,9.6,1.3,7,'#2e3328');
+   for(const side of[-1,1]){column(side*5.7,13.3+bob,.6,3,4.3,3,'#657947',.8,.4);for(const y of[12.3,13.4,14.5])column(side*5.7,y+bob,.6,3.1,.28,3.1,'#33412a',1,.1);box(side*5.7,15.9+bob,.6,1.5,.8,1.5,'#9a9f78',.2);beam([side*5.4,16.5+bob,.6],[side*6.5,16.5+bob,.6],.22,'#e0ce87',.22,.08)}
+   beam([0,15+bob,-3],[0,17+bob,-5.5],1.3,'#dac3a0',.4,.25);
+  }else{
+   column(0,21+bob,0,7.7,12.8,5.5,V,1.2);column(0,14.7+bob,-.3,10.5,5.2,6.6,'#a4d3e5',.7,.35);
+   for(const side of[-1,1]){beam([side*4.1,25+bob,-2],[side*6.2,29+bob,-2],1.5,'#d7f6fc',.06,.3);beam([side*3.2,25+bob,3],[side*2.7,15+bob,3.5],.22,'#e0b857',.22,.06)}
+   box(0,22+bob,3.1,2.5,3.8,.8,'#e7bc5e',.25);beam([0,23+bob,3.8],[0,21+bob,3.8],.6,'#ebfaff',.06,.12);
+  }
  }else{
  column(0,15+bob,0,9.1,3.8,5.2,B,1.06);
  column(0,21.2+bob,0,10.2,10.8,5.6,B,1.15);
@@ -156,9 +179,10 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  const haR=o.nogun?[6.3,16+bob+frostLift,1]:[gunX+.2+(sniper?pull*1.6:0),gunY-1.6+bob+(sniper?pull:0),gunZ+W.grip-kick-(sniper?pull*1.5:0)];
  const elL=o.nogun?[-6.8,20.4+bob,2.2]:reach(shL,haL,8.2,12.6,[-.75,-1,.1]),elR=o.nogun?[7.1,20.8+bob,2.6]:reach(shR,haR,7.4,7.8,[.8,-1,-.35]);
  for(const [sh,el,ha]of [[shL,elL,haL],[shR,elR,haR]]){
-  beam(sh,el,o.sahur?1.1:2,B,o.sahur?1:1.7);beam(el,ha,o.sahur?1:1.65,B,o.sahur?.9:1.42);
+  const arm=o.winterModel==='yulemaw'?2.8:o.winterModel==='gildedfrostborn'?1.25:2;
+  beam(sh,el,o.sahur?1.1:arm,B,o.sahur?1:arm*.85);beam(el,ha,o.sahur?1:arm*.82,B,o.sahur?.9:arm*.71);
   if(o.reaper){beam(sh,el,2.7,B,2.5,.4);beam(el,ha.map((v,i)=>v+(el[i]-v)*.3),2.5,B,2.6,.4)}
-  beam(ha.map((v,i)=>v+(el[i]-v)*.13),ha,o.sahur?1.1:1.5,o.sahur?'#bf834b':'#363b2b',o.sahur?1.05:1.48,.35);
+  beam(ha.map((v,i)=>v+(el[i]-v)*.13),ha,o.sahur?1.1:o.winterModel==='yulemaw'?2.6:1.5,o.sahur?'#bf834b':o.winterModel?B:'#363b2b',o.sahur?1.05:o.winterModel==='yulemaw'?2.2:1.48,.35);
  }
  box(6.8,24.3+bob,1.8,1.65,1.8,.5,o.mark||'#dcb647',.2);
  box(8.05,24+bob,.1,.22,1.6,2,o.mark||'#dcb647',.15);
@@ -189,7 +213,7 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  // small meshes break through when the head turns or an item sits close to the face.
  const faceCovered=!!(o.hood||o.sheet||o.pumpkin||o.glitchm||o.mask||o.visor||o.hockey||o.sack||o.facewrap||o.khelm||o.bomb||o.clownface);
  // Angular cheek and jaw planes, ears and a shaped helmet instead of a flat circle.
- if(!o.pumpkin&&!o.sheet&&!o.sahur){   // special heads replace the ordinary ears and face
+ if(!o.pumpkin&&!o.sheet&&!o.sahur&&!o.winterModel){   // special heads replace the ordinary ears and face
  column(0,30.1+bob,.2,7.2,6.4,6.3,skin,1.13,.6);
  column(-4.05,30.5+bob,.15,1.15,2.25,2,skin,1,.3);column(4.05,30.5+bob,.15,1.15,2.25,2,skin,1,.3);
  if(!faceCovered){
@@ -231,7 +255,22 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  // stays across the painted brow; the headband sits just above it. In the downed
  // projection its thin band needs the exposed crown edge or the log hides it.
  sahurHatLift=o.sahur?(o.visor?0:o.headband?(o.downed?5:1.5):o.halo?0:3.5):0;
- if(o.winterHat){
+ if(o.winterModel){
+  if(o.winterModel==='yulemaw'){
+   column(0,30.3+bob,1,10,7.8,8.5,B,1.1,.6);
+   for(const side of[-1,1]){beam([side*4,32+bob,0],[side*7,34+bob,-1],1.3,B,.06,.3);box(side*2,31.5+bob,5.1,1.3,.85,.3,'#f5d365',.12,1.4);beam([side*.8,32.2+bob,5.2],[side*3,32.8+bob,4.8],.25,'#2e4a25',.25,.08)}
+   column(0,29.3+bob,5,3.7,2,2.3,'#6baa4a',.85,.3);box(0,27.7+bob,4.8,4.3,.6,.4,'#263923',.1,1.4);
+   dome('#a33740',33,5.2,4.5,3.4);column(0,33+bob,0,10.8,1.6,9.3,'#eee4cc',1,.3);beam([0,36+bob,0],[3.8,37+bob,-2],1.8,V,.35,.3);ball(3.8,37+bob,-2,1.2,'#eee4cc');
+  }else if(o.winterModel==='rednosedemolisher'){
+   column(0,30.8+bob,0,6.7,7.6,6.3,B,1.15,.5);column(0,29.1+bob,4.4,5,3.4,5,'#c1986c',.85,.4);ball(0,29.8+bob,7.2,1.45,'#ff4147');
+   for(const side of[-1,1]){beam([side*2.5,33+bob,0],[side*6,34+bob,-1],1.4,B,.12,.3);box(side*1.8,32+bob,3.5,.7,.9,.3,'#242820',.08,1.5);beam([side*2.2,34+bob,-.7],[side*3.3,41+bob,-1.7],.55,'#d0b58a',.25,.2);for(let i=0;i<3;i++)beam([side*(2.7+i*.2),36+i*1.6+bob,-1],[side*(5+i*.2),38+i*1.8+bob,-1.5],.33,'#d0b58a',.06,.13)}
+  }else{
+   column(0,30.7+bob,0,6.2,7,5.7,'#d9f0f5',1.1,.5);
+   for(const side of[-1,1]){box(side*1.25,31.1+bob,3.05,.7,.8,.25,'#547cba',.06,1.4);beam([side*3,32+bob,-.4],[side*5,36+bob,-2],.9,'#b6e8f5',.04,.2)}
+   for(const [x,h,z]of[[-2.7,38,-1],[0,40,-1.7],[2.2,37,-.4],[-1,37,2]])beam([x,33+bob,z],[x*.8,h+bob,z-1.5],1.1,'#d6f6fc',.04,.25);
+   column(0,33.1+bob,0,6.7,.7,6.1,'#e0b857',1,.2);box(0,28.7+bob,3.05,1.4,.25,.2,'#638caa',.05,1.3);
+  }
+ }else if(o.winterHat){
   const h=o.winterHat,iv='#e5e7d3';
   switch(h){
    case'snowgoggles':dome('#aebfc4',32,4.6,4,2);box(0,31.8+bob,4.3,7.8,2.1,.9,'#454d48',.3);box(0,31.8+bob,4.85,6.5,1.4,.25,'#d7a252',.1);for(const side of[-1,1])box(side*4.5,31.8+bob,0,.6,1.4,7,'#625c4b',.15);break;
@@ -772,7 +811,7 @@ function drawWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
 // bp: bolt-action phase after a shot (0 = just fired, 1 = bolt home), or -1 for none
 // kind: '' rifle/carbine, 'sg' pump shotgun (the fore-end slides back on each pump), 'rpg' launcher tube,
 // 'zap' lightning rifle, 'sword' (swing: 0 rest, 1 wind-up, 2 charge wind-up, 3 charging)
-function gunArms(hand,sd,gl,shB,shF,sleeve,nogun,bob,bp=-1,kind='',swing=0){
+function gunArms(hand,sd,gl,shB,shF,sleeve,nogun,bob,bp=-1,kind='',swing=0,shieldWear=0){
   if(nogun){limb(shB,[shB[0],-13.5+bob],sleeve,2.6);limb(shF,[shF[0],-13.5+bob],sleeve,2.6);return}
   if(kind==='sword'||kind==='swordp'||kind==='swordb'){const pk=kind==='swordp',bl=kind==='swordb';
     const sx=sd.x>=0?1:-1,a=swing===1?Math.atan2(-1,sx*.35):swing===2?Math.atan2(-.35,sx):swing===3?Math.atan2(sd.y,sd.x):Math.atan2(sd.y+.7,sd.x),c=Math.cos(a),n=Math.sin(a);
@@ -787,7 +826,9 @@ function gunArms(hand,sd,gl,shB,shF,sleeve,nogun,bob,bp=-1,kind='',swing=0){
     limb(shB,hand,sleeve,2.6);const pm=[hand[0]+sd.x*6,hand[1]+sd.y*6];seg(hand,pm,OUT,3.6);seg(hand,pm,'#2b2823',2.2);
     const cx=hand[0]+sd.x*5,cy=hand[1]+sd.y*3-4,w=4+9*Math.min(1,Math.abs(sd.y)*1.7),h=22;limb(shF,[cx,cy+2],sleeve,2.6);
     g.fillStyle=OUT;g.fillRect(cx-w/2-1,cy-h/2-1,w+2,h+2);g.fillStyle='#4a5358';g.fillRect(cx-w/2,cy-h/2,w,h);g.fillStyle='#6b767c';g.fillRect(cx-w/2,cy-h/2,w*.35,h);
-    g.fillStyle='rgba(160,200,220,.6)';g.fillRect(cx-w*.32,cy-h*.34,w*.64,2.2);g.fillStyle='#e2b436';g.fillRect(cx-w/2,cy+h*.28,w,1.6);return}
+    g.fillStyle='rgba(160,200,220,.6)';g.fillRect(cx-w*.32,cy-h*.34,w*.64,2.2);g.fillStyle='#e2b436';g.fillRect(cx-w/2,cy+h*.28,w,1.6);
+    if(shieldWear>.25){seg([cx-w*.3,cy-5],[cx+w*.1,cy+1],'#17252a',1);seg([cx+w*.1,cy+1],[cx-w*.2,cy+5],'#afc1c2',.6)}
+    if(shieldWear>.65){seg([cx+w*.3,cy-8],[cx-w*.1,cy-2],'#101c22',1.2);seg([cx-w*.1,cy-2],[cx+w*.2,cy+8],'#101c22',1.1)}return}
   if(kind==='bottle'){   // a lit fire bottle held up, ready to throw
     limb(shB,[shB[0],-13.5+bob],sleeve,2.6);const b=[shF[0]+sd.x*3,shF[1]-7];limb(shF,b,sleeve,2.6);
     g.fillStyle=OUT;g.fillRect(b[0]-2.2,b[1]-6,4.4,7);g.fillStyle='#3f7a4a';g.fillRect(b[0]-1.6,b[1]-5.4,3.2,6);g.fillStyle='#e8dcc0';g.fillRect(b[0]-.8,b[1]-8,1.6,2.6);
@@ -823,7 +864,7 @@ function gunArms(hand,sd,gl,shB,shF,sleeve,nogun,bob,bp=-1,kind='',swing=0){
 }
 // A soldier, raider or Delgado standing at tile (x,y), facing o.aim. Drawn in base pixels, scaled.
 function drawPerson(x,y,o){
-  if(o.mark&&o.detail!==false||o.sahur||o.halloweenHat||o.sheet||o.winterBoss){
+  if(o.mark&&o.detail!==false||o.sahur||o.halloweenHat||o.sheet||o.winterBoss||o.winterModel){
     const [sx,sy]=iso(x,y),sd=wdirToScreen(o.aim),BG=o.big||1;
     if(o.aura)paintAura(g,o.aura,sx,sy,u*FIG*BG,game.time,o.faded?.5:1,'ground');   // v0.9.3: rings and pools under the figure,
     drawWardrobeCharacter(g,o,wardrobeAimAngle(sd),game.time,u*FIG*BG,sx,sy,o.walk||0);
@@ -850,7 +891,7 @@ function drawPerson(x,y,o){
   const hand=[sd.x*6,-17+bob+sd.y*3],shB=[-side*5,-22.5+bob],shF=[side*5,-22.5+bob];
   if(o.pack&&front)P(rectP(-side*1.2,-19.5+bob,13,11),o.pack);
   const bp=o.bolt===undefined?-1:o.bolt;
-  if(!front)gunArms(hand,sd,gl,shB,shF,body,nogun,bob,bp,o.weapon,o.swing);
+  if(!front)gunArms(hand,sd,gl,shB,shF,body,nogun,bob,bp,o.weapon,o.swing,o.shieldWear);
   P([[-6.2,-24.5+bob],[6.2,-24.5+bob],[4.8,-11.5+bob],[-4.8,-11.5+bob]],body);
   P([[-5,-23+bob],[5,-23+bob],[4.3,-14.5+bob],[-4.3,-14.5+bob]],vest,false);
   if(front){g.fillStyle=dark(vest,.3);for(const px of[-4,-1.2,1.6])g.fillRect(px,-17.2+bob,2.4,2.6)}
@@ -931,13 +972,13 @@ function drawPerson(x,y,o){
     g.fillStyle='#6a2a8a';g.fillRect(hx-4.3,hy2-4.8,8.6,1.8);P(rectP(hx+side*.4,hy2-3.9,2.6,2.4),'#e2c25a',false);P(rectP(hx+side*.4,hy2-3.9,1.2,1.1),'#6a2a8a',false)}
   else if(o.headband){neonSeg([hx-5,hy2-2.2],[hx+5,hy2-2.2],o.headband);seg([hx-side*4.8,hy2-2.2],[hx-side*7.8,hy2+.6],o.headband,1.2)}
   if(o.cross){const c=[shB[0],shB[1]+2.2];g.fillStyle='#efe6d2';g.fillRect(c[0]-1.9,c[1]-1.3,3.8,3.6);g.fillStyle='#c43a3a';g.fillRect(c[0]-.5,c[1]-.9,1,2.8);g.fillRect(c[0]-1.4,c[1]+.05,2.8,1)}
-  if(front)gunArms(hand,sd,gl,shB,shF,body,nogun,bob,bp,o.weapon,o.swing);
+  if(front)gunArms(hand,sd,gl,shB,shF,body,nogun,bob,bp,o.weapon,o.swing,o.shieldWear);
   if(o.hp!==undefined&&o.hp<1){g.fillStyle='rgba(10,8,6,.8)';g.fillRect(-8,-41,16,2.6);g.fillStyle='#d65a3a';g.fillRect(-8,-41,16*Math.max(0,o.hp),2.6)}
   g.restore();
   if(o.tag)label(o.tag,sx,sy-46*u*BG,o.tagCol||'#a9bccb',BG>1?11:9);
 }
 function drawDowned(x,y,o,prog,tag){
-  if(o.mark&&o.detail!==false){
+  if(o.mark&&o.detail!==false||o.winterModel){
     const [sx,sy]=iso(x,y);
     drawWardrobeCharacter(g,Object.assign({},o,{downed:true,nogun:true}),.7,game.time,u*FIG,sx,sy,0);
     label(tag,sx,sy-20*u,'#d65a3a',10);
@@ -1086,6 +1127,7 @@ function buildLook(p,cos){
   const o={body:S.body,vest:S.vest,pants:S.pants,head:S.head||'#c19a78',mark:'#e2b436',gl:14,stripe:S.stripe,glow:S.glow,shine:S.shine};
   for(const k of SKIN_FX)if(S[k]!==undefined)o[k]=S[k];
   if(S.winter){o.winter=S.winter;o.winterTrim=S.winterTrim}
+  if(S.winterModel){o.winterModel=S.winterModel;o.aura=S.aura}
   const C=p.C||CLASSES[p.cls]||CLASSES.soldier;
   if(C.name==='SNIPER'){o.gl=19}else if(C.name==='GRENADIER'){o.pack='#4a3a26';o.bandolier=true;o.gl=15;o.weapon='sg'}
   else if(C.name==='QUARTERMASTER'){o.pack='#5a4a30';o.cross=true;o.gl=11}
@@ -1106,6 +1148,7 @@ function buildLook(p,cos){
   if(S.reaper&&H==='class'){delete o.helmet;delete o.cap;delete o.boonie;o.hood=S.body}
   else if((S.bones||S.wraps||S.phantom)&&H==='class'){delete o.helmet;delete o.cap;delete o.boonie}   // the face is the point: no default headgear
   if(p.slot)o.mark=SLOTCOL[p.slot%6];
+  if(S.winterModel){delete o.helmet;delete o.cap;delete o.boonie}
   return o;
 }
 

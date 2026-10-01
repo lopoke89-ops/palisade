@@ -1,0 +1,3 @@
+{"ordinary":{"players":6,"enemies":49,"peakStatus":0,"peakParts":124,"peakEvents":45,"peakBullets":28,"updateMedianMs":0.2,"updateP90Ms":0.5,"renderMedianMs":5.1,"renderP90Ms":14.8,"maxRoundHistory":0},"special":{"players":6,"enemies":49,"peakStatus":49,"peakParts":440,"peakEvents":283,"peakBullets":34,"updateMedianMs":0.3,"updateP90Ms":0.6,"renderMedianMs":5.7,"renderP90Ms":13,"maxRoundHistory":63}}
+errors: none
+

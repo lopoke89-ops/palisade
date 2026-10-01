@@ -1,7 +1,10 @@
 PALISADE: phone version with online co-op
 =========================================
 
-CURRENT RELEASE: v0.9.6.0. Frostpeak adds three functional elevation tiers,
+LOCAL UPDATE: v0.9.6.1 / yard-22 is implemented and tested. Three Winter Case models, tracer refinements, Delgado Follow/Defend commands, Dead End recovery, and 20-hit riot shields are ready for review. The winter collection now contains 45 items. The new backend catalog is live.
+See [completion evidence](dev/evidence/2026-10-01-winter-upgrade/README.md) and the [complete four-angle catalog](dev/catalog/cosmetics/README.md).
+
+PUBLISHED RELEASE: v0.9.6.0. Frostpeak adds three functional elevation tiers,
 ramps/stairs and the Rime Colossus. Operation Whiteout connects all four maps
 and ends with one five-minute personal evacuation rush. The collection adds
 42 winter cosmetics, with milestones and a 14-shard Winter Case.

@@ -67,6 +67,7 @@ const AURA_PART={
 const GOLDS=['#ffe066','#fff6c8','#ffd24a'];
 // each effect is a list of pieces, drawn in order (ground first)
 const AURAS={
+  frostborn:[{p:'ring',col:'#d7b866'},{p:'fall',n:5,cols:['#d9f6ff','#fff0b8'],top:43,w:24,sp:.3,shape:'flake',drift:true,size:1},{p:'orbit',n:3,col:'#e6b94f',shape:'star',size:.8,sp:.4,y:24}],
   // Legendary: one simple effect
   rage:[{p:'glow',col:'#ff2a1a',a:.2},{p:'rise',n:7,cols:['#ff4a2a','#ffa03a'],sp:.55}],
   fuse:[{p:'sparks',n:6,cols:['#fff0a0','#ff9a2a'],x:0,y:15,dir:-1.3},{p:'smoke',n:3,x:5,y:26}],
@@ -98,6 +99,7 @@ const AURAS={
 const AURA_GROUND=new Set(['pool','ring','pulse','mist']),AURA_STILL=new Set(['pool','ring','glow']);
 const AURA_PICK={ground:p=>AURA_GROUND.has(p),top:p=>!AURA_GROUND.has(p),sground:p=>p==='pool'||p==='ring',stop:p=>p==='glow',moving:p=>!AURA_STILL.has(p)};
 function paintAura(c,kind,x,y,s,t,alpha=1,part){
+  if(reduceMotion())t=0;
   const L=AURAS[kind];if(!L)return;const pick=part&&AURA_PICK[part];
   c.save();c.globalAlpha=alpha;
   for(const o of L){if(pick&&!pick(o.p))continue;c.globalAlpha=alpha;AURA_PART[o.p](c,x,y,s,t,o)}

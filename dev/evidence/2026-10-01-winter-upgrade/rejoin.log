@@ -1,0 +1,4 @@
+{"rocket":{"host":[4,"soldier"],"guestHud":[4,"4"]},"guestBase1":[0,"muq2iuom-wi2a769n7sq4"],"guestBase2":[3,"muq2iuom-wi2a769n7sq4",4,"raid"],"first":{"gid":true,"from":0,"to":3,"held":3,"left":true,"win":false,"bosses":[],"dur":true},"second":{"gid":true,"from":3,"to":5,"held":2,"left":false,"win":true,"bosses":["demolisher"],"dur":true},"upgrades":"00000:0","clsMap":["soldier@yard","soldier@yard"]}
+errors: none
+OUT {"rocket":{"host":[4,"soldier"],"guestHud":[4,"4"]},"guestBase1":[0,"muq2iuom-wi2a769n7sq4"],"guestBase2":[3,"muq2iuom-wi2a769n7sq4",4,"raid"],"first":{"gid":true,"from":0,"to":3,"held":3,"left":true,"win":false,"bosses":[],"dur":true},"second":{"gid":true,"from":3,"to":5,"held":2,"left":false,"win":true,"bosses":["demolisher"],"dur":true},"upgrades":"00000:0","clsMap":["soldier@yard","soldier@yard"]}
+

@@ -6,7 +6,7 @@ const PB={A:0,B:1,X:2,Y:3,LB:4,RB:5,LT:6,RT:7,VIEW:8,MENU:9,LS:10,RS:11,UP:12,DO
 // [id, what Settings calls it, default button]. -1 = not on a button until the player puts it on one.
 const PAD_ACTIONS=[['fire','FIRE',PB.RT],['nade','GRENADE',PB.LT],['build','BUILD',PB.A],['special','ABILITY / SPRINT',PB.B],
   ['armory','ARMORY',PB.X],['piece','WALL / DOOR',PB.Y],['matPrev','MATERIAL BACK',PB.LEFT],['matNext','MATERIAL NEXT',PB.RIGHT],
-  ['kit','BUILD KIT',PB.DOWN],['start','START RAID',PB.VIEW],['reload','RELOAD',-1]];
+  ['kit','BUILD KIT',PB.DOWN],['start','START RAID',PB.VIEW],['reload','RELOAD',-1],['delgado','DELGADO ORDERS',-1]];
 const PAD_KEY='palisade.pad.v1';
 const padDefaults=()=>Object.fromEntries(PAD_ACTIONS.map(a=>[a[0],a[2]]));
 let padMap=padDefaults();
@@ -75,6 +75,7 @@ function gamePad(cur,hit,now){
   if(hit(M.kit))toggleBuild();
   if(hit(M.start)&&game.phase==='build'&&NET.mode!=='guest')startRaid();
   if(hit(M.reload))localReload();
+  if(hit(M.delgado))setQMMode(qm.mode==='defend'?'follow':'defend');
 }
 
 /* ---- menus: the d-pad or left stick moves a highlight to the nearest button that way ---- */

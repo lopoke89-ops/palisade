@@ -1,0 +1,610 @@
+{
+  "counts": {
+    "skin": 13,
+    "hat": 10,
+    "trail": 6,
+    "fx": 6,
+    "bg": 10
+  },
+  "items": [
+    {
+      "id": "skin:snowline",
+      "name": "Snowline Scout",
+      "r": "r",
+      "box": null,
+      "need": {
+        "map_frost": 250
+      },
+      "description": "White insulated scout jacket, wrapped boots and climbing straps.",
+      "animated": false
+    },
+    {
+      "id": "hat:snowgoggles",
+      "name": "Snowline Goggles",
+      "r": "c",
+      "box": "winter",
+      "need": null,
+      "description": "Amber snow lenses in a compact insulated frame.",
+      "animated": false
+    },
+    {
+      "id": "skin:summitranger",
+      "name": "Summit Ranger",
+      "r": "e",
+      "box": null,
+      "need": {
+        "map_frost": 500
+      },
+      "description": "Deep green mountain kit, rope harness and reinforced shoulders.",
+      "animated": false
+    },
+    {
+      "id": "hat:ushanka",
+      "name": "Ranger Ushanka",
+      "r": "r",
+      "box": "winter",
+      "need": null,
+      "description": "Fur-lined field cap with folded winter ear flaps.",
+      "animated": false
+    },
+    {
+      "id": "skin:glacierengineer",
+      "name": "Glacier Engineer",
+      "r": "l",
+      "box": null,
+      "need": {
+        "map_frost": 1000
+      },
+      "description": "Blue-gray utility suit, repair tools and frost-marked plates.",
+      "animated": false
+    },
+    {
+      "id": "hat:surveyhelm",
+      "name": "Surveyor Helmet",
+      "r": "r",
+      "box": "winter",
+      "need": null,
+      "description": "Angular survey helmet with a bright expedition lamp.",
+      "animated": false
+    },
+    {
+      "id": "skin:polarrescue",
+      "name": "Polar Rescue",
+      "r": "r",
+      "box": null,
+      "need": {
+        "boss_rime": 25
+      },
+      "description": "Rescue-orange parka, reflective trim and medical packs.",
+      "animated": false
+    },
+    {
+      "id": "hat:rescuehood",
+      "name": "Rescue Hood",
+      "r": "e",
+      "box": "winter",
+      "need": null,
+      "description": "Structured orange storm hood with a pale insulated face opening.",
+      "animated": false
+    },
+    {
+      "id": "skin:evergreen",
+      "name": "Evergreen Sentinel",
+      "r": "e",
+      "box": null,
+      "need": {
+        "boss_rime": 50
+      },
+      "description": "Layered green armor with pine details and bark-toned straps.",
+      "animated": false
+    },
+    {
+      "id": "hat:pinecrown",
+      "name": "Evergreen Crown",
+      "r": "e",
+      "box": "winter",
+      "need": null,
+      "description": "A branching evergreen crown with restrained pine accents.",
+      "animated": false
+    },
+    {
+      "id": "skin:yuletideqm",
+      "name": "Yuletide Quartermaster",
+      "r": "r",
+      "box": "winter",
+      "need": null,
+      "description": "Burgundy supply coat with brass hardware and field pouches.",
+      "animated": false
+    },
+    {
+      "id": "hat:yulecap",
+      "name": "Quartermaster Cap",
+      "r": "c",
+      "box": "winter",
+      "need": null,
+      "description": "Fitted burgundy seasonal cap with a pale winter cuff.",
+      "animated": false
+    },
+    {
+      "id": "skin:gingergren",
+      "name": "Gingerbread Grenadier",
+      "r": "e",
+      "box": "winter",
+      "need": null,
+      "description": "Biscuit-toned combat plates with inset icing seams and candy accents.",
+      "animated": false
+    },
+    {
+      "id": "hat:icinghelm",
+      "name": "Icing Helmet",
+      "r": "c",
+      "box": "winter",
+      "need": null,
+      "description": "Shaped biscuit helmet edged in pale icing.",
+      "animated": false
+    },
+    {
+      "id": "skin:nutcracker",
+      "name": "Nutcracker Vanguard",
+      "r": "l",
+      "box": null,
+      "need": {
+        "boss_rime": 100
+      },
+      "description": "Red and navy parade armor with sculpted plates and brass fasteners.",
+      "animated": false
+    },
+    {
+      "id": "hat:shako",
+      "name": "Parade Shako",
+      "r": "l",
+      "box": "winter",
+      "need": null,
+      "description": "Tall red military shako with brass parade trim.",
+      "animated": false
+    },
+    {
+      "id": "skin:rimewarden",
+      "name": "Rimebound Warden",
+      "r": "g",
+      "box": null,
+      "need": {
+        "boss_rime": 250
+      },
+      "description": "Angular expedition armor with fractured ice plates and luminous frost edges.",
+      "animated": false
+    },
+    {
+      "id": "hat:rimecrest",
+      "name": "Rime Crest",
+      "r": "l",
+      "box": "winter",
+      "need": null,
+      "description": "A jagged translucent ice crest on an expedition helmet.",
+      "animated": false
+    },
+    {
+      "id": "skin:aurorasovereign",
+      "name": "Aurora Sovereign",
+      "r": "g",
+      "box": null,
+      "need": {
+        "map_frost": 2500
+      },
+      "description": "Premium polar armor with aurora trim and a luminous chest crest.",
+      "animated": false
+    },
+    {
+      "id": "hat:aurorahalo",
+      "name": "Aurora Halo",
+      "r": "g",
+      "box": "winter",
+      "need": null,
+      "description": "A segmented aurora halo with gentle motion; still with reduced motion.",
+      "animated": true
+    },
+    {
+      "id": "trail:snowstreak",
+      "name": "Snowstreak",
+      "r": "r",
+      "box": "winter",
+      "need": null,
+      "description": "Fine white rounds with sparse snowflake motes.",
+      "animated": false
+    },
+    {
+      "id": "trail:glaciershard",
+      "name": "Glacier Shard",
+      "r": "r",
+      "box": "winter",
+      "need": null,
+      "description": "Translucent blue ice fragments along a short trail.",
+      "animated": false
+    },
+    {
+      "id": "trail:candyline",
+      "name": "Candyline",
+      "r": "e",
+      "box": "winter",
+      "need": null,
+      "description": "A restrained red-and-white candy spiral.",
+      "animated": false
+    },
+    {
+      "id": "trail:polarspark",
+      "name": "Polar Spark",
+      "r": "l",
+      "box": "winter",
+      "need": null,
+      "description": "Cool sparks with a crystalline tail.",
+      "animated": false
+    },
+    {
+      "id": "trail:auroralance",
+      "name": "Aurora Lance",
+      "r": "g",
+      "box": "winter",
+      "need": null,
+      "description": "Layered mint and violet aurora ribbon with an icy core.",
+      "animated": false
+    },
+    {
+      "id": "trail:solsticecomet",
+      "name": "Solstice Comet",
+      "r": "g",
+      "box": "winter",
+      "need": null,
+      "description": "Warm gold core, winter-star accents and a crisp frost wake.",
+      "animated": false
+    },
+    {
+      "id": "fx:snowpuff",
+      "name": "Snow Puff",
+      "r": "r",
+      "box": "winter",
+      "need": null,
+      "description": "A compact snow burst that fades quickly.",
+      "animated": false
+    },
+    {
+      "id": "fx:frostfracture",
+      "name": "Frost Fracture",
+      "r": "r",
+      "box": "winter",
+      "need": null,
+      "description": "Small ice crystals break into readable blue shards.",
+      "animated": false
+    },
+    {
+      "id": "fx:ornamentpop",
+      "name": "Ornament Pop",
+      "r": "e",
+      "box": "winter",
+      "need": null,
+      "description": "A brief seasonal ornament burst with restrained fragments.",
+      "animated": false
+    },
+    {
+      "id": "fx:winterbloom",
+      "name": "Winter Bloom",
+      "r": "l",
+      "box": "winter",
+      "need": null,
+      "description": "An expanding snowflake and a ring of frost petals.",
+      "animated": false
+    },
+    {
+      "id": "fx:borealiscollapse",
+      "name": "Borealis Collapse",
+      "r": "g",
+      "box": "winter",
+      "need": null,
+      "description": "Aurora orbits collapse into a crystalline ring.",
+      "animated": false
+    },
+    {
+      "id": "fx:solsticenova",
+      "name": "Solstice Supernova",
+      "r": "g",
+      "box": "winter",
+      "need": null,
+      "description": "A gold-white winter starburst, ice halo and trailing snow stars.",
+      "animated": false
+    },
+    {
+      "id": "skin:yulemaw",
+      "name": "Yulemaw",
+      "r": "e",
+      "box": "winter",
+      "need": null,
+      "description": "A shaggy green Christmas monster with a hunched fur mantle, oversized hands and a red winter coat.",
+      "animated": false
+    },
+    {
+      "id": "skin:rednosedemolisher",
+      "name": "Rednose Demolisher",
+      "r": "l",
+      "box": "winter",
+      "need": null,
+      "description": "A bipedal reindeer with branching antlers, a luminous red nose, split hooves and hip-mounted grenades.",
+      "animated": false
+    },
+    {
+      "id": "skin:gildedfrostborn",
+      "name": "Gilded Frostborn",
+      "r": "g",
+      "box": "winter",
+      "need": null,
+      "description": "A slender frost spirit with sculpted ice hair, a crystalline winter coat, gold trim and drifting Christmas snow.",
+      "animated": false
+    },
+    {
+      "id": "bg:summitcommand",
+      "name": "Summit Command",
+      "r": "c",
+      "box": "winter",
+      "need": null,
+      "description": "A snowy summit outpost above three mountain ridges.",
+      "animated": false
+    },
+    {
+      "id": "bg:frozenriver",
+      "name": "Frozen River Crossing",
+      "r": "r",
+      "box": "winter",
+      "need": null,
+      "description": "An icy supply crossing with branching river cracks.",
+      "animated": false
+    },
+    {
+      "id": "bg:snowquarry",
+      "name": "Snowed-In Quarry",
+      "r": "r",
+      "box": "winter",
+      "need": null,
+      "description": "Snow-covered quarry terraces and an abandoned crane.",
+      "animated": false
+    },
+    {
+      "id": "bg:skistation",
+      "name": "Abandoned Ski Station",
+      "r": "e",
+      "box": "winter",
+      "need": null,
+      "description": "A deserted cable lift suspended above snowy pines.",
+      "animated": false
+    },
+    {
+      "id": "bg:winterdepot",
+      "name": "Winter Supply Depot",
+      "r": "c",
+      "box": "winter",
+      "need": null,
+      "description": "Expedition supply crates beside a sheltered mountain depot.",
+      "animated": false
+    },
+    {
+      "id": "bg:lanternoutpost",
+      "name": "Lanternlit Outpost",
+      "r": "e",
+      "box": "winter",
+      "need": null,
+      "description": "A warm lanternlit outpost in the winter dusk.",
+      "animated": false
+    },
+    {
+      "id": "bg:aurorafrostpeak",
+      "name": "Aurora Over Frostpeak",
+      "r": "l",
+      "box": "winter",
+      "need": null,
+      "description": "Aurora ribbons and sparse drifting snow over Frostpeak.",
+      "animated": true
+    },
+    {
+      "id": "bg:whiteouttower",
+      "name": "Whiteout Watchtower",
+      "r": "e",
+      "box": "winter",
+      "need": null,
+      "description": "Wind-driven snow and a slow watchtower beacon.",
+      "animated": true
+    },
+    {
+      "id": "bg:yulehangar",
+      "name": "Yuletide Hangar",
+      "r": "l",
+      "box": "winter",
+      "need": null,
+      "description": "Warm seasonal hangar lights and gentle steam.",
+      "animated": true
+    },
+    {
+      "id": "bg:midnightevac",
+      "name": "Midnight Evacuation",
+      "r": "g",
+      "box": "winter",
+      "need": null,
+      "description": "A midnight landing pad, sweeping searchlights and a distant helicopter.",
+      "animated": true
+    }
+  ],
+  "fit": [
+    {
+      "skin": "snowline",
+      "hat": "snowgoggles",
+      "allowed": true,
+      "field": "snowgoggles"
+    },
+    {
+      "skin": "sahur",
+      "hat": "snowgoggles",
+      "allowed": true,
+      "field": "snowgoggles"
+    },
+    {
+      "skin": "summitranger",
+      "hat": "ushanka",
+      "allowed": true,
+      "field": "ushanka"
+    },
+    {
+      "skin": "sahur",
+      "hat": "ushanka",
+      "allowed": true,
+      "field": "ushanka"
+    },
+    {
+      "skin": "glacierengineer",
+      "hat": "surveyhelm",
+      "allowed": true,
+      "field": "surveyhelm"
+    },
+    {
+      "skin": "sahur",
+      "hat": "surveyhelm",
+      "allowed": true,
+      "field": "surveyhelm"
+    },
+    {
+      "skin": "polarrescue",
+      "hat": "rescuehood",
+      "allowed": true,
+      "field": "rescuehood"
+    },
+    {
+      "skin": "sahur",
+      "hat": "rescuehood",
+      "allowed": true,
+      "field": "rescuehood"
+    },
+    {
+      "skin": "evergreen",
+      "hat": "pinecrown",
+      "allowed": true,
+      "field": "pinecrown"
+    },
+    {
+      "skin": "sahur",
+      "hat": "pinecrown",
+      "allowed": true,
+      "field": "pinecrown"
+    },
+    {
+      "skin": "yuletideqm",
+      "hat": "yulecap",
+      "allowed": true,
+      "field": "yulecap"
+    },
+    {
+      "skin": "sahur",
+      "hat": "yulecap",
+      "allowed": true,
+      "field": "yulecap"
+    },
+    {
+      "skin": "gingergren",
+      "hat": "icinghelm",
+      "allowed": true,
+      "field": "icinghelm"
+    },
+    {
+      "skin": "sahur",
+      "hat": "icinghelm",
+      "allowed": true,
+      "field": "icinghelm"
+    },
+    {
+      "skin": "nutcracker",
+      "hat": "shako",
+      "allowed": true,
+      "field": "shako"
+    },
+    {
+      "skin": "sahur",
+      "hat": "shako",
+      "allowed": true,
+      "field": "shako"
+    },
+    {
+      "skin": "rimewarden",
+      "hat": "rimecrest",
+      "allowed": true,
+      "field": "rimecrest"
+    },
+    {
+      "skin": "sahur",
+      "hat": "rimecrest",
+      "allowed": true,
+      "field": "rimecrest"
+    },
+    {
+      "skin": "aurorasovereign",
+      "hat": "aurorahalo",
+      "allowed": true,
+      "field": "aurorahalo"
+    },
+    {
+      "skin": "sahur",
+      "hat": "aurorahalo",
+      "allowed": true,
+      "field": "aurorahalo"
+    }
+  ],
+  "animated": 4,
+  "goldTrail": 2,
+  "goldFX": 2,
+  "motion": [
+    {
+      "id": "summitcommand",
+      "animated": false,
+      "changed": false
+    },
+    {
+      "id": "frozenriver",
+      "animated": false,
+      "changed": false
+    },
+    {
+      "id": "snowquarry",
+      "animated": false,
+      "changed": false
+    },
+    {
+      "id": "skistation",
+      "animated": false,
+      "changed": false
+    },
+    {
+      "id": "winterdepot",
+      "animated": false,
+      "changed": false
+    },
+    {
+      "id": "lanternoutpost",
+      "animated": false,
+      "changed": false
+    },
+    {
+      "id": "aurorafrostpeak",
+      "animated": true,
+      "changed": true
+    },
+    {
+      "id": "whiteouttower",
+      "animated": true,
+      "changed": true
+    },
+    {
+      "id": "yulehangar",
+      "animated": true,
+      "changed": true
+    },
+    {
+      "id": "midnightevac",
+      "animated": true,
+      "changed": true
+    }
+  ],
+  "poses": 1280
+}

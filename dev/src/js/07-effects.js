@@ -11,6 +11,9 @@ function emit(x,y,z,kind,mat){
     let n=0,first=-1;for(let i=0;i<parts.length;i++)if(parts[i].kind.charCodeAt(0)===102&&parts[i].kind.startsWith('finish:')){if(first<0)first=i;n++}if(n>=24)parts.splice(first,1);
   }
   switch(kind){
+    case'snowdust':p.col='#e2f5fa';p.vx*=.12;p.vy*=.12;p.vz=3;p.grav=0;p.life=p.max=.32;p.size=1.4;break;
+    case'yulelight':p.col='#ffe09a';p.vx*=.1;p.vy*=.1;p.vz=0;p.grav=15;p.life=p.max=.38;p.size=2;break;
+    case'flagmote':p.vx*=.15;p.vy*=.15;p.vz=4;p.grav=0;p.life=p.max=.3;p.size=1.5;break;
     case'splinter':p.col=rnd()<.5?'#c99a5e':'#7a5530';p.life=p.max=.45;break;
     case'dust':p.col=mat===1?'rgba(170,110,85,':mat===2?'rgba(150,155,155,':'rgba(150,120,85,';p.vx*=.4;p.vy*=.4;p.vz=10+rnd()*20;p.grav=-8;p.life=p.max=.9+rnd()*.5;p.size=7;break;
     case'spark':p.col=rnd()<.5?'#ffe39a':'#ffb14a';p.vx*=3;p.vy*=3;p.vz=40+rnd()*90;p.life=p.max=.3;p.size=1.6;break;
@@ -51,6 +54,7 @@ function emit(x,y,z,kind,mat){
     case'arc':p.col=rnd()<.5?'#e8f6ff':'#7fd8ff';p.vx*=2.6;p.vy*=2.6;p.vz=20+rnd()*60;p.grav=0;p.life=p.max=.25;p.size=2;break;
   }
   parts.push(p);if(parts.length>600)parts.splice(0,parts.length-600);
+  return p;
 }
 function hitFx(x,y,mat){
   if(mat===0){for(let n=0;n<4;n++)emit(x,y,WH*.5,'splinter')}

@@ -5,9 +5,9 @@ level (built from here); this folder is the source.
 This folder is **not published** on GitHub Pages (`_config.yml` excludes it). Audio masters live in `audio/masters/`.
 Tests find an installed Chromium automatically if Playwright's own browser build is missing.
 
-Current source release is **v0.9.6.0**, protocol `yard-21`: Frostpeak elevation,
-Operation Whiteout, the Rime Colossus, 42 winter cosmetics and authenticated friend invitations.
-The two October 1 winter/invitation migrations are applied and verified.
+Current local source/build is **v0.9.6.1**, protocol `yard-22`: three distinct Winter Case models, upgraded tracers, Delgado commands, Dead End recovery, and bullet-count riot shield durability. The winter collection now has 45 items (13 skins). The additive `winter_models` backend migration is applied and verified; the game build awaits release.
+See the [completion report](evidence/2026-10-01-winter-upgrade/README.md) and [complete four-angle catalog](catalog/cosmetics/README.md).
+
 See [STATUS.md](STATUS.md), [winter release evidence](evidence/2026-10-01-winter-whiteout/README.md),
 [balance and height contracts](evidence/2026-10-01-winter-whiteout/BALANCE.md)
 and [the complete catalog](evidence/2026-10-01-winter-whiteout/CATALOG.md).

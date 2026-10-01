@@ -18,7 +18,8 @@
 10d-winter-campaign.js   Whiteout chapters, continuity, winter bosses and terrain-clipped warnings
 11-hud-chat.js   best record, HUD, text chat
 12-players.js   main update, player control and simulation (triggers, bursts, gathering)
-13-dell.js   Dell, the quartermaster AI and shotgun
+13-dell.js   Delgado, the quartermaster AI and shotgun
+13b-commands-recovery.js   host command modes, safe perimeter jobs and terminal crew recovery
 14-raiders.js   raider AI, bullets, walls, fires
 15-render.js   world rendering, walls, tiles, lighting
 16-characters.js   characters, kit and boss effects

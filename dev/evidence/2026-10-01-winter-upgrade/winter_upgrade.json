@@ -1,0 +1,145 @@
+{
+  "baseline": {
+    "phase": "raid",
+    "rt": 999997.9999999935,
+    "core": 500,
+    "qmGone": true
+  },
+  "checks": [
+    "unrecoverable modifier pair",
+    "core remains intact",
+    "rewards exactly once",
+    "finite respawn survives",
+    "reachable assisted revive survives",
+    "downed quartermaster terminal",
+    "committed raid completion survives",
+    "finite post-raid hazards preserve preparation recovery",
+    "alive teammate preserves recovery",
+    "whole co-op crew terminates",
+    "unreachable living Delgado cannot soft-lock",
+    "guest cannot finalize",
+    "evac crew dead end finalizes",
+    "extracted player keeps personal victory",
+    "host selects defend",
+    "4x4 or3x3 perimeter",
+    "constructs perimeter with paid resources",
+    "raid5 construction tier",
+    "switching does not duplicate upgrades",
+    "raid10 tier capped at metal",
+    "follow stays near host",
+    "guest mode command rejected",
+    "terrain selects3x3 fallback",
+    "empty inventory does not build free walls",
+    "absent Delgado has no orders",
+    "PvP has no orders",
+    "low/high damage cost one hit",
+    "rear hit does not wear shield",
+    "AP consumes one with penetration",
+    "nonbullet damage leaves shield budget",
+    "same bullet contact is deduplicated",
+    "five contacting shotgun pellets cost five hits",
+    "only two contacting pellets wear the shield",
+    "last ordinary hit blocked",
+    "broken shield admits later bullets",
+    "snapshot retains shield break",
+    "shield survives19 hits at damage1",
+    "exactly20 hits break at damage1",
+    "shield survives19 hits at damage1000",
+    "exactly20 hits break at damage1000",
+    "full model in compact preview yulemaw",
+    "saved cosmetic ID parses yulemaw",
+    "full model in compact preview rednosedemolisher",
+    "saved cosmetic ID parses rednosedemolisher",
+    "full model in compact preview gildedfrostborn",
+    "saved cosmetic ID parses gildedfrostborn"
+  ],
+  "layout": [
+    {
+      "i": 4,
+      "j": 10,
+      "k": 164,
+      "door": true
+    },
+    {
+      "i": 3,
+      "j": 11,
+      "k": 179,
+      "door": true
+    },
+    {
+      "i": 6,
+      "j": 11,
+      "k": 182,
+      "door": true
+    },
+    {
+      "i": 4,
+      "j": 13,
+      "k": 212,
+      "door": true
+    },
+    {
+      "i": 3,
+      "j": 10,
+      "k": 163,
+      "door": false
+    },
+    {
+      "i": 5,
+      "j": 10,
+      "k": 165,
+      "door": false
+    },
+    {
+      "i": 6,
+      "j": 10,
+      "k": 166,
+      "door": false
+    },
+    {
+      "i": 3,
+      "j": 12,
+      "k": 195,
+      "door": false
+    },
+    {
+      "i": 6,
+      "j": 12,
+      "k": 198,
+      "door": false
+    },
+    {
+      "i": 3,
+      "j": 13,
+      "k": 211,
+      "door": false
+    },
+    {
+      "i": 5,
+      "j": 13,
+      "k": 213,
+      "door": false
+    },
+    {
+      "i": 6,
+      "j": 13,
+      "k": 214,
+      "door": false
+    }
+  ],
+  "build": {
+    "count": 12,
+    "status": "Perimeter ready",
+    "mats": [
+      936,
+      1000,
+      1000
+    ]
+  },
+  "shield": {
+    "left": 0,
+    "broken": true
+  },
+  "poses": 96,
+  "errors": []
+}

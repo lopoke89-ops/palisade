@@ -116,6 +116,7 @@ registerWinterLooks();
 // Class Issue preserves the skin's own appearance. Unknown or special heads block added headwear.
 function headwearAllowed(skin,hat){
   const S=SKINS[skin];if(!S)return false;if(hat==='class')return true;
+  if(S.winterModel)return false;
   if(S.sheet)return hat==='halo';
   if(S.sahur)return SAHUR_HATS.has(hat);
   return !(S.demon||S.reaper||S.wraps||S.phantom||S.sack||S.hockey||S.clownface||S.ghillie||S.facewrap||S.headwear&&Object.keys(S.headwear).length);
@@ -186,7 +187,7 @@ const FLAGS=[
   ['russia','Russia','c',['#ffffff','#0039a6','#d52b1e']],
   ['nkorea','North Korea','c',['#024fa2','#ed1c27','#024fa2']]];
 // One color per round, shared by its pellets. Background stripe data stays unchanged.
-for(const[id,,r,b]of FLAGS)TRAILS['f_'+id]={cycle:id==='trans'?['#5bcefa','#ffffff','#f5a9b8']:b,w:1.35,len:1,snd:r==='g'?'ts_grainbow':'ts_grad'};
+for(const[id,,r,b]of FLAGS)TRAILS['f_'+id]={cycle:id==='trans'?['#5bcefa','#ffffff','#f5a9b8']:b,w:1.35,len:1,snd:r==='g'?'ts_grainbow':'ts_grad',...(r==='l'||r==='g'?{pk:'flagmote',pr:r==='g'?.65:.35,premium:r}:{})};
 // v0.9.4.0 (after the flags, so every older tracer keeps its number): the Blitzkrieg ladder's Blue Arc and the Blitzkrieg Case
 Object.assign(TRAILS,{
   bluearc:{arc:true,c:'#5af0ff',w:1.6,len:1.6,glow:'rgba(58,224,224,.4)',pk:'tealdust',pr:.9,edge:'#0a5a66',snd:'ts_plasma'},
@@ -454,7 +455,7 @@ function runClaim(held,win,kills,left=false){
   const fbKeys=(game.fbLog||[]).slice(game.joinFB|0).slice(0,20);   // v0.9.4.0: the Final Blitz bosses
   const claim={kind:'run',mode:game.mode,diff:pick.diff||'normal',win:!!win,held:mine,raid_from:from,raid_to:held,kills,bosses:keys.length,boss_keys:keys,shard_bosses:sb,sb_keys:sbKeys,
     salvage:sal,size:game.size||'std',duration_s:dur,game_id:game.gid,joined_s:Math.round(game.joinT||0),left_s:Math.round(game.time),left:!!left,
-    upgrades:(player?player.upS:'')+':'+(game.dellLv|0),mods:game.mods||[],map:game.map,cls:player?player.cls:pick.cls};
+    upgrades:(player?player.upS:'')+':'+(game.dellLv|0),mods:game.mods||[],map:game.map,cls:player?player.cls:pick.cls,end_reason:game.endReason||''};
   if(blitz()){claim.fb_keys=fbKeys;claim.evac=res}
   claim.claim_id=game.gid+':'+from+':'+held+':'+Math.round(game.joinT||0)+':'+claim.left_s;
   return {claim,shards};

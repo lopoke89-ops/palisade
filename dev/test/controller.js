@@ -53,7 +53,7 @@ const FAKE = (id) => {
   out.lockerTabs = [cat0, cat1, cat2]; assert.notEqual(cat0, cat1, 'RT changes locker tab'); assert.equal(cat0, cat2, 'LT goes back');
   // settings: slider, toggle (with rumble), button changes
   await p.click('[data-nav=settings]'); await press(p, 0);
-  out.padRows = await p.evaluate(() => document.querySelectorAll('#padMap [data-pa]').length); assert.equal(out.padRows, 11, 'every action listed');
+  out.padRows = await p.evaluate(() => document.querySelectorAll('#padMap [data-pa]').length); assert.equal(out.padRows, 12, 'every action listed');
   out.status = await p.textContent('#padStatus'); assert.ok(/connected/i.test(out.status), 'settings sees the controller');
   await focusOn(p, '#sVol'); const v0 = await p.evaluate(() => +document.getElementById('sVol').value);
   await press(p, 15); const v1 = await p.evaluate(() => +document.getElementById('sVol').value); await press(p, 14);

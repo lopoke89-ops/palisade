@@ -1,0 +1,11 @@
+{
+  flags: 32,
+  pixels: 125,
+  pellets: [
+    0, 0, 0, 0, 0,
+    1, 1, 1, 1, 1
+  ],
+  failures: []
+}
+errors: none
+

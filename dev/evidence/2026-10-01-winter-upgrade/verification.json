@@ -1,0 +1,154 @@
+{
+  "release": "v0.9.6.1",
+  "protocol": "yard-22",
+  "baselineCommit": "07eb5e54d53525277f6f8839e6d7b0e4a5617680",
+  "buildSHA256": "3aeb523f19a283ac991b4275bee402bb94f2623c08f7a08ebdb582274cf851e9",
+  "tests": [
+    {
+      "test": "winter_upgrade",
+      "status": "pass"
+    },
+    {
+      "test": "winter_upgrade_network",
+      "status": "pass"
+    },
+    {
+      "test": "winter_tracers",
+      "status": "pass"
+    },
+    {
+      "test": "winter_models_migration",
+      "status": "pass"
+    },
+    {
+      "test": "restore_schema",
+      "status": "pass"
+    },
+    {
+      "test": "winter_cosmetics",
+      "status": "pass"
+    },
+    {
+      "test": "delgado",
+      "status": "pass"
+    },
+    {
+      "test": "tracer_cycle",
+      "status": "pass"
+    },
+    {
+      "test": "tracer_network",
+      "status": "pass"
+    },
+    {
+      "test": "cosmetic_network",
+      "status": "pass"
+    },
+    {
+      "test": "winter_migration",
+      "status": "pass"
+    },
+    {
+      "test": "blitz_network",
+      "status": "pass"
+    },
+    {
+      "test": "ammo_stress",
+      "status": "pass"
+    },
+    {
+      "test": "hud_layout",
+      "status": "pass"
+    },
+    {
+      "test": "solo",
+      "status": "pass"
+    },
+    {
+      "test": "bosses",
+      "status": "pass"
+    },
+    {
+      "test": "cosmetics",
+      "status": "pass"
+    },
+    {
+      "test": "wardrobe3d",
+      "status": "pass"
+    },
+    {
+      "test": "headgear_fit",
+      "status": "pass"
+    },
+    {
+      "test": "muzzle",
+      "status": "pass"
+    },
+    {
+      "test": "rewards_screen",
+      "status": "pass"
+    },
+    {
+      "test": "rejoin",
+      "status": "pass"
+    },
+    {
+      "test": "controller",
+      "status": "pass"
+    },
+    {
+      "test": "winter_elevation",
+      "status": "pass"
+    },
+    {
+      "test": "winter_combat",
+      "status": "pass"
+    },
+    {
+      "test": "winter_reconnect",
+      "status": "pass"
+    },
+    {
+      "test": "winter_network",
+      "status": "pass"
+    },
+    {
+      "test": "presentation",
+      "status": "pass"
+    },
+    {
+      "test": "flagcase",
+      "status": "pass"
+    },
+    {
+      "test": "modifiers",
+      "status": "pass"
+    },
+    {
+      "test": "mod_synergy",
+      "status": "pass"
+    },
+    {
+      "test": "multiplayer",
+      "status": "pass"
+    },
+    {
+      "test": "blitz_mode",
+      "status": "pass"
+    },
+    {
+      "test": "ammo_armory",
+      "status": "pass"
+    },
+    {
+      "test": "ammo_network",
+      "status": "pass"
+    },
+    {
+      "test": "csp",
+      "status": "pass"
+    }
+  ],
+  "databaseMigration": "20261001214620_winter_models",
+  "serverCatalogCount": 311
+}

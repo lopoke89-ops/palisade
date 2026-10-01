@@ -12,9 +12,9 @@ const quant=(a,p)=>a.slice().sort((x,y)=>x-y)[Math.min(a.length-1,Math.floor(a.l
 const summary=a=>({median:+quant(a,.5).toFixed(3),p95:+quant(a,.95).toFixed(3)});
 function setup(scene){
  const P=__pal;window.__resetSeed(713);
- P.demo=false;P.pick.mode=scene==='winter'?'blitz':'endless';P.pick.map=scene==='winter'?'frost':scene==='night'?'quarry':'yard';P.pick.size='xl';P.cfg.fpsMode='60';P.cfg.touchLock='off';
+ P.demo=false;P.pick.mode=(scene==='winter'||scene==='holiday')?'blitz':'endless';P.pick.map=(scene==='winter'||scene==='holiday')?'frost':scene==='night'?'quarry':'yard';P.pick.size='xl';if(P.cfg){P.cfg.fpsMode='60';P.cfg.touchLock='off'};
  const count=scene==='typical'?1:6;
- P.newGame(Array.from({length:count},(_,i)=>({id:i?'bot'+i:'solo',name:'CREW '+i,cls:['soldier','sniper','grenadier','quartermaster'][i%4],cos:scene==='winter'?['aurorasovereign|aurorahalo|auroralance|solsticenova','rimewarden|rimecrest|solsticecomet|borealiscollapse','snowline|snowgoggles|snowstreak|winterbloom'][i%3]:'',sk:P.skillStr({ammo_fire:4,ammo_shock:4,ammo_blast:4})})), '');
+ P.newGame(Array.from({length:count},(_,i)=>({id:i?'bot'+i:'solo',name:'CREW '+i,cls:['soldier','sniper','grenadier','quartermaster'][i%4],cos:scene==='holiday'?['yulemaw|class|auroralance|winterbloom','rednosedemolisher|class|f_pride|ornamentpop','gildedfrostborn|class|solsticecomet|solsticenova'][i%3]:scene==='winter'?['aurorasovereign|aurorahalo|auroralance|solsticenova','rimewarden|rimecrest|solsticecomet|borealiscollapse','snowline|snowgoggles|snowstreak|winterbloom'][i%3]:'',sk:P.skillStr({ammo_fire:4,ammo_shock:4,ammo_blast:4})})), '');
  P.enterGameHook();
  P.NET.mode='solo';P.NET.inGame=false;
  for(const p of P.players.values()){p.hp=p.max=1e9;p.x=P.core.i+.5+(p.slot%3-1)*.8;p.y=P.core.j+2.5+Math.floor(p.slot/3)*.6;p.aim={x:0,y:-1};p.ammoEq=scene==='typical'?['','']:[p.slot%2?'fire':'blast',p.cls==='sniper'?'shock':''];p.walk=1;}
@@ -23,12 +23,12 @@ function setup(scene){
  P.game.wave=scene==='typical'?1:15;P.game.phase='raid';P.game.queue=[];P.game.timer=99999;
  const n=scene==='typical'?12:64;
  for(let i=0;i<n;i++){const e=P.spawnEnemyAt(['rifle','gren','shield','medic','spotter','fire'][i%6],1.5+(i%8)*2.6,1.5+Math.floor(i/8)*2.6);e.hp=e.max=1e8;e.cd=999;e.speed=0;e.walk=i*.7;}
- if(scene!=='typical')for(const id of scene==='winter'?['rime','rime','tempest','bulldozer']:['bluebutcher','arsonist','tempest','bulldozer']){P.spawnBoss(id);const e=P.enemies[P.enemies.length-1];e.hp=e.max=1e8;e.x=P.core.i-2+(P.enemies.length%4)*1.3;e.y=P.core.j-2.5;e.cd=999;e.speed=0;e.st=0;e.stT=999;}
- if(scene==='winter'){P.startFinalBlitz();P.game.fb.next=1e9;P.game.fb.t=280;}
+ if(scene!=='typical')for(const id of (scene==='winter'||scene==='holiday')?['rime','rime','tempest','bulldozer']:['bluebutcher','arsonist','tempest','bulldozer']){P.spawnBoss(id);const e=P.enemies[P.enemies.length-1];e.hp=e.max=1e8;e.x=P.core.i-2+(P.enemies.length%4)*1.3;e.y=P.core.j-2.5;e.cd=999;e.speed=0;e.st=0;e.stT=999;}
+ if(scene==='winter'||scene==='holiday'){P.startFinalBlitz();P.game.fb.next=1e9;P.game.fb.t=280;}
  window.__step=f=>{
   // Replenish representative real effects with identical inputs in both builds.
   if(scene!=='typical'&&f%12===0)for(const p of P.players.values())P.shoot(p,p.gun,0);
-  if(scene==='winter'&&f%30===0){for(let j=0;j<8;j++)for(let i=0;i<8;i++)P.addFrost(2.5+i,6.5+j);P.killFx('solo',P.player.x-1,P.player.y-1);}
+  if((scene==='winter'||scene==='holiday')&&f%30===0){for(let j=0;j<8;j++)for(let i=0;i<8;i++)P.addFrost(2.5+i,6.5+j);P.killFx(P.player.x-1,P.player.y-1,'solsticenova');}
   for(const p of P.players.values()){p.hp=p.max;p.walk=(f/60)*7;p.aim={x:Math.sin(f/100),y:-Math.cos(f/100)};p.x=P.core.i+.5+(p.slot%3-1)*.8+Math.sin(f/75)*1.4;p.y=P.core.j+2.5+Math.floor(p.slot/3)*.6+Math.cos(f/90)*.8;}
   P.qm.hp=P.qm.max;P.core.hp=P.core.max;
  };
@@ -55,7 +55,7 @@ if(require.main===module)(async()=>{
  await new Promise(r=>server.listen(8086,'127.0.0.1',r));
  let b;try{
  b=await chromium.launch({executablePath:process.env.CHROMIUM||'C:/Program Files/Google/Chrome/Application/chrome.exe',args:[...(backend==='software'?['--disable-gpu','--disable-accelerated-2d-canvas']:[]),'--enable-precise-memory-info']});
- const results={label,backend,browser:await b.version(),viewport:{width:390,height:844},deviceScaleFactor:2,canvasDPR:2,baseCommit:'cfca0e59edc2d920a336ca307c21124bcf6602e2',samples:Number(process.env.SAMPLES||3),framesPerSample:Number(process.env.FRAMES||480),stageBarriers:!!process.env.STAGE_FLUSH,cpuProfiler:!!process.env.PROFILE,scenes:{},errors:[]};
+ const results={label,backend,browser:await b.version(),viewport:{width:390,height:844},deviceScaleFactor:2,canvasDPR:2,baseCommit:'07eb5e54d53525277f6f8839e6d7b0e4a5617680',samples:Number(process.env.SAMPLES||3),framesPerSample:Number(process.env.FRAMES||480),stageBarriers:!!process.env.STAGE_FLUSH,cpuProfiler:!!process.env.PROFILE,scenes:{},errors:[]};
  for(const scene of (process.env.SCENES||'typical,dense,night,winter').split(',')){
   const runs=[];
   for(let sample=0;sample<Number(process.env.SAMPLES||3);sample++){
