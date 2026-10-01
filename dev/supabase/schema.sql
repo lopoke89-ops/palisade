@@ -58,7 +58,7 @@ create table public.lobbies (
   constraint lobbies_host_id_fkey FOREIGN KEY (host_id) REFERENCES auth.users(id) ON DELETE CASCADE,
   constraint lobbies_code_check CHECK ((code ~ '^[A-Z0-9]{4}$'::text)),
   constraint lobbies_diff_check CHECK ((diff = ANY (ARRAY['easy'::text, 'normal'::text, 'hard'::text]))),
-  constraint lobbies_length_check CHECK ((length = ANY (ARRAY['5'::text, '10'::text, 'endless'::text]))),
+  constraint lobbies_length_check CHECK ((length = ANY (ARRAY['5'::text, '10'::text, 'endless'::text, 'blitz'::text]))),
   constraint lobbies_mode_check CHECK ((mode = ANY (ARRAY['coop'::text, 'base'::text, 'ffa'::text]))),
   constraint lobbies_name_check CHECK (((char_length(name) >= 1) AND (char_length(name) <= 24))),
   constraint lobbies_players_check CHECK (((players >= 0) AND (players <= 6))),
