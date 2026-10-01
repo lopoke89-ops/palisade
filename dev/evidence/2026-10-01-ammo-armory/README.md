@@ -1,6 +1,6 @@
 # Special ammo and eight-level Armory validation
 
-Implemented from [the work order](../../plans/ammo-and-armory-expansion-work-order.md), prepared as **v0.9.5.2** for Big U's authorized October 1 release. Protocol is `yard-20`, room prefix `palisade-yard-20-`. The final build and Pages verification are recorded in `release-verification.json` after deployment.
+Implemented from [the work order](../../plans/ammo-and-armory-expansion-work-order.md) and published as **v0.9.5.2** with Big U's authorization October 1. Protocol is `yard-20`, room prefix `palisade-yard-20-`, service worker `palisade-1158b41b21`. Final build and Pages verification are recorded in `release-verification.json`.
 
 **Mobile UI follow-up:** the Armory now uses Upgrades/Ammo tabs and a Sniper slot selector. Both categories fit without scrolling in 73 tested layout cases, including smaller portrait and landscape phones. See [the compact Armory report and current captures](compact-armory/README.md); it supersedes the original scrolling-layout validation below.
 
@@ -60,6 +60,10 @@ Twenty simulated seconds per condition, six shooters, 48 durable raiders plus a 
 The stress test completes without errors. Physical-device performance and longer player balance sessions remain useful follow-up checks; these measurements do not establish phone battery use or production network latency.
 
 ## Backend and release state
+
+Release commit [`ac0e049`](https://github.com/lopoke89-ops/palisade/commit/ac0e049d9e94d18e684b60add0c6ac3262f7c6d0) is pushed to `main`. [Pages run 36819697721](https://github.com/lopoke89-ops/palisade/actions/runs/36819697721) completed successfully. Fresh live HTML and service worker fetches match the local release files; the production footer is v0.9.5.2. The final rebuild passed `csp` and all 73 `armory_layout` cases before push.
+
+The production UI smoke test started a Sniper solo game through the visible controls, confirmed debug hooks are absent, and checked both tabs at 320×480, 568×320, 390×844 and 844×390. All eight views fit without scrolling, with no page errors or CSP violations. Account requests were blocked in this UI-only smoke test so it created no test accounts. Production captures are saved as `live_*_armUpTab.png` and `live_*_armAmmoTab.png`; the measured rectangles, exact file hashes and workflow result are in `release-verification.json`.
 
 Migration `20261001045820_ammo_armory_expansion` is applied to `puvjfhwxigxjpsvdwrwf`. The local migration filename matches its live version. Read-only verification confirms all four cost/gate arrays, the lifetime gate in `skill_buy`, 40 SP spent for four maxed nodes, authenticated purchase access, anon denial and no exposed private definitions. Security advisors are unchanged from the pre-migration baseline. Their existing categories are documented by Supabase's [database linter](https://supabase.com/docs/guides/database/database-linter) and [password security guide](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
 

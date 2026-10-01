@@ -1,6 +1,6 @@
 # Compact Armory UI
 
-October 1, 2026 follow-up to the ammo/Armory expansion, included in **v0.9.5.2**. Big U asked for a mobile Armory that fits without scrolling. This replaces the earlier stacked, scrolling layout. The release rebuilds the frontend and service worker; final deployment verification is recorded in the parent evidence directory.
+October 1, 2026 follow-up to the ammo/Armory expansion, published in **v0.9.5.2**. Big U asked for a mobile Armory that fits without scrolling. This replaces the earlier stacked, scrolling layout. The live frontend and service worker `palisade-1158b41b21` match the release files; final deployment verification and live captures are recorded in the parent evidence directory.
 
 ## Changes
 

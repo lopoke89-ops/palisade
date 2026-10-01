@@ -1,6 +1,6 @@
 # PALISADE: current summary and next-work blueprint
 
-**Current implementation update (October 1):** v0.9.5.2 is prepared for the authorized release.
+**Current implementation update (October 1):** v0.9.5.2 is pushed and verified live on GitHub Pages.
 It includes special ammo, eight-level upgrades and a compact mobile Armory with protocol
 `yard-20`. Account migration `20261001045820_ammo_armory_expansion` is live.
 Use [STATUS.md](STATUS.md) and [the balance/validation report](evidence/2026-10-01-ammo-armory/README.md)

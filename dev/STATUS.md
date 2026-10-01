@@ -12,11 +12,11 @@ The Claude audit URL still requires sign-in in the available browser session. Bi
 | Item | Current state |
 |---|---|
 | Source release | **v0.9.5.2** (special ammo, eight-level upgrades and compact Armory UI) |
-| Release deployment | Authorized October 1; push/Pages verification in progress; protocol `yard-20` |
-| Live protocol | `yard-19` / `palisade-yard-19-` |
+| Release deployment | Pushed October 1; [Pages run 36819697721](https://github.com/lopoke89-ops/palisade/actions/runs/36819697721) succeeded; live production UI verified |
+| Live protocol | `yard-20` / `palisade-yard-20-` |
 | Applied server migration | `ammo_armory_expansion` (`20261001045820`), verified October 1; before it `palisade_v0940_blitz` (`20260930141401`) |
-| GitHub branch | `main` at `1f94c20` (v0.9.5.1 release), checked September 30 |
-| Published build | GitHub Pages displays **v0.9.5.1**, protocol `yard-19`, service worker `palisade-d59dec9b99`, verified September 30 |
+| GitHub branch | `main` includes release commit `ac0e049` (v0.9.5.2); checked October 1 |
+| Published build | GitHub Pages displays **v0.9.5.2**, protocol `yard-20`, service worker `palisade-1158b41b21`, verified October 1; live HTML and service worker match the local release |
 
 Controller support shipped in v0.9.2.1. The v0.9.3 cosmetics migration is applied and the live case catalog includes Flags. The two proposed new game modes have not shipped; the Nightmare modifier and a future preset definition do not constitute a separate game mode.
 
@@ -24,7 +24,9 @@ Four commits after the v0.9.3 release changed the case intro and reel source (`9
 
 ## v0.9.5.2: special ammo and eight-level Armory
 
-The [ammo and Armory work order](plans/ammo-and-armory-expansion-work-order.md) is implemented. [Validation, balance tables and evidence](evidence/2026-10-01-ammo-armory/README.md) record the finished build and live account migration. Big U authorized publication October 1; Pages verification is in progress.
+The [ammo and Armory work order](plans/ammo-and-armory-expansion-work-order.md) is implemented. [Validation, balance tables and evidence](evidence/2026-10-01-ammo-armory/README.md) record the finished build and live account migration. Big U authorized publication October 1. Commit `ac0e049` is pushed to `main`, Pages deployed successfully, and the live v0.9.5.2 footer, protocol and service worker are verified.
+
+Release verification also opened the production page in Chrome, confirmed debug hooks are absent, started a Sniper solo game through the actual controls, and checked both Armory tabs at 320×480, 568×320, 390×844 and 844×390. All eight live layouts fit without scrolling and reported no page errors or CSP violations. This UI smoke test blocked account requests to avoid creating test accounts; account/server and local online tests are recorded separately. See `evidence/2026-10-01-ammo-armory/release-verification.json` and the live captures beside it.
 
 Armor Piercing, Incendiary, Explosive and Lightning are offered only in solo/co-op 5-raid, 10-raid, Endless and Blitzkrieg Rush. They cost 150 salvage for an empty slot and 75 to switch; repeated selection is free. Classes have one slot, Sniper has two distinct slots, and leaving Sniper clears slot two. Host validation enforces these rules, phase/distance/life/Lockdown checks and salvage. Ammo, verified ranks, burn and slow are synchronized; a same-match reconnect retains slots and level-8 upgrades. Protocol is `yard-20` because these packet fields are new.
 

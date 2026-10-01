@@ -1,0 +1,146 @@
+{
+  "checked_at_utc": "2026-10-01T05:28:57.657124+00:00",
+  "release_commit": "ac0e049d9e94d18e684b60add0c6ac3262f7c6d0",
+  "url": "https://lopoke89-ops.github.io/palisade/",
+  "remote_main": "ac0e049d9e94d18e684b60add0c6ac3262f7c6d0",
+  "workflow_runs": [
+    {
+      "id": 36819697721,
+      "name": "pages build and deployment",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/lopoke89-ops/palisade/actions/runs/36819697721",
+      "head_sha": "ac0e049d9e94d18e684b60add0c6ac3262f7c6d0"
+    }
+  ],
+  "index.html": {
+    "sha256": "fe4fb2e99eeb826746f8becc0023feb3e134b74f8a348321aea75d4d8fc07f5c",
+    "matches_local": true,
+    "version": [
+      "v0.9.5.2"
+    ],
+    "protocol_yard20": true
+  },
+  "sw.js": {
+    "sha256": "e954ce7395b18f43c16cc6f544a0a25a37c8bb837b7e95f58ed88ad64973fa2c",
+    "matches_local": true,
+    "version": [
+      "palisade-1158b41b21"
+    ],
+    "protocol_yard20": null
+  },
+  "live_footer": "v0.9.5.2 · phone, desktop and controller · online co-op and PvP for up to six",
+  "live_layouts": [
+    {
+      "tab": "armUpTab",
+      "width": 320,
+      "height": 480,
+      "top": 8.5,
+      "bottom": 471.5,
+      "scrollHeight": 480,
+      "clientHeight": 480,
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "ammoRows": 0,
+      "slots": 0
+    },
+    {
+      "tab": "armAmmoTab",
+      "width": 320,
+      "height": 480,
+      "top": 57,
+      "bottom": 423,
+      "scrollHeight": 480,
+      "clientHeight": 480,
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "ammoRows": 4,
+      "slots": 2
+    },
+    {
+      "tab": "armUpTab",
+      "width": 568,
+      "height": 320,
+      "top": 17.5,
+      "bottom": 302.5,
+      "scrollHeight": 320,
+      "clientHeight": 320,
+      "scrollWidth": 568,
+      "clientWidth": 568,
+      "ammoRows": 0,
+      "slots": 0
+    },
+    {
+      "tab": "armAmmoTab",
+      "width": 568,
+      "height": 320,
+      "top": 19,
+      "bottom": 301,
+      "scrollHeight": 320,
+      "clientHeight": 320,
+      "scrollWidth": 568,
+      "clientWidth": 568,
+      "ammoRows": 4,
+      "slots": 2
+    },
+    {
+      "tab": "armUpTab",
+      "width": 390,
+      "height": 844,
+      "top": 155,
+      "bottom": 689,
+      "scrollHeight": 844,
+      "clientHeight": 844,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ammoRows": 0,
+      "slots": 0
+    },
+    {
+      "tab": "armAmmoTab",
+      "width": 390,
+      "height": 844,
+      "top": 199.5,
+      "bottom": 644.5,
+      "scrollHeight": 844,
+      "clientHeight": 844,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ammoRows": 4,
+      "slots": 2
+    },
+    {
+      "tab": "armUpTab",
+      "width": 844,
+      "height": 390,
+      "top": 52.5,
+      "bottom": 337.5,
+      "scrollHeight": 390,
+      "clientHeight": 390,
+      "scrollWidth": 844,
+      "clientWidth": 844,
+      "ammoRows": 0,
+      "slots": 0
+    },
+    {
+      "tab": "armAmmoTab",
+      "width": 844,
+      "height": 390,
+      "top": 46,
+      "bottom": 344,
+      "scrollHeight": 390,
+      "clientHeight": 390,
+      "scrollWidth": 844,
+      "clientWidth": 844,
+      "ammoRows": 4,
+      "slots": 2
+    }
+  ],
+  "live_ui": {
+    "errors": [],
+    "violations": [],
+    "production_debug_hooks_absent": true,
+    "account_requests": "blocked in UI smoke test"
+  },
+  "verified_at_utc": "2026-10-01T05:31:27.336Z"
+}
