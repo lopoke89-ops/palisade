@@ -1,0 +1,57 @@
+{
+  "samples": [
+    {
+      "batches": 5,
+      "heap": 4482920,
+      "nodes": 2007,
+      "art": {
+        "entries": 29,
+        "limit": 64
+      },
+      "session": null,
+      "tiles": 0,
+      "results": 0,
+      "intro": false
+    },
+    {
+      "batches": 10,
+      "heap": 4596340,
+      "nodes": 2007,
+      "art": {
+        "entries": 29,
+        "limit": 64
+      },
+      "session": null,
+      "tiles": 0,
+      "results": 0,
+      "intro": false
+    },
+    {
+      "batches": 15,
+      "heap": 4610476,
+      "nodes": 2007,
+      "art": {
+        "entries": 29,
+        "limit": 64
+      },
+      "session": null,
+      "tiles": 0,
+      "results": 0,
+      "intro": false
+    },
+    {
+      "batches": 20,
+      "heap": 4633520,
+      "nodes": 2007,
+      "art": {
+        "entries": 29,
+        "limit": 64
+      },
+      "session": null,
+      "tiles": 0,
+      "results": 0,
+      "intro": false
+    }
+  ],
+  "errors": []
+}

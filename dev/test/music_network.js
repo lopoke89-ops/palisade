@@ -1,0 +1,12 @@
+const {chromium}=require('playwright'),assert=require('node:assert/strict');
+(async()=>{const b=await chromium.launch({executablePath:process.env.CHROMIUM,args:['--autoplay-policy=no-user-gesture-required','--disable-features=WebRtcHideLocalIpsWithMdns']}),h=await b.newPage(),g=await b.newPage(),errors=[];
+ const url='http://localhost:8080/debug.html?debug=1&peerhost=127.0.0.1&peerport=9000&peerpath=/';for(const p of[h,g]){p.on('pageerror',e=>errors.push(e.message));await p.goto(url)}
+ await h.evaluate(()=>__pal.pick.mode='blitz');await h.click('[data-go=multi]');await h.fill('#mName','Music Host');await h.click('#hostBtn');await h.waitForSelector('#pg-lobby:not([hidden])');const code=await h.textContent('#lCode');
+ await g.click('[data-go=multi]');await g.fill('#mName','Music Guest');await g.fill('#mCode',code);await g.click('#joinBtn');await g.waitForSelector('#pg-lobby:not([hidden])');await h.click('#lStart');await g.waitForFunction(()=>__pal.NET.inGame);await h.evaluate(()=>__pal.game.paused=true);
+ const track=async(p,k)=>p.waitForFunction(k=>__pal.mus.cur===k&&!!__pal.mus.src,k,{timeout:30000});await track(h,'between');await track(g,'between');
+ await h.evaluate(()=>{__pal.game.phase='raid';__pal.game.wave=2});await track(h,'cool');await track(g,'cool');const starts=await g.evaluate(()=>__pal.mus.starts);await g.waitForTimeout(800);assert.equal(await g.evaluate(()=>__pal.mus.starts),starts);
+ await h.evaluate(()=>{__pal.game.wave=15;__pal.startFinalBlitz()});await track(h,'finale');await track(g,'finale');const finaleStarts=await g.evaluate(()=>__pal.mus.starts);await g.waitForTimeout(800);assert.equal(await g.evaluate(()=>__pal.mus.starts),finaleStarts);
+ const late=await b.newPage();late.on('pageerror',e=>errors.push(e.message));await late.goto(url);await late.click('[data-go=multi]');await late.fill('#mName','Late Music');await late.fill('#mCode',code);await late.click('#joinBtn');await late.waitForFunction(()=>__pal.NET.inGame);await track(late,'finale');const lateStarts=await late.evaluate(()=>__pal.mus.starts);await late.waitForTimeout(800);assert.equal(await late.evaluate(()=>__pal.mus.starts),lateStarts);
+ await h.evaluate(()=>__pal.endGame(false));for(const p of[h,g,late]){await p.waitForSelector('#over:not([hidden])');await track(p,'results')}
+ assert.deepEqual(errors,[]);await b.close();console.log('Real host/guest raid routing, repeated snapshots, same-finale late join and results pass. errors: none');
+})().catch(e=>{console.error(e);process.exit(1)});

@@ -1,0 +1,247 @@
+{
+  "scope": "Chrome software Canvas, fixed seed, music/combat volume zero; JS heap excludes audio and some native allocations",
+  "comparisons": [
+    {
+      "file": "caseperf-baseline-1.json",
+      "label": "baseline",
+      "quantity": 1,
+      "samples": 3,
+      "browser": "154.0.8037.93",
+      "viewport": [
+        390,
+        844,
+        3
+      ],
+      "phases": {
+        "intro": {
+          "median_cpu_ms_per_s": 122.71076923076923,
+          "cpu_ms_per_s_range": [
+            120.71,
+            148.11923076923077
+          ],
+          "maximum_run_p95_frame_ms": 16.799999999999727,
+          "maximum_frame_ms": 33.399999999999864,
+          "layouts_range": [
+            2,
+            2
+          ],
+          "style_recalcs_range": [
+            175,
+            177
+          ],
+          "maximum_computed_style_reads": 0
+        },
+        "reel": {
+          "median_cpu_ms_per_s": 96.36558823529413,
+          "cpu_ms_per_s_range": [
+            91.42882352941176,
+            99.57852941176469
+          ],
+          "maximum_run_p95_frame_ms": 16.800000000000182,
+          "maximum_frame_ms": 16.800000000000182,
+          "layouts_range": [
+            0,
+            0
+          ],
+          "style_recalcs_range": [
+            398,
+            398
+          ],
+          "maximum_computed_style_reads": 0
+        }
+      },
+      "maximum_done_to_next_frame_ms": 8.400000005960464,
+      "peak_sampled_js_heap_bytes": 9137384,
+      "retained_heap_bytes": [
+        4331728,
+        4357680,
+        4358584
+      ],
+      "maximum_setup_cpu_ms": 121.59200000000003
+    },
+    {
+      "file": "caseperf-candidate-1.json",
+      "label": "candidate",
+      "quantity": 1,
+      "samples": 3,
+      "browser": "154.0.8037.93",
+      "viewport": [
+        390,
+        844,
+        3
+      ],
+      "phases": {
+        "intro": {
+          "median_cpu_ms_per_s": 119.77615384615382,
+          "cpu_ms_per_s_range": [
+            116.73499999999999,
+            133.32576923076923
+          ],
+          "maximum_run_p95_frame_ms": 16.799999999999727,
+          "maximum_frame_ms": 33.299999999999955,
+          "layouts_range": [
+            3,
+            3
+          ],
+          "style_recalcs_range": [
+            176,
+            177
+          ],
+          "maximum_computed_style_reads": 0
+        },
+        "reel": {
+          "median_cpu_ms_per_s": 91.20470588235297,
+          "cpu_ms_per_s_range": [
+            86.76470588235296,
+            96.53676470588238
+          ],
+          "maximum_run_p95_frame_ms": 16.800000000000182,
+          "maximum_frame_ms": 16.800000000000182,
+          "layouts_range": [
+            0,
+            0
+          ],
+          "style_recalcs_range": [
+            397,
+            399
+          ],
+          "maximum_computed_style_reads": 0
+        }
+      },
+      "maximum_done_to_next_frame_ms": 16.600000023841858,
+      "peak_sampled_js_heap_bytes": 9093540,
+      "retained_heap_bytes": [
+        4285652,
+        4290476,
+        4290836
+      ],
+      "maximum_setup_cpu_ms": 91.14900000000003
+    },
+    {
+      "file": "caseperf-candidate-5.json",
+      "label": "candidate",
+      "quantity": 5,
+      "samples": 10,
+      "browser": "154.0.8037.93",
+      "viewport": [
+        390,
+        844,
+        3
+      ],
+      "phases": {
+        "intro": {
+          "median_cpu_ms_per_s": 101.97961538461522,
+          "cpu_ms_per_s_range": [
+            99.09269230769232,
+            125.76346153846154
+          ],
+          "maximum_run_p95_frame_ms": 16.80000000000291,
+          "maximum_frame_ms": 33.30000000000018,
+          "layouts_range": [
+            3,
+            3
+          ],
+          "style_recalcs_range": [
+            173,
+            177
+          ],
+          "maximum_computed_style_reads": 0
+        },
+        "reel": {
+          "median_cpu_ms_per_s": 85.7116176470588,
+          "cpu_ms_per_s_range": [
+            79.61764705882345,
+            93.74470588235262
+          ],
+          "maximum_run_p95_frame_ms": 16.799999999999272,
+          "maximum_frame_ms": 33.30000000000291,
+          "layouts_range": [
+            0,
+            0
+          ],
+          "style_recalcs_range": [
+            396,
+            402
+          ],
+          "maximum_computed_style_reads": 0
+        }
+      },
+      "maximum_done_to_next_frame_ms": 13.599999994039536,
+      "peak_sampled_js_heap_bytes": 6360772,
+      "retained_heap_bytes": [
+        4200388,
+        4406512,
+        4458976,
+        4595132,
+        4651264,
+        4653380,
+        4683720,
+        4693976,
+        4754424,
+        4790692
+      ],
+      "maximum_setup_cpu_ms": 72.38200000000018
+    }
+  ],
+  "twenty_batches": {
+    "samples": [
+      {
+        "batches": 5,
+        "heap": 4482920,
+        "nodes": 2007,
+        "art": {
+          "entries": 29,
+          "limit": 64
+        },
+        "session": null,
+        "tiles": 0,
+        "results": 0,
+        "intro": false
+      },
+      {
+        "batches": 10,
+        "heap": 4596340,
+        "nodes": 2007,
+        "art": {
+          "entries": 29,
+          "limit": 64
+        },
+        "session": null,
+        "tiles": 0,
+        "results": 0,
+        "intro": false
+      },
+      {
+        "batches": 15,
+        "heap": 4610476,
+        "nodes": 2007,
+        "art": {
+          "entries": 29,
+          "limit": 64
+        },
+        "session": null,
+        "tiles": 0,
+        "results": 0,
+        "intro": false
+      },
+      {
+        "batches": 20,
+        "heap": 4633520,
+        "nodes": 2007,
+        "art": {
+          "entries": 29,
+          "limit": 64
+        },
+        "session": null,
+        "tiles": 0,
+        "results": 0,
+        "intro": false
+      }
+    ],
+    "warm_tail_heap_variation_bytes": 37180
+  },
+  "limits": [
+    "Physical phones and Safari unverified",
+    "Desktop timings are subject to scheduler variation"
+  ]
+}

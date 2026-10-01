@@ -5,8 +5,8 @@ level (built from here); this folder is the source.
 This folder is **not published** on GitHub Pages (`_config.yml` excludes it). Audio masters live in `audio/masters/`.
 Tests find an installed Chromium automatically if Playwright's own browser build is missing.
 
-Current local source/build is **v0.9.6.1**, protocol `yard-22`: three distinct Winter Case models, upgraded tracers, Delgado commands, Dead End recovery, and bullet-count riot shield durability. The winter collection now has 45 items (13 skins). The additive `winter_models` backend migration is applied and verified; the game build awaits release.
-See the [completion report](evidence/2026-10-01-winter-upgrade/README.md) and [complete four-angle catalog](catalog/cosmetics/README.md).
+Current local source/build is **v0.9.6.2**, protocol `yard-22`: seven replacement music tracks and atomic one/five-case sessions. The `music_case_batches` backend migration is applied and verified; the new game build awaits release. The winter upgrade v0.9.6.1 is pushed and live.
+See the [music/case completion report](evidence/2026-10-01-music-case-batches/README.md), [winter report](evidence/2026-10-01-winter-upgrade/README.md), and [complete four-angle catalog](catalog/cosmetics/README.md).
 
 See [STATUS.md](STATUS.md), [winter release evidence](evidence/2026-10-01-winter-whiteout/README.md),
 [balance and height contracts](evidence/2026-10-01-winter-whiteout/BALANCE.md)
@@ -115,17 +115,7 @@ be on, and email needs custom SMTP.
 
 ## Music
 
-Four tracks, each as AAC (.m4a) and Opus (.ogg) in `audio/`: `between_raids` (co-op/Endless build
-phases), `raid` (co-op raids), `main_menu` (menu pages outside the Locker), and `locker` (the
-Locker page). To replace one, encode both formats from a WAV under the
-same name and update its loop length (in samples) in `MUSIC` inside src/js/03-audio.js. A new
-track = a new entry in `MUSIC`, its name in `MUSIC_FILES` in build.py, and a case in `musicWant()`.
-
-```
-ffmpeg -i track.wav -c:a aac -b:a 160k -movflags +faststart between_raids.m4a
-ffmpeg -i track.wav -c:a libopus -b:a 128k between_raids.ogg
-ffprobe -v error -select_streams a -count_packets -show_entries stream=duration_ts track.wav   # loop length
-```
+Seven AAC/Opus tracks now cover shared menus/Locker, build phases, the Attitude/Cool/Express raid rotation, Blitzkrieg Rush finale, and all player results. Sacrifices is trimmed to the original 2:44 cue. See [audio preparation, exact durations and playback limits](audio/README.md). `MUSIC` in `src/js/03-audio.js` and `MUSIC_FILES` in `build.py` define packaging/routing.
 
 ## Debug copy
 

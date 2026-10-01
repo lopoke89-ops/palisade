@@ -1,6 +1,6 @@
 # PALISADE: music swap and five-case opening work order
 
-**Status:** Ready for implementation.
+**Status:** Implemented locally as v0.9.6.2 / yard-22. Atomic case RPC migration `20261001225643_music_case_batches` is live. See the [completion report](../evidence/2026-10-01-music-case-batches/README.md) for tests, cue verification, performance, and remaining physical-device verification limits. Publishing the new game candidate remains separate.
 **Source folders:** `H:\vapeor` and `H:\music\Drake - More Life (2017) [Mp3~320kbps]\Drake – More Life (2017)`
 
 ## Goal

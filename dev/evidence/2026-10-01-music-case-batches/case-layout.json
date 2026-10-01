@@ -1,0 +1,141 @@
+{
+  "layouts": [
+    {
+      "width": 320,
+      "height": 568,
+      "reels": [
+        {
+          "left": 16,
+          "right": 304,
+          "bottom": 188.5
+        },
+        {
+          "left": 16,
+          "right": 304,
+          "bottom": 242.5
+        },
+        {
+          "left": 16,
+          "right": 304,
+          "bottom": 293.5
+        },
+        {
+          "left": 16,
+          "right": 304,
+          "bottom": 344.5
+        },
+        {
+          "left": 16,
+          "right": 304,
+          "bottom": 395.5
+        }
+      ],
+      "skip": 449.5,
+      "scroll": false,
+      "doneBottom": 515.96875
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "reels": [
+        {
+          "left": 16,
+          "right": 374,
+          "bottom": 303.875
+        },
+        {
+          "left": 16,
+          "right": 374,
+          "bottom": 372.953125
+        },
+        {
+          "left": 16,
+          "right": 374,
+          "bottom": 439.03125
+        },
+        {
+          "left": 16,
+          "right": 374,
+          "bottom": 505.109375
+        },
+        {
+          "left": 16,
+          "right": 374,
+          "bottom": 571.1875
+        }
+      ],
+      "skip": 625.1875,
+      "scroll": false,
+      "doneBottom": 722.03125
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "reels": [
+        {
+          "left": 16,
+          "right": 414,
+          "bottom": 340.5
+        },
+        {
+          "left": 16,
+          "right": 414,
+          "bottom": 414.5
+        },
+        {
+          "left": 16,
+          "right": 414,
+          "bottom": 485.5
+        },
+        {
+          "left": 16,
+          "right": 414,
+          "bottom": 556.5
+        },
+        {
+          "left": 16,
+          "right": 414,
+          "bottom": 627.5
+        }
+      ],
+      "skip": 681.5,
+      "scroll": false,
+      "doneBottom": 788.015625
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "reels": [
+        {
+          "left": 430,
+          "right": 850,
+          "bottom": 286.5
+        },
+        {
+          "left": 430,
+          "right": 850,
+          "bottom": 352.5
+        },
+        {
+          "left": 430,
+          "right": 850,
+          "bottom": 415.5
+        },
+        {
+          "left": 430,
+          "right": 850,
+          "bottom": 478.5
+        },
+        {
+          "left": 430,
+          "right": 850,
+          "bottom": 541.5
+        }
+      ],
+      "skip": 595.5,
+      "scroll": false,
+      "doneBottom": 687.5
+    }
+  ],
+  "errors": []
+}

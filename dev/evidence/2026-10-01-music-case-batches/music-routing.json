@@ -1,0 +1,895 @@
+{
+  "cueOriginalSeconds": 164,
+  "trimmedRelease": true,
+  "evidence": [
+    {
+      "format": "m4a",
+      "cur": "menu",
+      "token": "menu",
+      "loopStart": 0,
+      "loopEnd": 195.691,
+      "starts": 1,
+      "decoded": [
+        "menu"
+      ],
+      "bytes": 75145344
+    },
+    {
+      "format": "m4a",
+      "cur": "menu",
+      "token": "menu",
+      "loopStart": 0,
+      "loopEnd": 195.691,
+      "starts": 1,
+      "decoded": [
+        "menu"
+      ],
+      "bytes": 75145344
+    },
+    {
+      "format": "m4a",
+      "cur": "menu",
+      "token": "menu",
+      "loopStart": 0,
+      "loopEnd": 195.691,
+      "starts": 1,
+      "decoded": [
+        "menu"
+      ],
+      "bytes": 75145344
+    },
+    {
+      "format": "m4a",
+      "cur": "menu",
+      "token": "menu",
+      "loopStart": 0,
+      "loopEnd": 195.691,
+      "starts": 1,
+      "decoded": [
+        "menu"
+      ],
+      "bytes": 75145344
+    },
+    {
+      "format": "m4a",
+      "cur": "menu",
+      "token": "menu",
+      "loopStart": 0,
+      "loopEnd": 195.691,
+      "starts": 1,
+      "decoded": [
+        "menu"
+      ],
+      "bytes": 75145344
+    },
+    {
+      "format": "m4a",
+      "cur": "menu",
+      "token": "menu",
+      "loopStart": 0,
+      "loopEnd": 195.691,
+      "starts": 1,
+      "decoded": [
+        "menu"
+      ],
+      "bytes": 75145344
+    },
+    {
+      "format": "m4a",
+      "cur": "between",
+      "token": "build:muq5x2l9-uea4bqazf4py:0",
+      "loopStart": 0,
+      "loopEnd": 160.084,
+      "starts": 2,
+      "decoded": [
+        "between"
+      ],
+      "bytes": 61472256
+    },
+    {
+      "format": "m4a",
+      "cur": "attitude",
+      "token": "raid:muq5x2l9-uea4bqazf4py:1",
+      "loopStart": 0,
+      "loopEnd": 198.76572916666666,
+      "starts": 3,
+      "decoded": [
+        "attitude"
+      ],
+      "bytes": 76326040
+    },
+    {
+      "format": "m4a",
+      "cur": "attitude",
+      "token": "raid:muq5x2l9-uea4bqazf4py:1",
+      "loopStart": 0,
+      "loopEnd": 198.76572916666666,
+      "starts": 3,
+      "decoded": [
+        "attitude"
+      ],
+      "bytes": 76326040
+    },
+    {
+      "format": "m4a",
+      "cur": "between",
+      "token": "build:muq5x2l9-uea4bqazf4py:1",
+      "loopStart": 0,
+      "loopEnd": 160.084,
+      "starts": 4,
+      "decoded": [
+        "between"
+      ],
+      "bytes": 61472256
+    },
+    {
+      "format": "m4a",
+      "cur": "cool",
+      "token": "raid:muq5x2l9-uea4bqazf4py:2",
+      "loopStart": 0,
+      "loopEnd": 181.185,
+      "starts": 5,
+      "decoded": [
+        "cool"
+      ],
+      "bytes": 69575040
+    },
+    {
+      "format": "m4a",
+      "cur": "cool",
+      "token": "raid:muq5x2l9-uea4bqazf4py:2",
+      "loopStart": 0,
+      "loopEnd": 181.185,
+      "starts": 5,
+      "decoded": [
+        "cool"
+      ],
+      "bytes": 69575040
+    },
+    {
+      "format": "m4a",
+      "cur": "between",
+      "token": "build:muq5x2l9-uea4bqazf4py:2",
+      "loopStart": 0,
+      "loopEnd": 160.084,
+      "starts": 6,
+      "decoded": [
+        "between"
+      ],
+      "bytes": 61472256
+    },
+    {
+      "format": "m4a",
+      "cur": "express",
+      "token": "raid:muq5x2l9-uea4bqazf4py:3",
+      "loopStart": 0,
+      "loopEnd": 115.513,
+      "starts": 7,
+      "decoded": [
+        "express"
+      ],
+      "bytes": 44356992
+    },
+    {
+      "format": "m4a",
+      "cur": "express",
+      "token": "raid:muq5x2l9-uea4bqazf4py:3",
+      "loopStart": 0,
+      "loopEnd": 115.513,
+      "starts": 7,
+      "decoded": [
+        "express"
+      ],
+      "bytes": 44356992
+    },
+    {
+      "format": "m4a",
+      "cur": "between",
+      "token": "build:muq5x2l9-uea4bqazf4py:3",
+      "loopStart": 0,
+      "loopEnd": 160.084,
+      "starts": 8,
+      "decoded": [
+        "between"
+      ],
+      "bytes": 61472256
+    },
+    {
+      "format": "m4a",
+      "cur": "attitude",
+      "token": "raid:muq5x2l9-uea4bqazf4py:4",
+      "loopStart": 0,
+      "loopEnd": 198.76572916666666,
+      "starts": 9,
+      "decoded": [
+        "attitude"
+      ],
+      "bytes": 76326040
+    },
+    {
+      "format": "m4a",
+      "cur": "attitude",
+      "token": "raid:muq5x2l9-uea4bqazf4py:4",
+      "loopStart": 0,
+      "loopEnd": 198.76572916666666,
+      "starts": 9,
+      "decoded": [
+        "attitude"
+      ],
+      "bytes": 76326040
+    },
+    {
+      "format": "m4a",
+      "cur": "attitude",
+      "token": "raid:muq5x2l9-uea4bqazf4py:4",
+      "loopStart": 0,
+      "loopEnd": 198.76572916666666,
+      "starts": 10,
+      "decoded": [
+        "attitude"
+      ],
+      "bytes": 76326040
+    },
+    {
+      "format": "m4a",
+      "cur": "attitude",
+      "token": "raid:muq5x2l9-uea4bqazf4py:4",
+      "loopStart": 0,
+      "loopEnd": 198.76572916666666,
+      "starts": 11,
+      "decoded": [
+        "attitude"
+      ],
+      "bytes": 76326040
+    },
+    {
+      "format": "m4a",
+      "cur": "finale",
+      "token": "finale:muq5x2l9-uea4bqazf4py",
+      "loopStart": 0,
+      "loopEnd": 389.426,
+      "starts": 12,
+      "decoded": [
+        "finale"
+      ],
+      "bytes": 149539584
+    },
+    {
+      "format": "m4a",
+      "cur": "finale",
+      "token": "finale:muq5x2l9-uea4bqazf4py",
+      "loopStart": 0,
+      "loopEnd": 389.426,
+      "starts": 12,
+      "decoded": [
+        "finale"
+      ],
+      "bytes": 149539584
+    },
+    {
+      "format": "m4a",
+      "cur": "express",
+      "token": "raid:muq5x2l9-uea4bqazf4py:15",
+      "loopStart": 0,
+      "loopEnd": 115.513,
+      "starts": 13,
+      "decoded": [
+        "express"
+      ],
+      "bytes": 44356992
+    },
+    {
+      "format": "m4a",
+      "cur": "results",
+      "token": "results:muq5x2l9-uea4bqazf4py",
+      "loopStart": 0,
+      "loopEnd": 143.61797916666666,
+      "starts": 14,
+      "decoded": [
+        "results"
+      ],
+      "bytes": 55149304
+    },
+    {
+      "format": "m4a",
+      "cur": "results",
+      "token": "results:muq5x2l9-uea4bqazf4py",
+      "loopStart": 0,
+      "loopEnd": 143.61797916666666,
+      "starts": 14,
+      "decoded": [
+        "results"
+      ],
+      "bytes": 55149304
+    },
+    {
+      "format": "m4a",
+      "cur": "menu",
+      "token": "menu",
+      "loopStart": 0,
+      "loopEnd": 195.691,
+      "starts": 15,
+      "decoded": [
+        "menu"
+      ],
+      "bytes": 75145344
+    },
+    {
+      "format": "m4a",
+      "cur": "between",
+      "token": "build:muq5x7a6-kstxq5hykzpc:0",
+      "loopStart": 0,
+      "loopEnd": 160.084,
+      "starts": 16,
+      "decoded": [
+        "between"
+      ],
+      "bytes": 61472256
+    },
+    {
+      "format": "m4a",
+      "cur": "attitude",
+      "token": "raid:muq5x7a6-kstxq5hykzpc:1",
+      "loopStart": 0,
+      "loopEnd": 198.76572916666666,
+      "starts": 17,
+      "decoded": [
+        "attitude"
+      ],
+      "bytes": 76326040
+    },
+    {
+      "format": "m4a",
+      "cur": "results",
+      "token": "results:muq5x7a6-kstxq5hykzpc",
+      "loopStart": 0,
+      "loopEnd": 143.61797916666666,
+      "starts": 18,
+      "decoded": [
+        "results"
+      ],
+      "bytes": 55149304
+    },
+    {
+      "format": "m4a",
+      "cur": "results",
+      "token": "results:muq5x7a6-kstxq5hykzpc",
+      "loopStart": 0,
+      "loopEnd": 143.61797916666666,
+      "starts": 18,
+      "decoded": [
+        "results"
+      ],
+      "bytes": 55149304
+    },
+    {
+      "format": "m4a",
+      "cur": "menu",
+      "token": "menu",
+      "loopStart": 0,
+      "loopEnd": 195.691,
+      "starts": 19,
+      "decoded": [
+        "menu"
+      ],
+      "bytes": 75145344
+    },
+    {
+      "format": "m4a",
+      "cur": "between",
+      "token": "build:muq5x990-w4pmuid4mf7x:0",
+      "loopStart": 0,
+      "loopEnd": 160.084,
+      "starts": 20,
+      "decoded": [
+        "between"
+      ],
+      "bytes": 61472256
+    },
+    {
+      "format": "m4a",
+      "cur": "attitude",
+      "token": "raid:muq5x990-w4pmuid4mf7x:1",
+      "loopStart": 0,
+      "loopEnd": 198.76572916666666,
+      "starts": 21,
+      "decoded": [
+        "attitude"
+      ],
+      "bytes": 76326040
+    },
+    {
+      "format": "m4a",
+      "cur": "results",
+      "token": "results:muq5x9r1-4cd8a2nkmk2m",
+      "loopStart": 0,
+      "loopEnd": 143.61797916666666,
+      "starts": 22,
+      "decoded": [
+        "results"
+      ],
+      "bytes": 55149304
+    },
+    {
+      "format": "m4a",
+      "cur": "menu",
+      "token": "menu",
+      "loopStart": 0,
+      "loopEnd": 195.691,
+      "starts": 23,
+      "decoded": [
+        "menu"
+      ],
+      "bytes": 75145344
+    },
+    {
+      "format": "m4a",
+      "cur": "results",
+      "token": "results:muq5xb2c-ggz95jex2p85",
+      "loopStart": 0,
+      "loopEnd": 143.61797916666666,
+      "starts": 24,
+      "decoded": [
+        "results"
+      ],
+      "bytes": 55149304
+    },
+    {
+      "format": "m4a",
+      "cur": "menu",
+      "token": "menu",
+      "loopStart": 0,
+      "loopEnd": 195.691,
+      "starts": 25,
+      "decoded": [
+        "menu"
+      ],
+      "bytes": 75145344
+    },
+    {
+      "format": "ogg",
+      "cur": "menu",
+      "token": "menu",
+      "loopStart": 0,
+      "loopEnd": 195.69160416666668,
+      "starts": 1,
+      "decoded": [
+        "menu"
+      ],
+      "bytes": 75145576
+    },
+    {
+      "format": "ogg",
+      "cur": "menu",
+      "token": "menu",
+      "loopStart": 0,
+      "loopEnd": 195.69160416666668,
+      "starts": 1,
+      "decoded": [
+        "menu"
+      ],
+      "bytes": 75145576
+    },
+    {
+      "format": "ogg",
+      "cur": "menu",
+      "token": "menu",
+      "loopStart": 0,
+      "loopEnd": 195.69160416666668,
+      "starts": 1,
+      "decoded": [
+        "menu"
+      ],
+      "bytes": 75145576
+    },
+    {
+      "format": "ogg",
+      "cur": "menu",
+      "token": "menu",
+      "loopStart": 0,
+      "loopEnd": 195.69160416666668,
+      "starts": 1,
+      "decoded": [
+        "menu"
+      ],
+      "bytes": 75145576
+    },
+    {
+      "format": "ogg",
+      "cur": "menu",
+      "token": "menu",
+      "loopStart": 0,
+      "loopEnd": 195.69160416666668,
+      "starts": 1,
+      "decoded": [
+        "menu"
+      ],
+      "bytes": 75145576
+    },
+    {
+      "format": "ogg",
+      "cur": "menu",
+      "token": "menu",
+      "loopStart": 0,
+      "loopEnd": 195.69160416666668,
+      "starts": 1,
+      "decoded": [
+        "menu"
+      ],
+      "bytes": 75145576
+    },
+    {
+      "format": "ogg",
+      "cur": "between",
+      "token": "build:muq5xem4-ju94mhx37v59:0",
+      "loopStart": 0,
+      "loopEnd": 160.08408333333333,
+      "starts": 2,
+      "decoded": [
+        "between"
+      ],
+      "bytes": 61472288
+    },
+    {
+      "format": "ogg",
+      "cur": "attitude",
+      "token": "raid:muq5xem4-ju94mhx37v59:1",
+      "loopStart": 0,
+      "loopEnd": 198.76572916666666,
+      "starts": 3,
+      "decoded": [
+        "attitude"
+      ],
+      "bytes": 76326040
+    },
+    {
+      "format": "ogg",
+      "cur": "attitude",
+      "token": "raid:muq5xem4-ju94mhx37v59:1",
+      "loopStart": 0,
+      "loopEnd": 198.76572916666666,
+      "starts": 3,
+      "decoded": [
+        "attitude"
+      ],
+      "bytes": 76326040
+    },
+    {
+      "format": "ogg",
+      "cur": "between",
+      "token": "build:muq5xem4-ju94mhx37v59:1",
+      "loopStart": 0,
+      "loopEnd": 160.08408333333333,
+      "starts": 4,
+      "decoded": [
+        "between"
+      ],
+      "bytes": 61472288
+    },
+    {
+      "format": "ogg",
+      "cur": "cool",
+      "token": "raid:muq5xem4-ju94mhx37v59:2",
+      "loopStart": 0,
+      "loopEnd": 181.1853125,
+      "starts": 5,
+      "decoded": [
+        "cool"
+      ],
+      "bytes": 69575160
+    },
+    {
+      "format": "ogg",
+      "cur": "cool",
+      "token": "raid:muq5xem4-ju94mhx37v59:2",
+      "loopStart": 0,
+      "loopEnd": 181.1853125,
+      "starts": 5,
+      "decoded": [
+        "cool"
+      ],
+      "bytes": 69575160
+    },
+    {
+      "format": "ogg",
+      "cur": "between",
+      "token": "build:muq5xem4-ju94mhx37v59:2",
+      "loopStart": 0,
+      "loopEnd": 160.08408333333333,
+      "starts": 6,
+      "decoded": [
+        "between"
+      ],
+      "bytes": 61472288
+    },
+    {
+      "format": "ogg",
+      "cur": "express",
+      "token": "raid:muq5xem4-ju94mhx37v59:3",
+      "loopStart": 0,
+      "loopEnd": 115.51347916666667,
+      "starts": 7,
+      "decoded": [
+        "express"
+      ],
+      "bytes": 44357176
+    },
+    {
+      "format": "ogg",
+      "cur": "express",
+      "token": "raid:muq5xem4-ju94mhx37v59:3",
+      "loopStart": 0,
+      "loopEnd": 115.51347916666667,
+      "starts": 7,
+      "decoded": [
+        "express"
+      ],
+      "bytes": 44357176
+    },
+    {
+      "format": "ogg",
+      "cur": "between",
+      "token": "build:muq5xem4-ju94mhx37v59:3",
+      "loopStart": 0,
+      "loopEnd": 160.08408333333333,
+      "starts": 8,
+      "decoded": [
+        "between"
+      ],
+      "bytes": 61472288
+    },
+    {
+      "format": "ogg",
+      "cur": "attitude",
+      "token": "raid:muq5xem4-ju94mhx37v59:4",
+      "loopStart": 0,
+      "loopEnd": 198.76572916666666,
+      "starts": 9,
+      "decoded": [
+        "attitude"
+      ],
+      "bytes": 76326040
+    },
+    {
+      "format": "ogg",
+      "cur": "attitude",
+      "token": "raid:muq5xem4-ju94mhx37v59:4",
+      "loopStart": 0,
+      "loopEnd": 198.76572916666666,
+      "starts": 9,
+      "decoded": [
+        "attitude"
+      ],
+      "bytes": 76326040
+    },
+    {
+      "format": "ogg",
+      "cur": "attitude",
+      "token": "raid:muq5xem4-ju94mhx37v59:4",
+      "loopStart": 0,
+      "loopEnd": 198.76572916666666,
+      "starts": 10,
+      "decoded": [
+        "attitude"
+      ],
+      "bytes": 76326040
+    },
+    {
+      "format": "ogg",
+      "cur": "attitude",
+      "token": "raid:muq5xem4-ju94mhx37v59:4",
+      "loopStart": 0,
+      "loopEnd": 198.76572916666666,
+      "starts": 11,
+      "decoded": [
+        "attitude"
+      ],
+      "bytes": 76326040
+    },
+    {
+      "format": "ogg",
+      "cur": "finale",
+      "token": "finale:muq5xem4-ju94mhx37v59",
+      "loopStart": 0,
+      "loopEnd": 389.4266666666667,
+      "starts": 12,
+      "decoded": [
+        "finale"
+      ],
+      "bytes": 149539840
+    },
+    {
+      "format": "ogg",
+      "cur": "finale",
+      "token": "finale:muq5xem4-ju94mhx37v59",
+      "loopStart": 0,
+      "loopEnd": 389.4266666666667,
+      "starts": 12,
+      "decoded": [
+        "finale"
+      ],
+      "bytes": 149539840
+    },
+    {
+      "format": "ogg",
+      "cur": "express",
+      "token": "raid:muq5xem4-ju94mhx37v59:15",
+      "loopStart": 0,
+      "loopEnd": 115.51347916666667,
+      "starts": 13,
+      "decoded": [
+        "express"
+      ],
+      "bytes": 44357176
+    },
+    {
+      "format": "ogg",
+      "cur": "results",
+      "token": "results:muq5xem4-ju94mhx37v59",
+      "loopStart": 0,
+      "loopEnd": 143.61797916666666,
+      "starts": 14,
+      "decoded": [
+        "results"
+      ],
+      "bytes": 55149304
+    },
+    {
+      "format": "ogg",
+      "cur": "results",
+      "token": "results:muq5xem4-ju94mhx37v59",
+      "loopStart": 0,
+      "loopEnd": 143.61797916666666,
+      "starts": 14,
+      "decoded": [
+        "results"
+      ],
+      "bytes": 55149304
+    },
+    {
+      "format": "ogg",
+      "cur": "menu",
+      "token": "menu",
+      "loopStart": 0,
+      "loopEnd": 195.69160416666668,
+      "starts": 15,
+      "decoded": [
+        "menu"
+      ],
+      "bytes": 75145576
+    },
+    {
+      "format": "ogg",
+      "cur": "between",
+      "token": "build:muq5xlat-kmknq9t568tk:0",
+      "loopStart": 0,
+      "loopEnd": 160.08408333333333,
+      "starts": 16,
+      "decoded": [
+        "between"
+      ],
+      "bytes": 61472288
+    },
+    {
+      "format": "ogg",
+      "cur": "attitude",
+      "token": "raid:muq5xlat-kmknq9t568tk:1",
+      "loopStart": 0,
+      "loopEnd": 198.76572916666666,
+      "starts": 17,
+      "decoded": [
+        "attitude"
+      ],
+      "bytes": 76326040
+    },
+    {
+      "format": "ogg",
+      "cur": "results",
+      "token": "results:muq5xlat-kmknq9t568tk",
+      "loopStart": 0,
+      "loopEnd": 143.61797916666666,
+      "starts": 18,
+      "decoded": [
+        "results"
+      ],
+      "bytes": 55149304
+    },
+    {
+      "format": "ogg",
+      "cur": "results",
+      "token": "results:muq5xlat-kmknq9t568tk",
+      "loopStart": 0,
+      "loopEnd": 143.61797916666666,
+      "starts": 18,
+      "decoded": [
+        "results"
+      ],
+      "bytes": 55149304
+    },
+    {
+      "format": "ogg",
+      "cur": "menu",
+      "token": "menu",
+      "loopStart": 0,
+      "loopEnd": 195.69160416666668,
+      "starts": 19,
+      "decoded": [
+        "menu"
+      ],
+      "bytes": 75145576
+    },
+    {
+      "format": "ogg",
+      "cur": "between",
+      "token": "build:muq5xnpv-kkuv7hkq6jzd:0",
+      "loopStart": 0,
+      "loopEnd": 160.08408333333333,
+      "starts": 20,
+      "decoded": [
+        "between"
+      ],
+      "bytes": 61472288
+    },
+    {
+      "format": "ogg",
+      "cur": "attitude",
+      "token": "raid:muq5xnpv-kkuv7hkq6jzd:1",
+      "loopStart": 0,
+      "loopEnd": 198.76572916666666,
+      "starts": 21,
+      "decoded": [
+        "attitude"
+      ],
+      "bytes": 76326040
+    },
+    {
+      "format": "ogg",
+      "cur": "results",
+      "token": "results:muq5xoir-uqtuibt4hwtk",
+      "loopStart": 0,
+      "loopEnd": 143.61797916666666,
+      "starts": 22,
+      "decoded": [
+        "results"
+      ],
+      "bytes": 55149304
+    },
+    {
+      "format": "ogg",
+      "cur": "menu",
+      "token": "menu",
+      "loopStart": 0,
+      "loopEnd": 195.69160416666668,
+      "starts": 23,
+      "decoded": [
+        "menu"
+      ],
+      "bytes": 75145576
+    },
+    {
+      "format": "ogg",
+      "cur": "results",
+      "token": "results:muq5xpzv-8n3wmfrc364i",
+      "loopStart": 0,
+      "loopEnd": 143.61797916666666,
+      "starts": 24,
+      "decoded": [
+        "results"
+      ],
+      "bytes": 55149304
+    },
+    {
+      "format": "ogg",
+      "cur": "menu",
+      "token": "menu",
+      "loopStart": 0,
+      "loopEnd": 195.69160416666668,
+      "starts": 25,
+      "decoded": [
+        "menu"
+      ],
+      "bytes": 75145576
+    }
+  ],
+  "errors": []
+}

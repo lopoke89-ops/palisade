@@ -179,7 +179,7 @@
           <div><h3>CONTROLLER</h3><p>Left stick move · right stick aim · RT fire<br>LT grenade · A build (hold to keep building)<br>B ability, or sprint if your class has no ability · X armory at the stake<br>Y wall/door · d-pad left/right material · d-pad down build kit<br>View start raid · Menu pause. Change any button in Settings.</p></div>
         </div>
       </details>
-      <p class="foot">v0.9.6.1 · phone, desktop and controller · online co-op and PvP for up to six</p>
+      <p class="foot">v0.9.6.2 · phone, desktop and controller · online co-op and PvP for up to six</p>
     </section>
 
     <section class="page" id="pg-classes" hidden>
@@ -351,7 +351,10 @@
     <div class="eyebrow" id="caseEye">SUPPLY CASE</div>
     <button id="caseIntro" type="button" hidden aria-label="Opening the case. Tap to skip."><canvas id="caseIntroCv" width="480" height="300" aria-hidden="true"></canvas><small>TAP TO SKIP</small></button>
     <div class="reelWrap"><div class="reel" id="reel"></div></div>
-    <div id="caseResult" hidden><b id="caseName"></b><span id="caseSub"></span></div>
+    <div id="caseRows"></div>
+    <button class="ghost" id="caseSkip" type="button" hidden>SKIP ANIMATION</button>
+    <button class="go" id="caseResume" type="button" hidden>RESUME OPENING</button>
+    <div id="caseResult" hidden><b id="caseName"></b><span id="caseSub"></span><div id="caseResults"></div></div>
     <button class="go" id="caseEquip" type="button" hidden>EQUIP IT</button>
     <button class="ghost" id="caseDone" type="button" hidden>DONE</button>
   </div>

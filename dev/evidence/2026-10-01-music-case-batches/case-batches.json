@@ -1,0 +1,195 @@
+{
+  "checks": [
+    "five aligned phone reels, committed winners, repeated-click lock and no auto-equip",
+    "reload resumes exact local receipt without consumption or reroll",
+    "reduced motion, Escape/controller-back path and bounded art cache",
+    "local rolls resolve ownership in order for four within-batch duplicates",
+    "reload after an uncertain cloud response retries the saved operation ID and presents committed awards"
+  ],
+  "geometry": {
+    "rows": [
+      {
+        "left": 16,
+        "width": 358,
+        "top": 242.796875,
+        "bottom": 303.875
+      },
+      {
+        "left": 16,
+        "width": 358,
+        "top": 311.875,
+        "bottom": 372.953125
+      },
+      {
+        "left": 16,
+        "width": 358,
+        "top": 377.953125,
+        "bottom": 439.03125
+      },
+      {
+        "left": 16,
+        "width": 358,
+        "top": 444.03125,
+        "bottom": 505.109375
+      },
+      {
+        "left": 16,
+        "width": 358,
+        "top": 510.109375,
+        "bottom": 571.1875
+      }
+    ],
+    "viewport": 844
+  },
+  "committed": {
+    "cases": 10,
+    "owned": [
+      "skin:std",
+      "hat:class",
+      "hat:cap",
+      "trail:std",
+      "fx:none",
+      "bg:campfire",
+      "bg:nightwatch",
+      "hat:boonie",
+      "bg:dogtags",
+      "trail:blue",
+      "fx:smoke"
+    ],
+    "shards": 3,
+    "eq": {
+      "skin": "std",
+      "hat": "class",
+      "trail": "std",
+      "fx": "none",
+      "bg": "campfire"
+    },
+    "receipt": {
+      "operation": "267c90a7-6047-4146-91d5-0b11f4503462",
+      "case": "supply",
+      "quantity": 5,
+      "results": [
+        {
+          "id": "hat:boonie",
+          "dup": false,
+          "shards": 0
+        },
+        {
+          "id": "bg:dogtags",
+          "dup": false,
+          "shards": 0
+        },
+        {
+          "id": "trail:blue",
+          "dup": false,
+          "shards": 0
+        },
+        {
+          "id": "trail:blue",
+          "dup": true,
+          "shards": 3
+        },
+        {
+          "id": "fx:smoke",
+          "dup": false,
+          "shards": 0
+        }
+      ]
+    }
+  },
+  "result": {
+    "rows": [
+      "hat:boonie",
+      "bg:dogtags",
+      "trail:blue",
+      "trail:blue",
+      "fx:smoke"
+    ],
+    "landed": [
+      "hat:boonie",
+      "bg:dogtags",
+      "trail:blue",
+      "trail:blue",
+      "fx:smoke"
+    ],
+    "eq": {
+      "skin": "std",
+      "hat": "class",
+      "trail": "std",
+      "fx": "none",
+      "bg": "campfire"
+    },
+    "centers": [
+      {
+        "error": 0,
+        "width": 88,
+        "step": 94,
+        "transform": "matrix(1, 0, 0, 1, -712, 0)"
+      },
+      {
+        "error": 0,
+        "width": 88,
+        "step": 94,
+        "transform": "matrix(1, 0, 0, 1, -712, 0)"
+      },
+      {
+        "error": 0,
+        "width": 88,
+        "step": 94,
+        "transform": "matrix(1, 0, 0, 1, -712, 0)"
+      },
+      {
+        "error": 0,
+        "width": 88,
+        "step": 94,
+        "transform": "matrix(1, 0, 0, 1, -712, 0)"
+      },
+      {
+        "error": 0,
+        "width": 88,
+        "step": 94,
+        "transform": "matrix(1, 0, 0, 1, -712, 0)"
+      }
+    ]
+  },
+  "localDuplicates": [
+    {
+      "id": "skin:night",
+      "dup": false,
+      "shards": 0
+    },
+    {
+      "id": "skin:night",
+      "dup": true,
+      "shards": 3
+    },
+    {
+      "id": "skin:night",
+      "dup": true,
+      "shards": 3
+    },
+    {
+      "id": "skin:night",
+      "dup": true,
+      "shards": 3
+    },
+    {
+      "id": "skin:night",
+      "dup": true,
+      "shards": 3
+    }
+  ],
+  "cloudRequests": [
+    {
+      "p_case": "supply",
+      "p_quantity": 5,
+      "p_operation": "00c990a9-c9a6-41ef-9d5b-8d03c9dae480"
+    },
+    {
+      "p_case": "supply",
+      "p_quantity": 5,
+      "p_operation": "00c990a9-c9a6-41ef-9d5b-8d03c9dae480"
+    }
+  ],
+  "errors": []
+}

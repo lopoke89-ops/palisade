@@ -10,49 +10,59 @@ function initAudio(){
    faded in and out. Only the track this part of the game can play stays decoded (a decoded minute of music is
    ~20 MB), so only the track needed by the current screen or phase stays decoded.
    Each track comes in two formats: AAC for Safari/iPhone/Chrome, Opus for browsers without AAC; the first one
-   this browser plays is used. len: the exact loop length of the original file, in seconds.
+   this browser plays is used. len: the exact release loop length in seconds; results is trimmed to the original 164-second cue.
    New track: add an entry here, a case in musicWant(), and both files to build.py's MUSIC_FILES. */
-const MUSIC={between:{src:['between_raids.m4a','between_raids.ogg'],len:2348026/48000},   // co-op build phase
-             locker:{src:['locker.m4a','locker.ogg'],len:3680004/48000},                   // the Locker page
-             menu:{src:['main_menu.m4a','main_menu.ogg'],len:6764037/48000},               // main menu
-             raid:{src:['raid.m4a','raid.ogg'],len:5832911/48000}};                        // co-op raid
-const mus={bufs:{},loading:{},failAt:{},src:null,g:null,bus:null,cur:null};
-function musicLoad(k){
-  if(mus.bufs[k]||mus.loading[k]||performance.now()-(mus.failAt[k]||-1e9)<30000||!AC)return;mus.loading[k]=true;
-  const A=document.createElement('audio'),can=u=>/\.m4a/.test(u)?A.canPlayType('audio/mp4; codecs="mp4a.40.2"'):A.canPlayType('audio/ogg; codecs="opus"');
-  const list=MUSIC[k].src.filter(u=>can(u)),get=u=>fetch(u).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()})
-    .then(a=>new Promise((ok,no)=>{const q=AC.decodeAudioData(a,ok,no);if(q&&q.catch)q.catch(no)}));   // callback form for older Safari
-  list.reduce((pr,u)=>pr.catch(()=>get(u)),Promise.reject())
-    .then(b=>{mus.loading[k]=false;if(musicKeep(k))mus.bufs[k]=b},()=>{mus.loading[k]=false;mus.failAt[k]=performance.now()});
+const MUSIC={menu:{src:['main_menu.m4a','main_menu.ogg'],len:195.69160416666668},between:{src:['between_raids.m4a','between_raids.ogg'],len:160.08408333333333},attitude:{src:['raid_attitude.m4a','raid_attitude.ogg'],len:198.76572916666666},cool:{src:['raid_cool.m4a','raid_cool.ogg'],len:181.1853125},express:{src:['raid_express.m4a','raid_express.ogg'],len:115.51347916666667},finale:{src:['final_blitz.m4a','final_blitz.ogg'],len:389.4266666666667},results:{src:['results.m4a','results.ogg'],len:143.61797916666666}};
+const mus={bufs:{},loading:{},failAt:{},src:null,g:null,bus:null,cur:null,token:'',resume:null,started:0,offset:0,starts:0,retiring:null};
+// A route identity changes only at a real screen/raid entry. Snapshots and settings cannot advance it.
+function musicRoute(){
+  if(!demo&&!$('over').hidden)return {k:'results',token:'results:'+game.gid};
+  if(!$('menu').hidden)return {k:'menu',token:'menu'};
+  if(!demo&&playing()){
+    if(game.mode==='blitz'&&!game.pvp&&game.fb)return {k:'finale',token:'finale:'+game.gid};
+    if(game.phase==='raid')return {k:['attitude','cool','express'][Math.max(0,game.wave-1)%3],token:'raid:'+game.gid+':'+game.wave};
+    return {k:'between',token:'build:'+game.gid+':'+game.wave};
+  }
+  return null;
 }
-function musicStart(k){
-  const b=mus.bufs[k],s=AC.createBufferSource(),g=AC.createGain(),t=AC.currentTime;
-  s.buffer=b;s.loop=true;s.loopStart=0;s.loopEnd=Math.min(b.duration,MUSIC[k].len);
+function musicWant(){const r=musicRoute();return cfg.music>0&&!document.hidden&&r?r.k:null}
+const musicKeep=k=>k===musicWant();
+function musicLoad(k){
+  if(mus.bufs[k]||mus.loading[k]||performance.now()-(mus.failAt[k]||-1e9)<30000||!AC)return;
+  const ctl=new AbortController();mus.loading[k]=ctl;
+  const A=document.createElement('audio'),can=u=>/\.m4a/.test(u)?A.canPlayType('audio/mp4; codecs="mp4a.40.2"'):A.canPlayType('audio/ogg; codecs="opus"');
+  const list=MUSIC[k].src.filter(u=>can(u)),get=u=>fetch(u,{signal:ctl.signal}).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()})
+    .then(a=>{if(ctl.signal.aborted||!musicKeep(k))throw 0;return new Promise((ok,no)=>{const q=AC.decodeAudioData(a,ok,no);if(q&&q.catch)q.catch(no)})});
+  list.reduce((pr,u)=>pr.catch(()=>{if(ctl.signal.aborted)throw 0;return get(u)}),Promise.reject())
+    .then(b=>{delete mus.loading[k];if(musicKeep(k))mus.bufs[k]=b},()=>{delete mus.loading[k];if(!ctl.signal.aborted)mus.failAt[k]=performance.now()});
+}
+function musicStart(k,token){
+  const b=mus.bufs[k],s=AC.createBufferSource(),g=AC.createGain(),t=AC.currentTime,len=Math.min(b.duration,MUSIC[k].len);
+  const off=mus.resume?.token===token?mus.resume.offset%len:0;
+  s.buffer=b;s.loop=true;s.loopStart=0;s.loopEnd=len;
   g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(1,t+1.6);
-  s.connect(g);g.connect(mus.bus);s.start(t);mus.src=s;mus.g=g;mus.cur=k;
+  s.connect(g);g.connect(mus.bus);s.start(t,off);mus.src=s;mus.g=g;mus.cur=k;mus.token=token;mus.started=t;mus.offset=off;mus.starts++;
+  s.onended=()=>{s.disconnect();g.disconnect();if(mus.retiring===s)mus.retiring=null};
 }
 function musicStop(fade){
-  const s=mus.src,g=mus.g,t=AC.currentTime;mus.src=mus.g=null;mus.cur=null;
+  const s=mus.src,g=mus.g,t=AC.currentTime;
+  if(mus.retiring){try{mus.retiring.stop(t)}catch(e){}}mus.retiring=s;
+  mus.resume={token:mus.token,offset:(mus.offset+t-mus.started)%s.loopEnd};mus.src=mus.g=null;mus.cur=null;
   g.gain.cancelScheduledValues(t);g.gain.setValueAtTime(Math.max(g.gain.value,.0001),t);g.gain.exponentialRampToValueAtTime(.0001,t+fade);
   try{s.stop(t+fade+.05)}catch(e){}
 }
-// which track should be playing right now (null: none)
-function musicWant(){
-  if(cfg.music<=0||document.hidden)return null;
-  if(!$('menu').hidden&&demo)return $('pg-locker').hidden?'menu':'locker';
-  if(!demo&&!game.pvp&&playing())return game.phase==='raid'?'raid':'between';
-  return null;
-}
-const musicKeep=k=>k===musicWant();   // the one track worth keeping decoded here
 function musicTick(){
   if(!AC)return;
   if(!mus.bus){mus.bus=AC.createGain();mus.bus.connect(master)}
   mus.bus.gain.value=.5*cfg.music;
-  const want=musicWant();
-  if(mus.src&&mus.cur!==want)musicStop(game.phase==='raid'?.9:1.2);
-  if(want){musicLoad(want);if(!mus.src&&mus.bufs[want])musicStart(want)}
-  for(const k in mus.bufs)if(!musicKeep(k)&&k!==mus.cur)delete mus.bufs[k];
+  const route=musicRoute(),want=musicWant();
+  if(mus.src&&(mus.cur!==want||mus.token!==route?.token))musicStop(game.phase==='raid'?.9:1.2);
+  if(mus.resume&&mus.resume.token!==route?.token)mus.resume=null;
+  for(const k in mus.loading)if(k!==want)mus.loading[k].abort();
+  if(want){musicLoad(want);if(!mus.src&&mus.bufs[want])musicStart(want,route.token)}
+  for(const k in mus.bufs)if(!musicKeep(k))delete mus.bufs[k];
 }
+document.addEventListener('visibilitychange',musicTick);
 const uiSfx=n=>sfx(n,undefined,undefined,true,true);
 // the case reel: a soft click and a small beep as each item crosses the marker, higher for rarer items
 function caseTick(r){

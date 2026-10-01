@@ -206,9 +206,11 @@ function renderCaseBoxes(){
   for(const id of[...CASE_IDS].sort((x,y)=>(caseCount(y)>0)-(caseCount(x)>0))){const C=CASES[id],n=caseCount(id),d=document.createElement('div');d.className='cbox'+(n<1?' empty':'');d.style.setProperty('--cc',C.col);
     const nm=document.createElement('span');nm.textContent=C.name;const b=document.createElement('b');b.textContent=n;
     const how=document.createElement('i');how.textContent=C.how;const bt=document.createElement('div');bt.className='btns';
-    const op=document.createElement('button');op.type='button';op.className='go';op.textContent='OPEN';op.dataset.open=id;op.disabled=n<1||lockBusy;bt.append(op);
-    if(C.cost){const buy=document.createElement('button');buy.type='button';buy.className='ghost';buy.textContent=`BUY · ${C.cost} SHARDS`;buy.dataset.buy=id;buy.disabled=locker.shards<C.cost||lockBusy;bt.append(buy)}
-    if(id==='supply'){const sp=locker.sp|0,s=document.createElement('button');s.type='button';s.className='ghost spBuy';s.dataset.spbuy='1';s.disabled=sp<SP_CASE||lockBusy;   // v0.9.3.9
+    const op=document.createElement('button');op.type='button';op.className='go';op.textContent='OPEN';op.dataset.open=id;op.disabled=n<1||lockBusy||caseBusy();bt.append(op);
+    const five=document.createElement('button');five.type='button';five.className='go';five.textContent='OPEN 5';five.dataset.open5=id;five.disabled=n<5||lockBusy||caseBusy();five.setAttribute('aria-label',`Open five owned ${C.name} cases. You have ${n}.`);bt.append(five);
+    const pending=pendingOpening();if(pending?.case===id&&!caseSession){const resume=document.createElement('button');resume.type='button';resume.className='ghost';resume.textContent='RESUME OPENING';resume.onclick=resumeCaseOpening;bt.append(resume)}
+    if(C.cost){const buy=document.createElement('button');buy.type='button';buy.className='ghost';buy.textContent=`BUY · ${C.cost} SHARDS`;buy.dataset.buy=id;buy.disabled=locker.shards<C.cost||lockBusy||caseBusy();bt.append(buy)}
+    if(id==='supply'){const sp=locker.sp|0,s=document.createElement('button');s.type='button';s.className='ghost spBuy';s.dataset.spbuy='1';s.disabled=sp<SP_CASE||lockBusy||caseBusy();   // v0.9.3.9
       const armed=Date.now()-spArmed<3000;s.textContent=armed?`TAP AGAIN · SPEND ${SP_CASE} SKILL POINTS`:`BUY · ${SP_CASE} SKILL POINTS (${sp})`;
       s.title=sp<SP_CASE?`You have ${sp} skill point${sp===1?'':'s'}. Earn them by holding raids (1 per 5) and beating bosses.`:`Trade ${SP_CASE} unspent skill points for a Supply Case`;s.setAttribute('aria-label',s.textContent+'. '+s.title);bt.append(s)}
     d.append(nm,b,how,bt);box.append(d)}
@@ -238,6 +240,7 @@ function lockerCollection(id,items){
   section.append(button,body);setCollectionOpen(section,lockOpen.has(section.dataset.collection));return section;
 }
 function renderLocker(){
+  recoverCaseOpening();
   renderCaseBoxes();
   document.querySelectorAll('#lockTabs button').forEach(b=>b.classList.toggle('sel',b.dataset.cat===lockCat));renderPartyState();
   const grid=$('lockGrid');
@@ -284,7 +287,7 @@ function buyCaseSP(){
 function buyCase(id){const C=CASES[id];if(!C||!C.cost||locker.shards<C.cost)return;
   if(locker.cloud){lockWait(true);rpc('buy_case',{p_case:id}).then(r=>{lockWait(false);if(r.ok){takeLocker(r.j);renderLocker();uiSfx('restock')}else lockMsg(r.status?sbErr(r):'Buying a case needs a connection. Your shards are safe.')});return}
   locker.shards-=C.cost;caseAdd(id,1);saveLocker();renderLocker();uiSfx('restock')}
-$('caseBoxes').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;initAudio();if(b.dataset.open)openCaseUI(b.dataset.open);else if(b.dataset.buy)buyCase(b.dataset.buy);else if(b.dataset.spbuy)buyCaseSP()});
+$('caseBoxes').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;initAudio();if(b.dataset.open5)openCaseUI(b.dataset.open5,5);else if(b.dataset.open)openCaseUI(b.dataset.open);else if(b.dataset.buy)buyCase(b.dataset.buy);else if(b.dataset.spbuy)buyCaseSP()});
 function lockMsg(t){$('lockMsg').textContent=t||''}
 function lockWait(on){lockBusy=on;renderCaseBoxes();lockMsg(on?'Talking to the quartermaster…':'')}
 function cloudEquip(id){if(!locker.cloud)return;rpc('equip',{p_item:id}).then(r=>{if(r.ok)takeLocker(r.j);else if(r.status&&r.status!==401)syncLocker()})}
@@ -294,16 +297,17 @@ let caseIntroOn=false;
 function caseIntro(id){
   const ov=$('caseOv'),btn=$('caseIntro'),cv=$('caseIntroCv'),x=cv.getContext('2d'),C=CASES[id]||CASES.supply;
   const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches,T=reduced?.7:3,t0=performance.now();
+  const scale=Math.min(1,Math.max(320,Math.round(innerWidth*.92))/480);cv.width=Math.round(480*scale);cv.height=Math.round(300*scale);x.setTransform(scale,0,0,scale,0,0);
   ov.hidden=false;ov.classList.add('intro');btn.hidden=false;$('caseResult').hidden=true;$('caseEquip').hidden=true;$('caseDone').hidden=true;$('reel').textContent='';
   $('caseEye').textContent=C.name;$('caseEye').style.color=C.col;caseIntroOn=true;
   const crate=document.createElement('canvas');crate.width=crate.height=180;drawCaseIcon(crate,id);
   const bits=Array.from({length:46},(_,i)=>{const a=Math.PI*2*i/46+Math.random()*.3,sp=120+Math.random()*260;return{vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-120,r:2+Math.random()*5,c:i%3?C.col:'#f3e9d6',rot:Math.random()*6}});
   return new Promise(done=>{
-    let lastTick=0,finished=false;
-    const end=()=>{if(finished)return;finished=true;caseIntroOn=false;btn.hidden=true;ov.classList.remove('intro','blurring');done()};
-    btn.onclick=end;
+    let lastTick=0,finished=false,frame=0;
+    const end=()=>{if(finished)return;finished=true;cancelAnimationFrame(frame);caseIntroOn=false;btn.hidden=true;ov.classList.remove('intro','blurring');if(caseSession)caseSession.cancelIntro=null;done()};
+    btn.onclick=end;if(caseSession)caseSession.cancelIntro=end;
     let lastDraw=0;   // 30 fps is plenty for a shake
-    const step=now=>{if(finished)return;if(now-lastDraw<31){requestAnimationFrame(step);return}lastDraw=now;const t=(now-t0)/1000;x.clearRect(0,0,cv.width,cv.height);const cx=cv.width/2,cy=cv.height/2+10;
+    const step=now=>{if(finished)return;if(now-lastDraw<31){frame=requestAnimationFrame(step);return}lastDraw=now;const t=(now-t0)/1000;x.clearRect(0,0,480,300);const cx=240,cy=160;
       if(reduced){x.globalAlpha=Math.max(0,1-t/T);x.drawImage(crate,cx-81,cy-81,162,162);x.globalAlpha=1}
       else if(t<2){   // shake, harder and faster, and the screen behind blurs from 1.2 s
         const k=Math.min(1,t/1.8),amp=2+k*9,f=10+k*26,dx=Math.sin(t*f)*amp,rot=Math.sin(t*f*1.3)*.06*k;
@@ -315,51 +319,10 @@ function caseIntro(id){
         x.save();x.globalAlpha=Math.max(0,1-u*3);x.translate(cx,cy);x.scale(1+u*1.2,1+u*1.2);x.drawImage(crate,-81,-81,162,162);x.restore();
         for(const b of bits){const px=cx+b.vx*u,py=cy+b.vy*u+260*u*u,a=Math.max(0,1-u);x.globalAlpha=a;x.fillStyle=b.c;x.save();x.translate(px,py);x.rotate(b.rot+u*6);x.fillRect(-b.r,-b.r*.6,b.r*2,b.r*1.2);x.restore()}
         x.globalAlpha=1}
-      if(t>=T||ov.hidden){end();return}requestAnimationFrame(step)};
-    requestAnimationFrame(step);
+      if(t>=T||ov.hidden){end();return}frame=requestAnimationFrame(step)};
+    frame=requestAnimationFrame(step);
   });
 }
-function openCaseUI(id='supply'){
-  if(!CASES[id]||caseCount(id)<1||caseIntroOn||lockBusy)return;
-  const intro=caseIntro(id);
-  let roll;
-  if(locker.cloud){lockWait(true);
-    roll=rpc('open_case_v0961',{p_case:id}).then(r=>{lockWait(false);
-      if(!r.ok){lockMsg(r.status?sbErr(r):'Opening a case needs a connection. Your cases are safe.');renderLocker();return null}
-      const s=r.j.item,it=COSBY[s.id]||{...COSBY['fx:none'],id:s.id,name:s.name,r:s.rarity};
-      takeLocker(r.j.locker);renderLocker();return{it,dup:!!r.j.dup,box:id}})}
-  else{const res=openCase(id);renderLocker();roll=Promise.resolve(res)}
-  Promise.all([intro,roll]).then(([,res])=>{if(res&&!$('caseOv').hidden)caseReel(res);else{$('caseOv').hidden=true;renderLocker()}});   // closed during the intro: the item is already yours
-}
-function caseReel(res){
-  const ov=$('caseOv'),reel=$('reel'),WIN=29,COUNT=34,TW=94,C=CASES[res.box]||CASES.supply;
-  ov.hidden=false;$('caseResult').hidden=true;$('caseEquip').hidden=true;$('caseDone').hidden=true;caseItem=null;
-  $('caseEye').textContent=C.name;$('caseEye').style.color=C.col;
-  reel.style.transition='none';reel.style.transform='translateX(0px)';reel.textContent='';
-  const rs=[];for(let i=0;i<COUNT;i++){const it=i===WIN?res.it:rollCase(res.box||'supply'),t=itemTile(it);rs.push(it.r);t.classList.remove('lock','eq');t.querySelector('i').textContent=RAR[it.r].n;t.tabIndex=-1;reel.append(t)}
-  const wrapW=reel.parentElement.clientWidth,target=WIN*TW+44-wrapW/2+(rnd()-.5)*50;
-  const dur=matchMedia('(prefers-reduced-motion: reduce)').matches?.6:4.2,t0=performance.now();
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{reel.style.transition=`transform ${dur}s cubic-bezier(.08,.72,.16,1)`;reel.style.transform=`translateX(${-target}px)`}));
-  let lastIdx=-1;const tick=now=>{if(ov.hidden)return;const p=Math.min(1,Math.max(0,(now-t0)/(dur*1000)));
-    // Mirror the CSS cubic-bezier easing without forcing a style/layout read every frame.
-    let q=p;for(let i=0;i<4;i++){const u=1-q,x=3*.08*u*u*q+3*.16*u*q*q+q*q*q;const dx=3*.08*u*u+6*(.16-.08)*u*q+3*(1-.16)*q*q;q=Math.min(1,Math.max(0,q-(x-p)/dx))}
-    const u=1-q,y=3*.72*(1-q)*(1-q)*q+3*(1-q)*q*q+q*q*q;
-    const idx=Math.floor((target*y+wrapW/2)/TW);if(idx!==lastIdx){lastIdx=idx;caseTick(rs[idx])}
-    if(p<1)requestAnimationFrame(tick)};requestAnimationFrame(tick);
-  setTimeout(()=>{
-    const it=res.it,R=RAR[it.r];caseItem=it;
-    $('caseName').textContent=it.name;$('caseName').style.color=R.col;$('caseName').classList.toggle('gold',it.r==='g');$('caseName').classList.toggle('ultimate',it.r==='u');
-    $('caseSub').textContent=`${R.n} ${CATN[it.cat]}`+(res.dup?` · already owned, +${R.sh} shard${R.sh>1?'s':''}`:' · new');
-    $('caseResult').hidden=false;$('caseEquip').hidden=locker.eq[it.cat]===it.key||it.cat==='hat'&&!headwearAllowed(locker.eq.skin,it.key);$('caseDone').hidden=false;
-    uiSfx('legu'.includes(it.r)?'win':'restock');if(it.r==='g')uiSfx('kx_bubbles');buzz(it.r==='g'||it.r==='u'?[40,60,40,60,90]:40);
-  },dur*1000+120);
-}
-$('caseEquip').addEventListener('click',()=>{if(caseItem&&owns(caseItem.id)&&(caseItem.cat!=='hat'||headwearAllowed(locker.eq.skin,caseItem.key))){locker.eq[caseItem.cat]=caseItem.key;saveLocker();cloudEquip(caseItem.id)}$('caseOv').hidden=true;
-  if(caseItem){lockCat=caseItem.ladder?'ms':caseItem.cat;if(caseItem.box)lockOpen.add(lockCat+':'+caseItem.box)}renderLocker();
-  if(caseItem){const tile=[...$('lockGrid').querySelectorAll('.item')].find(t=>t.dataset.item===caseItem.id);if(tile){tile.scrollIntoView({block:'nearest'});tile.focus({preventScroll:true})}}
-});
-$('caseDone').addEventListener('click',()=>{$('caseOv').hidden=true;renderLocker()});
-
 // a small crate in the case's colour, for the reward cards and the case intro
 function drawCaseIcon(cv2,id){
   const x=cv2.getContext('2d'),S=cv2.width,C=CASES[id]||CASES.supply;x.clearRect(0,0,S,S);x.save();x.translate(S/2,S*.56);x.scale(S/100,S/100);

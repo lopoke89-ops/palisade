@@ -997,3 +997,24 @@ body.padMenu #menu .panel{padding-bottom:64px}body.pad .padF{scroll-margin:12px 
 #deadEnd.fading{opacity:0;pointer-events:none}
 @media(prefers-reduced-motion:reduce){#deadEnd{transition:none}}
 @media(max-width:600px){.qmCommand{font-size:8px;min-width:70px;padding:3px;max-width:100px}}
+
+/* One shared intro, five compact CSS reels, one scrollable results summary. */
+.reel .item img{width:52px;height:52px;object-fit:contain;flex:none}
+#caseRows{display:grid;gap:5px}#caseRows:empty{display:none}
+#caseOv .card{max-height:94dvh;overflow:auto}
+#caseOv.batch .reelWrap{height:clamp(44px,7dvh,64px)}
+#caseOv.batch .reel{top:2px}
+#caseOv.batch .reel .item{height:58px;display:grid;grid-template-columns:32px 1fr;grid-template-rows:1fr 1fr;gap:0 3px;padding:3px}
+#caseOv.batch .reel .item img{width:32px;height:32px;grid-row:1/3;align-self:center}
+#caseOv.batch .reel .item b{font-size:10px;align-self:end}
+#caseOv.batch .reel .item i{font-size:8px;align-self:start}
+#caseOv.batch.intro #caseRows{display:none}
+#caseResults{display:grid;gap:5px;max-height:22dvh;overflow:auto;text-align:left}
+#caseResults:empty{display:none}
+.caseResultRow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid var(--line)}
+.caseResultRow span{display:grid;gap:3px;min-width:0}.caseResultRow b{font-size:15px!important;letter-spacing:0!important}.caseResultRow small{font-size:10px;color:var(--dim)}
+.caseResultRow button,#caseSkip,#caseResume{min-height:44px}
+
+.reel .item{box-sizing:border-box}
+#caseOv.batch .card{gap:8px}
+#caseOv.batch .reel .item{height:calc(clamp(44px,7dvh,64px) - 6px)}

@@ -1,0 +1,108 @@
+{
+ "early": [
+  1,
+  0.194305,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0
+ ],
+ "cards": [
+  {
+   "cls": "rwCase",
+   "text": "×3SUPPLY CASE",
+   "op": 1
+  },
+  {
+   "cls": "rwCase",
+   "text": "×1AFTERGLOW CASE",
+   "op": 1
+  },
+  {
+   "cls": "rwShard",
+   "text": "?+4SHARDS",
+   "op": 1
+  },
+  {
+   "cls": "rwShard rwSkill",
+   "text": "?+2SKILL POINTS",
+   "op": 1
+  },
+  {
+   "cls": "rwNew",
+   "text": "UNLOCKEDDesert",
+   "op": 1
+  },
+  {
+   "cls": "rwNew",
+   "text": "UNLOCKEDUrban Grey",
+   "op": 1
+  },
+  {
+   "cls": "rwNew",
+   "text": "UNLOCKEDFirst Light",
+   "op": 1
+  },
+  {
+   "cls": "rwProg rwMile",
+   "text": "THE DEMOLISHER1 / 25 Demolishers beaten · next: Demolisher",
+   "op": 1
+  },
+  {
+   "cls": "rwProg",
+   "text": "SUPPLY CASE2 more raids to the next case",
+   "op": 1
+  }
+ ],
+ "loot": "+3 supply cases · +1 afterglow case from bosses · +4 shards from leftover salvage · +2 skill points · 2 more raids to the next supply case · Unlocked Desert, Urban Grey, First Light.",
+ "bar": 4,
+ "data": {
+  "cases": {
+   "supply": 0
+  },
+  "shards": 0,
+  "unlocked": [],
+  "toNext": 2,
+  "prog": 1,
+  "text": "2 more raids to the next supply case."
+ },
+ "skip": true,
+ "claim": {
+  "cases": {
+   "supply": 2,
+   "afterglow": 1,
+   "halloween": 0
+  },
+  "unlocked": [
+   "bg:dawn"
+  ],
+  "toNext": 1,
+  "text": "+2 supply cases · +1 afterglow case from bosses · +3 shards from leftover salvage · 1 more raid to the next supply case · Unlocked First Light. Saved to your account."
+ },
+ "oldServer": {
+  "kind": "run",
+  "cases": {
+   "supply": 1,
+   "afterglow": 1
+  },
+  "shards": 0,
+  "unlocked": [
+   "bg:dawn"
+  ],
+  "prog": 1,
+  "toNext": 2,
+  "cloud": true,
+  "chance": 0,
+  "missCase": "",
+  "bossShards": 0,
+  "sp": 0,
+  "spToNext": 0,
+  "left": false,
+  "blitzShards": false,
+  "text": "+1 supply case · +1 afterglow case from bosses · 2 more raids to the next supply case · Unlocked First Light. Saved to your account."
+ }
+}
+errors: none

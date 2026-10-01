@@ -1,0 +1,206 @@
+{
+  "release": "v0.9.6.2",
+  "protocol": "yard-22",
+  "publication": "local candidate, not pushed",
+  "parent_commit": "526831bad0c4369a5058f9a5812e20413a1e9367",
+  "index_sha256": "10eb6988d299ec67c91146215220d5ad1388ced6b8bbf801692f22e47de2f27e",
+  "service_worker_version": "palisade-192267b8e1",
+  "media_cache": "palisade-media-2",
+  "tests": [
+    {
+      "suite": "caseperf",
+      "status": "pass",
+      "log": "caseperf.log"
+    },
+    {
+      "suite": "case_batches",
+      "status": "pass",
+      "log": "case_batches.log"
+    },
+    {
+      "suite": "case_memory",
+      "status": "pass",
+      "log": "case_memory.log"
+    },
+    {
+      "suite": "case_layout",
+      "status": "pass",
+      "log": "case_layout.log"
+    },
+    {
+      "suite": "cases",
+      "status": "pass",
+      "log": "cases.log"
+    },
+    {
+      "suite": "locker_collections",
+      "status": "pass",
+      "log": "locker_collections.log"
+    },
+    {
+      "suite": "reel_music",
+      "status": "pass",
+      "log": "reel_music.log"
+    },
+    {
+      "suite": "music_routing",
+      "status": "pass",
+      "log": "music_routing.log"
+    },
+    {
+      "suite": "music_network",
+      "status": "pass",
+      "log": "music_network.log"
+    },
+    {
+      "suite": "music_assets",
+      "status": "pass",
+      "log": "music_assets.log"
+    },
+    {
+      "suite": "case_batch_migration",
+      "status": "pass",
+      "log": "case_batch_migration.log"
+    },
+    {
+      "suite": "restore_schema",
+      "status": "pass",
+      "log": "restore_schema.log"
+    },
+    {
+      "suite": "controller",
+      "status": "pass",
+      "log": "controller.log"
+    },
+    {
+      "suite": "csp",
+      "status": "pass",
+      "log": "csp.log"
+    },
+    {
+      "suite": "rewards_screen",
+      "status": "pass",
+      "log": "rewards_screen.log"
+    },
+    {
+      "suite": "blitz_network",
+      "status": "pass",
+      "log": "blitz_network.log"
+    },
+    {
+      "suite": "winter_upgrade",
+      "status": "pass",
+      "log": "winter_upgrade.log"
+    }
+  ],
+  "release_assets": [
+    {
+      "file": "main_menu.m4a",
+      "sha256": "fbf4ac8becdd90a9a2b2518d53a7b14dfde45e142ba621d9623d0f47585ecd60",
+      "bytes": 4066298
+    },
+    {
+      "file": "main_menu.ogg",
+      "sha256": "61fa3052b18766f33bd108e7885e5bc761178ee28f353d8dd02402c01f9fd43f",
+      "bytes": 3004612
+    },
+    {
+      "file": "between_raids.m4a",
+      "sha256": "5529e5c9b1777b8f7306926c5318712697fef3932c74e4782407bd5f338df383",
+      "bytes": 3312122
+    },
+    {
+      "file": "between_raids.ogg",
+      "sha256": "2ce6c5f48d44246229854da66e4ffc58fc31b0778610c59887394f550e9aa369",
+      "bytes": 2641831
+    },
+    {
+      "file": "raid_attitude.m4a",
+      "sha256": "44c132e53d2f7cedc983057098ebddcc11859bad5824b088380fb7cbfe118e48",
+      "bytes": 4083559
+    },
+    {
+      "file": "raid_attitude.ogg",
+      "sha256": "330fb1e883113ebcc2353d9983c0835645a671270ce95d6abdf192c62d0aa3e8",
+      "bytes": 3305401
+    },
+    {
+      "file": "raid_cool.m4a",
+      "sha256": "0d00fe143362b96e8953a7255a4f08436285f1f9498eeeac643063596693f4c2",
+      "bytes": 3722220
+    },
+    {
+      "file": "raid_cool.ogg",
+      "sha256": "4b25f8d70e6509db9a16718b433c452d1a22c56cf4042082531d1d183fb304e8",
+      "bytes": 2936487
+    },
+    {
+      "file": "raid_express.m4a",
+      "sha256": "7fbad6bb028e6ccd0eff65c3d1d891b04e7d6af763ea3cf777895f9a27dcf07a",
+      "bytes": 2380025
+    },
+    {
+      "file": "raid_express.ogg",
+      "sha256": "6a2c8da5de3936a500a595714bffb32988af35f76764d672e740003a8e9b03ed",
+      "bytes": 1932152
+    },
+    {
+      "file": "final_blitz.m4a",
+      "sha256": "4e806588abb09fe677e12fae1cd2ab4750f8ed97490aaba70fc2736322c87696",
+      "bytes": 8098541
+    },
+    {
+      "file": "final_blitz.ogg",
+      "sha256": "e0e4f41f7970a4f56f6d21190280cb29ec51915e73ccd835796d0d24bc9ea19e",
+      "bytes": 6028602
+    },
+    {
+      "file": "results.m4a",
+      "sha256": "5238100bb7e1aaa0a3f9ec4cdbe518e4d148e4e9cd97b67700f1ca448ed02722",
+      "bytes": 3058325
+    },
+    {
+      "file": "results.ogg",
+      "sha256": "d73301b6016ff57560e1e45c92840c47972fec9640cf9935b707247b313ef844",
+      "bytes": 2552656
+    }
+  ],
+  "original_sources_rehashed_unchanged": 7,
+  "results_cue": {
+    "m4a": {
+      "sourceCueSeconds": 164,
+      "offsetMilliseconds": 0.0,
+      "decodedCorrelation": 0.9978454640524504,
+      "samplesCompared": 72000
+    },
+    "ogg": {
+      "sourceCueSeconds": 164,
+      "offsetMilliseconds": 0.0,
+      "decodedCorrelation": 0.9969289010259449,
+      "samplesCompared": 72000
+    }
+  },
+  "backend": {
+    "project": "puvjfhwxigxjpsvdwrwf",
+    "migration": "20261001225643_music_case_batches",
+    "applied": true,
+    "live_permission_check": {
+      "authenticated_can_open": true,
+      "anonymous_can_open": false,
+      "direct_receipt_access": false,
+      "receipt_rls": true
+    },
+    "correctness_test": "case_batch_migration: actual SQL restored into isolated Postgres"
+  },
+  "previous_release": {
+    "release": "v0.9.6.1",
+    "commit": "526831bad0c4369a5058f9a5812e20413a1e9367",
+    "published_and_verified": true,
+    "live_html_sha256": "ecfcfa50ab243fa02e9b3d817b454d8fa11d02be359cb1513ce1649f643a870e"
+  },
+  "limitations": [
+    "Physical-phone heat/battery and native audio memory",
+    "Safari playback",
+    "Real Internet conditions"
+  ]
+}

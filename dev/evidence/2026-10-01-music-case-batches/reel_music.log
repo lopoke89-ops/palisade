@@ -1,0 +1,8 @@
+reel {"heights":[112],"stripInside":false,"demo":true,"labels":"EPIC/rgb(177, 104, 224) RARE/rgb(79, 149, 224) RARE/rgb(79, 149, 224) COMMON/rgb(154, 149, 138) RARE/rgb(79, 149, 224) COMMON/rgb(154, 149, 138)"} | oscillators (ticks+reveal) during spin: 31
+opening build phase {"phase":"build","want":"between","track":"between","loaded":true,"playing":true,"dur":"160.084","loopEnd":"160.084","bus":0.3499999940395355}
+raid started {"phase":"raid","want":"attitude","track":"attitude","loaded":false,"playing":true,"loopEnd":"198.766","bus":0.3499999940395355}
+between raids {"phase":"build","want":"between","track":"between","loaded":true,"playing":true,"dur":"160.084","loopEnd":"160.084","bus":0.3499999940395355}
+music slider 0 {"phase":"build","want":null,"track":null,"loaded":false,"playing":false,"loopEnd":null,"bus":0}
+music slider 70 {"phase":"build","want":"between","track":null,"loaded":false,"playing":false,"loopEnd":null,"bus":0.3499999940395355}
+back to menu {"phase":"build","want":"menu","track":null,"loaded":false,"playing":false,"loopEnd":null,"bus":0.3499999940395355}
+errors none

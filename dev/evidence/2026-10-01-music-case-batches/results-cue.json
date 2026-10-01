@@ -1,0 +1,14 @@
+{
+  "m4a": {
+    "sourceCueSeconds": 164,
+    "offsetMilliseconds": 0.0,
+    "decodedCorrelation": 0.9978454640524504,
+    "samplesCompared": 72000
+  },
+  "ogg": {
+    "sourceCueSeconds": 164,
+    "offsetMilliseconds": 0.0,
+    "decodedCorrelation": 0.9969289010259449,
+    "samplesCompared": 72000
+  }
+}

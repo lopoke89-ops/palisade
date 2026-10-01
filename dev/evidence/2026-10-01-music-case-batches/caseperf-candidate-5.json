@@ -1,0 +1,414 @@
+{
+  "label": "candidate",
+  "qty": 5,
+  "samples": 10,
+  "browser": "154.0.8037.93",
+  "viewport": [
+    390,
+    844,
+    3
+  ],
+  "runs": [
+    {
+      "intro": {
+        "cpu_ms_per_s": 125.76346153846154,
+        "layouts": 3,
+        "style_recalcs": 177,
+        "frame_ms": {
+          "median": 16.699999999999818,
+          "p95": 16.700000000000273,
+          "max": 33.30000000000018,
+          "n": 161
+        },
+        "heap_bytes": 6360772,
+        "dom_nodes": 2343
+      },
+      "reel": {
+        "cpu_ms_per_s": 84.62617647058822,
+        "layouts": 0,
+        "style_recalcs": 396,
+        "frame_ms": {
+          "median": 16.699999999999818,
+          "p95": 16.700000000000728,
+          "max": 16.800000000000182,
+          "n": 205
+        },
+        "heap_bytes": 5561032,
+        "dom_nodes": 2824,
+        "computed_style_reads": 0
+      },
+      "setup": {
+        "remaining_intro_and_reel_setup_ms": 424,
+        "cpu_ms": 70.76799999999994
+      },
+      "correct": true,
+      "input_response_ms": 3.7999999821186066,
+      "retained_heap_bytes": 4200388,
+      "art_cache": {
+        "entries": 7,
+        "limit": 64
+      }
+    },
+    {
+      "intro": {
+        "cpu_ms_per_s": 102.40653846153843,
+        "layouts": 3,
+        "style_recalcs": 175,
+        "frame_ms": {
+          "median": 16.69999999999891,
+          "p95": 16.700000000000728,
+          "max": 16.80000000000109,
+          "n": 159
+        },
+        "heap_bytes": 5288584,
+        "dom_nodes": 2388
+      },
+      "reel": {
+        "cpu_ms_per_s": 91.15529411764706,
+        "layouts": 0,
+        "style_recalcs": 397,
+        "frame_ms": {
+          "median": 16.69999999999891,
+          "p95": 16.799999999999272,
+          "max": 16.80000000000109,
+          "n": 204
+        },
+        "heap_bytes": 5910056,
+        "dom_nodes": 2449,
+        "computed_style_reads": 0
+      },
+      "setup": {
+        "remaining_intro_and_reel_setup_ms": 437,
+        "cpu_ms": 66.608
+      },
+      "correct": true,
+      "input_response_ms": 8.199999988079071,
+      "retained_heap_bytes": 4406512,
+      "art_cache": {
+        "entries": 11,
+        "limit": 64
+      }
+    },
+    {
+      "intro": {
+        "cpu_ms_per_s": 102.98346153846154,
+        "layouts": 3,
+        "style_recalcs": 173,
+        "frame_ms": {
+          "median": 16.700000000000728,
+          "p95": 16.799999999999272,
+          "max": 16.80000000000291,
+          "n": 160
+        },
+        "heap_bytes": 6096220,
+        "dom_nodes": 2395
+      },
+      "reel": {
+        "cpu_ms_per_s": 80.11441176470602,
+        "layouts": 0,
+        "style_recalcs": 401,
+        "frame_ms": {
+          "median": 16.69999999999709,
+          "p95": 16.799999999999272,
+          "max": 33.30000000000291,
+          "n": 205
+        },
+        "heap_bytes": 4759488,
+        "dom_nodes": 2454,
+        "computed_style_reads": 0
+      },
+      "setup": {
+        "remaining_intro_and_reel_setup_ms": 439,
+        "cpu_ms": 72.38200000000018
+      },
+      "correct": true,
+      "input_response_ms": 11.700000017881393,
+      "retained_heap_bytes": 4458976,
+      "art_cache": {
+        "entries": 17,
+        "limit": 64
+      }
+    },
+    {
+      "intro": {
+        "cpu_ms_per_s": 99.09269230769232,
+        "layouts": 3,
+        "style_recalcs": 173,
+        "frame_ms": {
+          "median": 16.700000000000728,
+          "p95": 16.799999999999272,
+          "max": 16.80000000000291,
+          "n": 159
+        },
+        "heap_bytes": 4940860,
+        "dom_nodes": 2400
+      },
+      "reel": {
+        "cpu_ms_per_s": 92.47529411764694,
+        "layouts": 0,
+        "style_recalcs": 397,
+        "frame_ms": {
+          "median": 16.700000000000728,
+          "p95": 16.700000000000728,
+          "max": 16.80000000000291,
+          "n": 205
+        },
+        "heap_bytes": 4834944,
+        "dom_nodes": 2874,
+        "computed_style_reads": 0
+      },
+      "setup": {
+        "remaining_intro_and_reel_setup_ms": 410,
+        "cpu_ms": 39.25599999999996
+      },
+      "correct": true,
+      "input_response_ms": 11.300000011920929,
+      "retained_heap_bytes": 4595132,
+      "art_cache": {
+        "entries": 19,
+        "limit": 64
+      }
+    },
+    {
+      "intro": {
+        "cpu_ms_per_s": 103.07076923076913,
+        "layouts": 3,
+        "style_recalcs": 174,
+        "frame_ms": {
+          "median": 16.69999999999709,
+          "p95": 16.700000000004366,
+          "max": 16.80000000000291,
+          "n": 159
+        },
+        "heap_bytes": 4998532,
+        "dom_nodes": 2403
+      },
+      "reel": {
+        "cpu_ms_per_s": 79.61764705882345,
+        "layouts": 0,
+        "style_recalcs": 398,
+        "frame_ms": {
+          "median": 16.69999999999709,
+          "p95": 16.700000000004366,
+          "max": 16.80000000000291,
+          "n": 205
+        },
+        "heap_bytes": 5569564,
+        "dom_nodes": 2460,
+        "computed_style_reads": 0
+      },
+      "setup": {
+        "remaining_intro_and_reel_setup_ms": 435,
+        "cpu_ms": 60.273000000000025
+      },
+      "correct": true,
+      "input_response_ms": 12.099999994039536,
+      "retained_heap_bytes": 4651264,
+      "art_cache": {
+        "entries": 21,
+        "limit": 64
+      }
+    },
+    {
+      "intro": {
+        "cpu_ms_per_s": 99.33192307692286,
+        "layouts": 3,
+        "style_recalcs": 174,
+        "frame_ms": {
+          "median": 16.69999999999709,
+          "p95": 16.799999999995634,
+          "max": 16.80000000000291,
+          "n": 160
+        },
+        "heap_bytes": 5074564,
+        "dom_nodes": 2406
+      },
+      "reel": {
+        "cpu_ms_per_s": 89.82647058823508,
+        "layouts": 0,
+        "style_recalcs": 397,
+        "frame_ms": {
+          "median": 16.69999999999709,
+          "p95": 16.799999999995634,
+          "max": 16.80000000000291,
+          "n": 204
+        },
+        "heap_bytes": 4971128,
+        "dom_nodes": 2874,
+        "computed_style_reads": 0
+      },
+      "setup": {
+        "remaining_intro_and_reel_setup_ms": 403,
+        "cpu_ms": 36.17700000000035
+      },
+      "correct": true,
+      "input_response_ms": 13.599999994039536,
+      "retained_heap_bytes": 4653380,
+      "art_cache": {
+        "entries": 21,
+        "limit": 64
+      }
+    },
+    {
+      "intro": {
+        "cpu_ms_per_s": 100.15500000000004,
+        "layouts": 3,
+        "style_recalcs": 173,
+        "frame_ms": {
+          "median": 16.69999999999709,
+          "p95": 16.700000000004366,
+          "max": 16.80000000000291,
+          "n": 158
+        },
+        "heap_bytes": 5053040,
+        "dom_nodes": 2406
+      },
+      "reel": {
+        "cpu_ms_per_s": 84.70558823529416,
+        "layouts": 0,
+        "style_recalcs": 400,
+        "frame_ms": {
+          "median": 16.69999999999709,
+          "p95": 16.799999999995634,
+          "max": 16.80000000000291,
+          "n": 205
+        },
+        "heap_bytes": 6156856,
+        "dom_nodes": 2462,
+        "computed_style_reads": 0
+      },
+      "setup": {
+        "remaining_intro_and_reel_setup_ms": 421,
+        "cpu_ms": 47.98200000000019
+      },
+      "correct": true,
+      "input_response_ms": 10.700000017881393,
+      "retained_heap_bytes": 4683720,
+      "art_cache": {
+        "entries": 23,
+        "limit": 64
+      }
+    },
+    {
+      "intro": {
+        "cpu_ms_per_s": 101.25269230769241,
+        "layouts": 3,
+        "style_recalcs": 173,
+        "frame_ms": {
+          "median": 16.69999999999709,
+          "p95": 16.799999999995634,
+          "max": 16.80000000000291,
+          "n": 158
+        },
+        "heap_bytes": 5154176,
+        "dom_nodes": 2408
+      },
+      "reel": {
+        "cpu_ms_per_s": 86.71764705882346,
+        "layouts": 0,
+        "style_recalcs": 400,
+        "frame_ms": {
+          "median": 16.69999999999709,
+          "p95": 16.70000000001164,
+          "max": 16.80000000000291,
+          "n": 205
+        },
+        "heap_bytes": 6188704,
+        "dom_nodes": 2463,
+        "computed_style_reads": 0
+      },
+      "setup": {
+        "remaining_intro_and_reel_setup_ms": 434,
+        "cpu_ms": 58.97299999999994
+      },
+      "correct": true,
+      "input_response_ms": 13.200000017881393,
+      "retained_heap_bytes": 4693976,
+      "art_cache": {
+        "entries": 24,
+        "limit": 64
+      }
+    },
+    {
+      "intro": {
+        "cpu_ms_per_s": 101.55269230769198,
+        "layouts": 3,
+        "style_recalcs": 173,
+        "frame_ms": {
+          "median": 16.69999999999709,
+          "p95": 16.80000000000291,
+          "max": 16.80000000000291,
+          "n": 158
+        },
+        "heap_bytes": 5351856,
+        "dom_nodes": 2409
+      },
+      "reel": {
+        "cpu_ms_per_s": 83.0273529411765,
+        "layouts": 0,
+        "style_recalcs": 396,
+        "frame_ms": {
+          "median": 16.69999999999709,
+          "p95": 16.70000000001164,
+          "max": 16.80000000000291,
+          "n": 205
+        },
+        "heap_bytes": 5121868,
+        "dom_nodes": 2879,
+        "computed_style_reads": 0
+      },
+      "setup": {
+        "remaining_intro_and_reel_setup_ms": 434,
+        "cpu_ms": 59.326999999999686
+      },
+      "correct": true,
+      "input_response_ms": 4.9000000059604645,
+      "retained_heap_bytes": 4754424,
+      "art_cache": {
+        "entries": 25,
+        "limit": 64
+      }
+    },
+    {
+      "intro": {
+        "cpu_ms_per_s": 104.9084615384616,
+        "layouts": 3,
+        "style_recalcs": 175,
+        "frame_ms": {
+          "median": 16.69999999999709,
+          "p95": 16.70000000001164,
+          "max": 16.80000000000291,
+          "n": 160
+        },
+        "heap_bytes": 5061284,
+        "dom_nodes": 2410
+      },
+      "reel": {
+        "cpu_ms_per_s": 93.74470588235262,
+        "layouts": 0,
+        "style_recalcs": 402,
+        "frame_ms": {
+          "median": 16.69999999999709,
+          "p95": 16.79999999998836,
+          "max": 16.80000000000291,
+          "n": 205
+        },
+        "heap_bytes": 6250788,
+        "dom_nodes": 2466,
+        "computed_style_reads": 0
+      },
+      "setup": {
+        "remaining_intro_and_reel_setup_ms": 405,
+        "cpu_ms": 40.41400000000017
+      },
+      "correct": true,
+      "input_response_ms": 11.899999976158142,
+      "retained_heap_bytes": 4790692,
+      "art_cache": {
+        "entries": 26,
+        "limit": 64
+      }
+    }
+  ],
+  "errors": []
+}

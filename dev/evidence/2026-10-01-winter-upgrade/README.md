@@ -1,6 +1,6 @@
 # Winter upgrade completion report
 
-Implemented October 1, 2026 as local source/build **v0.9.6.1**, protocol **yard-22**, against baseline `07eb5e54d53525277f6f8839e6d7b0e4a5617680`. The game changes are ready for review in this checkout. The additive Supabase catalog migration is live; publishing the game build remains a separate release step.
+Implemented October 1, 2026 as local source/build **v0.9.6.1**, protocol **yard-22**, against baseline `07eb5e54d53525277f6f8839e6d7b0e4a5617680`. The game changes are ready for review in this checkout. The additive Supabase catalog migration is live; the game build was subsequently pushed as [`526831b`](https://github.com/lopoke89-ops/palisade/commit/526831bad0c4369a5058f9a5812e20413a1e9367) at the user's request, and its live HTML exactly matches the committed bytes.
 
 ## Delivered behavior
 
@@ -51,4 +51,4 @@ Measured in desktop Chrome 154 software Canvas at a 390×844 viewport and DPR 2,
 
 The new-model stress scene peaks at 243 particles and approximately 4.3 MB of wardrobe cache, below the existing 600-particle and 24-MB cache limits. Dense software-rendered scenes exceed a 16.7-ms frame budget in both builds, and the added presentation has a measurable cost. Physical-phone heat/battery, Safari, and real wide-area networking remain unverified. Mobile viewport, touch, low-power emission behavior, and local WebRTC host/guest tests pass. Raw measurements: [baseline](baseline-software.json), [candidate](candidate-software.json), [new-model stress](holiday-software.json). Benchmark command: `node dev/test/render_perf.js baseline|candidate|holiday software`, with `CHROMIUM`, `SCENES`, `SAMPLES`, and `FRAMES` overrides.
 
-The local source/build is ready for review. A production game release should retain this performance caveat and require clients to reload for protocol yard-22.
+The winter build is published as commit `526831b`. This performance caveat still applies; clients need to reload for protocol yard-22. The subsequent local music/case candidate is recorded in its [completion report](../2026-10-01-music-case-batches/README.md).

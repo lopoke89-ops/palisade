@@ -1,0 +1,1 @@
+Twenty repeated batches release all reel/result nodes and callbacks; warm-cache retained heap stays within 256 KB. errors: none

@@ -1,36 +1,20 @@
-// The supplied menu/raid tracks should decode, loop and route without replacing build or Locker music.
-const {chromium} = require('playwright');
-const assert = require('node:assert/strict');
-(async () => {
-  const b = await chromium.launch({executablePath:process.env.CHROMIUM||undefined,args:['--autoplay-policy=no-user-gesture-required']});
-  try {
-    const p = await b.newPage({viewport:{width:390,height:844},deviceScaleFactor:2}), errors = [];
-    p.on('pageerror',e=>errors.push(e.message));
-    await p.goto('http://localhost:8080/debug.html?debug=1');
-    assert.equal(await p.evaluate(()=>__pal.musicWant()),'menu');
-    await p.click('#startBtn');
-    const track = async name => {
-      await p.waitForFunction(name=>__pal.mus.cur===name&&!!__pal.mus.src,name,{timeout:15000});
-      return p.evaluate(()=>({want:__pal.musicWant(),cur:__pal.mus.cur,loop:__pal.mus.src.loopEnd,decoded:Object.keys(__pal.mus.bufs),gain:__pal.mus.bus.gain.value}));
-    };
-    const build = await track('between');
-    await p.evaluate(()=>__pal.startRaid());
-    const raid = await track('raid');
-    await p.evaluate(()=>__pal.toMenu());
-    const menu = await track('menu');
-    await p.evaluate(()=>__pal.showPage('locker'));
-    const locker = await track('locker');
-    await p.evaluate(()=>{const s=document.getElementById('sMus');s.value=0;s.dispatchEvent(new Event('input'))});
-    await p.waitForFunction(()=>__pal.musicWant()===null&&__pal.mus.cur===null);
-    for (const [name,s] of Object.entries({between:build,raid,menu,locker})) {
-      assert.equal(s.want,name); assert.equal(s.cur,name);
-      assert.ok(s.loop>1,'loop length for '+name);
-      assert.ok(s.decoded.length<=1,'only one decoded track for '+name);
-      assert.ok(s.gain>0,'music volume for '+name);
-    }
-    assert.ok(Math.abs(raid.loop-5832911/48000)<.01,'raid WAV loop length');
-    assert.ok(Math.abs(menu.loop-6764037/48000)<.01,'menu WAV loop length');
-    assert.deepEqual(errors,[]);
-    console.log('routes',JSON.stringify({build,raid,menu,locker}),'errors: none');
-  } finally { await b.close() }
-})().catch(e=>{console.error(e);process.exitCode=1});
+const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
+const manifest=require('../audio/music-manifest.json');
+(async()=>{const b=await chromium.launch({executablePath:process.env.CHROMIUM,args:['--autoplay-policy=no-user-gesture-required']}),errors=[],evidence=[];
+ for(const format of ['m4a','ogg']){const p=await b.newPage({viewport:{width:390,height:844},deviceScaleFactor:2});p.on('pageerror',e=>errors.push(e.message));
+  if(format==='ogg')await p.route('**/*.m4a*',r=>r.abort());
+  await p.goto('http://localhost:8080/debug.html?debug=1');await p.mouse.click(5,5);await p.evaluate(()=>__pal.initAudio());
+  const track=async k=>{await p.waitForFunction(k=>__pal.mus.cur===k&&!!__pal.mus.src,k,{timeout:30000});const data=await p.evaluate(()=>({cur:__pal.mus.cur,token:__pal.mus.token,loopStart:__pal.mus.src.loopStart,loopEnd:__pal.mus.src.loopEnd,starts:__pal.mus.starts,decoded:Object.keys(__pal.mus.bufs),bytes:__pal.mus.src.buffer.length*__pal.mus.src.buffer.numberOfChannels*4}));assert.equal(data.decoded.length,1);assert.equal(data.loopStart,0);evidence.push({format,...data});return data};
+  const menu=await track('menu');for(const page of ['locker','settings','solo','multi','main']){await p.evaluate(page=>__pal.showPage(page),page);await p.waitForTimeout(90);assert.equal((await track('menu')).starts,menu.starts)}
+  await p.evaluate(()=>__pal.showPage('solo'));await p.click('#startBtn');await p.evaluate(()=>__pal.game.paused=true);await track('between');
+  for(let wave=1;wave<=4;wave++){await p.evaluate(w=>{__pal.game.wave=w;__pal.game.phase='raid'},wave);const k=['attitude','cool','express','attitude'][wave-1],data=await track(k);const starts=data.starts;await p.waitForTimeout(100);assert.equal((await track(k)).starts,starts);if(wave<4){await p.evaluate(()=>__pal.game.phase='build');await track('between')}}
+  await p.evaluate(()=>{__pal.cfg.music=0;__pal.musicTick()});assert.equal(await p.evaluate(()=>__pal.mus.cur),null);const offset=await p.evaluate(()=>__pal.mus.resume.offset);await p.evaluate(()=>{__pal.cfg.music=.7;__pal.musicTick()});await track('attitude');assert.ok(await p.evaluate(off=>__pal.mus.offset>=off,offset));
+  await p.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'))});assert.equal(await p.evaluate(()=>__pal.musicWant()),null);await p.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'))});await track('attitude');
+  await p.evaluate(()=>{__pal.game.mode='blitz';__pal.game.wave=15;__pal.startFinalBlitz();__pal.game.paused=true});const finale=await track('finale');await p.evaluate(()=>{__pal.game.evac=true;__pal.musicTick()});assert.equal((await track('finale')).starts,finale.starts);
+  await p.evaluate(()=>{__pal.game.mode='campaign';__pal.musicTick()});assert.equal(await p.evaluate(()=>__pal.musicWant()),'express');await track('express');
+  for(const win of [true,false]){await p.evaluate(win=>{__pal.game.phase='raid';__pal.game.rewarded=false;__pal.endGame(win)},win);await p.waitForSelector('#over:not([hidden])');const result=await track('results');assert.ok(Math.abs(result.loopEnd-manifest.tracks.results.loopSeconds)<.001);await p.evaluate(()=>__pal.showRewards(null));await p.waitForTimeout(150);assert.equal((await track('results')).starts,result.starts);await p.evaluate(()=>__pal.toMenu());await track('menu');await p.evaluate(()=>__pal.showPage('solo'));await p.click('#startBtn');await p.evaluate(()=>__pal.game.paused=true);await track('between');await p.evaluate(()=>__pal.startRaid());await track('attitude')}
+  for(const mode of ['base','ffa']){await p.evaluate(mode=>{__pal.pick.mode='5';__pal.newGame(null,mode);__pal.demo=false;__pal.enterGameHook();__pal.game.paused=true;__pal.endPvp(mode==='base'?__pal.player.team:__pal.player.id)},mode);await p.waitForSelector('#over:not([hidden])');await track('results');await p.evaluate(()=>__pal.toMenu());await track('menu')}
+  await p.waitForTimeout(1400);assert.equal(await p.evaluate(()=>__pal.mus.retiring),null);await p.evaluate(()=>{__pal.endGame(false);__pal.musicTick()});assert.equal(await p.evaluate(()=>__pal.musicWant()),'menu');await p.close();
+ }
+ assert.deepEqual(errors,[]);fs.writeFileSync(__dirname+'/out/music-routing.json',JSON.stringify({cueOriginalSeconds:164,trimmedRelease:true,evidence,errors},null,2));await b.close();console.log('All seven tracks, both formats, stable menus/raids/finale/results, PvP, rematch, mute and visibility resume pass. errors: none');
+})().catch(e=>{console.error(e);process.exit(1)});

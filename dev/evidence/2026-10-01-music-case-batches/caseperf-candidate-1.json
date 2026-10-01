@@ -1,0 +1,134 @@
+{
+  "label": "candidate",
+  "qty": 1,
+  "samples": 3,
+  "browser": "154.0.8037.93",
+  "viewport": [
+    390,
+    844,
+    3
+  ],
+  "runs": [
+    {
+      "intro": {
+        "cpu_ms_per_s": 133.32576923076923,
+        "layouts": 3,
+        "style_recalcs": 177,
+        "frame_ms": {
+          "median": 16.699999999999818,
+          "p95": 16.799999999999727,
+          "max": 33.299999999999955,
+          "n": 161
+        },
+        "heap_bytes": 6320356,
+        "dom_nodes": 2342
+      },
+      "reel": {
+        "cpu_ms_per_s": 86.76470588235296,
+        "layouts": 0,
+        "style_recalcs": 399,
+        "frame_ms": {
+          "median": 16.699999999999818,
+          "p95": 16.700000000000728,
+          "max": 16.800000000000182,
+          "n": 205
+        },
+        "heap_bytes": 6601120,
+        "dom_nodes": 2602,
+        "computed_style_reads": 0
+      },
+      "setup": {
+        "remaining_intro_and_reel_setup_ms": 441,
+        "cpu_ms": 91.14900000000003
+      },
+      "correct": true,
+      "input_response_ms": 16.600000023841858,
+      "retained_heap_bytes": 4285652,
+      "art_cache": {
+        "entries": 10,
+        "limit": 64
+      }
+    },
+    {
+      "intro": {
+        "cpu_ms_per_s": 119.77615384615382,
+        "layouts": 3,
+        "style_recalcs": 176,
+        "frame_ms": {
+          "median": 16.699999999999818,
+          "p95": 16.700000000000273,
+          "max": 16.800000000000182,
+          "n": 160
+        },
+        "heap_bytes": 9093540,
+        "dom_nodes": 4133
+      },
+      "reel": {
+        "cpu_ms_per_s": 96.53676470588238,
+        "layouts": 0,
+        "style_recalcs": 397,
+        "frame_ms": {
+          "median": 16.699999999999818,
+          "p95": 16.799999999999272,
+          "max": 16.800000000000182,
+          "n": 204
+        },
+        "heap_bytes": 7494100,
+        "dom_nodes": 2217,
+        "computed_style_reads": 0
+      },
+      "setup": {
+        "remaining_intro_and_reel_setup_ms": 450,
+        "cpu_ms": 87.59699999999992
+      },
+      "correct": true,
+      "input_response_ms": 14,
+      "retained_heap_bytes": 4290476,
+      "art_cache": {
+        "entries": 10,
+        "limit": 64
+      }
+    },
+    {
+      "intro": {
+        "cpu_ms_per_s": 116.73499999999999,
+        "layouts": 3,
+        "style_recalcs": 176,
+        "frame_ms": {
+          "median": 16.699999999999818,
+          "p95": 16.700000000000273,
+          "max": 16.800000000000182,
+          "n": 160
+        },
+        "heap_bytes": 5806032,
+        "dom_nodes": 2161
+      },
+      "reel": {
+        "cpu_ms_per_s": 91.20470588235297,
+        "layouts": 0,
+        "style_recalcs": 397,
+        "frame_ms": {
+          "median": 16.699999999999818,
+          "p95": 16.800000000000182,
+          "max": 16.800000000000182,
+          "n": 204
+        },
+        "heap_bytes": 7560440,
+        "dom_nodes": 2217,
+        "computed_style_reads": 0
+      },
+      "setup": {
+        "remaining_intro_and_reel_setup_ms": 442,
+        "cpu_ms": 85.02600000000004
+      },
+      "correct": true,
+      "input_response_ms": 16,
+      "retained_heap_bytes": 4290836,
+      "art_cache": {
+        "entries": 10,
+        "limit": 64
+      }
+    }
+  ],
+  "errors": []
+}

@@ -38,6 +38,7 @@
 19d-friend-invites.js   authenticated room registration and friend invitation UI flow
 20-locker-ui.js   drawing cosmetics, locker screen, armory screen
 20a-cosmetic-art.js (shared tracer and kill effect painters)
+20b-case-openings.js   Atomic single/batch rewards, durable receipts and shared reel sessions.
 20b-winter-effects.js   shared winter snowflake and six kill effect painters
 21-online.js   online co-op and PvP networking
 22-loop-menus.js   main loop, menus, install prompt, debug hooks

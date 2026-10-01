@@ -2,7 +2,7 @@
 
 **Work order date:** October 1, 2026  
 **Repository:** [lopoke89-ops/palisade](https://github.com/lopoke89-ops/palisade)  
-**Status:** Implemented locally as v0.9.6.1 / yard-22. The additive backend catalog migration is live. See the [completion report](../evidence/2026-10-01-winter-upgrade/README.md), [36-suite verification](../evidence/2026-10-01-winter-upgrade/verification.json), and [311-entry four-angle catalog](../catalog/cosmetics/README.md). The game build awaits release; dense software-rendering cost and unverified physical-phone/Safari/WAN behavior are documented in the report.
+**Status:** Implemented locally as v0.9.6.1 / yard-22. The additive backend catalog migration is live. See the [completion report](../evidence/2026-10-01-winter-upgrade/README.md), [36-suite verification](../evidence/2026-10-01-winter-upgrade/verification.json), and [311-entry four-angle catalog](../catalog/cosmetics/README.md). The game build was pushed as `526831b` and verified live; dense software-rendering cost and unverified physical-phone/Safari/WAN behavior are documented in the report.
 
 ## Role and objective
 

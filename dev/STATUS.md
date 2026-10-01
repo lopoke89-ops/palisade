@@ -7,20 +7,24 @@ Big U's latest completed local scope is recorded in the [presentation prompt](pl
 
 The Claude audit URL still requires sign-in in the available browser session. Big U supplied an exported copy at `D:\downloads\Untitled.md`, which was read on September 29. Its newest Progress entry is v0.9.3, so its release claims are superseded by the verified v0.9.3.3 release below. The external artifact itself was not edited here.
 
-## v0.9.6.1 local implementation
+## v0.9.6.1 published winter upgrade
 
-The [winter upgrade work order](plans/winter-cosmetics-dell-and-dead-end-work-order.md) is implemented in the checkout, with 36 affected suites passing and a complete 311-entry four-angle catalog. Source/build protocol is yard-22. The `20261001214620_winter_models` migration is live; the game changes are ready for review. See [completion and performance evidence](evidence/2026-10-01-winter-upgrade/README.md) and [catalog index](catalog/cosmetics/README.md). The published release below remains the earlier release record.
+The [winter upgrade work order](plans/winter-cosmetics-dell-and-dead-end-work-order.md) is implemented in the checkout, with 36 affected suites passing and a complete 311-entry four-angle catalog. Source/build protocol is yard-22. The `20261001214620_winter_models` migration is live; the game changes were pushed as `526831b` and the live HTML was verified against that commit. See [completion and performance evidence](evidence/2026-10-01-winter-upgrade/README.md) and [catalog index](catalog/cosmetics/README.md). The table below distinguishes the published winter build from the new local candidate.
+
+## v0.9.6.2 local music/case candidate
+
+Seven replacement tracks, stable raid/finale/results routing, and atomic one/five-case openings are implemented. `20261001225643_music_case_batches` is live. Focused gameplay/network/database/asset checks and phone-sized case benchmarks are documented in the [completion report](evidence/2026-10-01-music-case-batches/README.md). The new game build awaits publication.
 
 ## Live and local
 
 | Item | Current state |
 |---|---|
-| Source release | **v0.9.6.0** (Frostpeak elevation, Whiteout, Rime, winter collection and friend invitations); published October 1 |
-| Release deployment | Pushed October 1; [Pages run 36845257315](https://github.com/lopoke89-ops/palisade/actions/runs/36845257315) succeeded; live production UI and committed bytes verified |
-| Live protocol | `yard-21` / `palisade-yard-21-`; old clients must reload |
-| Applied server migrations | `winter_whiteout` (`20261001081259`) and `friend_lobby_invites` (`20261001081316`), applied and verified October 1; earlier ammo/Blitz migrations retained |
-| GitHub branch | `main` includes release commit [`92d3c16`](https://github.com/lopoke89-ops/palisade/commit/92d3c16608225f61e4d513b7c287a768834933ae); preexisting uncommitted cleanup excluded |
-| Published build | GitHub Pages **v0.9.6.0**, protocol `yard-21`, service worker `palisade-dc87756470`; exact committed HTML/SW hashes verified live |
+| Source release | Local **v0.9.6.2**, protocol `yard-22`; published **v0.9.6.1** |
+| Release deployment | Winter upgrade pushed October 1; live HTML exactly matches commit `526831b` |
+| Live protocol | `yard-22` / `palisade-yard-22-`; clients from yard-21 must reload |
+| Applied server migrations | Winter models (`20261001214620`) and music/case batches (`20261001225643`) are live; earlier migrations retained |
+| GitHub branch | `main` contains [526831b](https://github.com/lopoke89-ops/palisade/commit/526831bad0c4369a5058f9a5812e20413a1e9367); v0.9.6.2 changes are local |
+| Published build | GitHub Pages **v0.9.6.1**, protocol `yard-22`; committed/live HTML SHA256 `ecfcfa50ab243fa02e9b3d817b454d8fa11d02be359cb1513ce1649f643a870e` |
 
 Controller support shipped in v0.9.2.1. The v0.9.3 cosmetics migration is applied and the live case catalog includes Flags. The two proposed new game modes have not shipped; the Nightmare modifier and a future preset definition do not constitute a separate game mode.
 

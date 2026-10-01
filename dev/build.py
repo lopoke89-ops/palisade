@@ -38,7 +38,11 @@ src=head+src.replace('<script>\n(()=>{','<script>window.PEER_SRC=\'peerjs.min.js
 src=src.replace('</style>\n','</style>\n</head>\n<body>\n',1)
 src=src.replace('\n</html>\n','\n</body>\n</html>\n')
 # music: each file name carries its content hash, so a new track reaches players instead of the cached old one
-MUSIC_FILES=['between_raids','locker','main_menu','raid']
+MUSIC_FILES=['between_raids','main_menu','raid_attitude','raid_cool','raid_express','final_blitz','results']
+# Only obsolete generated release files are removed; original masters are preserved.
+for old in ('locker.m4a','locker.ogg','raid.m4a','raid.ogg'):
+    p=os.path.join(SITE,old)
+    if os.path.isfile(p):os.remove(p)
 for name in MUSIC_FILES:
     for ext in ('m4a','ogg'):
         mh=hashlib.sha1(open(f'{DEV}/audio/{name}.{ext}','rb').read()).hexdigest()[:8]
@@ -120,7 +124,7 @@ const V='palisade-{ver}';
 const FILES=['./','index.html','peerjs.min.js','manifest.webmanifest','icon-192.png','icon-512.png','apple-touch-icon.png'{FONTFILES}];
 self.addEventListener('install',e=>{{e.waitUntil(caches.open(V).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting()))}});
 // music is big and rarely changes, so it lives in its own cache that survives game updates (saved the first time it plays)
-const M='palisade-media-1';
+const M='palisade-media-2';
 self.addEventListener('activate',e=>{{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==V&&k!==M).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))}});
 self.addEventListener('fetch',e=>{{
   const r=e.request;if(r.method!=='GET'||new URL(r.url).origin!==location.origin)return;

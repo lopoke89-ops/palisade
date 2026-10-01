@@ -1,0 +1,161 @@
+{
+  "sampleRate": 48000,
+  "channels": 2,
+  "resultsOriginalCueSeconds": 164,
+  "tracks": {
+    "main_menu": {
+      "title": "Heartbeat",
+      "source": "H:\\vapeor\\luxury elite - blind date - 01 heartbeat.wav",
+      "sourceSHA256": "e3e25f114811ca1944f2ff34f592f88a1d97dda45eb7fa36afacdd8807c6a5b9",
+      "sourceFrames": 9393197,
+      "sourceSeconds": 195.69160416666668,
+      "trimStartSeconds": 0,
+      "releaseFrames": 9393197,
+      "loopSeconds": 195.69160416666668,
+      "formats": {
+        "m4a": {
+          "bytes": 4066298,
+          "SHA256": "fbf4ac8becdd90a9a2b2518d53a7b14dfde45e142ba621d9623d0f47585ecd60",
+          "decodedFrames": 9394176
+        },
+        "ogg": {
+          "bytes": 3004612,
+          "SHA256": "61fa3052b18766f33bd108e7885e5bc761178ee28f353d8dd02402c01f9fd43f",
+          "decodedFrames": 9393197
+        }
+      }
+    },
+    "between_raids": {
+      "title": "Cold",
+      "source": "H:\\vapeor\\luxury elite - blind date - 02 cold.wav",
+      "sourceSHA256": "74201c8df3adc82221712ff8e27fdee68f6f21d92ee1b385d149a343240718dc",
+      "sourceFrames": 7684036,
+      "sourceSeconds": 160.08408333333333,
+      "trimStartSeconds": 0,
+      "releaseFrames": 7684036,
+      "loopSeconds": 160.08408333333333,
+      "formats": {
+        "m4a": {
+          "bytes": 3312122,
+          "SHA256": "5529e5c9b1777b8f7306926c5318712697fef3932c74e4782407bd5f338df383",
+          "decodedFrames": 7684096
+        },
+        "ogg": {
+          "bytes": 2641831,
+          "SHA256": "2ce6c5f48d44246229854da66e4ffc58fc31b0778610c59887394f550e9aa369",
+          "decodedFrames": 7684036
+        }
+      }
+    },
+    "raid_attitude": {
+      "title": "Attitude",
+      "source": "H:\\vapeor\\Luxury Elite - World Class - 04 Attitude.wav",
+      "sourceSHA256": "fbbcabefb885f56f3f3bef2349ac7e7a59720ba3b4f9a5e5b42cdcfdb9859555",
+      "sourceFrames": 9540755,
+      "sourceSeconds": 198.76572916666666,
+      "trimStartSeconds": 0,
+      "releaseFrames": 9540755,
+      "loopSeconds": 198.76572916666666,
+      "formats": {
+        "m4a": {
+          "bytes": 4083559,
+          "SHA256": "44c132e53d2f7cedc983057098ebddcc11859bad5824b088380fb7cbfe118e48",
+          "decodedFrames": 9541632
+        },
+        "ogg": {
+          "bytes": 3305401,
+          "SHA256": "330fb1e883113ebcc2353d9983c0835645a671270ce95d6abdf192c62d0aa3e8",
+          "decodedFrames": 9540755
+        }
+      }
+    },
+    "raid_cool": {
+      "title": "Cool",
+      "source": "H:\\vapeor\\Luxury Elite - World Class - 12 Cool.wav",
+      "sourceSHA256": "656cf36ca8f032d298649f81e17941d823952c5ee88b03859604296e5c2f80e0",
+      "sourceFrames": 8696895,
+      "sourceSeconds": 181.1853125,
+      "trimStartSeconds": 0,
+      "releaseFrames": 8696895,
+      "loopSeconds": 181.1853125,
+      "formats": {
+        "m4a": {
+          "bytes": 3722220,
+          "SHA256": "0d00fe143362b96e8953a7255a4f08436285f1f9498eeeac643063596693f4c2",
+          "decodedFrames": 8697856
+        },
+        "ogg": {
+          "bytes": 2936487,
+          "SHA256": "4b25f8d70e6509db9a16718b433c452d1a22c56cf4042082531d1d183fb304e8",
+          "decodedFrames": 8696895
+        }
+      }
+    },
+    "raid_express": {
+      "title": "Express",
+      "source": "H:\\vapeor\\Luxury Elite - World Class - 09 Express.wav",
+      "sourceSHA256": "fa7e7b8b9c5c847f95da785b034bf15a46ac71060b0a7709447b6edfff5cfdd8",
+      "sourceFrames": 5544647,
+      "sourceSeconds": 115.51347916666667,
+      "trimStartSeconds": 0,
+      "releaseFrames": 5544647,
+      "loopSeconds": 115.51347916666667,
+      "formats": {
+        "m4a": {
+          "bytes": 2380025,
+          "SHA256": "7fbad6bb028e6ccd0eff65c3d1d891b04e7d6af763ea3cf777895f9a27dcf07a",
+          "decodedFrames": 5544960
+        },
+        "ogg": {
+          "bytes": 1932152,
+          "SHA256": "6a2c8da5de3936a500a595714bffb32988af35f76764d672e740003a8e9b03ed",
+          "decodedFrames": 5544647
+        }
+      }
+    },
+    "final_blitz": {
+      "title": "Everything She Wants",
+      "source": "H:\\vapeor\\23 - Everything She Wants - Wham!.mp3",
+      "sourceSHA256": "3de2ca96eba76bd14cc80fb5961db99e24e5cb3e4c24be9c4b56c31205355a5f",
+      "sourceFrames": 18692480,
+      "sourceSeconds": 389.4266666666667,
+      "trimStartSeconds": 0,
+      "releaseFrames": 18692480,
+      "loopSeconds": 389.4266666666667,
+      "formats": {
+        "m4a": {
+          "bytes": 8098541,
+          "SHA256": "4e806588abb09fe677e12fae1cd2ab4750f8ed97490aaba70fc2736322c87696",
+          "decodedFrames": 18693120
+        },
+        "ogg": {
+          "bytes": 6028602,
+          "SHA256": "e0e4f41f7970a4f56f6d21190280cb29ec51915e73ccd835796d0d24bc9ea19e",
+          "decodedFrames": 18692480
+        }
+      }
+    },
+    "results": {
+      "title": "Sacrifices",
+      "source": "H:\\music\\Drake - More Life (2017) [Mp3~320kbps]\\Drake \u2013 More Life (2017)\\12 Sacrifices (feat. 2 Chainz & Young Thug).mp3",
+      "sourceSHA256": "889f6ce3b4fbef078ad9f6f69c3d3346e18bd22f5a930fbf5e84694b7819e91e",
+      "sourceFrames": 14765663,
+      "sourceSeconds": 307.61797916666666,
+      "trimStartSeconds": 164,
+      "releaseFrames": 6893663,
+      "loopSeconds": 143.61797916666666,
+      "formats": {
+        "m4a": {
+          "bytes": 3058325,
+          "SHA256": "5238100bb7e1aaa0a3f9ec4cdbe518e4d148e4e9cd97b67700f1ca448ed02722",
+          "decodedFrames": 6894592
+        },
+        "ogg": {
+          "bytes": 2552656,
+          "SHA256": "d73301b6016ff57560e1e45c92840c47972fec9640cf9935b707247b313ef844",
+          "decodedFrames": 6893663
+        }
+      }
+    }
+  }
+}

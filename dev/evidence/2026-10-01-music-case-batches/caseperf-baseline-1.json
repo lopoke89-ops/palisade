@@ -1,0 +1,125 @@
+{
+  "label": "baseline",
+  "qty": 1,
+  "samples": 3,
+  "browser": "154.0.8037.93",
+  "viewport": [
+    390,
+    844,
+    3
+  ],
+  "runs": [
+    {
+      "intro": {
+        "cpu_ms_per_s": 148.11923076923077,
+        "layouts": 2,
+        "style_recalcs": 177,
+        "frame_ms": {
+          "median": 16.699999999999818,
+          "p95": 16.700000000000273,
+          "max": 33.399999999999864,
+          "n": 162
+        },
+        "heap_bytes": 5529476,
+        "dom_nodes": 2211
+      },
+      "reel": {
+        "cpu_ms_per_s": 91.42882352941176,
+        "layouts": 0,
+        "style_recalcs": 398,
+        "frame_ms": {
+          "median": 16.699999999999818,
+          "p95": 16.799999999999272,
+          "max": 16.800000000000182,
+          "n": 205
+        },
+        "heap_bytes": 5788232,
+        "dom_nodes": 2530,
+        "computed_style_reads": 0
+      },
+      "setup": {
+        "remaining_intro_and_reel_setup_ms": 455,
+        "cpu_ms": 121.59200000000003
+      },
+      "correct": true,
+      "input_response_ms": 4.299999982118607,
+      "retained_heap_bytes": 4331728,
+      "art_cache": null
+    },
+    {
+      "intro": {
+        "cpu_ms_per_s": 120.71,
+        "layouts": 2,
+        "style_recalcs": 175,
+        "frame_ms": {
+          "median": 16.699999999999818,
+          "p95": 16.799999999999727,
+          "max": 16.800000000000182,
+          "n": 160
+        },
+        "heap_bytes": 9043900,
+        "dom_nodes": 4231
+      },
+      "reel": {
+        "cpu_ms_per_s": 96.36558823529413,
+        "layouts": 0,
+        "style_recalcs": 398,
+        "frame_ms": {
+          "median": 16.699999999999818,
+          "p95": 16.800000000000182,
+          "max": 16.800000000000182,
+          "n": 205
+        },
+        "heap_bytes": 8234712,
+        "dom_nodes": 2242,
+        "computed_style_reads": 0
+      },
+      "setup": {
+        "remaining_intro_and_reel_setup_ms": 458,
+        "cpu_ms": 106.21500000000006
+      },
+      "correct": true,
+      "input_response_ms": 5.899999976158142,
+      "retained_heap_bytes": 4357680,
+      "art_cache": null
+    },
+    {
+      "intro": {
+        "cpu_ms_per_s": 122.71076923076923,
+        "layouts": 2,
+        "style_recalcs": 176,
+        "frame_ms": {
+          "median": 16.699999999999818,
+          "p95": 16.799999999999727,
+          "max": 16.800000000000182,
+          "n": 161
+        },
+        "heap_bytes": 9137384,
+        "dom_nodes": 4231
+      },
+      "reel": {
+        "cpu_ms_per_s": 99.57852941176469,
+        "layouts": 0,
+        "style_recalcs": 398,
+        "frame_ms": {
+          "median": 16.699999999999818,
+          "p95": 16.799999999999272,
+          "max": 16.800000000000182,
+          "n": 205
+        },
+        "heap_bytes": 8237588,
+        "dom_nodes": 2243,
+        "computed_style_reads": 0
+      },
+      "setup": {
+        "remaining_intro_and_reel_setup_ms": 453,
+        "cpu_ms": 106.57099999999997
+      },
+      "correct": true,
+      "input_response_ms": 8.400000005960464,
+      "retained_heap_bytes": 4358584,
+      "art_cache": null
+    }
+  ],
+  "errors": []
+}
