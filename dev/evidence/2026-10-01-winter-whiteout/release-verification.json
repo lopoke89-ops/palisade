@@ -102,10 +102,10 @@
         "windowsBuildDifference": "Git converts Windows CRLF to LF; deployed bytes match the committed artifacts exactly."
       }
     },
-    "footer": "v0.9.6.0 \u00c2\u00b7 phone, desktop and controller \u00c2\u00b7 online co-op and PvP for up to six",
+    "footer": "v0.9.6.0 \u00b7 phone, desktop and controller \u00b7 online co-op and PvP for up to six",
     "campaign": {
-      "label": "CH 1 \u00c2\u00b7 BUILD",
-      "tip": "CHAPTER 1 \u00c2\u00b7 THE YARD. Secure the Yard and recover the mountain evacuation route. Three raids here, then your kit travels onward. Prepare at the core."
+      "label": "CH 1 \u00b7 BUILD",
+      "tip": "CHAPTER 1 \u00b7 THE YARD. Secure the Yard and recover the mountain evacuation route. Three raids here, then your kit travels onward. Prepare at the core."
     },
     "frost": {
       "label": "BUILD"

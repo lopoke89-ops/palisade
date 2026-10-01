@@ -8,7 +8,7 @@ Release protocol: **`yard-21`**, room prefix `palisade-yard-21-`. Service worker
 
 - **Frostpeak:** standard and XL snowy mountain defense maps, summit core, three actual height tiers, two uphill approaches with ramps/stairs, terrace-aware movement and combat, snow-covered pines, expedition equipment and a summit beacon. Available in solo/co-op 5, 10, Endless, Blitzkrieg Rush and campaign.
 - **Rime Colossus:** original ice armor, reservoir and maul silhouette; huge marked Glacial Rupture; Venom Rush leaving poisoned frost that slows everyone crossing it; coordinated health phases and bounded hazards.
-- **Operation Whiteout:** one continuous Yard â†’ Riverbend â†’ Quarry â†’ Frostpeak campaign. Three raids and a revamped boss per chapter, persistent kit/core damage, short chapter preparation, then one five-minute personal evacuation finale.
+- **Operation Whiteout:** one continuous Yard → Riverbend → Quarry → Frostpeak campaign. Three raids and a revamped boss per chapter, persistent kit/core damage, short chapter preparation, then one five-minute personal evacuation finale.
 - **Winter collection:** exactly 10 skins, 10 matching headgear, 10 backgrounds (four animated), six tracers (two Gold) and six kill effects (two Gold). Eight milestone skins plus 34 Winter Case items. All hats also fit supported Sahur characters.
 - **Friend invitations:** host accepted-friend invitations from the Friends list, including private rooms; in-app mailbox with Accept/Decline and deliberate Leave & Join confirmation; usable from the pause menu with touch/controller. Five-minute expiry, duplicate suppression, authenticated authority checks and room-incarnation binding.
 - **Reliability:** height validation prevents forged cliff traversal. Late join and reconnect preserve chapter, actual height, kit and personal evacuation state. Reconnecting within the same preparation epoch cannot refill HP/grenades. Account switches and session changes invalidate pending invitation actions. Retry receipts prevent duplicate account rewards.
@@ -91,14 +91,14 @@ Focused verification command:
 | Friends | [Invitation UI JSON](winter_invites.json): private host, decline/resend/real join, in-game mailbox, deliberate confirmation, account switch and changed-session guards |
 | Server | [Migration JSON](winter_migration.json): 30 named checks plus rejection cases; migrations apply twice, real reward/unlock/case functions, retry/late/missed progression, private invitation authority, expiry/stale/full/lock/protocol/bans/rates/grants |
 | Production/offline | [Offline JSON](winter_offline.json): real minified page, no debug hooks, real cached service worker, offline reload, campaign start, four ammo choices and Frostpeak start through touch UI |
-| Armory | [Layout JSON](armory_layout.json): 73 layout cases, ten portrait/landscape sizes down to 320Ã—480 and 568Ã—320, both tabs, Sniper slots and 44-pixel minimum buttons; no scrolling |
+| Armory | [Layout JSON](armory_layout.json): 73 layout cases, ten portrait/landscape sizes down to 320×480 and 568×320, both tabs, Sniper slots and 44-pixel minimum buttons; no scrolling |
 | Shared behavior | Existing solo, multiplayer, room controls, old-protocol rejection, rejoin, bosses, Blitz mode/boss/network/milestones, ammo/online purchases, cosmetic networking, headgear fit, touch lock, muzzle, controller and CSP regressions |
 
 Visual review covers [collection contact sheet](winter_collection.png), [standard battlefield](winter_frostpeak_std.png), [XL battlefield](winter_frostpeak_xl.png), [touch portrait](winter_frostpeak_mobile.png), [lobby invitation](winter_friend_invite.png) and [in-game mailbox](winter_in_game_invite.png).
 
 ## Performance and network measurements
 
-[Raw comparison](winter_performance.json): Windows desktop Chrome **154.0.8037.92** with software Canvas (`--disable-gpu --disable-accelerated-2d-canvas`), 390Ã—844 viewport; baseline and candidate use the same browser/device/workload. Each condition simulates 1,200 updates; the first 180 are warm-up. Six simulated shooters, 48 durable raiders and four bosses, ammo/status effects, winter outfits and 64 active frost fields. The real six-browser transport test is separate.
+[Raw comparison](winter_performance.json): Windows desktop Chrome **154.0.8037.92** with software Canvas (`--disable-gpu --disable-accelerated-2d-canvas`), 390×844 viewport; baseline and candidate use the same browser/device/workload. Each condition simulates 1,200 updates; the first 180 are warm-up. Six simulated shooters, 48 durable raiders and four bosses, ammo/status effects, winter outfits and 64 active frost fields. The real six-browser transport test is separate.
 
 | Measurement | Baseline | Candidate, same Yard workload | Frostpeak winter workload |
 | --- | --- | --- | --- |
@@ -133,7 +133,7 @@ Captures: [live campaign](live_campaign_mobile.png), [live Frostpeak](live_frost
 
 ## Remaining validation and publication
 
-- Conduct sustained human solo/co-op campaign sessions before final difficulty tuning, especially chapter 3â†’4 economy, six-player boss pressure and the lifetime Gold thresholds.
+- Conduct sustained human solo/co-op campaign sessions before final difficulty tuning, especially chapter 3→4 economy, six-player boss pressure and the lifetime Gold thresholds.
 - Measure a physical phone's heat, battery and frame-time behavior, and an actual six-player Internet finale. Desktop phone-sized/touch browser checks are identified above.
 - Internet joining still uses the existing PeerJS/WebRTC transport and its connection-help flow; invitations do not remove NAT/relay constraints.
 - Backend work is live and compatible with old account flows. This release publishes `index.html` and `sw.js` together; old peers need to reload for protocol 21. Publication and live results are recorded in [release-verification.json](release-verification.json).
