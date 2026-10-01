@@ -80,8 +80,8 @@ function gamePad(cur,hit,now){
 /* ---- menus: the d-pad or left stick moves a highlight to the nearest button that way ---- */
 const NAV_SEL='button,input[type=range],label.tog,select,a[href],[tabindex]:not([tabindex="-1"])';
 function navScope(){
-  for(const id of['saveOv','caseOv','setupSheet','igSet','armory','pause','over']){const el=$(id);if(el&&!el.hidden)return el}
   if(typeof dropOpen==='function'&&dropOpen())return $('friendsDrop');
+  for(const id of['saveOv','caseOv','setupSheet','igSet','armory','pause','over']){const el=$(id);if(el&&!el.hidden)return el}
   if(!$('menu').hidden)return $('menu');
   const rj=$('respawnJobs');if(rj&&!rj.hidden)return rj;
   return null;

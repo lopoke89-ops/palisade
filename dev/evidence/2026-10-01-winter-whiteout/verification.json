@@ -1,0 +1,204 @@
+{
+  "date": "2026-10-01",
+  "candidate": "0.9.6.0",
+  "protocol": "yard-21",
+  "serviceWorker": "palisade-e911468819",
+  "publication": "Prepublication candidate verification, before excluding preexisting cleanup. Published build and release gate are recorded in release-verification.json.",
+  "baselineHead": "3d540554965a109f62955ae6ecb487785efc18c6",
+  "passedTests": [
+    {
+      "name": "winter_elevation",
+      "result": "pass",
+      "log": "winter_elevation.log",
+      "timestampUtc": "2026-10-01T08:13:05.428272+00:00"
+    },
+    {
+      "name": "winter_combat",
+      "result": "pass",
+      "log": "winter_combat.log",
+      "timestampUtc": "2026-10-01T08:39:24.338570+00:00"
+    },
+    {
+      "name": "winter_cosmetics",
+      "result": "pass",
+      "log": "winter_cosmetics.log",
+      "timestampUtc": "2026-10-01T08:40:01.967919+00:00"
+    },
+    {
+      "name": "winter_scene",
+      "result": "pass",
+      "log": "winter_scene.log",
+      "timestampUtc": "2026-10-01T08:39:26.659602+00:00"
+    },
+    {
+      "name": "winter_network",
+      "result": "pass",
+      "log": "winter_network.log",
+      "timestampUtc": "2026-10-01T08:39:50.830204+00:00"
+    },
+    {
+      "name": "winter_reconnect",
+      "result": "pass",
+      "log": "winter_reconnect.log",
+      "timestampUtc": "2026-10-01T08:39:55.067777+00:00"
+    },
+    {
+      "name": "winter_invites",
+      "result": "pass",
+      "log": "winter_invites.log",
+      "timestampUtc": "2026-10-01T08:35:31.823078+00:00"
+    },
+    {
+      "name": "winter_migration",
+      "result": "pass",
+      "log": "winter_migration.log",
+      "timestampUtc": "2026-10-01T08:49:46.026983+00:00"
+    },
+    {
+      "name": "winter_offline",
+      "result": "pass",
+      "log": "winter_offline.log",
+      "timestampUtc": "2026-10-01T08:39:40.039596+00:00"
+    },
+    {
+      "name": "winter_performance",
+      "result": "pass",
+      "log": "winter_performance.log",
+      "timestampUtc": "2026-10-01T08:39:37.663976+00:00"
+    },
+    {
+      "name": "solo",
+      "result": "pass",
+      "log": "solo.log",
+      "timestampUtc": "2026-10-01T07:48:23.751580+00:00"
+    },
+    {
+      "name": "multiplayer",
+      "result": "pass",
+      "log": "multiplayer.log",
+      "timestampUtc": "2026-10-01T07:34:23.005489+00:00"
+    },
+    {
+      "name": "room_controls",
+      "result": "pass",
+      "log": "room_controls.log",
+      "timestampUtc": "2026-10-01T07:39:28.566810+00:00"
+    },
+    {
+      "name": "hostcheck",
+      "result": "pass",
+      "log": "hostcheck.log",
+      "timestampUtc": "2026-10-01T07:34:24.712144+00:00"
+    },
+    {
+      "name": "rejoin",
+      "result": "pass",
+      "log": "rejoin.log",
+      "timestampUtc": "2026-10-01T07:58:46.427046+00:00"
+    },
+    {
+      "name": "bosses",
+      "result": "pass",
+      "log": "bosses.log",
+      "timestampUtc": "2026-10-01T08:23:35.867903+00:00"
+    },
+    {
+      "name": "blitz_mode",
+      "result": "pass",
+      "log": "blitz_mode.log",
+      "timestampUtc": "2026-10-01T07:09:33.785327+00:00"
+    },
+    {
+      "name": "blitz_bosses",
+      "result": "pass",
+      "log": "blitz_bosses.log",
+      "timestampUtc": "2026-10-01T08:23:37.403796+00:00"
+    },
+    {
+      "name": "blitz_network",
+      "result": "pass",
+      "log": "blitz_network.log",
+      "timestampUtc": "2026-10-01T07:34:34.004222+00:00"
+    },
+    {
+      "name": "blitz_milestones",
+      "result": "pass",
+      "log": "blitz_milestones.log",
+      "timestampUtc": "2026-10-01T07:23:31.697431+00:00"
+    },
+    {
+      "name": "ammo_armory",
+      "result": "pass",
+      "log": "ammo_armory.log",
+      "timestampUtc": "2026-10-01T07:09:35.679031+00:00"
+    },
+    {
+      "name": "ammo_network",
+      "result": "pass",
+      "log": "ammo_network.log",
+      "timestampUtc": "2026-10-01T08:35:55.698892+00:00"
+    },
+    {
+      "name": "cosmetic_network",
+      "result": "pass",
+      "log": "cosmetic_network.log",
+      "timestampUtc": "2026-10-01T08:35:49.770945+00:00"
+    },
+    {
+      "name": "headgear_fit",
+      "result": "pass",
+      "log": "headgear_fit.log",
+      "timestampUtc": "2026-10-01T07:23:30.344758+00:00"
+    },
+    {
+      "name": "touch_lock",
+      "result": "pass",
+      "log": "touch_lock.log",
+      "timestampUtc": "2026-10-01T08:23:42.050617+00:00"
+    },
+    {
+      "name": "muzzle",
+      "result": "pass",
+      "log": "muzzle.log",
+      "timestampUtc": "2026-10-01T08:40:03.934209+00:00"
+    },
+    {
+      "name": "controller",
+      "result": "pass",
+      "log": "controller.log",
+      "timestampUtc": "2026-10-01T08:40:35.119252+00:00"
+    },
+    {
+      "name": "csp",
+      "result": "pass",
+      "log": "csp.log",
+      "timestampUtc": "2026-10-01T08:40:08.660644+00:00"
+    },
+    {
+      "name": "armory_layout",
+      "result": "pass",
+      "log": "armory_layout.log",
+      "timestampUtc": "2026-10-01T08:40:13.902875+00:00"
+    }
+  ],
+  "distinctPassingTests": 29,
+  "outputs": {
+    "index.html": {
+      "baselineHeadBytes": 628790,
+      "candidateBytes": 670553,
+      "deltaBytes": 41763,
+      "baselineGzipBytes": 211532,
+      "candidateGzipBytes": 228415,
+      "candidateSha256": "6e8d9490f13293a0c4dc76d3ac4113e430191871c6480b93f48311077ca96c8d"
+    },
+    "sw.js": {
+      "baselineHeadBytes": 2149,
+      "candidateBytes": 2173,
+      "deltaBytes": 24,
+      "baselineGzipBytes": 1043,
+      "candidateGzipBytes": 1047,
+      "candidateSha256": "8f7cc185ae359b571146f18cff8eede144f4b06a848f01b58ad5151d07b49869"
+    }
+  },
+  "comparisonNote": "HEAD is the prior v0.9.5.2 checkout; output-size deltas include its existing uncommitted cleanup. Performance uses the separately saved pre-winter assembled baseline."
+}

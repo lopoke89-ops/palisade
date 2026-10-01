@@ -5,11 +5,12 @@ level (built from here); this folder is the source.
 This folder is **not published** on GitHub Pages (`_config.yml` excludes it). Audio masters live in `audio/masters/`.
 Tests find an installed Chromium automatically if Playwright's own browser build is missing.
 
-Current source release is **v0.9.5.2**: four special ammo types, eight-level Armory tracks,
-and a compact mobile Armory with category tabs and a Sniper slot selector.
-Protocol is `yard-20`. Account migration `20261001045820_ammo_armory_expansion` is applied and verified.
-See [STATUS.md](STATUS.md), [balances and validation](evidence/2026-10-01-ammo-armory/README.md)
-and [the compact UI captures](evidence/2026-10-01-ammo-armory/compact-armory/README.md).
+Current source release is **v0.9.6.0**, protocol `yard-21`: Frostpeak elevation,
+Operation Whiteout, the Rime Colossus, 42 winter cosmetics and authenticated friend invitations.
+The two October 1 winter/invitation migrations are applied and verified.
+See [STATUS.md](STATUS.md), [winter release evidence](evidence/2026-10-01-winter-whiteout/README.md),
+[balance and height contracts](evidence/2026-10-01-winter-whiteout/BALANCE.md)
+and [the complete catalog](evidence/2026-10-01-winter-whiteout/CATALOG.md).
 
 The [presentation report](PRESENTATION_2026-09-29.md) records nine focused checks,
 matched captures/clips and the A/B performance comparison. The [dated backup manifest](backups/2026-09-29-v0.9.3.3-presentation/MANIFEST.md)

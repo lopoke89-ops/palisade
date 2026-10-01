@@ -989,3 +989,5 @@ body.padMenu #menu .panel{padding-bottom:64px}body.pad .padF{scroll-margin:12px 
 /* MULTIPLAYER: the host lines lose their sublines so HOST shows without scrolling */
 #hostRows .setupRow small{display:none}
 #hostRows .setupRow{min-height:48px}
+.friendsDrop.inGame{position:fixed;top:20px;left:50%;right:auto;transform:translateX(-50%);width:min(380px,calc(100vw - 24px));max-height:calc(var(--appH,100vh) - 40px);z-index:80}
+#friendsClose{float:right;min-width:44px;min-height:44px;padding:6px;margin:0 0 4px 8px;font-size:11px}

@@ -38,5 +38,5 @@ const DIFF={
 };
 const RATE=[.18,.225,.54],YIELD=[4,1,1],WAVES=5,QM_RESERVE=[16,8,8],STACK=64,WALL_COST=4,DOOR_COST=8;
 const hash=(i,j)=>{let h=(i*374761393+j*668265263)|0;h=Math.imul(h^(h>>>13),1274126177);return((h^(h>>>16))>>>0)/4294967295};
-const clamp=(v,a,b)=>v<a?a:v>b?b:v,rnd=Math.random,dist2=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+const clamp=(v,a,b)=>v<a?a:v>b?b:v,rnd=Math.random,dist2=(a,b)=>heightDist(a.x,a.y,b.x,b.y);
 

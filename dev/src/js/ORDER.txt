@@ -6,12 +6,16 @@
 05-net-record.js   recording events for guests
 06-world.js   pathing, collision, damage to walls/players/enemies
 06b-maps.js   maps (Yard, Riverbend, Ashfall Quarry), terrain, floods and pits
+06c-pvp-maps.js   Base Battle and Free-for-all layouts for every map
+06d-elevation.js   Frostpeak standard/XL, height traversal, range, projection and frost fields
 07-effects.js   particles and floating text
 08-input.js   keyboard, mouse, touch sticks and buttons
 08b-pad.js   controller: the button table, play, menu highlight, button changes, rumble
 09-actions.js   building, grenades, sprint, weapons firing (shoot/fire)
 10-phases-bosses.js   raids, build phases, waves, bosses
 10b-mods-play.js   modifiers in play (bosses, storms, Sudden Death, Frenzy) and class abilities
+10c-blitz.js   Blitzkrieg Rush phases, bosses, attacks and evacuation
+10d-winter-campaign.js   Whiteout chapters, continuity, winter bosses and terrain-clipped warnings
 11-hud-chat.js   best record, HUD, text chat
 12-players.js   main update, player control and simulation (triggers, bursts, gathering)
 13-dell.js   Dell, the quartermaster AI and shotgun
@@ -19,13 +23,20 @@
 15-render.js   world rendering, walls, tiles, lighting
 16-characters.js   characters, kit and boss effects
 16b-auras.js   moving effects on Legendary and Gold milestone outfits, drawn over the cached figure
+16c-blitz-fx.js   Blitz boss effects, particles, extracted players and spectator camera
+16d-winter-data.js   stable winter cosmetic IDs, descriptions, pairings and tiers
 17-scenery.js   forest, fence and cached scenery, frame render
 18-cosmetics.js   cosmetics, locker data, cases, save backup
+18a-winter-catalog.js   winter acquisition, milestones, tracer and background registration
 18b-backgrounds.js   lobby backgrounds (free, milestone and case)
 18c-background-depth.js   cached scenic finishing layers; per-ID art rollback
+18d-winter-scenes.js   ten winter background painters, four with bounded animation
 19-accounts.js   accounts, cloud locker, claims, open games list
 19b-social-lobby.js   account identity, saved players and multiplayer character stage
+19c-home.js   PLAY summary rows, side cards and picker overlays
+19d-friend-invites.js   authenticated room registration and friend invitation UI flow
 20-locker-ui.js   drawing cosmetics, locker screen, armory screen
 20a-cosmetic-art.js (shared tracer and kill effect painters)
+20b-winter-effects.js   shared winter snowflake and six kill effect painters
 21-online.js   online co-op and PvP networking
 22-loop-menus.js   main loop, menus, install prompt, debug hooks

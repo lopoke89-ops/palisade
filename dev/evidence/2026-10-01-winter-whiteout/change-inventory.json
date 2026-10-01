@@ -1,0 +1,290 @@
+{
+  "baseline": "HEAD plus preserved preexisting cleanup patch",
+  "focusedPatch": "Ignored local review artifact dev/test/out/winter-implementation.patch in the source checkout; the release commit provides the published diff.",
+  "files": [
+    {
+      "path": "README.md",
+      "status": "modified"
+    },
+    {
+      "path": "dev/README.md",
+      "status": "modified"
+    },
+    {
+      "path": "dev/STATUS.md",
+      "status": "modified"
+    },
+    {
+      "path": "dev/evidence/2026-10-01-winter-whiteout/BALANCE.md",
+      "status": "added"
+    },
+    {
+      "path": "dev/evidence/2026-10-01-winter-whiteout/CATALOG.md",
+      "status": "added"
+    },
+    {
+      "path": "dev/evidence/2026-10-01-winter-whiteout/README.md",
+      "status": "added"
+    },
+    {
+      "path": "dev/evidence/2026-10-01-winter-whiteout/armory_layout.json",
+      "status": "added"
+    },
+    {
+      "path": "dev/evidence/2026-10-01-winter-whiteout/backend-verification.json",
+      "status": "added"
+    },
+    {
+      "path": "dev/evidence/2026-10-01-winter-whiteout/verification.json",
+      "status": "added"
+    },
+    {
+      "path": "dev/evidence/2026-10-01-winter-whiteout/winter_combat.json",
+      "status": "added"
+    },
+    {
+      "path": "dev/evidence/2026-10-01-winter-whiteout/winter_cosmetics.json",
+      "status": "added"
+    },
+    {
+      "path": "dev/evidence/2026-10-01-winter-whiteout/winter_elevation.json",
+      "status": "added"
+    },
+    {
+      "path": "dev/evidence/2026-10-01-winter-whiteout/winter_invites.json",
+      "status": "added"
+    },
+    {
+      "path": "dev/evidence/2026-10-01-winter-whiteout/winter_migration.json",
+      "status": "added"
+    },
+    {
+      "path": "dev/evidence/2026-10-01-winter-whiteout/winter_network.json",
+      "status": "added"
+    },
+    {
+      "path": "dev/evidence/2026-10-01-winter-whiteout/winter_offline.json",
+      "status": "added"
+    },
+    {
+      "path": "dev/evidence/2026-10-01-winter-whiteout/winter_performance.json",
+      "status": "added"
+    },
+    {
+      "path": "dev/evidence/2026-10-01-winter-whiteout/winter_reconnect.json",
+      "status": "added"
+    },
+    {
+      "path": "dev/evidence/2026-10-01-winter-whiteout/winter_scene.json",
+      "status": "added"
+    },
+    {
+      "path": "dev/src/js/01-setup.js",
+      "status": "modified"
+    },
+    {
+      "path": "dev/src/js/02-view.js",
+      "status": "modified"
+    },
+    {
+      "path": "dev/src/js/03-audio.js",
+      "status": "modified"
+    },
+    {
+      "path": "dev/src/js/04-state-armory.js",
+      "status": "modified"
+    },
+    {
+      "path": "dev/src/js/06-world.js",
+      "status": "modified"
+    },
+    {
+      "path": "dev/src/js/06b-maps.js",
+      "status": "modified"
+    },
+    {
+      "path": "dev/src/js/06d-elevation.js",
+      "status": "added"
+    },
+    {
+      "path": "dev/src/js/08b-pad.js",
+      "status": "modified"
+    },
+    {
+      "path": "dev/src/js/09-actions.js",
+      "status": "modified"
+    },
+    {
+      "path": "dev/src/js/10-phases-bosses.js",
+      "status": "modified"
+    },
+    {
+      "path": "dev/src/js/10c-blitz.js",
+      "status": "modified"
+    },
+    {
+      "path": "dev/src/js/10d-winter-campaign.js",
+      "status": "added"
+    },
+    {
+      "path": "dev/src/js/11-hud-chat.js",
+      "status": "modified"
+    },
+    {
+      "path": "dev/src/js/12-players.js",
+      "status": "modified"
+    },
+    {
+      "path": "dev/src/js/14-raiders.js",
+      "status": "modified"
+    },
+    {
+      "path": "dev/src/js/15-render.js",
+      "status": "modified"
+    },
+    {
+      "path": "dev/src/js/16-characters.js",
+      "status": "modified"
+    },
+    {
+      "path": "dev/src/js/16d-winter-data.js",
+      "status": "added"
+    },
+    {
+      "path": "dev/src/js/17-scenery.js",
+      "status": "modified"
+    },
+    {
+      "path": "dev/src/js/18-cosmetics.js",
+      "status": "modified"
+    },
+    {
+      "path": "dev/src/js/18a-winter-catalog.js",
+      "status": "added"
+    },
+    {
+      "path": "dev/src/js/18b-backgrounds.js",
+      "status": "modified"
+    },
+    {
+      "path": "dev/src/js/18d-winter-scenes.js",
+      "status": "added"
+    },
+    {
+      "path": "dev/src/js/19-accounts.js",
+      "status": "modified"
+    },
+    {
+      "path": "dev/src/js/19b-social-lobby.js",
+      "status": "modified"
+    },
+    {
+      "path": "dev/src/js/19c-home.js",
+      "status": "modified"
+    },
+    {
+      "path": "dev/src/js/19d-friend-invites.js",
+      "status": "added"
+    },
+    {
+      "path": "dev/src/js/20-locker-ui.js",
+      "status": "modified"
+    },
+    {
+      "path": "dev/src/js/20a-cosmetic-art.js",
+      "status": "modified"
+    },
+    {
+      "path": "dev/src/js/20b-winter-effects.js",
+      "status": "added"
+    },
+    {
+      "path": "dev/src/js/21-online.js",
+      "status": "modified"
+    },
+    {
+      "path": "dev/src/js/22-loop-menus.js",
+      "status": "modified"
+    },
+    {
+      "path": "dev/src/js/ORDER.txt",
+      "status": "modified"
+    },
+    {
+      "path": "dev/src/page.html",
+      "status": "modified"
+    },
+    {
+      "path": "dev/src/style.css",
+      "status": "modified"
+    },
+    {
+      "path": "dev/supabase/migrations/20261001081259_winter_whiteout.sql",
+      "status": "added"
+    },
+    {
+      "path": "dev/supabase/migrations/20261001081316_friend_lobby_invites.sql",
+      "status": "added"
+    },
+    {
+      "path": "dev/supabase/snapshots/20261001_before_winter_whiteout.json",
+      "status": "added"
+    },
+    {
+      "path": "dev/test/winter-db.js",
+      "status": "added"
+    },
+    {
+      "path": "dev/test/winter_combat.js",
+      "status": "added"
+    },
+    {
+      "path": "dev/test/winter_cosmetics.js",
+      "status": "added"
+    },
+    {
+      "path": "dev/test/winter_elevation.js",
+      "status": "added"
+    },
+    {
+      "path": "dev/test/winter_invites.js",
+      "status": "added"
+    },
+    {
+      "path": "dev/test/winter_migration.js",
+      "status": "added"
+    },
+    {
+      "path": "dev/test/winter_network.js",
+      "status": "added"
+    },
+    {
+      "path": "dev/test/winter_offline.js",
+      "status": "added"
+    },
+    {
+      "path": "dev/test/winter_performance.js",
+      "status": "added"
+    },
+    {
+      "path": "dev/test/winter_reconnect.js",
+      "status": "added"
+    },
+    {
+      "path": "dev/test/winter_scene.js",
+      "status": "added"
+    },
+    {
+      "path": "index.html",
+      "status": "modified"
+    },
+    {
+      "path": "sw.js",
+      "status": "modified"
+    }
+  ],
+  "captures": "six selected PNGs in this directory",
+  "logs": "29 selected passing logs in this directory",
+  "omittedPreexistingWork": "repository cleanup, historical PNG recompression, other local checkouts",
+  "publicationIsolation": "Applied feature delta to starting HEAD in a separate worktree; rebuilt production artifacts. README release introductions retained without unrelated documentation reorganization."
+}

@@ -1,0 +1,12 @@
+start {
+  mats: [ 24, 0, 0 ],
+  cap: [ 64, 64, 64 ],
+  keys: 'WASDmoveMOUSEaim, hold to fireGgrenadeQstealthSPACEbuild1 2 3materialFdoorBbuild kitEarmoryENTERstart raidESCpause',
+  sub: 'WOOD · 4'
+}
+build {"wall":4,"after1":20,"door":8,"dok":true,"dr":"","after2":20,"makeDoor":4,"act":"MAKE DOOR"}
+gather skip
+sniper: holding 2s fired 3 then 3 clicks -> 3
+bolt state { bolt: 0.1939999999999997, boltT: 0.644 }
+keys WASDmoveMOUSEaim, hold to fireGgrenadeQstealthSPACEbuild1 2 3materialFdoorBbuild kitESCpause chatBtn hidden true
+ERRS []

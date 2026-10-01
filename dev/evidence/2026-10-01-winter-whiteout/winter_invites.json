@@ -1,0 +1,26 @@
+{
+  "sends": 2,
+  "answers": 4,
+  "privateRoom": true,
+  "actualPeerJoin": true,
+  "deliberateLeaveConfirmation": true,
+  "inGameMailbox": true,
+  "changedSessionCancelsJoin": true,
+  "accountSwitchIgnoresOldAcceptance": true,
+  "viewport": [
+    390,
+    844
+  ],
+  "calls": [
+    "user",
+    "get_my_locker",
+    "profiles",
+    "social_state",
+    "lobbies",
+    "room_register",
+    "lobby_invite_send",
+    "notes_seen",
+    "lobby_invite_answer",
+    "skills_of"
+  ]
+}

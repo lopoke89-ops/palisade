@@ -5,7 +5,7 @@ const mix=(a,b,t)=>{const k=a+b+t;let v=MIXC.get(k);if(v===undefined){const A=he
 function quad(a,b,c,d,fill){g.fillStyle=fill;g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.lineTo(c[0],c[1]);g.lineTo(d[0],d[1]);g.closePath();g.fill()}
 const up=(p,h)=>[p[0],p[1]-h];
 function boxR(x0,y0,x1,y1,z,h,top,l,r){
-  const A=iso(x0,y0),B=iso(x1,y0),C=iso(x1,y1),D=iso(x0,y1);
+  const hz=heightAt((x0+x1)/2,(y0+y1)/2),A=iso(x0,y0,hz),B=iso(x1,y0,hz),C=iso(x1,y1,hz),D=iso(x0,y1,hz);
   quad(up(D,z),up(C,z),up(C,z+h),up(D,z+h),l);quad(up(C,z),up(B,z),up(B,z+h),up(C,z+h),r);
   quad(up(A,z+h),up(B,z+h),up(C,z+h),up(D,z+h),top);return{A,B,C,D};
 }
@@ -21,7 +21,7 @@ function drawWall(i,j,w,alpha){
 }
 function wallSprite(i,j,w,key){
   // the tile's box on screen (camera at 0,0), snapped to device pixels so the image copies 1:1
-  const x0=Math.floor(((i-j-1)*TW2-4*u)*DPR)/DPR,y0=Math.floor(((i+j)*TH2-WH-4*u)*DPR)/DPR,x1=(i-j+1)*TW2+4*u,y1=(i+j+2)*TH2+4*u;
+  const hz=heightAt(i+.5,j+.5)*heightPx(),x0=Math.floor(((i-j-1)*TW2-4*u)*DPR)/DPR,y0=Math.floor(((i+j)*TH2-hz-WH-4*u)*DPR)/DPR,x1=(i-j+1)*TW2+4*u,y1=(i+j+2)*TH2-hz+4*u;
   const cv2=document.createElement('canvas');cv2.width=Math.ceil((x1-x0)*DPR);cv2.height=Math.ceil((y1-y0)*DPR);
   const ctx=cv2.getContext('2d');ctx.setTransform(DPR,0,0,DPR,0,0);
   const kg=g,kx=camX,ky=camY;g=ctx;camX=-x0;camY=-y0;

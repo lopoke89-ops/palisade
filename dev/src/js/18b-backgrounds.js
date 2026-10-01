@@ -324,11 +324,12 @@ function flagScene(x,w,h,t,id,moving){
 for(const[id,name,r]of FLAGS){const moving=r==='l'||r==='g';BGS['f_'+id]=Object.assign({name:name+' Flag',r,src:'case',box:'flags',draw(x,w,h,t){flagScene(x,w,h,t,id,moving)}},moving?{}:{still:0})}
 // the one call the lobby and the Locker use: still backgrounds are drawn once and reused
 function drawBg(id,x,w,h,t){const B=BGS[id]||BGS.campfire;if(B.still!==undefined)bgBlit(x,bgLayer('still:'+id,w,h,(c,w,h)=>B.draw(c,w,h,B.still)),w,h);else B.draw(x,w,h,t)}
+registerWinterBackgrounds();
 const BG_IDS=Object.keys(BGS);
 
 // backgrounds are lobby cosmetics: Locker items like the rest (cat 'bg'), never sent to other players
 for(const id of BG_IDS){const B=BGS[id],box=B.src==='case'?B.box:null,c={id:'bg:'+id,cat:'bg',key:id,name:B.name,r:B.r,src:B.src,box,need:B.need||null,
-  how:B.how||(box?'Found in '+CASES[box].short:'Free'),price:null};COS.push(c);COSBY[c.id]=c}
+  how:B.how||(box?'Found in '+CASES[box].short:'Free'),description:B.description,collection:B.collection,animated:!!B.animated,price:null};COS.push(c);COSBY[c.id]=c}
 CATN.bg='BACKGROUND';
 locker=normLocker(locker);   // the locker loaded before these items existed: give the free ones and check the equipped one
 const DEFAULT_BG='campfire',lobbyBgId=()=>BGS[locker.eq.bg]?locker.eq.bg:DEFAULT_BG;

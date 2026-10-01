@@ -1,0 +1,19 @@
+{
+  "scenes": [
+    {
+      "size": "std",
+      "coreHeight": 2,
+      "players": 6,
+      "boss": "rime",
+      "fields": 3
+    },
+    {
+      "size": "xl",
+      "coreHeight": 2,
+      "players": 6,
+      "boss": "rime",
+      "fields": 3
+    }
+  ],
+  "errors": []
+}

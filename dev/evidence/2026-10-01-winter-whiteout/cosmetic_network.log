@@ -1,0 +1,3 @@
+new cosmetics seen by the guest: {"skin":"butcher4","trail":"f_pride","aura":"gbutcher","fallback":"{\"skin\":\"std\",\"hat\":\"class\",\"trail\":\"std\",\"fx\":\"none\"}"}
+{"expected":35,"received":35,"effects":["sparks","smoke","confetti","embers","glint","bolt","skull","pixel","frost","gradburst","sunburst","toxic","supernova","glitchout","singularity","shockwave","bubbles","bats","spider","souls","rocketburst","reticle","frag","salvage","hellportal","cinder","tealslash","ashbrand","demonclaw","snowpuff","frostfracture","ornamentpop","winterbloom","borealiscollapse","solsticenova"],"errors":[]}
+errors: none

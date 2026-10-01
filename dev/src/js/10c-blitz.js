@@ -7,7 +7,7 @@
 const BLITZ={waves:15,fb:300,evac:60,evacHot:45,every:30,everyDT:20,max:10,maxDT:15,cap:4,ring:1.5,ringHot:1,hold:3,fbHp:.85,
   order:['bluebutcher','arsonist','tempest','harbinger','bulldozer'],
   of:{butcher:'bluebutcher',demolisher:'arsonist',storm:'tempest',ferryman:'harbinger',foreman:'bulldozer'}};
-const blitz=()=>!!game&&game.mode==='blitz'&&!game.pvp;
+const blitz=()=>!!game&&['blitz','campaign'].includes(game.mode)&&!game.pvp;
 const bossBase=k=>(BOSSES[k]&&BOSSES[k].base)||k;
 const blitzBoss=k=>BLITZ.of[k]||k;
 const evacR=()=>hasMod('hotlz')?BLITZ.ringHot:BLITZ.ring;
@@ -36,13 +36,14 @@ function startFinalBlitz(){
   const dt=hasMod('blitzclock');
   game.fb={t:BLITZ.fb,n:0,max:dt?BLITZ.maxDT:BLITZ.max,every:dt?BLITZ.everyDT:BLITZ.every,evac:null,shellT:1,trickT:0,done:false};
   game.queue=[];game.spawnT=1.2;game.spawnGap=1.3;
-  toastAll('THE FINAL BLITZ',`Five minutes. A Blitzkrieg boss every ${game.fb.every} seconds. With ${hasMod('hotlz')?'45 seconds':'a minute'} left an evac site opens: every soldier has to get there on their own.`);
+  toastAll(campaign()?'WHITEOUT · FINAL EVAC':'THE FINAL BLITZ',`Five minutes. ${campaign()?'A summit assault':'A Blitzkrieg boss'} every ${game.fb.every} seconds. With ${hasMod('hotlz')?'45 seconds':'a minute'} left an evac site opens: every soldier has to get there on their own.`);
 }
 const liveBosses=()=>{let n=0;for(const e of enemies)if(!e.dead&&e.type==='boss')n++;return n};
 function fbTick(dt){
   const F=game.fb;if(!F||F.done||game.phase!=='raid')return;
   F.t=Math.max(0,F.t-dt);const el=BLITZ.fb-F.t;
-  while(F.n<F.max&&el>=F.n*F.every&&liveBosses()<BLITZ.cap){spawnBoss(BLITZ.order[F.n%BLITZ.order.length],false,false,true);F.n++}
+  const order=campaign()?['whitebutcher','whiteforeman','rime','tempest','bulldozer']:MAP===MAPS.frost?['bluebutcher','arsonist','tempest','rime','bulldozer']:BLITZ.order;
+  while(F.n<F.max&&el>=F.n*F.every&&liveBosses()<BLITZ.cap){spawnBoss(order[F.n%order.length],false,false,true);F.n++}
   // raiders keep coming alongside: small groups whenever the field thins out
   F.trickT-=dt;const P=Math.max(1,players.size);
   if(F.trickT<=0&&!game.queue.length&&enemies.length-liveBosses()<5+2*P){F.trickT=2.5;const sp=['gren','breach','shield','fire','medic','spotter'];
@@ -55,9 +56,9 @@ function fbTick(dt){
 function evacSpot(){
   const L=game.lay||{},c=L.core||[core.i,core.j],want=N>16?11:8,dist=new Int16Array(N*N).fill(-1),q=[idx(c[0],c[1])];dist[q[0]]=0;
   const pass=k=>{const t=terr[k];return!terrSolid(t)&&!(nodeAt(k%N,(k/N)|0)||{}).solid};
-  for(let h=0;h<q.length;h++){const k=q[h],i=k%N,j=(k/N)|0;for(const[a,b]of D4){const ni=i+a,nj=j+b;if(!inb(ni,nj))continue;const nk=idx(ni,nj);if(dist[nk]>=0||!pass(nk))continue;dist[nk]=dist[k]+1;q.push(nk)}}
+  for(let h=0;h<q.length;h++){const k=q[h],i=k%N,j=(k/N)|0;for(const[a,b]of D4){const ni=i+a,nj=j+b;if(!heightLink(i,j,ni,nj))continue;const nk=idx(ni,nj);if(dist[nk]>=0||!pass(nk))continue;dist[nk]=dist[k]+1;q.push(nk)}}
   const clear=(i,j)=>{for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const ni=i+a,nj=j+b;if(!inb(ni,nj))return false;const k=idx(ni,nj),t=terr[k];
-    if(terrSolid(t)||t===T_WATER||t===T_BRIDGE||nodeAt(ni,nj)||coreKs.has(k))return false}return true};
+    if(connectors[k]||heights[k]!==heights[idx(i,j)]||terrSolid(t)||t===T_WATER||t===T_BRIDGE||nodeAt(ni,nj)||coreKs.has(k))return false}return true};
   const spawns=[];for(const s of L.spawns||[])for(const t of s.tiles||[])spawns.push(t);
   let best=null,bs=1e9;const seed=String(game.gid||'').length*7+(game.gid||'').charCodeAt(3)|0;
   for(let k=0;k<N*N;k++){const d=dist[k];if(d<4)continue;const i=k%N,j=(k/N)|0;if(!clear(i,j))continue;
@@ -78,7 +79,7 @@ function evacTick(dt){
     if(p.out)continue;
     if(p.downed){p.rt=Math.max(p.rt,1e6);p.ev=0;continue}   // no respawns in the evacuation: a teammate has to pick you up
     if(!p.alive){p.ev=0;continue}
-    if(Math.hypot(p.x-E.x,p.y-E.y)<=E.r){p.ev=(p.ev||0)+dt;if(p.ev>=BLITZ.hold)extract(p)}else p.ev=0;
+    if(heightDist(p.x,p.y,E.x,E.y)<=E.r&&heightRayClear(p.x,p.y,E.x,E.y)){p.ev=(p.ev||0)+dt;if(p.ev>=BLITZ.hold)extract(p)}else p.ev=0;
   }
   if(hasMod('barrage')){F.shellT-=dt;if(F.shellT<=0){F.shellT=1.1;const on=[...players.values()].filter(p=>p.alive&&!p.out);
     if(on.length){const p=on[Math.floor(rnd()*on.length)],a=rnd()*6.283,r=.6+rnd()*2.6,tx=clamp(p.x+Math.cos(a)*r,.4,N-.4),ty=clamp(p.y+Math.sin(a)*r,.4,N-.4);
@@ -126,7 +127,7 @@ function launchArc(e,Df){
 }
 function updateArcs(dt){
   for(const r of arcs){const sp=Math.hypot(r.vx,r.vy),steps=Math.ceil(sp*dt/.1);
-    for(let n=0;n<steps&&!r.dead;n++){r.x+=r.vx*dt/steps;r.y+=r.vy*dt/steps;r.d+=sp*dt/steps;r.dust+=sp*dt/steps;
+    for(let n=0;n<steps&&!r.dead;n++){const ox=r.x,oy=r.y;r.x+=r.vx*dt/steps;r.y+=r.vy*dt/steps;if(!heightTravelClear(ox,oy,r.x,r.y)){r.dead=true;break}r.d+=sp*dt/steps;r.dust+=sp*dt/steps;
       if(r.dust>=.22){r.dust=0;emit(r.x,r.y,WH*.55,'tealdust');if(hasMod('scorched')&&arcHaz.length<60)arcHaz.push({x:r.x,y:r.y,t:.5})}
       const i=Math.floor(r.x),j=Math.floor(r.y);if(!inb(i,j)||r.d>r.max){r.dead=true;break}
       const k=idx(i,j);
@@ -135,11 +136,11 @@ function updateArcs(dt){
       const w=walls[k];if(w&&!r.wk.has(k)){r.wk.add(k);
         if(w.mat<=1){damageWall(k,w.max*4);emitSpread(i+.5,j+.5,.8,0,WH*.5,'tealdust',0,6)}   // wood and brick: gone
         else{damageWall(k,w.mat===2?140:0);r.dead=true;break}}   // metal takes a heavy hit and stops it
-      for(const al of allies())if(al.alive&&!r.hit.has(al)&&Math.hypot(al.x-r.x,al.y-r.y)<.62){r.hit.add(al);hurtAlly(al,30*r.pw);stunAlly(al,.3);addShake(al.x,al.y,5)}}
+      for(const al of allies())if(al.alive&&!r.hit.has(al)&&groundReach(al.x,al.y,r.x,r.y,.62)){r.hit.add(al);hurtAlly(al,30*r.pw);stunAlly(al,.3);addShake(al.x,al.y,5)}}
     if(r.dead){for(let n=0;n<8;n++)emit(r.x,r.y,WH*.5,'tealdust')}}
   arcs=arcs.filter(r=>!r.dead);
   for(let h=arcHaz.length-1;h>=0;h--){const z=arcHaz[h];z.t-=dt;if(z.t<=0){arcHaz.splice(h,1);continue}
-    for(const al of allies())if(al.alive&&Math.hypot(al.x-z.x,al.y-z.y)<.4)hurtAlly(al,16*dt*game.Df.dmg)}
+    for(const al of allies())if(al.alive&&groundReach(al.x,al.y,z.x,z.y,.4))hurtAlly(al,16*dt*game.Df.dmg)}
 }
 // the Arsonist: plants his feet and shows a line with four rings down it for about a second, then lobs a chain of
 // napalm bottles that land on the rings, one after another. Each patch burns 10 s (15 with Scorched Earth).
@@ -164,9 +165,9 @@ function napalmLand(l){
 // against. Regular fire only burns wood (9 a second); napalm burns brick at that rate and metal at twice it.
 const NAPALM_BURN=9;
 function napalmTick(f){
-  for(const a of allies())if(a.alive&&Math.hypot(a.x-f.x,a.y-f.y)<f.r)hurtAlly(a,7*game.Df.dmg);
+  for(const a of allies())if(a.alive&&groundReach(a.x,a.y,f.x,f.y,f.r))hurtAlly(a,7*game.Df.dmg);
   for(let i=Math.floor(f.x-f.r);i<=Math.floor(f.x+f.r);i++)for(let j=Math.floor(f.y-f.r);j<=Math.floor(f.y+f.r);j++){
-    if(!inb(i,j)||Math.hypot(i+.5-f.x,j+.5-f.y)>f.r+.35)continue;const k=idx(i,j),w=walls[k];if(!w)continue;
+    if(!inb(i,j)||!groundReach(i+.5,j+.5,f.x,f.y,f.r+.35))continue;const k=idx(i,j),w=walls[k];if(!w)continue;
     if(w.mat===0){if(!(w.fire>0))w.fire=6}else if(w.mat<3)damageWall(k,NAPALM_BURN*.45*(w.mat===2?2:1))}
 }
 // the Tempest: the Stormcaller's shot, exactly, twice, side by side
@@ -202,6 +203,7 @@ function thinkBulldozer(e,dt,tgt,mv,aimAt,Df){
   if(e.st===2){e.stT-=dt;let stop=e.stT<=0,daze=false;
     const moveDt=dt*(1-(e.slowT>0?e.slowPct||0:0));
     for(let s=0;s<4&&!stop;s++){const nx=e.x+e.cvx*moveDt/4,ny=e.y+e.cvy*moveDt/4,i=Math.floor(nx),j=Math.floor(ny);
+      if(!heightTravelClear(e.x,e.y,nx,ny)){stop=daze=true;break}
       if(!inb(i,j)||(nodeAt(i,j)||{}).solid||terrSolid(terr[idx(i,j)])){stop=daze=true;break}const k=idx(i,j);
       if(coreKs.has(k)){hurtStake(stakeAt(k),45*Df.dmg);stop=daze=true;break}
       if(walls[k]){damageWall(k,200*MAT[walls[k].mat].blast);addShake(nx,ny,9);sfx('collapse',nx,ny);stop=daze=true;break}
@@ -214,7 +216,7 @@ function thinkBulldozer(e,dt,tgt,mv,aimAt,Df){
     return{eng:true,mv:null}}
   const f=e.foe;
   if(f&&e.cd<=0&&e.ab<=0&&dist2(f,e)<9&&dist2(f,e)>1.2){const a=aimAt(f.x,f.y);e.st=1;e.stT=e.stM=.7;e.lx=clamp(e.x+Math.cos(a)*BULL.lane,.2,N-.2);e.ly=clamp(e.y+Math.sin(a)*BULL.lane,.2,N-.2);sfx('drill',e.x,e.y);return{eng:true,mv:null}}
-  if(tgt&&Math.hypot(tgt.x-e.x,tgt.y-e.y)<1.35){aimAt(tgt.x,tgt.y);
+  if(tgt&&heightDist(tgt.x,tgt.y,e.x,e.y)<1.35){aimAt(tgt.x,tgt.y);
     if(e.cd<=0){e.cd=1;const k=idx(Math.floor(tgt.x),Math.floor(tgt.y));if(walls[k])damageWall(k,60*MAT[walls[k].mat].blast);else if(coreKs.has(k))hurtStake(stakeAt(k),20*Df.dmg);sfx('drill',e.x,e.y)}
     return{eng:true,mv:null}}
   if(f){aimAt(f.x,f.y);if(dist2(f,e)<1.3){if(e.cd<=0){e.cd=1.1;hurtAlly(f,20*Df.dmg);sfx('drill',e.x,e.y)}return{eng:true,mv:null}}return{eng:false,mv:{x:f.x,y:f.y}}}
@@ -245,7 +247,7 @@ function blitzSpawnFix(e,key){if(key!=='harbinger')return;const R=game.lay&&game
 function blitzOverText(res,crew){
   const P=[...players.values()],outN=P.filter(p=>p.out).length,ok=res==='evac';
   $('overTitle').textContent=ok?'EVACUATED':'LEFT BEHIND';$('overTitle').className=ok?'':'lost';
-  $('overEyebrow').textContent=`${player.C.name} · ${game.Df.name} · BLITZKRIEG RUSH${crew} · ${ok?'VICTORY':'HALF REWARDS'} · ${outN} OF ${P.length} MADE IT OUT${game.mods.length?' · '+modNames(game.mods).join(' + '):''}`;
+  $('overEyebrow').textContent=`${player.C.name} · ${game.Df.name} · ${campaign()?'OPERATION WHITEOUT':'BLITZKRIEG RUSH'}${crew} · ${ok?'VICTORY':'HALF REWARDS'} · ${outN} OF ${P.length} MADE IT OUT${game.mods.length?' · '+modNames(game.mods).join(' + '):''}`;
   const made=P.filter(p=>p.out).map(p=>p===player?'you':p.name),left=P.filter(p=>!p.out).map(p=>p===player?'you':p.name);
   $('overLede').textContent=(ok?'You made it out of the Final Blitz.':'The evac left without you: half your cases and shards this time. Raids, boss kills and skill points still count in full.')+
     (P.length>1?` Made it: ${made.join(', ')||'nobody'}.${left.length?` Left behind: ${left.join(', ')}.`:''}`:'');

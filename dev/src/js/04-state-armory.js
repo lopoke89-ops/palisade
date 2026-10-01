@@ -55,7 +55,7 @@ const AMMO=[
   {id:'blast',name:'EXPLOSIVE',what:'Small enemy-only blast on impact',skill:'ammo_blast',col:'#ffc05a'},
   {id:'shock',name:'LIGHTNING',what:'Slows the target and nearby enemies',skill:'ammo_shock',col:'#81dafa'}];
 const AMMO_BY=Object.fromEntries(AMMO.map(x=>[x.id,x]));
-const ammoMode=()=>!game.pvp&&['5','10','endless','blitz'].includes(game.mode);
+const ammoMode=()=>!game.pvp&&['5','10','endless','blitz','campaign'].includes(game.mode);
 const ammoRank=(p,id)=>{const A=AMMO_BY[id];return A?Math.min(4,parseSkills(p.sk)[A.skill]|0):0};
 const ammoEffect=(id,rank)=>id==='ap'?`${[50,60,70,85,100][rank]}% direct damage through frontal shields`:id==='fire'?`10 HP/s for ${3+.5*rank}s; hits refresh`:id==='blast'?`${8+2*rank} damage, 1.25-block blast; 0.4s proc limit`:`${25+5*rank}% slow for 2s; nearest 3 within 3 blocks`;
 const armBoost=(lv,oldStep,newStep)=>oldStep*Math.min(4,lv)+newStep*Math.max(0,lv-4);
@@ -125,10 +125,10 @@ const newGid=()=>{const A='abcdefghijkmnpqrstuvwxyz23456789';let s='';for(let i=
 function newGame(roster,pvp='',opt={}){
   roster=roster||[{id:myId,name:myName(),cls:pick.cls,cos:cosStr(myCos()),sk:mySkills()}];
   pvp=pvp==='base'||pvp==='ffa'?pvp:'';
-  const mods=cleanMods(opt.mods,pvp||(pick.mode==='blitz'?'blitz':'')),job=mods.includes('onejob')&&CLASSES[opt.job]?opt.job:'';
+  const mods=pick.mode==='campaign'&&!pvp?campaignMods(cleanMods(opt.mods,'')):cleanMods(opt.mods,pvp||(pick.mode==='blitz'?'blitz':'')),job=mods.includes('onejob')&&CLASSES[opt.job]?opt.job:'';
   if(job)roster=roster.map(r=>({...r,cls:job}));
   const Df=pvp?DIFF.normal:DIFF[pick.diff]||DIFF.normal;
-  const L=layMap(pick.map,pick.size,pvp);   // sets the size (N) and the terrain first
+  const map=pick.mode==='campaign'&&!pvp?'yard':pvp&&pick.map==='frost'?'yard':pick.map,L=layMap(map,pick.size,pvp);
   walls=new Array(N*N).fill(null);debris=new Int8Array(N*N);dist=new Float32Array(N*N);
   const wood=(i,j)=>({i,j,type:0,amt:48,max:48,rt:0,locked:false});
   const ruin=(list,mat,ratio,ch)=>list.forEach(([i,j])=>{const w=makeWall(mat,false,ratio);w.char=ch;walls[idx(i,j)]=w});
@@ -158,11 +158,11 @@ function newGame(roster,pvp='',opt={}){
   qm={x:3.5+off[0],y:11.5+off[1],hp:180,max:180,alive:true,revive:0,aim:{x:1,y:0},cd:0,sup:8,gt:0,work:0,job:'',next:-1,pathT:0,scanT:0,foe:null,walk:0,flash:0,mats:[24,0,0],hurt:9};
   if(pvp||mods.includes('alone'))Object.assign(qm,{alive:false,gone:true,x:-9,y:-9});   // Delgado sits PvP (and On Your Own) out
   enemies=[];bullets=[];lobs=[];charges=[];parts=[];flashes=[];floats=[];sacks=[];rockets=[];fires=[];zaps=[];slashes=[];rings=[];chains=[];arcs=[];arcHaz.length=0;
-  const mode=['5','10','endless','blitz'].includes(pick.mode)?pick.mode:'5';
+  const mode=['5','10','endless','blitz','campaign'].includes(pick.mode)?pick.mode:'5';
   game={phase:pvp==='ffa'?'raid':'build',paused:false,wave:0,timer:pvp==='base'?PVP.truce:pvp==='ffa'?PVP.ffaTime:40+Df.build,queue:[],qn:0,spawnT:0,sel:game.sel||0,piece:'wall',time:0,tip:0,gathered:0,C:player.C,Df,
-    mode,waves:mode==='endless'?Infinity:mode==='blitz'?BLITZ.waves:+mode,rewarded:false,bosses:0,pvp,goal:PVP.ffaGoal,winner:'',
+    mode,waves:mode==='endless'?Infinity:mode==='blitz'?BLITZ.waves:mode==='campaign'?CAMPAIGN.waves:+mode,rewarded:false,bosses:0,pvp,goal:PVP.ffaGoal,winner:'',chapter:0,
     stats:{dropped:0,built:0,lost:0,repairs:0,revives:0},
-    map:MAP_IDS.includes(pick.map)?pick.map:'yard',size:N>16?'xl':'std',lay:L,flood:{t:0,warned:false},bossLog:[],oct:!!pick.oct,
+    map:MAP_IDS.includes(map)?map:'yard',size:N>16?'xl':'std',lay:L,flood:{t:0,warned:false},bossLog:[],oct:!!pick.oct,
     gid:String(opt.gid||newGid()).slice(0,40),mods,job,sbN:0,sbLog:[],fbLog:[],fb:null,joinFB:0,wx:0,wxT:0,sd:false,
     joinHeld:opt.guest?null:0,joinT:0,joinBoss:0,joinSB:0};   // join*: where this phone came in (guests learn it from the first state packet)
   for(const p of players.values())kitUp(p);
@@ -174,6 +174,7 @@ function newGame(roster,pvp='',opt={}){
   if(pvp==='base'){const me=TEAMS[player.team],them=TEAMS[player.team==='a'?'b':'a'];game.tip=9;
     setTip(`You're ${me.name}. Truce for ${PVP.truce} seconds: gather and wall in your stake. Then knock down the ${them.name} stake. ${ctl('ARMORY','E',padKey('armory'))} at your stake spends salvage.`)}
   else if(pvp==='ffa'){game.tip=9;setTip(`Free-for-all. First to ${PVP.ffaGoal} drops wins. The cover can't be broken.`)}
+  else if(campaign())setTip(`CHAPTER 1 · THE YARD. ${CAMPAIGN.story[0]} Three raids here, then your kit travels onward. Prepare at the core.`);
   else setTip(touchMode?'Stand next to a wood pile to gather. Delgado is gathering too.':'Walk next to a wood pile to gather. Delgado is gathering too.');
 }
 

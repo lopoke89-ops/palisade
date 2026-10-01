@@ -1,0 +1,48 @@
+{
+  chapter: {
+    chapter: 2,
+    x: 5.5,
+    y: 11.5,
+    z: 0,
+    hp: 115,
+    max: 115,
+    nades: 2,
+    maxN: 2,
+    mats: [ 12, 5, 3 ],
+    up: 5,
+    ammo: [ 'shock', '' ],
+    sal: 200,
+    out: false
+  },
+  ramp: {
+    chapter: 3,
+    x: 4.5,
+    y: 5.5,
+    z: 1.5,
+    hp: 33,
+    max: 115,
+    nades: 0,
+    maxN: 2,
+    mats: [ 12, 5, 3 ],
+    up: 5,
+    ammo: [ 'shock', '' ],
+    sal: 217,
+    out: false
+  },
+  finale: {
+    chapter: 3,
+    x: 4.5,
+    y: 5.5,
+    z: 1.5,
+    hp: 33,
+    max: 115,
+    nades: 0,
+    maxN: 2,
+    mats: [ 12, 5, 3 ],
+    up: 5,
+    ammo: [ 'shock', '' ],
+    sal: 217,
+    out: true
+  }
+}
+errors: none

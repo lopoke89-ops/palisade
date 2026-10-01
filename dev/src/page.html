@@ -57,7 +57,7 @@
     <header class="accountDock">
       <nav class="partyNav" aria-label="Lobby navigation"><strong>PALI<span class="cut">SADE</span></strong><button type="button" data-go="solo" data-nav="solo"><svg class="nIco" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M6 4l10 6-10 6z" fill="currentColor"/></svg>PLAY</button><button type="button" data-go="multi" data-nav="multi"><svg class="nIco" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><circle cx="7" cy="6" r="3"/><path d="M1.5 17c.6-3.4 2.8-5.2 5.5-5.2s4.9 1.8 5.5 5.2"/><circle cx="14.2" cy="5.6" r="2.4"/><path d="M13.6 10.2c2.6-.3 4.4 1.5 4.9 4.8"/></svg>MULTIPLAYER</button><button type="button" data-go="locker" data-nav="locker" id="navLocker"><svg class="nIco" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="3" y="6" width="14" height="11"/><path d="M3 10h14M8 10v2h4v-2M6 6l1.5-3h5L14 6"/></svg><span class="nLbl">LOCKER</span><em class="nBadge" hidden></em></button><button type="button" data-go="skills" data-nav="skills" id="navSkills"><svg class="nIco" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M10 2.5l2.2 4.8 5.1.6-3.8 3.5 1 5.1L10 14l-4.5 2.5 1-5.1-3.8-3.5 5.1-.6z"/></svg><span class="nLbl">SKILLS</span><em class="nBadge" hidden></em></button><button type="button" data-go="classes" data-nav="classes"><svg class="nIco" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M10 2.5l6.5 2.5v5c0 4-2.8 6.6-6.5 7.8C6.3 16.6 3.5 14 3.5 10V5z"/></svg>CLASSES</button><button type="button" data-go="settings" data-nav="settings"><svg class="nIco" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><circle cx="10" cy="10" r="3"/><path d="M10 2v3M10 15v3M2 10h3M15 10h3M4.3 4.3l2.1 2.1M13.6 13.6l2.1 2.1M4.3 15.7l2.1-2.1M13.6 6.4l2.1-2.1"/></svg>SETTINGS</button></nav>
       <div class="friendsWrap"><button id="friendsBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="friendsDrop" aria-label="Friends"><svg viewBox="0 0 20 16" width="20" height="16" aria-hidden="true"><circle cx="7" cy="5" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M1.5 15c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="14.2" cy="4.6" r="2.4" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M13.6 9.2c2.6-.3 4.4 1.4 4.9 4.6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="fbLab">FRIENDS</span><b id="friendsDot" class="fDot" hidden>0</b></button>
-      <div id="friendsDrop" class="friendsDrop" hidden role="dialog" aria-label="Friends">
+      <div id="friendsDrop" class="friendsDrop" hidden role="dialog" aria-label="Friends"><button id="friendsClose" class="ghost" type="button" aria-label="Close Friends">CLOSE</button>
         <div class="fdTabs" role="tablist"><button type="button" role="tab" data-ft="friends" aria-selected="true">FRIENDS <b id="fdFriendsN">0</b></button><button type="button" role="tab" data-ft="requests" aria-selected="false">REQUESTS <b id="fdReqN" class="fCnt" hidden>0</b></button><button type="button" role="tab" data-ft="mail" aria-selected="false">MAILBOX <b id="fdMailN" class="fCnt" hidden>0</b></button></div>
         <p id="socialStatus" class="status" role="status"></p>
         <section class="fdPage" data-fp="friends" role="tabpanel">
@@ -109,7 +109,7 @@
           <section class="ssSec" data-ss="map" id="ssMap"></section>
           <section class="ssSec" data-ss="rules">
             <h2>LENGTH</h2>
-            <div class="seg" id="modes"><button data-m5="5" type="button">5 RAIDS</button><button data-m5="10" type="button">10 RAIDS</button><button data-m5="endless" type="button">ENDLESS</button><button data-m5="blitz" type="button" class="blitzSeg">BLITZKRIEG</button></div>
+            <div class="seg" id="modes"><button data-m5="5" type="button">5 RAIDS</button><button data-m5="10" type="button">10 RAIDS</button><button data-m5="endless" type="button">ENDLESS</button><button data-m5="blitz" type="button" class="blitzSeg">BLITZKRIEG</button><button data-m5="campaign" type="button">CAMPAIGN</button></div>
             <p class="lede sm blitzNote" hidden>15 hard raids, then the Final Blitz: 5 minutes with a new boss every 30 seconds. The last minute is the evacuation: reach the evac site yourself, or leave with half your cases and shards.</p>
             <h2>THREAT</h2>
             <div class="seg" id="diff"><button data-d="easy" type="button">EASY</button><button data-d="normal" class="sel" type="button">NORMAL</button><button data-d="hard" type="button">HARD</button></div>
@@ -178,7 +178,7 @@
           <div><h3>CONTROLLER</h3><p>Left stick move · right stick aim · RT fire<br>LT grenade · A build (hold to keep building)<br>B ability, or sprint if your class has no ability · X armory at the stake<br>Y wall/door · d-pad left/right material · d-pad down build kit<br>View start raid · Menu pause. Change any button in Settings.</p></div>
         </div>
       </details>
-      <p class="foot">v0.9.5.2 · phone, desktop and controller · online co-op and PvP for up to six</p>
+      <p class="foot">v0.9.6.0 · phone, desktop and controller · online co-op and PvP for up to six</p>
     </section>
 
     <section class="page" id="pg-classes" hidden>
@@ -217,7 +217,7 @@
       </details>
       <div hidden aria-hidden="true">   <!-- v0.9.5: the old job, length and threat pickers stay in step with the setup sheet but aren't shown -->
         <div class="seg jobs"><button data-mc="soldier" type="button" tabindex="-1">SOLDIER</button><button data-mc="sniper" type="button" tabindex="-1">SNIPER</button><button data-mc="grenadier" type="button" tabindex="-1">GRENADIER</button><button data-mc="quartermaster" type="button" tabindex="-1">QUARTERMASTER</button></div>
-        <div id="coopOpts"><div class="seg"><button data-mm="5" type="button" tabindex="-1">5</button><button data-mm="10" type="button" tabindex="-1">10</button><button data-mm="endless" type="button" tabindex="-1">E</button><button data-mm="blitz" type="button" tabindex="-1">B</button></div>
+        <div id="coopOpts"><div class="seg"><button data-mm="5" type="button" tabindex="-1">5</button><button data-mm="10" type="button" tabindex="-1">10</button><button data-mm="endless" type="button" tabindex="-1">E</button><button data-mm="blitz" type="button" tabindex="-1">B</button><button data-mm="campaign" type="button" tabindex="-1">C</button></div>
         <div class="seg"><button data-md="easy" type="button" tabindex="-1">E</button><button data-md="normal" type="button" tabindex="-1">N</button><button data-md="hard" type="button" tabindex="-1">H</button></div></div>
       </div>
     </section>
@@ -298,6 +298,7 @@
     <div id="pauseCrew" hidden><div class="eyebrow">CREW · HOST CONTROLS</div><ul class="roster" id="pauseCrewList"></ul></div>
     <div id="padCard" class="padCard" hidden></div>
     <button class="ghost" id="pSetBtn" type="button">SETTINGS</button>
+    <button class="ghost" id="pFriendsBtn" type="button">FRIENDS</button>
     <button class="ghost" id="quitBtn" type="button">ABANDON THE CLAIM</button>
   </div>
 </div>

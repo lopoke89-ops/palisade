@@ -1,0 +1,2 @@
+{"harbinger":{"raft":true,"n":3,"flight":1.66,"onMarker":true,"dodged":true,"landed":true},"harbingerHit":55,"harbingerDry":{"raft":false,"moved":false},"arc":{"w5":false,"w7":false,"hit":25.5,"metal":0.56,"arcs":0,"dust":0.52},"napalm":{"T":10,"life":10,"napalmMetal":170,"fireMetal":0},"tempest":{"both":68,"one":34},"bull":{"burrowed":false,"dazed":3,"wall":false},"cases":[["harbinger",2,"ferryman"],["bluebutcher",2,"butcher"],["arsonist",2,"demolisher"],["tempest",2,"storm"],["bulldozer",2,"foreman"]]}
+errors: none

@@ -1,0 +1,96 @@
+{
+  "river": {
+    "chapter": 1,
+    "map": "river",
+    "dell": 4,
+    "hostUp": 3,
+    "hostAmmo": "shock"
+  },
+  "frost": {
+    "map": "frost",
+    "coreZ": 2,
+    "field": 1,
+    "bossZ": 0
+  },
+  "hostMove": {
+    "cliff": {
+      "x": 8.5,
+      "y": 5.4
+    },
+    "ramp": {
+      "x": 4.5,
+      "y": 5.25
+    }
+  },
+  "late": {
+    "map": "frost",
+    "chapter": 3,
+    "joinHeld": 9
+  },
+  "sixPlayers": [
+    {
+      "players": 6,
+      "map": "frost",
+      "chapter": 3
+    },
+    {
+      "players": 6,
+      "map": "frost",
+      "chapter": 3
+    },
+    {
+      "players": 6,
+      "map": "frost",
+      "chapter": 3
+    },
+    {
+      "players": 6,
+      "map": "frost",
+      "chapter": 3
+    },
+    {
+      "players": 6,
+      "map": "frost",
+      "chapter": 3
+    },
+    {
+      "players": 6,
+      "map": "frost",
+      "chapter": 3
+    }
+  ],
+  "finale": {
+    "wave": 13,
+    "max": 10,
+    "t": 60,
+    "site": {
+      "x": 10.5,
+      "y": 7.5,
+      "r": 1.5
+    }
+  },
+  "results": [
+    {
+      "title": "LEFT BEHIND",
+      "mode": "campaign",
+      "maps": [
+        3,
+        3,
+        3,
+        4
+      ],
+      "winter": 0
+    },
+    {
+      "title": "EVACUATED",
+      "mode": "campaign",
+      "maps": [
+        3,
+        3,
+        3,
+        4
+      ],
+      "winter": 1
+    }
+  ]
+}

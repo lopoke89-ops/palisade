@@ -10,7 +10,7 @@ function update(dt){
   else{
     if(game.queue.length){game.spawnT-=dt;if(game.spawnT<=0){spawnEnemy(game.queue.shift());game.spawnT=game.spawnGap||1.1}}
     if(game.fb){fbTick(dt);if(game.phase==='over')return}   // v0.9.4.0: the Final Blitz runs on its clock, not on an empty field
-    else if(!game.queue.length&&!enemies.length&&!charges.length&&!rockets.length){if(game.wave>=game.waves){endGame(true);return}startBuild(24+game.Df.build)}
+    else if(!game.queue.length&&!enemies.length&&!charges.length&&!rockets.length){if(game.wave>=game.waves){endGame(true);return}if(!campaignAdvance())startBuild(24+game.Df.build)}
   }
   if(flowDirty){flowT-=dt;if(flowT<=0){computeFlow();flowDirty=false}}
   for(const p of players.values())simPlayer(p,dt);
@@ -21,7 +21,7 @@ function update(dt){
 }
 function assist(d){
   let best=null,ba=.32;const a0=Math.atan2(d.y,d.x),p=player;
-  for(const e of foes()){const dx=e.x-p.x,dy=e.y-p.y,dd=Math.hypot(dx,dy);if(dd>p.gun.range)continue;let da=Math.abs(Math.atan2(dy,dx)-a0);if(da>Math.PI)da=2*Math.PI-da;if(da<ba){ba=da;best={x:dx/dd,y:dy/dd}}}
+  for(const e of foes()){const dx=e.x-p.x,dy=e.y-p.y,dd=Math.hypot(dx,dy);if(heightDist(p.x,p.y,e.x,e.y)>p.gun.range||!heightRayClear(p.x,p.y,e.x,e.y))continue;let da=Math.abs(Math.atan2(dy,dx)-a0);if(da>Math.PI)da=2*Math.PI-da;if(da<ba){ba=da;best={x:dx/(dd||1),y:dy/(dd||1)}}}
   return best||d;
 }
 // this phone's thumbs/keys drive this phone's soldier (on every kind of phone)
@@ -91,14 +91,14 @@ function simPlayer(p,dt){
   }else{p.rl=0;p.rlReq=false}
   for(const n of nodes){
     if(n.locked||(n.type===0&&n.amt<=0))continue;
-    const d=Math.hypot(p.x-(n.i+.5),p.y-(n.j+.5));
+    const d=heightDist(p.x,p.y,n.i+.5,n.j+.5);
     if(d<(n.solid?1.3:1.05)&&p.gt<=0&&p.mats[n.type]<p.cap[n.type]){
       const y=Math.min(YIELD[n.type],p.cap[n.type]-p.mats[n.type],n.type===0?n.amt:99);p.mats[n.type]+=y;if(n.type===0)n.amt-=y;p.gt+=RATE[n.type]*(p.C.gather||1)*(p.perk||PERK0).gather;personal(p,'gather');
       emit(n.i+.5,n.j+.5,10*u,n.type===0?'splinter':n.type===1?'dust':'spark',n.type);
       if(p===player&&n.type===0&&++game.gathered>=4&&game.tip===0){game.tip=1;setTip(ctl('Face a tile and tap BUILD to raise a wall.','Face a tile with the mouse and press Space to raise a wall.',`Aim at a tile and press ${padKey('build')} to raise a wall.`))}
     }
   }
-  for(let s=sacks.length-1;s>=0;s--){const k=sacks[s];if(Math.hypot(k.x-p.x,k.y-p.y)<.7){for(let m=0;m<3;m++)p.mats[m]=Math.min(p.cap[m],p.mats[m]+k.mats[m]);sacks.splice(s,1);personal(p,'gather');flt(p.x,p.y,'PACK RECOVERED')}}
+  for(let s=sacks.length-1;s>=0;s--){const k=sacks[s];if(heightDist(k.x,k.y,p.x,p.y)<.7){for(let m=0;m<3;m++)p.mats[m]=Math.min(p.cap[m],p.mats[m]+k.mats[m]);sacks.splice(s,1);personal(p,'gather');flt(p.x,p.y,'PACK RECOVERED')}}
   {const K=p.perk||PERK0;if(p.hurt>K.regenAfter&&!game.wx)p.hp=Math.min(p.max,p.hp+K.regen*dt)}   // Second Wind; no healing in a storm
 }
 

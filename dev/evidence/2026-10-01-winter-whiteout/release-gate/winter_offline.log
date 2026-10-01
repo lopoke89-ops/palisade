@@ -1,0 +1,11 @@
+{
+  cached: [ 'palisade-dc87756470' ],
+  campaign: {
+    label: 'CH 1 · BUILD',
+    tip: 'CHAPTER 1 · THE YARD. Secure the Yard and recover the mountain evacuation route. Three raids here, then your kit travels onward. Prepare at the core.'
+  },
+  frost: 'BUILD',
+  errors: [],
+  offline: true
+}
+errors: none

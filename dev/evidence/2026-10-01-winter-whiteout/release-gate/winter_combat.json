@@ -1,0 +1,36 @@
+{
+  "muzzle": {
+    "checks": 128,
+    "maxDelta": 1.7422791863792823e-13
+  },
+  "downLOS": true,
+  "slope": -0.3030303030303031,
+  "downHP": 80,
+  "upHP": 80,
+  "cliffLOS": false,
+  "hpDuringWarning": 1000,
+  "hpAfterRupture": 974.5,
+  "expectedRuptureHP": 974.5,
+  "dash": {
+    "x": 4.5,
+    "y": 6.604000000000008,
+    "fields": 3
+  },
+  "slow": 0.7,
+  "bossShock": 0.2,
+  "fireDamage": 1,
+  "maxFields": 64,
+  "networkFields": 64,
+  "secondAdvance": false,
+  "transitionPaidOnce": true,
+  "lateBossCredit": [
+    "whiteforeman",
+    "rime"
+  ],
+  "localReward": {
+    "winter": 8,
+    "blitz": 4,
+    "sp": 9,
+    "blitzLadderDelta": 0
+  }
+}

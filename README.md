@@ -1,11 +1,14 @@
 PALISADE: phone version with online co-op
 =========================================
 
-CURRENT RELEASE: v0.9.5.2. Four special ammo types for solo/co-op 5, 10,
-Endless and Blitzkrieg Rush, plus eight-level Armory tracks and a compact
-Armory with Upgrades/Ammo tabs that fit without scrolling on phones.
-Protocol yard-20. The account migration is applied and verified.
-See dev/evidence/2026-10-01-ammo-armory/README.md for balances and validation.
+CURRENT RELEASE: v0.9.6.0. Frostpeak adds three functional elevation tiers,
+ramps/stairs and the Rime Colossus. Operation Whiteout connects all four maps
+and ends with one five-minute personal evacuation rush. The collection adds
+42 winter cosmetics, with milestones and a 14-shard Winter Case.
+Accepted friends can invite each other to public/private host rooms.
+Protocol yard-21. Both backend migrations are applied and verified.
+See dev/evidence/2026-10-01-winter-whiteout/README.md for release evidence,
+BALANCE.md for contracts/tuning, and CATALOG.md for all 42 items.
 
 This folder is the whole game as a website. Put it online once and anyone
 can play by opening the link. No app store, no download.

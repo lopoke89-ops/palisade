@@ -1,0 +1,88 @@
+{
+  "date": "2026-10-01",
+  "release": "0.9.6.0",
+  "protocol": "yard-21",
+  "serviceWorker": "palisade-dc87756470",
+  "publication": "authorized; release gate passed; push and deployment verification pending",
+  "baselineHead": "3d540554965a109f62955ae6ecb487785efc18c6",
+  "build": {
+    "index.html": {
+      "bytes": 673018,
+      "sha256": "75351dc60b4d8095b3f1166720cbaa53c1becfe4f1ebd56bf8690dde617f705b",
+      "gzipBytes": 228873
+    },
+    "sw.js": {
+      "bytes": 2173,
+      "sha256": "7344f5dbb69f2cccac56afb46fb9ab51cab03b80060246849f120e5f6026a7e7"
+    }
+  },
+  "passedTests": [
+    {
+      "name": "winter_elevation",
+      "result": "pass",
+      "log": "release-gate/winter_elevation.log",
+      "timestampUtc": "2026-10-01T09:44:45.525533+00:00"
+    },
+    {
+      "name": "winter_combat",
+      "result": "pass",
+      "log": "release-gate/winter_combat.log",
+      "timestampUtc": "2026-10-01T09:44:46.693980+00:00"
+    },
+    {
+      "name": "winter_cosmetics",
+      "result": "pass",
+      "log": "release-gate/winter_cosmetics.log",
+      "timestampUtc": "2026-10-01T09:44:53.091643+00:00"
+    },
+    {
+      "name": "winter_network",
+      "result": "pass",
+      "log": "release-gate/winter_network.log",
+      "timestampUtc": "2026-10-01T09:45:02.840473+00:00"
+    },
+    {
+      "name": "winter_reconnect",
+      "result": "pass",
+      "log": "release-gate/winter_reconnect.log",
+      "timestampUtc": "2026-10-01T09:45:06.703858+00:00"
+    },
+    {
+      "name": "winter_invites",
+      "result": "pass",
+      "log": "release-gate/winter_invites.log",
+      "timestampUtc": "2026-10-01T09:45:25.892436+00:00"
+    },
+    {
+      "name": "winter_migration",
+      "result": "pass",
+      "log": "release-gate/winter_migration.log",
+      "timestampUtc": "2026-10-01T09:45:28.452525+00:00"
+    },
+    {
+      "name": "winter_offline",
+      "result": "pass",
+      "log": "release-gate/winter_offline.log",
+      "timestampUtc": "2026-10-01T09:45:30.678165+00:00"
+    },
+    {
+      "name": "csp",
+      "result": "pass",
+      "log": "release-gate/csp.log",
+      "timestampUtc": "2026-10-01T09:45:35.292083+00:00"
+    },
+    {
+      "name": "armory_layout",
+      "result": "pass",
+      "log": "release-gate/armory_layout.log",
+      "timestampUtc": "2026-10-01T09:45:40.434294+00:00"
+    },
+    {
+      "name": "controller",
+      "result": "pass",
+      "log": "release-gate/controller.log",
+      "timestampUtc": "2026-10-01T09:46:01.484660+00:00"
+    }
+  ],
+  "isolation": "Built from HEAD plus winter feature changes in a separate Git worktree. Preexisting uncommitted repository cleanup excluded."
+}

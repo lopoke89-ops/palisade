@@ -11,16 +11,26 @@ The Claude audit URL still requires sign-in in the available browser session. Bi
 
 | Item | Current state |
 |---|---|
-| Source release | **v0.9.5.2** (special ammo, eight-level upgrades and compact Armory UI) |
-| Release deployment | Pushed October 1; [Pages run 36819697721](https://github.com/lopoke89-ops/palisade/actions/runs/36819697721) succeeded; live production UI verified |
-| Live protocol | `yard-20` / `palisade-yard-20-` |
-| Applied server migration | `ammo_armory_expansion` (`20261001045820`), verified October 1; before it `palisade_v0940_blitz` (`20260930141401`) |
-| GitHub branch | `main` includes release commit `ac0e049` (v0.9.5.2); checked October 1 |
-| Published build | GitHub Pages displays **v0.9.5.2**, protocol `yard-20`, service worker `palisade-1158b41b21`, verified October 1; live HTML and service worker match the local release |
+| Source release | **v0.9.6.0** (Frostpeak elevation, Whiteout, Rime, winter collection and friend invitations); publication authorized, release gate passed |
+| Release deployment | v0.9.6.0 push and live deployment verification pending; prior v0.9.5.2 deployment verified |
+| Release protocol | `yard-21` / `palisade-yard-21-`; old clients must reload after publication |
+| Applied server migrations | `winter_whiteout` (`20261001081259`) and `friend_lobby_invites` (`20261001081316`), applied and verified October 1; earlier ammo/Blitz migrations retained |
+| GitHub branch | `main` starts at `3d54055` (Open Games Blitz fix); isolated winter release excludes earlier local cleanup |
+| Published build | GitHub Pages **v0.9.5.2**, protocol `yard-20`, service worker `palisade-1158b41b21`, verified during that October 1 release; winter candidate publication is pending |
 
 Controller support shipped in v0.9.2.1. The v0.9.3 cosmetics migration is applied and the live case catalog includes Flags. The two proposed new game modes have not shipped; the Nightmare modifier and a future preset definition do not constitute a separate game mode.
 
 Four commits after the v0.9.3 release changed the case intro and reel source (`98bb522`, `4c8dd3d`, `a49df08`, `566e30e`). The v0.9.3.1 release includes those fixes. Their source was compared with the v0.9.3 release on September 29; see [case animation validation](CASE_PERFORMANCE_2026-09-29.md). The reel avoids repeated style reads and its measured CPU use was lower, but intro readings overlapped and Locker readings were higher in the comparison runs. Further profiling and a real-phone comparison are still required before performance sign-off.
+
+## v0.9.6.0: winter expansion
+
+The [winter/elevation/campaign/invitations work order](plans/winter-elevation-campaign-and-friend-invites-work-order.md) is implemented; publication was authorized October 1. The [release report](evidence/2026-10-01-winter-whiteout/README.md) includes architecture, measured verification, backend grants/advisors and limitations; [BALANCE.md](evidence/2026-10-01-winter-whiteout/BALANCE.md) defines the height, continuity, boss and reward contracts; [CATALOG.md](evidence/2026-10-01-winter-whiteout/CATALOG.md) lists all 42 items.
+
+Frostpeak has standard/XL layouts with summit core, three traversable heights, ramp/stair approaches and terrain-aware combat. Whiteout visits Yard, Riverbend, Quarry and Frostpeak, three raids per chapter, revamped chapter bosses and one five-minute personal evacuation finale. Rime has its own ice armor/reservoir/maul rig, telegraphed rupture and slowing frost dash. New milestones and a 34-item Winter Case provide acquisition paths for the complete 42-item winter collection.
+
+Authenticated Friends invitations support public/private rooms and deliberate leave confirmation, including from an active game's pause menu. The two migrations are live; read-only checks and disposable Postgres tests verify catalog, reward retries and invitation authority. Six real local PeerJS clients, chapter/ramp/finale reconnect, production offline launch, all 73 compact Armory layouts and affected input/combat/network regressions pass. Final desktop software-Canvas stress sample at 390×844: six simulated players, 52 enemies/four bosses, 64 frost fields, 19.1% added median update+render cost. Physical phones and real Internet finale performance remain separate validation.
+
+Production files use protocol `yard-21`, footer v0.9.6.0 and service worker `palisade-dc87756470`. **The isolated release build passed 11 publication checks; push and live verification are pending.** [Release verification](evidence/2026-10-01-winter-whiteout/release-verification.json) records the actual release hashes and gate results. Preexisting uncommitted cleanup is preserved and excluded.
 
 ## v0.9.5.2: special ammo and eight-level Armory
 

@@ -6,6 +6,7 @@ const RAR={c:{n:'COMMON',col:'#9a958a',sh:1},r:{n:'RARE',col:'#4f95e0',sh:3},e:{
 // Every case in the game. Accounts use the server's copy of this table (case_types), which is the one that counts;
 // this one drives the locker screen and players with no account. A new case = a new entry here + items with its box.
 const CASES={
+  winter:{name:'WINTER CASE',short:'Winter Cases',col:'#a3e6de',weights:{c:45,r:32,e:16,l:6,g:1},cost:14,how:'Winter bosses drop Winter Cases. Extract from Operation Whiteout for a bonus case. Or 14 shards.'},
   supply:{name:'SUPPLY CASE',short:'Supply Cases',col:'#e2b436',weights:{c:59.75,r:27,e:10,l:3,u:.25},cost:null,
     how:'Co-op and Endless only: one every 3 raids you hold, plus wins.'},
   afterglow:{name:'AFTERGLOW CASE',short:'Afterglow Cases',col:'#ff5ad8',weights:{c:53,r:30,e:12,l:4,g:1},cost:10,
@@ -111,6 +112,7 @@ const SKIN_FX=['neon','dots','ruff','badge','plate','stars','holo','spots','fros
   'apron','facewrap','coat','cape','lining','collar','reflect','waders','charges','medals','ghillie','sheet','stitches','clownface','hockey','sack','patches','straws','medal','aura','sahur','demon'];
 const HALLOWEEN_HATS={gravecap:true,stemband:true,batcirclet:true,bonewrap:true,webpin:true,skullseal:true};
 const SAHUR_HATS=new Set(['crown','tophat','visor','headband','pcap','halo','witch','devilhorns']);
+registerWinterLooks();
 // Class Issue preserves the skin's own appearance. Unknown or special heads block added headwear.
 function headwearAllowed(skin,hat){
   const S=SKINS[skin];if(!S)return false;if(hat==='class')return true;
@@ -192,6 +194,7 @@ Object.assign(TRAILS,{
   tealwake:{c:'#5af0ff',w:1.1,len:1.9,glow:'rgba(90,240,255,.25)',pk:'tealdust',pr:.6,snd:'ts_aurora'},
   hellchain:{bands:['#ffd060','#ff4a0a','#3a0a04','#ff4a0a','#3a0a04'],w:1.8,len:1.9,glow:'rgba(255,74,10,.32)',pk:'flame',pr:.5,chain:true,snd:'ts_solar'},
   sigil:{grad:['#fff0b0','#ff3a0a'],w:1.9,len:2.1,glow:'rgba(255,58,10,.38)',pk:'rune',pr:.95,head:'#fff8d0',snd:'ts_void'}});
+registerWinterTrails();
 const TRAIL_IDS=Object.keys(TRAILS),ENEMY_TR={c:'rgba(255,140,90,.95)'};
 function nextTracerColor(from){
   const key=from.cos&&from.cos.trail,st=TRAILS[key];if(!st||!st.cycle)return 0;
@@ -287,6 +290,7 @@ for(const L of LADDERS)L.items.forEach(([cat,key,name],i)=>COS.push({id:cat+':'+
   need:{[L.st]:L.steps[i]},how:L.how(L.steps[i]),price:null,ladder:L.id}));
 // the Flag Case's tracers (its backgrounds are added with the other backgrounds)
 for(const[id,name,r]of FLAGS)COS.push({id:'trail:f_'+id,cat:'trail',key:'f_'+id,name:name+' Flag',r,src:'case',box:'flags',need:null,how:'Found in '+CASES.flags.short,price:null});
+registerWinterCosmetics();
 const COSBY=Object.fromEntries(COS.map(c=>[c.id,c]));
 const CATN={skin:'SKIN',hat:'HEADGEAR',trail:'TRACER',fx:'KILL FX'};
 const DEFAULT_COS={skin:'std',hat:'class',trail:'std',fx:'none'};
@@ -394,6 +398,7 @@ const salvageShards=(sal,held)=>Math.max(0,Math.min(Math.floor(Math.max(0,sal)/S
 // v0.9.2: `from` is the raid count when this player came in; only boss raids after it count
 // v0.9.3: which of the bosses that went down this claim counts (the same cap the server uses)
 function bossCounted(keys,held,from=0,waves=game.waves,size=game.size){
+  if(waves===CAMPAIGN.waves){const hi=Math.min(13,held+1);return[...new Set(keys)].filter(k=>{const w=(CAMPAIGN.bosses.indexOf(k)+1)*3;return w>from&&w<=hi&&CAMPAIGN.bosses.includes(k)})}
   const hi=Math.min(held+1,isFinite(waves)?waves:1e9),cap=Math.max(0,Math.floor(hi/5)-Math.floor(from/5))*(size==='xl'?2:1),out=[];   // XL boss raids have two bosses
   for(const k of keys){if(out.length>=cap)break;if(!BOSSES[k==='butcher_oct'?'butcher':k])continue;out.push(k)}
   return out;
@@ -405,16 +410,16 @@ function bossDrops(keys,held,from=0,waves,size){
 // v0.9.3 milestone counters (the server keeps the same ones for accounts): each boss beaten, raids held on each map
 // and raids held as each class (the class you ended the run as)
 function addMilestones(st,keys,held,from,mine,cls,map,waves,size){
-  for(const k of bossCounted(keys,held,from,waves,size))bossMilestone(st,k==='butcher_oct'?'butcher':k);
-  if(mine>0){if(MAP_IDS.includes(map))st['map_'+map]=(st['map_'+map]|0)+mine;if(CLASSES[cls])st['cls_'+cls+'_raids']=(st['cls_'+cls+'_raids']|0)+mine}
+  for(const k of bossCounted(keys,held,from,waves,size))bossMilestone(st,k==='butcher_oct'?'butcher':k,waves===CAMPAIGN.waves?'campaign':'');
+  if(mine>0){if(waves===CAMPAIGN.waves){for(const [m,n]of Object.entries(chapterCredit(from,held)))st['map_'+m]=(st['map_'+m]|0)+n}else if(MAP_IDS.includes(map))st['map_'+map]=(st['map_'+map]|0)+mine;if(CLASSES[cls])st['cls_'+cls+'_raids']=(st['cls_'+cls+'_raids']|0)+mine}
 }
 // v0.9.4.0: a Blitzkrieg boss counts for the boss it comes from (a Blue Butcher is a Butcher) and for the BLITZKRIEG RUSH ladder
-function bossMilestone(st,k){if(!BOSSES[k])return;const b='boss_'+bossBase(k);st[b]=(st[b]|0)+1;if(BOSSES[k].base)st.mode_blitz_bosses=(st.mode_blitz_bosses|0)+1}
+function bossMilestone(st,k,mode=''){if(!BOSSES[k])return;const b='boss_'+bossBase(k);st[b]=(st[b]|0)+1;if(BOSSES[k].base&&!BOSSES[k].campaign&&mode!=='campaign')st.mode_blitz_bosses=(st.mode_blitz_bosses|0)+1}
 // Blitzkrieg Rush: players left behind at the evacuation keep half their cases and half their shards, odd counts rounded
 // up first (7 -> 4). Raids, boss kills, skill points and milestones are never halved.
 const halfUp=n=>Math.ceil(Math.max(0,n|0)/2);
 const BLITZ_EVAC={cases:1,shards:25};   // making the evacuation: one more Blitzkrieg Case and 25 shards
-const fbCap=(c)=>(c.raid_to|0)>=BLITZ.waves?((c.mods||[]).includes('blitzclock')?BLITZ.maxDT:BLITZ.max):0;
+const fbCap=(c)=>(c.raid_to|0)>=(c.mode==='campaign'?CAMPAIGN.waves:BLITZ.waves)?((c.mods||[]).includes('blitzclock')?BLITZ.maxDT:BLITZ.max):0;
 // the Flag Case's chance after any win (this browser's own locker; the server rolls for accounts)
 function winDrop(){const id=winCase();if(!id||rnd()>=CASES[id].drop.win)return{};caseAdd(id,1);return{[id]:1}}
 // Rewards come back as data (for the reward cards) with a sentence alongside (toasts, older screens):
@@ -441,7 +446,7 @@ const mkReward=(kind,o)=>{const R={kind,cases:{},shards:0,unlocked:[],toNext:3-(
 // left = they walked out before the end. Everything else about the game rides along for the match record.
 // The claim for this phone's share of the run so far. Pure: nothing is spent or saved here.
 function runClaim(held,win,kills,left=false){
-  const res=blitzResult(player);if(res){held=BLITZ.waves;win=res==='evac'}   // v0.9.4.0: once the evac site is open, raid 15 counts as held; making it out is the win
+  const res=blitzResult(player);if(res){held=finalWave();win=res==='evac'}   // v0.9.4.0: once the evac site is open, raid 15 counts as held; making it out is the win
   const from=Math.min(held,game.joinHeld|0),mine=held-from,pct=modBonus(game.mods,game.mode==='blitz'?'blitz':'');
   const sal=Math.max(0,(player&&player.sal)|0),shards=Math.min(salvageShards(sal,mine),Math.floor(SAL_SHARD.max*(100+pct)/100));
   const keys=(game.bossLog||[]).slice(game.joinBoss|0).slice(0,40),sb=Math.max(0,(game.sbN|0)-(game.joinSB|0)),dur=Math.round(game.time-(game.joinT||0));
@@ -450,7 +455,8 @@ function runClaim(held,win,kills,left=false){
   const claim={kind:'run',mode:game.mode,diff:pick.diff||'normal',win:!!win,held:mine,raid_from:from,raid_to:held,kills,bosses:keys.length,boss_keys:keys,shard_bosses:sb,sb_keys:sbKeys,
     salvage:sal,size:game.size||'std',duration_s:dur,game_id:game.gid,joined_s:Math.round(game.joinT||0),left_s:Math.round(game.time),left:!!left,
     upgrades:(player?player.upS:'')+':'+(game.dellLv|0),mods:game.mods||[],map:game.map,cls:player?player.cls:pick.cls};
-  if(game.mode==='blitz'){claim.fb_keys=fbKeys;claim.evac=res}
+  if(blitz()){claim.fb_keys=fbKeys;claim.evac=res}
+  claim.claim_id=game.gid+':'+from+':'+held+':'+Math.round(game.joinT||0)+':'+claim.left_s;
   return {claim,shards};
 }
 function lockerReward(held,win,kills,left=false){
@@ -463,9 +469,9 @@ function lockerReward(held,win,kills,left=false){
 }
 // this browser's own locker (no account): the same rules as the server, minus skill points
 function localRun(c,shards){
-  const st=locker.st,held=c.raid_to,from=c.raid_from,mine=c.held,keys=c.boss_keys||[],sb=c.shard_bosses|0,BZ=c.mode==='blitz';
+  const st=locker.st,held=c.raid_to,from=c.raid_from,mine=c.held,keys=c.boss_keys||[],sb=c.shard_bosses|0,BZ=['blitz','campaign'].includes(c.mode);
   const b0={bag:{...locker.bag},cases:locker.cases,shards:locker.shards|0};   // v0.9.4.0: what this run adds, for the reward cards and halving
-  const waves=c.mode==='endless'?Infinity:BZ?BLITZ.waves:+c.mode,pct=modBonus(c.mods||[],BZ?'blitz':''),won=c.win&&from*2<=waves&&(!BZ||c.evac==='evac');
+  const waves=c.mode==='endless'?Infinity:c.mode==='campaign'?CAMPAIGN.waves:BZ?BLITZ.waves:+c.mode,pct=modBonus(c.mods||[],c.mode==='blitz'?'blitz':''),won=c.win&&from*2<=waves&&(!BZ||c.evac==='evac');
   const drops=bossDrops(keys,held,from,waves,c.size),bshards=sb*(15+Math.floor(rnd()*16));
   locker.shards=(locker.shards|0)+shards+bshards;
   st.raids+=mine;st.drops+=c.kills|0;if(won){st.wins++;if(c.diff==='hard')st.hardWins++}
@@ -480,10 +486,10 @@ function localRun(c,shards){
   for(const k of(c.sb_keys||[]).slice(0,sb))if(BOSSES[k]){const b='boss_'+k;st[b]=(st[b]|0)+1}   // v0.9.3.8: every boss kill counts
   let fshards=0;
   if(BZ){   // v0.9.4.0: Final Blitz bosses (2 Blitzkrieg Cases, 15-30 shards and a skill point each), the evacuation bonus, then halving
-    const fk=(c.fb_keys||[]).filter(k=>BOSSES[k]&&BOSSES[k].base).slice(0,fbCap(c));
-    for(const k of fk){caseAdd('blitz',BOSSES[k].cases||2);fshards+=15+Math.floor(rnd()*16);bossMilestone(st,k)}
+    const fk=(c.fb_keys||[]).filter(k=>BOSSES[k]&&(BOSSES[k].base||k==='rime')).slice(0,fbCap(c));
+    for(const k of fk){caseAdd(bossBox(k),BOSSES[k].cases||2);fshards+=15+Math.floor(rnd()*16);bossMilestone(st,k,c.mode)}
     spGain+=fk.length;
-    if(won){caseAdd('blitz',BLITZ_EVAC.cases);fshards+=BLITZ_EVAC.shards}
+    if(won){caseAdd(c.mode==='campaign'?'winter':'blitz',BLITZ_EVAC.cases);fshards+=BLITZ_EVAC.shards}
     locker.shards+=fshards;
   }
   locker.sp=(locker.sp|0)+spGain;locker.spTotal=(locker.spTotal|0)+spGain;
@@ -541,7 +547,7 @@ function claimReward(c,j){
   else if(j.case_id)cases[j.case_id]=j.cases_granted|0;
   const prog=(j.locker&&j.locker.prog)|0,ids=Array.isArray(j.unlocked_ids)?j.unlocked_ids:(j.unlocked||[]).map(n=>(COS.find(x=>x.name===n)||{id:n}).id);
   const R={kind:c.kind,cases,shards:j.shards|0,unlocked:ids,prog,toNext:j.to_next!==undefined?j.to_next|0:3-prog,cloud:true,chance:j.chance||0,missCase:c.kind==='match'&&!(j.cases_granted>0)?j.case_id:'',
-    bossShards:j.boss_shards|0,sp:j.skill_points|0,spToNext:j.sp_to_next|0,left:!!j.left_behind,blitzShards:c.mode==='blitz'};
+    bossShards:j.boss_shards|0,sp:j.skill_points|0,spToNext:j.sp_to_next|0,left:!!j.left_behind,blitzShards:['blitz','campaign'].includes(c.mode)};
   R.text=rewardText(R);return R;
 }
 const claimText=(c,j)=>claimReward(c,j).text;

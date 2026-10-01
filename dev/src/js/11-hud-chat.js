@@ -3,11 +3,11 @@ const BEST_KEY='palisade.best.v3';
 function loadBest(){try{return JSON.parse(localStorage.getItem(BEST_KEY)||'{}')||{}}catch(e){return{}}}
 // one record per length and threat on the Yard (the keys from before maps), and per map and size elsewhere
 // v0.9.2: and per modifier set (no modifiers keeps the old key)
-const bestKey=(mode,diff,map,size,mods)=>mode+':'+diff+(map&&map!=='yard'||size==='xl'?':'+(map||'yard')+(size==='xl'?':xl':''):'')+(mods&&mods.length?'|'+modKey(mods):'');
+const bestKey=(mode,diff,map,size,mods)=>(mode==='campaign'?'campaign':mode)+':'+diff+(mode!=='campaign'&&(map&&map!=='yard')||size==='xl'?':'+(mode==='campaign'?'all':map||'yard')+(size==='xl'?':xl':''):'')+(mods&&mods.length?'|'+modKey(mods):'');
 function saveBest(held,dropped){try{const b=loadBest(),k=bestKey(game.mode,pick.diff,game.map,game.size,game.mods),o=b[k];if(!o||held>o.held||(held===o.held&&dropped>o.dropped)){b[k]={held,dropped,cls:player.C.name};localStorage.setItem(BEST_KEY,JSON.stringify(b))}}catch(e){}}
 function showBest(){const m=myMods(coopMods()),b=loadBest()[bestKey(pick.mode,pick.diff,pick.map,pick.size,m)],el=$('best');if(!b){el.hidden=true;return}el.hidden=false;
   const w=m.length?` with ${m.length>2?m.length+' modifiers':modNames(m).map(n=>n.toLowerCase()).join(' + ')}`:'';
-  el.textContent=pick.mode==='endless'?`Best endless on ${DIFF[pick.diff].name.toLowerCase()}${w}: ${b.held} raids held, ${b.dropped} raiders dropped (${b.cls.toLowerCase()}).`:`Best on ${DIFF[pick.diff].name.toLowerCase()}${w}: ${b.held} of ${pick.mode} raids held, ${b.dropped} raiders dropped (${b.cls.toLowerCase()}).`}
+  el.textContent=pick.mode==='endless'?`Best endless on ${DIFF[pick.diff].name.toLowerCase()}${w}: ${b.held} raids held, ${b.dropped} raiders dropped (${b.cls.toLowerCase()}).`:`Best on ${DIFF[pick.diff].name.toLowerCase()}${w}: ${b.held} of ${pick.mode==='campaign'?CAMPAIGN.waves:pick.mode==='blitz'?BLITZ.waves:pick.mode} stages held, ${b.dropped} raiders dropped (${b.cls.toLowerCase()}).`}
 
 /* ================= HUD ================= */
 let toastT=0;
@@ -116,10 +116,10 @@ function hud(dt){
     const rows=[...players.values()].sort((a,b)=>b.kills-a.kills||a.deaths-b.deaths).slice(0,6),bd=$('board'),sig=rows.map(o=>o.id+o.kills).join();
     if(bd._sig!==sig){bd._sig=sig;bd.textContent='';for(const o of rows){const li=document.createElement('li');if(o===p)li.className='me';const n=document.createElement('span');n.textContent=o===p?'YOU':o.name.toUpperCase();const b=document.createElement('b');b.textContent=o.kills;li.append(n,b);bd.append(li)}}
   }
-  else if(game.phase==='build'){txt(lab,'BUILD');cls(lab,'raid',false);txt($('phaseVal'),`${clock(game.timer)} until raid ${game.wave+1}`);$('skipBtn').hidden=!host;txt($('skipLab'),'START RAID')}
+  else if(game.phase==='build'){txt(lab,campaign()?`CH ${game.chapter+1} · BUILD`:'BUILD');cls(lab,'raid',false);txt($('phaseVal'),campaign()?`${clock(game.timer)} · ${MAP.short} · ${game.wave===12?'final evacuation':`raid ${game.wave%3+1}/3`}`:`${clock(game.timer)} until raid ${game.wave+1}`);$('skipBtn').hidden=!host;txt($('skipLab'),'START RAID')}
   else if(game.fb&&!game.fb.done){const F=game.fb,ev=!!F.evac;txt(lab,ev?'EVACUATE':W<700?'BLITZ':'FINAL BLITZ');cls(lab,'raid',true);cls(lab,'evac',ev);   // v0.9.4.0
     txt($('phaseVal'),ev?(p.out?`${clock(F.t)} · you're out`:`${clock(F.t)} · get to the green ring`):`${clock(F.t)} · boss ${Math.min(F.n,F.max)}/${F.max}`);$('skipBtn').hidden=true}
-  else{txt(lab,isFinite(game.waves)?`RAID ${game.wave}/${game.waves}`:`RAID ${game.wave}`);cls(lab,'evac',false);cls(lab,'raid',true);txt($('phaseVal'),`${enemies.length+(NET.mode==='guest'?game.qn:game.queue.length)} raiders left`);$('skipBtn').hidden=true}
+  else{txt(lab,campaign()?`CH ${game.chapter+1} · RAID ${(game.wave-1)%3+1}/3`:isFinite(game.waves)?`RAID ${game.wave}/${game.waves}`:`RAID ${game.wave}`);cls(lab,'evac',false);cls(lab,'raid',true);txt($('phaseVal'),`${campaign()?MAP.short+' · ':''}${enemies.length+(NET.mode==='guest'?game.qn:game.queue.length)} raiders left`);$('skipBtn').hidden=true}
   for(let m=0;m<3;m++){
     const c=$('c'+m),locked=m>0&&!!(nodes.find(n=>n.type===m)||{}).locked&&p.mats[m]===0;
     txt($('n'+m),locked?(m===1?'R2':'R4'):String(p.mats[m]));cls(c,'sel',game.sel===m);cls(c,'locked',locked);

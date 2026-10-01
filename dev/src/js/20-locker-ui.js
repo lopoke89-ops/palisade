@@ -1,8 +1,8 @@
 /* ---------- drawing cosmetics ---------- */
 const lookOf=(cos,cls)=>playerLook({cos,cls,C:CLASSES[cls]||CLASSES.soldier,slot:0});
 function drawFig(ctx,w,h,look,sc,aim,cy){
-  const kg=g,ku=u,kx=camX,ky=camY;g=ctx;u=sc;camX=w/2;camY=cy;
-  try{drawPerson(0,0,Object.assign({aim:aim||{x:.9,y:.25},walk:0},look))}finally{g=kg;u=ku;camX=kx;camY=ky}
+  const kg=g,ku=u,kx=camX,ky=camY,kp=heightPreview;heightPreview=true;g=ctx;u=sc;camX=w/2;camY=cy;
+  try{drawPerson(0,0,Object.assign({aim:aim||{x:.9,y:.25},walk:0},look))}finally{g=kg;u=ku;camX=kx;camY=ky;heightPreview=kp}
 }
 // The painter shares the exact calibrated head/tail segment with gameplay and previews.
 function traceSeg(ctx,x1,y1,x2,y2,st,w,t,heavy,tc=0){paintTracer(ctx,x1,y1,x2,y2,st,w,t,heavy,tc)}
@@ -10,10 +10,11 @@ function traceSeg(ctx,x1,y1,x2,y2,st,w,t,heavy,tc=0){paintTracer(ctx,x1,y1,x2,y2
 function tracerPoints(b,L,out={head:[0,0],tail:[0,0]}){
  const a=out.head,c=out.tail,v=b.visual;
  a[0]=(b.x-b.y)*TW2+camX;a[1]=(b.x+b.y)*TH2+camY;
- c[0]=a[0]-(b.vx-b.vy)*L*TW2;c[1]=a[1]-(b.vx+b.vy)*L*TH2;
+ const hz=((b.z0===undefined?heightAt(b.x,b.y):bulletZ(b)-.7))*heightPx();a[1]-=hz;
+ c[0]=a[0]-(b.vx-b.vy)*L*TW2;c[1]=a[1]-(b.vx+b.vy)*L*TH2+(b.zSlope||0)*Math.hypot(b.vx,b.vy)*L*heightPx();
  if(!v){a[1]-=WH*.62;c[1]-=WH*.62;return out}
  a[0]+=v[0]*u;a[1]+=v[1]*u;c[0]+=v[0]*u;c[1]+=v[1]*u;
- const mx=(v[2]-v[3])*TW2+camX,my=(v[2]+v[3])*TH2+camY,dx=(b.vx-b.vy)*TW2,dy=(b.vx+b.vy)*TH2;
+ const mx=(v[2]-v[3])*TW2+camX,my=(v[2]+v[3])*TH2+camY-(v[4]??heightAt(v[2],v[3]))*heightPx(),dx=(b.vx-b.vy)*TW2,dy=(b.vx+b.vy)*TH2;
  if((a[0]-mx)*dx+(a[1]-my)*dy<=0)return null;
  if((c[0]-mx)*dx+(c[1]-my)*dy<0){c[0]=mx;c[1]=my}
  return out;
@@ -171,6 +172,7 @@ function refreshItemTile(d,c){
     eq=!blocked&&(locker.eq[c.cat]===c.key||c.cat==='hat'&&c.key==='class'&&!headwearAllowed(locker.eq.skin,locker.eq.hat));
   d.classList.toggle('lock',!own);d.classList.toggle('eq',eq);
   d.classList.toggle('incompatible',blocked);d.setAttribute('aria-disabled',String(blocked));
+  if(c.description)d.title=c.description;
   d.querySelector('i').textContent=blocked?'DOES NOT FIT THIS SKIN':eq?'EQUIPPED':own?RAR[c.r].n:c.how;
   const pr=!own&&c.src==='unlock'&&c.need?needProgress(c.need):null;
   d.setAttribute('aria-label',`${c.name}, ${RAR[c.r].n.toLowerCase()} ${CATN[c.cat].toLowerCase()}, ${blocked?'does not fit this skin':eq?'equipped':own?'owned':'locked: '+c.how+(pr?`, ${pr.have} of ${pr.need}`:'')}`);

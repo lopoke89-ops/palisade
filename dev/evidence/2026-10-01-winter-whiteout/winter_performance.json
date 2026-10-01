@@ -1,0 +1,109 @@
+{
+  "device": "Windows desktop Chrome, software Canvas, 390x844 viewport; no physical phone",
+  "baseline": {
+    "players": 6,
+    "enemies": 52,
+    "bosses": 4,
+    "peakParts": 600,
+    "peakEvents": 303,
+    "peakBullets": 28,
+    "peakFields": 0,
+    "updateMedianMs": 0.3,
+    "updateP90Ms": 0.5,
+    "renderMedianMs": 8.6,
+    "renderP90Ms": 14.4,
+    "renderP99Ms": 24.5,
+    "maxRenderMs": 28,
+    "snapshotP90Bytes": 3770,
+    "hostStateBytesPerSecond": 282750,
+    "wardrobe": {
+      "workers": 2,
+      "completed": 0,
+      "pending": 4,
+      "busy": 2,
+      "entries": 96,
+      "bytes": 1866720
+    },
+    "background": {
+      "entries": 1,
+      "bytes": 1316640,
+      "limit": 50331648
+    },
+    "fx": {
+      "tracers": 1,
+      "glows": 1
+    }
+  },
+  "candidate": {
+    "players": 6,
+    "enemies": 52,
+    "bosses": 4,
+    "peakParts": 600,
+    "peakEvents": 303,
+    "peakBullets": 24,
+    "peakFields": 0,
+    "updateMedianMs": 0.4,
+    "updateP90Ms": 0.5,
+    "renderMedianMs": 8.5,
+    "renderP90Ms": 14.4,
+    "renderP99Ms": 23.9,
+    "maxRenderMs": 24.5,
+    "snapshotP90Bytes": 3788,
+    "hostStateBytesPerSecond": 284100,
+    "wardrobe": {
+      "workers": 2,
+      "completed": 0,
+      "pending": 4,
+      "busy": 2,
+      "entries": 96,
+      "bytes": 1872960
+    },
+    "background": {
+      "entries": 1,
+      "bytes": 1316640,
+      "limit": 50331648
+    },
+    "fx": {
+      "tracers": 1,
+      "glows": 1
+    }
+  },
+  "winter": {
+    "players": 6,
+    "enemies": 52,
+    "bosses": 4,
+    "peakParts": 568,
+    "peakEvents": 297,
+    "peakBullets": 24,
+    "peakFields": 64,
+    "updateMedianMs": 0.4,
+    "updateP90Ms": 0.5,
+    "renderMedianMs": 10.2,
+    "renderP90Ms": 18.8,
+    "renderP99Ms": 25.3,
+    "maxRenderMs": 28.3,
+    "snapshotP90Bytes": 4841,
+    "hostStateBytesPerSecond": 363075,
+    "wardrobe": {
+      "workers": 2,
+      "completed": 0,
+      "pending": 11,
+      "busy": 2,
+      "entries": 96,
+      "bytes": 1932592
+    },
+    "background": {
+      "entries": 1,
+      "bytes": 1316640,
+      "limit": 50331648
+    },
+    "fx": {
+      "tracers": 4,
+      "glows": 1
+    }
+  },
+  "comparison": {
+    "sameWorkloadPercent": 0,
+    "winterPercent": 19.1
+  }
+}

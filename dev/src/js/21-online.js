@@ -4,7 +4,7 @@
 // they talk directly. Each guest opens 'r' (reliable: hello, build, grenade, and every
 // one-off event: sounds, particles, bullets, toasts, wall changes), 'u' (fast: movement in),
 // and 'st' (never resent: game state out, 15 times a second).
-const PROTO='yard-20',ROOM_PREFIX='palisade-yard-20-';   // special ammo and enemy status snapshots
+const PROTO='yard-21',ROOM_PREFIX='palisade-yard-21-';   // elevation, chapter epochs and winter hazards
 const ROOM_SESSION=(()=>{let id='';try{id=sessionStorage.getItem('palisade.roomSession')||''}catch(e){}
   if(!/^[0-9a-f]{24}$/.test(id)){id=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');try{sessionStorage.setItem('palisade.roomSession',id)}catch(e){}}
   return id})();
@@ -80,7 +80,7 @@ async function netHost(){
   const ice=await getIce();
   if(NET.mode!=='opening')return;   // they backed out while the relay logins loaded
   const code=genCode(),peer=new Peer(ROOM_PREFIX+code,peerOpts(ice));NET.peer=peer;NET.mode='opening';
-  peer.on('open',()=>{NET.mode='host';NET.code=code;NET.roomLocked=false;NET.banned=new Set();myId='host';NET.roster=[{id:'host',name:myName(),cls:pick.cls,cos:cosStr(myCos()),team:'a',sk:mySkills()}];mStatus('');showLobby();lobbyStartPublishing()});
+  peer.on('open',()=>{NET.incarnation=crypto.randomUUID();NET.mode='host';NET.code=code;NET.roomLocked=false;NET.banned=new Set();myId='host';NET.roster=[{id:'host',name:myName(),cls:pick.cls,cos:cosStr(myCos()),team:'a',sk:mySkills()}];mStatus('');showLobby();lobbyStartPublishing()});
   peer.on('connection',hostConn);
   peer.on('error',err=>{
     if(err.type==='unavailable-id'&&NET.mode==='opening'){try{peer.destroy()}catch(e){}netHost();return}
@@ -117,6 +117,7 @@ function hostData(peerId,d){
   if(d.t==='hello'){
     if(c.pid||!c.r||!c.r.open)return;
     if(d.v!==PROTO){c.r.send({t:'kick',why:'Your copy of PALISADE is a different version from the host’s. Both of you reload the page.'});return}
+    if(d.invitationSession&&d.invitationSession!==NET.incarnation){c.r.send({t:'kick',why:'That invitation belongs to an earlier room. Ask for a new invite.'});return}
     if(!/^[0-9a-f]{24}$/.test(d.session||''))return;
     if(NET.banned.has(d.session)){c.r.send({t:'kick',why:'The host removed you from the game.'});return}
     if(NET.roomLocked){c.r.send({t:'kick',why:'Room is locked.'});return}
@@ -163,8 +164,8 @@ function hostData(peerId,d){
         Math.max(slowAt(p.x,p.y),slowAt(d.x,d.y))*1.15;
       c.moveBudget=Math.min(HOST_LIMITS.moveBurst,(c.moveBudget??.55)+speed*dt);
       const dd=Math.hypot(d.x-p.x,d.y-p.y);
-      if(dd<=c.moveBudget+.02&&dd<3&&!collides(d.x,d.y,.2,pt(p))){c.moveBudget=Math.max(0,c.moveBudget-dd);p.walk+=dd*3;p.x=d.x;p.y=d.y}
-      else if(dd>c.moveBudget+.02||dd>=3){p.tp++;if(new URLSearchParams(location.search).has('debug'))c.moveRejects=(c.moveRejects||0)+1}
+      if(dd<=c.moveBudget+.02&&dd<3&&travelClear(p.x,p.y,d.x,d.y,pt(p))){c.moveBudget=Math.max(0,c.moveBudget-dd);p.walk+=dd*3;p.x=d.x;p.y=d.y;p.z=heightAt(p.x,p.y)}
+      else{p.tp++;if(new URLSearchParams(location.search).has('debug'))c.moveRejects=(c.moveRejects||0)+1}
     }
   }
   else if(d.t==='b'){if(hostInt(d.i,0,N-1)&&hostInt(d.j,0,N-1)&&hostInt(d.s,0,2)&&typeof d.d==='boolean')doBuild(p,d.i,d.j,d.s,d.d)}
@@ -187,13 +188,20 @@ function hostDrop(peerId){
 // salvage and kills. Keyed by the browser's room session, which survives a reload in the same tab.
 function stashLeaver(c,p){
   if(!c.session||c.kicked||!p||game.pvp)return;
-  NET.leftBy.set(c.session,{gid:game.gid,cls:p.cls,up:{...p.up},ammoEq:p.ammoEq.slice(),sal:p.sal|0,kills:p.kills|0,deaths:p.deaths|0,out:!!p.out});
+  NET.leftBy.set(c.session,{gid:game.gid,chapter:game.chapter,prepEpoch:game.prepEpoch||0,cls:p.cls,up:{...p.up},ammoEq:p.ammoEq.slice(),sal:p.sal|0,kills:p.kills|0,deaths:p.deaths|0,out:!!p.out,
+    x:p.x,y:p.y,z:heightAt(p.x,p.y),hp:p.hp,max:p.max,alive:p.alive,downed:p.downed,rt:p.rt,revive:p.revive,mats:p.mats.slice(),nades:p.nades,ammo:p.ammo,rl:p.rl,rk:p.rk,rkCd:p.rkCd,stl:p.stl,stlCd:p.stlCd});
   if(NET.leftBy.size>12)NET.leftBy.delete(NET.leftBy.keys().next().value);
 }
 function restoreLeaver(c,p){
   const s=NET.leftBy.get(c.session);if(!s||s.gid!==game.gid||game.pvp)return false;NET.leftBy.delete(c.session);
   if(s.cls===p.cls){for(const k in p.up)p.up[k]=Math.max(0,Math.min(ARM_MAX,s.up[k]|0));p.upS=upStr(p);refit(p);p.nades=p.maxN}
   if(Array.isArray(s.ammoEq)&&ammoMode()){const a=s.ammoEq.map(id=>AMMO_BY[id]?id:'');p.ammoEq=[a[0]||'',p.cls==='sniper'&&a[1]&&a[1]!==a[0]?a[1]:'']}
+  if(campaign()){
+    const prepared=(game.prepEpoch||0)>s.prepEpoch;
+    p.mats=s.mats.map((m,i)=>Math.min(m,p.cap[i]));
+    if(!prepared){p.hp=Math.min(p.max,s.hp*(p.max/s.max));p.alive=s.alive;p.downed=s.downed;p.rt=s.rt;p.revive=s.revive;p.nades=Math.min(p.maxN,s.nades);p.rk=s.rk;p.rkCd=s.rkCd;p.stl=s.stl;p.stlCd=s.stlCd;if(s.cls===p.cls&&p.gun.mag){p.ammo=Math.min(p.gun.mag,s.ammo??p.gun.mag);p.rl=s.rl||0}}
+    if(s.chapter===game.chapter&&!collides(s.x,s.y,.27,pt(p))){p.x=s.x;p.y=s.y;p.z=heightAt(p.x,p.y);p.tx=p.x;p.ty=p.y;p.tp++}
+  }
   p.sal=Math.max(p.sal|0,s.sal);p.kills=s.kills;p.deaths=s.deaths;if(s.out){p.out=true;p.alive=false;p.downed=false;p.ev=BLITZ.hold}return true;   // v0.9.4.0: out is out
 }
 function hostKick(pid){
@@ -250,7 +258,7 @@ function hostNet(dt){
 // one-off events (sounds, particles, toasts, bullets, kill feed) and wall changes go on the reliable channel, so a
 // lost or late state packet never takes them with it; big batches are split to stay under PeerJS's 16 KB JSON limit
 function sendEvents(fx,wl,wd,pi){
-  const out=[],put=(list,w,d,i)=>{const m={t:'x',n:NET.snapN,fx:list};if(w)m.wl=w;if(d)m.wd=d;if(i)m.pi=i;
+  const out=[],put=(list,w,d,i)=>{const m={t:'x',n:NET.snapN,fx:list};if(campaign())m.cm=game.chapter;if(w)m.wl=w;if(d)m.wd=d;if(i)m.pi=i;
     if(list.length>1&&JSON.stringify(m).length>12000){const h=list.length>>1;put(list.slice(0,h),w,d,i);put(list.slice(h),null,null,null)}else out.push(m)};
   put(fx,wl,wd,pi);for(const m of out)NET.sendAll(m);
 }
@@ -284,12 +292,12 @@ function applyWallDiff(d){for(let q=0;q+4<d.length;q+=5)setWallTile(d[q],d[q+1],
 const PL_STATE=[['id',p=>p.id],['x',p=>r2(p.x)],['y',p=>r2(p.y)],['ax',p=>r2(p.aim.x)],['ay',p=>r2(p.aim.y)],['hp',p=>Math.ceil(p.hp)],
   ['alive',p=>p.alive?1:0],['down',p=>p.downed?1:0],['rev',p=>r2(p.revive)],['rt',p=>r2(p.rt)],['m0',p=>p.mats[0]],['m1',p=>p.mats[1]],['m2',p=>p.mats[2]],
   ['nades',p=>p.nades],['tp',p=>p.tp],['bcd',p=>r2(Math.max(0,p.bcd))],['sal',p=>p.sal|0],['kills',p=>p.kills|0],['deaths',p=>p.deaths|0],
-  ['prot',p=>p.prot>0?1:0],['bolt',p=>p.bolt>0?r2(p.bolt/p.boltT):0],['ammo',p=>p.gun.mag?p.ammo|0:-1],['rl',p=>p.rl>0?1:0],['stun',p=>r2(p.stun||0)],['ab',p=>p.ab|0],['out',p=>p.out?1:0],['ev',p=>r2(p.ev||0)]];   // out/ev (v0.9.4.0): evacuated, and seconds stood in the evac ring   // ab: class-ability state, reserved (always 0 until abilities land)
+  ['prot',p=>p.prot>0?1:0],['bolt',p=>p.bolt>0?r2(p.bolt/p.boltT):0],['ammo',p=>p.gun.mag?p.ammo|0:-1],['rl',p=>p.rl>0?1:0],['stun',p=>r2(p.stun||0)],['ab',p=>p.ab|0],['out',p=>p.out?1:0],['ev',p=>r2(p.ev||0)],['z',p=>r2(heightAt(p.x,p.y))]];   // out/ev (v0.9.4.0): evacuated, and seconds stood in the evac ring   // ab: class-ability state, reserved (always 0 until abilities land)
 const PL_INFO=[['id',p=>p.id],['name',p=>p.name],['cls',p=>p.cls],['slot',p=>p.slot],['max',p=>p.max],['maxN',p=>p.maxN],['upS',p=>p.upS],['cosS',p=>p.cosS],['team',p=>p.team||''],['ammoEq',p=>p.ammoEq.join(',')],['sk',p=>p.sk]];
 // enemies: the boss-only fields sit last and trailing zeros are dropped, so a plain raider sends 7 numbers, not 12
 const EN_STATE=[['id',e=>e.id],['type',e=>ECODE.indexOf(e.type==='boss'?'boss:'+e.boss:e.type)],['x',e=>r2(e.x)],['y',e=>r2(e.y)],['ax',e=>r2(e.aim.x)],['ay',e=>r2(e.aim.y)],
   ['hp',e=>r2(e.hp/e.max)],['plant',e=>e.planted?1:0],['st',e=>e.st||0],['stF',e=>e.st?r2(Math.max(0,e.stT/e.stM)):0],['lx',e=>r2(e.lx||0)],['ly',e=>r2(e.ly||0)],
-  ['burn',e=>r2(e.burnT||0)],['slow',e=>r2(e.slowT||0)],['slowPct',e=>r2(e.slowPct||0)]];
+  ['burn',e=>r2(e.burnT||0)],['slow',e=>r2(e.slowT||0)],['slowPct',e=>r2(e.slowPct||0)],['z',e=>r2(heightAt(e.x,e.y))]];
 const fieldIdx=L=>Object.fromEntries(L.map((f,i)=>[f[0],i])),PS=fieldIdx(PL_STATE),PI=fieldIdx(PL_INFO);
 const packRow=(L,x)=>L.map(f=>f[1](x)),packTrim=(L,x)=>{const r=packRow(L,x);while(r.length>1&&r[r.length-1]===0)r.pop();return r},PE=fieldIdx(EN_STATE);
 // player info that changed since it was last sent (all of it after a reset: game start, someone dropping in)
@@ -323,6 +331,8 @@ function makeSnap(withWalls){
     sa:flat(sacks,k=>[r2(k.x),r2(k.y)]),
     nd:flat(nodes,n=>[n.amt|0,n.locked?1:0]),fo:floodOn?1:0};
   if(game.bossLog&&game.bossLog.length)s.bl=game.bossLog;
+  if(campaign())s.cm=game.chapter;
+  if(frostFields.length)s.ice=frostFields.map(f=>[r2(f.x),r2(f.y),r2(f.t),r2(f.z)]);
   if(game.fb){const F=game.fb,E=F.evac;s.fb=[r2(F.t),F.n,F.max,E?r2(E.x):0,E?r2(E.y):0,E?r2(E.r):0,F.done?1:0]}   // v0.9.4.0: the Final Blitz clock and the evac site
   if(game.fbLog&&game.fbLog.length)s.fl=game.fbLog;
   if(arcs.length)s.ar=flat(arcs,r=>[r2(r.x),r2(r.y),r2(r.vx),r2(r.vy)]);
@@ -333,7 +343,7 @@ function makeSnap(withWalls){
 }
 
 // ---------- guest ----------
-async function netJoin(code){
+async function netJoin(code,invitationSession=''){
   if(inRun()&&$('menu').hidden)return;   // v0.9.3.7: never host or join over a live run
   if(!onlineOK()){mStatus('Getting online play ready…');if(!await needPeer()){mStatus(PEER_FAIL);return}if(NET.mode!=='solo')return}
   code=String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
@@ -347,7 +357,7 @@ async function netJoin(code){
   peer.on('open',()=>{
     const tgt=ROOM_PREFIX+code,r=peer.connect(tgt,{label:'r',reliable:true,serialization:'json'}),uu=peer.connect(tgt,{label:'u',reliable:false,serialization:'json'});
     NET.host={r,u:uu};
-    r.on('open',()=>{clearTimeout(to);NET.lastHeard=performance.now();const st=openStateCh(r);if(st){NET.host.st=st;st.onmessage=ev=>{try{guestData(JSON.parse(ev.data))}catch(e){}}}r.send({t:'hello',name:myName(),cls:pick.cls,cos:cosStr(myCos()),v:PROTO,sk:mySkills(),uid:locker.cloud?myUid():'',session:ROOM_SESSION})});
+    r.on('open',()=>{clearTimeout(to);NET.lastHeard=performance.now();const st=openStateCh(r);if(st){NET.host.st=st;st.onmessage=ev=>{try{guestData(JSON.parse(ev.data))}catch(e){}}}r.send({t:'hello',name:myName(),cls:pick.cls,cos:cosStr(myCos()),v:PROTO,sk:mySkills(),uid:locker.cloud?myUid():'',session:ROOM_SESSION,invitationSession})});
     for(const c of[r,uu]){c.on('data',guestData);c.on('error',()=>{})}
     r.on('close',()=>{if(NET.mode==='guest')netLeave('The host closed the game.')});
   });
@@ -362,13 +372,14 @@ function guestData(d){
       newGame(d.roster,d.pvp||'',{gid:d.gid,mods:d.mods,job:d.job,guest:true});replayFx(d.shots||[]);NET.lastN=0;NET.inGame=true;enterGame();modsToast();break;
     case'ping':break;
     case's':if(NET.inGame&&d.n>NET.lastN){NET.lastN=d.n;applySnap(d)}break;
-    case'x':if(NET.inGame){if(d.pi)applyInfo(d.pi);if(d.wl)decodeWalls(d.wl);if(d.wd)applyWallDiff(d.wd);replayFx(d.fx||[])}break;
+    case'x':if(NET.inGame){if(campaign()&&d.cm!==undefined){if(d.cm<game.chapter)break;if(d.cm!==game.chapter)changeChapter(d.cm,true)}if(d.pi)applyInfo(d.pi);if(d.wl)decodeWalls(d.wl);if(d.wd)applyWallDiff(d.wd);replayFx(d.fx||[])}break;
     case't':toast(d.b,d.s);break;
     case'kick':netLeave(d.why);break;
     case'c':addChat(d.id,d.n,cleanChat(d.m),d.tm);break;
   }
 }
 function applySnap(s){
+  if(campaign()&&s.cm!==undefined){if(s.cm<game.chapter)return;if(s.cm!==game.chapter)changeChapter(s.cm,true)}
   const wasOver=game.phase==='over';
   game.phase=s.ph;game.wave=s.w;game.timer=s.tm;game.bosses=s.bk|0;game.qn=s.q;game.won=!!s.won;game.winner=s.wn||'';
   game.sbN=s.sb|0;game.wx=s.wx?1:0;game.sd=!!s.sd;
@@ -382,7 +393,7 @@ function applySnap(s){
     const id=r[PS.id];let p=players.get(id);seen.add(id);
     if(!p)continue;   // their details (name, job, outfit) arrive on the reliable channel; they appear a moment later
     if(p.fresh===undefined){p.fresh=0;p.x=r[PS.x];p.y=r[PS.y]}
-    p.sal=r[PS.sal]|0;p.kills=r[PS.kills]|0;p.deaths=r[PS.deaths]|0;p.prot=r[PS.prot]?1:0;
+    p.z=r[PS.z]||0;p.sal=r[PS.sal]|0;p.kills=r[PS.kills]|0;p.deaths=r[PS.deaths]|0;p.prot=r[PS.prot]?1:0;
     const mine=id===myId;
     if(mine){if(r[PS.tp]!==p.tp){p.x=r[PS.x];p.y=r[PS.y];p.tp=r[PS.tp]}}
     else{p.tx=r[PS.x];p.ty=r[PS.y];p.aim={x:r[PS.ax],y:r[PS.ay]};p.tp=r[PS.tp]}
@@ -399,7 +410,8 @@ function applySnap(s){
     if(!e)e={id,x:v('x'),y:v('y'),walk:rnd()*6,flash:0,max:1,hp:1};
     if(v('hp')<e.hp-.001)e.flash=.08;
     const c=ECODE[v('type')]||'rifle',bk=c.startsWith('boss:')?c.slice(5):'';
-    Object.assign(e,{type:bk?'boss':c,boss:bk||undefined,big:!!bk,raft:!!(BOSSES[bk]&&BOSSES[bk].raft)&&waterK(idx(clamp(Math.floor(v('x')),0,N-1),clamp(Math.floor(v('y')),0,N-1))),burrow:bk==='foreman'&&(v('st')===2||v('st')===4),tx:v('x'),ty:v('y'),aim:{x:v('ax'),y:v('ay')},hp:v('hp'),max:1,planted:!!v('plant'),st:v('st'),stF:v('stF'),lx:v('lx'),ly:v('ly'),burnT:v('burn'),slowT:v('slow'),slowPct:v('slowPct')});enemies.push(e)}
+    Object.assign(e,{type:bk?'boss':c,boss:bk||undefined,big:!!bk,raft:!!(BOSSES[bk]&&BOSSES[bk].raft)&&waterK(idx(clamp(Math.floor(v('x')),0,N-1),clamp(Math.floor(v('y')),0,N-1))),burrow:bk==='foreman'&&(v('st')===2||v('st')===4),tx:v('x'),ty:v('y'),aim:{x:v('ax'),y:v('ay')},hp:v('hp'),max:1,planted:!!v('plant'),st:v('st'),stF:v('stF'),lx:v('lx'),ly:v('ly'),burnT:v('burn'),slowT:v('slow'),slowPct:v('slowPct'),z:v('z')});enemies.push(e)}
+  frostFields=(s.ice||[]).map(f=>({x:f[0],y:f[1],t:f[2],z:f[3],r:.72,k:idx(Math.floor(f[0]),Math.floor(f[1]))}));
   rockets=[];for(let o=0;o<(s.rk||[]).length;o+=4)rockets.push({x:s.rk[o],y:s.rk[o+1],vx:s.rk[o+2],vy:s.rk[o+3]});
   fires=[];for(let o=0;o<(s.fz||[]).length;o+=5)fires.push({x:s.fz[o],y:s.fz[o+1],t:s.fz[o+2],r:s.fz[o+3],nap:s.fz[o+4]|0,max:4});
   arcs=[];for(let o=0;o<(s.ar||[]).length;o+=4)arcs.push({x:s.ar[o],y:s.ar[o+1],vx:s.ar[o+2],vy:s.ar[o+3]});
@@ -418,11 +430,11 @@ function applySnap(s){
   if(game.phase==='over'&&!wasOver)showOver();
 }
 // Optional tail fields keep old shot events readable; no simulation data depends on them.
-function cosmeticPoint(v,n){return Array.isArray(v)&&v.length===n&&v.every(Number.isFinite)?v:null}
+function cosmeticPoint(v,n){return Array.isArray(v)&&(v.length===n||v.length===n+1)&&v.every(Number.isFinite)?v:null}
 function addGuestBullet(e){
  if(bullets.some(b=>b.id===e[1]))return; // start snapshot and queued reliable shot may overlap
  const visual=cosmeticPoint(e[10],4),owner=visual&&players.get(e[11]);if(owner)owner._shotDrawUntil=game.time+.08;
- if(bullets.length<300)bullets.push({id:e[1],x:e[2],y:e[3],vx:e[4],vy:e[5],team:e[6],heavy:!!e[7],tr:e[8],tc:Math.max(0,e[12]|0),left:e[9],visual});
+ if(bullets.length<300)bullets.push({id:e[1],x:e[2],y:e[3],vx:e[4],vy:e[5],team:e[6],heavy:!!e[7],tr:e[8],tc:Math.max(0,e[12]|0),left:e[9],dist:0,z0:Number.isFinite(e[13])?e[13]:heightAt(e[2],e[3])+.7,zSlope:Number.isFinite(e[14])?e[14]:0,visual});
 }
 function replayFx(list){
   replaying=true;
@@ -452,7 +464,7 @@ function guestUpdate(dt){
   for(const p of players.values()){if(p!==player)smooth(p);p.flash=Math.max(0,(p.flash||0)-dt);if(p.boltF>0)p.boltF=Math.max(0,p.boltF-dt*1.9);if(p.stun>0)p.stun=Math.max(0,p.stun-dt)}
   smooth(qm);qm.flash=Math.max(0,qm.flash-dt);
   for(const e of enemies){smooth(e);e.flash=Math.max(0,e.flash-dt);e.burnT=Math.max(0,(e.burnT||0)-dt);e.slowT=Math.max(0,(e.slowT||0)-dt)}
-  for(const b of bullets){b.x+=b.vx*dt;b.y+=b.vy*dt;if(b.left!==undefined){b.left-=Math.hypot(b.vx,b.vy)*dt;if(b.left<=0||!inb(b.x|0,b.y|0))b.dead=true}}
+  for(const b of bullets){b.x+=b.vx*dt;b.y+=b.vy*dt;b.dist=(b.dist||0)+Math.hypot(b.vx,b.vy)*dt;if(b.left!==undefined){b.left-=Math.hypot(b.vx,b.vy)*dt;if(b.left<=0||!inb(b.x|0,b.y|0))b.dead=true}}
   compactBullets();
   for(const l of lobs)l.t=Math.min(l.T,l.t+dt);
   for(const r of arcs){r.x+=r.vx*dt;r.y+=r.vy*dt}if(game.fb&&!game.fb.done&&game.phase==='raid')game.fb.t=Math.max(0,game.fb.t-dt);   // v0.9.4.0

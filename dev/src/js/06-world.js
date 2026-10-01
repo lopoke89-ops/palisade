@@ -7,11 +7,11 @@ function computeFlow(){
   for(let it=0;it<N*N;it++){
     let uK=-1,bv=1e9;for(let k=0;k<N*N;k++)if(!done[k]&&dist[k]<bv){bv=dist[k];uK=k}
     if(uK<0)break;done[uK]=1;const ui=uK%N,uj=(uK/N)|0,c=enterCost(uK);
-    for(const[di,dj]of D4){const i=ui+di,j=uj+dj;if(!inb(i,j))continue;const k=idx(i,j),nv=bv+c;if(nv<dist[k])dist[k]=nv}
+    for(const[di,dj]of D4){const i=ui+di,j=uj+dj;if(!heightLink(ui,uj,i,j))continue;const k=idx(i,j),nv=bv+c;if(nv<dist[k])dist[k]=nv}
   }
 }
 function markFlow(){if(!flowDirty){flowDirty=true;flowT=.3}}
-function bestStep(ti,tj){let best=-1,bv=1e12;for(const[di,dj]of D4){const i=ti+di,j=tj+dj;if(!inb(i,j))continue;const k=idx(i,j),v=dist[k]+enterCost(k);if(v<bv){bv=v;best=k}}return best}
+function bestStep(ti,tj){let best=-1,bv=1e9;for(const[di,dj]of D4){const i=ti+di,j=tj+dj;if(!heightLink(ti,tj,i,j))continue;const k=idx(i,j),v=dist[k]+enterCost(k);if(v<bv){bv=v;best=k}}return best}
 // breadth-first path for Delgado: doors are open to our side
 function teamPath(si,sj,isGoal){
   const s=idx(si,sj);if(isGoal(s))return s;
@@ -20,7 +20,7 @@ function teamPath(si,sj,isGoal){
     const k=q[h];
     if(isGoal(k)){let c=k;while(prev[c]!==s)c=prev[c];return c}
     const i=k%N,j=(k/N)|0;
-    for(const[di,dj]of D4){const ni=i+di,nj=j+dj;if(!inb(ni,nj)||solidTile(ni,nj,true))continue;const nk=idx(ni,nj);if(prev[nk]!==-1)continue;prev[nk]=k;q.push(nk)}
+    for(const[di,dj]of D4){const ni=i+di,nj=j+dj;if(!heightLink(i,j,ni,nj)||solidTile(ni,nj,true))continue;const nk=idx(ni,nj);if(prev[nk]!==-1)continue;prev[nk]=k;q.push(nk)}
   }
   return -1;
 }
@@ -29,17 +29,21 @@ function teamPath(si,sj,isGoal){
 function solidTile(i,j,team){if(!inb(i,j))return true;const k=idx(i,j);if(coreKs.has(k)||terrSolid(terr[k]))return true;const w=walls[k];if(w)return!(team&&w.door&&(team===true||w.tm===team));const n=nodeAt(i,j);return!!(n&&n.solid)}
 function collides(x,y,r,team){
   if(x-r<0||y-r<0||x+r>N||y+r>N)return true;
+  if(heightCollision(x,y,r))return true;
   if(typeof team==='string'&&game.pvp==='base'&&game.phase==='build'&&(team==='a'?x-y>-.35:x-y<.35))return true;   // the truce line
   for(let i=Math.floor(x-r);i<=Math.floor(x+r);i++)for(let j=Math.floor(y-r);j<=Math.floor(y+r);j++)if(solidTile(i,j,team))return true;
   return false;
 }
-function moveEnt(e,dx,dy,team){const r=.27;if(!collides(e.x+dx,e.y,r,team))e.x+=dx;if(!collides(e.x,e.y+dy,r,team))e.y+=dy}
+function moveEnt(e,dx,dy,team){const r=.27;
+  if(MAP!==MAPS.frost){if(!collides(e.x+dx,e.y,r,team))e.x+=dx;if(!collides(e.x,e.y+dy,r,team))e.y+=dy;return}
+  const n=Math.max(1,Math.ceil(Math.max(Math.abs(dx),Math.abs(dy))/.12));for(let s=0;s<n;s++){if(travelClear(e.x,e.y,e.x+dx/n,e.y,team,r))e.x+=dx/n;if(travelClear(e.x,e.y,e.x,e.y+dy/n,team,r))e.y+=dy/n}e.z=heightAt(e.x,e.y)}
 function losClear(x0,y0,x1,y1){
+  if(!heightRayClear(x0,y0,x1,y1))return false;
   const d=Math.hypot(x1-x0,y1-y0),st=Math.ceil(d/.2);let last=-1,skipped=false;
   for(let s=1;s<st;s++){
     const t=s/st,x=x0+(x1-x0)*t,y=y0+(y1-y0)*t,i=x|0,j=y|0;if(!inb(i,j))return false;const k=idx(i,j);
     if(coreKs.has(k)||terrShot(terr[k]))return false;const n=nodeAt(i,j);if(n&&n.solid)return false;
-    const w=walls[k];if(w&&k!==last){last=k;if(!skipped&&d*t<1.35){skipped=true;continue}if(wallState(w)===0)return false}
+    const w=walls[k];if(w&&k!==last){last=k;if(!skipped&&d*t<1.35){skipped=true;continue}const ray=heightAt(x0,y0)+.7+(heightAt(x1,y1)-heightAt(x0,y0))*t;if(ray<heightAt(x,y)+1.35&&wallState(w)===0)return false}
   }
   return true;
 }
@@ -114,15 +118,15 @@ function explode(x,y,R=1.65,power=1,own=null,raid=false){
   for(let n=0;n<22*power;n++)emit(x,y,4*u,'fire');for(let n=0;n<10*power;n++)emit(x,y,4*u,'smoke');
   const fall=d=>d<.7?1:Math.max(0,1-(d-.7)/(R-.7));
   for(let i=Math.floor(x-R-1);i<=Math.floor(x+R+1);i++)for(let j=Math.floor(y-R-1);j<=Math.floor(y+R+1);j++){
-    if(!inb(i,j))continue;const k=idx(i,j),f=fall(Math.hypot(i+.5-x,j+.5-y));if(f<=0)continue;
+    if(!inb(i,j))continue;const k=idx(i,j),f=fall(heightDist(x,y,i+.5,j+.5));if(f<=0)continue;
     const w=walls[k];if(w){if(w.mat===0&&f>.25){w.fire=6;w.fireBy=own}damageWall(k,80*f*power*MAT[w.mat].blast,own)}
   }
   crackBlast(x,y,R,power);
   const src=own?players.get(own):null;
-  for(const c of cores){const f=fall(Math.hypot(c.i+.5-x,c.j+.5-y));if(f>0&&!(game.pvp&&src&&src.team===c.team))hurtStake(c,48*f*power)}
-  if(!raid)for(const e of enemies){if(e.burrow)continue;const f=fall(Math.hypot(e.x-x,e.y-y));if(f>0)hurtEnemy(e,62*f*power,own)}
+  for(const c of cores){const f=fall(heightDist(x,y,c.i+.5,c.j+.5));if(f>0&&!(game.pvp&&src&&src.team===c.team))hurtStake(c,48*f*power)}
+  if(!raid)for(const e of enemies){if(e.burrow)continue;const f=fall(heightDist(x,y,e.x,e.y));if(f>0)hurtEnemy(e,62*f*power,own)}
   if(game.pvp){for(const a of players.values()){if(!a.alive||(src&&!rivals(src,a)))continue;const f=fall(Math.hypot(a.x-x,a.y-y));if(f>0)hurtPlayer(a,50*f*power*PVP.nade,own)}}
-  else for(const a of allies()){if(!a.alive)continue;const f=fall(Math.hypot(a.x-x,a.y-y));if(f>0)hurtAlly(a,50*f*power*(a===qm?.8:1))}
+  else for(const a of allies()){if(!a.alive)continue;const f=fall(heightDist(x,y,a.x,a.y));if(f>0)hurtAlly(a,50*f*power*(a===qm?.8:1))}
 }
 // Screen shake. `shake` is a decaying amplitude (px) for impacts and blasts; `kick` is a short directional
 // shove for your own gunshots that springs back. Both follow the SCREEN SHAKE setting.

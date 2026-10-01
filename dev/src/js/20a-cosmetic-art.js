@@ -22,6 +22,7 @@ function tracerStamp(st,t){
  const fade=c.createLinearGradient(0,0,192,0);fade.addColorStop(0,'#fff');fade.addColorStop(.64,'#fff');fade.addColorStop(1,'transparent');c.globalCompositeOperation='destination-in';c.fillStyle=fade;c.fillRect(0,0,192,48);
  // Small decorative marks belong to the cached frame, not a new path on every live bullet.
  c.globalCompositeOperation='source-over';
+ if(st.winter){for(let i=0;i<3;i++)winterFlake(c,20+i*38,24,i===0?5:3,st.c,i*.3);if(st.winter==='auroralance'||st.winter==='solsticecomet'){c.strokeStyle=st.winter==='auroralance'?'#c1a9f1':'#a4e7ff';c.lineWidth=2;c.beginPath();c.moveTo(0,25);c.bezierCurveTo(32,13,80,33,150,24);c.stroke()}}
  if(st.pulse||st===TRAILS.plasma||st===TRAILS.aurora){c.strokeStyle=st.pulse?'#fff2fb':'#deffff';c.lineWidth=1.4;c.beginPath();for(let i=1;i<4;i++){const x=i*32;c.moveTo(x,19);c.lineTo(x+3,24);c.lineTo(x,29)}c.stroke()}
  if(st.pk==='star'||st.pk==='cosmic'||st.rgrad){c.fillStyle=st.rgrad?'#fff1ac':'#f4edff';c.beginPath();for(let i=1;i<4;i++){const x=i*35,y=24+(i%2?2:-2),r=i===1?5:3;c.moveTo(x-r,y);c.lineTo(x,y-r);c.lineTo(x+r,y);c.lineTo(x,y+r);c.closePath()}c.fill()}
  if(st.arc){c.globalCompositeOperation='source-over';for(const[w,col]of[[7,'rgba(40,200,220,.45)'],[3.2,st.c],[1.2,'#eaffff']]){c.strokeStyle=col;c.lineWidth=w;c.beginPath();c.arc(-14,24,26,-.62,.62);c.stroke()}}   // v0.9.4.0 Blue Arc: a crescent at the head
@@ -62,6 +63,7 @@ function paintTracer(ctx,x1,y1,x2,y2,st,w,t,heavy,colorIndex=0){
 }
 const FINISH_LIFE={sparks:.48,smoke:1.15,confetti:.95,embers:.8,glint:.65,bolt:.48,skull:.95,pixel:.7,frost:.75,gradburst:.75,sunburst:.75,toxic:.85,supernova:.85,glitchout:.6,singularity:.85,shockwave:.7,bubbles:1.2,bats:1,spider:1.1,souls:1.2,rocketburst:.8,reticle:.7,frag:.75,salvage:.95,hellportal:1.15,cinder:.8,tealslash:.6,ashbrand:1,demonclaw:1.1};
 function paintFinish(ctx,key,progress,scale,x,y){
+ if(paintWinterFinish(ctx,key,progress,scale,x,y))return;
  if(!(key in FINISH_LIFE)||progress<0||progress>=1)return;
  const p=progress,e=1-Math.pow(1-p,3),fade=Math.min(1,(1-p)*2.8),pop=Math.min(1,p*12),tau=Math.PI*2;
  ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);ctx.globalAlpha*=fade*pop;ctx.lineJoin='round';ctx.lineCap='round';

@@ -266,19 +266,22 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)acctResume
 // Hosts who tick "List my game" publish their room code to Supabase every 15 s while the room is open; the
 // Multiplayer page lists rooms heard from in the last 45 s that run this same version. Joining is the usual
 // room-code join, so the game itself still goes phone to phone.
-const MODE_NAME={coop:'CO-OP',base:'BASE BATTLE',ffa:'FREE-FOR-ALL'},LEN_NAME={'5':'5 RAIDS','10':'10 RAIDS',endless:'ENDLESS',blitz:'BLITZKRIEG RUSH'};
+const MODE_NAME={coop:'CO-OP',base:'BASE BATTLE',ffa:'FREE-FOR-ALL'},LEN_NAME={'5':'5 RAIDS','10':'10 RAIDS',endless:'ENDLESS',blitz:'BLITZKRIEG RUSH',campaign:'OPERATION WHITEOUT'};
 let lobTimer=0,lobBusy=false,pubTimer=0;
 const listing=()=>cloudOn&&cfg.listGame!==false;
 async function lobbyPublish(){
-  if(!listing()||NET.mode!=='host'||!NET.code||!acct.s||!await freshToken())return;
+  const owner=myUid(),inc=NET.incarnation;
+  if(NET.mode!=='host'||!NET.code||!acct.s||!await freshToken()||owner!==myUid()||inc!==NET.incarnation)return;
+  await registerInviteRoom();if(owner!==myUid()||inc!==NET.incarnation||NET.mode!=='host')return;
+  if(!listing()){sbFetch('/rest/v1/lobbies?host_id=eq.'+encodeURIComponent(owner),{method:'DELETE'});return}
   const coop=(pick.pvp||'coop')==='coop',n=NET.inGame&&!demo?players.size:NET.roster.length;
   const body={host_id:myUid(),code:NET.code,name:cleanChat(`${myName()}'s game`).slice(0,24)||'Open game',mode:pick.pvp||'coop',
     length:coop?pick.mode:null,diff:coop?pick.diff:null,players:Math.max(1,Math.min(6,n)),in_game:!!NET.inGame,proto:PROTO};
   await sbFetch('/rest/v1/lobbies',{method:'POST',body,headers:{Prefer:'resolution=merge-duplicates,return=minimal'}});
 }
 function lobbyUnpublish(){clearInterval(pubTimer);pubTimer=0;if(!cloudOn||!acct.s)return;
-  sbFetch('/rest/v1/lobbies?host_id=eq.'+encodeURIComponent(myUid()),{method:'DELETE',keepalive:true})}
-function lobbyStartPublishing(){clearInterval(pubTimer);if(!listing())return;lobbyPublish();pubTimer=setInterval(lobbyPublish,15000)}
+  sbFetch('/rest/v1/lobbies?host_id=eq.'+encodeURIComponent(myUid()),{method:'DELETE',keepalive:true});if(NET.incarnation)rpc('room_register',{p:{incarnation:NET.incarnation,close:true}})}
+function lobbyStartPublishing(){clearInterval(pubTimer);lobbyPublish();pubTimer=setInterval(lobbyPublish,15000)}
 async function refreshLobbies(){
   // the list is only rebuilt when what it would show changed (it refreshes every 6 s)
   const box=$('lobList'),same=k=>{if(box.dataset.k===k)return true;box.dataset.k=k;return false},

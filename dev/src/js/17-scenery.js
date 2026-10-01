@@ -16,7 +16,7 @@ function genForest(){
     if(Q){if(d>=2&&h>.72)t={x,y,kind:v>.7?1:4,v,h:40+v*26};else if(d>=1&&h>.86)t={x,y,kind:4,v,h:0}}
     else if(d>=(front?3:2)&&h>.3)t={x,y,kind:v>.93?1:0,v,h:56+v*30+(d-2)*2};
     else if(d>=1&&h>.8)t={x,y,kind:v>.35?2:3,v,h:0};
-    if(t)t.a=1;
+    if(t){t.a=1;t.snow=m===MAPS.frost;if(t.snow&&t.kind===1)t.kind=0}
     if(t)(front?treesFront:treesBack).push(t);
   }
   treesBack.sort((a,b)=>a.x+a.y-b.x-b.y);treesFront.sort((a,b)=>a.x+a.y-b.x-b.y);
@@ -36,6 +36,7 @@ function drawTreeAt(t,cx,cy,alpha){
       const by=-9-k*t.h*.2,w=(19-k*4.8)*(.9+t.v*.3),ty=by-t.h*.44;
       const L=[-w,by],R=[w,by],A=[0,ty],M=[0,by+3.5];
       P([L,A,M],light,false);P([M,A,R],dk,false);
+      if(t.snow){P([[-w*.68,by-t.h*.14],A,[w*.68,by-t.h*.14],[0,by-t.h*.07]],k%2?'#d9ebef':'#b8d5e1',false)}
       g.strokeStyle=OUT;g.lineWidth=1.1;g.beginPath();g.moveTo(L[0],L[1]);g.lineTo(A[0],A[1]);g.lineTo(R[0],R[1]);g.lineTo(M[0],M[1]);g.closePath();g.stroke();
     }
   }else if(t.kind===1){
@@ -79,7 +80,7 @@ function paintBack(){
     if(i>=0&&j>=0&&i<N&&j<N)continue;
     const dx=i<0?-i:(i>=N?i-N+1:0),dy=j<0?-j:(j>=N?j-N+1:0),d=Math.max(dx,dy),h=hash(i+400,j+77);
     if(m.outWater&&m.outWater(i,j,MAPO)){quad(iso(i,j),iso(i+1,j),iso(i+1,j+1),iso(i,j+1),h<.5?'#1d3848':'#1b3544');continue}
-    const col=Q?(rampNear(i,j)?(h<.5?'#4a4238':'#453e35'):mix(mix('#2e2a25','#35302a',h),'#1a1816',clamp((d-2)/6,0,1))):
+    const col=m===MAPS.frost?mix('#adc6d1','#405966',clamp(d/8,0,1)):Q?(rampNear(i,j)?(h<.5?'#4a4238':'#453e35'):mix(mix('#2e2a25','#35302a',h),'#1a1816',clamp((d-2)/6,0,1))):
       d===1?(h<.5?'#342d21':'#2f2a1e'):mix(mix('#1f2518','#262c1b',h),'#171c13',clamp((d-2)/6,0,1));
     quad(iso(i,j),iso(i+1,j),iso(i+1,j+1),iso(i,j+1),col);
     if(Q){if(h>.7){const c=iso(i+.3+h*.4,j+.5);oval(c[0],c[1],3*u,1.4*u,'rgba(140,130,115,.25)')}continue}
@@ -88,12 +89,14 @@ function paintBack(){
   }
   for(const t of treesBack)drawTree(t,1);
   for(let j=0;j<N;j++)for(let i=0;i<N;i++){
+    if(m===MAPS.frost){paintFrostTile(i,j);continue}
     const h=hash(i,j);quad(iso(i,j),iso(i+1,j),iso(i+1,j+1),iso(i,j+1),groundCol(i,j,h));
     if(!groundDetail(i,j,h)&&h>.86&&!Q){const c=iso(i+.5,j+.5);oval(c[0]+(h-.9)*40*u,c[1],6*u,2.5*u,'rgba(84,104,64,.35)')}
   }
   g.strokeStyle='rgba(0,0,0,.22)';g.lineWidth=1;g.beginPath();
-  for(let s=0;s<=N;s++){let a=iso(s,0),b=iso(s,N);g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);a=iso(0,s);b=iso(N,s);g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1])}g.stroke();
+  if(m!==MAPS.frost)for(let s=0;s<=N;s++){let a=iso(s,0),b=iso(s,N);g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);a=iso(0,s);b=iso(N,s);g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1])}g.stroke();
   for(let s=0;s<N;s++){drawEdge('n',s);drawEdge('w',s)}
+  if(m===MAPS.frost)frostScenery();
 }
 // Near side of the yard. When someone walks behind a tree, only the small patch around that
 // tree is redrawn in the cached image, never the whole thing (a full redraw was the hitch).
@@ -227,7 +230,7 @@ function itemEnemy(e){
   if(e.type==='boss'){const B=BOSSES[e.boss];if(!B)return;const I=bossInfo(e.boss);
     if(e.burrow||(e.boss==='foreman'&&(e.st===2||e.st===4))){drawMound(e);return}
     const rf=B.raft&&e.raft!==false;if(rf)drawRaft(e);const kb=bossBase(e.boss);
-    drawPerson(e.x,e.y,Object.assign({aim:e.aim,walk:rf?0:e.walk,flash:e.flash>0,hp:e.hp/e.max,big:1.45,tag:I.name,tagCol:I.col,swing:kb==='butcher'&&e.st<5?e.st|0:e.boss==='bluebutcher'&&e.st===5?1:0},I.look));
+    drawPerson(e.x,e.y,Object.assign({aim:e.aim,walk:rf?0:e.walk,flash:e.flash>0,hp:e.hp/e.max,big:1.45,tag:I.name,tagCol:I.col,winterSt:e.st,swing:kb==='butcher'&&e.st<5?e.st|0:e.boss==='bluebutcher'&&e.st===5?1:0},I.look));
     if(e.boss==='bulldozer'&&e.st===6)drawDazed(e);drawAmmoStatus(e);return}
   drawPerson(e.x,e.y,Object.assign({aim:e.aim,walk:e.walk,flash:e.flash>0,hp:e.hp/e.max},LOOK[e.type]||LOOK.rifle,{satchel:e.type==='breach'&&!e.planted},e.type==='shield'?{big:1.1}:null));
   drawAmmoStatus(e);
@@ -274,17 +277,18 @@ function render(dt){
   let fx=p.x,fy=p.y,cxF=W<760?.4:.5,cyF=.52; // keep the east approach clear of the kit column on phones
   if(p.out&&!demo){const s=spectateTarget(p);fx=s.x;fy=s.y}   // v0.9.4.0: out of the Final Blitz, you watch your crew
   if(demo){const t=game.time*.07;fx=core.i+2.5+Math.cos(t)*2.5;fy=core.j-2+Math.sin(t)*2;cxF=.5;cyF=W>700?.5:.3}
-  const tx=W*cxF-(fx-fy)*TW2,ty=H*cyF-(fx+fy)*TH2;
+  const tx=W*cxF-(fx-fy)*TW2,ty=H*cyF-(fx+fy)*TH2+heightAt(fx,fy)*heightPx();
   camSX+=(tx-camSX)*.14;camSY+=(ty-camSY)*.14;
   const sh=shakeOffset(dt);camX=snapPx(camSX+sh[0]);camY=snapPx(camSY+sh[1]);
   const bk=caches.back,bx=camX+bk.minX,by=camY+bk.minY;
   if(!(bx<=0&&by<=0&&bx+bk.w>=W&&by+bk.h>=H)){g.fillStyle='#10140e';g.fillRect(0,0,W,H)}
-  PM('back');drawCache(caches.back);drawTerrainLive();PM('items');
+  PM('back');drawCache(caches.back);drawTerrainLive();drawFrostFields();drawWinterTelegraphs();PM('items');
   if(game.pvp==='base'&&game.phase==='build'&&!demo){const a=iso(0,0),b=iso(N,N);g.save();g.strokeStyle='rgba(226,180,54,.55)';g.lineWidth=2*u;g.setLineDash([7*u,6*u]);g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();g.restore();
     const m=iso(N*.5,N*.5);label('TRUCE LINE',m[0],m[1]+14*u,'rgba(226,180,54,.8)',11)}
   RI.n=0;const pd=p.x+p.y,pl=p.x-p.y;
   for(let k=0;k<N*N;k++){
     const i=k%N,j=(k/N)|0;
+    if(MAP===MAPS.frost&&heights[k]&&!connectors[k]&&((j+1<N&&heights[k]>heights[k+N]+(connectors[k+N]?1:0))||(i+1<N&&heights[k]>heights[k+1])))ritem(i+j+2,itemFrostCliff,k);
     if(walls[k]){const dd=i+j+1-pd,lat=(i-j)-pl;ritem(i+j+1,itemWall,k,dd>0&&dd<3.2&&Math.abs(lat)<1.7)}
     else if(debris[k])ritem(i+j+.2,itemDebris,k);
     if(terr[k]>=T_ROCK)ritem(i+j+1,itemTerr,k);   // rock and oil drums
@@ -305,7 +309,7 @@ function render(dt){
   if(playing()&&touchMode&&!padMode&&p.alive&&!game.pvp){const e=lockNow(p);if(e)drawLock(e)}
   g.lineCap='butt';
   for(const l of lobs){if(l.t<0)continue;const t=l.t/l.T,x=l.x0+(l.x1-l.x0)*t,y=l.y0+(l.y1-l.y0)*t,z=Math.sin(Math.PI*t)*((l.k===3||l.k===5?90:40)+Math.hypot(l.x1-l.x0,l.y1-l.y0)*9)*u+WH*.5*(1-t);
-    const c=iso(x,y);g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(c[0],c[1],3*u,1.5*u,0,0,Math.PI*2);g.fill();
+    const c=iso(x,y,heightAt(l.x0,l.y0)+(heightAt(l.x1,l.y1)-heightAt(l.x0,l.y0))*t);g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(c[0],c[1],3*u,1.5*u,0,0,Math.PI*2);g.fill();
     if(l.k===1){g.fillStyle='#2f6a3a';g.fillRect(c[0]-2*u,c[1]-z-3*u,4*u,6*u);g.fillStyle='#ffb040';g.beginPath();g.arc(c[0],c[1]-z-4.5*u,1.8*u+Math.sin(game.time*30)*.6*u,0,Math.PI*2);g.fill()}   // fire bottle
     else if(l.k>=3&&l.k<=5){drawBlitzLob(l,c,z,t)}   // v0.9.4.0: missile, napalm bottle, artillery shell
     else if(l.k===2){g.fillStyle='#6f695f';g.strokeStyle=OUT;g.lineWidth=1.2*u;g.beginPath();g.moveTo(c[0]-7*u,c[1]-z);g.lineTo(c[0]-4*u,c[1]-z-6*u);g.lineTo(c[0]+6*u,c[1]-z-5*u);g.lineTo(c[0]+7*u,c[1]-z+2*u);g.lineTo(c[0]-2*u,c[1]-z+4*u);g.closePath();g.fill();g.stroke()}   // rock slab

@@ -94,6 +94,7 @@ function sfx(name,x,y,noRec,ui){
     case'lock':osc(dest,t,.06,'square',1560,.09);osc(dest,t+.1,.06,'square',1560,.09);osc(dest,t+.2,.1,'square',2080,.1);break;
     case'slash':nz(dest,t,.18,'bandpass',3200,1.5,.55,900);osc(dest,t+.02,.25,'sine',1900,.08,1200);break;
     case'charge':osc(dest,t,.8,'sawtooth',220,.08,900);osc(dest,t,.8,'sine',440,.07,1800);break;
+    case'winterwarn':nz(dest,t,.65,'highpass',2800,.8,.12,1100);[880,660,440].forEach((f,i)=>osc(dest,t+i*.17,.3,'triangle',f,.09,f*.72));break;
     case'zap':nz(dest,t,.35,'highpass',2500,.6,.9);osc(dest,t,.3,'square',95,.25,40);[0,.04,.09,.15].forEach(d=>nz(dest,t+d,.04,'bandpass',4200,3,.5));break;
     // tracer sounds: a soft layer on top of the gunshot (at most every 0.22 s per soldier)
     case'ts_gold':osc(dest,t,.12,'sine',2350,.035);osc(dest,t+.03,.12,'sine',3140,.025);break;

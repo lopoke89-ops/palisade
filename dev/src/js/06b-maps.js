@@ -13,8 +13,9 @@ const terrSolid=t=>t===T_PIT||t===T_ROCK||t===T_DRUM;
 const terrShot=t=>t===T_ROCK;   // what stops a bullet and blocks sight: rock outcrops only (v0.9.1: oil drums don't; a pit doesn't)
 const wetT=t=>t===T_WATER||(t===T_LOW&&floodOn);
 // how fast you move on this spot (1 = normal)
-function slowAt(x,y){const t=tAt(Math.floor(x),Math.floor(y));return(t===T_WATER?.5:t===T_LOW&&floodOn?.62:1)*stormSlow()}   // the Weather modifier's storm slows everyone
+function slowAt(x,y){const t=tAt(Math.floor(x),Math.floor(y)),s=(t===T_WATER?.5:t===T_LOW&&floodOn?.62:1)*stormSlow(),f=frostSlow(x,y);return f<1?Math.max(.5,s*f):s}
 function terrNoBuild(k,hasWall){
+  if(connectors[k])return'Keep the mountain connector clear';
   const t=terr[k];
   if(t===T_WATER)return'Can\'t build on water';
   if(t===T_PIT)return'That\'s a pit now';
@@ -105,7 +106,7 @@ function edgeTiles(side,a,b){const out=[];for(let s=Math.max(0,a);s<Math.min(N,b
 function layMap(id,size,pvp){
   const n=pvp?16:SIZES[size]||16;
   if(n!==N){N=n}
-  terr=new Uint8Array(N*N);terrLog=[];floodOn=false;floodLv=0;
+  terr=new Uint8Array(N*N);heights=new Uint8Array(N*N);connectors=new Uint8Array(N*N);frostFields=[];terrLog=[];floodOn=false;floodLv=0;
   if(pvp){MAP=MAPS[id]||MAPS.yard;MAPO={ox:0,oy:0,xl:false,pvp};return layPvp(MAP===MAPS[id]?id:'yard',pvp)}   // v0.9.1: PvP plays on every map
   MAP=MAPS[id]||MAPS.yard;
   const o={ox:N>16?2:0,oy:N>16?N-16-2:0,xl:N>16,pvp:''};   // XL: the 16×16 layout moves in a little from the south-west corner
@@ -226,7 +227,7 @@ const TERR_SPR=new Map();
 function itemTerr(k){
   const i=k%N,j=(k/N)|0,t=terr[k],key=t+'|'+i+'|'+j+'|'+N+'|'+TW2+'|'+DPR;let S=TERR_SPR.get(k);
   if(!S||S.key!==key){if(TERR_SPR.size>256)TERR_SPR.clear();const pad=t===T_DRUM?0:0;
-    const x0=Math.floor(((i-j-1)*TW2-4*u)*DPR)/DPR,y0=Math.floor(((i+j)*TH2-WH*1.4-4*u)*DPR)/DPR,x1=(i-j+1)*TW2+4*u,y1=(i+j+2)*TH2+4*u;
+    const hz=heightAt(i+.5,j+.5)*heightPx(),x0=Math.floor(((i-j-1)*TW2-4*u)*DPR)/DPR,y0=Math.floor(((i+j)*TH2-hz-WH*1.4-4*u)*DPR)/DPR,x1=(i-j+1)*TW2+4*u,y1=(i+j+2)*TH2-hz+4*u;
     const cv2=document.createElement('canvas');cv2.width=Math.ceil((x1-x0)*DPR);cv2.height=Math.ceil((y1-y0)*DPR);const ctx=cv2.getContext('2d');ctx.setTransform(DPR,0,0,DPR,0,0);
     const kg=g,kx=camX,ky=camY;g=ctx;camX=-x0;camY=-y0;try{terrShape(i,j,t,false)}finally{g=kg;camX=kx;camY=ky}
     S={key,cv:cv2,x:x0,y:y0,w:cv2.width/DPR,h:cv2.height/DPR};TERR_SPR.set(k,S)}

@@ -34,7 +34,7 @@ function buildEval(p,i,j,sel,door){
 }
 // host/solo: actually place it
 function doBuild(p,i,j,sel,door){
-  if(p.bcd>0)return;if(Math.hypot(i+.5-p.x,j+.5-p.y)>2.1)return;
+  if(p.bcd>0)return;if(heightDist(p.x,p.y,i+.5,j+.5)>2.1||!heightRayClear(p.x,p.y,i+.5,j+.5))return;
   const t=buildEval(p,i,j,clamp(sel|0,0,2),!!door);
   if(!t.ok){personal(p,'deny');return}
   const k=idx(t.i,t.j),prev=walls[k];
@@ -55,7 +55,7 @@ function doBuild(p,i,j,sel,door){
 }
 function throwNade(p,tx,ty){
   if(!p.alive||p.nades<=0||p.ncd>0||truce()){personal(p,'deny');return}
-  let dx=tx-p.x,dy=ty-p.y;const d0=Math.hypot(dx,dy)||1,m=Math.min(d0,6.5);
+  let dx=tx-p.x,dy=ty-p.y;const d0=Math.hypot(dx,dy)||1,m=d0*Math.min(1,6.5/(heightDist(p.x,p.y,tx,ty)||1));
   tx=clamp(p.x+dx/d0*m,.3,N-.3);ty=clamp(p.y+dy/d0*m,.3,N-.3);
   const FZ=hasMod('frenzy'),d=Math.hypot(tx-p.x,ty-p.y);lobs.push({x0:p.x,y0:p.y,x1:tx,y1:ty,t:0,T:.5+d*.08,R:1.65*(p.C.blast>1?1.15:1)*(1+armBoost(p.up.n,.05,.0125))*(FZ?1.33:1),power:p.blast,own:p.id});p.nades--;p.ncd=p.C.nadeCd*(p.perk||PERK0).reload*(FZ?.5:1);sfx('lob',p.x,p.y);
 }
@@ -74,6 +74,7 @@ function localSprint(){const p=player;if(!p||!p.alive||!p.C.sprint||demo||(p.spr
 // aim stay manual, PvP stays manual, and the host checks the throw exactly as before (it is just a target point).
 const LOCK={min:6,nade:8,rocket:12,every:.15};
 function lockClear(x0,y0,x1,y1){
+  if(!heightRayClear(x0,y0,x1,y1))return false;
   const d=Math.hypot(x1-x0,y1-y0),st=Math.ceil(d/.2),k0=idx(x0|0,y0|0),k1=idx(x1|0,y1|0);
   for(let s=1;s<st;s++){const t=s/st,x=x0+(x1-x0)*t,y=y0+(y1-y0)*t,i=x|0,j=y|0;if(!inb(i,j))return false;const k=idx(i,j);if(k===k0||k===k1)continue;
     if(walls[k]||coreKs.has(k)||terrShot(terr[k]))return false;const n=nodeAt(i,j);if(n&&n.solid)return false}
@@ -82,7 +83,7 @@ function lockClear(x0,y0,x1,y1){
 function touchLock(p,kind){
   if(!touchMode||padMode||game.pvp||!p||!p.alive)return null;
   const max=LOCK[kind]||LOCK.nade;let best=null,bd=1e9;
-  for(const e of enemies){if(e.dead||!(e.hp>0)||e.burrow)continue;const d=Math.hypot(e.x-p.x,e.y-p.y);if(d<LOCK.min||d>max||d>=bd)continue;
+  for(const e of enemies){if(e.dead||!(e.hp>0)||e.burrow)continue;const d=heightDist(e.x,e.y,p.x,p.y);if(d<LOCK.min||d>max||d>=bd)continue;
     if(lockClear(p.x,p.y,e.x,e.y)){best=e;bd=d}}
   return best;
 }
@@ -105,16 +106,17 @@ function shoot(p,G,late){
 }
 let shotSeq=0;
 // pellets lose punch with distance: full damage to fall[0] tiles, down to fall[2] of it by fall[1]
-function bdmg(b){if(!b.fall)return b.dmg;const[a,z,m]=b.fall,d=b.dist;return b.dmg*(d<=a?1:d>=z?m:1-(1-m)*(d-a)/(z-a))}
+function bdmg(b){if(!b.fall)return b.dmg;const[a,z,m]=b.fall,d=b.dist*bulletRangeScale(b);return b.dmg*(d<=a?1:d>=z?m:1-(1-m)*(d-a)/(z-a))}
 // late = seconds ago the shot was due (a slow frame can owe one); the bullet starts that much further along
 function fire(from,ang,team,gun,late=0,quiet=false,tc=nextTracerColor(from),shot=++shotSeq){
   const ahead=.33+gun.speed*clamp(late,0,.25);
   const own=from===qm?'dell':(from.id!==undefined&&players.get(from.id)===from?from.id:null);
   const visual=wardrobeShotVisual(from,ang,gun);if(visual)from._shotDrawUntil=game.time+.08;
-  bullets.push({visual,id:++bulletSeq,pt:from.team||'',x:from.x+Math.cos(ang)*ahead,y:from.y+Math.sin(ang)*ahead,vx:Math.cos(ang)*gun.speed,vy:Math.sin(ang)*gun.speed,team,dmg:gun.dmg,dist:ahead-.33,over:gun.over!==false,skipped:false,last:-1,range:gun.range,pierce:gun.pierce||0,heavy:!!gun.pierce,
+  const [z0,zSlope]=bulletHeight(from,ang,gun.range);
+  bullets.push({z0:z0+zSlope*.33,zSlope,visual,id:++bulletSeq,pt:from.team||'',x:from.x+Math.cos(ang)*ahead,y:from.y+Math.sin(ang)*ahead,vx:Math.cos(ang)*gun.speed,vy:Math.sin(ang)*gun.speed,team,dmg:gun.dmg,dist:ahead-.33,over:gun.over!==false,skipped:false,last:-1,range:gun.range,pierce:gun.pierce||0,heavy:!!gun.pierce,
     own,tr:own&&own!=='dell'?Math.max(0,TRAIL_IDS.indexOf(from.cos.trail)):0,tc,fall:gun.fall||null,pel:gun.pellets>1,shot,ammo:team===0&&ammoMode()&&from.ammoEq?from.ammoEq.filter(Boolean).map(id=>[id,ammoRank(from,id)]):[]});
   rec(bulletEvent(bullets[bullets.length-1]));
   if(!quiet)addFlash({x:from.x+Math.cos(ang)*.4,y:from.y+Math.sin(ang)*.4,life:.06,max:.06,r:gun.pellets>1?1.3:.9,muzzle:true,visual:visual?visual.slice(2):null});
 }
-function bulletEvent(b){return ['b',b.id,r2(b.x),r2(b.y),r2(b.vx),r2(b.vy),b.team,b.heavy?1:0,b.tr|0,r2(b.range-b.dist),b.visual,b.visual?b.own:null,b.tc|0]}
+function bulletEvent(b){return ['b',b.id,r2(b.x),r2(b.y),r2(b.vx),r2(b.vy),b.team,b.heavy?1:0,b.tr|0,r2(b.range/bulletRangeScale(b)-b.dist),b.visual,b.visual?b.own:null,b.tc|0,r2(bulletZ(b)),r2(b.zSlope||0)]}
 

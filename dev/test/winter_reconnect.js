@@ -1,0 +1,17 @@
+const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
+const url='http://localhost:8080/debug.html?peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1';
+(async()=>{const b=await chromium.launch({executablePath:process.env.CHROMIUM||undefined,args:['--disable-features=WebRtcHideLocalIpsWithMdns']}),H=await b.newPage(),G=await(await b.newContext()).newPage(),errors=[],out={};
+ for(const p of[H,G]){p.on('pageerror',e=>errors.push(e.message));await p.goto(url);await p.waitForFunction(()=>__pal?.NET)}
+ await H.evaluate(()=>{__pal.pick.mode='campaign'});await H.click('[data-nav=multi]');await H.click('#hostBtn');await H.waitForFunction(()=>__pal.NET.mode==='host');const code=await H.textContent('#lCode');
+ const join=async()=>{await G.click('[data-nav=multi]');await G.fill('#mCode',code);await G.click('#joinBtn');await G.waitForFunction(()=>__pal.NET.mode==='guest');};
+ const reload=async()=>{await G.reload();await G.waitForFunction(()=>__pal?.NET);await H.waitForFunction(()=>__pal.players.size===1)};
+ const state=()=>H.evaluate(()=>{const P=__pal,p=[...P.players.values()].find(p=>p.id!=='host');return{chapter:P.game.chapter,x:p.x,y:p.y,z:P.heightAt(p.x,p.y),hp:p.hp,max:p.max,nades:p.nades,maxN:p.maxN,mats:p.mats,up:p.up.d,ammo:p.ammoEq,sal:p.sal,out:!!p.out}});
+ await join();await H.click('#lStart');await G.waitForFunction(()=>!__pal.demo&&__pal.game.joinHeld===0);
+ await H.evaluate(()=>{const P=__pal;P.game.paused=true;P.game.wave=3;P.campaignAdvance();const p=[...P.players.values()].find(p=>p.id!=='host');p.up.d=5;p.upS='50000';P.kitUp(p);p.hp=33;p.nades=0;p.mats=[12,5,3];p.ammoEq=['shock',''];p.sal=200;P.qm.sup=9999});await G.waitForFunction(()=>__pal.game.chapter===1&&__pal.player.hp===33);
+ await reload();await H.evaluate(()=>{__pal.game.wave=6;__pal.campaignAdvance()});await join();await G.waitForFunction(()=>__pal.game.chapter===2);out.chapter=await state();assert.equal(out.chapter.hp,out.chapter.max);assert.equal(out.chapter.nades,out.chapter.maxN);assert.deepEqual(out.chapter.mats,[12,5,3]);assert.equal(out.chapter.up,5);assert.equal(out.chapter.ammo[0],'shock');
+ await H.evaluate(()=>{const P=__pal;P.game.wave=9;P.campaignAdvance();const p=[...P.players.values()].find(p=>p.id!=='host');p.x=4.5;p.y=5.5;p.tp++;p.hp=33;p.nades=0;p.mats=[12,5,3];P.game.phase='raid';P.addFrost(4.5,5.5)});await G.waitForFunction(()=>__pal.game.chapter===3&&__pal.player.hp===33&&__pal.player.y===5.5);
+ await reload();await join();await G.waitForFunction(()=>__pal.game.chapter===3&&__pal.frostFields.length);out.ramp=await state();assert.equal(out.ramp.hp,33);assert.equal(out.ramp.nades,0);assert.equal(out.ramp.x,4.5);assert.equal(out.ramp.y,5.5);assert.equal(out.ramp.z,1.5);assert.deepEqual(out.ramp.mats,[12,5,3]);
+ await H.evaluate(()=>{const P=__pal;P.game.wave=12;P.startRaid();P.game.fb.t=59;P.openEvac();const p=[...P.players.values()].find(p=>p.id!=='host');p.out=true;p.alive=false;p.downed=false});await G.waitForFunction(()=>__pal.player.out);
+ await reload();await join();await G.waitForFunction(()=>__pal.game.chapter===3&&__pal.player.out&&__pal.game.fb);out.finale=await state();assert.ok(out.finale.out);assert.equal(out.finale.up,5);assert.equal(out.finale.ammo[0],'shock');assert.deepEqual(errors,[]);
+ fs.writeFileSync(__dirname+'/out/winter_reconnect.json',JSON.stringify(out,null,2));console.log(out);console.log('errors: none');await b.close();
+})().catch(e=>{console.error(e);process.exit(1)});

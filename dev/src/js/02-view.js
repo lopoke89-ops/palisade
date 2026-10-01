@@ -23,8 +23,19 @@ function resize(){
 }
 let resizeT=0;
 addEventListener('resize',()=>{clearTimeout(resizeT);resizeT=setTimeout(()=>{if(resize())caches=null;vignette=null;vignetteDemo=null},100)});resize();
-const iso=(x,y)=>[(x-y)*TW2+camX,(x+y)*TH2+camY];
-function screenToWorld(sx,sy){const a=(sx-camX)/TW2,b=(sy-camY)/TH2;return{x:(a+b)/2,y:(b-a)/2}}
+let heightPreview=false;
+const iso=(x,y,z=heightPreview?0:heightAt(x,y))=>[(x-y)*TW2+camX,(x+y)*TH2+camY-z*heightPx()];
+function screenToWorld(sx,sy){
+  const a=(sx-camX)/TW2;let best=null;
+  const accept=(x,y)=>{if(inb(Math.floor(x),Math.floor(y))&&(!best||x+y>best.x+best.y))best={x,y}};
+  // Intersect the viewing ray with the flat and connector planes analytically.
+  for(let z=0;z<=2;z++){
+    const b=(sy-camY+z*heightPx())/TH2,x=(a+b)/2,y=(b-a)/2;
+    if(Math.abs(heightAt(x,y)-z)<.00001)accept(x,y);
+  }
+  if(MAP===MAPS.frost)for(let k=0;k<connectors.length;k++)if(connectors[k]){const j=(k/N)|0,y=(sy-camY-a*TH2+heightPx()*(heights[k]+1+j))/(2*TH2+heightPx()),x=y+a;if(Math.floor(x)===k%N&&Math.floor(y)===j)accept(x,y)}
+  if(best)return best;const b=(sy-camY)/TH2;return{x:(a+b)/2,y:(b-a)/2};
+}
 // Bullets fly along the ground and hit a circle around each figure's feet, but the figure is drawn standing up.
 // A cursor on someone's head used to turn into a ground point up to ~0.8 tiles behind them, so shots across the screen
 // passed beside them. If the cursor is on a drawn body (feet to helmet), aim at that body's feet instead.

@@ -30,7 +30,11 @@ function updateEnemies(dt){
     if(e.foe&&!seen(e.foe))e.foe=null;
     const aimAt=(x,y)=>{const dx=x-e.x,dy=y-e.y,l=Math.hypot(dx,dy)||1;e.aim={x:dx/l,y:dy/l};return Math.atan2(dy,dx)};
     let engaging=false;
-    if(e.type==='boss'){const r=BOSSES[e.boss].think(e,dt,tgt,moveTo,aimAt,Df);engaging=r.eng;moveTo=r.mv}
+    if(e.type==='boss'){const px=e.x,py=e.y,r=BOSSES[e.boss].think(e,dt,tgt,moveTo,aimAt,Df);engaging=r.eng;moveTo=r.mv;
+      if(e.boss!=='rime'&&frostFields.length){const slow=frostSlow(px,py);e.x=px+(e.x-px)*slow;e.y=py+(e.y-py)*slow}
+      if(!heightTravelClear(px,py,e.x,e.y)){e.x=px;e.y=py;e.st=0;e.ab=2;e.cd=1}e.z=heightAt(e.x,e.y);
+      if(moveTo&&!travelClear(e.x,e.y,moveTo.x,moveTo.y,false))moveTo=moveTo===tgt?tgt:(()=>{const k=bestStep(e.x|0,e.y|0);return k>=0?{x:k%N+.5,y:((k/N)|0)+.5}:null})();
+    }
     else if(e.type==='rifle'){
       // a spotter's mark tightens their aim a lot (0.2 rad spread down to 0.06) and adds a little range
       if(e.foe){engaging=true;const mk=e.foe.markT>0,a=aimAt(e.foe.x,e.foe.y);if(e.cd<=0){while(e.cd<=0){fire(e,a+(rnd()-.5)*(mk?.06:.2),1,{dmg:8*Df.dmg,speed:22,range:mk?13:11},-e.cd);e.cd+=.65+rnd()*.45}sfx('rifle',e.x,e.y)}}
@@ -44,7 +48,7 @@ function updateEnemies(dt){
       // shieldbearer: keeps walking the path with the shield turned to whoever is shooting at him, pistol over the top;
       // at a wall he bashes it. The shield stops bullets from the front (updateBullets); blasts still hurt.
       if(e.foe){const a=aimAt(e.foe.x,e.foe.y);if(e.cd<=0&&dist2(e.foe,e)<6.5){fire(e,a+(rnd()-.5)*.22,1,{dmg:6*Df.dmg,speed:20,range:7},0);e.cd=1.1+rnd()*.5;sfx('rifle',e.x,e.y)}}
-      if(tgt&&Math.hypot(tgt.x-e.x,tgt.y-e.y)<1.3){if(!e.foe)aimAt(tgt.x,tgt.y);engaging=true;
+      if(tgt&&heightDist(tgt.x,tgt.y,e.x,e.y)<1.3){if(!e.foe)aimAt(tgt.x,tgt.y);engaging=true;
         if(e.cd<=0){e.cd=1.2;const k=idx(Math.floor(tgt.x),Math.floor(tgt.y));if(walls[k])damageWall(k,16*MAT[walls[k].mat].bullet);else if(coreKs.has(k))hurtStake(stakeAt(k),6*Df.dmg);sfx('hit1',tgt.x,tgt.y)}}
     }else if(e.type==='medic'){
       // field medic: hangs back behind the nearest raider and patches up everyone near him every 1.6 s
@@ -73,14 +77,14 @@ function updateEnemies(dt){
       if(lt&&Math.hypot(lt.x-e.x,lt.y-e.y)<5)engaging=true;
     }else{ // breacher: run the satchel to the wall, then run
       if(!e.planted&&tgt){
-        if(Math.hypot(tgt.x-e.x,tgt.y-e.y)<1.35){charges.push({x:e.x+(tgt.x-e.x)*.45,y:e.y+(tgt.y-e.y)*.45,fuse:2.4,beep:0});e.planted=true;e.fleeT=5;sfx('plant',e.x,e.y);flt(e.x,e.y,'SATCHEL','#d65a3a')}
+        if(heightDist(tgt.x,tgt.y,e.x,e.y)<1.35){charges.push({x:e.x+(tgt.x-e.x)*.45,y:e.y+(tgt.y-e.y)*.45,fuse:2.4,beep:0});e.planted=true;e.fleeT=5;sfx('plant',e.x,e.y);flt(e.x,e.y,'SATCHEL','#d65a3a')}
         else moveTo=tgt; // walk right up to the wall
       }
       if(e.planted){e.fleeT-=dt;if(e.fleeT<=0){e.planted=false;flt(e.x,e.y,'RE-ARMED','#d65a3a')}}
       if(e.planted){let bk=-1,bv=-1;for(const[di,dj]of D4){const i=ti+di,j=tj+dj;if(!inb(i,j)||solidTile(i,j))continue;const k=idx(i,j);if(dist[k]>bv){bv=dist[k];bk=k}}
         moveTo=bk>=0?{x:bk%N+.5,y:((bk/N)|0)+.5}:null}
     }
-    if(!engaging&&moveTo){const dx=moveTo.x-e.x,dy=moveTo.y-e.y,l=Math.hypot(dx,dy);if(l>.02){const s=Math.min(l,e.speed*dt*slowAt(e.x,e.y)*(NM&&!boss?1.12:1)*(1-(e.slowT>0?e.slowPct||0:0)));moveEnt(e,dx/l*s,dy/l*s,false);e.walk+=dt*9;if(!tgt&&!e.foe)e.aim={x:dx/l,y:dy/l}}}
+    if(!engaging&&moveTo){const dx=moveTo.x-e.x,dy=moveTo.y-e.y,l=Math.hypot(dx,dy);if(l>.02){const s=Math.min(l,e.speed*dt*Math.max(.5,slowAt(e.x,e.y)*(1-(e.slowT>0?e.slowPct||0:0)))*(NM&&!boss?1.12:1));moveEnt(e,dx/l*s,dy/l*s,false);e.walk+=dt*9;if(!tgt&&!e.foe)e.aim={x:dx/l,y:dy/l}}}
   }
   for(let a=0;a<enemies.length;a++)for(let b=a+1;b<enemies.length;b++){const A=enemies[a],B=enemies[b];if(A.raft||B.raft||A.burrow||B.burrow)continue;const dx=B.x-A.x,dy=B.y-A.y,d=Math.hypot(dx,dy);if(d<.5&&d>.001){const push=(.5-d)*.5;moveEnt(A,-dx/d*push,-dy/d*push,false);moveEnt(B,dx/d*push,dy/d*push,false)}}
   dropDead(enemies);
@@ -96,10 +100,10 @@ function ammoHit(e,b){
     if(id==='fire'&&!e.dead){e.burnT=Math.max(e.burnT||0,3+.5*rank);e.burnOwn=own;emit(e.x,e.y,WH*.45,'fire')}
     else if(id==='blast'){
       const last=e.ammoBlast||(e.ammoBlast={});if(game.time-(last[key]??-1e9)<.4)continue;last[key]=game.time;
-      for(const o of enemies)if(!o.dead&&!o.burrow){const d=Math.hypot(o.x-e.x,o.y-e.y);if(d<1.25)hurtEnemy(o,(8+2*rank)*(d<.35?1:1-(d-.35)/.9),own)}
+      for(const o of enemies)if(!o.dead&&!o.burrow){const d=heightDist(e.x,e.y,o.x,o.y);if(d<1.25)hurtEnemy(o,(8+2*rank)*(d<.35?1:1-(d-.35)/.9),own)}
       emit(e.x,e.y,WH*.55,'spark');addFlash({x:e.x,y:e.y,life:.14,max:.14,r:.7});
     }else if(id==='shock'){
-      const near=enemies.filter(o=>o!==e&&!o.dead&&!o.burrow&&Math.hypot(o.x-e.x,o.y-e.y)<=3).sort((a,c)=>Math.hypot(a.x-e.x,a.y-e.y)-Math.hypot(c.x-e.x,c.y-e.y)||a.id-c.id).slice(0,3);
+      const near=enemies.filter(o=>o!==e&&!o.dead&&!o.burrow&&heightDist(e.x,e.y,o.x,o.y)<=3&&heightRayClear(e.x,e.y,o.x,o.y)).sort((a,c)=>Math.hypot(a.x-e.x,a.y-e.y)-Math.hypot(c.x-e.x,c.y-e.y)||a.id-c.id).slice(0,3);
       for(const o of[e,...near])if(!o.dead){o.slowT=Math.max(o.slowT||0,2);o.slowPct=Math.max(o.slowPct||0,Math.min(o.type==='boss'?.2:1,.25+.05*rank));emit(o.x,o.y,WH*.4,'arc')}
     }
   }
@@ -110,13 +114,14 @@ function updateBullets(dt){
     for(let s=0;s<steps&&!b.dead;s++){
       b.x+=b.vx*dt/steps;b.y+=b.vy*dt/steps;b.dist+=sp*dt/steps;
       const i=Math.floor(b.x),j=Math.floor(b.y);
-      if(!inb(i,j)||b.dist>b.range){b.dead=b.spent=true;break}
+      if(!inb(i,j)||b.dist*bulletRangeScale(b)>b.range){b.dead=b.spent=true;break}
       const k=idx(i,j);
-      if(coreKs.has(k)){const c=stakeAt(k);if(game.pvp?c.team!==b.pt:b.team===1)hurtStake(c,game.pvp?b.dmg*PVP.stakeHit:6*game.Df.dmg);else emit(b.x,b.y,WH*.5,'spark');b.dead=true;break}
+      if(heightAt(b.x,b.y)>bulletZ(b)-.08){hitFx(b.x,b.y,1);b.dead=true;break}
+      if(coreKs.has(k)&&bulletZ(b)<heightAt(b.x,b.y)+1.35){const c=stakeAt(k);if(game.pvp?c.team!==b.pt:b.team===1)hurtStake(c,game.pvp?b.dmg*PVP.stakeHit:6*game.Df.dmg);else emit(b.x,b.y,WH*.5,'spark');b.dead=true;break}
       const n=nodeAt(i,j);if(n&&n.solid){hitFx(b.x,b.y,n.type);b.dead=true;break}
       if(terrShot(terr[k])){hitFx(b.x,b.y,1);b.dead=true;break}
       const w=walls[k];
-      if(w&&k!==b.last){
+      if(w&&k!==b.last&&bulletZ(b)<heightAt(b.x,b.y)+1.35){
         b.last=k;
         if(b.over&&!b.skipped&&b.dist<1.3){b.skipped=true}
         else{const st=wallState(w);if(rnd()>=(st===0?0:st===1?.35:.65)){
@@ -124,11 +129,11 @@ function updateBullets(dt){
           if(b.pierce>0&&w.mat===0){b.pierce--;b.dmg*=.8}else{b.dead=true;break}}}
       }
       if(game.pvp){for(const o of players.values())if(o.alive&&!(o.prot>0)&&o.id!==b.own&&(game.pvp==='ffa'||o.team!==b.pt)&&Math.hypot(o.x-b.x,o.y-b.y)<.3){hurtPlayer(o,bdmg(b)*(b.heavy?PVP.snipe:PVP.dmg),b.own);feelHit(b.own,b.heavy);b.dead=true;break}}
-      else if(b.team===0){for(const e of enemies)if(!e.dead&&!e.burrow&&Math.hypot(e.x-b.x,e.y-b.y)<(e.big?.55:.34)){
+      else if(b.team===0){for(const e of enemies)if(!e.dead&&!e.burrow&&bulletAtActor(b,e)&&Math.hypot(e.x-b.x,e.y-b.y)<(e.big?.55:.34)){
           // a shieldbearer's shield covers his front (about 130°): the round sparks off it
           let shield=1;if(e.type==='shield'){const l=Math.hypot(b.vx,b.vy)||1;if(-(b.vx*e.aim.x+b.vy*e.aim.y)/l>.42){const ap=b.ammo&&b.ammo.find(x=>x[0]==='ap');if(!ap){hitFx(b.x,b.y,2);sfx('shieldhit',b.x,b.y);if(!b.pel||!b.felt){b.felt=1;feelHit(b.own,false)}b.dead=true;break}shield=[.5,.6,.7,.85,1][ap[1]]||.5}}
           hurtEnemy(e,bdmg(b)*shield,b.own);ammoHit(e,b);if(!b.pel||!b.felt){b.felt=1;feelHit(b.own,b.heavy)}b.dead=true;break}}
-      else{for(const a of allies())if(a.alive&&Math.hypot(a.x-b.x,a.y-b.y)<.3){hurtAlly(a,b.dmg*(a===qm?.7:1));b.dead=true;break}}
+      else{for(const a of allies())if(a.alive&&bulletAtActor(b,a)&&Math.hypot(a.x-b.x,a.y-b.y)<.3){hurtAlly(a,b.dmg*(a===qm?.7:1));b.dead=true;break}}
     }
   }
   {const hit=[];for(const b of bullets)if(b.dead&&!b.spent&&b.id)hit.push(b.id);if(hit.length)rec(['bx',...hit])}   // guests expire misses on their own
@@ -144,7 +149,7 @@ function bottleLand(l){
   fires.push({x:l.x1,y:l.y1,t:FS?8:5,max:FS?8:5,tick:.3,r:FS?1.35:.9});sfx('bottle',l.x1,l.y1);addFlash({x:l.x1,y:l.y1,life:.3,max:.3,r:FS?1.5:1});
   for(let n=0;n<10;n++)emit(l.x1,l.y1,4*u,'fire');
   for(let i=Math.floor(l.x1-R);i<=Math.floor(l.x1+R);i++)for(let j=Math.floor(l.y1-R);j<=Math.floor(l.y1+R);j++){if(!inb(i,j))continue;const w=walls[idx(i,j)];
-    if(w&&w.mat===0&&Math.hypot(i+.5-l.x1,j+.5-l.y1)<R&&!(w.fire>0)){w.fire=FS?9:6;w.fireBy=null}}
+    if(w&&w.mat===0&&groundReach(i+.5,j+.5,l.x1,l.y1,R)&&!(w.fire>0)){w.fire=FS?9:6;w.fireBy=null}}
 }
 function updateCharges(dt){for(const c of charges){c.fuse-=dt;c.beep-=dt;if(c.beep<=0){c.beep=Math.max(.12,c.fuse*.25);sfx('beep',c.x,c.y)}if(c.fuse<=0){c.dead=true;explode(c.x,c.y,2.1,1.6)}}charges=charges.filter(c=>!c.dead)}
 function updateWalls(dt){
@@ -176,6 +181,7 @@ function ageOut(a,dt){let j=0;for(let i=0;i<a.length;i++){const v=a[i];v.life-=d
 const dropDead=a=>{let j=0;for(let i=0;i<a.length;i++){const v=a[i];if(!v.dead)a[j++]=v}a.length=j};
 function updateParticles(dt){
   if(game.paused)return;
+  ageFrost(dt);
   for(const p of parts){p.life-=dt;p.x+=p.vx*dt*.6;p.y+=p.vy*dt*.6;p.vz-=p.grav*dt;p.z+=p.vz*dt*u;if(p.z<0){p.z=0;p.vz*=-.3;p.vx*=.5;p.vy*=.5}}
   floodVisual(dt);ageOut(parts,0);ageOut(flashes,dt);ageOut(zaps,dt);ageOut(chains,dt);ageOut(rings,dt);ageOut(slashes,dt);ageOut(floats,dt);
   shake=Math.max(0,shake-dt*30);
