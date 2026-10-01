@@ -1,9 +1,11 @@
 PALISADE: phone version with online co-op
 =========================================
 
-CURRENT RELEASE: v0.9.5.1. Tung Tung Tung Sahur can wear eight
-selected hats, and Open Games is visible on the Multiplayer page. The network protocol
-remains yard-19. See dev/STATUS.md and dev/evidence/2026-09-30-sahur-open-games/.
+CURRENT RELEASE: v0.9.5.2. Four special ammo types for solo/co-op 5, 10,
+Endless and Blitzkrieg Rush, plus eight-level Armory tracks and a compact
+Armory with Upgrades/Ammo tabs that fit without scrolling on phones.
+Protocol yard-20. The account migration is applied and verified.
+See dev/evidence/2026-10-01-ammo-armory/README.md for balances and validation.
 
 This folder is the whole game as a website. Put it online once and anyone
 can play by opening the link. No app store, no download.

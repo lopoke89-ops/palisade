@@ -1,0 +1,29 @@
+grenadier gun {
+  pellets: 7,
+  dmg: 12,
+  cd: 0.5,
+  spread: 0.15,
+  range: 7.2,
+  mag: 6,
+  ammo: 6,
+  nades: 3
+}
+one pull -> { pellets: 7, ammo: 5 }
+pellet damage at 1 / 4 / 7 tiles [ 10, 8.3, 5 ]
+after 6 more pulls: ammo 1 reloading true
+ammo while reloading (every 0.4s): 1 2 3 4 5 6 6 6
+partial tube 5 -> after R + 0.5s 6
+key bar WASDmoveMOUSEaim, click or hold to fireGgrenadeRreloadSPACEbuild1 2 3materialFdoorBbuild kitESCpause
+one blast at 1.5 tiles on a 36hp rifleman: still alive? true
+qm { cap: [ 96, 96, 96 ], gun: 'smg', gather: 0.72, repair: 0.5 }
+quartermaster instant revive {"before":{"alive":false},"after":{"alive":true,"hp":69,"max":115,"revives":1,"revivesLater":1,"dellUp":true,"dellHp":108}}
+repair cost qm vs soldier { qm: 1, soldier: 2 }
+wall salvage {"ruins":"110001","wood":5,"woodAgain":5,"brickTotal":13,"metalTotal":28,"built":true,"ownWall":0,"byRaiders":0}
+boss schedule 1:- 4:- 5:demolisher 9:- 10:butcher 15:storm 20:demolisher 25:butcher 30:storm
+raid 5 queue: rifle,breach,rifle,gren,gren,boss:butcher,fire,medic,shield,gren,breach,fire,breach,gren
+raid 5 toast: RAID 5 OF 5 · BOSS2 riflemen, 4 grenadiers, 3 breachers, 1 shieldbearer, 1 field medic, 2 firebrands and THE BUTCHER coming over the east fence in the dark.
+demolisher {"hp":620,"states":"0","maxRockets":0,"fires":0,"dmgTaken":0,"toast":"THE DEMOLISHERHe fires slow rockets. A red line shows where the next one goes: step out of it."}
+butcher {"states":"2,3,0,1","dmgTaken":75,"slashes":1,"endDist":"0.71","rage":true,"speed":"2.56"}
+stormcaller {"states":"0,1","dmgTaken":34,"zapFrames":7,"maxStun":"0.88","chainTargets":2,"qmHurt":true}
+boss down {"bossGone":true,"salGain":0,"phase":"over","toast":"THE STORMCALLER IS DOWNBig U landed it: +40 salvage. Everyone else +15. +1 AFTERGLOW Case each, added when the run ends (or when you leave it)."}
+errors: none

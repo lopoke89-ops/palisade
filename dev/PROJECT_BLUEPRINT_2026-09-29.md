@@ -1,5 +1,11 @@
 # PALISADE: current summary and next-work blueprint
 
+**Current implementation update (October 1):** v0.9.5.2 is prepared for the authorized release.
+It includes special ammo, eight-level upgrades and a compact mobile Armory with protocol
+`yard-20`. Account migration `20261001045820_ammo_armory_expansion` is live.
+Use [STATUS.md](STATUS.md) and [the balance/validation report](evidence/2026-10-01-ammo-armory/README.md)
+for the current state; the planning history below is retained for context.
+
 Updated September 29, 2026. This is the working summary for the next release planning pass. The three original handoff/prompt files are historical inputs, not an accurate description of today's release. For exact release and test evidence, use [STATUS.md](STATUS.md) and [case performance validation](CASE_PERFORMANCE_2026-09-29.md). Recheck GitHub and the live service before any future implementation or migration.
 
 **Latest scope decision:** Big U reports that case-opening lag feels fixed on desktop and mobile. Cosmetic facial clipping and independent hardening shipped in v0.9.3.2; reward retry/rejoin and import/account-identity changes remain deferred, and new modes wait. The actionable scope is in [the next-work prompt](plans/next-cosmetics-and-hardening-prompt.md). The earlier priority order below is retained as an inventory, not an instruction to implement deferred items now.

@@ -1,0 +1,18 @@
+[
+  {
+    "signature": "private.skill_defs()",
+    "definition": "CREATE OR REPLACE FUNCTION private.skill_defs()\n RETURNS jsonb\n LANGUAGE sql\n IMMUTABLE\n SET search_path TO ''\nAS $function$\n  select '{\"dmg\":{\"cost\":[1,2,3]},\"rate\":{\"cost\":[1,2,3]},\"reload\":{\"cost\":[1,2]},\"range\":{\"cost\":[1,2]},\n    \"hp\":{\"cost\":[1,2,3]},\"regen\":{\"cost\":[2,3]},\"revive\":{\"cost\":[1,2]},\"speed\":{\"cost\":[1,2,3]},\"vest\":{\"cost\":[2,3]},\"haul\":{\"cost\":[1,2]},\n    \"rockets\":{\"cost\":[1,2,3]},\"pouch\":{\"cost\":[2,3]},\"molotov\":{\"cost\":[3],\"req\":[\"pouch\",1]},\"ghillie\":{\"cost\":[1,2]},\"stride\":{\"cost\":[1,2]}}'::jsonb\n$function$\n"
+  },
+  {
+    "signature": "private.skill_spent(jsonb)",
+    "definition": "CREATE OR REPLACE FUNCTION private.skill_spent(t jsonb)\n RETURNS integer\n LANGUAGE sql\n IMMUTABLE\n SET search_path TO ''\nAS $function$\n  select coalesce(sum((d.value->'cost'->>(l - 1))::int), 0)::int\n  from jsonb_each(private.skill_defs()) d\n  cross join lateral generate_series(1, least(coalesce((t->>d.key)::int, 0), jsonb_array_length(d.value->'cost'))) l\n$function$\n"
+  },
+  {
+    "signature": "skill_buy(text,integer)",
+    "definition": "CREATE OR REPLACE FUNCTION public.skill_buy(p_node text, p_rev integer DEFAULT NULL::integer)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare uid uuid := private.require_user(); l public.lockers; d jsonb := private.skill_defs()->p_node; lv int; cost int;\nbegin\n  if d is null then raise exception 'Unknown skill' using errcode = '22023'; end if;\n  select * into l from public.lockers where user_id = uid for update;\n  perform private.check_rev(l, p_rev);\n  lv := coalesce((l.skills->>p_node)::int, 0);\n  if lv >= jsonb_array_length(d->'cost') then raise exception 'That skill is maxed' using errcode = '22023'; end if;\n  if d ? 'req' and coalesce((l.skills->>(d->'req'->>0))::int, 0) < (d->'req'->>1)::int then\n    raise exception 'Unlock % first', d->'req'->>0 using errcode = '22023'; end if;\n  cost := (d->'cost'->>lv)::int;\n  if l.sp < cost then raise exception 'That takes % skill point%', cost, case when cost = 1 then '' else 's' end using errcode = '22023'; end if;\n  update public.lockers set sp = sp - cost, skills = jsonb_set(skills, array[p_node], to_jsonb(lv + 1)), rev = rev + 1, updated_at = now()\n    where user_id = uid returning * into l;\n  return private.locker_out(l);\nend $function$\n"
+  },
+  {
+    "signature": "skill_respec(integer)",
+    "definition": "CREATE OR REPLACE FUNCTION public.skill_respec(p_rev integer DEFAULT NULL::integer)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare uid uuid := private.require_user(); l public.lockers; back int; cost int := private.respec_cost();\nbegin\n  select * into l from public.lockers where user_id = uid for update;\n  perform private.check_rev(l, p_rev);\n  back := private.skill_spent(l.skills);\n  if back = 0 then raise exception 'There are no points in your tree' using errcode = '22023'; end if;\n  if l.shards < cost then raise exception 'Resetting takes % shards', cost using errcode = '22023'; end if;\n  update public.lockers set sp = sp + back, skills = '{}'::jsonb, shards = shards - cost, rev = rev + 1, updated_at = now()\n    where user_id = uid returning * into l;\n  return private.locker_out(l);\nend $function$\n"
+  }
+]

@@ -16,6 +16,8 @@ function updateEnemies(dt){
   const Df=game.Df,NM=hasMod('nightmare'),BZ=hasMod('berserk'),EL=hasMod('elite');for(const a of allies())if(a.markT>0)a.markT-=dt;
   for(const e of enemies){
     if(e.dead)continue;const boss=e.type==='boss',hurry=NM&&!boss?1.18:1;
+    if(e.burnT>0){const tick=Math.min(dt,e.burnT);e.burnT=Math.max(0,e.burnT-dt);hurtEnemy(e,10*tick,e.burnOwn,true);if(e.dead)continue}
+    if(e.slowT>0){e.slowT=Math.max(0,e.slowT-dt);if(!e.slowT)e.slowPct=0}
     e.cd=Math.max(e.cd-dt*hurry,-dt);e.flash=Math.max(0,e.flash-dt);e.scanT-=dt;
     if(BZ&&boss&&!e.st){e.cd-=dt*.33;if(e.ab!==undefined)e.ab-=dt*.33}
     const ti=e.x|0,tj=e.y|0;let tgt=null,moveTo=null;
@@ -78,10 +80,29 @@ function updateEnemies(dt){
       if(e.planted){let bk=-1,bv=-1;for(const[di,dj]of D4){const i=ti+di,j=tj+dj;if(!inb(i,j)||solidTile(i,j))continue;const k=idx(i,j);if(dist[k]>bv){bv=dist[k];bk=k}}
         moveTo=bk>=0?{x:bk%N+.5,y:((bk/N)|0)+.5}:null}
     }
-    if(!engaging&&moveTo){const dx=moveTo.x-e.x,dy=moveTo.y-e.y,l=Math.hypot(dx,dy);if(l>.02){const s=Math.min(l,e.speed*dt*slowAt(e.x,e.y)*(NM&&!boss?1.12:1));moveEnt(e,dx/l*s,dy/l*s,false);e.walk+=dt*9;if(!tgt&&!e.foe)e.aim={x:dx/l,y:dy/l}}}
+    if(!engaging&&moveTo){const dx=moveTo.x-e.x,dy=moveTo.y-e.y,l=Math.hypot(dx,dy);if(l>.02){const s=Math.min(l,e.speed*dt*slowAt(e.x,e.y)*(NM&&!boss?1.12:1)*(1-(e.slowT>0?e.slowPct||0:0)));moveEnt(e,dx/l*s,dy/l*s,false);e.walk+=dt*9;if(!tgt&&!e.foe)e.aim={x:dx/l,y:dy/l}}}
   }
   for(let a=0;a<enemies.length;a++)for(let b=a+1;b<enemies.length;b++){const A=enemies[a],B=enemies[b];if(A.raft||B.raft||A.burrow||B.burrow)continue;const dx=B.x-A.x,dy=B.y-A.y,d=Math.hypot(dx,dy);if(d<.5&&d>.001){const push=(.5-d)*.5;moveEnt(A,-dx/d*push,-dy/d*push,false);moveEnt(B,dx/d*push,dy/d*push,false)}}
   dropDead(enemies);
+}
+function ammoHit(e,b){
+  if(!ammoMode()||!b.ammo||!b.ammo.length)return;
+  const own=b.own||'',seen=e.ammoSeen||(e.ammoSeen={}),key=String(own);
+  // Keep recent round IDs: pellets from different rounds can arrive interleaved.
+  // The bounded history outlasts any bullet in flight without growing during Endless.
+  const rounds=seen[key]||(seen[key]=[]);if(rounds.includes(b.shot))return;
+  rounds.push(b.shot);if(rounds.length>128)rounds.shift();
+  for(const [id,rank] of b.ammo){
+    if(id==='fire'&&!e.dead){e.burnT=Math.max(e.burnT||0,3+.5*rank);e.burnOwn=own;emit(e.x,e.y,WH*.45,'fire')}
+    else if(id==='blast'){
+      const last=e.ammoBlast||(e.ammoBlast={});if(game.time-(last[key]??-1e9)<.4)continue;last[key]=game.time;
+      for(const o of enemies)if(!o.dead&&!o.burrow){const d=Math.hypot(o.x-e.x,o.y-e.y);if(d<1.25)hurtEnemy(o,(8+2*rank)*(d<.35?1:1-(d-.35)/.9),own)}
+      emit(e.x,e.y,WH*.55,'spark');addFlash({x:e.x,y:e.y,life:.14,max:.14,r:.7});
+    }else if(id==='shock'){
+      const near=enemies.filter(o=>o!==e&&!o.dead&&!o.burrow&&Math.hypot(o.x-e.x,o.y-e.y)<=3).sort((a,c)=>Math.hypot(a.x-e.x,a.y-e.y)-Math.hypot(c.x-e.x,c.y-e.y)||a.id-c.id).slice(0,3);
+      for(const o of[e,...near])if(!o.dead){o.slowT=Math.max(o.slowT||0,2);o.slowPct=Math.max(o.slowPct||0,Math.min(o.type==='boss'?.2:1,.25+.05*rank));emit(o.x,o.y,WH*.4,'arc')}
+    }
+  }
 }
 function updateBullets(dt){
   for(const b of bullets){
@@ -105,8 +126,8 @@ function updateBullets(dt){
       if(game.pvp){for(const o of players.values())if(o.alive&&!(o.prot>0)&&o.id!==b.own&&(game.pvp==='ffa'||o.team!==b.pt)&&Math.hypot(o.x-b.x,o.y-b.y)<.3){hurtPlayer(o,bdmg(b)*(b.heavy?PVP.snipe:PVP.dmg),b.own);feelHit(b.own,b.heavy);b.dead=true;break}}
       else if(b.team===0){for(const e of enemies)if(!e.dead&&!e.burrow&&Math.hypot(e.x-b.x,e.y-b.y)<(e.big?.55:.34)){
           // a shieldbearer's shield covers his front (about 130°): the round sparks off it
-          if(e.type==='shield'){const l=Math.hypot(b.vx,b.vy)||1;if(-(b.vx*e.aim.x+b.vy*e.aim.y)/l>.42){hitFx(b.x,b.y,2);sfx('shieldhit',b.x,b.y);if(!b.pel||!b.felt){b.felt=1;feelHit(b.own,false)}b.dead=true;break}}
-          hurtEnemy(e,bdmg(b),b.own);if(!b.pel||!b.felt){b.felt=1;feelHit(b.own,b.heavy)}b.dead=true;break}}
+          let shield=1;if(e.type==='shield'){const l=Math.hypot(b.vx,b.vy)||1;if(-(b.vx*e.aim.x+b.vy*e.aim.y)/l>.42){const ap=b.ammo&&b.ammo.find(x=>x[0]==='ap');if(!ap){hitFx(b.x,b.y,2);sfx('shieldhit',b.x,b.y);if(!b.pel||!b.felt){b.felt=1;feelHit(b.own,false)}b.dead=true;break}shield=[.5,.6,.7,.85,1][ap[1]]||.5}}
+          hurtEnemy(e,bdmg(b)*shield,b.own);ammoHit(e,b);if(!b.pel||!b.felt){b.felt=1;feelHit(b.own,b.heavy)}b.dead=true;break}}
       else{for(const a of allies())if(a.alive&&Math.hypot(a.x-b.x,a.y-b.y)<.3){hurtAlly(a,b.dmg*(a===qm?.7:1));b.dead=true;break}}
     }
   }

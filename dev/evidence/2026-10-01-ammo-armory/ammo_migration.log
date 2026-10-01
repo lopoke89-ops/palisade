@@ -1,0 +1,2 @@
+{"migration":"20261001045820_ammo_armory_expansion.sql","checks":["migration applies twice","tier 1 gate","tier 1 costs 1 SP","tier 2 gate","tier 2 refuses one point early","tier 2 costs its rank in SP","tier 3 refuses one point early","tier 3 costs its rank in SP","tier 4 refuses one point early","tier 4 costs its rank in SP","rank 5 refused","respec refunds exactly 10 SP and preserves lifetime earned","second respec refused","stale revision refused","unknown node refused","unspent SP still required","only authenticated can buy"]}
+errors: none

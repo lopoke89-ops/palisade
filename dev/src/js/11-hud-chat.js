@@ -131,7 +131,7 @@ function hud(dt){
     txt($('buildSub'),t.ok?`${MAT[t.mat].name} · ${t.cost}`:t.reason);cls(b,'no',!t.ok)}
   txt($('salN'),String(p.sal|0));
   const ab=$('armBtn'),shopPhase=shopOpen(p);ab.hidden=!shopPhase;
-  if(shopPhase){const near=nearStake(p),afford=UPG.some(U=>p.up[U.k]<4&&p.sal>=U.cost[p.up[U.k]])||!game.pvp&&((game.dellLv|0)<4&&p.sal>=DELL_UP.cost[game.dellLv|0]);
+  if(shopPhase){const near=nearStake(p),afford=UPG.some(U=>p.up[U.k]<ARM_MAX&&p.sal>=U.cost[p.up[U.k]])||!game.pvp&&((game.dellLv|0)<ARM_MAX&&p.sal>=DELL_UP.cost[game.dellLv|0]||ammoMode()&&p.sal>=(p.ammoEq.some(Boolean)?75:150));
     txt($('armLab'),'ARMORY');cls(ab,'far',!near);cls(ab,'pulse',near&&afford)}
   keyBar();
   if(!$('armory').hidden&&armorySig(p)!==armSig)renderArmory()

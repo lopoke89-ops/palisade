@@ -105,13 +105,14 @@ const fails = [];
     ok(!arm.whenFull[0] && arm.whenFull[1] === 87, 'full core: refused, nothing charged');
     ok(arm.missing120[1] === 70, 'repair adds 50 at most');
     ok(!arm.broke[0], "can't repair without the salvage");
-    ok(arm.dell.map(x => x[1]).join() === '1,2,3,4,4' && arm.dell[4][0] === false && arm.dell[3][2] === 60, 'Dell levels 1-4 for 30/60/100/150, then maxed');
+    ok(arm.dell.map(x => x[1]).join() === '1,2,3,4,4' && arm.dell[4][0] === false && arm.dell[3][2] === 60, 'Dell levels 1-4 keep their original costs; level 5 needs 200 salvage');
     ok(arm.gun4.dmg === 9.6 && arm.gun4.cd === .5 && arm.gun4.range === 9.6, 'Dell level 4 = +60% damage, range, fire rate');
     ok(arm.dellHp[1] === 180, 'Dell has 180 health');
     await q.evaluate(() => { document.getElementById('armory').hidden = false; __pal.renderArmory() }); await q.waitForTimeout(150);
     await q.screenshot({ path: O + '/v087_armory.png' });
     const rows = await q.evaluate(() => [...document.querySelectorAll('#armRows .arow')].map(r => r.querySelector('b').textContent + ':' + r.querySelector('button').textContent));
-    console.log('armory rows', rows.join(' | ')); ok(rows.length === 7 && rows.some(x => x.startsWith('DELGADO')) && rows.some(x => x.startsWith('REPAIR CORE')), 'armory has DELGADO and REPAIR CORE rows');
+    console.log('armory rows', rows.join(' | ')); ok(rows.length === 7 && rows.some(x => x.startsWith('DELGADO')) && rows.some(x => x.startsWith('REPAIR CORE')), 'upgrades tab has DELGADO and REPAIR CORE');
+    await q.click('#armAmmoTab');const ammoRows=await q.locator('#armRows .ammoRow').count();ok(ammoRows===4,'ammo tab has four choices');
     await q.evaluate(() => { document.getElementById('armory').hidden = true });
     await q.close();
   }

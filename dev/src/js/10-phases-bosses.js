@@ -167,7 +167,8 @@ function thinkButcher(e,dt,tgt,mv,aimAt,Df){
     if(e.stT<=0){const a=Math.atan2(e.ly-e.y,e.lx-e.x);e.st=3;e.stT=e.stM=.72;e.cvx=Math.cos(a)*9;e.cvy=Math.sin(a)*9;e.hit=new Set();sfx('slash',e.x,e.y)}
     return{eng:true,mv:null}}
   if(e.st===3){e.stT-=dt;let stop=e.stT<=0;
-    for(let s=0;s<3&&!stop;s++){const nx=e.x+e.cvx*dt/3,ny=e.y+e.cvy*dt/3,i=Math.floor(nx),j=Math.floor(ny);
+    const moveDt=dt*(1-(e.slowT>0?e.slowPct||0:0));
+    for(let s=0;s<3&&!stop;s++){const nx=e.x+e.cvx*moveDt/3,ny=e.y+e.cvy*moveDt/3,i=Math.floor(nx),j=Math.floor(ny);
       if(!inb(i,j)||(nodeAt(i,j)||{}).solid||terrSolid(terr[idx(i,j)])){stop=true;break}const k=idx(i,j);
       if(coreKs.has(k)){hurtStake(stakeAt(k),40*Df.dmg);addShake(nx,ny,8);stop=true;break}
       if(walls[k]){damageWall(k,150*MAT[walls[k].mat].blast);addShake(nx,ny,6);if(walls[k]){stop=true;break}}
@@ -330,7 +331,7 @@ function raftMove(e,dt,goalK){
   if(e.next<0)return false;
   const tx=e.next%N+.5,ty=((e.next/N)|0)+.5,dx=tx-e.x,dy=ty-e.y,l=Math.hypot(dx,dy);
   if(l<.05){e.pathT=0;return e.next===goalK}
-  const s=Math.min(l,e.speed*dt);e.x+=dx/l*s;e.y+=dy/l*s;e.walk+=dt*3;if(rnd()<dt*6)emit(e.x,e.y,2*u,'dust',0);
+  const s=Math.min(l,e.speed*dt*(1-(e.slowT>0?e.slowPct||0:0)));e.x+=dx/l*s;e.y+=dy/l*s;e.walk+=dt*3;if(rnd()<dt*6)emit(e.x,e.y,2*u,'dust',0);
   return false;
 }
 function thinkFerryman(e,dt,tgt,mv,aimAt,Df){

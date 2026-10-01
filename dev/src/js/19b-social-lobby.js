@@ -363,11 +363,11 @@ function renderSkills(){
   const br=[...new Set(SKILLS.map(S=>S.br))];box.textContent='';
   for(const name of br){const card=document.createElement('div');card.className='setCard skBranch';const h=document.createElement('h3');h.textContent=name;card.append(h);
     for(const S of SKILLS.filter(x=>x.br===name)){const lv=t[S.id]|0,row=document.createElement('div');row.className='skRow'+(lv?' on':'');
-      const nm=document.createElement('b');nm.textContent=S.name;const w=document.createElement('i');w.textContent=S.what+(S.cls?'':(S.id==='revive'?' (co-op)':''));
+      const nm=document.createElement('b');nm.textContent=S.name;const w=document.createElement('i');w.textContent=S.what+(S.cls?'':(S.id==='revive'?' (co-op)':''))+(S.gate&&lv<S.max?` Next tier: ${S.gate[lv]} lifetime SP earned, ${S.cost[lv]} SP to buy.`:'');
       const pips=document.createElement('div');pips.className='pips';for(let n=0;n<S.max;n++){const sp=document.createElement('span');if(n<lv)sp.className='on';pips.append(sp)}
-      const btn=document.createElement('button');btn.type='button';btn.dataset.sk=S.id;const locked=S.req&&(t[S.req[0]]|0)<S.req[1];
+      const btn=document.createElement('button');btn.type='button';btn.dataset.sk=S.id;const locked=S.req&&(t[S.req[0]]|0)<S.req[1],gate=S.gate&&S.gate[lv],gated=gate&&(L.spTotal|0)<gate;
       if(lv>=S.max){btn.textContent='MAXED';btn.disabled=true}
-      else{const c=S.cost[lv];btn.textContent=locked?`NEEDS ${SKILLBY[S.req[0]].name}`:`${c} PT${c>1?'S':''}`;btn.disabled=!acc||skillBusy||locked||(L.sp|0)<c}
+      else{const c=S.cost[lv];btn.textContent=locked?`NEEDS ${SKILLBY[S.req[0]].name}`:gated?`NEEDS ${gate} EARNED`:`${c} PT${c>1?'S':''}`;btn.disabled=!acc||skillBusy||locked||gated||(L.sp|0)<c}
       btn.setAttribute('aria-label',`${S.name}, level ${lv} of ${S.max}. ${btn.textContent}`);btn.addEventListener('click',()=>{initAudio();skillBuy(S.id)});
       row.append(nm,btn,pips,w);
       if(S.id==='molotov'&&lv){const tg=document.createElement('label');tg.className='tog';const cb=document.createElement('input');cb.type='checkbox';cb.id='skMolotov';cb.checked=!cfg.molOff;

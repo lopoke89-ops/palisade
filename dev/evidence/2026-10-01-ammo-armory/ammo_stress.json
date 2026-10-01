@@ -1,0 +1,28 @@
+{
+  "ordinary": {
+    "players": 6,
+    "enemies": 49,
+    "peakStatus": 0,
+    "peakParts": 116,
+    "peakEvents": 41,
+    "peakBullets": 31,
+    "updateMedianMs": 0.2,
+    "updateP90Ms": 0.4,
+    "renderMedianMs": 3.9,
+    "renderP90Ms": 6.5,
+    "maxRoundHistory": 0
+  },
+  "special": {
+    "players": 6,
+    "enemies": 49,
+    "peakStatus": 49,
+    "peakParts": 419,
+    "peakEvents": 284,
+    "peakBullets": 31,
+    "updateMedianMs": 0.2,
+    "updateP90Ms": 0.4,
+    "renderMedianMs": 4.2,
+    "renderP90Ms": 6.1,
+    "maxRoundHistory": 62
+  }
+}

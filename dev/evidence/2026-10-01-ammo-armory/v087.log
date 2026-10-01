@@ -1,0 +1,19 @@
+soldier DAMAGE 0: burst sizes 3,3,3,3,3 | pause between bursts 0.4,0.4,0.4,0.4
+one quick click fired 3 rounds
+soldier DAMAGE 4: burst sizes 9,9,9,9 | pause 0.2,0.2,0.2
+burst table 3@0.40 5@0.35 7@0.30 9@0.25 9@0.20
+soldier speed 3.28 tiles/s
+sniper holding 3 s: 5 shots, gaps 0.7,0.7,0.7,0.68
+sniper speed 3.66 = 1.11x soldier
+grenadier speed 2.95 = 0.90x soldier
+quartermaster sprinting 4.52 = 1.38x soldier; shots while sprinting 0 | button GO
+after the sprint ends: {"spr":0,"cd":5.6,"n":6,"lab":"6s"}
+armory {"full30":[true,true,87],"whenFull":[false,87],"missing120":[true,70,74],"broke":[false,70,5],"dell":[[true,1,370],[true,2,310],[true,3,210],[true,4,60],[false,4,60]],"gun0":{"dmg":6,"cd":0.8,"range":6,"pellets":5},"gun4":{"dmg":9.6,"cd":0.5,"range":9.6,"fall":[4,9.6,0.55]},"dellHp":[180,180]}
+armory rows DAMAGE:20 SAL | FIRE RATE:20 SAL | RANGE:15 SAL | ARMOR:20 SAL | GRENADES:15 SAL | ARMOR PIERCING:150 SAL | INCENDIARY:150 SAL | EXPLOSIVE:150 SAL | LIGHTNING:150 SAL | DELGADO:200 SAL | REPAIR CORE:13 SAL
+Dell in a fight: volleys 5 pellets per volley 5,5,5,5,5
+shards 0sal/5held=0  19sal/5held=0  20sal/5held=1  137sal/5held=6  250sal/5held=10  250sal/3held=6  1000sal/40held=10  60sal/0held=0
+end of a 5-raid win with 137 salvage left: [6,17,"+2 supply cases · +1 flag case for the win · +6 shards from leftover salvage · +1 skill point · 1 more raid to the next supply case · Unlocked Desert, Urban Grey, First Light."] | showing the end screen again: [6,17]
+miss distance (tiles) from the raider's centre, hit radius 0.34. New: boots 0, chest 0, head 0, helmet top 0 | old aim: 0.55, 0.28, 0.83, 1.12
+holding fire on the head for 1.5 s: 9 rounds, 9 hits
+errors none
+all checks ok

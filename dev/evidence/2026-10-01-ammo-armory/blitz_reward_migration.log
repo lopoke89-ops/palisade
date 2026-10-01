@@ -1,0 +1,35 @@
+{
+  migration: '20260930141401_palisade_v0940_blitz.sql',
+  checks: [
+    'migration applies on the live v0.9.3.8 function and re-applies',
+    'evac: 25 Blitzkrieg Cases (12 bosses x2 + 1)',
+    'evac: supply = 15 raids (5) + the 15-raid win (2)',
+    'evac: skill points = 15/5 + 12 bosses',
+    'evac: shards = salvage (10) + 10 x 15-30 + 25',
+    'evac: a win',
+    'milestones: mode_blitz_bosses 12, base bosses counted',
+    'ladder unlocks at 10 (Devil Horns) and not yet 25',
+    'left: 24 Blitzkrieg Cases -> 12 (no evac bonus)',
+    'left: 5 supply -> 3 (odd rounds up)',
+    'left: shards halved, rounded up',
+    'left: skill points never halved',
+    'left: raids and boss milestones in full, no win',
+    'match record keeps the mode, Final Blitz bosses and evac',
+    'left: 6 Blitzkrieg -> 3, 0 supply -> 0',
+    'left: 8 -> 4',
+    'cap 10',
+    'Double Time: cap 15',
+    'time: 110 s of play pays at most 4',
+    'same game, second claim: only the rest of the cap',
+    'unknown Final Blitz keys are skipped',
+    'evac before raid 15 ignored: nothing halved',
+    '5 raids: unchanged (fb_keys and evac ignored)',
+    'blitz mods cleaned and priced',
+    'co-op mods unchanged (Hot LZ not in co-op)',
+    'Blitzkrieg Case: 14 shards',
+    '10 Blitzkrieg items, catalog 2',
+    'ladder 10/25/50/75/100',
+    'grants: anon denied, signed-in allowed'
+  ]
+}
+errors: none

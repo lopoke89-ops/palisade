@@ -4,7 +4,7 @@
 // they talk directly. Each guest opens 'r' (reliable: hello, build, grenade, and every
 // one-off event: sounds, particles, bullets, toasts, wall changes), 'u' (fast: movement in),
 // and 'st' (never resent: game state out, 15 times a second).
-const PROTO='yard-19',ROOM_PREFIX='palisade-yard-19-';   // v0.9.4.0: Blitzkrieg Rush (new bosses, shots, the Final Blitz and the evacuation)
+const PROTO='yard-20',ROOM_PREFIX='palisade-yard-20-';   // special ammo and enemy status snapshots
 const ROOM_SESSION=(()=>{let id='';try{id=sessionStorage.getItem('palisade.roomSession')||''}catch(e){}
   if(!/^[0-9a-f]{24}$/.test(id)){id=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');try{sessionStorage.setItem('palisade.roomSession',id)}catch(e){}}
   return id})();
@@ -170,6 +170,7 @@ function hostData(peerId,d){
   else if(d.t==='b'){if(hostInt(d.i,0,N-1)&&hostInt(d.j,0,N-1)&&hostInt(d.s,0,2)&&typeof d.d==='boolean')doBuild(p,d.i,d.j,d.s,d.d)}
   else if(d.t==='n'){if(hostFinite(d.x,-HOST_LIMITS.targetPad,N+HOST_LIMITS.targetPad)&&hostFinite(d.y,-HOST_LIMITS.targetPad,N+HOST_LIMITS.targetPad))throwNade(p,d.x,d.y)}
   else if(d.t==='u'){if(typeof d.k==='string'&&(UPG.some(u=>u.k===d.k)||d.k==='core'||d.k==='dell'))buyUpgrade(p,d.k)}
+  else if(d.t==='am'){if(typeof d.id==='string'&&AMMO_BY[d.id]&&hostInt(d.slot,0,1))buyAmmo(p,d.id,d.slot)}
   else if(d.t==='rl'){if(p.gun.mag)p.rlReq=true}
   else if(d.t==='ab'){if(hostFinite(d.x,-HOST_LIMITS.targetPad,N+HOST_LIMITS.targetPad)&&hostFinite(d.y,-HOST_LIMITS.targetPad,N+HOST_LIMITS.targetPad))useAbility(p,d.x,d.y)}
 }
@@ -186,12 +187,13 @@ function hostDrop(peerId){
 // salvage and kills. Keyed by the browser's room session, which survives a reload in the same tab.
 function stashLeaver(c,p){
   if(!c.session||c.kicked||!p||game.pvp)return;
-  NET.leftBy.set(c.session,{gid:game.gid,cls:p.cls,up:{...p.up},sal:p.sal|0,kills:p.kills|0,deaths:p.deaths|0,out:!!p.out});
+  NET.leftBy.set(c.session,{gid:game.gid,cls:p.cls,up:{...p.up},ammoEq:p.ammoEq.slice(),sal:p.sal|0,kills:p.kills|0,deaths:p.deaths|0,out:!!p.out});
   if(NET.leftBy.size>12)NET.leftBy.delete(NET.leftBy.keys().next().value);
 }
 function restoreLeaver(c,p){
   const s=NET.leftBy.get(c.session);if(!s||s.gid!==game.gid||game.pvp)return false;NET.leftBy.delete(c.session);
-  if(s.cls===p.cls){for(const k in p.up)p.up[k]=Math.max(0,Math.min(4,s.up[k]|0));p.upS=upStr(p);refit(p);p.nades=p.maxN}
+  if(s.cls===p.cls){for(const k in p.up)p.up[k]=Math.max(0,Math.min(ARM_MAX,s.up[k]|0));p.upS=upStr(p);refit(p);p.nades=p.maxN}
+  if(Array.isArray(s.ammoEq)&&ammoMode()){const a=s.ammoEq.map(id=>AMMO_BY[id]?id:'');p.ammoEq=[a[0]||'',p.cls==='sniper'&&a[1]&&a[1]!==a[0]?a[1]:'']}
   p.sal=Math.max(p.sal|0,s.sal);p.kills=s.kills;p.deaths=s.deaths;if(s.out){p.out=true;p.alive=false;p.downed=false;p.ev=BLITZ.hold}return true;   // v0.9.4.0: out is out
 }
 function hostKick(pid){
@@ -283,10 +285,11 @@ const PL_STATE=[['id',p=>p.id],['x',p=>r2(p.x)],['y',p=>r2(p.y)],['ax',p=>r2(p.a
   ['alive',p=>p.alive?1:0],['down',p=>p.downed?1:0],['rev',p=>r2(p.revive)],['rt',p=>r2(p.rt)],['m0',p=>p.mats[0]],['m1',p=>p.mats[1]],['m2',p=>p.mats[2]],
   ['nades',p=>p.nades],['tp',p=>p.tp],['bcd',p=>r2(Math.max(0,p.bcd))],['sal',p=>p.sal|0],['kills',p=>p.kills|0],['deaths',p=>p.deaths|0],
   ['prot',p=>p.prot>0?1:0],['bolt',p=>p.bolt>0?r2(p.bolt/p.boltT):0],['ammo',p=>p.gun.mag?p.ammo|0:-1],['rl',p=>p.rl>0?1:0],['stun',p=>r2(p.stun||0)],['ab',p=>p.ab|0],['out',p=>p.out?1:0],['ev',p=>r2(p.ev||0)]];   // out/ev (v0.9.4.0): evacuated, and seconds stood in the evac ring   // ab: class-ability state, reserved (always 0 until abilities land)
-const PL_INFO=[['id',p=>p.id],['name',p=>p.name],['cls',p=>p.cls],['slot',p=>p.slot],['max',p=>p.max],['maxN',p=>p.maxN],['upS',p=>p.upS],['cosS',p=>p.cosS],['team',p=>p.team||'']];
+const PL_INFO=[['id',p=>p.id],['name',p=>p.name],['cls',p=>p.cls],['slot',p=>p.slot],['max',p=>p.max],['maxN',p=>p.maxN],['upS',p=>p.upS],['cosS',p=>p.cosS],['team',p=>p.team||''],['ammoEq',p=>p.ammoEq.join(',')],['sk',p=>p.sk]];
 // enemies: the boss-only fields sit last and trailing zeros are dropped, so a plain raider sends 7 numbers, not 12
 const EN_STATE=[['id',e=>e.id],['type',e=>ECODE.indexOf(e.type==='boss'?'boss:'+e.boss:e.type)],['x',e=>r2(e.x)],['y',e=>r2(e.y)],['ax',e=>r2(e.aim.x)],['ay',e=>r2(e.aim.y)],
-  ['hp',e=>r2(e.hp/e.max)],['plant',e=>e.planted?1:0],['st',e=>e.st||0],['stF',e=>e.st?r2(Math.max(0,e.stT/e.stM)):0],['lx',e=>r2(e.lx||0)],['ly',e=>r2(e.ly||0)]];
+  ['hp',e=>r2(e.hp/e.max)],['plant',e=>e.planted?1:0],['st',e=>e.st||0],['stF',e=>e.st?r2(Math.max(0,e.stT/e.stM)):0],['lx',e=>r2(e.lx||0)],['ly',e=>r2(e.ly||0)],
+  ['burn',e=>r2(e.burnT||0)],['slow',e=>r2(e.slowT||0)],['slowPct',e=>r2(e.slowPct||0)]];
 const fieldIdx=L=>Object.fromEntries(L.map((f,i)=>[f[0],i])),PS=fieldIdx(PL_STATE),PI=fieldIdx(PL_INFO);
 const packRow=(L,x)=>L.map(f=>f[1](x)),packTrim=(L,x)=>{const r=packRow(L,x);while(r.length>1&&r[r.length-1]===0)r.pop();return r},PE=fieldIdx(EN_STATE);
 // player info that changed since it was last sent (all of it after a reset: game start, someone dropping in)
@@ -299,7 +302,9 @@ function applyInfo(rows){
   for(const r of rows){const id=r[PI.id];let p=players.get(id);
     if(!p){p=makePlayer(id,r[PI.name],r[PI.cls],r[PI.slot],r[PI.cosS],r[PI.team]);players.set(id,p)}
     else if(r[PI.cls]&&r[PI.cls]!==p.cls)changeClass(p,r[PI.cls]);   // a job change on the host
-    if(r[PI.upS]!==undefined&&String(r[PI.upS])!==p.upS){p.upS=String(r[PI.upS]);UPG.forEach((U,i)=>p.up[U.k]=+p.upS[i]||0);refit(p)}
+    if(r[PI.sk]!==undefined&&p.sk!==r[PI.sk]){const t=parseSkills(r[PI.sk]);p.sk=skillStr(t,t.molOff);p.perk=perkMods(t,!!game.pvp);refit(p)}
+    if(r[PI.upS]!==undefined&&String(r[PI.upS])!==p.upS){p.upS=String(r[PI.upS]);UPG.forEach((U,i)=>p.up[U.k]=clamp(+p.upS[i]||0,0,ARM_MAX));refit(p)}
+    if(r[PI.ammoEq]!==undefined){const a=String(r[PI.ammoEq]).split(',');p.ammoEq=[AMMO_BY[a[0]]?a[0]:'',p.cls==='sniper'&&AMMO_BY[a[1]]&&a[1]!==a[0]?a[1]:'']}
     if(r[PI.cosS]&&r[PI.cosS]!==p.cosS){p.cos=parseCos(r[PI.cosS]);p.cosS=cosStr(p.cos)}
     p.name=r[PI.name];p.slot=r[PI.slot];p.max=r[PI.max];p.maxN=r[PI.maxN];if(r[PI.team])p.team=r[PI.team]}
 }
@@ -394,7 +399,7 @@ function applySnap(s){
     if(!e)e={id,x:v('x'),y:v('y'),walk:rnd()*6,flash:0,max:1,hp:1};
     if(v('hp')<e.hp-.001)e.flash=.08;
     const c=ECODE[v('type')]||'rifle',bk=c.startsWith('boss:')?c.slice(5):'';
-    Object.assign(e,{type:bk?'boss':c,boss:bk||undefined,big:!!bk,raft:!!(BOSSES[bk]&&BOSSES[bk].raft)&&waterK(idx(clamp(Math.floor(v('x')),0,N-1),clamp(Math.floor(v('y')),0,N-1))),burrow:bk==='foreman'&&(v('st')===2||v('st')===4),tx:v('x'),ty:v('y'),aim:{x:v('ax'),y:v('ay')},hp:v('hp'),max:1,planted:!!v('plant'),st:v('st'),stF:v('stF'),lx:v('lx'),ly:v('ly')});enemies.push(e)}
+    Object.assign(e,{type:bk?'boss':c,boss:bk||undefined,big:!!bk,raft:!!(BOSSES[bk]&&BOSSES[bk].raft)&&waterK(idx(clamp(Math.floor(v('x')),0,N-1),clamp(Math.floor(v('y')),0,N-1))),burrow:bk==='foreman'&&(v('st')===2||v('st')===4),tx:v('x'),ty:v('y'),aim:{x:v('ax'),y:v('ay')},hp:v('hp'),max:1,planted:!!v('plant'),st:v('st'),stF:v('stF'),lx:v('lx'),ly:v('ly'),burnT:v('burn'),slowT:v('slow'),slowPct:v('slowPct')});enemies.push(e)}
   rockets=[];for(let o=0;o<(s.rk||[]).length;o+=4)rockets.push({x:s.rk[o],y:s.rk[o+1],vx:s.rk[o+2],vy:s.rk[o+3]});
   fires=[];for(let o=0;o<(s.fz||[]).length;o+=5)fires.push({x:s.fz[o],y:s.fz[o+1],t:s.fz[o+2],r:s.fz[o+3],nap:s.fz[o+4]|0,max:4});
   arcs=[];for(let o=0;o<(s.ar||[]).length;o+=4)arcs.push({x:s.ar[o],y:s.ar[o+1],vx:s.ar[o+2],vy:s.ar[o+3]});
@@ -446,7 +451,7 @@ function guestUpdate(dt){
     if(d>3){e.x=e.tx;e.y=e.ty}else{e.x+=dx*k;e.y+=dy*k;e.walk=(e.walk||0)+d*k*3}};
   for(const p of players.values()){if(p!==player)smooth(p);p.flash=Math.max(0,(p.flash||0)-dt);if(p.boltF>0)p.boltF=Math.max(0,p.boltF-dt*1.9);if(p.stun>0)p.stun=Math.max(0,p.stun-dt)}
   smooth(qm);qm.flash=Math.max(0,qm.flash-dt);
-  for(const e of enemies){smooth(e);e.flash=Math.max(0,e.flash-dt)}
+  for(const e of enemies){smooth(e);e.flash=Math.max(0,e.flash-dt);e.burnT=Math.max(0,(e.burnT||0)-dt);e.slowT=Math.max(0,(e.slowT||0)-dt)}
   for(const b of bullets){b.x+=b.vx*dt;b.y+=b.vy*dt;if(b.left!==undefined){b.left-=Math.hypot(b.vx,b.vy)*dt;if(b.left<=0||!inb(b.x|0,b.y|0))b.dead=true}}
   compactBullets();
   for(const l of lobs)l.t=Math.min(l.T,l.t+dt);

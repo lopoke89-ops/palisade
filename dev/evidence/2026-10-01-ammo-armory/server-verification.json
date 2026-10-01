@@ -1,0 +1,70 @@
+{
+  "project": "puvjfhwxigxjpsvdwrwf",
+  "migration": "20261001045820_ammo_armory_expansion",
+  "checks": [
+    {
+      "ap": {
+        "cost": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "gate": [
+          5,
+          10,
+          15,
+          20
+        ]
+      },
+      "fire": {
+        "cost": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "gate": [
+          5,
+          10,
+          15,
+          20
+        ]
+      },
+      "blast": {
+        "cost": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "gate": [
+          5,
+          10,
+          15,
+          20
+        ]
+      },
+      "shock": {
+        "cost": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "gate": [
+          5,
+          10,
+          15,
+          20
+        ]
+      },
+      "spent": 40,
+      "lifetime_gate": true,
+      "anon_buy": false,
+      "signed_in_buy": true,
+      "private_exposed": false
+    }
+  ],
+  "securityAdvisorsUnchanged": true
+}

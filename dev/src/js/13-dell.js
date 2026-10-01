@@ -1,9 +1,9 @@
 /* ---------- Delgado, the quartermaster ---------- */
 // Delgado's pump shotgun: 5 pellets x 6, every 0.8 s, full damage to 2.5 tiles, falling to 55% by 6.
-// Each crew-bought level adds 15% damage, 15% reach (falloff and range) and 15% fire rate.
+// Levels 1–4 add 15% damage, reach and fire rate each; levels 5–8 add 3.75% each.
 const DELL_GUN={dmg:6,cd:.8,spread:.2,range:6,speed:24,pellets:5,fall:[2.5,6,.55]};
-function dellGun(){const L=game.dellLv|0,m=1+.15*L,G=DELL_GUN;
-  return{dmg:G.dmg*m,cd:G.cd/m,spread:G.spread,range:G.range*m,speed:G.speed*(1+.1*L),pellets:G.pellets,fall:[G.fall[0]*m,G.fall[1]*m,G.fall[2]]}}
+function dellGun(){const L=game.dellLv|0,m=1+dellBoost(L),G=DELL_GUN;
+  return{dmg:G.dmg*m,cd:G.cd/m,spread:G.spread,range:G.range*m,speed:G.speed*(1+armBoost(L,.1,.025)),pellets:G.pellets,fall:[G.fall[0]*m,G.fall[1]*m,G.fall[2]]}}
 const tileOf=e=>idx(Math.floor(e.x),Math.floor(e.y));
 const adj4=(k,t)=>{const a=k%N,b=(k/N)|0,c=t%N,d=(t/N)|0;return Math.abs(a-c)+Math.abs(b-d)===1};
 function nearestPlayer(from,pred){let best=null,bd=1e9;for(const p of players.values()){if(!pred(p))continue;const d=dist2(p,from);if(d<bd){bd=d;best=p}}return best}

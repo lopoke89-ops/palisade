@@ -102,8 +102,8 @@ function hurtQM(d){
   const q=qm;if(!q.alive)return;q.hp-=d;q.hurt=0;q.flash=.1;emit(q.x,q.y,16*u,'blood');
   if(q.hp<=0){q.alive=false;q.hp=0;q.revive=0;flt(q.x,q.y,'DELGADO IS DOWN','#d65a3a');toastAll('DELGADO IS DOWN','Stand over him to get him back up.')}
 }
-function hurtEnemy(e,d,own){
-  e.hp-=d;e.flash=.08;emit(e.x,e.y,15*u,'blood');
+function hurtEnemy(e,d,own,quiet=false){
+  e.hp-=d;if(!quiet){e.flash=.08;emit(e.x,e.y,15*u,'blood')}
   if(e.hp<=0&&!e.dead){e.dead=true;game.stats.dropped++;sfx('drop',e.x,e.y);for(let n=0;n<6;n++)emit(e.x,e.y,10*u,'blood');
     if(e.type==='boss'){if(!demo)bossDown(e,own);const p=own&&own!=='dell'?players.get(own):null;if(p){p.kills++;killFx(e.x,e.y,p.cos.fx)}}else award(own,e)}
 }

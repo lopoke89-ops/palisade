@@ -1,6 +1,6 @@
 # PALISADE project status
 
-Updated September 30, 2026. This is the current status record for the clone. The older project handoff and v0.9.3 hardening prompt describe a superseded release order.
+Updated October 1, 2026. This is the current status record for the clone. The older project handoff and v0.9.3 hardening prompt describe a superseded release order.
 
 For a consolidated list of what remains from those documents, see the [current project blueprint](PROJECT_BLUEPRINT_2026-09-29.md).
 Big U's latest completed local scope is recorded in the [presentation prompt](plans/backgrounds-and-character-animation-prompt.md). The earlier [cosmetic and hardening prompt](plans/next-cosmetics-and-hardening-prompt.md) remains the record of v0.9.3.2 and its deferred work.
@@ -11,15 +11,30 @@ The Claude audit URL still requires sign-in in the available browser session. Bi
 
 | Item | Current state |
 |---|---|
-| Source release | **v0.9.5.1** (Sahur headgear and Open Games visibility) |
+| Source release | **v0.9.5.2** (special ammo, eight-level upgrades and compact Armory UI) |
+| Release deployment | Authorized October 1; push/Pages verification in progress; protocol `yard-20` |
 | Live protocol | `yard-19` / `palisade-yard-19-` |
-| Applied server migration | `palisade_v0940_blitz` (`20260930141401`); before it `palisade_v0939_sp_cases` (`20260930084544`) |
+| Applied server migration | `ammo_armory_expansion` (`20261001045820`), verified October 1; before it `palisade_v0940_blitz` (`20260930141401`) |
 | GitHub branch | `main` at `1f94c20` (v0.9.5.1 release), checked September 30 |
 | Published build | GitHub Pages displays **v0.9.5.1**, protocol `yard-19`, service worker `palisade-d59dec9b99`, verified September 30 |
 
 Controller support shipped in v0.9.2.1. The v0.9.3 cosmetics migration is applied and the live case catalog includes Flags. The two proposed new game modes have not shipped; the Nightmare modifier and a future preset definition do not constitute a separate game mode.
 
 Four commits after the v0.9.3 release changed the case intro and reel source (`98bb522`, `4c8dd3d`, `a49df08`, `566e30e`). The v0.9.3.1 release includes those fixes. Their source was compared with the v0.9.3 release on September 29; see [case animation validation](CASE_PERFORMANCE_2026-09-29.md). The reel avoids repeated style reads and its measured CPU use was lower, but intro readings overlapped and Locker readings were higher in the comparison runs. Further profiling and a real-phone comparison are still required before performance sign-off.
+
+## v0.9.5.2: special ammo and eight-level Armory
+
+The [ammo and Armory work order](plans/ammo-and-armory-expansion-work-order.md) is implemented. [Validation, balance tables and evidence](evidence/2026-10-01-ammo-armory/README.md) record the finished build and live account migration. Big U authorized publication October 1; Pages verification is in progress.
+
+Armor Piercing, Incendiary, Explosive and Lightning are offered only in solo/co-op 5-raid, 10-raid, Endless and Blitzkrieg Rush. They cost 150 salvage for an empty slot and 75 to switch; repeated selection is free. Classes have one slot, Sniper has two distinct slots, and leaving Sniper clears slot two. Host validation enforces these rules, phase/distance/life/Lockdown checks and salvage. Ammo, verified ranks, burn and slow are synchronized; a same-match reconnect retains slots and level-8 upgrades. Protocol is `yard-20` because these packet fields are new.
+
+Four account nodes are appended after the original 15, gated by 5/10/15/20 lifetime SP and priced at 1/2/3/4 unspent SP. The applied migration extends the live definitions and purchase gate. Tests use the exact deployed respec body and verify accurate refunds, no repeat refund and preserved lifetime SP. No player rows were rewritten. Read-only live checks and the unchanged security-advisor baseline are saved in the evidence directory.
+
+Levels 5–8 extend Damage, Fire Rate, Range, Armor, Grenades and Delgado. Their final bonus caps are 25% above the previous level-4 bonus caps; the original four tiers retain their values and prices. The Armory shows level out of eight, current-to-next benefit, and each ammo's effect, rank, slot and price.
+
+**October 1 mobile UI follow-up:** Upgrades and Ammo are separate tabs, and Sniper chooses a slot above one four-choice ammo list. The introduction is removed, salvage sits in the header, landscape uses columns, and all action buttons remain at least 44×44 pixels. Both tabs fit without scrolling across 73 layout cases at ten viewport sizes, including 320×480 portrait and 568×320 landscape, equipped slots and maxed upgrades. Purchases, real guest UI buying, controller navigation and CSP pass. See [current captures and measurements](evidence/2026-10-01-ammo-armory/compact-armory/README.md).
+
+The initial full regression run plus focused reruns cover 62 distinct passing tests. The old `v087` row-count expectation was updated and passes. New focused tests cover purchases, combat, real local host/guest runs in all four eligible modes, real reconnect, forged packets, PvP rejection, server gates/refunds and a six-player/49-enemy stress scene. In the PC phone-sized software-rendered sample, simulation median/p90 remained 0.2/0.4 ms and rendering median changed from 3.9 to 4.2 ms. Physical-device performance and longer player balance sessions are follow-up validation; the local tests do not measure production network latency.
 
 ## v0.9.5.1: Sahur hats and Open Games visibility
 

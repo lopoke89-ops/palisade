@@ -397,40 +397,69 @@ function showRewards(R){
 $('overRewards').addEventListener('click',()=>$('overRewards').classList.add('skip'));
 
 /* ---------- armory screen ---------- */
-let armSig='';
+let armSig='',armTab='upgrades',armSlot=0;
 function tryArmory(){const p=player;if(p&&p.alive&&game.phase==='build'&&lockdown()){toast('ARMORY','Lockdown: the armory stays shut until the run is over.');return}if(!shopOpen(p))return;if(!nearStake(p)){toast('ARMORY',game.pvp?'Walk back to your stake to spend salvage.':'Walk back to the stake to spend salvage.');return}openArmory()}
-function openArmory(){$('armEyebrow').textContent=game.pvp?'ARMORY · AT YOUR STAKE':'ARMORY · BETWEEN RAIDS';$('armory').hidden=false;if(NET.mode==='solo')game.paused=true;freeSticks();renderArmory()}
+function openArmory(){$('armEyebrow').textContent=game.pvp?'ARMORY · AT YOUR STAKE':'ARMORY · BETWEEN RAIDS';$('armory').hidden=false;if(NET.mode==='solo')game.paused=true;freeSticks();renderArmory();if(padMode)navFocus($('armRows').querySelector('button:not(:disabled)')||$('armClose'))}
 function closeArmory(){if($('armory').hidden)return;$('armory').hidden=true;if(NET.mode==='solo'&&$('pause').hidden)game.paused=false}
-const armorySig=p=>p.sal+'|'+upStr(p)+'|'+canShop(p)+'|'+(game.dellLv|0)+'|'+(cores[0]?Math.ceil(cores[0].hp):'');
+const armorySig=p=>p.sal+'|'+upStr(p)+'|'+p.ammoEq.join(',')+'|'+p.sk+'|'+p.cls+'|'+canShop(p)+'|'+(game.dellLv|0)+'|'+(cores[0]?Math.ceil(cores[0].hp):'');
 function renderArmory(){
   const p=player;if(!p)return;armSig=armorySig(p);$('armSal').textContent=p.sal|0;
   const box=$('armRows');box.textContent='';
+  if(!ammoMode())armTab='upgrades';if(p.cls!=='sniper')armSlot=0;
+  $('armAmmoTab').hidden=!ammoMode();$('armUpTab').setAttribute('aria-selected',armTab==='upgrades');$('armAmmoTab').setAttribute('aria-selected',armTab==='ammo');
+  box.setAttribute('aria-labelledby',armTab==='ammo'?'armAmmoTab':'armUpTab');box.classList.toggle('ammoPanel',armTab==='ammo');
+  if(armTab==='ammo'){
+    if(p.cls==='sniper'){
+      const slots=document.createElement('div');slots.className='armSlots';slots.setAttribute('role','group');slots.setAttribute('aria-label','Sniper ammo slot');
+      for(let slot=0;slot<2;slot++){const btn=document.createElement('button'),id=p.ammoEq[slot];btn.type='button';btn.dataset.armSlot=slot;btn.setAttribute('aria-pressed',slot===armSlot);
+        btn.textContent=`${slot+1}: ${id?AMMO_BY[id].name:'EMPTY'}`;btn.setAttribute('aria-label',`Ammo slot ${slot+1}: ${id?AMMO_BY[id].name:'empty'}`);
+        btn.addEventListener('click',()=>{armSlot=slot;renderArmory();box.querySelector(`[data-arm-slot="${slot}"]`).focus({preventScroll:true})});slots.append(btn)}box.append(slots);
+    }
+    for(const A of AMMO){const row=document.createElement('div');row.className='arow ammoRow';row.style.setProperty('--ammo-color',A.col);
+      const b=document.createElement('b');b.textContent=A.name;const i=document.createElement('i'),rank=ammoRank(p,A.id);i.textContent=ammoEffectShort(A.id,rank);i.title=ammoEffect(A.id,rank)+` · skill ${rank}/4`;
+      const btn=document.createElement('button');btn.type='button';btn.dataset.armAmmo=A.id;
+      const same=p.ammoEq[armSlot]===A.id,other=p.ammoEq.includes(A.id),cost=p.ammoEq[armSlot]?75:150;
+      btn.textContent=same?'EQUIPPED':other?'OTHER SLOT':cost+' SAL';btn.disabled=same||other||p.sal<cost||!canShop(p);
+      btn.setAttribute('aria-label',`${A.name}, ${ammoEffect(A.id,rank)}, skill ${rank} of 4, ${p.cls==='sniper'?'slot '+(armSlot+1)+', ':''}${btn.textContent}`);
+      const slot=armSlot;btn.addEventListener('click',()=>{initAudio();if(NET.mode==='guest'){NET.toHost({t:'am',id:A.id,slot});btn.disabled=true}else if(buyAmmo(p,A.id,slot))renderArmory()});
+      row.append(b,btn,i);box.append(row)}return;
+  }
   for(const U of UPG){
     const t=p.up[U.k],row=document.createElement('div');row.className='arow';
-    const b=document.createElement('b');b.textContent=U.name;
-    const pips=document.createElement('div');pips.className='pips';for(let n=0;n<4;n++){const sp=document.createElement('span');if(n<t)sp.className='on';pips.append(sp)}
-    const i=document.createElement('i');i.textContent=U.what;
+    const b=document.createElement('b');b.textContent=U.name;const level=document.createElement('small');level.textContent=`${t}/${ARM_MAX}`;b.append(level);
+    const pips=document.createElement('div');pips.className='pips';for(let n=0;n<ARM_MAX;n++){const sp=document.createElement('span');if(n<t)sp.className='on';pips.append(sp)}
+    const i=document.createElement('i');i.textContent=armUpgradeSummary(U.k,t);i.title=U.what;
     const btn=document.createElement('button');btn.type='button';
-    if(t>=4){btn.textContent='MAXED';btn.disabled=true}
+    if(t>=ARM_MAX){btn.textContent='MAXED';btn.disabled=true}
     else{btn.textContent=U.cost[t]+' SAL';btn.disabled=p.sal<U.cost[t]||!canShop(p)}
-    btn.setAttribute('aria-label',`${U.name} level ${t} of 4. ${t>=4?'Maxed':'Costs '+U.cost[t]+' salvage'}`);
+    btn.setAttribute('aria-label',`${U.name} level ${t} of ${ARM_MAX}. ${i.textContent}. ${t>=ARM_MAX?'Maxed':'Costs '+U.cost[t]+' salvage'}`);
     btn.addEventListener('click',()=>{initAudio();if(NET.mode==='guest'){NET.toHost({t:'u',k:U.k});btn.disabled=true}else if(buyUpgrade(p,U.k))renderArmory()});
     row.append(b,btn,pips,i);box.append(row);
   }
   if(game.pvp)return;
   const extra=(name,lvl,what,label,dis,aria,k)=>{
     const row=document.createElement('div');row.className='arow';
-    const b=document.createElement('b');b.textContent=name;
-    const pips=document.createElement('div');pips.className='pips';if(lvl>=0)for(let n=0;n<4;n++){const sp=document.createElement('span');if(n<lvl)sp.className='on';pips.append(sp)}
+    const b=document.createElement('b');b.textContent=name;if(lvl>=0){const level=document.createElement('small');level.textContent=`${lvl}/${ARM_MAX}`;b.append(level)}
+    const pips=document.createElement('div');pips.className='pips';if(lvl>=0)for(let n=0;n<ARM_MAX;n++){const sp=document.createElement('span');if(n<lvl)sp.className='on';pips.append(sp)}
     const i=document.createElement('i');i.textContent=what;
     const btn=document.createElement('button');btn.type='button';btn.textContent=label;btn.disabled=dis;btn.setAttribute('aria-label',aria);
     btn.addEventListener('click',()=>{initAudio();if(NET.mode==='guest'){NET.toHost({t:'u',k});btn.disabled=true}else if(buyUpgrade(p,k))renderArmory()});
     row.append(b,btn,pips,i);box.append(row)};
   const L=game.dellLv|0;
-  if(!qm.gone)extra(DELL_UP.name,L,DELL_UP.what,L>=4?'MAXED':DELL_UP.cost[L]+' SAL',L>=4||p.sal<DELL_UP.cost[L]||!canShop(p),`Delgado level ${L} of 4. ${L>=4?'Maxed':'Costs '+DELL_UP.cost[L]+' salvage'}`,'dell');
+  if(!qm.gone)extra(DELL_UP.name,L,armUpgradeSummary('dell',L),L>=ARM_MAX?'MAXED':DELL_UP.cost[L]+' SAL',L>=ARM_MAX||p.sal<DELL_UP.cost[L]||!canShop(p),`Delgado level ${L} of ${ARM_MAX}. ${L>=ARM_MAX?'Maxed':'Costs '+DELL_UP.cost[L]+' salvage'}`,'dell');
   const c=hasMod('nopatch')?null:cores[0];   // No Patch-Ups: no core repair
   if(c){const hp=Math.max(0,Math.ceil(c.hp)),full=c.hp>=c.max,cost=coreFixCost(p);
-    extra('REPAIR CORE',-1,`Core ${hp} / ${c.max}. Each repair restores up to ${CORE_FIX.hp}.${p.C.repair?' Half price for you.':''}`,full?'FULL':cost+' SAL',full||c.hp<=0||p.sal<cost||!canShop(p),full?'Core is at full health':`Repair core, ${cost} salvage`,'core')}
+    extra('REPAIR CORE',-1,`${hp}/${c.max} HP · repairs +${CORE_FIX.hp}`,full?'FULL':cost+' SAL',full||c.hp<=0||p.sal<cost||!canShop(p),full?'Core is at full health':`Repair core, ${cost} salvage`,'core')}
 }
+function armUpgradeSummary(k,lv){
+  const n=Math.min(ARM_MAX,lv+1),pct=v=>+(100*v).toFixed(2),steps={d:[.2,.05,'Damage'],r:[.1,.025,'Cooldown'],g:[.12,.03,'Reach'],a:[.15,.0375,'HP'],dell:[.15,.0375,'Power']};
+  if(k==='n')return lv>=ARM_MAX?'+5 stock · +40% blast':`Next: +${Math.min(n,4)+(n>=8?1:0)} stock · +${pct(armBoost(n,.08,.02))}% blast`;
+  const [oldStep,newStep,label]=steps[k],sign=k==='r'?'−':'+';return`${label} ${sign}${pct(armBoost(lv,oldStep,newStep))}%${lv<ARM_MAX?' → '+sign+pct(armBoost(n,oldStep,newStep))+'%':''}`;
+}
+const ammoEffectShort=(id,rank)=>{
+  const effect=id==='ap'?`${[50,60,70,85,100][rank]}% frontal shield damage`:id==='fire'?`10 HP/s · ${3+.5*rank}s burn`:id==='blast'?`${8+2*rank} dmg · 1.25-block blast`:`${25+5*rank}% slow · 2s · 3 nearby/3 blocks`;
+  return effect+` · skill ${rank}/4`;
+};
+for(const [id,tab] of [['armUpTab','upgrades'],['armAmmoTab','ammo']])$(id).addEventListener('click',()=>{armTab=tab;renderArmory()});
 $('armClose').addEventListener('click',closeArmory);
 

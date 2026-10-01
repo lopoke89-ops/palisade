@@ -26,7 +26,7 @@ function makePlayer(id,name,cls,slot,cos,team,sk){
   if(!CLASSES[cls])cls='soldier';const C=CLASSES[cls],[x,y]=SPAWNS[slot%SPAWNS.length];
   const p={id,name,cls,slot,x,y,hp:C.hp,max:C.hp,alive:true,downed:false,rt:0,revive:0,aim:{x:.7,y:-.7},face:{x:.7,y:-.7},moveDir:{x:.7,y:-.7},
     cd:0,bcd:0,gt:0,ncd:0,mats:[24,0,0],cap:C.cap.slice(),nades:C.nades,maxN:C.nades,hurt:9,walk:0,flash:0,C,tp:0,fireIn:false,
-    sal:0,kills:0,deaths:0,prot:0,ab:0,team:team==='b'?'b':team==='a'?'a':'',up:{d:0,r:0,g:0,a:0,n:0},upS:'00000',cos:parseCos(cos),cosS:'',sk:String(sk||''),perk:PERK0,rk:0,rkCd:0,stl:0,stlCd:0};
+    sal:0,kills:0,deaths:0,prot:0,ab:0,team:team==='b'?'b':team==='a'?'a':'',up:{d:0,r:0,g:0,a:0,n:0},upS:'00000',ammoEq:['',''],cos:parseCos(cos),cosS:'',sk:String(sk||''),perk:PERK0,rk:0,rkCd:0,stl:0,stlCd:0};
   p.cosS=cosStr(p.cos);refit(p);return p;
 }
 // The one way to change jobs (the room, Free-for-all respawns, and later the skill tree all use it): a fresh gun,
@@ -38,18 +38,31 @@ function changeClass(p,cls){
   p.mats=p.mats.map((m,i)=>Math.min(m,p.cap[i]));p.ammo=p.gun.mag?p.gun.mag:undefined;p.rl=0;p.rlReq=false;p.bolt=0;p.cd=0;p.bcd=0;p.sinceShot=9;
   p.bLeft=0;p.ab=0;p._lk='';p.nextShow='';if(p===player&&game)game.C=C;
   p.rk=abilRockets(p);p.rkCd=0;p.stl=0;p.stlCd=0;
+  if(cls!=='sniper')p.ammoEq[1]='';
   return true;
 }
 /* ---------- armory: salvage buys upgrades between raids ---------- */
+const ARM_MAX=8;
 const UPG=[
-  {k:'d',name:'DAMAGE',what:'+20% bullet damage per level',cost:[20,45,80,130]},
-  {k:'r',name:'FIRE RATE',what:'Shoots 10% faster per level',cost:[20,45,80,130]},
-  {k:'g',name:'RANGE',what:'+12% reach and bullet speed per level',cost:[15,35,60,100]},
-  {k:'a',name:'ARMOR',what:'+15% max health per level',cost:[20,45,80,130]},
-  {k:'n',name:'GRENADES',what:'+1 grenade each raid, bigger blasts',cost:[15,35,60,100]}];
-// co-op / Endless only. Delgado's level is shared by the whole crew; anyone can buy the next one.
-// +15% damage, range and fire rate per level, added (not multiplied): level 4 = +60% each.
-const DELL_UP={name:'DELGADO',what:'+15% damage, range and fire rate per level. Shared by the whole crew.',cost:[30,60,100,150]};
+  {k:'d',name:'DAMAGE',what:'Bullet damage up to +100%',cost:[20,45,80,130,175,225,290,370]},
+  {k:'r',name:'FIRE RATE',what:'Shot cooldown up to 50% shorter',cost:[20,45,80,130,175,225,290,370]},
+  {k:'g',name:'RANGE',what:'Reach up to +60%; bullet speed up to +50%',cost:[15,35,60,100,140,185,240,310]},
+  {k:'a',name:'ARMOR',what:'Maximum health up to +75%',cost:[20,45,80,130,175,225,290,370]},
+  {k:'n',name:'GRENADES',what:'Up to +5 grenades and +40% blast power',cost:[15,35,60,100,140,185,240,310]}];
+const AMMO=[
+  {id:'ap',name:'ARMOR PIERCING',what:'Damage through a frontal riot shield',skill:'ammo_ap',col:'#c8e0f2'},
+  {id:'fire',name:'INCENDIARY',what:'Burns for 10 HP/s; hits refresh the timer',skill:'ammo_fire',col:'#ff8244'},
+  {id:'blast',name:'EXPLOSIVE',what:'Small enemy-only blast on impact',skill:'ammo_blast',col:'#ffc05a'},
+  {id:'shock',name:'LIGHTNING',what:'Slows the target and nearby enemies',skill:'ammo_shock',col:'#81dafa'}];
+const AMMO_BY=Object.fromEntries(AMMO.map(x=>[x.id,x]));
+const ammoMode=()=>!game.pvp&&['5','10','endless','blitz'].includes(game.mode);
+const ammoRank=(p,id)=>{const A=AMMO_BY[id];return A?Math.min(4,parseSkills(p.sk)[A.skill]|0):0};
+const ammoEffect=(id,rank)=>id==='ap'?`${[50,60,70,85,100][rank]}% direct damage through frontal shields`:id==='fire'?`10 HP/s for ${3+.5*rank}s; hits refresh`:id==='blast'?`${8+2*rank} damage, 1.25-block blast; 0.4s proc limit`:`${25+5*rank}% slow for 2s; nearest 3 within 3 blocks`;
+const armBoost=(lv,oldStep,newStep)=>oldStep*Math.min(4,lv)+newStep*Math.max(0,lv-4);
+// Co-op only. Delgado's level is shared by the crew; anyone can buy the next one.
+// The first four levels add 15% each; the next four add 3.75% each, to a +75% cap.
+const DELL_UP={name:'DELGADO',what:'Shared damage, reach and fire rate up to +75%.',cost:[30,60,100,150,200,270,350,450]};
+const dellBoost=lv=>armBoost(lv,.15,.0375);
 // the core doesn't heal on its own: 25 salvage (13 for the quartermaster) buys back up to 50 health
 const CORE_FIX={hp:50,cost:25};
 const coreFixCost=p=>Math.ceil(CORE_FIX.cost*(p.C.repair||1));
@@ -58,10 +71,10 @@ const BOUNTY={rifle:4,gren:7,breach:6,shield:6,medic:5,spotter:5,fire:6};
 const PERK0=perkMods({},false);
 function refit(p){
   const G=p.C.gun,U=p.up,K=p.perk||PERK0;
-  p.gun=Object.assign({},G,{dmg:G.dmg*(1+.2*U.d)*K.dmg,cd:G.cd*(1-.1*U.r)/K.rate,range:G.range*(1+.12*U.g)*K.range,speed:G.speed*(1+.1*U.g)});
+  p.gun=Object.assign({},G,{dmg:G.dmg*(1+armBoost(U.d,.2,.05))*K.dmg,cd:G.cd*(1-armBoost(U.r,.1,.025))/K.rate,range:G.range*(1+armBoost(U.g,.12,.03))*K.range,speed:G.speed*(1+armBoost(U.g,.1,.025))});
   if(G.reload)p.gun.reload=G.reload*K.reload;
-  const mx=Math.round(p.C.hp*(1+.15*U.a)*K.hp*(hasMod('glass')?.7:1));if(mx>p.max)p.hp+=mx-p.max;p.max=mx;if(p.hp>p.max)p.hp=p.max;
-  p.maxN=p.C.nades+U.n+(p.cls==='grenadier'?K.pouch:0);p.blast=p.C.blast*(1+.08*U.n)*(hasMod('frenzy')?1.33:1);
+  const mx=Math.round(p.C.hp*(1+armBoost(U.a,.15,.0375))*K.hp*(hasMod('glass')?.7:1));if(mx>p.max)p.hp+=mx-p.max;p.max=mx;if(p.hp>p.max)p.hp=p.max;
+  p.maxN=p.C.nades+Math.min(U.n,4)+(U.n>=8?1:0)+(p.cls==='grenadier'?K.pouch:0);p.blast=p.C.blast*(1+armBoost(U.n,.08,.02))*(hasMod('frenzy')?1.33:1);
   p.cap=p.C.cap.map(c=>c+K.carry);
 }
 // perks for this match (PvP halves them), then a full kit: health, grenades, rockets
@@ -77,9 +90,15 @@ const canShop=p=>shopOpen(p)&&nearStake(p);
 function buyUpgrade(p,k){
   if(k==='core')return repairCore(p);
   if(k==='dell')return buyDell(p);
-  const U=UPG.find(x=>x.k===k);if(!U||!canShop(p))return false;const t=p.up[k];if(t>=4||p.sal<U.cost[t])return false;
+  const U=UPG.find(x=>x.k===k);if(!U||!canShop(p))return false;const t=p.up[k];if(t>=ARM_MAX||p.sal<U.cost[t])return false;
   p.sal-=U.cost[t];p.up[k]=t+1;p.upS=upStr(p);refit(p);if(k==='n')p.nades=Math.max(p.nades,p.maxN);
   personal(p,'restock');return true;
+}
+function buyAmmo(p,id,slot){
+  if(!AMMO_BY[id]||!ammoMode()||!canShop(p)||!Number.isInteger(slot)||slot<0||slot>=(p.cls==='sniper'?2:1))return false;
+  if(p.ammoEq.includes(id))return p.ammoEq[slot]===id;
+  const cost=p.ammoEq[slot]?75:150;if(p.sal<cost)return false;
+  p.sal-=cost;p.ammoEq[slot]=id;personal(p,'restock');return true;
 }
 function repairCore(p){
   const c=cores[0],cost=coreFixCost(p);
@@ -89,9 +108,9 @@ function repairCore(p){
 }
 function buyDell(p){
   const L=game.dellLv|0;
-  if(game.pvp||!canShop(p)||L>=4||p.sal<DELL_UP.cost[L])return false;
+  if(game.pvp||!canShop(p)||L>=ARM_MAX||p.sal<DELL_UP.cost[L])return false;
   p.sal-=DELL_UP.cost[L];game.dellLv=L+1;
-  toastAll(`DELGADO · LEVEL ${L+1}`,`${p.name} upgraded Delgado's shotgun: +${15*(L+1)}% damage, range and fire rate.`);personal(p,'restock');return true;
+  toastAll(`DELGADO · LEVEL ${L+1}`,`${p.name} upgraded Delgado's shotgun: +${Math.round(dellBoost(L+1)*100)}% damage, range and fire rate.`);personal(p,'restock');return true;
 }
 // who gets paid for a kill; bullets and grenades remember whose they were
 function award(own,e){

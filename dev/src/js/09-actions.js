@@ -57,7 +57,7 @@ function throwNade(p,tx,ty){
   if(!p.alive||p.nades<=0||p.ncd>0||truce()){personal(p,'deny');return}
   let dx=tx-p.x,dy=ty-p.y;const d0=Math.hypot(dx,dy)||1,m=Math.min(d0,6.5);
   tx=clamp(p.x+dx/d0*m,.3,N-.3);ty=clamp(p.y+dy/d0*m,.3,N-.3);
-  const FZ=hasMod('frenzy'),d=Math.hypot(tx-p.x,ty-p.y);lobs.push({x0:p.x,y0:p.y,x1:tx,y1:ty,t:0,T:.5+d*.08,R:1.65*(p.C.blast>1?1.15:1)*(1+.05*p.up.n)*(FZ?1.33:1),power:p.blast,own:p.id});p.nades--;p.ncd=p.C.nadeCd*(p.perk||PERK0).reload*(FZ?.5:1);sfx('lob',p.x,p.y);
+  const FZ=hasMod('frenzy'),d=Math.hypot(tx-p.x,ty-p.y);lobs.push({x0:p.x,y0:p.y,x1:tx,y1:ty,t:0,T:.5+d*.08,R:1.65*(p.C.blast>1?1.15:1)*(1+armBoost(p.up.n,.05,.0125))*(FZ?1.33:1),power:p.blast,own:p.id});p.nades--;p.ncd=p.C.nadeCd*(p.perk||PERK0).reload*(FZ?.5:1);sfx('lob',p.x,p.y);
 }
 // this phone's buttons: do it (host/solo) or ask the host (guest)
 function localBuild(){
@@ -99,18 +99,20 @@ function localNade(){
 // one pull of the trigger: a shotgun throws an even fan of pellets (a little jitter so it isn't a grid)
 function shoot(p,G,late){
   const a=Math.atan2(p.aim.y,p.aim.x),P=G.pellets|0,tc=nextTracerColor(p);
-  if(P>1)for(let i=0;i<P;i++)fire(p,a+(i/(P-1)-.5)*G.spread+(rnd()-.5)*G.spread*.3,0,G,late,i>0,tc);
-  else fire(p,a+(rnd()-.5)*G.spread,0,G,late,false,tc);
+  const shot=++shotSeq;
+  if(P>1)for(let i=0;i<P;i++)fire(p,a+(i/(P-1)-.5)*G.spread+(rnd()-.5)*G.spread*.3,0,G,late,i>0,tc,shot);
+  else fire(p,a+(rnd()-.5)*G.spread,0,G,late,false,tc,shot);
 }
+let shotSeq=0;
 // pellets lose punch with distance: full damage to fall[0] tiles, down to fall[2] of it by fall[1]
 function bdmg(b){if(!b.fall)return b.dmg;const[a,z,m]=b.fall,d=b.dist;return b.dmg*(d<=a?1:d>=z?m:1-(1-m)*(d-a)/(z-a))}
 // late = seconds ago the shot was due (a slow frame can owe one); the bullet starts that much further along
-function fire(from,ang,team,gun,late=0,quiet=false,tc=nextTracerColor(from)){
+function fire(from,ang,team,gun,late=0,quiet=false,tc=nextTracerColor(from),shot=++shotSeq){
   const ahead=.33+gun.speed*clamp(late,0,.25);
   const own=from===qm?'dell':(from.id!==undefined&&players.get(from.id)===from?from.id:null);
   const visual=wardrobeShotVisual(from,ang,gun);if(visual)from._shotDrawUntil=game.time+.08;
   bullets.push({visual,id:++bulletSeq,pt:from.team||'',x:from.x+Math.cos(ang)*ahead,y:from.y+Math.sin(ang)*ahead,vx:Math.cos(ang)*gun.speed,vy:Math.sin(ang)*gun.speed,team,dmg:gun.dmg,dist:ahead-.33,over:gun.over!==false,skipped:false,last:-1,range:gun.range,pierce:gun.pierce||0,heavy:!!gun.pierce,
-    own,tr:own&&own!=='dell'?Math.max(0,TRAIL_IDS.indexOf(from.cos.trail)):0,tc,fall:gun.fall||null,pel:gun.pellets>1});
+    own,tr:own&&own!=='dell'?Math.max(0,TRAIL_IDS.indexOf(from.cos.trail)):0,tc,fall:gun.fall||null,pel:gun.pellets>1,shot,ammo:team===0&&ammoMode()&&from.ammoEq?from.ammoEq.filter(Boolean).map(id=>[id,ammoRank(from,id)]):[]});
   rec(bulletEvent(bullets[bullets.length-1]));
   if(!quiet)addFlash({x:from.x+Math.cos(ang)*.4,y:from.y+Math.sin(ang)*.4,life:.06,max:.06,r:gun.pellets>1?1.3:.9,muzzle:true,visual:visual?visual.slice(2):null});
 }

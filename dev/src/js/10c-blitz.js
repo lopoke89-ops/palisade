@@ -200,7 +200,8 @@ function thinkBulldozer(e,dt,tgt,mv,aimAt,Df){
     if(e.stT<=0){const a=Math.atan2(e.ly-e.y,e.lx-e.x);e.st=2;e.stT=e.stM=BULL.lane/BULL.speed;e.cvx=Math.cos(a)*BULL.speed;e.cvy=Math.sin(a)*BULL.speed;e.hit=new Set();sfx('charge',e.x,e.y)}
     return{eng:true,mv:null}}
   if(e.st===2){e.stT-=dt;let stop=e.stT<=0,daze=false;
-    for(let s=0;s<4&&!stop;s++){const nx=e.x+e.cvx*dt/4,ny=e.y+e.cvy*dt/4,i=Math.floor(nx),j=Math.floor(ny);
+    const moveDt=dt*(1-(e.slowT>0?e.slowPct||0:0));
+    for(let s=0;s<4&&!stop;s++){const nx=e.x+e.cvx*moveDt/4,ny=e.y+e.cvy*moveDt/4,i=Math.floor(nx),j=Math.floor(ny);
       if(!inb(i,j)||(nodeAt(i,j)||{}).solid||terrSolid(terr[idx(i,j)])){stop=daze=true;break}const k=idx(i,j);
       if(coreKs.has(k)){hurtStake(stakeAt(k),45*Df.dmg);stop=daze=true;break}
       if(walls[k]){damageWall(k,200*MAT[walls[k].mat].blast);addShake(nx,ny,9);sfx('collapse',nx,ny);stop=daze=true;break}

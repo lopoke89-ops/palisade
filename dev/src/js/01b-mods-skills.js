@@ -56,7 +56,11 @@ const SKILLS=[
   {id:'pouch',br:'GRENADIER',cls:'grenadier',name:'EXTRA POUCH',what:'+1 grenade',max:2,cost:[2,3]},
   {id:'molotov',br:'GRENADIER',cls:'grenadier',name:'MOLOTOVS',what:'Grenades leave burning ground that hurts raiders. Switch it on or off.',max:1,cost:[3],req:['pouch',1]},
   {id:'ghillie',br:'SNIPER',cls:'sniper',name:'GHILLIE SUIT',what:'+3 s of stealth',max:2,cost:[1,2]},
-  {id:'stride',br:'QUARTERMASTER',cls:'quartermaster',name:'LONG STRIDE',what:'+0.6 s of sprint and 1 s less recharge',max:2,cost:[1,2]}];
+  {id:'stride',br:'QUARTERMASTER',cls:'quartermaster',name:'LONG STRIDE',what:'+0.6 s of sprint and 1 s less recharge',max:2,cost:[1,2]},
+  {id:'ammo_ap',br:'SPECIAL AMMO',name:'ARMOR PIERCING',what:'More damage through riot shields. Solo and co-op only.',max:4,cost:[1,2,3,4],gate:[5,10,15,20]},
+  {id:'ammo_fire',br:'SPECIAL AMMO',name:'INCENDIARY',what:'Longer 10 HP/s burn. Solo and co-op only.',max:4,cost:[1,2,3,4],gate:[5,10,15,20]},
+  {id:'ammo_blast',br:'SPECIAL AMMO',name:'EXPLOSIVE',what:'Stronger small blasts. Solo and co-op only.',max:4,cost:[1,2,3,4],gate:[5,10,15,20]},
+  {id:'ammo_shock',br:'SPECIAL AMMO',name:'LIGHTNING',what:'Stronger slow within 3 blocks. Solo and co-op only.',max:4,cost:[1,2,3,4],gate:[5,10,15,20]}];
 const SKILLBY=Object.fromEntries(SKILLS.map(s=>[s.id,s]));
 const RESPEC_COST=40;   // shards; the server has its own copy (private.respec_cost)
 const skillSpent=t=>{let n=0;for(const S of SKILLS)for(let l=0;l<(t[S.id]|0)&&l<S.max;l++)n+=S.cost[l];return n};
@@ -64,7 +68,7 @@ const skillSpent=t=>{let n=0;for(const S of SKILLS)for(let l=0;l<(t[S.id]|0)&&l<
 function skillStr(t,molOff){return SKILLS.map(S=>clamp(t&&t[S.id]|0,0,S.max)).join('')+(molOff?'m':'')}
 function parseSkills(s){const t={};s=String(s||'');SKILLS.forEach((S,i)=>{const v=+s[i]||0;if(v>0)t[S.id]=Math.min(v,S.max)});
   for(const S of SKILLS)if(S.req&&(t[S.req[0]]|0)<S.req[1])delete t[S.id];
-  t.molOff=s.slice(SKILLS.length).includes('m');return t}
+  t.molOff=s.slice(15).includes('m');return t}   // old 15-node strings put the Molotov toggle at index 15
 // the numbers each node gives (pvp: stat perks at half, class nodes off)
 function perkMods(t,pvp){const k=pvp?.5:1,L=id=>(t&&t[id])|0,A=id=>pvp?0:L(id);
   return{dmg:1+.04*L('dmg')*k,rate:1+.04*L('rate')*k,reload:1-.12*L('reload')*k,range:1+.06*L('range')*k,hp:1+.06*L('hp')*k,

@@ -4,10 +4,10 @@
 // quartermaster Long Stride; all off in PvP), and the host checking a guest's tree with the server. node skilltree.js
 const { chromium } = require('playwright'), assert = require('node:assert/strict');
 const A = 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa', B = 'bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb';
-const DEFS = { dmg: [1, 2, 3], rate: [1, 2, 3], reload: [1, 2], range: [1, 2], hp: [1, 2, 3], regen: [2, 3], revive: [1, 2], speed: [1, 2, 3], vest: [2, 3], haul: [1, 2], rockets: [1, 2, 3], pouch: [2, 3], molotov: [3], ghillie: [1, 2], stride: [1, 2] };
+const DEFS = { dmg: [1, 2, 3], rate: [1, 2, 3], reload: [1, 2], range: [1, 2], hp: [1, 2, 3], regen: [2, 3], revive: [1, 2], speed: [1, 2, 3], vest: [2, 3], haul: [1, 2], rockets: [1, 2, 3], pouch: [2, 3], molotov: [3], ghillie: [1, 2], stride: [1, 2], ammo_ap: [1, 2, 3, 4], ammo_fire: [1, 2, 3, 4], ammo_blast: [1, 2, 3, 4], ammo_shock: [1, 2, 3, 4] };
 const L = { owned: ['skin:std', 'hat:class', 'hat:cap', 'trail:std', 'fx:none'], eq: { skin: 'std', hat: 'class', trail: 'std', fx: 'none' }, cases: 0, bag: {}, shards: 55, prog: 0, st: { raids: 0, wins: 0, drops: 0, endless: 0, hardWins: 0 },
   imported: true, sp: 0, sp_prog: 3, sp_total: 0, skills: {}, rev: 1 };
-const others = { [B]: { dmg: 3, hp: 1 } };   // what the server says player B has
+const others = { [B]: { dmg: 3, hp: 1, ammo_ap: 1, ammo_blast: 2, ammo_shock: 3 } };   // what the server says player B has
 const token = id => Buffer.from('{}').toString('base64url') + '.' + Buffer.from(JSON.stringify({ sub: id, is_anonymous: false })).toString('base64url') + '.test';
 const session = id => ({ access_token: token(id), refresh_token: 'fixture', expires_at: Math.floor(Date.now() / 1000) + 3600, user: { id, email: 'a@example.invalid', is_anonymous: false, user_metadata: { pw: true } } });
 const calls = [], claims = [];
@@ -15,6 +15,7 @@ const spent = t => Object.entries(t).reduce((n, [k, v]) => n + DEFS[k].slice(0, 
 const rpc = {
   get_my_locker: () => L,
   skill_buy: a => { const d = DEFS[a.p_node]; if (!d) return [400, { message: 'Unknown skill' }]; const lv = L.skills[a.p_node] | 0; if (lv >= d.length) return [400, { message: 'That skill is maxed' }];
+    if (a.p_node.startsWith('ammo_') && L.sp_total < [5, 10, 15, 20][lv]) return [400, { message: 'Earn more lifetime skill points first' }];
     if (a.p_node === 'molotov' && !(L.skills.pouch >= 1)) return [400, { message: 'Unlock pouch first' }];
     if (L.sp < d[lv]) return [400, { message: `That takes ${d[lv]} skill points` }]; L.sp -= d[lv]; L.skills[a.p_node] = lv + 1; L.rev++; return L },
   skill_respec: () => { const back = spent(L.skills); if (!back) return [400, { message: 'There are no points in your tree' }]; if (L.shards < 40) return [400, { message: 'Resetting takes 40 shards' }];
@@ -50,12 +51,13 @@ const rpc = {
   // 2. the SKILLS page
   await p.click('#navSkills'); await p.waitForSelector('#pg-skills:not([hidden])');
   out.page = await p.evaluate(() => ({ pts: document.getElementById('skPts').textContent, rows: document.querySelectorAll('#skTree .skRow').length, lede: document.getElementById('skLede').textContent }));
-  assert.equal(out.page.pts, '3'); assert.equal(out.page.rows, 15); assert.match(out.page.lede, /2 more to the next one/);
+  assert.equal(out.page.pts, '3'); assert.equal(out.page.rows, 19); assert.match(out.page.lede, /2 more to the next one/);
+  assert.match(await p.textContent('[data-sk=ammo_ap]'), /NEEDS 5 EARNED/);
   out.molotovLocked = await p.textContent('[data-sk=molotov]'); assert.match(out.molotovLocked, /NEEDS EXTRA POUCH/);
   await p.click('[data-sk=dmg]'); await p.waitForFunction(() => __pal.locker.skills.dmg === 1);
   await p.click('[data-sk=pouch]'); await p.waitForFunction(() => __pal.locker.skills.pouch === 1);
   out.afterBuy = await p.evaluate(() => ({ sp: __pal.locker.sp, dmgBtn: document.querySelector('[data-sk=dmg]').textContent, cant: document.querySelector('[data-sk=molotov]').disabled, str: __pal.mySkills() }));
-  assert.deepEqual(out.afterBuy, { sp: 0, dmgBtn: '2 PTS', cant: true, str: '100000000001000' });
+  assert.deepEqual(out.afterBuy, { sp: 0, dmgBtn: '2 PTS', cant: true, str: '1000000000010000000' });
   await p.screenshot({ path: __dirname + '/out/skilltree.png' });
   // reset: asks once more, costs 40 shards, every point comes back
   await p.click('#skReset'); out.ask = await p.textContent('#skReset'); assert.equal(out.ask, 'TAP AGAIN TO RESET'); assert.ok(!calls.includes('skill_respec'));
@@ -98,8 +100,8 @@ const rpc = {
   assert.deepEqual(out.pvpAb, { rockets: 0, btn: true });
   // 8. the host checks a guest's tree: only what the server says they have counts
   out.check = await p.evaluate(async B => { const P = __pal, c = { pid: 'g9', uid: B }; P.NET.roster.push({ id: 'g9', name: 'B', cls: 'soldier', cos: '', sk: '' });
-    P.checkSkills(c, P.skillStr({ dmg: 3, hp: 3, rockets: 3 })); await new Promise(r => setTimeout(r, 600)); const noAcct = { pid: 'g8', uid: '' }; P.checkSkills(noAcct, '333333333333333');
+    P.checkSkills(c, P.skillStr({ dmg: 3, hp: 3, rockets: 3, ammo_ap: 4, ammo_fire: 4, ammo_blast: 4, ammo_shock: 4 })); await new Promise(r => setTimeout(r, 600)); const noAcct = { pid: 'g8', uid: '' }; P.checkSkills(noAcct, '3333333333333334444');
     return { verified: c.sk, noAccount: noAcct.sk } }, B);
-  assert.deepEqual(out.check, { verified: '300010000000000', noAccount: '' });
+  assert.deepEqual(out.check, { verified: '3000100000000001023', noAccount: '' });
   console.log(JSON.stringify(out)); console.log('errors:', errors.length ? errors : 'none'); assert.equal(errors.length, 0); await b.close();
 })().catch(e => { console.log('Error:', e.message, (e.stack || '').split('\n').find(l => /skilltree.js/.test(l))); process.exit(1) });

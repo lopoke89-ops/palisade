@@ -178,7 +178,7 @@
           <div><h3>CONTROLLER</h3><p>Left stick move · right stick aim · RT fire<br>LT grenade · A build (hold to keep building)<br>B ability, or sprint if your class has no ability · X armory at the stake<br>Y wall/door · d-pad left/right material · d-pad down build kit<br>View start raid · Menu pause. Change any button in Settings.</p></div>
         </div>
       </details>
-      <p class="foot">v0.9.5.1 · phone, desktop and controller · online co-op and PvP for up to six</p>
+      <p class="foot">v0.9.5.2 · phone, desktop and controller · online co-op and PvP for up to six</p>
     </section>
 
     <section class="page" id="pg-classes" hidden>
@@ -315,10 +315,15 @@
 
 <div class="overlay" id="armory" hidden>
   <div class="card">
-    <div class="eyebrow" id="armEyebrow">ARMORY · BETWEEN RAIDS</div>
-    <div class="salbig">SALVAGE <span id="armSal">0</span></div>
-    <p class="lede" style="font-size:12px;color:var(--dim)">Drop raiders to earn salvage; clearing a raid pays everyone. Upgrades are yours and last the whole run. Salvage left when the run ends becomes shards (20 to 1, up to 2 per raid held, 10 a run).</p>
-    <div class="arm" id="armRows"></div>
+    <div class="armTop">
+      <div class="eyebrow" id="armEyebrow">ARMORY · BETWEEN RAIDS</div>
+      <div class="salbig">SALVAGE <span id="armSal">0</span></div>
+    </div>
+    <div class="armTabs" role="tablist" aria-label="Armory category">
+      <button id="armUpTab" type="button" role="tab" aria-selected="true" aria-controls="armRows">UPGRADES</button>
+      <button id="armAmmoTab" type="button" role="tab" aria-selected="false" aria-controls="armRows">AMMO</button>
+    </div>
+    <div class="arm" id="armRows" role="tabpanel" aria-labelledby="armUpTab"></div>
     <button class="ghost" id="armClose" type="button">BACK TO THE FENCE</button>
     <p class="armHint">E or Esc closes the armory.</p>
   </div>
