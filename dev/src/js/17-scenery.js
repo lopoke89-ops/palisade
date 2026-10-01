@@ -158,11 +158,33 @@ function updateFades(){
   if(changed.length)repaintTrees(changed);
 }
 const drawCache=c=>{
-  if(!c.tiles){g.drawImage(c.cv,camX+c.minX,camY+c.minY,c.w,c.h);return}
+  if(!c.tiles){drawBackView(c);return}
   const ox=camX+c.minX,oy=camY+c.minY;
   for(const[sx,sy,sw,sh]of c.tiles){const dx=ox+sx/c.s,dy=oy+sy/c.s,dw=sw/c.s,dh=sh/c.s;
     if(dx>W||dy>H||dx+dw<0||dy+dh<0)continue;g.drawImage(c.cv,sx,sy,sw,sh,dx,dy,dw,dh)}
 };
+// The static world cache is budgeted below device resolution on large maps.
+// Resampling it every frame is expensive even when the camera has stopped.
+// Rasterize a viewport plus a small pan margin once, then copy at device pixels.
+// Camera coordinates already snap to device pixels, so panning this image keeps
+// exactly the original sample grid. Terrain changes remain in the live layer.
+function drawBackView(c){
+  const pad=Math.ceil(96*DPR),pw=Math.ceil(W*DPR)+pad*2,ph=Math.ceil(H*DPR)+pad*2;
+  // Full-resolution source caches already copy on the same pixel grid. Avoid
+  // extra storage there, and cap the extra viewport buffer at 16 MiB.
+  if(c.s===DPR||pw*ph*4>16*1024*1024){g.drawImage(c.cv,camX+c.minX,camY+c.minY,c.w,c.h);return}
+  let v=c.view,sx,sy;
+  if(v){sx=v.pad-Math.round((camX-v.x)*DPR);sy=v.pad-Math.round((camY-v.y)*DPR)}
+  if(!v||v.cv.width!==pw||v.cv.height!==ph||v.dpr!==DPR||sx<0||sy<0||sx+W*DPR>pw||sy+H*DPR>ph){
+    if(!v)v=c.view={cv:document.createElement('canvas')};
+    if(v.cv.width!==pw||v.cv.height!==ph){v.cv.width=pw;v.cv.height=ph}
+    const ctx=v.cv.getContext('2d',{alpha:false});ctx.setTransform(DPR,0,0,DPR,pad,pad);
+    ctx.fillStyle='#10140e';ctx.fillRect(-pad/DPR,-pad/DPR,pw/DPR,ph/DPR);
+    ctx.drawImage(c.cv,camX+c.minX,camY+c.minY,c.w,c.h);
+    v.x=camX;v.y=camY;v.pad=pad;v.dpr=DPR;v.builds=(v.builds||0)+1;sx=sy=pad;
+  }
+  g.drawImage(v.cv,sx,sy,W*DPR,H*DPR,0,0,W,H);
+}
 function drawLighting(){
   if(light.L<.03&&light.warm<.01)return;
   // dusk's warm grade used to be a full-screen 'soft-light' pass (~5 ms a frame on phones). It's folded into the shade:

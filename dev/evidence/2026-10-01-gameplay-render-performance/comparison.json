@@ -1,0 +1,146 @@
+{
+  "software-typical": {
+    "renderMedianImprovementPercent": 35.87,
+    "simulationStatesEqual": true,
+    "motionFrames": [
+      {
+        "frame": 0,
+        "changedPixels": 80,
+        "maxChannelDelta": 1
+      },
+      {
+        "frame": 1,
+        "changedPixels": 211,
+        "maxChannelDelta": 4
+      },
+      {
+        "frame": 2,
+        "changedPixels": 196,
+        "maxChannelDelta": 3
+      },
+      {
+        "frame": 3,
+        "changedPixels": 196,
+        "maxChannelDelta": 3
+      },
+      {
+        "frame": 4,
+        "changedPixels": 193,
+        "maxChannelDelta": 3
+      },
+      {
+        "frame": 5,
+        "changedPixels": 81,
+        "maxChannelDelta": 1
+      }
+    ]
+  },
+  "software-dense": {
+    "renderMedianImprovementPercent": 21.53,
+    "simulationStatesEqual": true,
+    "motionFrames": [
+      {
+        "frame": 0,
+        "changedPixels": 142,
+        "maxChannelDelta": 1
+      },
+      {
+        "frame": 1,
+        "changedPixels": 142,
+        "maxChannelDelta": 1
+      },
+      {
+        "frame": 2,
+        "changedPixels": 159,
+        "maxChannelDelta": 2
+      },
+      {
+        "frame": 3,
+        "changedPixels": 160,
+        "maxChannelDelta": 2
+      },
+      {
+        "frame": 4,
+        "changedPixels": 162,
+        "maxChannelDelta": 2
+      },
+      {
+        "frame": 5,
+        "changedPixels": 78,
+        "maxChannelDelta": 1
+      }
+    ]
+  },
+  "software-night": {
+    "renderMedianImprovementPercent": 17.61,
+    "simulationStatesEqual": true,
+    "motionFrames": [
+      {
+        "frame": 0,
+        "changedPixels": 77741,
+        "maxChannelDelta": 33
+      },
+      {
+        "frame": 1,
+        "changedPixels": 43,
+        "maxChannelDelta": 1
+      },
+      {
+        "frame": 2,
+        "changedPixels": 60,
+        "maxChannelDelta": 1
+      },
+      {
+        "frame": 3,
+        "changedPixels": 64,
+        "maxChannelDelta": 1
+      },
+      {
+        "frame": 4,
+        "changedPixels": 64,
+        "maxChannelDelta": 1
+      },
+      {
+        "frame": 5,
+        "changedPixels": 37,
+        "maxChannelDelta": 1
+      }
+    ]
+  },
+  "software-winter": {
+    "renderMedianImprovementPercent": 17.51,
+    "simulationStatesEqual": true,
+    "motionFrames": [
+      {
+        "frame": 0,
+        "changedPixels": 133,
+        "maxChannelDelta": 4
+      },
+      {
+        "frame": 1,
+        "changedPixels": 207,
+        "maxChannelDelta": 4
+      },
+      {
+        "frame": 2,
+        "changedPixels": 317,
+        "maxChannelDelta": 4
+      },
+      {
+        "frame": 3,
+        "changedPixels": 320,
+        "maxChannelDelta": 4
+      },
+      {
+        "frame": 4,
+        "changedPixels": 241,
+        "maxChannelDelta": 4
+      },
+      {
+        "frame": 5,
+        "changedPixels": 240,
+        "maxChannelDelta": 4
+      }
+    ]
+  }
+}

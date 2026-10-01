@@ -1,0 +1,78 @@
+[
+  {
+    "test": "render_cache",
+    "result": "pass"
+  },
+  {
+    "test": "solo",
+    "result": "pass"
+  },
+  {
+    "test": "multiplayer",
+    "result": "pass"
+  },
+  {
+    "test": "muzzle",
+    "result": "pass"
+  },
+  {
+    "test": "wardrobe3d",
+    "result": "pass"
+  },
+  {
+    "test": "presentation",
+    "result": "pass"
+  },
+  {
+    "test": "presentation_network",
+    "result": "pass"
+  },
+  {
+    "test": "csp",
+    "result": "pass"
+  },
+  {
+    "test": "fps_mode",
+    "result": "pass"
+  },
+  {
+    "test": "touch_lock",
+    "result": "pass"
+  },
+  {
+    "test": "controller",
+    "result": "pass"
+  },
+  {
+    "test": "hud_layout",
+    "result": "pass"
+  },
+  {
+    "test": "ingame_settings",
+    "result": "pass"
+  },
+  {
+    "test": "winter_elevation",
+    "result": "pass"
+  },
+  {
+    "test": "winter_combat",
+    "result": "pass"
+  },
+  {
+    "test": "winter_cosmetics",
+    "result": "pass"
+  },
+  {
+    "test": "winter_network",
+    "result": "pass"
+  },
+  {
+    "test": "winter_reconnect",
+    "result": "pass"
+  },
+  {
+    "test": "winter_offline",
+    "result": "pass"
+  }
+]

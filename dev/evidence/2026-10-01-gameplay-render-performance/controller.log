@@ -1,0 +1,135 @@
+{
+ "firstPress": {
+  "mode": true,
+  "touch": false,
+  "page": "solo",
+  "focus": "startBtn",
+  "bodyPad": true,
+  "hint": true
+ },
+ "walked": [
+  "startBtn",
+  "MILESTONES",
+  "◆ 0 SHARDS",
+  "TRY IT",
+  "OPEN IN LOCKER",
+  "JOBSOLDIERthe door probl",
+  "LENGTH5 RAIDSThreat: nor",
+  "multi"
+ ],
+ "stickHold": "MILESTONES",
+ "rb1": "multi",
+ "lockerTabs": [
+  "skin",
+  "hat",
+  "skin"
+ ],
+ "padRows": 11,
+ "status": "Controller connected (Xbox-style buttons). Pick an action, then press the button you want for it.",
+ "vol": [
+  80,
+  85
+ ],
+ "hap": [
+  true,
+  true
+ ],
+ "rumble": 1,
+ "reload": 4,
+ "swap": {
+  "nade": 7,
+  "fire": 6,
+  "saved": {
+   "fire": 6,
+   "nade": 7,
+   "build": 0,
+   "special": 1,
+   "armory": 2,
+   "piece": 3,
+   "matPrev": 14,
+   "matNext": 15,
+   "kit": 13,
+   "start": 8,
+   "reload": 4
+  }
+ },
+ "reset": {
+  "nade": 6,
+  "fire": 7,
+  "reload": -1
+ },
+ "start": {
+  "phase": "build",
+  "x": 5.5,
+  "y": 11.5,
+  "aim": {
+   "x": 0.7,
+   "y": -0.7
+  },
+  "fire": false,
+  "auto": false,
+  "sel": 0,
+  "piece": "wall",
+  "build": true,
+  "paused": false,
+  "keys": "LSmoveRSaimRTfireLTgrenadeBrocketAbuild◀ ▶materialYdoor▼build kitXarmoryVIEWstart raidMENUpause"
+ },
+ "moved": 1.644996626516298,
+ "aimUp": {
+  "x": -0.7071067811865475,
+  "y": -0.7071067811865475
+ },
+ "aimRight": {
+  "x": 0.7071067811865475,
+  "y": -0.7071067811865475
+ },
+ "nades": [
+  2,
+  1
+ ],
+ "card": {
+  "shown": true,
+  "text": "CONTROLLERLSMOVERSAIMRTFIRELTGRENADEABUILDBABILITY / SPRINTXARMORYYWALL / DOOR◀MATERIAL BACK▶MATERIAL NEXT▼BUILD KITVIEWSTART RAIDMENUPAUSE"
+ },
+ "armory": true,
+ "buy": {
+  "before": "{\"d\":0,\"r\":0,\"g\":0,\"a\":0,\"n\":0}",
+  "sal": 900,
+  "f": "DAMAGE level 0 of 8. Damage +0% → +20%. Costs 20 salvage",
+  "after": "{\"d\":2,\"r\":0,\"g\":0,\"a\":0,\"n\":0}",
+  "sal2": 835,
+  "f2": "DAMAGE level 2 of 8. Damage +40% → +60%. Costs 80 salvage",
+  "inArm": true
+ },
+ "armHint": "X or B closes the armory.",
+ "unplugged": {
+  "mode": false,
+  "touch": false,
+  "page": "solo",
+  "focus": null,
+  "bodyPad": false,
+  "hint": false
+ },
+ "phone": {
+  "mode": true,
+  "touch": false,
+  "page": "solo",
+  "focus": "startBtn",
+  "bodyPad": true,
+  "hint": true
+ },
+ "phoneHint": "✕SELECT○BACKL1 R1PAGESL2 R2TABS",
+ "online": {
+  "fire": true,
+  "aim": {
+   "x": -0.7071067811865475,
+   "y": 0.7071067811865475
+  },
+  "auto": false
+ },
+ "sent": [
+  "a,ax,ay,f,n,t,tp,x,y|a0|f0",
+  "a,ax,ay,f,n,t,tp,x,y|a0|f1"
+ ]
+}
+errors: none

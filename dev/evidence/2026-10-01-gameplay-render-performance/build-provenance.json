@@ -1,0 +1,13 @@
+{
+  "baseCommit": "cfca0e59edc2d920a336ca307c21124bcf6602e2",
+  "candidateMeasuredUnminifiedDebugSha256": "234596d45493e749d9547298dcd6c4e7f58b43b08a0d81ff1ce1f016bf8e03a9",
+  "files": {
+    "dev/test/out/render-perf/baseline-debug.html": "4071b3ff037156e0c76af2c82511daa2fceb5210451bef7ead6707f6c6d786f7",
+    "dev/test/out/render-perf/baseline-debug-min.html": "41180280883722bff923dda4d7b96a6cd432769f1850ae4fed7c3696edddf9a9",
+    "dev/test/out/render-perf/baseline-index.html": "75351dc60b4d8095b3f1166720cbaa53c1becfe4f1ebd56bf8690dde617f705b",
+    "debug.html": "4a72051bd80da8f32ad62b46d12584932c1a1f8f3dc27ddc12694060a7dbc400",
+    "index.html": "d9b5ca1aa79774bea71b2423e63aa999b9d6c09569b1806377f04532d526ea1b",
+    "sw.js": "f02b71f2ccb7f5a92d15618275d18a7aadf1d429eafc1bbc012e45ed5508e0fb",
+    "dev/src/js/17-scenery.js": "0515ea1d45cfd4c2aa054c7b5914dbb49872e82119578a9a2d3f1a7627f061df"
+  }
+}

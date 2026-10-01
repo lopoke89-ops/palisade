@@ -21,7 +21,8 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', O = __dirname +
   await H.screenshot({path:O+'/party-host.jpg'});await G.screenshot({path:O+'/party-guest.jpg'});
   await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 6000 }); await H.waitForTimeout(1200);
   console.log('guest sees classes:', await G.evaluate(() => [...__pal.players.values()].map(p => p.name + ':' + p.cls + (p.gun.mag ? ' ammo ' + p.ammo : '')).join(', ')));
-  await G.evaluate(() => { window.__muzzleIds=new Set(); window.__muzzleTimer=setInterval(()=>{for(const b of __pal.bullets)if(b.visual&&b.visual.length===4)window.__muzzleIds.add(b.id)},10) });
+  // yard-21 adds ground height as the fifth calibrated visual coordinate.
+  await G.evaluate(() => { window.__muzzleIds=new Set(); window.__muzzleTimer=setInterval(()=>{for(const b of __pal.bullets)if(b.visual&&b.visual.length===5&&b.visual.every(Number.isFinite))window.__muzzleIds.add(b.id)},10) });
   // guest fires 2 blasts (touch = auto pump): host ammo drops, guest sees it
   await G.evaluate(() => { const f = __pal.NET.toHost.bind(__pal.NET); window.__f = 1; __pal.NET.toHost = (m, c) => { if (m.t === 'i') m.f = window.__f; return f(m, c) } });
   await H.waitForTimeout(1500); await G.evaluate(() => { window.__f = 0 }); await H.waitForTimeout(250);

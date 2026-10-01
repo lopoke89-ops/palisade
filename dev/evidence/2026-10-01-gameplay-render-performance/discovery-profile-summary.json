@@ -1,0 +1,111 @@
+{
+  "typical": {
+    "sampledMs": 4735.535,
+    "topSelfMs": {
+      "drawImage": 3527.4799999999245,
+      "save": 630.4340000000001,
+      "getImageData": 57.86500000000002,
+      "fill": 49.163000000000004,
+      "(program)": 47.61700000000002,
+      "render": 39.64000000000001,
+      "quad": 28.60199999999999,
+      "seg": 20.402000000000005,
+      "(garbage collector)": 16.694999999999997,
+      "P": 14.935000000000002,
+      "drawPerson": 14.435000000000002,
+      "hud": 11.539000000000001
+    },
+    "drawImageParentsMs": {
+      "drawCache": 2716.750999999978,
+      "drawWall": 49.88699999999999,
+      "drawVignette": 2.67,
+      "label": 757.1140000000016,
+      "drawWardrobeCharacter": 1.058
+    }
+  },
+  "dense": {
+    "sampledMs": 8408.342,
+    "topSelfMs": {
+      "drawImage": 5552.474999999847,
+      "save": 748.0309999999998,
+      "fill": 161.02399999999994,
+      "getImageData": 153.6560000000001,
+      "stroke": 104.12700000000004,
+      "paintWardrobeCharacter": 96.8640000000001,
+      "render": 88.06900000000003,
+      "updateEnemies": 83.11100000000005,
+      "drawWardrobeCharacter": 77.03900000000004,
+      "update": 67.69800000000002,
+      "(program)": 66.09700000000001,
+      "P": 65.814
+    },
+    "drawImageParentsMs": {
+      "drawCache": 4283.439999999918,
+      "drawWardrobeCharacter": 380.94099999999924,
+      "drawWall": 74.15300000000005,
+      "label": 805.437000000001,
+      "paintTracer": 6.349,
+      "drawVignette": 1.633,
+      "render": 0.522
+    }
+  },
+  "night": {
+    "sampledMs": 9992.687,
+    "topSelfMs": {
+      "drawImage": 6176.945999999881,
+      "stroke": 1265.5450000000055,
+      "getImageData": 627.3859999999995,
+      "fill": 166.031,
+      "paintWardrobeCharacter": 104.46800000000007,
+      "render": 89.66900000000004,
+      "": 81.4130000000001,
+      "updateEnemies": 77.90700000000002,
+      "drawWardrobeCharacter": 77.17200000000003,
+      "seg": 74.63400000000003,
+      "update": 63.757000000000005,
+      "(program)": 59.897000000000006
+    },
+    "drawImageParentsMs": {
+      "drawLighting": 1276.3230000000028,
+      "drawCache": 4368.802999999929,
+      "drawWardrobeCharacter": 362.913,
+      "drawWall": 64.001,
+      "itemTerr": 23.905000000000005,
+      "hole": 52.256,
+      "drawVignette": 6.409999999999999,
+      "label": 13.950000000000001,
+      "paintTracer": 4.715,
+      "render": 3.6700000000000004
+    }
+  },
+  "winter": {
+    "sampledMs": 10468.471,
+    "topSelfMs": {
+      "drawImage": 7075.751999999956,
+      "getImageData": 658.4760000000003,
+      "stroke": 629.9659999999998,
+      "fill": 173.45300000000015,
+      "paintWardrobeCharacter": 152.53300000000004,
+      "drawWardrobeCharacter": 101.67200000000005,
+      "": 101.65600000000013,
+      "updateEnemies": 88.58200000000004,
+      "seg": 74.68500000000003,
+      "render": 73.27699999999999,
+      "P": 65.55000000000004,
+      "update": 62.448000000000036
+    },
+    "drawImageParentsMs": {
+      "drawWall": 53.25900000000003,
+      "drawWardrobeCharacter": 516.3829999999987,
+      "drawCache": 5269.205999999919,
+      "drawLighting": 1168.9519999999995,
+      "label": 11.224,
+      "drawFrostFields": 7.724,
+      "hole": 35.20399999999999,
+      "render": 3.263,
+      "itemTerr": 3.137,
+      "paintTracer": 5.281000000000001,
+      "drawVignette": 2.119
+    }
+  }
+}

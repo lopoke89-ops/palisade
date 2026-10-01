@@ -1,0 +1,2557 @@
+[
+  {
+    "scene": "1280x720-1-frost-std-0",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-frost-std-1",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-frost-std-2",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-frost-std-3",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-frost-std-4",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-frost-std-5",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-frost-std-6",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-frost-std-7",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-frost-std-8",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-frost-xl-0",
+    "changedPixels": 204,
+    "pixelCount": 921600,
+    "maxChannelDelta": 9,
+    "meanChannelDelta": 0.00028428819444444443
+  },
+  {
+    "scene": "1280x720-1-frost-xl-1",
+    "changedPixels": 97,
+    "pixelCount": 921600,
+    "maxChannelDelta": 7,
+    "meanChannelDelta": 0.00012613932291666668
+  },
+  {
+    "scene": "1280x720-1-frost-xl-2",
+    "changedPixels": 393,
+    "pixelCount": 921600,
+    "maxChannelDelta": 9,
+    "meanChannelDelta": 0.0004709201388888889
+  },
+  {
+    "scene": "1280x720-1-frost-xl-3",
+    "changedPixels": 150,
+    "pixelCount": 921600,
+    "maxChannelDelta": 9,
+    "meanChannelDelta": 0.00018391927083333333
+  },
+  {
+    "scene": "1280x720-1-frost-xl-4",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-frost-xl-5",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-frost-xl-6",
+    "changedPixels": 380,
+    "pixelCount": 921600,
+    "maxChannelDelta": 7,
+    "meanChannelDelta": 0.00035237630208333334
+  },
+  {
+    "scene": "1280x720-1-frost-xl-7",
+    "changedPixels": 383,
+    "pixelCount": 921600,
+    "maxChannelDelta": 7,
+    "meanChannelDelta": 0.0003542751736111111
+  },
+  {
+    "scene": "1280x720-1-frost-xl-8",
+    "changedPixels": 202,
+    "pixelCount": 921600,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 0.00013264973958333333
+  },
+  {
+    "scene": "1280x720-1-quarry-std-0",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-quarry-std-1",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-quarry-std-2",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-quarry-std-3",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-quarry-std-4",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-quarry-std-5",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-quarry-std-6",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-quarry-std-7",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-quarry-std-8",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-quarry-xl-0",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-quarry-xl-1",
+    "changedPixels": 24,
+    "pixelCount": 921600,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 1.1393229166666667e-05
+  },
+  {
+    "scene": "1280x720-1-quarry-xl-2",
+    "changedPixels": 133,
+    "pixelCount": 921600,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 9.060329861111111e-05
+  },
+  {
+    "scene": "1280x720-1-quarry-xl-3",
+    "changedPixels": 88,
+    "pixelCount": 921600,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 5.3168402777777775e-05
+  },
+  {
+    "scene": "1280x720-1-quarry-xl-4",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-quarry-xl-5",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-quarry-xl-6",
+    "changedPixels": 87,
+    "pixelCount": 921600,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 3.662109375e-05
+  },
+  {
+    "scene": "1280x720-1-quarry-xl-7",
+    "changedPixels": 172,
+    "pixelCount": 921600,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 8.490668402777778e-05
+  },
+  {
+    "scene": "1280x720-1-quarry-xl-8",
+    "changedPixels": 87,
+    "pixelCount": 921600,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 3.689236111111111e-05
+  },
+  {
+    "scene": "1280x720-1-resize",
+    "changedPixels": 372,
+    "pixelCount": 916979,
+    "maxChannelDelta": 7,
+    "meanChannelDelta": 0.00040349888056324083
+  },
+  {
+    "scene": "1280x720-1-river-std-0",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-river-std-1",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-river-std-2",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-river-std-3",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-river-std-4",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-river-std-5",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-river-std-6",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-river-std-7",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-river-std-8",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-river-xl-0",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-river-xl-1",
+    "changedPixels": 63,
+    "pixelCount": 921600,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 3.390842013888889e-05
+  },
+  {
+    "scene": "1280x720-1-river-xl-2",
+    "changedPixels": 143,
+    "pixelCount": 921600,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 8.219401041666667e-05
+  },
+  {
+    "scene": "1280x720-1-river-xl-3",
+    "changedPixels": 121,
+    "pixelCount": 921600,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 6.212022569444444e-05
+  },
+  {
+    "scene": "1280x720-1-river-xl-4",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-river-xl-5",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-river-xl-6",
+    "changedPixels": 82,
+    "pixelCount": 921600,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 3.879123263888889e-05
+  },
+  {
+    "scene": "1280x720-1-river-xl-7",
+    "changedPixels": 212,
+    "pixelCount": 921600,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 0.00010362413194444445
+  },
+  {
+    "scene": "1280x720-1-river-xl-8",
+    "changedPixels": 84,
+    "pixelCount": 921600,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 3.987630208333333e-05
+  },
+  {
+    "scene": "1280x720-1-yard-std-0",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-yard-std-1",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-yard-std-2",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-yard-std-3",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-yard-std-4",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-yard-std-5",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-yard-std-6",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-yard-std-7",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-yard-std-8",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-yard-xl-0",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-yard-xl-1",
+    "changedPixels": 60,
+    "pixelCount": 921600,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 2.5770399305555555e-05
+  },
+  {
+    "scene": "1280x720-1-yard-xl-2",
+    "changedPixels": 140,
+    "pixelCount": 921600,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 8.165147569444444e-05
+  },
+  {
+    "scene": "1280x720-1-yard-xl-3",
+    "changedPixels": 85,
+    "pixelCount": 921600,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 4.611545138888889e-05
+  },
+  {
+    "scene": "1280x720-1-yard-xl-4",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-yard-xl-5",
+    "changedPixels": 0,
+    "pixelCount": 921600,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "1280x720-1-yard-xl-6",
+    "changedPixels": 101,
+    "pixelCount": 921600,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 4.503038194444444e-05
+  },
+  {
+    "scene": "1280x720-1-yard-xl-7",
+    "changedPixels": 187,
+    "pixelCount": 921600,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 9.195963541666666e-05
+  },
+  {
+    "scene": "1280x720-1-yard-xl-8",
+    "changedPixels": 96,
+    "pixelCount": 921600,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 4.2860243055555554e-05
+  },
+  {
+    "scene": "390x844-2-frost-std-0",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-frost-std-1",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-frost-std-2",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-frost-std-3",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-frost-std-4",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-frost-std-5",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-frost-std-6",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-frost-std-7",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-frost-std-8",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-frost-xl-0",
+    "changedPixels": 188,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 9,
+    "meanChannelDelta": 0.00013025580264916758
+  },
+  {
+    "scene": "390x844-2-frost-xl-1",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-frost-xl-2",
+    "changedPixels": 544,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 8,
+    "meanChannelDelta": 0.0003721594361404788
+  },
+  {
+    "scene": "390x844-2-frost-xl-3",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-frost-xl-4",
+    "changedPixels": 142,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 8.886255924170616e-05
+  },
+  {
+    "scene": "390x844-2-frost-xl-5",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-frost-xl-6",
+    "changedPixels": 371,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 7,
+    "meanChannelDelta": 0.0002493088467614534
+  },
+  {
+    "scene": "390x844-2-frost-xl-7",
+    "changedPixels": 354,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 7,
+    "meanChannelDelta": 0.00023810608822457164
+  },
+  {
+    "scene": "390x844-2-frost-xl-8",
+    "changedPixels": 449,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 8,
+    "meanChannelDelta": 0.0003019048487057966
+  },
+  {
+    "scene": "390x844-2-quarry-std-0",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-quarry-std-1",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-quarry-std-2",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-quarry-std-3",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-quarry-std-4",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-quarry-std-5",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-quarry-std-6",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-quarry-std-7",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-quarry-std-8",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-quarry-xl-0",
+    "changedPixels": 57,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 1.651932191031717e-05
+  },
+  {
+    "scene": "390x844-2-quarry-xl-1",
+    "changedPixels": 89,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 1,
+    "meanChannelDelta": 3.740582087738486e-05
+  },
+  {
+    "scene": "390x844-2-quarry-xl-2",
+    "changedPixels": 432,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 5,
+    "meanChannelDelta": 0.00014411684287276704
+  },
+  {
+    "scene": "390x844-2-quarry-xl-3",
+    "changedPixels": 185,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 6.0191092477822336e-05
+  },
+  {
+    "scene": "390x844-2-quarry-xl-4",
+    "changedPixels": 60,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 1.89877263336979e-05
+  },
+  {
+    "scene": "390x844-2-quarry-xl-5",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-quarry-xl-6",
+    "changedPixels": 250,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 7.082421922469315e-05
+  },
+  {
+    "scene": "390x844-2-quarry-xl-7",
+    "changedPixels": 254,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 7.158372827804107e-05
+  },
+  {
+    "scene": "390x844-2-quarry-xl-8",
+    "changedPixels": 308,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 8.810305018835825e-05
+  },
+  {
+    "scene": "390x844-2-resize",
+    "changedPixels": 221,
+    "pixelCount": 1352868,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 0.00015818246865178273
+  },
+  {
+    "scene": "390x844-2-river-std-0",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-river-std-1",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-river-std-2",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-river-std-3",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-river-std-4",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-river-std-5",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-river-std-6",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-river-std-7",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-river-std-8",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-river-xl-0",
+    "changedPixels": 136,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 5.791256531777859e-05
+  },
+  {
+    "scene": "390x844-2-river-xl-1",
+    "changedPixels": 106,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 1,
+    "meanChannelDelta": 3.645643456069996e-05
+  },
+  {
+    "scene": "390x844-2-river-xl-2",
+    "changedPixels": 708,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 0.00023430854295783206
+  },
+  {
+    "scene": "390x844-2-river-xl-3",
+    "changedPixels": 202,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 5.905182889780046e-05
+  },
+  {
+    "scene": "390x844-2-river-xl-4",
+    "changedPixels": 75,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 1,
+    "meanChannelDelta": 2.3544780653785393e-05
+  },
+  {
+    "scene": "390x844-2-river-xl-5",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-river-xl-6",
+    "changedPixels": 491,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 0.000153420828776279
+  },
+  {
+    "scene": "390x844-2-river-xl-7",
+    "changedPixels": 488,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 0.0001526613197229311
+  },
+  {
+    "scene": "390x844-2-river-xl-8",
+    "changedPixels": 547,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 0.00016747174626321546
+  },
+  {
+    "scene": "390x844-2-yard-std-0",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-yard-std-1",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-yard-std-2",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-yard-std-3",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-yard-std-4",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-yard-std-5",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-yard-std-6",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-yard-std-7",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-yard-std-8",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-yard-xl-0",
+    "changedPixels": 107,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 4.822882488759266e-05
+  },
+  {
+    "scene": "390x844-2-yard-xl-1",
+    "changedPixels": 108,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 1,
+    "meanChannelDelta": 4.082361161745048e-05
+  },
+  {
+    "scene": "390x844-2-yard-xl-2",
+    "changedPixels": 660,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 0.00022880210232105967
+  },
+  {
+    "scene": "390x844-2-yard-xl-3",
+    "changedPixels": 203,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 6.398863774456191e-05
+  },
+  {
+    "scene": "390x844-2-yard-xl-4",
+    "changedPixels": 76,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 2.3354903390448413e-05
+  },
+  {
+    "scene": "390x844-2-yard-xl-5",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-2-yard-xl-6",
+    "changedPixels": 443,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 0.00013272420707254832
+  },
+  {
+    "scene": "390x844-2-yard-xl-7",
+    "changedPixels": 435,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 0.0001298760481224936
+  },
+  {
+    "scene": "390x844-2-yard-xl-8",
+    "changedPixels": 505,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 0.0001482941426661806
+  },
+  {
+    "scene": "390x844-3-frost-std-0",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-frost-std-1",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-frost-std-2",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-frost-std-3",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-frost-std-4",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-frost-std-5",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-frost-std-6",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-frost-std-7",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-frost-std-8",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-frost-xl-0",
+    "changedPixels": 188,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 9,
+    "meanChannelDelta": 0.00013025580264916758
+  },
+  {
+    "scene": "390x844-3-frost-xl-1",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-frost-xl-2",
+    "changedPixels": 544,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 8,
+    "meanChannelDelta": 0.0003721594361404788
+  },
+  {
+    "scene": "390x844-3-frost-xl-3",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-frost-xl-4",
+    "changedPixels": 142,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 8.886255924170616e-05
+  },
+  {
+    "scene": "390x844-3-frost-xl-5",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-frost-xl-6",
+    "changedPixels": 371,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 7,
+    "meanChannelDelta": 0.0002493088467614534
+  },
+  {
+    "scene": "390x844-3-frost-xl-7",
+    "changedPixels": 354,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 7,
+    "meanChannelDelta": 0.00023810608822457164
+  },
+  {
+    "scene": "390x844-3-frost-xl-8",
+    "changedPixels": 449,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 8,
+    "meanChannelDelta": 0.0003019048487057966
+  },
+  {
+    "scene": "390x844-3-quarry-std-0",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-quarry-std-1",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-quarry-std-2",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-quarry-std-3",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-quarry-std-4",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-quarry-std-5",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-quarry-std-6",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-quarry-std-7",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-quarry-std-8",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-quarry-xl-0",
+    "changedPixels": 57,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 1.651932191031717e-05
+  },
+  {
+    "scene": "390x844-3-quarry-xl-1",
+    "changedPixels": 89,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 1,
+    "meanChannelDelta": 3.740582087738486e-05
+  },
+  {
+    "scene": "390x844-3-quarry-xl-2",
+    "changedPixels": 432,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 5,
+    "meanChannelDelta": 0.00014411684287276704
+  },
+  {
+    "scene": "390x844-3-quarry-xl-3",
+    "changedPixels": 185,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 6.0191092477822336e-05
+  },
+  {
+    "scene": "390x844-3-quarry-xl-4",
+    "changedPixels": 60,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 1.89877263336979e-05
+  },
+  {
+    "scene": "390x844-3-quarry-xl-5",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-quarry-xl-6",
+    "changedPixels": 250,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 7.082421922469315e-05
+  },
+  {
+    "scene": "390x844-3-quarry-xl-7",
+    "changedPixels": 254,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 7.158372827804107e-05
+  },
+  {
+    "scene": "390x844-3-quarry-xl-8",
+    "changedPixels": 308,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 8.810305018835825e-05
+  },
+  {
+    "scene": "390x844-3-resize",
+    "changedPixels": 221,
+    "pixelCount": 1352868,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 0.00015818246865178273
+  },
+  {
+    "scene": "390x844-3-river-std-0",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-river-std-1",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-river-std-2",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-river-std-3",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-river-std-4",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-river-std-5",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-river-std-6",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-river-std-7",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-river-std-8",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-river-xl-0",
+    "changedPixels": 136,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 5.791256531777859e-05
+  },
+  {
+    "scene": "390x844-3-river-xl-1",
+    "changedPixels": 106,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 1,
+    "meanChannelDelta": 3.645643456069996e-05
+  },
+  {
+    "scene": "390x844-3-river-xl-2",
+    "changedPixels": 708,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 0.00023430854295783206
+  },
+  {
+    "scene": "390x844-3-river-xl-3",
+    "changedPixels": 202,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 5.905182889780046e-05
+  },
+  {
+    "scene": "390x844-3-river-xl-4",
+    "changedPixels": 75,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 1,
+    "meanChannelDelta": 2.3544780653785393e-05
+  },
+  {
+    "scene": "390x844-3-river-xl-5",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-river-xl-6",
+    "changedPixels": 491,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 0.000153420828776279
+  },
+  {
+    "scene": "390x844-3-river-xl-7",
+    "changedPixels": 488,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 0.0001526613197229311
+  },
+  {
+    "scene": "390x844-3-river-xl-8",
+    "changedPixels": 547,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 0.00016747174626321546
+  },
+  {
+    "scene": "390x844-3-yard-std-0",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-yard-std-1",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-yard-std-2",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-yard-std-3",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-yard-std-4",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-yard-std-5",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-yard-std-6",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-yard-std-7",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-yard-std-8",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-yard-xl-0",
+    "changedPixels": 107,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 4.822882488759266e-05
+  },
+  {
+    "scene": "390x844-3-yard-xl-1",
+    "changedPixels": 108,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 1,
+    "meanChannelDelta": 4.082361161745048e-05
+  },
+  {
+    "scene": "390x844-3-yard-xl-2",
+    "changedPixels": 660,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 0.00022880210232105967
+  },
+  {
+    "scene": "390x844-3-yard-xl-3",
+    "changedPixels": 203,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 6.398863774456191e-05
+  },
+  {
+    "scene": "390x844-3-yard-xl-4",
+    "changedPixels": 76,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 2.3354903390448413e-05
+  },
+  {
+    "scene": "390x844-3-yard-xl-5",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "390x844-3-yard-xl-6",
+    "changedPixels": 443,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 0.00013272420707254832
+  },
+  {
+    "scene": "390x844-3-yard-xl-7",
+    "changedPixels": 435,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 0.0001298760481224936
+  },
+  {
+    "scene": "390x844-3-yard-xl-8",
+    "changedPixels": 505,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 0.0001482941426661806
+  },
+  {
+    "scene": "844x390-2-frost-std-0",
+    "changedPixels": 256,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 12,
+    "meanChannelDelta": 0.00023696682464454977
+  },
+  {
+    "scene": "844x390-2-frost-std-1",
+    "changedPixels": 281,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 8,
+    "meanChannelDelta": 0.00023525792927451696
+  },
+  {
+    "scene": "844x390-2-frost-std-2",
+    "changedPixels": 367,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 9,
+    "meanChannelDelta": 0.0002494987240247904
+  },
+  {
+    "scene": "844x390-2-frost-std-3",
+    "changedPixels": 40,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 5,
+    "meanChannelDelta": 2.3734657917122373e-05
+  },
+  {
+    "scene": "844x390-2-frost-std-4",
+    "changedPixels": 27,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 1.5380058330295297e-05
+  },
+  {
+    "scene": "844x390-2-frost-std-5",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "844x390-2-frost-std-6",
+    "changedPixels": 119,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 6,
+    "meanChannelDelta": 6.85456920646494e-05
+  },
+  {
+    "scene": "844x390-2-frost-std-7",
+    "changedPixels": 531,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 9,
+    "meanChannelDelta": 0.0004496293595819662
+  },
+  {
+    "scene": "844x390-2-frost-std-8",
+    "changedPixels": 407,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 8,
+    "meanChannelDelta": 0.0003334244744197351
+  },
+  {
+    "scene": "844x390-2-frost-xl-0",
+    "changedPixels": 319,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 7,
+    "meanChannelDelta": 0.0002591824644549763
+  },
+  {
+    "scene": "844x390-2-frost-xl-1",
+    "changedPixels": 161,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 10,
+    "meanChannelDelta": 0.00014297757929274517
+  },
+  {
+    "scene": "844x390-2-frost-xl-2",
+    "changedPixels": 72,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 4.139324340746142e-05
+  },
+  {
+    "scene": "844x390-2-frost-xl-3",
+    "changedPixels": 486,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 5,
+    "meanChannelDelta": 0.0002793094543686961
+  },
+  {
+    "scene": "844x390-2-frost-xl-4",
+    "changedPixels": 78,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 3.550704824401507e-05
+  },
+  {
+    "scene": "844x390-2-frost-xl-5",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "844x390-2-frost-xl-6",
+    "changedPixels": 511,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 5,
+    "meanChannelDelta": 0.00027228399562522783
+  },
+  {
+    "scene": "844x390-2-frost-xl-7",
+    "changedPixels": 506,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 5,
+    "meanChannelDelta": 0.00027038522299185805
+  },
+  {
+    "scene": "844x390-2-frost-xl-8",
+    "changedPixels": 403,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 5,
+    "meanChannelDelta": 0.00021000425325069875
+  },
+  {
+    "scene": "844x390-2-quarry-std-0",
+    "changedPixels": 31,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 1,
+    "meanChannelDelta": 8.164722323490096e-06
+  },
+  {
+    "scene": "844x390-2-quarry-std-1",
+    "changedPixels": 48,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 2.240551707376352e-05
+  },
+  {
+    "scene": "844x390-2-quarry-std-2",
+    "changedPixels": 65,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 1,
+    "meanChannelDelta": 1.632944464698019e-05
+  },
+  {
+    "scene": "844x390-2-quarry-std-3",
+    "changedPixels": 20,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 1,
+    "meanChannelDelta": 4.557054320087495e-06
+  },
+  {
+    "scene": "844x390-2-quarry-std-4",
+    "changedPixels": 19,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 5.886195163446348e-06
+  },
+  {
+    "scene": "844x390-2-quarry-std-5",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "844x390-2-quarry-std-6",
+    "changedPixels": 246,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 7.462176449143274e-05
+  },
+  {
+    "scene": "844x390-2-quarry-std-7",
+    "changedPixels": 165,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 5.183649289099526e-05
+  },
+  {
+    "scene": "844x390-2-quarry-std-8",
+    "changedPixels": 157,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 4.633005225422287e-05
+  },
+  {
+    "scene": "844x390-2-quarry-xl-0",
+    "changedPixels": 7,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 1,
+    "meanChannelDelta": 1.5190181066958319e-06
+  },
+  {
+    "scene": "844x390-2-quarry-xl-1",
+    "changedPixels": 73,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 2.4494166970470287e-05
+  },
+  {
+    "scene": "844x390-2-quarry-xl-2",
+    "changedPixels": 29,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 1,
+    "meanChannelDelta": 7.40521327014218e-06
+  },
+  {
+    "scene": "844x390-2-quarry-xl-3",
+    "changedPixels": 63,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 1,
+    "meanChannelDelta": 1.5000303803621339e-05
+  },
+  {
+    "scene": "844x390-2-quarry-xl-4",
+    "changedPixels": 54,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 1,
+    "meanChannelDelta": 1.310153117025155e-05
+  },
+  {
+    "scene": "844x390-2-quarry-xl-5",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "844x390-2-quarry-xl-6",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "844x390-2-quarry-xl-7",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "844x390-2-quarry-xl-8",
+    "changedPixels": 128,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 1,
+    "meanChannelDelta": 3.151962571393851e-05
+  },
+  {
+    "scene": "844x390-2-resize",
+    "changedPixels": 229,
+    "pixelCount": 1298388,
+    "maxChannelDelta": 5,
+    "meanChannelDelta": 0.00022277624254075053
+  },
+  {
+    "scene": "844x390-2-river-std-0",
+    "changedPixels": 159,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 5.810244258111557e-05
+  },
+  {
+    "scene": "844x390-2-river-std-1",
+    "changedPixels": 196,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 7.367237817474785e-05
+  },
+  {
+    "scene": "844x390-2-river-std-2",
+    "changedPixels": 179,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 5.6393547211082755e-05
+  },
+  {
+    "scene": "844x390-2-river-std-3",
+    "changedPixels": 17,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 1,
+    "meanChannelDelta": 3.4177907400656218e-06
+  },
+  {
+    "scene": "844x390-2-river-std-4",
+    "changedPixels": 24,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 6.455826953457285e-06
+  },
+  {
+    "scene": "844x390-2-river-std-5",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "844x390-2-river-std-6",
+    "changedPixels": 412,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 0.0001509524243528983
+  },
+  {
+    "scene": "844x390-2-river-std-7",
+    "changedPixels": 330,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 0.00013063555717584153
+  },
+  {
+    "scene": "844x390-2-river-std-8",
+    "changedPixels": 308,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 0.00012038218495564467
+  },
+  {
+    "scene": "844x390-2-river-xl-0",
+    "changedPixels": 91,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 3.70260663507109e-05
+  },
+  {
+    "scene": "844x390-2-river-xl-1",
+    "changedPixels": 225,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 9.057145461173897e-05
+  },
+  {
+    "scene": "844x390-2-river-xl-2",
+    "changedPixels": 59,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 1.7848462753676025e-05
+  },
+  {
+    "scene": "844x390-2-river-xl-3",
+    "changedPixels": 72,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 1,
+    "meanChannelDelta": 1.5949690120306234e-05
+  },
+  {
+    "scene": "844x390-2-river-xl-4",
+    "changedPixels": 54,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 1,
+    "meanChannelDelta": 1.2531899380240612e-05
+  },
+  {
+    "scene": "844x390-2-river-xl-5",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "844x390-2-river-xl-6",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "844x390-2-river-xl-7",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "844x390-2-river-xl-8",
+    "changedPixels": 146,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 3.645643456069996e-05
+  },
+  {
+    "scene": "844x390-2-yard-std-0",
+    "changedPixels": 147,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 5.3545388261028074e-05
+  },
+  {
+    "scene": "844x390-2-yard-std-1",
+    "changedPixels": 189,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 7.082421922469315e-05
+  },
+  {
+    "scene": "844x390-2-yard-std-2",
+    "changedPixels": 172,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 5.6773301737756715e-05
+  },
+  {
+    "scene": "844x390-2-yard-std-3",
+    "changedPixels": 14,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 1,
+    "meanChannelDelta": 3.2279134767286425e-06
+  },
+  {
+    "scene": "844x390-2-yard-std-4",
+    "changedPixels": 23,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 1,
+    "meanChannelDelta": 5.886195163446348e-06
+  },
+  {
+    "scene": "844x390-2-yard-std-5",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "844x390-2-yard-std-6",
+    "changedPixels": 389,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 0.00014696500182282172
+  },
+  {
+    "scene": "844x390-2-yard-std-7",
+    "changedPixels": 323,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 0.0001308254344391785
+  },
+  {
+    "scene": "844x390-2-yard-std-8",
+    "changedPixels": 306,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 0.0001201923076923077
+  },
+  {
+    "scene": "844x390-2-yard-xl-0",
+    "changedPixels": 94,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 3.816532993073278e-05
+  },
+  {
+    "scene": "844x390-2-yard-xl-1",
+    "changedPixels": 203,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 7.917881881152023e-05
+  },
+  {
+    "scene": "844x390-2-yard-xl-2",
+    "changedPixels": 63,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 1.9937112650382792e-05
+  },
+  {
+    "scene": "844x390-2-yard-xl-3",
+    "changedPixels": 76,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 1,
+    "meanChannelDelta": 1.89877263336979e-05
+  },
+  {
+    "scene": "844x390-2-yard-xl-4",
+    "changedPixels": 47,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 1,
+    "meanChannelDelta": 1.1582513063555718e-05
+  },
+  {
+    "scene": "844x390-2-yard-xl-5",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "844x390-2-yard-xl-6",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "844x390-2-yard-xl-7",
+    "changedPixels": 0,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "844x390-2-yard-xl-8",
+    "changedPixels": 135,
+    "pixelCount": 1316640,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 3.626655729736298e-05
+  },
+  {
+    "scene": "900x700-1.25-frost-std-0",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-frost-std-1",
+    "changedPixels": 98,
+    "pixelCount": 984375,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 6.349206349206349e-05
+  },
+  {
+    "scene": "900x700-1.25-frost-std-2",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-frost-std-3",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-frost-std-4",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-frost-std-5",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-frost-std-6",
+    "changedPixels": 378,
+    "pixelCount": 984375,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 0.0003276190476190476
+  },
+  {
+    "scene": "900x700-1.25-frost-std-7",
+    "changedPixels": 88,
+    "pixelCount": 984375,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 5.511111111111111e-05
+  },
+  {
+    "scene": "900x700-1.25-frost-std-8",
+    "changedPixels": 84,
+    "pixelCount": 984375,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 5.307936507936508e-05
+  },
+  {
+    "scene": "900x700-1.25-frost-xl-0",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-frost-xl-1",
+    "changedPixels": 129,
+    "pixelCount": 984375,
+    "maxChannelDelta": 8,
+    "meanChannelDelta": 0.0001859047619047619
+  },
+  {
+    "scene": "900x700-1.25-frost-xl-2",
+    "changedPixels": 486,
+    "pixelCount": 984375,
+    "maxChannelDelta": 8,
+    "meanChannelDelta": 0.00046704761904761905
+  },
+  {
+    "scene": "900x700-1.25-frost-xl-3",
+    "changedPixels": 221,
+    "pixelCount": 984375,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 0.00017904761904761904
+  },
+  {
+    "scene": "900x700-1.25-frost-xl-4",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-frost-xl-5",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-frost-xl-6",
+    "changedPixels": 106,
+    "pixelCount": 984375,
+    "maxChannelDelta": 5,
+    "meanChannelDelta": 7.94920634920635e-05
+  },
+  {
+    "scene": "900x700-1.25-frost-xl-7",
+    "changedPixels": 106,
+    "pixelCount": 984375,
+    "maxChannelDelta": 5,
+    "meanChannelDelta": 7.796825396825396e-05
+  },
+  {
+    "scene": "900x700-1.25-frost-xl-8",
+    "changedPixels": 231,
+    "pixelCount": 984375,
+    "maxChannelDelta": 5,
+    "meanChannelDelta": 0.00019606349206349207
+  },
+  {
+    "scene": "900x700-1.25-quarry-std-0",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-quarry-std-1",
+    "changedPixels": 56,
+    "pixelCount": 984375,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 2.615873015873016e-05
+  },
+  {
+    "scene": "900x700-1.25-quarry-std-2",
+    "changedPixels": 92,
+    "pixelCount": 984375,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 4.190476190476191e-05
+  },
+  {
+    "scene": "900x700-1.25-quarry-std-3",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-quarry-std-4",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-quarry-std-5",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-quarry-std-6",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-quarry-std-7",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-quarry-std-8",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-quarry-xl-0",
+    "changedPixels": 56,
+    "pixelCount": 984375,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 3.0476190476190475e-05
+  },
+  {
+    "scene": "900x700-1.25-quarry-xl-1",
+    "changedPixels": 20,
+    "pixelCount": 984375,
+    "maxChannelDelta": 1,
+    "meanChannelDelta": 6.349206349206349e-06
+  },
+  {
+    "scene": "900x700-1.25-quarry-xl-2",
+    "changedPixels": 142,
+    "pixelCount": 984375,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 7.212698412698412e-05
+  },
+  {
+    "scene": "900x700-1.25-quarry-xl-3",
+    "changedPixels": 175,
+    "pixelCount": 984375,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 7.847619047619047e-05
+  },
+  {
+    "scene": "900x700-1.25-quarry-xl-4",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-quarry-xl-5",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-quarry-xl-6",
+    "changedPixels": 104,
+    "pixelCount": 984375,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 6.222222222222222e-05
+  },
+  {
+    "scene": "900x700-1.25-quarry-xl-7",
+    "changedPixels": 211,
+    "pixelCount": 984375,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 0.00012266666666666668
+  },
+  {
+    "scene": "900x700-1.25-quarry-xl-8",
+    "changedPixels": 108,
+    "pixelCount": 984375,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 6.45079365079365e-05
+  },
+  {
+    "scene": "900x700-1.25-resize",
+    "changedPixels": 224,
+    "pixelCount": 984414,
+    "maxChannelDelta": 5,
+    "meanChannelDelta": 0.00013383596738770475
+  },
+  {
+    "scene": "900x700-1.25-river-std-0",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-river-std-1",
+    "changedPixels": 219,
+    "pixelCount": 984375,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 0.00012114285714285714
+  },
+  {
+    "scene": "900x700-1.25-river-std-2",
+    "changedPixels": 82,
+    "pixelCount": 984375,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 3.53015873015873e-05
+  },
+  {
+    "scene": "900x700-1.25-river-std-3",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-river-std-4",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-river-std-5",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-river-std-6",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-river-std-7",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-river-std-8",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-river-xl-0",
+    "changedPixels": 213,
+    "pixelCount": 984375,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 0.0001219047619047619
+  },
+  {
+    "scene": "900x700-1.25-river-xl-1",
+    "changedPixels": 161,
+    "pixelCount": 984375,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 6.882539682539682e-05
+  },
+  {
+    "scene": "900x700-1.25-river-xl-2",
+    "changedPixels": 308,
+    "pixelCount": 984375,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 0.0001584761904761905
+  },
+  {
+    "scene": "900x700-1.25-river-xl-3",
+    "changedPixels": 242,
+    "pixelCount": 984375,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 9.574603174603175e-05
+  },
+  {
+    "scene": "900x700-1.25-river-xl-4",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-river-xl-5",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-river-xl-6",
+    "changedPixels": 118,
+    "pixelCount": 984375,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 5.7396825396825396e-05
+  },
+  {
+    "scene": "900x700-1.25-river-xl-7",
+    "changedPixels": 233,
+    "pixelCount": 984375,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 0.00011149206349206349
+  },
+  {
+    "scene": "900x700-1.25-river-xl-8",
+    "changedPixels": 122,
+    "pixelCount": 984375,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 5.638095238095238e-05
+  },
+  {
+    "scene": "900x700-1.25-yard-std-0",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-yard-std-1",
+    "changedPixels": 202,
+    "pixelCount": 984375,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 0.00011707936507936508
+  },
+  {
+    "scene": "900x700-1.25-yard-std-2",
+    "changedPixels": 69,
+    "pixelCount": 984375,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 2.5142857142857143e-05
+  },
+  {
+    "scene": "900x700-1.25-yard-std-3",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-yard-std-4",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-yard-std-5",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-yard-std-6",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-yard-std-7",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-yard-std-8",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-yard-xl-0",
+    "changedPixels": 210,
+    "pixelCount": 984375,
+    "maxChannelDelta": 4,
+    "meanChannelDelta": 0.00012088888888888888
+  },
+  {
+    "scene": "900x700-1.25-yard-xl-1",
+    "changedPixels": 164,
+    "pixelCount": 984375,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 7.009523809523809e-05
+  },
+  {
+    "scene": "900x700-1.25-yard-xl-2",
+    "changedPixels": 297,
+    "pixelCount": 984375,
+    "maxChannelDelta": 3,
+    "meanChannelDelta": 0.00015415873015873016
+  },
+  {
+    "scene": "900x700-1.25-yard-xl-3",
+    "changedPixels": 217,
+    "pixelCount": 984375,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 8.558730158730159e-05
+  },
+  {
+    "scene": "900x700-1.25-yard-xl-4",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-yard-xl-5",
+    "changedPixels": 0,
+    "pixelCount": 984375,
+    "maxChannelDelta": 0,
+    "meanChannelDelta": 0.0
+  },
+  {
+    "scene": "900x700-1.25-yard-xl-6",
+    "changedPixels": 130,
+    "pixelCount": 984375,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 6.45079365079365e-05
+  },
+  {
+    "scene": "900x700-1.25-yard-xl-7",
+    "changedPixels": 247,
+    "pixelCount": 984375,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 0.00012546031746031746
+  },
+  {
+    "scene": "900x700-1.25-yard-xl-8",
+    "changedPixels": 131,
+    "pixelCount": 984375,
+    "maxChannelDelta": 2,
+    "meanChannelDelta": 6.4e-05
+  }
+]
