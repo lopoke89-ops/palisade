@@ -11,12 +11,12 @@ The Claude audit URL still requires sign-in in the available browser session. Bi
 
 | Item | Current state |
 |---|---|
-| Source release | **v0.9.6.0** (Frostpeak elevation, Whiteout, Rime, winter collection and friend invitations); publication authorized, release gate passed |
-| Release deployment | v0.9.6.0 push and live deployment verification pending; prior v0.9.5.2 deployment verified |
-| Release protocol | `yard-21` / `palisade-yard-21-`; old clients must reload after publication |
+| Source release | **v0.9.6.0** (Frostpeak elevation, Whiteout, Rime, winter collection and friend invitations); published October 1 |
+| Release deployment | Pushed October 1; [Pages run 36845257315](https://github.com/lopoke89-ops/palisade/actions/runs/36845257315) succeeded; live production UI and committed bytes verified |
+| Live protocol | `yard-21` / `palisade-yard-21-`; old clients must reload |
 | Applied server migrations | `winter_whiteout` (`20261001081259`) and `friend_lobby_invites` (`20261001081316`), applied and verified October 1; earlier ammo/Blitz migrations retained |
-| GitHub branch | `main` starts at `3d54055` (Open Games Blitz fix); isolated winter release excludes earlier local cleanup |
-| Published build | GitHub Pages **v0.9.5.2**, protocol `yard-20`, service worker `palisade-1158b41b21`, verified during that October 1 release; winter candidate publication is pending |
+| GitHub branch | `main` includes release commit [`92d3c16`](https://github.com/lopoke89-ops/palisade/commit/92d3c16608225f61e4d513b7c287a768834933ae); preexisting uncommitted cleanup excluded |
+| Published build | GitHub Pages **v0.9.6.0**, protocol `yard-21`, service worker `palisade-dc87756470`; exact committed HTML/SW hashes verified live |
 
 Controller support shipped in v0.9.2.1. The v0.9.3 cosmetics migration is applied and the live case catalog includes Flags. The two proposed new game modes have not shipped; the Nightmare modifier and a future preset definition do not constitute a separate game mode.
 
@@ -28,23 +28,23 @@ The [winter/elevation/campaign/invitations work order](plans/winter-elevation-ca
 
 Frostpeak has standard/XL layouts with summit core, three traversable heights, ramp/stair approaches and terrain-aware combat. Whiteout visits Yard, Riverbend, Quarry and Frostpeak, three raids per chapter, revamped chapter bosses and one five-minute personal evacuation finale. Rime has its own ice armor/reservoir/maul rig, telegraphed rupture and slowing frost dash. New milestones and a 34-item Winter Case provide acquisition paths for the complete 42-item winter collection.
 
-Authenticated Friends invitations support public/private rooms and deliberate leave confirmation, including from an active game's pause menu. The two migrations are live; read-only checks and disposable Postgres tests verify catalog, reward retries and invitation authority. Six real local PeerJS clients, chapter/ramp/finale reconnect, production offline launch, all 73 compact Armory layouts and affected input/combat/network regressions pass. Final desktop software-Canvas stress sample at 390×844: six simulated players, 52 enemies/four bosses, 64 frost fields, 19.1% added median update+render cost. Physical phones and real Internet finale performance remain separate validation.
+Authenticated Friends invitations support public/private rooms and deliberate leave confirmation, including from an active game's pause menu. The two migrations are live; read-only checks and disposable Postgres tests verify catalog, reward retries and invitation authority. Six real local PeerJS clients, chapter/ramp/finale reconnect, production offline launch, all 73 compact Armory layouts and affected input/combat/network regressions pass. Final desktop software-Canvas stress sample at 390Ã—844: six simulated players, 52 enemies/four bosses, 64 frost fields, 19.1% added median update+render cost. Physical phones and real Internet finale performance remain separate validation.
 
-Production files use protocol `yard-21`, footer v0.9.6.0 and service worker `palisade-dc87756470`. **The isolated release build passed 11 publication checks; push and live verification are pending.** [Release verification](evidence/2026-10-01-winter-whiteout/release-verification.json) records the actual release hashes and gate results. Preexisting uncommitted cleanup is preserved and excluded.
+Production files use protocol `yard-21`, footer v0.9.6.0 and service worker `palisade-dc87756470`. **The isolated release passed 11 publication checks, is pushed as `92d3c16`, and deployed successfully.** Live campaign/Frostpeak starts, eight mobile Armory layouts, exact committed file hashes and the active service-worker cache are verified with no page errors or CSP violations. [Release verification](evidence/2026-10-01-winter-whiteout/release-verification.json) records the actual release hashes and gate results. Preexisting uncommitted cleanup is preserved and excluded.
 
 ## v0.9.5.2: special ammo and eight-level Armory
 
 The [ammo and Armory work order](plans/ammo-and-armory-expansion-work-order.md) is implemented. [Validation, balance tables and evidence](evidence/2026-10-01-ammo-armory/README.md) record the finished build and live account migration. Big U authorized publication October 1. Commit `ac0e049` is pushed to `main`, Pages deployed successfully, and the live v0.9.5.2 footer, protocol and service worker are verified.
 
-Release verification also opened the production page in Chrome, confirmed debug hooks are absent, started a Sniper solo game through the actual controls, and checked both Armory tabs at 320×480, 568×320, 390×844 and 844×390. All eight live layouts fit without scrolling and reported no page errors or CSP violations. This UI smoke test blocked account requests to avoid creating test accounts; account/server and local online tests are recorded separately. See `evidence/2026-10-01-ammo-armory/release-verification.json` and the live captures beside it.
+Release verification also opened the production page in Chrome, confirmed debug hooks are absent, started a Sniper solo game through the actual controls, and checked both Armory tabs at 320Ã—480, 568Ã—320, 390Ã—844 and 844Ã—390. All eight live layouts fit without scrolling and reported no page errors or CSP violations. This UI smoke test blocked account requests to avoid creating test accounts; account/server and local online tests are recorded separately. See `evidence/2026-10-01-ammo-armory/release-verification.json` and the live captures beside it.
 
 Armor Piercing, Incendiary, Explosive and Lightning are offered only in solo/co-op 5-raid, 10-raid, Endless and Blitzkrieg Rush. They cost 150 salvage for an empty slot and 75 to switch; repeated selection is free. Classes have one slot, Sniper has two distinct slots, and leaving Sniper clears slot two. Host validation enforces these rules, phase/distance/life/Lockdown checks and salvage. Ammo, verified ranks, burn and slow are synchronized; a same-match reconnect retains slots and level-8 upgrades. Protocol is `yard-20` because these packet fields are new.
 
 Four account nodes are appended after the original 15, gated by 5/10/15/20 lifetime SP and priced at 1/2/3/4 unspent SP. The applied migration extends the live definitions and purchase gate. Tests use the exact deployed respec body and verify accurate refunds, no repeat refund and preserved lifetime SP. No player rows were rewritten. Read-only live checks and the unchanged security-advisor baseline are saved in the evidence directory.
 
-Levels 5–8 extend Damage, Fire Rate, Range, Armor, Grenades and Delgado. Their final bonus caps are 25% above the previous level-4 bonus caps; the original four tiers retain their values and prices. The Armory shows level out of eight, current-to-next benefit, and each ammo's effect, rank, slot and price.
+Levels 5â€“8 extend Damage, Fire Rate, Range, Armor, Grenades and Delgado. Their final bonus caps are 25% above the previous level-4 bonus caps; the original four tiers retain their values and prices. The Armory shows level out of eight, current-to-next benefit, and each ammo's effect, rank, slot and price.
 
-**October 1 mobile UI follow-up:** Upgrades and Ammo are separate tabs, and Sniper chooses a slot above one four-choice ammo list. The introduction is removed, salvage sits in the header, landscape uses columns, and all action buttons remain at least 44×44 pixels. Both tabs fit without scrolling across 73 layout cases at ten viewport sizes, including 320×480 portrait and 568×320 landscape, equipped slots and maxed upgrades. Purchases, real guest UI buying, controller navigation and CSP pass. See [current captures and measurements](evidence/2026-10-01-ammo-armory/compact-armory/README.md).
+**October 1 mobile UI follow-up:** Upgrades and Ammo are separate tabs, and Sniper chooses a slot above one four-choice ammo list. The introduction is removed, salvage sits in the header, landscape uses columns, and all action buttons remain at least 44Ã—44 pixels. Both tabs fit without scrolling across 73 layout cases at ten viewport sizes, including 320Ã—480 portrait and 568Ã—320 landscape, equipped slots and maxed upgrades. Purchases, real guest UI buying, controller navigation and CSP pass. See [current captures and measurements](evidence/2026-10-01-ammo-armory/compact-armory/README.md).
 
 The initial full regression run plus focused reruns cover 62 distinct passing tests. The old `v087` row-count expectation was updated and passes. New focused tests cover purchases, combat, real local host/guest runs in all four eligible modes, real reconnect, forged packets, PvP rejection, server gates/refunds and a six-player/49-enemy stress scene. In the PC phone-sized software-rendered sample, simulation median/p90 remained 0.2/0.4 ms and rendering median changed from 3.9 to 4.2 ms. Physical-device performance and longer player balance sessions are follow-up validation; the local tests do not measure production network latency.
 
@@ -58,13 +58,13 @@ The Open Games list was present and refreshing, but a mocked valid row began bel
 
 ## v0.9.5.0: Menu overhaul
 
-Big U asked for a full look at every menu page on desktop and phones (portrait and landscape) before changes, then: keep the character centrepiece, one PLAY button with the setup behind it, and a light touch on the Locker. Evidence: `evidence/v0.9.5.0/` (contact sheets at desktop, phone portrait and phone landscape). Review tool: `test/menu_audit.js` (every page at 1440×900, 1280×720, 390×844 and 844×390, with layout measurements). No protocol change (`yard-19`), no server migration.
+Big U asked for a full look at every menu page on desktop and phones (portrait and landscape) before changes, then: keep the character centrepiece, one PLAY button with the setup behind it, and a light touch on the Locker. Evidence: `evidence/v0.9.5.0/` (contact sheets at desktop, phone portrait and phone landscape). Review tool: `test/menu_audit.js` (every page at 1440Ã—900, 1280Ã—720, 390Ã—844 and 844Ã—390, with layout measurements). No protocol change (`yard-19`), no server migration.
 
 **PLAY.** The Solo page is now PLAY: the match as four tappable lines (MAP, LENGTH, JOB, MODIFIERS) and one PLAY button. Each line opens the **setup sheet** on its tab (map, rules, job, modifiers). The same sheet serves hosting a room and the room itself (host only), so there is one place to change a match. On desktop the right column shows the new mode (TRY IT), cases ready to open, the next unlock with its progress bar, and skill points (`19c-home.js`).
 
 **MULTIPLAYER and the room.** MULTIPLAYER is two cards: JOIN A CREW (code, JOIN) and HOST A ROOM (co-op, Base Battle, Free-for-all, the same four lines, HOST), then open games. The room puts the code, share link and START first, then the host's lines (read-only for guests), job, crew and chat.
 
-**Nav.** PLAY, MULTIPLAYER, LOCKER, SKILLS, CLASSES, SETTINGS with icons; waiting cases and skill points are badges (the labels no longer change). Phones in portrait get a bottom tab bar with PLAY pinned above it; landscape phones get a slim top bar and a compact 2×2 of lines with PLAY under it.
+**Nav.** PLAY, MULTIPLAYER, LOCKER, SKILLS, CLASSES, SETTINGS with icons; waiting cases and skill points are badges (the labels no longer change). Phones in portrait get a bottom tab bar with PLAY pinned above it; landscape phones get a slim top bar and a compact 2Ã—2 of lines with PLAY under it.
 
 **Locker (light touch).** Cases you hold come first; empty cases fold to one line with BUY. Milestones are one strip per ladder with an "n / 5 unlocked" count (swipe on a phone), about half the length.
 
@@ -86,18 +86,18 @@ Work order: [plans/blitzkrieg-rush-work-order.md](plans/blitzkrieg-rush-work-ord
   - The core no longer decides the result once the evacuation starts. A core loss before it is a normal squad loss.
   - At 0:00, anyone still on the field is **left behind**: they lose and keep half their cases and shards (odd counts round up first, `ceil(n/2)`). Raids, boss kills, skill points and milestones are never halved. Squadmates who made it still win.
   - Bosses still alive at 0:00 retreat and don't count. If everyone is out, or nobody is left standing to revive the rest, it ends early.
-  - The game-over screen is personal (EVACUATED · VICTORY or LEFT BEHIND · HALF REWARDS) with who made it out.
+  - The game-over screen is personal (EVACUATED Â· VICTORY or LEFT BEHIND Â· HALF REWARDS) with who made it out.
 - **The five Blitzkrieg bosses** (their own names, the base boss's rig, 2 Blitzkrieg Cases each):
   - **The Harbinger** (Ferryman): 3 missiles in a high arc (4 below half health), each showing its landing ring for its whole ~1.6 s flight. On maps without a river he fires from a fixed spot at the edge. Still puts boarding crews ashore.
   - **The Blue Butcher**: a teal lane, then a glowing arc that **breaks every wood and brick wall** it passes, hurts everyone it crosses once, and stops at metal after a heavy hit. Its blue dust is gone in about 0.5 s. The charge still happens, at half the rate.
   - **The Arsonist** (Demolisher): an aim line with four rings, then a chain of four napalm bottles. Each patch burns **10 s**; napalm burns brick at regular fire's rate and **metal at twice it** (regular fire doesn't burn metal at all).
   - **The Tempest** (Stormcaller): **the Stormcaller's shot, exactly, twice**, side by side. Both on you is double.
   - **The Bulldozer** (Foreman): no digging. A lane, then a charge faster than the Butcher's. Anything solid stops him; a wall takes a heavy hit (wood and brick break) and he is **dazed 3 s**.
-- **Modifiers:** Blitzkrieg Rush has its own list. Kept: No Patch-Ups, On Your Own, Firestorm, Adrenaline, Last Stand, Elite Raid, Weather, Nightmare (no surprise bosses here), Berserk. Removed: Boss Rush. New: Hot LZ (+15%: opens at 0:45, ring a third smaller), Double Time (+15%: every 20 s, 15 bosses), Artillery Barrage (+10%: marked shells during the evacuation), Lockdown (+10%: the armory is shut for the build before raid 15 — the armory only opens between raids, so it can't close "during" the Final Blitz — and Delgado stops fixing walls in it), Scorched Earth (+10%: napalm 15 s, the arc's dust burns, twin beams scorch the ground).
+- **Modifiers:** Blitzkrieg Rush has its own list. Kept: No Patch-Ups, On Your Own, Firestorm, Adrenaline, Last Stand, Elite Raid, Weather, Nightmare (no surprise bosses here), Berserk. Removed: Boss Rush. New: Hot LZ (+15%: opens at 0:45, ring a third smaller), Double Time (+15%: every 20 s, 15 bosses), Artillery Barrage (+10%: marked shells during the evacuation), Lockdown (+10%: the armory is shut for the build before raid 15 â€” the armory only opens between raids, so it can't close "during" the Final Blitz â€” and Delgado stops fixing walls in it), Scorched Earth (+10%: napalm 15 s, the arc's dust burns, twin beams scorch the ground).
 
 **Rewards.**
 - Every Blitzkrieg boss (raids 5/10 and the Final Blitz) pays everyone **2 Blitzkrieg Cases**. Final Blitz bosses also pay 15-30 shards and a skill point each. Making the evacuation pays 1 more Blitzkrieg Case and 25 shards (approved by Big U). A 15-raid win's 2 Supply Cases apply to evacuees.
-- **BLITZKRIEG RUSH ladder** (Locker → Milestones): Blitzkrieg bosses killed in the mode, credited to everyone in the match: 10 Devil Horns (Rare), 25 Blue Arc tracer (Epic), 50 Blue Butcher skin (Epic), 75 Hell Portal kill effect (Legendary), 100 Demon skin (Gold: its own body with horns, folded wings, tail, claws, ember cracks, burning eyes and an ember aura; it takes no other headgear). Each Blitzkrieg boss also counts for its base boss's ladder.
+- **BLITZKRIEG RUSH ladder** (Locker â†’ Milestones): Blitzkrieg bosses killed in the mode, credited to everyone in the match: 10 Devil Horns (Rare), 25 Blue Arc tracer (Epic), 50 Blue Butcher skin (Epic), 75 Hell Portal kill effect (Legendary), 100 Demon skin (Gold: its own body with horns, folded wings, tail, claws, ember cracks, burning eyes and an ember aura; it takes no other headgear). Each Blitzkrieg boss also counts for its base boss's ladder.
 - **Blitzkrieg Case** (14 shards): tracers Brimstone, Teal Wake, Hellfire Chain, Infernal Sigil; kill effects Cinder Burst, Teal Slash, Brand of Ash, Demon Claw; backgrounds Scorched Front (Epic, still) and **Hellgate** (Gold, animated: a gate with a turning hellfire vortex; every 6 s the Blue Butcher's arc cuts a teal rift across the sky that seals again; a boss shows in the fire). Hellgate's still parts are one cached layer; each frame draws three rotated vortex sprites, one glow, the arc and about 40 embers.
 - **Server:** migration `20260930141401_palisade_v0940_blitz` (**applied September 30 with Big U's approval**; verified: function bodies, catalog 2 has 15 items, the case costs 14, `open_case_v094` signed-in only, anon denied everywhere; advisors show only the known warnings, no new ones). It adds `match_results.fb_n`/`evac`, `private.blitz_base`, the Blitzkrieg modifier prices, the case and its 15 items (catalog 2, opened by the new `open_case_v094`), and mode `blitz` in `claim_match_reward` (built from the live v0.9.3.8 text). Older clients and other modes are unchanged. The new client opens cases through `open_case_v094`, so **the migration must be live before this build is**.
 
@@ -111,7 +111,7 @@ Work order: [plans/blitzkrieg-rush-work-order.md](plans/blitzkrieg-rush-work-ord
 - **Music master:** `palisade inbetween raid music.wav` moved to `dev/audio/masters/` (kept in the repo, no longer published).
 - **Dead code:** deleted `dev/src/palisade-outdated.html` (314 KB; still in git history).
 - **Test runner:** `run_all.sh`, which `run_targeted.sh` also uses, falls back to an installed Chromium when Playwright's own browser build is missing, so tests run without setting `CHROMIUM`.
-- **Still for Big U:** turn on leaked-password protection in the Supabase dashboard (Authentication → Passwords).
+- **Still for Big U:** turn on leaked-password protection in the Supabase dashboard (Authentication â†’ Passwords).
 
 ## v0.9.3.10: hat fixes (Big U's review)
 
@@ -127,7 +127,7 @@ Work order: [plans/blitzkrieg-rush-work-order.md](plans/blitzkrieg-rush-work-ord
 
 Work order: [plans/v0.9.3.9-work-order.md](plans/v0.9.3.9-work-order.md). Evidence: `evidence/v0.9.3.9/`.
 
-**1. 3 skill points → 1 Supply Case** (no cap, per Big U).
+**1. 3 skill points â†’ 1 Supply Case** (no cap, per Big U).
 - *Where:* a new button in the Locker's Supply Case panel shows your points. It works on two taps: the first arms it for 3 s, the second spends.
 - *When it's off:* it is disabled with a reason below 3 points; offline, the points stay and a message explains.
 - *Accounts:* use the new RPC `buy_case_sp` (migration `20260930084544_palisade_v0939_sp_cases`, **applied September 30 with Big U's approval**; signed-in players only, anon denied). It spends only unspent `sp`, and `sp_total` is unchanged. The live `skill_respec` refunds `skill_spent(skills)`, the tree's own costs, so points traded for cases can never come back through a reset.
@@ -137,10 +137,10 @@ Work order: [plans/v0.9.3.9-work-order.md](plans/v0.9.3.9-work-order.md). Eviden
 **2. Landscape HUD** (phones in landscape only; portrait and desktop unchanged).
 - *Boss bars:* health is one thin strip across the top centre, with two XL bosses side by side, instead of stacked 32 px cards.
 - *Team bars:* YOU, crewmates, DELGADO and CORE sit compact in the bottom-left corner and ignore touches. The raid panel stays top-right, and the top-left is clear.
-- *Test:* `hud_layout` at 844×390, 932×430, 390×844 and 1280×800 with 6 players and two bosses checks placement and no overlap with the kit or raid panel.
+- *Test:* `hud_layout` at 844Ã—390, 932Ã—430, 390Ã—844 and 1280Ã—800 with 6 players and two bosses checks placement and no overlap with the kit or raid panel.
 - *Phone check still needed:* the bars now share the bottom-left with the floating move stick, which draws underneath them.
 
-**3. Show tips during games.** A Settings → Screen toggle (also in the in-game settings panel), on by default, saved and included in export/import. Off hides the how-to tips immediately and in later games. Toasts (boss arrivals, IS BACK, rewards) always show. Test: `tips_toggle`.
+**3. Show tips during games.** A Settings â†’ Screen toggle (also in the in-game settings panel), on by default, saved and included in export/import. Off hides the how-to tips immediately and in later games. Toasts (boss arrivals, IS BACK, rewards) always show. Test: `tips_toggle`.
 
 **4. Headgear.**
 - *Rebuilt:* the six Halloween Case pieces are now full headwear in the style of the Top Hat, Witch and Pumpkin King, with volume, trim, shading steps and a clear front motif:
@@ -151,7 +151,7 @@ Work order: [plans/v0.9.3.9-work-order.md](plans/v0.9.3.9-work-order.md). Eviden
   - Cobweb Brow Pin: a tilted lace pillbox, a cobweb veil over the brow, and a spider brooch.
   - Crescent Skull Seal: a black-violet diadem with an ivory skull before a glowing gold crescent, and temple gems.
 - *Fit pass on all hats:* the Neon Helmet stripe now follows the helmet's curve (it stuck out at side angles), and the Arcade Cap badge is seated on the crown (it floated).
-- *Tests:* `headgear_fit` checks every hat's pixels stay inside a head window at 8 angles × 3 walk phases. It passes for all hats, and records per-hat area for review. `cosmetics_expansion` now caps the Halloween pieces at the height of our tallest existing hats, replacing the old "compact" limit.
+- *Tests:* `headgear_fit` checks every hat's pixels stay inside a head window at 8 angles Ã— 3 walk phases. It passes for all hats, and records per-hat area for review. `cosmetics_expansion` now caps the Halloween pieces at the height of our tallest existing hats, replacing the old "compact" limit.
 - *Evidence:* before/after sheets are `headgear_before_*.png` and `headgear_after_*.png`.
 
 Version footer v0.9.3.9; protocol unchanged.
@@ -159,9 +159,9 @@ Version footer v0.9.3.9; protocol unchanged.
 ## v0.9.3.8: every boss kill counts toward milestones
 
 Big U's rule: every boss kill counts toward boss milestones, for everyone in the match, not just whoever landed the last hit.
-- **Regular bosses** (raids 5, 10, 15…, and XL partners) already credited everyone in the match through the shared boss log. That is unchanged.
+- **Regular bosses** (raids 5, 10, 15â€¦, and XL partners) already credited everyone in the match through the shared boss log. That is unchanged.
 - **In-between bosses** (Boss Rush, Nightmare surprise, the Nightmare + Boss Rush second boss) paid shards and a skill point but no milestone credit, because the game only kept a count. The host now records which boss each one was (`sbLog`) and sends it to guests in snapshots (`sl`). Each player's claim names the in-between bosses killed while they were in the game (`sb_keys`), whoever shot them.
-- **Server:** migration `20260930075446_palisade_v0938_all_boss_milestones` (applied September 30) adds +1 to the matching `boss_*` counter for each *paid* in-between boss. It follows the existing paid cap, not the claimed list. Older clients send no `sb_keys` and are unchanged. The live function matches the file (md5 `a98b0562…`) and grants are unchanged.
+- **Server:** migration `20260930075446_palisade_v0938_all_boss_milestones` (applied September 30) adds +1 to the matching `boss_*` counter for each *paid* in-between boss. It follows the existing paid cap, not the claimed list. Older clients send no `sb_keys` and are unchanged. The live function matches the file (md5 `a98b0562â€¦`) and grants are unchanged.
 - **No-account players** get the same rule in the browser locker.
 - **Earlier kills: estimated backfill, approved by Big U and applied on September 30** (`supabase/compensation/2026-10-01_v0938_milestone_backfill.sql`, keyed so it can't re-apply). It credits 154 past in-between kills, each pre-migration claim's paid count: Boss Rush raids matched to the map's fixed rotation, and Nightmare surprises spread over the map's three bosses. Verified on the live lockers:
 
@@ -175,7 +175,7 @@ Big U's rule: every boss kill counts toward boss milestones, for everyone in the
 
   Unlocked by the backfill: lopoke89 gained the Butcher, Ferryman and Stormcaller skins; kappinkirk gained Butcher and Stormcaller. Each player got one mailbox note.
 - **Tests:** `boss_milestones` (a guest who never fired gets both a regular and a Boss Rush boss in the claim; solo local counter +1) and `rejoin_migration` (milestones for regular and in-between bosses; older client unchanged; milestones follow the paid count; re-apply).
-- **Test fix:** `modifiers` measured Adrenaline speed against wall-clock time and was flaky (a slow first frame shortened the walk). It now measures against game time and gives an exact 1.20×.
+- **Test fix:** `modifiers` measured Adrenaline speed against wall-clock time and was flaky (a slow first frame shortened the walk). It now measures against game time and gives an exact 1.20Ã—.
 
 Version footer v0.9.3.8. Protocol unchanged: `sl` is an extra snapshot field that older clients ignore.
 
@@ -185,7 +185,7 @@ Version footer v0.9.3.8. Protocol unchanged: `sl` is an extra snapshot field tha
 
 **2. In-game settings.** SETTINGS from the pause menu now opens an overlay over the game instead of the main menu. The main menu had let a player start a match or host a lobby mid-run. The same setting cards move into the overlay and back, so each control keeps one id and handler. Save Backup stays on the menu page. Pause/Escape or BACK returns to the pause menu; solo stays paused; online, the raid keeps going. As defense in depth, start, host and join are refused during a live run. Test: `ingame_settings` (phone and desktop, keyboard and button paths, deep-link start refused, online host time advances).
 
-**3. Nightmare + Boss Rush synergy.** With both on, each Boss Rush boss raid also rolls 1 in 12 for a second in-between boss. It is a different boss where the map has more than one, announced as "NIGHTMARE · SECOND BOSS". Odd raids keep Nightmare's normal surprise roll; regular boss raids and either modifier alone are unchanged.
+**3. Nightmare + Boss Rush synergy.** With both on, each Boss Rush boss raid also rolls 1 in 12 for a second in-between boss. It is a different boss where the map has more than one, announced as "NIGHTMARE Â· SECOND BOSS". Odd raids keep Nightmare's normal surprise roll; regular boss raids and either modifier alone are unchanged.
 - *Rewards:* it pays like any in-between boss (15-30 shards) and, like them, stays out of boss milestones. The live server cap already counts every non-5th raid when Nightmare is on, so no migration was needed (checked in `rejoin_migration`: four in-between bosses in five raids are all paid). **Big U: say if the second boss should pay differently or count toward milestones.**
 - Test: `mod_synergy` (8.3% over 24,000 rolls, always a different boss, never with one modifier, odd or regular raids; a forced roll spawns both, announces, and pays 2).
 
@@ -200,7 +200,7 @@ The whole-project audit is in [OPTIMIZATION_AUDIT_2026-10-01.md](OPTIMIZATION_AU
 - *Loss 1, client:* a reload, crash or killed app sent nothing, so the raids before the drop were lost. The client now saves a run draft every 3 s and on backgrounding, and sends it as an early-leave claim on the next start. Accounts use the normal claim queue; no-account players are paid into the browser locker. Test: `rejoin_drop`.
 - *Loss 2, host:* a returning player started with a fresh armory. The host now keeps a dropped player's armory, salvage and kills for the game, keyed by the tab's room session, and restores them on rejoin ("IS BACK"). Test: `rejoin_drop`.
 - *Loss 3, server:* `claim_match_reward` capped bosses per claim from the previous claim's raid + 1, so a boss (or Boss Rush/Nightmare in-between boss) on the first raid after a rejoin was paid to nobody. Migration `20260930071534_palisade_v0936_rejoin_bosses.sql` caps bosses over the player's whole stay minus earlier claims, and records `boss_n`. The pre-change live function is saved in `supabase/snapshots/`. Test: `rejoin_migration` runs the same claims through the live function (bug reproduced) and the migration (fixed; uninterrupted games unchanged; no double pay; old-row fallback; re-apply). **Applied live on September 30 with Big U's approval** as `20260930071534`. The function contains the fix, the `boss_n` column exists, grants are unchanged (authenticated, postgres, service_role), and the security advisor shows no new finding.
-- *Affected players found:* the table below. The kappinkirk cases match a hard drop: the claim starts mid-game with no earlier claim, and in `mulw1qg2` their previous FFA with the same partner ended three minutes before the run started. Please confirm with the player if possible. Supply case counts can differ by ±1 because teammates' case progress carries over differently.
+- *Affected players found:* the table below. The kappinkirk cases match a hard drop: the claim starts mid-game with no earlier claim, and in `mulw1qg2` their previous FFA with the same partner ended three minutes before the run started. Please confirm with the player if possible. Supply case counts can differ by Â±1 because teammates' case progress carries over differently.
 
 | Player | Game | What was lost | Proposed grant |
 |---|---|---|---|
@@ -208,17 +208,17 @@ The whole-project audit is in [OPTIMIZATION_AUDIT_2026-10-01.md](OPTIMIZATION_AU
 | kappinkirk | `mulw1qg2` 10-raid XL, Riverbend | raids 1-6: 2 Ferryman, 3 in-between bosses | 3 Supply, 2 Halloween, 69 shards, 6 skill points; raids/map/class +6; boss_ferryman +2 |
 | meezy2greezy | `mulv3e8h` 10-raid XL, The Yard | raid 7 (21 s disconnect); armory reset | 1 Supply; raids/map/class +1 |
 
-**Big U approved kappinkirk's two grants only; meezy2greezy was not compensated.** The script `supabase/compensation/2026-10-01_v0936_rejoin.sql` was applied on September 30. Verified before and after on the live locker: Supply 0 → 13, Halloween 0 → 6, shards 6 → 213, skill points 58 → 77 (total 124 → 143); raids 430 → 450; Riverbend and soldier raids +20; Ferryman 9 → 13; Butcher 11 → 13; player_stats raids 416 → 436. Two mailbox notes were sent. The grant is keyed, so re-running it pays nothing.
+**Big U approved kappinkirk's two grants only; meezy2greezy was not compensated.** The script `supabase/compensation/2026-10-01_v0936_rejoin.sql` was applied on September 30. Verified before and after on the live locker: Supply 0 â†’ 13, Halloween 0 â†’ 6, shards 6 â†’ 213, skill points 58 â†’ 77 (total 124 â†’ 143); raids 430 â†’ 450; Riverbend and soldier raids +20; Ferryman 9 â†’ 13; Butcher 11 â†’ 13; player_stats raids 416 â†’ 436. Two mailbox notes were sent. The grant is keyed, so re-running it pays nothing.
 
 **2. Frame rate and performance.**
-- *Setting:* Settings → Screen → Frame rate: Auto, 30 FPS or 60 FPS. Auto runs at 60 on phones and drops to 30 for the rest of the run when frames average over 12 ms or the battery is at or below 30% and not charging. On desktops Auto is uncapped.
+- *Setting:* Settings â†’ Screen â†’ Frame rate: Auto, 30 FPS or 60 FPS. Auto runs at 60 on phones and drops to 30 for the rest of the run when frames average over 12 ms or the battery is at or below 30% and not charging. On desktops Auto is uncapped.
 - *Why 60 matters too:* 60 now also caps 90/120 Hz phones, which previously drew up to 120 frames a second.
 - *Cap correctness:* the cap is exact (measured 30/60), game time runs at real speed either way, and a host and guest at 30 FPS move with no host rejections (`fps_mode`).
-- *Label cache:* outlined labels (name tags, damage numbers) are now cached images. In the six-player Endless raid-20 stress scene, median render dropped 10.8 → 8.7 ms and world-object drawing 4.8 → 4.0 ms.
+- *Label cache:* outlined labels (name tags, damage numbers) are now cached images. In the six-player Endless raid-20 stress scene, median render dropped 10.8 â†’ 8.7 ms and world-object drawing 4.8 â†’ 4.0 ms.
 - *Estimated CPU:* drawing CPU per second drops about 60% at 30 FPS versus 60 before, and about 60% on 120 Hz phones at the 60 cap. Heap is flat over 30 simulated minutes (5 MB).
 - These are desktop-software-canvas measurements; the heat improvement needs a physical-phone check.
 
-**3. Delgado.** Every player-facing "Dell" now reads "Delgado", with the Solo page nod "(as in 'Dell got you')". Internal ids (`dell`, `qm`, `13-dell.js`, network and save fields) are unchanged. HUD and armory fit at 390×844 and 844×390 (`delgado`).
+**3. Delgado.** Every player-facing "Dell" now reads "Delgado", with the Solo page nod "(as in 'Dell got you')". Internal ids (`dell`, `qm`, `13-dell.js`, network and save fields) are unchanged. HUD and armory fit at 390Ã—844 and 844Ã—390 (`delgado`).
 
 Protocol stays `yard-18` (no packet change).
 
@@ -228,7 +228,7 @@ The implementation record is [COSMETICS_V0935_CHECKPOINT.md](COSMETICS_V0935_CHE
 
 **Server:** migration `20260930050715_palisade_v0935_cosmetics` is already applied to the live project (the local file was renamed from `20260930045719` to match the live record). Live verification on September 30: the seven items exist at `catalog_version` 1, Supply weights are 59.75/27/10/3/0.25, the rarity check accepts `u`, no player owns a new item yet, `open_case_of` pins old clients to catalog 0 with the old 60/27/10/3 odds, `open_case_v0935` serves catalog 1, anon has no execute grant, and the legacy `open_case` no longer exists. The client never reads `case_types`, so published v0.9.3.4 clients are unaffected. The security advisor reports no new finding from this migration.
 
-**Checks:** build reproduces; 19 focused checks pass in Linux Chromium: `tracer_cycle`, `tracer_network`, `ultimate_cloud`, `cosmetics_expansion`, `cosmetics_migration` (12 PGlite checks), `cosmetics`, `wardrobe3d`, `cosmetic_network`, `flagcase`, `muzzle`, `presentation_posefit`, `locker_fit`, `locker_collections`, `cases`, `accounts`, `csp`, `multiplayer`, `hostcheck`, `room_controls`. The new tests are in the `cosmetics` group. Interleaved three-trial tracer A/B (desktop Chrome, phone viewport): flags 300 median 9.8 → 1.6 ms, p95 16.6 → 2.8 ms; non-flag 300 median 11.1 → 7.5 ms, p95 17.2 → 10.9 ms; GC total 33 → 24 ms. The earlier non-flag p95 regression did not reproduce. Evidence is in `evidence/v0.9.3.5/`. This is not a full-suite or physical-phone result.
+**Checks:** build reproduces; 19 focused checks pass in Linux Chromium: `tracer_cycle`, `tracer_network`, `ultimate_cloud`, `cosmetics_expansion`, `cosmetics_migration` (12 PGlite checks), `cosmetics`, `wardrobe3d`, `cosmetic_network`, `flagcase`, `muzzle`, `presentation_posefit`, `locker_fit`, `locker_collections`, `cases`, `accounts`, `csp`, `multiplayer`, `hostcheck`, `room_controls`. The new tests are in the `cosmetics` group. Interleaved three-trial tracer A/B (desktop Chrome, phone viewport): flags 300 median 9.8 â†’ 1.6 ms, p95 16.6 â†’ 2.8 ms; non-flag 300 median 11.1 â†’ 7.5 ms, p95 17.2 â†’ 10.9 ms; GC total 33 â†’ 24 ms. The earlier non-flag p95 regression did not reproduce. Evidence is in `evidence/v0.9.3.5/`. This is not a full-suite or physical-phone result.
 
 **To publish:** merge to `main`; the server side is already in place. Because the protocol changes to `yard-18`, v0.9.3.4 and v0.9.3.5 players cannot share rooms until both reload. Physical-phone review of tracer feel, Sahur and the head pieces remains open.
 
@@ -248,7 +248,7 @@ Build and nine focused checks passed: `presentation`, `presentation_posefit`, `f
 
 Milestone cosmetics now appear only in MILESTONES. Ordinary categories show STANDARD & UNLOCKS followed by independent case-collection disclosures with owned/total counts. Collections begin collapsed, remember their state for the page session, and allocate tiles only when opened. Equip/cloud refresh updates mounted tiles in place, preserving focus and scroll. A case result's EQUIP action opens the relevant collection and focuses the item. Case OPEN/BUY controls remain in their separate panel. No protocol, server, or save-format change is included.
 
-Build and eight focused checks passed: `locker_collections`, `milestones`, `flagcase`, `accounts`, `locker_fit`, `cosmetics`, `csp`, and `taborder`. Screenshots were inspected at 390×844, 844×390, and 1280×900. On the phone-sized PC benchmark, initial Skins canvases dropped from 72 to 4 and grid height from 7,827 to 660 CSS pixels; measured CPU work was lower in this small PC sample. See [Locker validation](LOCKER_UI_2026-09-29.md). Big U committed and pushed this release; GitHub `main` and the live v0.9.3.3 footer were verified. Physical-device testing and the older movement/account/PWA verification limits remain open.
+Build and eight focused checks passed: `locker_collections`, `milestones`, `flagcase`, `accounts`, `locker_fit`, `cosmetics`, `csp`, and `taborder`. Screenshots were inspected at 390Ã—844, 844Ã—390, and 1280Ã—900. On the phone-sized PC benchmark, initial Skins canvases dropped from 72 to 4 and grid height from 7,827 to 660 CSS pixels; measured CPU work was lower in this small PC sample. See [Locker validation](LOCKER_UI_2026-09-29.md). Big U committed and pushed this release; GitHub `main` and the live v0.9.3.3 footer were verified. Physical-device testing and the older movement/account/PWA verification limits remain open.
 
 ## v0.9.3.2 release and remaining verification
 

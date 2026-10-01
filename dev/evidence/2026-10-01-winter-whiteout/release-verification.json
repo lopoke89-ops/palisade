@@ -3,7 +3,7 @@
   "release": "0.9.6.0",
   "protocol": "yard-21",
   "serviceWorker": "palisade-dc87756470",
-  "publication": "authorized; release gate passed; push and deployment verification pending",
+  "publication": "pushed to main; Pages succeeded; live production UI and exact committed bytes verified",
   "baselineHead": "3d540554965a109f62955ae6ecb487785efc18c6",
   "build": {
     "index.html": {
@@ -84,5 +84,194 @@
       "timestampUtc": "2026-10-01T09:46:01.484660+00:00"
     }
   ],
-  "isolation": "Built from HEAD plus winter feature changes in a separate Git worktree. Preexisting uncommitted repository cleanup excluded."
+  "isolation": "Built from HEAD plus winter feature changes in a separate Git worktree. Preexisting uncommitted repository cleanup excluded.",
+  "live": {
+    "checkedAtUtc": "2026-10-01T09:56:12.980Z",
+    "url": "https://lopoke89-ops.github.io/palisade/",
+    "files": {
+      "index.html": {
+        "sha256": "de95560fd6fa79fdf2e34f7fe5f9d98228e9cdf650d2d606604b3a50d620523c",
+        "matchesReleaseCommit": true,
+        "bytes": 671620,
+        "windowsBuildDifference": "Git converts Windows CRLF to LF; deployed bytes match the committed artifacts exactly."
+      },
+      "sw.js": {
+        "sha256": "f20f4d5237a19fa90c21aaea40be6d267550cdf2c31e3e14497857840a3b2843",
+        "matchesReleaseCommit": true,
+        "bytes": 2149,
+        "windowsBuildDifference": "Git converts Windows CRLF to LF; deployed bytes match the committed artifacts exactly."
+      }
+    },
+    "footer": "v0.9.6.0 \u00c2\u00b7 phone, desktop and controller \u00c2\u00b7 online co-op and PvP for up to six",
+    "campaign": {
+      "label": "CH 1 \u00c2\u00b7 BUILD",
+      "tip": "CHAPTER 1 \u00c2\u00b7 THE YARD. Secure the Yard and recover the mountain evacuation route. Three raids here, then your kit travels onward. Prepare at the core."
+    },
+    "frost": {
+      "label": "BUILD"
+    },
+    "layouts": [
+      {
+        "tab": "armUpTab",
+        "width": 320,
+        "height": 480,
+        "top": 8.5,
+        "bottom": 471.5,
+        "left": 6,
+        "right": 314,
+        "scrollHeight": 480,
+        "clientHeight": 480,
+        "scrollWidth": 320,
+        "clientWidth": 320,
+        "ammoChoices": 0,
+        "slots": 0,
+        "smallButtons": []
+      },
+      {
+        "tab": "armAmmoTab",
+        "width": 320,
+        "height": 480,
+        "top": 57,
+        "bottom": 423,
+        "left": 6,
+        "right": 314,
+        "scrollHeight": 480,
+        "clientHeight": 480,
+        "scrollWidth": 320,
+        "clientWidth": 320,
+        "ammoChoices": 4,
+        "slots": 2,
+        "smallButtons": []
+      },
+      {
+        "tab": "armUpTab",
+        "width": 568,
+        "height": 320,
+        "top": 17.5,
+        "bottom": 302.5,
+        "left": 12,
+        "right": 556,
+        "scrollHeight": 320,
+        "clientHeight": 320,
+        "scrollWidth": 568,
+        "clientWidth": 568,
+        "ammoChoices": 0,
+        "slots": 0,
+        "smallButtons": []
+      },
+      {
+        "tab": "armAmmoTab",
+        "width": 568,
+        "height": 320,
+        "top": 19,
+        "bottom": 301,
+        "left": 12,
+        "right": 556,
+        "scrollHeight": 320,
+        "clientHeight": 320,
+        "scrollWidth": 568,
+        "clientWidth": 568,
+        "ammoChoices": 4,
+        "slots": 2,
+        "smallButtons": []
+      },
+      {
+        "tab": "armUpTab",
+        "width": 390,
+        "height": 844,
+        "top": 155,
+        "bottom": 689,
+        "left": 12,
+        "right": 378,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "ammoChoices": 0,
+        "slots": 0,
+        "smallButtons": []
+      },
+      {
+        "tab": "armAmmoTab",
+        "width": 390,
+        "height": 844,
+        "top": 199.5,
+        "bottom": 644.5,
+        "left": 12,
+        "right": 378,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "ammoChoices": 4,
+        "slots": 2,
+        "smallButtons": []
+      },
+      {
+        "tab": "armUpTab",
+        "width": 844,
+        "height": 390,
+        "top": 52.5,
+        "bottom": 337.5,
+        "left": 12,
+        "right": 832,
+        "scrollHeight": 390,
+        "clientHeight": 390,
+        "scrollWidth": 844,
+        "clientWidth": 844,
+        "ammoChoices": 0,
+        "slots": 0,
+        "smallButtons": []
+      },
+      {
+        "tab": "armAmmoTab",
+        "width": 844,
+        "height": 390,
+        "top": 46,
+        "bottom": 344,
+        "left": 12,
+        "right": 832,
+        "scrollHeight": 390,
+        "clientHeight": 390,
+        "scrollWidth": 844,
+        "clientWidth": 844,
+        "ammoChoices": 4,
+        "slots": 2,
+        "smallButtons": []
+      }
+    ],
+    "cached": [
+      "palisade-dc87756470",
+      "palisade-media-1"
+    ],
+    "pageErrors": [],
+    "cspViolations": [],
+    "accountRequests": "Blocked to avoid creating test accounts or contacting real friends; server authority and private join tested separately."
+  },
+  "releaseCommit": "92d3c16608225f61e4d513b7c287a768834933ae",
+  "releaseCommitUrl": "https://github.com/lopoke89-ops/palisade/commit/92d3c16608225f61e4d513b7c287a768834933ae",
+  "remoteMainAtVerification": "92d3c16608225f61e4d513b7c287a768834933ae",
+  "workflowRuns": [
+    {
+      "id": 36845257315,
+      "name": "pages build and deployment",
+      "status": "completed",
+      "conclusion": "success",
+      "headSha": "92d3c16608225f61e4d513b7c287a768834933ae",
+      "url": "https://github.com/lopoke89-ops/palisade/actions/runs/36845257315",
+      "updatedAtUtc": "2026-10-01T09:51:00Z"
+    }
+  ],
+  "publishedBuild": {
+    "index.html": {
+      "bytes": 671620,
+      "sha256": "de95560fd6fa79fdf2e34f7fe5f9d98228e9cdf650d2d606604b3a50d620523c",
+      "gzipBytes": 228787
+    },
+    "sw.js": {
+      "bytes": 2149,
+      "sha256": "f20f4d5237a19fa90c21aaea40be6d267550cdf2c31e3e14497857840a3b2843"
+    }
+  },
+  "buildNote": "build records the Windows CRLF outputs used for local verification. Git normalizes CRLF to LF; publishedBuild records committed/deployed bytes. No code/content difference."
 }
