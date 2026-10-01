@@ -14,8 +14,8 @@ The Claude audit URL still requires sign-in in the available browser session. Bi
 | Source release | **v0.9.5.1** (Sahur headgear and Open Games visibility) |
 | Live protocol | `yard-19` / `palisade-yard-19-` |
 | Applied server migration | `palisade_v0940_blitz` (`20260930141401`); before it `palisade_v0939_sp_cases` (`20260930084544`) |
-| GitHub branch | `main` at `a325765` before the v0.9.5.1 release commit, checked September 30 |
-| Published build | GitHub Pages footer displayed **v0.9.5.0**, protocol `yard-19`, before the v0.9.5.1 push |
+| GitHub branch | `main` at `1f94c20` (v0.9.5.1 release), checked September 30 |
+| Published build | GitHub Pages displays **v0.9.5.1**, protocol `yard-19`, service worker `palisade-d59dec9b99`, verified September 30 |
 
 Controller support shipped in v0.9.2.1. The v0.9.3 cosmetics migration is applied and the live case catalog includes Flags. The two proposed new game modes have not shipped; the Nightmare modifier and a future preset definition do not constitute a separate game mode.
 
