@@ -184,8 +184,10 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
   if(o.reaper){beam(sh,el,2.7,B,2.5,.4);beam(el,ha.map((v,i)=>v+(el[i]-v)*.3),2.5,B,2.6,.4)}
   beam(ha.map((v,i)=>v+(el[i]-v)*.13),ha,o.sahur?1.1:o.winterModel==='yulemaw'?2.6:1.5,o.sahur?'#bf834b':o.winterModel?B:'#363b2b',o.sahur?1.05:o.winterModel==='yulemaw'?2.2:1.48,.35);
  }
- box(6.8,24.3+bob,1.8,1.65,1.8,.5,o.mark||'#dcb647',.2);
- box(8.05,24+bob,.1,.22,1.6,2,o.mark||'#dcb647',.15);
+ if(o.mark){
+  box(6.8,24.3+bob,1.8,1.65,1.8,.5,o.mark,.2);
+  box(8.05,24+bob,.1,.22,1.6,2,o.mark,.15);
+ }
  if(o.winterBoss){const y=26+bob+frostLift;beam([6.3,10+bob+frostLift,1],[7.8,y,2],.65,'#3c5966',.8,.3);column(7.8,y,2,8,5,7,'#91cbdc',.7,.5);beam([5,y+1,5.4],[8.8,y-1,5.4],.15,'#e0fff4',.12,.03);for(const x of[5.5,9.5])beam([x,y+2,2],[x,y+5,1],.8,'#b8e9ed',.05,.2)}
  if(o.cross){box(-8,24+bob,0,.25,2.6,2.4,'#eee7d6',.2);box(-8.2,24+bob,0,.2,1.8,.6,'#c43a3a',.05);box(-8.2,24+bob,0,.2,.6,1.8,'#c43a3a',.05)}
  if(!o.nogun){

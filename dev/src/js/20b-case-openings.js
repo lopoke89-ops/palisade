@@ -71,8 +71,8 @@ function caseArtURL(it){
 function caseTile(it){const d=document.createElement('div');d.className='item';d.dataset.item=it.id;d.style.setProperty('--rc',RAR[it.r].col);
   const img=document.createElement('img');img.src=caseArtURL(it);img.width=img.height=52;img.alt='';const b=document.createElement('b');b.textContent=it.name;
   const r=document.createElement('i');r.textContent=RAR[it.r].n;d.append(img,b,r);return d}
-function caseReel(results){
-  const s=caseSession;if(!s)return;const batch=results.length===5,WIN=batch?9:29,COUNT=batch?13:34,TW=94;
+function prepareCaseReels(results){
+  const s=caseSession;if(s.reels)return s.reels;const batch=results.length===5,WIN=batch?9:29,COUNT=batch?13:34,TW=94;
   $('caseRows').replaceChildren();$('caseResult').hidden=true;$('caseEquip').hidden=true;$('caseDone').hidden=true;
   const filler=Array.from({length:COUNT},()=>rollCase(results[0].box)),rows=[];
   for(let row=0;row<results.length;row++){
@@ -81,6 +81,11 @@ function caseReel(results){
     for(let i=0;i<COUNT;i++)reel.append(caseTile(i===WIN?results[row].it:filler[i]));rows.push(reel);
   }
   const width=$('reel').parentElement.clientWidth,target=WIN*TW+44-width/2;
+  return s.reels={rows,WIN,TW,filler,width,target};
+}
+function caseReel(results){
+  const s=caseSession;if(!s||s.revealed)return;
+  const {rows,WIN,TW,filler,width,target}=prepareCaseReels(results);
   const dur=matchMedia('(prefers-reduced-motion: reduce)').matches?.6:4.2,t0=performance.now();
   let lastIdx=-1;
   const tick=now=>{if(caseSession!==s||$('caseOv').hidden)return;if(!s.reelStarted){s.reelStarted=true;for(const reel of rows){reel.style.transition=`transform ${dur}s cubic-bezier(.08,.72,.16,1)`;reel.style.transform=`translateX(${-target}px)`}}const p=Math.min(1,(now-t0)/(dur*1000));let q=p;
@@ -93,7 +98,10 @@ function caseReel(results){
   s.frame=requestAnimationFrame(tick);s.timer=setTimeout(()=>{if(caseSession===s)caseReveal(results)},dur*1000+120);
 }
 function caseReveal(results){
-  if(!caseSession)return;clearCaseAnimation();$('caseResult').hidden=false;$('caseDone').hidden=false;$('caseSkip').hidden=true;
+  const s=caseSession;if(!s||s.revealed)return;clearCaseAnimation();
+  const {rows,target}=prepareCaseReels(results);
+  for(const reel of rows){reel.style.transition='none';reel.style.transform=`translateX(${-target}px)`}
+  s.revealed=true;$('caseResult').hidden=false;$('caseDone').hidden=false;$('caseSkip').hidden=true;
   $('caseResults').replaceChildren();const batch=results.length===5;
   $('caseName').hidden=batch;$('caseSub').hidden=batch;caseItem=batch?null:results[0].it;
   if(!batch){const res=results[0],it=res.it,R=RAR[it.r];$('caseName').textContent=it.name;$('caseName').style.color=R.col;$('caseName').classList.toggle('gold',it.r==='g');$('caseName').classList.toggle('ultimate',it.r==='u');
@@ -108,5 +116,5 @@ function equipCaseItem(it){if(!owns(it.id)||it.cat==='hat'&&!headwearAllowed(loc
 $('caseEquip').addEventListener('click',()=>{const it=caseItem;if(it){equipCaseItem(it);lockCat=it.ladder?'ms':it.cat;if(it.box)lockOpen.add(lockCat+':'+it.box)}closeCaseOpening();
   if(it){const tile=[...$('lockGrid').querySelectorAll('.item')].find(t=>t.dataset.item===it.id);if(tile){tile.scrollIntoView({block:'nearest'});tile.focus({preventScroll:true})}}});
 $('caseDone').addEventListener('click',()=>closeCaseOpening());
-$('caseSkip').addEventListener('click',()=>{if(!caseSession)return;caseSession.skip=true;caseSession.cancelIntro?.();if(caseSession.results){for(const reel of document.querySelectorAll('#caseOv .reel'))reel.style.transition='none';caseReveal(caseSession.results)}});
+$('caseSkip').addEventListener('click',()=>{if(!caseSession)return;caseSession.skip=true;caseSession.cancelIntro?.();if(caseSession.results)caseReveal(caseSession.results)});
 $('caseResume').addEventListener('click',()=>{clearCaseAnimation();caseSession=null;resumeCaseOpening()});
