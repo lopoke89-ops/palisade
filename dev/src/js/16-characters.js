@@ -184,10 +184,6 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
   if(o.reaper){beam(sh,el,2.7,B,2.5,.4);beam(el,ha.map((v,i)=>v+(el[i]-v)*.3),2.5,B,2.6,.4)}
   beam(ha.map((v,i)=>v+(el[i]-v)*.13),ha,o.sahur?1.1:o.winterModel==='yulemaw'?2.6:1.5,o.sahur?'#bf834b':o.winterModel?B:'#363b2b',o.sahur?1.05:o.winterModel==='yulemaw'?2.2:1.48,.35);
  }
- if(o.mark){
-  box(6.8,24.3+bob,1.8,1.65,1.8,.5,o.mark,.2);
-  box(8.05,24+bob,.1,.22,1.6,2,o.mark,.15);
- }
  if(o.winterBoss){const y=26+bob+frostLift;beam([6.3,10+bob+frostLift,1],[7.8,y,2],.65,'#3c5966',.8,.3);column(7.8,y,2,8,5,7,'#91cbdc',.7,.5);beam([5,y+1,5.4],[8.8,y-1,5.4],.15,'#e0fff4',.12,.03);for(const x of[5.5,9.5])beam([x,y+2,2],[x,y+5,1],.8,'#b8e9ed',.05,.2)}
  if(o.cross){box(-8,24+bob,0,.25,2.6,2.4,'#eee7d6',.2);box(-8.2,24+bob,0,.2,1.8,.6,'#c43a3a',.05);box(-8.2,24+bob,0,.2,.6,1.8,'#c43a3a',.05)}
  if(!o.nogun){
@@ -925,7 +921,6 @@ function drawPerson(x,y,o){
   if(o.phantom){const t=game.time,A=A0;g.globalAlpha=A*.55;for(let k=0;k<3;k++){const x0=-3.5+k*3.5,ph=t*3+k*2;
     g.strokeStyle=o.phantom;g.lineWidth=1.4;g.beginPath();g.moveTo(x0,-11+bob);for(let yy=-9;yy<=1;yy+=2)g.lineTo(x0+Math.sin(ph+yy*.5)*1.4,yy+bob);g.stroke()}g.globalAlpha=A}
   seg([-4.8,-12.2+bob],[4.8,-12.2+bob],'#1d1914',1.8);
-  if(o.mark){g.fillStyle=o.mark;g.fillRect(shF[0]-1.3,shF[1]+.8,2.6,2.4)}
   if(o.satchel){const c=[side*5.5,-14+bob];P(rectP(c[0],c[1],6,5),'#1a1510');g.fillStyle='#d65a3a';g.fillRect(c[0]-1,c[1]-1,2,1.5)}
   if(o.pack&&!front){P(rectP(0,-18.5+bob,11,10),o.pack);seg([-5.5,-21.5+bob],[5.5,-21.5+bob],OUT,1)}
   const hx=side*.4;let hy2=-28.8+bob;
