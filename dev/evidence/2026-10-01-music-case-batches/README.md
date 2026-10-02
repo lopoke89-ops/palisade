@@ -1,6 +1,6 @@
 # Music and five-case completion report
 
-Implemented October 1, 2026 as local **v0.9.6.2**, protocol **yard-22**, on top of winter-upgrade commit [`526831b`](https://github.com/lopoke89-ops/palisade/commit/526831bad0c4369a5058f9a5812e20413a1e9367). The winter upgrade was pushed first as requested; live GitHub Pages HTML exactly matches that commit (SHA256 `ecfcfa50ab243fa02e9b3d817b454d8fa11d02be359cb1513ce1649f643a870e`). The new music/case build is a local release candidate. Its additive account RPC migration is live.
+Implemented and published October 1, 2026 as **v0.9.6.2**, protocol **yard-22**, on top of winter-upgrade commit [`526831b`](https://github.com/lopoke89-ops/palisade/commit/526831bad0c4369a5058f9a5812e20413a1e9367). The winter upgrade was pushed first as requested; live GitHub Pages HTML exactly matches that commit (SHA256 `ecfcfa50ab243fa02e9b3d817b454d8fa11d02be359cb1513ce1649f643a870e`). The music/case build is pushed as [`358696b`](https://github.com/lopoke89-ops/palisade/commit/358696b543f7aad4147f7f007e222423dfafe6d3) and GitHub Pages deployment `36941843154` succeeded. [Live release verification](release-verification.json) confirms the committed HTML/service-worker hashes, all 14 audio hashes, five-case rewards/alignment, uninterrupted menu music, and offline game/audio fetches. The disposable Chrome run blocked account traffic, used only its local test inventory, and reported no page errors or CSP violations. [Production five-case capture](release-five-cases.png). Its additive account RPC migration is live.
 
 ## Soundtrack
 
@@ -68,4 +68,4 @@ powershell -NoProfile -File dev/test/run_targeted.ps1 -Tests "caseperf"
 
 For a historical comparison, build commit `526831b` in a separate temporary checkout, preserve its generated `debug.html`, and select that page with `PAGE` and `LABEL=baseline` (QTY 1). Current candidate measurements use QTY 1 or 5 and no PAGE override. The checked-in source importer/cue verifier regenerate music from the original H: files using an installed FFmpeg binary and NumPy for cue comparison.
 
-The candidate is rebuilt and reviewable. Physical-phone heat/battery/audio memory, Safari, and real Internet conditions remain separate release verification. Publishing v0.9.6.2 was not included in the attached implementation work order.
+Publication was authorized after implementation and verified on the live site. Physical-phone heat/battery/audio memory, Safari, and real Internet gameplay conditions remain unverified; the published release retains the measured performance and memory caveats above.

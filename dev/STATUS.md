@@ -9,22 +9,22 @@ The Claude audit URL still requires sign-in in the available browser session. Bi
 
 ## v0.9.6.1 published winter upgrade
 
-The [winter upgrade work order](plans/winter-cosmetics-dell-and-dead-end-work-order.md) is implemented in the checkout, with 36 affected suites passing and a complete 311-entry four-angle catalog. Source/build protocol is yard-22. The `20261001214620_winter_models` migration is live; the game changes were pushed as `526831b` and the live HTML was verified against that commit. See [completion and performance evidence](evidence/2026-10-01-winter-upgrade/README.md) and [catalog index](catalog/cosmetics/README.md). The table below distinguishes the published winter build from the new local candidate.
+The [winter upgrade work order](plans/winter-cosmetics-dell-and-dead-end-work-order.md) is implemented in the checkout, with 36 affected suites passing and a complete 311-entry four-angle catalog. Source/build protocol is yard-22. The `20261001214620_winter_models` migration is live; the game changes were pushed as `526831b` and the live HTML was verified against that commit. See [completion and performance evidence](evidence/2026-10-01-winter-upgrade/README.md) and [catalog index](catalog/cosmetics/README.md). The following section records the subsequent published music/case release.
 
-## v0.9.6.2 local music/case candidate
+## v0.9.6.2 published music/case release
 
-Seven replacement tracks, stable raid/finale/results routing, and atomic one/five-case openings are implemented. `20261001225643_music_case_batches` is live. Focused gameplay/network/database/asset checks and phone-sized case benchmarks are documented in the [completion report](evidence/2026-10-01-music-case-batches/README.md). The new game build awaits publication.
+Seven replacement tracks, stable raid/finale/results routing, and atomic one/five-case openings are implemented. `20261001225643_music_case_batches` is live. Focused gameplay/network/database/asset checks and phone-sized case benchmarks are documented in the [completion report](evidence/2026-10-01-music-case-batches/README.md). Publication was authorized October 1. Commit `358696b` is pushed and GitHub Pages deployed successfully. Live HTML/service-worker hashes, all 14 audio hashes, the production five-case flow, shared menu playback and offline game/audio fetches pass without page errors or CSP violations. [Release verification](evidence/2026-10-01-music-case-batches/release-verification.json) records the checks and deployment.
 
 ## Live and local
 
 | Item | Current state |
 |---|---|
-| Source release | Local **v0.9.6.2**, protocol `yard-22`; published **v0.9.6.1** |
-| Release deployment | Winter upgrade pushed October 1; live HTML exactly matches commit `526831b` |
+| Source release | Published **v0.9.6.2**, protocol `yard-22` |
+| Release deployment | Music/case release pushed October 1; GitHub Pages run `36941843154` succeeded; live files match commit `358696b` |
 | Live protocol | `yard-22` / `palisade-yard-22-`; clients from yard-21 must reload |
 | Applied server migrations | Winter models (`20261001214620`) and music/case batches (`20261001225643`) are live; earlier migrations retained |
-| GitHub branch | `main` contains [526831b](https://github.com/lopoke89-ops/palisade/commit/526831bad0c4369a5058f9a5812e20413a1e9367); v0.9.6.2 changes are local |
-| Published build | GitHub Pages **v0.9.6.1**, protocol `yard-22`; committed/live HTML SHA256 `ecfcfa50ab243fa02e9b3d817b454d8fa11d02be359cb1513ce1649f643a870e` |
+| GitHub branch | `main` contains [358696b](https://github.com/lopoke89-ops/palisade/commit/358696b543f7aad4147f7f007e222423dfafe6d3) and publication evidence |
+| Published build | GitHub Pages **v0.9.6.2**, protocol `yard-22`; committed/live HTML SHA256 `11729dcb28f63f807cf2def31076ad2ec310ee35288a0ecc80dc91a8cbd93a03` |
 
 Controller support shipped in v0.9.2.1. The v0.9.3 cosmetics migration is applied and the live case catalog includes Flags. The two proposed new game modes have not shipped; the Nightmare modifier and a future preset definition do not constitute a separate game mode.
 

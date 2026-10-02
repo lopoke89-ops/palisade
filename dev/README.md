@@ -5,7 +5,7 @@ level (built from here); this folder is the source.
 This folder is **not published** on GitHub Pages (`_config.yml` excludes it). Audio masters live in `audio/masters/`.
 Tests find an installed Chromium automatically if Playwright's own browser build is missing.
 
-Current local source/build is **v0.9.6.2**, protocol `yard-22`: seven replacement music tracks and atomic one/five-case sessions. The `music_case_batches` backend migration is applied and verified; the new game build awaits release. The winter upgrade v0.9.6.1 is pushed and live.
+Current source/build and published game are **v0.9.6.2**, protocol `yard-22`: seven replacement music tracks and atomic one/five-case sessions. Commit `358696b` is pushed and verified live; all 14 audio assets, the production five-case flow and offline cache pass. The `music_case_batches` backend migration is applied and verified. Winter upgrade v0.9.6.1 is the previous release.
 See the [music/case completion report](evidence/2026-10-01-music-case-batches/README.md), [winter report](evidence/2026-10-01-winter-upgrade/README.md), and [complete four-angle catalog](catalog/cosmetics/README.md).
 
 See [STATUS.md](STATUS.md), [winter release evidence](evidence/2026-10-01-winter-whiteout/README.md),

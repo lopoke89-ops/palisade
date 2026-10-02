@@ -1,0 +1,152 @@
+{
+  "verifiedAt": "2026-10-01T23:58:58.802Z",
+  "release": "v0.9.6.2",
+  "protocol": "yard-22",
+  "commit": "358696b543f7aad4147f7f007e222423dfafe6d3",
+  "url": "https://lopoke89-ops.github.io/palisade/",
+  "indexSHA256": "11729dcb28f63f807cf2def31076ad2ec310ee35288a0ecc80dc91a8cbd93a03",
+  "serviceWorkerSHA256": "52375416aa6164ccc62b7ef405ed7d0f7db40f01f1711e23ff040044df5b0d0c",
+  "serviceWorkerCache": "palisade-192267b8e1",
+  "mediaCache": "palisade-media-2",
+  "assets": [
+    {
+      "file": "main_menu.m4a",
+      "sha256": "fbf4ac8becdd90a9a2b2518d53a7b14dfde45e142ba621d9623d0f47585ecd60",
+      "status": 200
+    },
+    {
+      "file": "main_menu.ogg",
+      "sha256": "61fa3052b18766f33bd108e7885e5bc761178ee28f353d8dd02402c01f9fd43f",
+      "status": 200
+    },
+    {
+      "file": "between_raids.m4a",
+      "sha256": "5529e5c9b1777b8f7306926c5318712697fef3932c74e4782407bd5f338df383",
+      "status": 200
+    },
+    {
+      "file": "between_raids.ogg",
+      "sha256": "2ce6c5f48d44246229854da66e4ffc58fc31b0778610c59887394f550e9aa369",
+      "status": 200
+    },
+    {
+      "file": "raid_attitude.m4a",
+      "sha256": "44c132e53d2f7cedc983057098ebddcc11859bad5824b088380fb7cbfe118e48",
+      "status": 200
+    },
+    {
+      "file": "raid_attitude.ogg",
+      "sha256": "330fb1e883113ebcc2353d9983c0835645a671270ce95d6abdf192c62d0aa3e8",
+      "status": 200
+    },
+    {
+      "file": "raid_cool.m4a",
+      "sha256": "0d00fe143362b96e8953a7255a4f08436285f1f9498eeeac643063596693f4c2",
+      "status": 200
+    },
+    {
+      "file": "raid_cool.ogg",
+      "sha256": "4b25f8d70e6509db9a16718b433c452d1a22c56cf4042082531d1d183fb304e8",
+      "status": 200
+    },
+    {
+      "file": "raid_express.m4a",
+      "sha256": "7fbad6bb028e6ccd0eff65c3d1d891b04e7d6af763ea3cf777895f9a27dcf07a",
+      "status": 200
+    },
+    {
+      "file": "raid_express.ogg",
+      "sha256": "6a2c8da5de3936a500a595714bffb32988af35f76764d672e740003a8e9b03ed",
+      "status": 200
+    },
+    {
+      "file": "final_blitz.m4a",
+      "sha256": "4e806588abb09fe677e12fae1cd2ab4750f8ed97490aaba70fc2736322c87696",
+      "status": 200
+    },
+    {
+      "file": "final_blitz.ogg",
+      "sha256": "e0e4f41f7970a4f56f6d21190280cb29ec51915e73ccd835796d0d24bc9ea19e",
+      "status": 200
+    },
+    {
+      "file": "results.m4a",
+      "sha256": "5238100bb7e1aaa0a3f9ec4cdbe518e4d148e4e9cd97b67700f1ca448ed02722",
+      "status": 200
+    },
+    {
+      "file": "results.ogg",
+      "sha256": "d73301b6016ff57560e1e45c92840c47972fec9640cf9935b707247b313ef844",
+      "status": 200
+    }
+  ],
+  "opening": {
+    "quantity": 5,
+    "casesRemaining": 0,
+    "winners": [
+      {
+        "id": "fx:sparks",
+        "result": "fx:sparks",
+        "centerError": 0
+      },
+      {
+        "id": "trail:red",
+        "result": "trail:red",
+        "centerError": 0
+      },
+      {
+        "id": "trail:blue",
+        "result": "trail:blue",
+        "centerError": 0
+      },
+      {
+        "id": "trail:pink",
+        "result": "trail:pink",
+        "centerError": 0
+      },
+      {
+        "id": "trail:red",
+        "result": "trail:red",
+        "centerError": 0
+      }
+    ]
+  },
+  "menuMusic": [
+    {
+      "duration": 195.691,
+      "loopStart": 0,
+      "loopEnd": 195.691
+    }
+  ],
+  "cachedAudio": {
+    "url": "https://lopoke89-ops.github.io/palisade/main_menu.m4a?v=febb899a",
+    "sha256": "fbf4ac8becdd90a9a2b2518d53a7b14dfde45e142ba621d9623d0f47585ecd60"
+  },
+  "offline": {
+    "game": true,
+    "audio": true,
+    "gameStatus": 200,
+    "audioStatus": 200,
+    "audioType": "basic",
+    "cachedStatus": 200,
+    "keys": [
+      "https://lopoke89-ops.github.io/palisade/main_menu.m4a?v=febb899a"
+    ]
+  },
+  "caches": [
+    "palisade-192267b8e1",
+    "palisade-media-2"
+  ],
+  "pageErrors": [],
+  "cspViolations": [],
+  "accountTraffic": "blocked in disposable browser; live additive RPC validated separately",
+  "limits": [
+    "Physical phones and Safari remain unverified"
+  ],
+  "deployment": {
+    "id": 36941843154,
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/lopoke89-ops/palisade/actions/runs/36941843154"
+  }
+}

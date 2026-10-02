@@ -1,9 +1,9 @@
 {
   "release": "v0.9.6.2",
   "protocol": "yard-22",
-  "publication": "local candidate, not pushed",
+  "publication": "pushed to main and verified live",
   "parent_commit": "526831bad0c4369a5058f9a5812e20413a1e9367",
-  "index_sha256": "10eb6988d299ec67c91146215220d5ad1388ced6b8bbf801692f22e47de2f27e",
+  "index_sha256": "11729dcb28f63f807cf2def31076ad2ec310ee35288a0ecc80dc91a8cbd93a03",
   "service_worker_version": "palisade-192267b8e1",
   "media_cache": "palisade-media-2",
   "tests": [
@@ -202,5 +202,9 @@
     "Physical-phone heat/battery and native audio memory",
     "Safari playback",
     "Real Internet conditions"
-  ]
+  ],
+  "local_build_index_sha256": "10eb6988d299ec67c91146215220d5ad1388ced6b8bbf801692f22e47de2f27e",
+  "release_commit": "358696b543f7aad4147f7f007e222423dfafe6d3",
+  "live_url": "https://lopoke89-ops.github.io/palisade/",
+  "publication_evidence": "release-verification.json"
 }
