@@ -1,15 +1,15 @@
 # PALISADE project status
 
-Updated October 1, 2026. This is the current status record for the clone. The older project handoff and v0.9.3 hardening prompt describe a superseded release order.
+Updated October 3, 2026. This is the current status record for the clone. The older project handoff and v0.9.3 hardening prompt describe a superseded release order.
 
 For a consolidated list of what remains from those documents, see the [current project blueprint](PROJECT_BLUEPRINT_2026-09-29.md).
 Big U's latest completed local scope is recorded in the [presentation prompt](plans/backgrounds-and-character-animation-prompt.md). The earlier [cosmetic and hardening prompt](plans/next-cosmetics-and-hardening-prompt.md) remains the record of v0.9.3.2 and its deferred work.
 
 The Claude audit URL still requires sign-in in the available browser session. Big U supplied an exported copy at `D:\downloads\Untitled.md`, which was read on September 29. Its newest Progress entry is v0.9.3, so its release claims are superseded by the verified v0.9.3.3 release below. The external artifact itself was not edited here.
 
-## v0.9.6.3 candidate: frame rate, CPU and network efficiency (on `claude/lucid-curie-491na1`, not published)
+## v0.9.6.3 published: frame rate, CPU and network efficiency
 
-From an October 3 audit (Big U approved items 1-4 plus the player-field change). Evidence and before/after numbers: [evidence/2026-10-03-efficiency/README.md](evidence/2026-10-03-efficiency/README.md). Protocol **`yard-23`**: the state packet layout changed, so older copies must reload.
+From an October 3 audit (Big U approved items 1-4 plus the player-field change). **Published October 3** as [#11](https://github.com/lopoke89-ops/palisade/pull/11) (`674f33e`); GitHub Pages serves footer v0.9.6.3, protocol `yard-23`, service worker `palisade-44a8936c2e`; a live desktop and phone start had no page errors or CSP violations and no debug hooks. Evidence and before/after numbers: [evidence/2026-10-03-efficiency/README.md](evidence/2026-10-03-efficiency/README.md). Protocol **`yard-23`**: the state packet layout changed, so older copies must reload.
 
 - **Desktop Auto holds 60 FPS.** Auto left desktops uncapped, so 144 and 240 Hz monitors ran the whole game 2.4-4x as often. Touch devices are unchanged (60, or 30 when struggling or on low battery).
 - **No per-frame page changes.** The frame loop and HUD re-set 5-7 `hidden` flags every frame even when unchanged; each counted as a page change and forced a style pass. A `hid()` guard (next to `cls()`) removes all of them: style passes on menus drop from 117 to 60 a second (the rest is the stage character's CSS bob).
@@ -31,12 +31,12 @@ Seven replacement tracks, stable raid/finale/results routing, and atomic one/fiv
 
 | Item | Current state |
 |---|---|
-| Source release | Published **v0.9.6.2**, protocol `yard-22` |
-| Release deployment | Music/case release pushed October 1; GitHub Pages run `36941843154` succeeded; live files match commit `358696b` |
-| Live protocol | `yard-22` / `palisade-yard-22-`; clients from yard-21 must reload |
-| Applied server migrations | Winter models (`20261001214620`) and music/case batches (`20261001225643`) are live; earlier migrations retained |
-| GitHub branch | `main` contains [358696b](https://github.com/lopoke89-ops/palisade/commit/358696b543f7aad4147f7f007e222423dfafe6d3) and publication evidence |
-| Published build | GitHub Pages **v0.9.6.2**, protocol `yard-22`; committed/live HTML SHA256 `11729dcb28f63f807cf2def31076ad2ec310ee35288a0ecc80dc91a8cbd93a03` |
+| Source release | Published **v0.9.6.3**, protocol `yard-23` |
+| Release deployment | v0.9.6.3 merged October 3 as #11 (`674f33e`); GitHub Pages serves it (service worker `palisade-44a8936c2e`) |
+| Live protocol | `yard-23` / `palisade-yard-23-`; clients from yard-22 must reload |
+| Applied server migrations | `room_register` accepts any `yard-N` (`20261003040401`, October 3); winter models (`20261001214620`) and music/case batches (`20261001225643`); earlier migrations retained |
+| GitHub branch | `main` contains `674f33e` (v0.9.6.3) |
+| Published build | GitHub Pages **v0.9.6.3**, protocol `yard-23`; live HTML SHA256 `fa537d3af50c892c55d4b45827c02d24ef45b2f2b5260103991d5248ea495b7f` (matches the committed build) |
 
 Controller support shipped in v0.9.2.1. The v0.9.3 cosmetics migration is applied and the live case catalog includes Flags. The two proposed new game modes have not shipped; the Nightmare modifier and a future preset definition do not constitute a separate game mode.
 
