@@ -104,6 +104,13 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
    else column(x,1.8+lift,z+1,monster?6:3.2,2.8,monster?6:4.6,monster?'#427d37':'#d6f4fa',.8,.35);
    continue;
   }
+  if(o.jersey){   // v0.9.6.4 jersey body: sneakers, bare calves, shorts with a trim hem
+   const m=knee.map((v,i)=>v+(hip[i]-v)*.3);
+   column(x,1.7+lift,1.15+z,3.7,2.5,5.6,'#efefea',.87);box(x,.55+lift,1.25+z,3.8,.7,5.8,o.jtrim,.25);
+   beam(ankle,knee,1.25,skin,1.5);beam(knee,m,1.5,skin,1.75);
+   column(m[0],m[1],m[2],4.9,.65,4.9,o.jtrim,1,.2);beam(m,hip,2.35,T,2.6);
+   continue;
+  }
   column(x,2+lift,1.05+z,4.3,3.1,6.1,'#35362e',.87);
   box(x,.7+lift,1.2+z,4.35,.85,6.25,'#202722',.3);
   beam(ankle,knee,1.7,T,2);beam(knee,hip,2.05,T,2.35);
@@ -134,6 +141,14 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
    for(const side of[-1,1]){beam([side*4.1,25+bob,-2],[side*6.2,29+bob,-2],1.5,'#d7f6fc',.06,.3);beam([side*3.2,25+bob,3],[side*2.7,15+bob,3.5],.22,'#e0b857',.22,.06)}
    box(0,22+bob,3.1,2.5,3.8,.8,'#e7bc5e',.25);beam([0,23+bob,3.8],[0,21+bob,3.8],.6,'#ebfaff',.06,.12);
   }
+ }else if(o.jersey){
+  // a sleeveless jersey over the shorts' waistband: trim on the neck, arm holes, sides and hem, a chest band and a number
+  column(0,15.2+bob,0,9.7,3.6,5.7,T,1.06);box(0,17+bob,0,9.8,.8,5.9,o.jtrim,.25);
+  column(0,22+bob,0,9.7,10.4,5.3,B,1.1);box(0,17.6+bob,0,9.9,.55,5.5,tint(B,.8),.15);
+  for(const side of[-1,1]){box(side*4.95,21.5+bob,0,.35,8.6,4.4,o.jtrim,.1);box(side*3.4,26.6+bob,0,2.2,.9,4.4,B,.25);box(side*4.5,25.9+bob,0,.5,1.6,4.6,o.jtrim,.08)}
+  box(0,24.6+bob,2.8,6.4,1.1,.3,o.jtrim,.08,1);
+  for(const x of[-1.25,1.25])box(x,20.9+bob,2.85,1.6,3.2,.3,o.jtrim,.12,1);
+  column(0,27+bob,0,4.5,2.8,3.6,skin,1,.32);column(0,27.6+bob,0,5.1,.7,4.1,o.jtrim,1,.18);
  }else{
  column(0,15+bob,0,9.1,3.8,5.2,B,1.06);
  column(0,21.2+bob,0,10.2,10.8,5.6,B,1.15);
@@ -180,9 +195,10 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  const elL=o.nogun?[-6.8,20.4+bob,2.2]:reach(shL,haL,8.2,12.6,[-.75,-1,.1]),elR=o.nogun?[7.1,20.8+bob,2.6]:reach(shR,haR,7.4,7.8,[.8,-1,-.35]);
  for(const [sh,el,ha]of [[shL,elL,haL],[shR,elR,haR]]){
   const arm=o.winterModel==='yulemaw'?2.8:o.winterModel==='gildedfrostborn'?1.25:2;
-  beam(sh,el,o.sahur?1.1:arm,B,o.sahur?1:arm*.85);beam(el,ha,o.sahur?1:arm*.82,B,o.sahur?.9:arm*.71);
+  const AC=o.jersey?skin:B;   // the jersey is sleeveless: bare arms
+  beam(sh,el,o.sahur?1.1:arm,AC,o.sahur?1:arm*.85);beam(el,ha,o.sahur?1:arm*.82,AC,o.sahur?.9:arm*.71);
   if(o.reaper){beam(sh,el,2.7,B,2.5,.4);beam(el,ha.map((v,i)=>v+(el[i]-v)*.3),2.5,B,2.6,.4)}
-  beam(ha.map((v,i)=>v+(el[i]-v)*.13),ha,o.sahur?1.1:o.winterModel==='yulemaw'?2.6:1.5,o.sahur?'#bf834b':o.winterModel?B:'#363b2b',o.sahur?1.05:o.winterModel==='yulemaw'?2.2:1.48,.35);
+  beam(ha.map((v,i)=>v+(el[i]-v)*.13),ha,o.sahur?1.1:o.winterModel==='yulemaw'?2.6:1.5,o.sahur?'#bf834b':o.winterModel?B:o.jersey?tint(skin,.9):'#363b2b',o.sahur?1.05:o.winterModel==='yulemaw'?2.2:1.48,.35);
  }
  if(o.winterBoss){const y=26+bob+frostLift;beam([6.3,10+bob+frostLift,1],[7.8,y,2],.65,'#3c5966',.8,.3);column(7.8,y,2,8,5,7,'#91cbdc',.7,.5);beam([5,y+1,5.4],[8.8,y-1,5.4],.15,'#e0fff4',.12,.03);for(const x of[5.5,9.5])beam([x,y+2,2],[x,y+5,1],.8,'#b8e9ed',.05,.2)}
  if(o.cross){box(-8,24+bob,0,.25,2.6,2.4,'#eee7d6',.2);box(-8.2,24+bob,0,.2,1.8,.6,'#c43a3a',.05);box(-8.2,24+bob,0,.2,.6,1.8,'#c43a3a',.05)}
@@ -209,7 +225,7 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  }
  // Opaque face pieces replace facial detail; drawing eyes and nose behind them lets those
  // small meshes break through when the head turns or an item sits close to the face.
- const faceCovered=!!(o.hood||o.sheet||o.pumpkin||o.glitchm||o.mask||o.visor||o.hockey||o.sack||o.facewrap||o.khelm||o.bomb||o.clownface);
+ const faceCovered=!!(o.hood||o.sheet||o.pumpkin||o.glitchm||o.mask||o.visor||o.hockey||o.sack||o.facewrap||o.khelm||o.bomb||o.clownface||o.hybridHat==='skullhelm');
  // Angular cheek and jaw planes, ears and a shaped helmet instead of a flat circle.
  if(!o.pumpkin&&!o.sheet&&!o.sahur&&!o.winterModel){   // special heads replace the ordinary ears and face
  column(0,30.1+bob,.2,7.2,6.4,6.3,skin,1.13,.6);
@@ -237,6 +253,11 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
    mesh(v,[[6,5,4,7],[1,2,3,0],[5,6,2,1]],col,.001)}
  }
  function ball(x,y,z,r,c){column(x,y,z,r*1.8,r*1.65,r*1.8,c,.75,.35)}
+ // v0.9.6.4 Dunce Cone: shared by the head branch and the Sheet Ghost (base = where the band sits)
+ function dunceCone(base){
+  column(0,base+bob,0,9,1,7.8,'#c43a3a',1,.25);column(0,base+2.2+bob,0,7.6,3.4,6.6,'#efe6cf',.7,.45);
+  column(0,base+5.4+bob,0,5.3,3.2,4.6,'#efe6cf',.55,.4);beam([0,base+6.8+bob,0],[0,base+11+bob,0],1.5,'#efe6cf',.08,.3);
+ }
  if(o.sahur){
   const eye=(x,y,rx,ry,z,col,bias=1.2)=>{const v=[];for(let i=0;i<12;i++){const a=i*Math.PI/6;v.push([x+Math.cos(a)*rx,y+Math.sin(a)*ry+bob,z])}mesh(v,[v.map((_,i)=>i)],col,.08,bias)};
   for(const x of[-1.9,1.9]){
@@ -281,6 +302,28 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
    case'shako':column(0,35+bob,0,8.7,6,7.7,'#263a54',.93,.5);column(0,32.7+bob,0,9.1,1.3,8.1,'#c1ac6d',1,.2);brim(32.2+bob,10,.8,8,'#30415a',.35,3.8,3);box(0,35+bob,4,2,2.5,.5,'#d7be74',.15);beam([0,38+bob,0],[.5,41+bob,-.3],.8,'#bd4d55',.2,.2);break;
    case'rimecrest':dome('#7cabbf',32,5,4.3,3.6);for(const x of[-2.8,0,2.8])beam([x,34+bob,0],[x*.7,39-Math.abs(x)*.6+bob,-.4],.85,'#c2eefa',.04,.25);break;
    case'aurorahalo':dome('#3d5d73',32,4.7,4.1,3);for(let i=0;i<8;i++){const a=i*Math.PI/4,b=a+Math.PI/4,r=6.1;beam([Math.cos(a)*r,38+bob+Math.sin(time*.8+i)*.25,Math.sin(a)*r],[Math.cos(b)*r,38+bob+Math.sin(time*.8+i+1)*.25,Math.sin(b)*r],.18,i%2?'#b4a0e9':'#8ae8d2',.18,.04)}break;
+  }
+ }else if(o.hybridHat&&!o.sheet){
+  // v0.9.6.4 Hybrid Theory headgear
+  const h=o.hybridHat,hairOn=h==='shades'||h==='yamaka'||h==='dunce';
+  if(hairOn&&!(o.bones||o.wraps||o.phantom))dome('#433b2b',32.7,4.2,3.6,1.65);
+  switch(h){
+   case'shades':box(0,31.3+bob,4.35,8.4,1.7,.7,'#0b0b0d',.3,1);for(const x of[-2,2])box(x,31.3+bob,4.75,2.9,1.3,.2,'#1d2226',.05,1.2);box(-2.7,31.7+bob,4.9,.7,.4,.12,'#ffffff',.01,1.5);
+    for(const side of[-1,1])box(side*4.5,31.5+bob,1.4,.4,.5,5.6,'#0b0b0d',.12);break;
+   case'yamaka':dome('#141414',33.7,2.7,2.4,.9);break;
+   case'ballhelm':dome('#e8702a',31.7,5.5,4.7,4.8);column(0,31.9+bob,0,11,.5,9.4,'#1a1a1a',1,.15);
+    beam([0,31.9+bob,4.7],[0,36.4+bob,0],.2,'#1a1a1a',.2,.05);beam([0,36.4+bob,0],[0,31.9+bob,-4.7],.2,'#1a1a1a',.2,.05);
+    beam([-5.4,31.9+bob,0],[0,36.4+bob,0],.2,'#1a1a1a',.2,.05);beam([0,36.4+bob,0],[5.4,31.9+bob,0],.2,'#1a1a1a',.2,.05);break;
+   case'gridhelm':dome('#1d2b4a',31.4,5.7,5,5.1);for(const side of[-1,1])box(side*4.6,29.9+bob,.6,.9,3.6,3.6,'#1d2b4a',.25);
+    for(const y of[28.6,30.2])box(0,y+bob,4.95,7.6,.45,.45,'#9aa3ab',.1,1.2);for(const x of[-2.6,0,2.6])box(x,29.4+bob,4.95,.45,2.4,.45,'#9aa3ab',.1,1.2);
+    box(0,35.4+bob,0,.9,1.4,8.6,'#c4ced4',.15);break;
+   case'dunce':dunceCone(32.8);break;
+   case'prop':{dome('#2a6fd1',31.9,5.1,4.3,4.4);column(0,32.2+bob,0,10.3,1.3,8.8,'#ffd23a',1,.3);beam([0,36.2+bob,0],[0,37.6+bob,0],.25,'#2a2a2a',.25,.05);
+    const a=time*9;for(const k of[0,Math.PI])beam([0,37.7+bob,0],[Math.cos(a+k)*3.6,37.7+bob,Math.sin(a+k)*3.6],.55,k?'#e03a3e':'#3fae49',.25,.12);ball(0,37.8+bob,0,.45,'#ffd23a');break}
+   case'conductor':column(0,33.4+bob,0,9.8,2.8,8.6,'#1b2a4a',1.05,.45);column(0,33.9+bob,0,10.1,.7,8.9,'#d4b24a',1,.15);box(0,32.4+bob,4.9,7.2,.45,2.6,'#121c33',.3);
+    box(0,33.9+bob,4.5,1.6,1.2,.3,'#d4b24a',.1,1.1);break;
+   case'skullhelm':dome('#e9e2cc',30.6,5.8,5.1,6.2);for(const x of[-1.7,1.7])box(x,31.3+bob,4.95,2,1.7,.3,'#18140f',.04,1.4);
+    box(0,29.4+bob,5.05,.9,1,.3,'#18140f',.04,1.4);for(const x of[-1.8,-.6,.6,1.8])box(x,27.8+bob,4.75,.7,1.1,.35,'#d8d0b8',.12,1.2);break;
   }
  }else if(o.pumpkin){
   // a ribbed pumpkin replaces the head; the carved face glows (the Pumpkin King's flames flicker over 4 cached frames)
@@ -456,6 +499,7 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  }
  sahurHatLift=0;
  // Floating Halo is independent of the head branch; the sheet gets a verified clearance.
+ if(o.sheet&&o.hybridHat==='dunce')dunceCone(35.1);   // v0.9.6.4: the cone sits on the sheet's crown
  if(o.halo){for(let i=0;i<16;i++){const a=i*Math.PI/8,b=(i+1)*Math.PI/8,y=(o.sheet?43:o.sahur?42:39)+bob+Math.sin(time*2.4)*.35;beam([Math.cos(a)*6,y,Math.sin(a)*4.8],[Math.cos(b)*6,y,Math.sin(b)*4.8],.22,o.halo,.22,.04)}}
  // v0.9.3 add-ons over whatever is on the head
  if(o.demon){   // v0.9.4.0 Demon: burning eyes under a heavy brow, pointed ears
@@ -967,6 +1011,9 @@ function drawPerson(x,y,o){
   else if(o.witch){oval(hx,hy2-2.4,9.4,2.7,OUT);oval(hx,hy2-2.4,8.6,2.1,o.witch);
     P([[hx-4.4,hy2-2.8],[hx+4.4,hy2-2.8],[hx+2.4,hy2-9],[hx-side*1.6,hy2-13.8],[hx-side*5,hy2-12.6],[hx-1.4,hy2-9]],o.witch);
     g.fillStyle='#6a2a8a';g.fillRect(hx-4.3,hy2-4.8,8.6,1.8);P(rectP(hx+side*.4,hy2-3.9,2.6,2.4),'#e2c25a',false);P(rectP(hx+side*.4,hy2-3.9,1.2,1.1),'#6a2a8a',false)}
+  else if(o.hybridHat){const hc={shades:'#0b0b0d',yamaka:'#141414',ballhelm:'#e8702a',gridhelm:'#1d2b4a',dunce:'#efe6cf',prop:'#2a6fd1',conductor:'#1b2a4a',skullhelm:'#e9e2cc'}[o.hybridHat];
+    if(o.hybridHat==='dunce')P([[hx-4.4,hy2-3.4-(o.sheet?3:0)],[hx+4.4,hy2-3.4-(o.sheet?3:0)],[hx,hy2-15-(o.sheet?3:0)]],hc);
+    else if(o.hybridHat==='shades'){if(front)P(rectP(hx+side*.6,hy2-.8,9,2),hc)}else if(o.hybridHat==='yamaka')P(domeP(hx,hy2-4.6,2.6),hc);else P(domeP(hx,hy2-.4,5.5),hc)}
   else if(o.headband){neonSeg([hx-5,hy2-2.2],[hx+5,hy2-2.2],o.headband);seg([hx-side*4.8,hy2-2.2],[hx-side*7.8,hy2+.6],o.headband,1.2)}
   if(o.cross){const c=[shB[0],shB[1]+2.2];g.fillStyle='#efe6d2';g.fillRect(c[0]-1.9,c[1]-1.3,3.8,3.6);g.fillStyle='#c43a3a';g.fillRect(c[0]-.5,c[1]-.9,1,2.8);g.fillRect(c[0]-1.4,c[1]+.05,2.8,1)}
   if(front)gunArms(hand,sd,gl,shB,shF,body,nogun,bob,bp,o.weapon,o.swing,o.shieldWear);
@@ -1154,8 +1201,10 @@ function buildLook(p,cos){
   else if(WINTER_HATS[H])o.winterHat=H;
   else if(HALLOWEEN_HATS[H])o.halloweenHat=H;
   else if(H==='devilhorns')o.horns='#7a1410';   // v0.9.4.0
+  else if(HYBRID_HAT_SET.has(H))o.hybridHat=H;   // v0.9.6.4
   else o.helmet=S.hat;
   if(S.headwear&&H==='class'){delete o.helmet;delete o.cap;delete o.boonie;Object.assign(o,S.headwear)}   // v0.9.3: the outfit's own hat (a hard hat, a straw hat…)
+  if(S.jersey&&H==='class'){delete o.helmet;delete o.cap;delete o.boonie;o.headband=S.jtrim}   // v0.9.6.4: jerseys wear a headband in their trim
   if(S.reaper&&H==='class'){delete o.helmet;delete o.cap;delete o.boonie;o.hood=S.body}
   else if((S.bones||S.wraps||S.phantom)&&H==='class'){delete o.helmet;delete o.cap;delete o.boonie}   // the face is the point: no default headgear
   if(p.slot)o.mark=SLOTCOL[p.slot%6];
