@@ -8,8 +8,8 @@ const setupOpen=()=>!$('setupSheet').hidden;
 function setupRowsFor(kind){
   const pv=kind!=='home'&&pick.pvp!=='coop',M=MAPS[pick.map]||MAPS.yard,C=CLASSES[pick.cls]||CLASSES.soldier,mods=kind==='room'?roomMods():myMods(kind==='home'?coopMods():roomKind());
   const selMap=document.querySelector('#mapCards .mapCard.sel b'),pct=pv?0:modBonus(mods,pick.mode==='blitz'?'blitz':'');
-  const rows=[['map','MAP',pick.mode==='campaign'&&!pv?'ALL FOUR MAPS':selMap?selMap.textContent:M.name,pv?'16×16 arena':`${pick.size==='xl'?'XL · 24×24':'16×16'} · bosses: ${(M.bosses||[]).map(k=>(BOSSES[k]||{name:k}).name.replace('THE ','').toLowerCase()).join(', ')}`]];
-  if(!pv)rows.push(['rules','LENGTH',LEN_NAME[pick.mode]||'5 RAIDS',`Threat: ${DIFF[pick.diff].name.toLowerCase()}${pick.mode==='campaign'?' · 4 chapters, 12 raids + five-minute evac':pick.mode==='blitz'?' · the Final Blitz and the evacuation':''}`]);
+  const BO=pick.mode==='blackout'&&!pv,rows=[BO?['map','MAP','THE CITY','64×64 night city · random bosses · the Supreme Destroyer']:['map','MAP',pick.mode==='campaign'&&!pv?'ALL FOUR MAPS':selMap?selMap.textContent:M.name,pv?'16×16 arena':`${pick.size==='xl'?'XL · 24×24':'16×16'} · bosses: ${(M.bosses||[]).map(k=>(BOSSES[k]||{name:k}).name.replace('THE ','').toLowerCase()).join(', ')}`]];
+  if(!pv)rows.push(['rules','LENGTH',LEN_NAME[pick.mode]||'5 RAIDS',`Threat: ${DIFF[pick.diff].name.toLowerCase()}${pick.mode==='campaign'?' · 4 chapters, 12 raids + five-minute evac':pick.mode==='blitz'?' · the Final Blitz and the evacuation':pick.mode==='blackout'?' · hold 8 points, then the final push':''}`]);
   if(kind!=='room'){const tg=document.querySelector(`#classes .cls[data-c=${pick.cls}] i`);rows.push(['job','CLASS',C.name,tg?tg.textContent:''])}
   rows.push(['mods','MODIFIERS',mods.length?modNames(mods).join(' · '):'NONE',mods.length?`${mods.length} on${pct?` · rewards ${pct>0?'+':''}${pct}%`:''}`:'Harder rules pay more']);
   return rows;
@@ -67,19 +67,19 @@ function homeCard(cls,kicker,title,body,btn,act){const d=document.createElement(
   if(btn){const b=document.createElement('button');b.type='button';b.className='ghost';b.textContent=btn;b.addEventListener('click',()=>{initAudio();act()});d.append(b)}
   return d}
 function nextUnlock(){
-  let best=null;for(const L of LADDERS){const have=locker.st[L.st]|0,i=L.items.findIndex(([c,k])=>!owns(c+':'+k));if(i<0)continue;const f=have/L.steps[i];if(!best||f>best.f)best={L,i,f,have}}
+  let best=null;for(const L of LADDERS){const i=L.items.findIndex(([c,k])=>!owns(c+':'+k));if(i<0)continue;const have=ladderHave(L,i);const f=have/L.steps[i];if(!best||f>best.f)best={L,i,f,have}}
   return best;
 }
 function renderHomeSide(){
   const box=$('homeSide');if(!box)return;const n=allCases(),nu=nextUnlock(),sig=[pick.mode,n,locker.sp|0,JSON.stringify(locker.bag),locker.cases,nu&&nu.have,nu&&nu.i,nu&&nu.L.id].join('|');
   if(box.dataset.sig===sig)return;box.dataset.sig=sig;box.textContent='';
-  box.append(pick.mode==='campaign'?homeCard('hcMode','SELECTED','OPERATION WHITEOUT','Travel all four maps. Carry upgrades and supplies through 12 raids, then survive a five-minute summit evacuation.'):pick.mode==='blitz'?homeCard('hcMode','SELECTED','BLITZKRIEG RUSH','15 hard raids, then the Final Blitz: a boss every 30 seconds for five minutes. Reach the evac in the last minute or keep only half your cases and shards.')
+  box.append(pick.mode==='blackout'?homeCard('hcMode','SELECTED','CITY BLACK OUT','A night city. Hold eight points as bosses hit them one by one, then defend Main Command against the Supreme Destroyer.'):pick.mode==='campaign'?homeCard('hcMode','SELECTED','OPERATION WHITEOUT','Travel all four maps. Carry upgrades and supplies through 12 raids, then survive a five-minute summit evacuation.'):pick.mode==='blitz'?homeCard('hcMode','SELECTED','BLITZKRIEG RUSH','15 hard raids, then the Final Blitz: a boss every 30 seconds for five minutes. Reach the evac in the last minute or keep only half your cases and shards.')
     :homeCard('hcMode','NEW CAMPAIGN','OPERATION WHITEOUT','Four connected maps, revamped bosses and a summit evacuation. Frostpeak adds ramps, stairs and the Rime Colossus.','TRY IT',()=>{pick.mode='campaign';syncPicks();renderMods();showBest();renderHome()}));
   if(n>0){const chips=document.createElement('span');chips.className='hcChips';for(const id of CASE_IDS){const c=caseCount(id);if(!c)continue;const s=document.createElement('i');s.style.setProperty('--cc',CASES[id].col);s.textContent=`${c} ${CASES[id].short.replace(/ Cases$/,'').toUpperCase()}`;chips.append(s)}
     box.append(homeCard('hcCases','READY TO OPEN',`${n} CASE${n>1?'S':''}`,chips,'OPEN IN LOCKER',()=>showPage('locker')))}
   else box.append(homeCard('hcCases','CASES','NONE WAITING','You earn a Supply Case every 3 raids you hold, and bosses drop their own.'));
   if(nu){const it=COSBY[nu.L.items[nu.i][0]+':'+nu.L.items[nu.i][1]],bar=document.createElement('span');bar.className='hcBar';const f=document.createElement('i');f.style.width=Math.min(100,nu.have/nu.L.steps[nu.i]*100)+'%';bar.append(f);
-    const wrap=document.createElement('span');wrap.append(bar,document.createTextNode(`${nu.have} / ${nu.L.steps[nu.i]} ${nu.L.unit}`));
+    const wrap=document.createElement('span');wrap.append(bar,document.createTextNode(`${nu.have} / ${nu.L.steps[nu.i]} ${ladderUnit(nu.L,nu.i)}`));
     box.append(homeCard('hcNext','NEXT UNLOCK · '+nu.L.title,it?it.name:'',wrap,'MILESTONES',()=>{showPage('locker');const t=document.querySelector('#lockTabs [data-cat=ms]');if(t)t.click()}))}
   const sp=locker.sp|0;if(sp>0)box.append(homeCard('hcSp','SKILL POINTS',`${sp} TO SPEND`,locker.cloud?'Spend them on the skill tree, or trade 3 for a Supply Case in the Locker.':'Trade 3 for a Supply Case in the Locker.',locker.cloud?'SKILL TREE':'LOCKER',()=>showPage(locker.cloud?'skills':'locker')));
 }

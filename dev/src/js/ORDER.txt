@@ -8,6 +8,7 @@
 06b-maps.js   maps (Yard, Riverbend, Ashfall Quarry), terrain, floods and pits
 06c-pvp-maps.js   Base Battle and Free-for-all layouts for every map
 06d-elevation.js   Frostpeak standard/XL, height traversal, range, projection and frost fields
+06e-city.js   v0.9.7 the ruined city: layout, roads, buildings, POI structures, streetlamps, city lights
 07-effects.js   particles and floating text
 08-input.js   keyboard, mouse, touch sticks and buttons
 08b-pad.js   controller: the button table, play, menu highlight, button changes, rumble
@@ -16,6 +17,8 @@
 10b-mods-play.js   modifiers in play (bosses, storms, Sudden Death, Frenzy) and class abilities
 10c-blitz.js   Blitzkrieg Rush phases, bosses, attacks and evacuation
 10d-winter-campaign.js   Whiteout chapters, continuity, winter bosses and terrain-clipped warnings
+10f-blackout.js   v0.9.7 City Black Out: gathering, POI attacks, perks, the final push, raider targeting per POI
+10g-destroyer.js   v0.9.7 THE SUPREME DESTROYER: five attacks with warnings, poison gas and mines (in fires), his kit
 11-hud-chat.js   best record, HUD, text chat
 12-players.js   main update, player control and simulation (triggers, bursts, gathering)
 13-dell.js   Delgado, the quartermaster AI and shotgun

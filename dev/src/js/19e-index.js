@@ -26,7 +26,9 @@ const IDX_BOSSES=[   // [group, [[key, where, attacks, phase]]]
     ['rime','Frostpeak boss raids · Campaign finale',['Frost rupture: cracking ice marks a huge ring. Step clear.','Frost dash: a marked dash that leaves slowing frost behind.'],'His attacks come faster as his health drops.'],
     ['whitebutcher','Campaign · chapter 1',['Ice arc: a lane, then a crescent through wood and brick.','Blade: a close cut.','Charge: a lane charge.','Frost rupture: a marked ring of cracking ice.'],'Enraged below 40%.'],
     ['whiteferryman','Campaign · chapter 2',['Harpoon: a chain line that drags you toward the water.','Boarding crews: raiders landed on the bank.','Bridge ram: a bridge goes into the river.','Frost rupture: a marked ring of cracking ice.'],'After a bridge falls: harpoons faster.'],
-    ['whiteforeman','Campaign · chapter 3',['Charge: a fast marked charge. Bait him into a wall to daze him.','Frost rupture: a marked ring of cracking ice.'],'']]]];
+    ['whiteforeman','Campaign · chapter 3',['Charge: a fast marked charge. Bait him into a wall to daze him.','Frost rupture: a marked ring of cracking ice.'],'']]],
+  ['CITY BLACK OUT',[
+    ['destroyer','City Black Out · the last 2 minutes of the final push',['Back Rockets: six red landing rings round you, then missiles arc in. They break wood.','Fire barrel: an orange lane, then a stream of fire down it that burns and lights wood.','Lightning barrel: a blue line tracks you, then a heavy bolt that stuns and jumps to two more people.','Poison Gas: a green ring grows round him, then a gas cloud fills it for 8 s. Fight him from range.','Minefield: a marked area, then ten mines. Shoot one, or throw a grenade, to set them off safely.','Orbital Cannon: a targeting circle follows you for 3 s, stops, then a beam hits. It wrecks walls.'],'Below 40%: the Orbital Cannon, every 20 s.']]]];
 // where a standard boss shows up: the maps whose boss order includes him
 function idxWhere(k){const m=Object.values(MAPS).filter(M=>(M.bosses||[]).includes(k)).map(M=>M.short||M.name);return m.length?m.join(', ')+' · every 5th raid':'Boss raids'}
 function idxPortrait(look){const c=document.createElement('canvas');c.width=c.height=96;c.className='idxArt';c.setAttribute('aria-hidden','true');
@@ -45,7 +47,11 @@ function renderIndex(tab){
       for(const [k,where,atk,phase]of list){const B=BOSSES[k];if(!B)continue;const wk=AMMO_BY[BOSS_WEAK[k]];
         const lines=[['idxStat',`${Math.round(B.hp*BOSS_HP)} base health · ${where||idxWhere(k)}`],['idxAtk',`${atk.length} ATTACK${atk.length>1?'S':''}`],['',atk]];
         if(phase)lines.push(['idxPhase',phase]);if(wk)lines.push(['idxWeak','WEAK TO '+wk.name+' (+35% bullet damage)',wk.col]);
-        box.append(idxCard(B.name,B.col,B.look,lines))}}}
+        box.append(idxCard(B.name,B.col,B.look,lines))}
+      if(grp==='CITY BLACK OUT'){   // v0.9.7: the eight points and what each one gives while it holds
+        const d=document.createElement('article');d.className='idxPois';const t=document.createElement('div'),h=document.createElement('h3');h.textContent='THE EIGHT POINTS';t.append(h);
+        const p=document.createElement('p');p.className='idxWhat';p.textContent='Each point gives a perk while it holds. A lost major point adds a squad to every final-push wave; a lost minor point gives final-push bosses +5% health.';t.append(p);
+        const ul=document.createElement('ul');for(const [,name,major,,what]of CITY_POIS){const li=document.createElement('li');li.textContent=`${name}${major?' (major)':''}: ${what}`;ul.append(li)}t.append(ul);d.append(t);box.append(d)}}}
 }
 function idxTab(tab){
   for(const b of document.querySelectorAll('.idxTabs [data-idx]')){const on=b.dataset.idx===tab;b.classList.toggle('sel',on);b.setAttribute('aria-selected',on?'true':'false')}

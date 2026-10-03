@@ -30,6 +30,7 @@ function startBuild(dur){
 }
 function startRaid(){
   if(game.pvp){startBattle();return}
+  if(blackout()){game.phase='raid';setTip('');closeArmory();if(!game.bo)boStart();for(const c of cores)c.next=false;boNext();return}   // v0.9.7
   game.wave++;game.phase='raid';setTip('');closeArmory();
   if(blitz()&&game.wave>=finalWave()){game.bossShare=1;stormRaid();sfx('siren');game.flood={t:0,warned:false};if(campaign())startGauntlet();else startFinalBlitz();return}
   const k=Math.floor(waveEff()),Df=game.Df,P=Math.max(1,players.size),q=[];
@@ -247,8 +248,10 @@ function updateRockets(dt){
       if(hit){r.dead=true;const bx=clamp(r.x-r.vx/sp*.2,.1,N-.1),by=clamp(r.y-r.vy/sp*.2,.1,N-.1);
         if(r.pl)explode(bx,by,ABIL.rocket.R,r.pw,r.own,false);else{explode(bx,by,1.7,r.pw,null,true);fires.push({x:bx,y:by,t:4,max:4,tick:.2})}}}}
   dropDead(rockets);
+  minesTick(dt);   // v0.9.7: the Destroyer's mines
   for(const f of fires){f.t-=dt;f.tick-=dt;
     if(f.tick<=0){f.tick=.45;const R=f.r||.9;
+      if(f.nap===2){gasTick(f);continue}if(f.nap===3)continue;   // v0.9.7: poison gas; mines run in minesTick
       if(f.pl){for(const e of enemies)if(!e.dead&&!e.burrow&&groundReach(e.x,e.y,f.x,f.y,R))hurtEnemy(e,e.type==='boss'?5:9,f.own);continue}   // Molotov fire: raiders only, never your walls
       if(f.nap){napalmTick(f);continue}   // v0.9.4.0: the Arsonist's napalm
       for(const a of allies())if(a.alive&&groundReach(a.x,a.y,f.x,f.y,R))hurtAlly(a,6*game.Df.dmg);
@@ -302,10 +305,13 @@ function showOver(){closeGameSettings(false);
   const win=!!game.won;sfx(win?'win':'lose',undefined,undefined,true);
   $('overTitle').textContent=win?'CLAIM HELD':'CLAIM LOST';$('overTitle').className=win?'':'lost';
   const crew=players.size>1?` · CREW OF ${players.size}`:'',W=game.waves,endless=!isFinite(W);
-  const res=blitzResult(player),held=win||res?W:game.endReason==='evacfail'?game.wave:Math.max(0,game.wave-1),S=game.stats;
+  const res=blitzResult(player),held=blackout()?boStages():win||res?W:game.endReason==='evacfail'?game.wave:Math.max(0,game.wave-1),S=game.stats;
   $('overEyebrow').textContent=`${player.C.name} · ${game.Df.name} · ${campaign()?'OPERATION WHITEOUT':endless?'ENDLESS':W+' RAIDS'}${crew} · ${win?`ALL ${W} RAIDS BROKEN`:endless?`${held} RAIDS HELD`:`STAKE FELL IN RAID ${game.wave}`}${game.mods.length?' · '+modNames(game.mods).join(' + '):''}`;
   if(game.endReason==='evacfail')$('overEyebrow').textContent=$('overEyebrow').textContent.replace(`STAKE FELL IN RAID ${game.wave}`,`EVAC FAILED · CHAPTER ${game.chapter+1}`);   // v0.9.6.4
   $('overLede').textContent=game.endReason==='evacfail'?`Nobody made the convoy out of ${MAP.name}. The campaign ends here.`:game.endReason==='deadend'?'The crew could not recover. No one left could get them back up.':win?'The stake is still standing. Try it with less wood and more nerve, or turn the threat up.':endless?`Endless only ends one way. ${held} raids is the number to beat.`:'They got to the core. Look at where they broke in. That hole is the lesson.';
+  if(blackout()){const B=game.bo||{};$('overTitle').textContent=win?'THE CITY HELD':'COMMAND FELL';   // v0.9.7
+    $('overEyebrow').textContent=`${player.C.name} · ${game.Df.name} · CITY BLACK OUT${crew} · ${B.held|0} OF 8 POINTS HELD${B.destroyer?' · THE DESTROYER IS DOWN':''}${game.mods.length?' · '+modNames(game.mods).join(' + '):''}`;
+    $('overLede').textContent=win?(B.destroyer?'The Supreme Destroyer is scrap and the lights are coming back on.':'Main Command stood until the clock ran out.'):B.push?'Main Command fell in the final push. Hold more points next time: every one lost makes the push harder.':'Main Command fell before the final push.'}
   const loot=game.rewarded?null:lockerReward(held,win,player.kills|0);game.rewarded=true;
   if(res)blitzOverText(res,crew);   // v0.9.4.0: your own evacuation result
   if(loot){$('overLoot').textContent=loot.text;$('overLoot').hidden=false;showRewards(loot)}else{$('overLoot').hidden=true;showRewards(null)}

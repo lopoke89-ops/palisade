@@ -7,6 +7,49 @@ Big U's latest completed local scope is recorded in the [presentation prompt](pl
 
 The Claude audit URL still requires sign-in in the available browser session. Big U supplied an exported copy at `D:\downloads\Untitled.md`, which was read on September 29. Its newest Progress entry is v0.9.3, so its release claims are superseded by the verified v0.9.3.3 release below. The external artifact itself was not edited here.
 
+## v0.9.7 on the branch: CITY BLACK OUT
+
+From the [work order](plans/city-blackout-work-order.md). Big U said to build it with the defaults (D1–D10). Protocol **`yard-26`**. Evidence and the Phase 0 gate are in [evidence/v0.9.7](evidence/v0.9.7/README.md).
+
+- **Big-map engine:**
+  - chunked scenery (only on-screen chunks are painted; far ones are evicted);
+  - on-screen-only culling on maps larger than 24×24;
+  - heap pathing, about 50× faster;
+  - per-POI flow fields.
+  - Existing maps keep their single picture.
+- **The city (64×64; 48×48 fallback):**
+  - Main Command in the centre;
+  - ring roads and avenues (1.35× speed), rubble (0.8×), and solid ruined blocks that block bullets;
+  - parks, sidewalks and streetlamps.
+  - The 8 POIs are stakes, each with its own structure. Held POIs are lit, lost ones flicker out, and the streetlamps run on the Power Station.
+- **The run:**
+  - 45 s gathering;
+  - attacks on minors first, then majors, 30 s apart, each a random boss with his own troops from the nearest edge;
+  - an attack ends held, lost, or pulled back after 60 s;
+  - the quiet windows repair POIs and open the armory;
+  - all 8 perks are in;
+  - the final push lasts 5 minutes, with a boss every 30 s (at most 4 up), plus 1 squad per lost major and +5% boss health per lost minor;
+  - the Supreme Destroyer arrives at 3:00 with shield and grenadier squads only;
+  - the run is won at 0:00 or when the Destroyer dies.
+- **THE SUPREME DESTROYER:**
+  - back rockets, a fire/lightning gun, poison gas, a minefield, and an Orbital Cannon below 40%;
+  - 7× a boss's health, weak to Armor Piercing;
+  - has an Index card.
+- **HUD, menu and online:**
+  - GATHER / POI ATTACK / QUIET / FINAL PUSH phase box, mini-map, off-screen attack arrow, COMMAND bar;
+  - BLACK OUT fills the sixth mode slot;
+  - an Index section on the eight points;
+  - music routing;
+  - guests get a POI summary, plus full detail only for raiders within 22 tiles of them (bosses always).
+- **Rewards (cv:5 claims):**
+  - POIs held fill the Supply Case bar;
+  - +1 Supply Case per held major;
+  - a win pays 2 Supply Cases and 25 shards;
+  - the Destroyer pays +40 shards and +1 skill point.
+- **The BLACK OUT ladder** (a counter per step): Night Shift, Blackout Helmet, Streetlight, Orbital Strike, Lit Skyline, Gold Night Shift.
+- **Server:** migration `20261003200000_v097_city_blackout.sql`, tested in PGlite, **applied live October 3 with Big U's approval** and verified (claim logic, rooms, lobby length, 6 catalog-5 rows, 2 new columns). Black Out claims queued on a device before that pay on their next retry.
+- **Tests:** `blackout_map`, `blackout_run`, `blackout_destroyer`, `blackout_network`, `blackout_rewards`, `blackout_migration`, `blackout_perf`.
+
 ## v0.9.6.5: the Index, boss weaknesses, +25% boss health, new boss moves
 
 From the [work order](plans/index-and-boss-weakness-work-order.md) (all decisions by Big U, October 3). Protocol **`yard-25`**. No server change.

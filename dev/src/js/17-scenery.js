@@ -76,36 +76,46 @@ function drawEdge(side,s){
 function paintBack(){
   const m=MAP||MAPS.yard,Q=m===MAPS.quarry;
   quad(iso(-BAND-6,-BAND-6),iso(N+BAND+6,-BAND-6),iso(N+BAND+6,N+BAND+6),iso(-BAND-6,N+BAND+6),Q?'#161412':'#151a12');
-  for(let j=-BAND;j<N+BAND;j++)for(let i=-BAND;i<N+BAND;i++){
-    if(i>=0&&j>=0&&i<N&&j<N)continue;
+  forTiles(-BAND,N+BAND,paintRange(-BAND,N+BAND,TH2),(i,j)=>{
+    if(i>=0&&j>=0&&i<N&&j<N)return;
+    if(PAINT_RECT&&!tileVis(i,j,TH2))return;
     const dx=i<0?-i:(i>=N?i-N+1:0),dy=j<0?-j:(j>=N?j-N+1:0),d=Math.max(dx,dy),h=hash(i+400,j+77);
-    if(m.outWater&&m.outWater(i,j,MAPO)){quad(iso(i,j),iso(i+1,j),iso(i+1,j+1),iso(i,j+1),h<.5?'#1d3848':'#1b3544');continue}
+    if(m.outWater&&m.outWater(i,j,MAPO)){quad(iso(i,j),iso(i+1,j),iso(i+1,j+1),iso(i,j+1),h<.5?'#1d3848':'#1b3544');return}
     const col=m===MAPS.frost?mix('#adc6d1','#405966',clamp(d/8,0,1)):Q?(rampNear(i,j)?(h<.5?'#4a4238':'#453e35'):mix(mix('#2e2a25','#35302a',h),'#1a1816',clamp((d-2)/6,0,1))):
       d===1?(h<.5?'#342d21':'#2f2a1e'):mix(mix('#1f2518','#262c1b',h),'#171c13',clamp((d-2)/6,0,1));
     quad(iso(i,j),iso(i+1,j),iso(i+1,j+1),iso(i,j+1),col);
-    if(Q){if(h>.7){const c=iso(i+.3+h*.4,j+.5);oval(c[0],c[1],3*u,1.4*u,'rgba(140,130,115,.25)')}continue}
+    if(Q){if(h>.7){const c=iso(i+.3+h*.4,j+.5);oval(c[0],c[1],3*u,1.4*u,'rgba(140,130,115,.25)')}return}
     if(d>=2&&h>.55){const c=iso(i+.3+h*.4,j+.5);g.strokeStyle='rgba(107,84,51,.35)';g.lineWidth=u;g.beginPath();g.moveTo(c[0],c[1]);g.lineTo(c[0]+4*u,c[1]-u);g.stroke()}
     else if(d===1&&h>.7){const c=iso(i+.5,j+.5);oval(c[0],c[1],7*u,2.6*u,'rgba(84,104,64,.35)')}
-  }
-  for(const t of treesBack)drawTree(t,1);
-  for(let j=0;j<N;j++)for(let i=0;i<N;i++){
-    if(m===MAPS.frost){paintFrostTile(i,j);continue}
+    });
+  for(const t of treesBack){if(PAINT_RECT){const b=treeBox(t);if(!paintVis(b[0],b[1],b[2],b[3]))continue}drawTree(t,1)}
+  forTiles(0,N,paintRange(0,N,TH2),(i,j)=>{
+    if(m===MAPS.frost){paintFrostTile(i,j);return}
     const h=hash(i,j);quad(iso(i,j),iso(i+1,j),iso(i+1,j+1),iso(i,j+1),groundCol(i,j,h));
     if(!groundDetail(i,j,h)&&h>.86&&!Q){const c=iso(i+.5,j+.5);oval(c[0]+(h-.9)*40*u,c[1],6*u,2.5*u,'rgba(84,104,64,.35)')}
-  }
+  });
   g.strokeStyle='rgba(0,0,0,.22)';g.lineWidth=1;g.beginPath();
   if(m!==MAPS.frost)for(let s=0;s<=N;s++){let a=iso(s,0),b=iso(s,N);g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);a=iso(0,s);b=iso(N,s);g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1])}g.stroke();
   for(let s=0;s<N;s++){drawEdge('n',s);drawEdge('w',s)}
   if(m===MAPS.frost)frostScenery();
+  if(m.city)paintCityBuildings();   // v0.9.7: buildings are part of the painted city; only the ones in front of someone are redrawn live
 }
 // Near side of the yard. When someone walks behind a tree, only the small patch around that
 // tree is redrawn in the cached image, never the whole thing (a full redraw was the hitch).
 function paintFront(){
-  for(let s=0;s<N;s++){drawEdge('s',s);drawEdge('e',s)}
-  for(const t of treesFront)drawTree(t,t.a);
+  let n=0;   // what landed in the chunk being painted (0: the chunk is empty)
+  for(let s=0;s<N;s++){if(!PAINT_RECT||tileVis(s,N-1,WH*2)||tileVis(N-1,s,WH*2))n++;drawEdge('s',s);drawEdge('e',s)}
+  for(const t of treesFront){if(PAINT_RECT){const b=treeBox(t);if(!paintVis(b[0],b[1],b[2],b[3]))continue}n++;drawTree(t,t.a)}
+  return n;
 }
 function treeBox(t){const c=iso(t.x,t.y),top=(t.kind<2?t.h*.9+16:20)*u;return[c[0]-28*u,c[1]-top,c[0]+28*u,c[1]+12*u]}
 function repaintTrees(changed){
+  if(caches.chunked){   // big maps: drop the front chunks under each changed tree; they repaint when drawn next
+    const kx=camX,ky=camY;camX=0;camY=0;
+    try{for(const ch of changed){const b=treeBox(ch);
+      for(let cy=Math.floor(b[1]/CHUNK);cy<=Math.floor(b[3]/CHUNK);cy++)for(let cx=Math.floor(b[0]/CHUNK);cx<=Math.floor(b[2]/CHUNK);cx++)caches.front.map.delete(cx+','+cy)}}
+    finally{camX=kx;camY=ky}
+    return}
   const c=caches.front,ctx=c.cv.getContext('2d');ctx.setTransform(c.s,0,0,c.s,0,0);
   const kg=g,kx=camX,ky=camY;g=ctx;camX=-c.minX;camY=-c.minY;
   try{for(const ch of changed){
@@ -121,7 +131,47 @@ function paintCache(c,fn){
   const kg=g,kx=camX,ky=camY;g=ctx;camX=-c.minX;camY=-c.minY;
   try{fn()}finally{g=kg;camX=kx;camY=ky}
 }
+// v0.9.7 big maps (more than 24 tiles a side): the scenery is painted in square chunks of world space, each at full
+// sharpness, only where the camera is; least-recently-used chunks are dropped past a budget. Painting a chunk skips
+// every tile outside it (PAINT_RECT), so a chunk costs about its own tiles, not the whole map.
+const CHUNK=DESK?512:384;   // phones: smaller chunks at up to 1.5x sharpness keep the chunk memory near 30 MB
+// keep the visible chunks, the prefetch ring round them and a few spare (a smaller budget repaints the ring forever)
+const chunkKeep=()=>(Math.ceil(W/CHUNK)+3)*(Math.ceil(H/CHUNK)+3)+4;
+let PAINT_RECT=null;
+const paintVis=(x0,y0,x1,y1)=>!PAINT_RECT||!(x1<PAINT_RECT[0]||x0>PAINT_RECT[2]||y1<PAINT_RECT[1]||y0>PAINT_RECT[3]);
+// a tile's world-pixel box (camera at 0), padded for anything standing on it
+const tileVis=(i,j,up=WH*3)=>paintVis(camX+(i-j-1)*TW2,camY+(i+j)*TH2-up,camX+(i-j+1)*TW2,camY+(i+j+2)*TH2+4*u);
+// the tiles whose boxes can touch PAINT_RECT: (i-j) and (i+j) ranges from the isometric projection (camera already set)
+function paintRange(lo,hi,up=WH*3){
+  if(!PAINT_RECT)return null;const R=PAINT_RECT;
+  return{d0:Math.floor((R[0]-camX)/TW2)-2,d1:Math.ceil((R[2]-camX)/TW2)+2,s0:Math.floor((R[1]-camY)/TH2)-3,s1:Math.ceil((R[3]-camY+up)/TH2)+2,lo,hi};
+}
+// visit (i,j) in [lo,hi)² limited to a range from paintRange (or all of them), back to front
+function forTiles(lo,hi,R,f){
+  if(!R){for(let j=lo;j<hi;j++)for(let i=lo;i<hi;i++)f(i,j);return}
+  for(let sm=Math.max(2*lo,R.s0);sm<=Math.min(2*hi-2,R.s1);sm++)for(let d=R.d0;d<=R.d1;d++){if((sm+d)&1)continue;const i=(sm+d)/2,j=(sm-d)/2;if(i<lo||j<lo||i>=hi||j>=hi)continue;f(i,j)}
+}
+function chunkLayer(opaque,paint){return{chunked:true,opaque,paint,s:Math.min(DPR,DESK?2:1.5),map:new Map(),stamp:0,painted:0}}
+function chunkPaint(L,cx,cy){
+  const cv2=document.createElement('canvas'),px=Math.ceil(CHUNK*L.s);cv2.width=cv2.height=px;const ctx=cv2.getContext('2d',{alpha:!L.opaque});
+  if(L.opaque){ctx.fillStyle='#10140e';ctx.fillRect(0,0,px,px)}ctx.setTransform(L.s,0,0,L.s,0,0);
+  const kg=g,kx=camX,ky=camY,x0=cx*CHUNK,y0=cy*CHUNK;g=ctx;camX=-x0;camY=-y0;PAINT_RECT=[0,0,CHUNK,CHUNK];
+  let n=1;try{n=L.paint()}finally{g=kg;camX=kx;camY=ky;PAINT_RECT=null}
+  L.painted++;const empty=!L.opaque&&n===0;if(empty){cv2.width=cv2.height=1}return{cv:cv2,used:0,empty};   // an empty front chunk is never drawn (and keeps no image)
+}
+function drawChunks(L,budget=99){
+  const cx0=Math.floor(-camX/CHUNK),cy0=Math.floor(-camY/CHUNK),cx1=Math.floor((W-camX)/CHUNK),cy1=Math.floor((H-camY)/CHUNK);L.stamp++;
+  for(let cy=cy0;cy<=cy1;cy++)for(let cx=cx0;cx<=cx1;cx++){const key=cx+','+cy;let c=L.map.get(key);
+    if(!c){if(budget<=0)continue;budget--;c=chunkPaint(L,cx,cy);L.map.set(key,c)}
+    c.used=L.stamp;if(!c.empty)g.drawImage(c.cv,camX+cx*CHUNK,camY+cy*CHUNK,CHUNK,CHUNK)}
+  // prefetch: one chunk a frame from the ring just outside the screen, so walking doesn't paint several at once
+  if(budget>0){let best=null,bd=1e9;const mx=(-camX+W/2)/CHUNK,my=(-camY+H/2)/CHUNK;
+    for(let cy=cy0-1;cy<=cy1+1;cy++)for(let cx=cx0-1;cx<=cx1+1;cx++){if(L.map.has(cx+','+cy))continue;const d=Math.hypot(cx+.5-mx,cy+.5-my);if(d<bd){bd=d;best=[cx,cy]}}
+    if(best){const c=chunkPaint(L,best[0],best[1]);c.used=L.stamp;L.map.set(best[0]+','+best[1],c)}}
+  const keep=chunkKeep();if(L.map.size>keep){const old=[...L.map].filter(([,c])=>c.used!==L.stamp).sort((a,b)=>a[1].used-b[1].used);for(const [k]of old.slice(0,L.map.size-keep))L.map.delete(k)}
+}
 function makeCaches(){
+  if(N>24){genForest();caches={chunked:true,back:chunkLayer(true,paintBack),front:chunkLayer(false,paintFront),key:cacheKey()};return}
   const minX=-(N+2*BAND)*TW2-40*u,maxX=(N+2*BAND)*TW2+40*u,minY=-2*BAND*TH2-120*u,maxY=(2*N+2*BAND)*TH2+20*u;
   const budget=DESK?2.4e7:7.4e6;let sc=DPR;if((maxX-minX)*(maxY-minY)*sc*sc>budget)sc=Math.sqrt(budget/((maxX-minX)*(maxY-minY)));
   const x0=Math.floor(minX*sc)/sc,y0=Math.floor(minY*sc)/sc,pw=Math.ceil((maxX-x0)*sc),ph=Math.ceil((maxY-y0)*sc);
@@ -158,6 +208,7 @@ function updateFades(){
   if(changed.length)repaintTrees(changed);
 }
 const drawCache=c=>{
+  if(c.chunked){drawChunks(c);return}
   if(!c.tiles){drawBackView(c);return}
   const ox=camX+c.minX,oy=camY+c.minY;
   for(const[sx,sy,sw,sh]of c.tiles){const dx=ox+sx/c.s,dy=oy+sy/c.s,dw=sw/c.s,dh=sh/c.s;
@@ -203,7 +254,7 @@ function drawLighting(){
     let c=at(player.x,player.y,WH*.5);if(!demo)hole(c[0],c[1],TW2*3.4,.95);
     if(!demo)for(const o of players.values())if(o!==player&&o.alive){c=at(o.x,o.y,WH*.5);hole(c[0],c[1],TW2*2.2,.8)}
     if(qm.alive){c=at(qm.x,qm.y,WH*.5);hole(c[0],c[1],TW2*1.8,.7)}
-    for(const k of cores){c=at(k.i+.5,k.j+.5,WH);hole(c[0],c[1],TW2*3,.85)}
+    if(MAP&&MAP.city)cityLights(hole,at);else for(const k of cores){c=at(k.i+.5,k.j+.5,WH);hole(c[0],c[1],TW2*3,.85)}
     for(const e of enemies){c=at(e.x,e.y,WH*.5);hole(c[0],c[1],TW2*.9,.45)}
     for(let k=0;k<N*N;k++){const w=walls[k];if(w&&w.fire>0){c=at(k%N+.5,((k/N)|0)+.5,WH);hole(c[0],c[1],TW2*2,.8)}}
     for(const kiln of nodes)if(kiln.type===1&&!kiln.locked){c=at(kiln.i+.5,kiln.j+.5,WH*.3);hole(c[0],c[1],TW2*1.6,.6)}
@@ -252,8 +303,8 @@ function itemEnemy(e){
   if(e.type==='boss'){const B=BOSSES[e.boss];if(!B)return;const I=bossInfo(e.boss);
     if(e.burrow||(e.boss==='foreman'&&(e.st===2||e.st===4))){drawMound(e);return}
     const rf=B.raft&&e.raft!==false;if(rf)drawRaft(e);const kb=bossBase(e.boss);
-    drawPerson(e.x,e.y,Object.assign({aim:e.aim,walk:rf?0:e.walk,flash:e.flash>0,hp:e.hp/e.max,big:1.45,tag:I.name,tagCol:I.col,winterSt:e.st,swing:kb==='butcher'&&e.st<5?e.st|0:e.boss==='bluebutcher'&&e.st===5?1:0},I.look));
-    if(e.boss==='bulldozer'&&e.st===6)drawDazed(e);drawAmmoStatus(e);return}
+    drawPerson(e.x,e.y,Object.assign({aim:e.aim,walk:rf?0:e.walk,flash:e.flash>0,hp:e.hp/e.max,big:B.big||1.45,tag:I.name,tagCol:I.col,winterSt:e.st,swing:kb==='butcher'&&e.st<5?e.st|0:e.boss==='bluebutcher'&&e.st===5?1:0},I.look));
+    if(e.boss==='bulldozer'&&e.st===6)drawDazed(e);if(e.boss==='destroyer')drawDestroyerKit(e);drawAmmoStatus(e);return}
   drawPerson(e.x,e.y,Object.assign({aim:e.aim,walk:e.walk,flash:e.flash>0,hp:e.hp/e.max},LOOK[e.type]||LOOK.rifle,{satchel:e.type==='breach'&&!e.planted},e.type==='shield'?{big:1.1,shieldWear:1-(e.shieldHitsLeft??RIOT_SHIELD_HITS)/(e.shieldHitsMax||RIOT_SHIELD_HITS),...(e.shieldBroken?{weapon:'pistol'}:{})}:null));
   drawAmmoStatus(e);
   if(e.type==='medic'&&game.phase==='raid'){const c=iso(e.x,e.y);g.strokeStyle='rgba(143,224,160,.35)';g.lineWidth=1.2*u;g.beginPath();g.ellipse(c[0],c[1],TW2*2.6,TH2*2.6,0,0,Math.PI*2);g.stroke()}   // his healing reach
@@ -324,20 +375,24 @@ function render(dt){
   camSX+=(tx-camSX)*.14;camSY+=(ty-camSY)*.14;
   const sh=shakeOffset(dt);camX=snapPx(camSX+sh[0]);camY=snapPx(camSY+sh[1]);
   const bk=caches.back,bx=camX+bk.minX,by=camY+bk.minY;
-  if(!(bx<=0&&by<=0&&bx+bk.w>=W&&by+bk.h>=H)){g.fillStyle='#10140e';g.fillRect(0,0,W,H)}
+  if(bk.chunked||!(bx<=0&&by<=0&&bx+bk.w>=W&&by+bk.h>=H)){g.fillStyle='#10140e';g.fillRect(0,0,W,H)}
   PM('back');drawCache(caches.back);drawTerrainLive();drawFrostFields();drawWinterTelegraphs();PM('items');
   if(game.pvp==='base'&&game.phase==='build'&&!demo){const a=iso(0,0),b=iso(N,N);g.save();g.strokeStyle='rgba(226,180,54,.55)';g.lineWidth=2*u;g.setLineDash([7*u,6*u]);g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();g.restore();
     const m=iso(N*.5,N*.5);label('TRUCE LINE',m[0],m[1]+14*u,'rgba(226,180,54,.8)',11)}
   RI.n=0;const pd=p.x+p.y,pl=p.x-p.y;
+  const big=N>24;   // v0.9.7: on big maps only what's on screen is queued
   for(let k=0;k<N*N;k++){
     const i=k%N,j=(k/N)|0;
+    if(big){const sx=camX+(i-j)*TW2,sy=camY+(i+j)*TH2;if(sx<-2*TW2||sx>W+2*TW2||sy<-TH2*2||sy>H+WH*4)continue}
     if(MAP===MAPS.frost&&heights[k]&&!connectors[k]&&((j+1<N&&heights[k]>heights[k+N]+(connectors[k+N]?1:0))||(i+1<N&&heights[k]>heights[k+1])))ritem(i+j+2,itemFrostCliff,k);
     if(walls[k]){const dd=i+j+1-pd,lat=(i-j)-pl;ritem(i+j+1,itemWall,k,dd>0&&dd<3.2&&Math.abs(lat)<1.7)}
     else if(debris[k])ritem(i+j+.2,itemDebris,k);
-    if(terr[k]>=T_ROCK)ritem(i+j+1,itemTerr,k);   // rock and oil drums
+    {const t=terr[k];if(t===T_ROCK||t===T_DRUM)ritem(i+j+1,itemTerr,k)}   // rock and oil drums (city buildings: cityOccluders)
   }
+  if(MAP&&MAP.city)cityOccluders();
   for(const n of nodes)ritem(n.i+n.j+1,drawNode,n);
-  for(const c of cores)ritem(c.i+c.j+1,drawStake,c);
+  for(const c of cores)ritem(c.i+c.j+1,c.poi?drawPoi:drawStake,c);
+  if(MAP&&MAP.city)cityLampItems();
   for(const s of sacks)ritem(s.x+s.y,itemSack,s);
   for(const c of charges)ritem(c.x+c.y,itemCharge,c);
   for(const e of enemies)ritem(e.x+e.y,itemEnemy,e);
@@ -371,7 +426,7 @@ function render(dt){
   g.globalCompositeOperation='source-over';
   drawStorm(dt);drawVignette(demo);PM('floats');
   for(const f of floats){const c=iso(f.x,f.y),a=f.life/f.max;g.globalAlpha=Math.min(1,a*2);label(f.t,c[0],c[1]-WH*1.5-(1-a)*24*u,f.col,11);g.globalAlpha=1}
-  PM('ui');if(playing()&&!overlayOpen())drawPrompts(p);if(game.fb&&!demo)drawEvacHud();
+  PM('ui');if(playing()&&!overlayOpen())drawPrompts(p);if(game.fb&&!demo)drawEvacHud();if(!demo&&MAP&&MAP.city)drawBlackoutHud();
   if(playing()&&p.alive&&!overlayOpen()){drawCrosshair(p);drawShells(p)}
   const top=110;
   for(const e of game.pvp&&!demo?foes():enemies){const c=iso(e.x,e.y);if(c[0]>14&&c[0]<W-14&&c[1]>top&&c[1]<H-14)continue;

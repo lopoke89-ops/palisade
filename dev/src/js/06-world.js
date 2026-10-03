@@ -1,15 +1,26 @@
 /* ================= pathing ================= */
-function nodeAt(i,j){for(const n of nodes)if(n.i===i&&n.j===j)return n;return null}
-// water costs about what walking round costs (wading is half speed), so raiders take a bridge when one is near
-function enterCost(k){if(k===coreK)return 0;if(coreKs.has(k))return 1e6;const t=terr[k];if(terrSolid(t))return 1e6;const w=walls[k];if(w)return 1+w.hp/8;const n=nodeAt(k%N,(k/N)|0);if(n&&n.solid)return 1e6;return(debris[k]?1.4:1)+(t===T_WATER?2.4:t===T_LOW&&floodOn?1.1:0)}
-function computeFlow(){
-  dist.fill(1e9);if(coreK<0)return;const done=new Uint8Array(N*N);dist[coreK]=0;
-  for(let it=0;it<N*N;it++){
-    let uK=-1,bv=1e9;for(let k=0;k<N*N;k++)if(!done[k]&&dist[k]<bv){bv=dist[k];uK=k}
-    if(uK<0)break;done[uK]=1;const ui=uK%N,uj=(uK/N)|0,c=enterCost(uK);
-    for(const[di,dj]of D4){const i=ui+di,j=uj+dj;if(!heightLink(ui,uj,i,j))continue;const k=idx(i,j),nv=bv+c;if(nv<dist[k])dist[k]=nv}
-  }
+// v0.9.7: a tile -> pile index (rebuilt when the pile list or the map size changes) instead of scanning every pile;
+// pathing asks once per tile, and the city has many more piles
+let NODE_IX=null,NODE_IX_SRC=null,NODE_IX_N=0,NODE_IX_LEN=0;
+function nodeAt(i,j){
+  if(!nodes||!inb(i,j))return null;
+  if(NODE_IX_SRC!==nodes||NODE_IX_N!==N||NODE_IX_LEN!==nodes.length){NODE_IX=new Map();for(const n of nodes)if(inb(n.i,n.j)&&!NODE_IX.has(idx(n.i,n.j)))NODE_IX.set(idx(n.i,n.j),n);NODE_IX_SRC=nodes;NODE_IX_N=N;NODE_IX_LEN=nodes.length}
+  return NODE_IX.get(idx(i,j))||null;
 }
+// water costs about what walking round costs (wading is half speed), so raiders take a bridge when one is near
+function enterCost(k){if(k===coreK)return 0;if(coreKs.has(k))return 1e6;const t=terr[k];if(terrSolid(t))return 1e6;const w=walls[k];if(w)return 1+w.hp/8;const n=nodeAt(k%N,(k/N)|0);if(n&&n.solid)return 1e6;return(debris[k]?1.4:t===T_ROAD?.75:t===T_RUBBLE?1.25:1)+(t===T_WATER?2.4:t===T_LOW&&floodOn?1.1:0)}
+// v0.9.7: Dijkstra with a binary heap (same distances as the old full scan, which was O(tiles²): fine at 16×16,
+// 16.7 million steps a rebuild at 64×64). flowTo fills any distance field toward any target tile (the city's POIs).
+function flowTo(target,out){
+  out.fill(1e9);if(target<0)return out;const n=N*N,done=new Uint8Array(n),hk=new Float64Array(n*4+8),hv=new Int32Array(n*4+8);let hn=0;
+  const push=(key,v)=>{let c=hn++;while(c>0){const p=(c-1)>>1;if(hk[p]<=key)break;hk[c]=hk[p];hv[c]=hv[p];c=p}hk[c]=key;hv[c]=v};
+  out[target]=0;push(0,target);
+  while(hn){const bv=hk[0],uK=hv[0];hn--;if(hn){const key=hk[hn],v=hv[hn];let c=0;for(;;){let m=c*2+1;if(m>=hn)break;if(m+1<hn&&hk[m+1]<hk[m])m++;if(hk[m]>=key)break;hk[c]=hk[m];hv[c]=hv[m];c=m}hk[c]=key;hv[c]=v}
+    if(done[uK]||bv>out[uK])continue;done[uK]=1;const ui=uK%N,uj=(uK/N)|0,c=enterCost(uK);
+    for(const[di,dj]of D4){const i=ui+di,j=uj+dj;if(!heightLink(ui,uj,i,j))continue;const k=idx(i,j),nv=bv+c;if(nv<out[k]){out[k]=nv;if(hn<hk.length)push(nv,k)}}}
+  return out;
+}
+function computeFlow(){flowTo(coreK,dist);if(typeof poiFlowsDirty==='function')poiFlowsDirty()}
 function markFlow(){if(!flowDirty){flowDirty=true;flowT=.3}}
 function bestStep(ti,tj){let best=-1,bv=1e9;for(const[di,dj]of D4){const i=ti+di,j=tj+dj;if(!heightLink(ti,tj,i,j))continue;const k=idx(i,j),v=dist[k]+enterCost(k);if(v<bv){bv=v;best=k}}return best}
 // breadth-first path for Delgado: doors are open to our side
@@ -111,8 +122,8 @@ function hurtEnemy(e,d,own,quiet=false){
   if(e.hp<=0&&!e.dead){e.dead=true;game.stats.dropped++;sfx('drop',e.x,e.y);for(let n=0;n<6;n++)emit(e.x,e.y,10*u,'blood');
     if(e.type==='boss'){if(!demo)bossDown(e,own);const p=own&&own!=='dell'?players.get(own):null;if(p){p.kills++;killFx(e.x,e.y,p.cos.fx)}}else award(own,e)}
 }
-function hurtStake(c,d){c.hp-=d;c.flash=.12;sfx('core',c.i+.5,c.j+.5);emit(c.i+.5,c.j+.5,WH*.8,'spark')}
-function explode(x,y,R=1.65,power=1,own=null,raid=false){
+function hurtStake(c,d){if(!c||c.lost)return;c.hp-=d;c.flash=.12;sfx('core',c.i+.5,c.j+.5);emit(c.i+.5,c.j+.5,WH*.8,'spark')}
+function explode(x,y,R=1.65,power=1,own=null,raid=false){if(!raid&&typeof minesNear==='function')minesNear(x,y,R);
   sfx(power>1.2?'bigboom':'boom',x,y);addShake(x,y,9*power);
   addFlash({x,y,life:.4,max:.4,r:R});
   for(let n=0;n<22*power;n++)emit(x,y,4*u,'fire');for(let n=0;n<10*power;n++)emit(x,y,4*u,'smoke');

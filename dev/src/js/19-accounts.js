@@ -138,6 +138,8 @@ function flushClaims(){
       if(!r.status||r.status>=500||r.status===401){flushWhy='offline';break}
       if(/moment ago/.test(sbErr(r))){flushWhy='wait';clearTimeout(flushT);flushT=setTimeout(flushClaims,21000);break}
       if(/saved later/.test(sbErr(r))){flushWhy='later';clearTimeout(flushT);flushT=setTimeout(flushClaims,5*60e3);break}   // play-time budget: keep it, the server takes it once enough real time has passed
+      if(c.mode==='blackout'&&/Unknown mode/.test(sbErr(r))){   // v0.9.7: the server doesn't know City Black Out yet: keep it until it does
+        claims.push({...claims.shift(),boHeld:1});saveClaims();if(claims.every(q=>q.boHeld)){for(const q of claims)delete q.boHeld;flushWhy='later';clearTimeout(flushT);flushT=setTimeout(flushClaims,30*60e3);break}continue}
       claims.shift();saveClaims();       // refused for good: say so plainly instead of letting a reward quietly vanish
       claimShow(c,`The server didn't accept that result (${sbErr(r)}). Nothing was added.`,'NOT SAVED');
     }};
@@ -266,7 +268,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)acctResume
 // Hosts who tick "List my game" publish their room code to Supabase every 15 s while the room is open; the
 // Multiplayer page lists rooms heard from in the last 45 s that run this same version. Joining is the usual
 // room-code join, so the game itself still goes phone to phone.
-const MODE_NAME={coop:'CO-OP',base:'BASE BATTLE',ffa:'FREE-FOR-ALL'},LEN_NAME={'5':'5 RAIDS','10':'10 RAIDS',endless:'ENDLESS',blitz:'BLITZKRIEG RUSH',campaign:'OPERATION WHITEOUT'};
+const MODE_NAME={coop:'CO-OP',base:'BASE BATTLE',ffa:'FREE-FOR-ALL'},LEN_NAME={'5':'5 RAIDS','10':'10 RAIDS',endless:'ENDLESS',blitz:'BLITZKRIEG RUSH',campaign:'OPERATION WHITEOUT',blackout:'CITY BLACK OUT'};
 let lobTimer=0,lobBusy=false,pubTimer=0;
 const listing=()=>cloudOn&&cfg.listGame!==false;
 async function lobbyPublish(){

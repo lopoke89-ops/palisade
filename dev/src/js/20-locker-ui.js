@@ -67,6 +67,7 @@ function killFxAt(x,y,id){
     // v0.9.4.0: Blitzkrieg
     case'hellportal':E(10,'ember',.3);E(4,'smoke',.25);ringFx(x,y,0,1.1,.5,'#ffb040','#7a0c06',2.4);ringFx(x,y,1.2,0,.9,'#ff3a0a','#1a0204',2);break;
     case'cinder':E(12,'ember',.5);E(3,'smoke',.4);break;
+    case'orbital':addFlash({x,y,life:.3,max:.3,r:2});ringFx(x,y,0,1.4,.5,'#ffffff','#ff6a2a',3);E(10,'spark',.5);E(4,'smoke',.3);break;   // v0.9.7
     case'tealslash':E(12,'tealdust',.6);break;
     case'ashbrand':E(6,'ember',.3);E(5,'smoke',.3);ringFx(x,y,0,.9,.45,'#ffd070','#5a1a0a',1.8);break;
     case'demonclaw':E(8,'ember',.4);ringFx(x,y,1,0,.6,'#c8102e','#1a0204',2.2);addShake(x,y,3);break;
@@ -263,7 +264,7 @@ function renderLocker(){
     const open=lockOpen.has(section.dataset.collection);if((section.firstChild.getAttribute('aria-expanded')==='true')!==open)setCollectionOpen(section,open);
     section.querySelector('.collectionCount').textContent=`${section._items.filter(c=>owns(c.id)).length} / ${section._items.length} owned`;
   }
-  for(const h of grid.querySelectorAll('.gsec'))if(h._ladder){const L=h._ladder,got=L.items.filter(([c,k])=>owns(c+':'+k)).length;h.lastChild.textContent=`${locker.st[L.st]|0} ${L.unit} · ${got} / ${L.items.length} unlocked`}
+  for(const h of grid.querySelectorAll('.gsec'))if(h._ladder){const L=h._ladder,got=L.items.filter(([c,k])=>owns(c+':'+k)).length;h.lastChild.textContent=L.sts?`${ladderHave(L,0)} points held · ${locker.st.bo_wins|0} win${(locker.st.bo_wins|0)===1?'':'s'} · ${locker.st.bo_dest|0} Destroyer${(locker.st.bo_dest|0)===1?'':'s'} · ${got} / ${L.items.length} unlocked`:`${locker.st[L.st]|0} ${L.unit} · ${got} / ${L.items.length} unlocked`}
   const look=lockerThumbKey();
   for(const t of grid.querySelectorAll('.item')){const c=COSBY[t.dataset.item];refreshItemTile(t,c);
     const cv=t.querySelector('canvas');if((c.cat==='skin'||c.cat==='hat')&&cv._lockerLook!==look){cv._lockerLook=look;
@@ -350,9 +351,9 @@ function showRewards(R){
     for(const id of R.unlocked){const c=COSBY[id];if(!c)continue;const d=card('rwNew');d.style.setProperty('--rc',RAR[c.r].col);const t=document.createElement('span');t.textContent='UNLOCKED';
       const cv=document.createElement('canvas');cv.width=cv.height=Math.round(88*Math.min(2,devicePixelRatio||1));drawIcon(cv,c);const n=document.createElement('b');n.textContent=c.name;d.append(t,cv,n)}
     // v0.9.3: the milestone this player is closest to (of the ladders they've started)
-    if(R.kind==='run'){let best=null;for(const L of LADDERS){const have=locker.st[L.st]|0;if(!have)continue;const i=L.items.findIndex(([c,k])=>!owns(c+':'+k));if(i<0)continue;const f=have/L.steps[i];if(!best||f>best.f)best={L,i,f,have}}
+    if(R.kind==='run'){let best=null;for(const L of LADDERS){const i=L.items.findIndex(([c,k])=>!owns(c+':'+k));if(i<0)continue;const have=ladderHave(L,i);if(!have)continue;const f=have/L.steps[i];if(!best||f>best.f)best={L,i,f,have}}
       if(best){const{L,i,have}=best,it=COSBY[L.items[i][0]+':'+L.items[i][1]],d=card('rwProg rwMile',L.title);const bar=document.createElement('div');bar.className='rwBar';const f=document.createElement('i');bar.append(f);
-        f.style.setProperty('--to',Math.min(100,have/L.steps[i]*100)+'%');d.append(bar);small(d,`${have} / ${L.steps[i]} ${L.unit} · next: ${it.name}`)}}
+        f.style.setProperty('--to',Math.min(100,have/L.steps[i]*100)+'%');d.append(bar);small(d,`${have} / ${L.steps[i]} ${ladderUnit(L,i)} · next: ${it.name}`)}}
     if(R.kind==='run'){const d=card('rwProg','SUPPLY CASE');const bar=document.createElement('div');bar.className='rwBar';const f=document.createElement('i');bar.append(f);
       for(let k=1;k<3;k++){const m=document.createElement('u');m.style.left=(k*100/3)+'%';bar.append(m)}
       f.style.setProperty('--to',((R.prog|0)/3*100)+'%');d.append(bar);small(d,R.toNext===1?'1 more raid to the next case':`${R.toNext} more raids to the next case`)}

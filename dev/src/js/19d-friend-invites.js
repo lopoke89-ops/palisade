@@ -3,7 +3,7 @@ async function registerInviteRoom(){
  if(!socialAccount()||NET.mode!=='host'||!NET.code||!NET.incarnation)return;
  const uid=myUid(),inc=NET.incarnation,code=NET.code;
  if(!await freshToken()||uid!==myUid()||NET.mode!=='host'||inc!==NET.incarnation)return;
- return rpc('room_register',{p:{incarnation:inc,code,proto:PROTO,mode:pick.pvp||'coop',length:pick.mode,map:NET.inGame&&!demo?game.map:pick.mode==='campaign'?'yard':pick.map,
+ return rpc('room_register',{p:{incarnation:inc,code,proto:PROTO,mode:pick.pvp||'coop',length:pick.mode,map:NET.inGame&&!demo?game.map:pick.mode==='campaign'?'yard':pick.mode==='blackout'?'city':pick.map,
    chapter:NET.inGame&&!demo?game.chapter||0:0,players:NET.roster.length,locked:NET.roomLocked}});
 }
 const canInviteFriend=()=>socialAccount()&&NET.mode==='host'&&!!NET.code&&!NET.roomLocked&&NET.roster.length<6;

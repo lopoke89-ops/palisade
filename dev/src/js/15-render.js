@@ -107,7 +107,7 @@ function drawNode(n){
     const cs=n.locked?['#5d6262','#454a4a','#353939']:[MAT[2].top,MAT[2].l,MAT[2].r];
     boxR(i+.12,j+.2,i+.62,j+.7,0,WH*.5,cs[0],cs[1],cs[2]);boxR(i+.45,j+.1,i+.9,j+.55,0,WH*.8,cs[0],cs[1],cs[2]);boxR(i+.3,j+.55,i+.85,j+.9,0,WH*.3,cs[0],cs[1],cs[2]);
   }
-  if(n.locked){const c=iso(i+.5,j+.5);label(`${n.type===1?'KILN':'SCRAP'} · OPENS RAID ${n.unlock}`,c[0],c[1]-WH*2.1,'#9a8f7a')}
+  if(n.locked){const c=iso(i+.5,j+.5);label(`${n.type===1?'KILN':'SCRAP'} · ${n.poi?'CUT OFF':'OPENS RAID '+n.unlock}`,c[0],c[1]-WH*2.1,'#9a8f7a')}
 }
 function drawStake(c){
   const {i,j}=c,f=c.flash>0,band=c.team&&TEAMS[c.team]?TEAMS[c.team].col:'#e2b436';

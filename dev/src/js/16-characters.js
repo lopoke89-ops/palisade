@@ -1047,13 +1047,14 @@ function drawDowned(x,y,o,prog,tag){
 function bossLine(x0,y0,x1,y1,z){const a=iso(x0,y0),b=iso(x1,y1);g.beginPath();g.moveTo(a[0],a[1]-z);g.lineTo(b[0],b[1]-z);g.stroke()}
 function drawBossFx(){
   const ch=WH*.55,t=game.time,pulse=.55+.45*Math.sin(t*22);drawEvacGround(t);
-  for(const f of fires){const c=iso(f.x,f.y),a=Math.min(1,f.t)*(.34+.1*Math.sin(t*9+f.x*3)),fr=(f.r||.9)/.9;if(f.nap){drawNapalm(f,c,a,fr,t);continue}g.fillStyle=`rgba(255,110,40,${a})`;g.beginPath();g.ellipse(c[0],c[1],TW2*.95*fr,TH2*.95*fr,0,0,Math.PI*2);g.fill()}
+  for(const f of fires){const c=iso(f.x,f.y),a=Math.min(1,f.t)*(.34+.1*Math.sin(t*9+f.x*3)),fr=(f.r||.9)/.9;if(f.nap===2){drawGas(f,c,t);continue}if(f.nap===3){drawMine(f,c,t);continue}if(f.nap){drawNapalm(f,c,a,fr,t);continue}g.fillStyle=`rgba(255,110,40,${a})`;g.beginPath();g.ellipse(c[0],c[1],TW2*.95*fr,TH2*.95*fr,0,0,Math.PI*2);g.fill()}
   // spotters: a red laser while they line up (st 1), solid with a mark over the soldier once they have them (st 2)
   for(const e of enemies){if(e.type!=='spotter'||!e.st)continue;const a=iso(e.x,e.y),b=iso(e.lx,e.ly);g.strokeStyle=e.st===2?'rgba(255,60,50,.75)':`rgba(255,60,50,${.25+.3*pulse})`;g.lineWidth=(e.st===2?1.3:.9)*u;
     g.beginPath();g.moveTo(a[0],a[1]-ch);g.lineTo(b[0],b[1]-ch);g.stroke();
     if(e.st===2){const y=b[1]-WH*1.9,s=5*u;g.fillStyle='#ff4a3a';g.beginPath();g.moveTo(b[0],y-s);g.lineTo(b[0]+s*.7,y);g.lineTo(b[0],y+s);g.lineTo(b[0]-s*.7,y);g.closePath();g.fill()}}
   for(const c of chains){const a=iso(c.x0,c.y0),b=iso(c.x1,c.y1),k=c.life/c.max;g.strokeStyle=`rgba(200,205,200,${k})`;g.lineWidth=2.2*u;g.setLineDash([4*u,2*u]);g.beginPath();g.moveTo(a[0],a[1]-ch);g.lineTo(b[0],b[1]-ch*.8);g.stroke();g.setLineDash([])}
   for(const e of enemies){if(e.type!=='boss'||!e.st)continue;const f=NET.mode==='guest'?(e.stF||0):Math.max(0,e.stT/e.stM);
+    if(drawDestroyerFx(e,f,pulse,ch))continue;   // v0.9.7: the Supreme Destroyer
     if(drawBossMove(e,f,pulse,ch))continue;   // v0.9.6.5: the new moves' warnings
     if(BOSSES[e.boss]&&BOSSES[e.boss].base&&drawBlitzFx(e,f,pulse,ch))continue;   // v0.9.4.0: a Blitzkrieg variant's own warnings
     const kb=bossBase(e.boss);
@@ -1127,7 +1128,7 @@ function drawBossCombined(list,y){
   const w=Math.min(440,W-48),x=(W-w)/2,hp=list.reduce((a,e)=>a+Math.max(0,e.hp),0),max=list.reduce((a,e)=>a+e.max,0),f=max?hp/max:0;
   const me=player||{x:0,y:0},near=list.slice().sort((a,b)=>Math.hypot(a.x-me.x,a.y-me.y)-Math.hypot(b.x-me.x,b.y-me.y))[0],B=bossInfo(near.boss),nf=Math.max(0,near.hp/near.max);
   g.fillStyle='rgba(12,10,8,.8)';g.fillRect(x-3,y-3,w+6,40);
-  g.font='800 12px "Big Shoulders Stencil Display", "Arial Narrow", sans-serif';g.textAlign='left';g.fillStyle='#d8fff3';g.fillText(`GAUNTLET · ${list.length} BOSSES`,x+2,y+9);
+  g.font='800 12px "Big Shoulders Stencil Display", "Arial Narrow", sans-serif';g.textAlign='left';g.fillStyle='#d8fff3';g.fillText(`${blackout()?'FINAL PUSH':'GAUNTLET'} · ${list.length} BOSSES`,x+2,y+9);
   g.textAlign='right';g.fillStyle='#dcd2ba';g.font='600 10px "IBM Plex Mono", monospace';g.fillText(`${Math.ceil(f*100)}%`,x+w-2,y+9);
   g.fillStyle='#2a2520';g.fillRect(x,y+13,w,6);g.fillStyle='#9cebdc';g.fillRect(x,y+13,w*f,6);
   g.font='800 10px "Big Shoulders Stencil Display", "Arial Narrow", sans-serif';g.textAlign='left';g.fillStyle=B.col;g.fillText('NEAREST · '+B.name,x+2,y+29);
@@ -1203,6 +1204,7 @@ function buildLook(p,cos){
   else if(WINTER_HATS[H])o.winterHat=H;
   else if(HALLOWEEN_HATS[H])o.halloweenHat=H;
   else if(H==='devilhorns')o.horns='#7a1410';   // v0.9.4.0
+  else if(H==='blackout'){o.helmet='#1d2024';o.hneon='#ffc860'}   // v0.9.7: a dark helmet with a sodium-yellow band
   else if(HYBRID_HAT_SET.has(H))o.hybridHat=H;   // v0.9.6.4
   else o.helmet=S.hat;
   if(S.headwear&&H==='class'){delete o.helmet;delete o.cap;delete o.boonie;Object.assign(o,S.headwear)}   // v0.9.3: the outfit's own hat (a hard hat, a straw hat…)

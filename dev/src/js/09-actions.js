@@ -113,7 +113,7 @@ function fire(from,ang,team,gun,late=0,quiet=false,tc=nextTracerColor(from),shot
   const own=from===qm?'dell':(from.id!==undefined&&players.get(from.id)===from?from.id:null);
   const visual=wardrobeShotVisual(from,ang,gun);if(visual)from._shotDrawUntil=game.time+.08;
   const [z0,zSlope]=bulletHeight(from,ang,gun.range);
-  bullets.push({z0:z0+zSlope*.33,zSlope,visual,id:++bulletSeq,pt:from.team||'',x:from.x+Math.cos(ang)*ahead,y:from.y+Math.sin(ang)*ahead,vx:Math.cos(ang)*gun.speed,vy:Math.sin(ang)*gun.speed,team,dmg:gun.dmg,dist:ahead-.33,over:gun.over!==false,skipped:false,last:-1,range:gun.range,pierce:gun.pierce||0,heavy:!!gun.pierce,
+  bullets.push({z0:z0+zSlope*.33,zSlope,visual,id:++bulletSeq,pt:from.team||'',x:from.x+Math.cos(ang)*ahead,y:from.y+Math.sin(ang)*ahead,vx:Math.cos(ang)*gun.speed,vy:Math.sin(ang)*gun.speed,team,dmg:gun.dmg,dist:ahead-.33,over:gun.over!==false,skipped:false,last:-1,range:gun.range+(team===0&&boHigh(from)?2:0),pierce:gun.pierce||0,heavy:!!gun.pierce,
     own,tr:own&&own!=='dell'?Math.max(0,TRAIL_IDS.indexOf(from.cos.trail)):0,tc,fall:gun.fall||null,pel:gun.pellets>1,shot,ammo:team===0&&ammoMode()&&from.ammoEq?from.ammoEq.filter(Boolean).map(id=>[id,ammoRank(from,id)]):[]});
   rec(bulletEvent(bullets[bullets.length-1]));
   if(!quiet)addFlash({x:from.x+Math.cos(ang)*.4,y:from.y+Math.sin(ang)*.4,life:.06,max:.06,r:gun.pellets>1?1.3:.9,muzzle:true,visual:visual?visual.slice(2):null});

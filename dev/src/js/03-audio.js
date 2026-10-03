@@ -19,6 +19,10 @@ function musicRoute(){
   if(!demo&&!$('over').hidden)return {k:'results',token:'results:'+game.gid};
   if(!$('menu').hidden)return {k:'menu',token:'menu'};
   if(!demo&&playing()){
+    if(game.mode==='blackout'&&!game.pvp&&game.bo&&game.phase==='raid'){const st=game.bo.stage;   // v0.9.7: raid tracks for POI attacks, the finale for the final push
+      if(st==='push'||st==='done')return {k:'finale',token:'finale:'+game.gid};
+      if(st==='attack')return {k:['attitude','cool','express'][Math.max(0,game.wave-1)%3],token:'raid:'+game.gid+':'+game.wave};
+      return {k:'between',token:'quiet:'+game.gid+':'+game.wave}}
     if((game.mode==='blitz'||game.fb&&game.fb.gauntlet)&&!game.pvp&&game.fb)return {k:'finale',token:'finale:'+game.gid};   // v0.9.6.4: the Whiteout Gauntlet gets the finale track too
     if(game.phase==='raid')return {k:['attitude','cool','express'][Math.max(0,game.wave-1)%3],token:'raid:'+game.gid+':'+game.wave};
     return {k:'between',token:'build:'+game.gid+':'+game.wave};
@@ -138,6 +142,7 @@ function sfx(name,x,y,noRec,ui){
     case'kx_frag':nz(dest,t,.1,'highpass',2500,.7,.14);nz(dest,t,.35,'lowpass',700,.7,.12,160);for(let k=0;k<4;k++)nz(dest,t+.08+k*.05,.03,'bandpass',3500+k*400,4,.05);break;
     // v0.9.4.0 Blitzkrieg: a deep rumbling rift that slams shut; crackling cinders; a bright blade swish; a searing hiss; a low growl and scrape
     case'kx_hellportal':osc(dest,t,.8,'sawtooth',70,.07,40);nz(dest,t,.7,'lowpass',400,.8,.12,120);nz(dest,t+.75,.12,'lowpass',900,.6,.16,120);break;
+    case'kx_orbital':osc(dest,t,.35,'sine',1400,.04,300);nz(dest,t+.3,.5,'lowpass',700,.7,.16,90);osc(dest,t+.3,.4,'sine',60,.1,30);break;   // v0.9.7: a rising whine, then the beam lands
     case'kx_cinder':for(let k=0;k<5;k++)nz(dest,t+k*.04,.03,'bandpass',2000+rnd()*1500,3,.07);nz(dest,t,.3,'lowpass',600,.6,.06);break;
     case'kx_tealslash':nz(dest,t,.16,'bandpass',3200,1.4,.12,6000);osc(dest,t,.2,'sine',1320,.03,2640);break;
     case'kx_ashbrand':nz(dest,t,.5,'highpass',2800,.6,.1,1200);osc(dest,t,.3,'triangle',180,.04,90);break;

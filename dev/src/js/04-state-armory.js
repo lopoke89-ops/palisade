@@ -55,7 +55,7 @@ const AMMO=[
   {id:'blast',name:'EXPLOSIVE',what:'Small enemy-only blast on impact',skill:'ammo_blast',col:'#ffc05a'},
   {id:'shock',name:'LIGHTNING',what:'Slows the target and nearby enemies',skill:'ammo_shock',col:'#81dafa'}];
 const AMMO_BY=Object.fromEntries(AMMO.map(x=>[x.id,x]));
-const ammoMode=()=>!game.pvp&&['5','10','endless','blitz','campaign'].includes(game.mode);
+const ammoMode=()=>!game.pvp&&['5','10','endless','blitz','campaign','blackout'].includes(game.mode);
 const ammoRank=(p,id)=>{const A=AMMO_BY[id];return A?Math.min(4,parseSkills(p.sk)[A.skill]|0):0};
 const ammoEffect=(id,rank)=>id==='ap'?`${[50,60,70,85,100][rank]}% direct damage through frontal shields`:id==='fire'?`10 HP/s for ${3+.5*rank}s; hits refresh`:id==='blast'?`${8+2*rank} damage, 1.25-block blast; 0.4s proc limit`:`${25+5*rank}% slow for 2s; nearest 3 within 3 blocks`;
 const armBoost=(lv,oldStep,newStep)=>oldStep*Math.min(4,lv)+newStep*Math.max(0,lv-4);
@@ -85,7 +85,7 @@ const BURST_N=[3,5,7,9,9],burstN=p=>BURST_N[Math.min(4,p.up.d|0)],burstGap=p=>Ma
 const upStr=p=>UPG.map(x=>p.up[x.k]).join('');
 const nearStake=p=>{const c=stakeOf(p);return!!c&&Math.hypot(p.x-(c.i+.5),p.y-(c.j+.5))<2.7};
 const lockdown=()=>hasMod('lockdown')&&game.mode==='blitz'&&game.wave>=BLITZ.waves-1;   // v0.9.4.0: the armory is shut before the Final Blitz
-const shopOpen=p=>!!p&&p.alive&&!lockdown()&&(game.pvp==='base'?game.phase!=='over':!game.pvp&&game.phase==='build');
+const shopOpen=p=>!!p&&p.alive&&!lockdown()&&(game.pvp==='base'?game.phase!=='over':!game.pvp&&(game.phase==='build'||!!game.bo&&game.bo.stage==='gap'));   // v0.9.7: Black Out's quiet windows too
 const canShop=p=>shopOpen(p)&&nearStake(p);
 function buyUpgrade(p,k){
   if(k==='core')return repairCore(p);
@@ -117,7 +117,7 @@ function award(own,e){
   if(demo)return;
   if(own==='dell'){for(const p of players.values())p.sal+=1;return}
   const p=players.get(own);if(!p)return;
-  const v=BOUNTY[e.type]||4;p.sal+=v;p.kills++;flt(e.x,e.y-.2,'+'+v,'#e2b436');killFx(e.x,e.y,p.cos.fx);
+  const v=Math.round((BOUNTY[e.type]||4)*boSalvage(e));p.sal+=v;p.kills++;flt(e.x,e.y-.2,'+'+v,'#e2b436');killFx(e.x,e.y,p.cos.fx);
 }
 const myName=()=>(acct.state==='full'&&acct.name?acct.name.slice(0,12):(cfg.name||'').trim())||'Big U';
 // opt (v0.9.2): {gid: the shared game id, mods: modifier ids, job: One Job's class, guest: true on a guest's phone}
@@ -128,7 +128,7 @@ function newGame(roster,pvp='',opt={}){
   const mods=pick.mode==='campaign'&&!pvp?campaignMods(cleanMods(opt.mods,'')):cleanMods(opt.mods,pvp||(pick.mode==='blitz'?'blitz':'')),job=mods.includes('onejob')&&CLASSES[opt.job]?opt.job:'';
   if(job)roster=roster.map(r=>({...r,cls:job}));
   const Df=pvp?DIFF.normal:DIFF[pick.diff]||DIFF.normal;
-  const map=pick.mode==='campaign'&&!pvp?'yard':pvp&&pick.map==='frost'?'yard':pick.map,L=layMap(map,pick.size,pvp);
+  const map=pick.mode==='blackout'&&!pvp?'city':pick.mode==='campaign'&&!pvp?'yard':pvp&&pick.map==='frost'?'yard':pick.map,L=layMap(map,pick.size,pvp);
   walls=new Array(N*N).fill(null);debris=new Int8Array(N*N);dist=new Float32Array(N*N);
   const wood=(i,j)=>({i,j,type:0,amt:48,max:48,rt:0,locked:false});
   const ruin=(list,mat,ratio,ch)=>list.forEach(([i,j])=>{const w=makeWall(mat,false,ratio);w.char=ch;walls[idx(i,j)]=w});
@@ -142,6 +142,9 @@ function newGame(roster,pvp='',opt={}){
   }else{
     cores=[{team:'',i:L.core[0],j:L.core[1],hp:Df.core,max:Df.core,flash:0}];
     nodes=L.nodes;
+    // v0.9.7 City Black Out: the eight POIs are stakes too (bullets, blasts and the snapshot already handle cores);
+    // Main Command stays cores[0], and only it ends the run
+    if(L.pois)for(const p of L.pois){const hp=Math.round(Df.core*(p.major?.7:.5));cores.push({team:'',i:p.i,j:p.j,hp,max:hp,flash:0,poi:p,lost:false,dark:0})}
     for(const[list,mat,ratio,ch]of L.ruins)ruin(list,mat,ratio,ch);   // old ruins: they pay salvage when knocked down
     if(pick.mode==='campaign')for(const n of nodes)if(n.locked&&n.unlock>3)n.unlock=3;   // v0.9.6.4: the Yard's metal opens after raid 2 in the campaign
   }
@@ -160,11 +163,11 @@ function newGame(roster,pvp='',opt={}){
   if(pvp||mods.includes('alone'))Object.assign(qm,{alive:false,gone:true,x:-9,y:-9});   // Delgado sits PvP (and On Your Own) out
   Object.assign(qm,{mode:'follow',completedRaids:0,layout:null,layoutAnchor:'',layoutSize:4,status:'Following host',bcd:0,C:{build:1,repair:1},face:{x:1,y:0},tp:0});
   enemies=[];bullets=[];lobs=[];charges=[];parts=[];flashes=[];floats=[];sacks=[];rockets=[];fires=[];zaps=[];slashes=[];rings=[];chains=[];arcs=[];arcHaz.length=0;
-  const mode=['5','10','endless','blitz','campaign'].includes(pick.mode)?pick.mode:'5';
-  game={phase:pvp==='ffa'?'raid':'build',paused:false,wave:0,timer:pvp==='base'?PVP.truce:pvp==='ffa'?PVP.ffaTime:40+Df.build,queue:[],qn:0,spawnT:0,sel:game.sel||0,piece:'wall',time:0,tip:0,gathered:0,C:player.C,Df,
-    mode,waves:mode==='endless'?Infinity:mode==='blitz'?BLITZ.waves:mode==='campaign'?CAMPAIGN.waves:+mode,rewarded:false,bosses:0,pvp,goal:PVP.ffaGoal,winner:'',chapter:0,
+  const mode=['5','10','endless','blitz','campaign','blackout'].includes(pick.mode)?pick.mode:'5';
+  game={phase:pvp==='ffa'?'raid':'build',paused:false,wave:0,timer:pvp==='base'?PVP.truce:pvp==='ffa'?PVP.ffaTime:mode==='blackout'?BO.gather:40+Df.build,queue:[],qn:0,spawnT:0,sel:game.sel||0,piece:'wall',time:0,tip:0,gathered:0,C:player.C,Df,
+    mode,waves:mode==='endless'?Infinity:mode==='blackout'?8:mode==='blitz'?BLITZ.waves:mode==='campaign'?CAMPAIGN.waves:+mode,rewarded:false,bosses:0,pvp,goal:PVP.ffaGoal,winner:'',chapter:0,
     stats:{dropped:0,built:0,lost:0,repairs:0,revives:0},
-    map:MAP_IDS.includes(map)?map:'yard',size:N>16?'xl':'std',lay:L,flood:{t:0,warned:false},bossLog:[],oct:!!pick.oct,
+    map:map==='city'||MAP_IDS.includes(map)?map:'yard',size:N>16?'xl':'std',lay:L,flood:{t:0,warned:false},bossLog:[],oct:!!pick.oct,
     gid:String(opt.gid||newGid()).slice(0,40),mods,job,sbN:0,sbLog:[],fbLog:[],fb:null,joinFB:0,wx:0,wxT:0,sd:false,
     joinHeld:opt.guest?null:0,joinT:0,joinBoss:0,joinSB:0};   // join*: where this phone came in (guests learn it from the first state packet)
   for(const p of players.values())kitUp(p);

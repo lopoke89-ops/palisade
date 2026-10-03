@@ -1,0 +1,48 @@
+{
+ "desktop:quarryxl": {
+  "avg": 16.01,
+  "p95": 22.4,
+  "N": 24,
+  "enemies": 60,
+  "chunks": null,
+  "maxChunks": 0,
+  "mb": 74
+ },
+ "desktop:city": {
+  "avg": 23.01,
+  "p95": 63.6,
+  "N": 64,
+  "enemies": 60,
+  "chunks": {
+   "back": 34,
+   "front": 34,
+   "painted": 84,
+   "keep": 34
+  },
+  "maxChunks": 68,
+  "mb": 49
+ },
+ "phone:quarryxl": {
+  "avg": 19.75,
+  "p95": 30.8,
+  "N": 24,
+  "enemies": 60,
+  "chunks": null,
+  "maxChunks": 0,
+  "mb": 56.5
+ },
+ "phone:city": {
+  "avg": 26.6,
+  "p95": 79,
+  "N": 64,
+  "enemies": 60,
+  "chunks": {
+   "back": 24,
+   "front": 24,
+   "painted": 48,
+   "keep": 34
+  },
+  "maxChunks": 48,
+  "mb": 40.5
+ }
+}
