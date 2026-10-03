@@ -31,7 +31,7 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
   const extras = out.run.W.map(w => w.keys.find(k => k !== 'rime')); for (let i = 1; i < extras.length; i++) assert.notEqual(extras[i], extras[i - 1], 'no repeat in a row');
   assert.equal(out.run.maxUp, 8, 'never more than 8 up'); assert.ok(out.run.landed >= 8 && out.run.landed < 18, 'with nobody falling, later bosses wait: ' + out.run.landed);
   assert.deepEqual(out.run.raiders, [], 'no ordinary raiders'); assert.equal(out.run.evacAt, 30); assert.equal(out.run.landedAfterEvac, 0);
-  assert.deepEqual(out.run.hp, [1.1], '110% of normal health'); assert.equal(out.run.onCore, 0);
+  assert.deepEqual(out.run.hp, [1.375], '110% of normal health, on top of the +25% every boss has since v0.9.6.5'); assert.equal(out.run.onCore, 0);
   const [a, c, d] = out.run.firstWave; assert.ok(Math.min(Math.hypot(a[0] - c[0], a[1] - c[1]), Math.hypot(a[0] - d[0], a[1] - d[1]), Math.hypot(c[0] - d[0], c[1] - d[1])) >= 3, 'first wave lands 3+ tiles apart');
   assert.equal(out.run.phase, 'over'); assert.equal(out.run.res, 'left', 'still on the field at 0:00'); assert.equal(out.run.cleared, 0);
   // 2. killing each wave as it lands: every wave counts as cleared; reaching the evac wins; the claim carries it

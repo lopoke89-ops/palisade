@@ -1,0 +1,22 @@
+# v0.9.6.5 evidence
+
+- **Full suite:** 77/77. Three older tests were updated for the intended changes:
+  - `v090` boss health share;
+  - `campaign_gauntlet` 1.1× → 1.375×;
+  - `campaign_network` protocol `yard-25`.
+- **`v0965_bosses`:**
+  - every boss spawns with 1.25× health;
+  - weakness math (1.35 / 1 / 1 / 1) for all 14 bosses;
+  - each of the eight new moves reaches its warning state and hits the player inside its area;
+  - Ring of Fire leaves the middle safe and lays 8 patches;
+  - a dodged Thunderstrike deals 0;
+  - bosses alternate with their own attack;
+  - every new warning draws.
+- **`index_page`:** at three sizes, 7 raider and 14 boss cards; health and weakness match the tables; the four reworked bosses list 3 attacks; no sideways scroll; the setup link opens Classes.
+- **Screenshots (desktop 1366x820, phone portrait 390x844, phone landscape 844x390):**
+  - `*-index-bosses.png`: the Bosses tab.
+  - `*-storm.png`: Thunderstrike.
+  - `*-tempest.png`: Storm Cage.
+  - `*-arsonist.png`: Ring of Fire.
+  - `*-bulldozer.png`: Overdrive lanes.
+  - The boss bar's WEAK tag is visible on desktop and phone portrait; the slim landscape strip has no room for it.
