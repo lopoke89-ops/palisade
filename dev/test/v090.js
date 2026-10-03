@@ -154,7 +154,7 @@ const PORT = process.env.PORT || 8080;
   out.xlBosses = await E(() => { const P = __pal, o = {};
     for (const [m, size] of [['yard', 'std'], ['river', 'std'], ['yard', 'xl'], ['river', 'xl'], ['quarry', 'xl']]) { run(m, size); clearField(); P.game.wave = 4; P.startRaid();
       const bs = P.game.queue.filter(q => q.startsWith('boss:')).map(q => q.slice(5)); o[m + ':' + size] = { bosses: bs, share: P.game.bossShare };
-      if (bs.length) { P.spawnBoss(bs[0]); const e = P.enemies.find(x => x.boss === bs[0]), B = P.BOSSES[bs[0]]; o[m + ':' + size].hpShare = +(e.max / (B.hp * P.game.Df.hp * (size === 'xl' ? 1.1 : 1) * ({ yard: 1, river: 1.05, quarry: 1.1 })[m])).toFixed(3) }
+      if (bs.length) { P.spawnBoss(bs[0]); const e = P.enemies.find(x => x.boss === bs[0]), B = P.BOSSES[bs[0]]; o[m + ':' + size].hpShare = +(e.max / (B.hp * (P.BOSS_HP || 1) * P.game.Df.hp * (size === 'xl' ? 1.1 : 1) * ({ yard: 1, river: 1.05, quarry: 1.1 })[m])).toFixed(3) }
       P.toMenu() } return o });
   for (const k of ['yard:std', 'river:std']) { assert.equal(out.xlBosses[k].bosses.length, 1, k); assert.equal(out.xlBosses[k].hpShare, 1) }
   for (const k of ['yard:xl', 'river:xl', 'quarry:xl']) { const v = out.xlBosses[k]; assert.equal(v.bosses.length, 2, k); assert.notEqual(v.bosses[0], v.bosses[1]); assert.equal(v.hpShare, .9, k) }

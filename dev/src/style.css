@@ -1018,3 +1018,20 @@ body.padMenu #menu .panel{padding-bottom:64px}body.pad .padF{scroll-margin:12px 
 .reel .item{box-sizing:border-box}
 #caseOv.batch .card{gap:8px}
 #caseOv.batch .reel .item{height:calc(clamp(44px,7dvh,64px) - 6px)}
+
+/* v0.9.6.5 the INDEX page */
+.idxTabs{margin:0 0 10px}
+.idxList{display:grid;gap:8px}
+.idxList>.lede{margin:0 0 2px}
+.idxGroup{font:900 15px var(--stencil);letter-spacing:.08em;color:var(--warn);margin:10px 0 0}
+.idxCard{display:grid;grid-template-columns:72px minmax(0,1fr);gap:10px;align-items:start;background:rgba(27,24,20,.8);border:1px solid var(--line);padding:9px}
+.idxCard:focus-visible{outline:2px solid var(--warn);outline-offset:1px}
+.idxArt{width:72px;height:72px;background:rgba(0,0,0,.25)}
+.idxCard h3{margin:0 0 3px;font:900 16px var(--stencil);letter-spacing:.04em;overflow-wrap:anywhere}
+.idxCard p{margin:2px 0;font-size:11px;line-height:1.4;color:var(--dim)}
+.idxCard .idxStat{color:#c9bf9f}
+.idxCard .idxAtk,.idxCard .idxWeak{font-weight:600;letter-spacing:.04em}
+.idxCard .idxPhase{color:#e0a46a}
+.idxCard ul{margin:2px 0;padding-left:16px;font-size:11px;line-height:1.4;color:var(--dim)}
+.idxCard li{margin:1px 0}
+.idxList{grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr))}.idxList>.lede,.idxGroup{grid-column:1/-1}   /* one column in the narrow menu panel, two on a wide page */

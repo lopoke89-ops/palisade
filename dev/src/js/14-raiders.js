@@ -140,7 +140,7 @@ function updateBullets(dt){
       else if(b.team===0){for(const e of enemies)if(!e.dead&&!e.burrow&&bulletAtActor(b,e)&&Math.hypot(e.x-b.x,e.y-b.y)<(e.big?.55:.34)){
           // a shieldbearer's shield covers his front (about 130°): the round sparks off it
           let shield=1;if(e.type==='shield'&&!e.shieldBroken){const l=Math.hypot(b.vx,b.vy)||1;if(-(b.vx*e.aim.x+b.vy*e.aim.y)/l>.42){shieldBulletHit(e,b);const ap=b.ammo&&b.ammo.find(x=>x[0]==='ap');if(!ap){hitFx(b.x,b.y,2);sfx('shieldhit',b.x,b.y);if(!b.pel||!b.felt){b.felt=1;feelHit(b.own,false)}b.dead=true;break}shield=[.5,.6,.7,.85,1][ap[1]]||.5}}
-          hurtEnemy(e,bdmg(b)*shield,b.own);ammoHit(e,b);if(!b.pel||!b.felt){b.felt=1;feelHit(b.own,b.heavy)}b.dead=true;break}}
+          hurtEnemy(e,bdmg(b)*shield*bossWeak(e,b),b.own);ammoHit(e,b);if(!b.pel||!b.felt){b.felt=1;feelHit(b.own,b.heavy)}b.dead=true;break}}
       else{for(const a of allies())if(a.alive&&bulletAtActor(b,a)&&Math.hypot(a.x-b.x,a.y-b.y)<.3){hurtAlly(a,b.dmg*(a===qm?.7:1));b.dead=true;break}}
     }
   }
