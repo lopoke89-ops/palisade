@@ -196,7 +196,7 @@ function updateParticles(dt){
   if(running())localAmbience(dt);
   // time of day: overcast → golden hour → night
   const tod=game.pvp?(hasMod('nightmare')?2:0):todStage(game.phase==='raid'?game.wave:game.wave+.5);
-  const T=tod===2?{L:.7,r:5,g:8,b:22,warm:0}:tod===1?{L:.2,r:60,g:30,b:10,warm:.07}:{L:.12,r:28,g:34,b:44,warm:0};
+  const T=tod===2?{L:isCity()&&game.dark?.8:.7,r:5,g:8,b:22,warm:0}:tod===1?{L:.2,r:60,g:30,b:10,warm:.07}:{L:.12,r:28,g:34,b:44,warm:0};
   const k=Math.min(1,dt*.8);for(const key of['L','r','g','b','warm'])light[key]+=(T[key]-light[key])*k;
 }
 

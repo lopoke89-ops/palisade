@@ -142,6 +142,9 @@ function newGame(roster,pvp='',opt={}){
   }else{
     cores=[{team:'',i:L.core[0],j:L.core[1],hp:Df.core,max:Df.core,flash:0}];
     nodes=L.nodes;
+    // v0.9.7 City Black Out: the eight POIs are stakes too (bullets, blasts and the snapshot already handle cores);
+    // Main Command stays cores[0], and only it ends the run
+    if(L.pois)for(const p of L.pois){const hp=Math.round(Df.core*(p.major?.7:.5));cores.push({team:'',i:p.i,j:p.j,hp,max:hp,flash:0,poi:p,lost:false,dark:0})}
     for(const[list,mat,ratio,ch]of L.ruins)ruin(list,mat,ratio,ch);   // old ruins: they pay salvage when knocked down
     if(pick.mode==='campaign')for(const n of nodes)if(n.locked&&n.unlock>3)n.unlock=3;   // v0.9.6.4: the Yard's metal opens after raid 2 in the campaign
   }

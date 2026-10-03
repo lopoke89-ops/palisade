@@ -254,7 +254,7 @@ function drawLighting(){
     let c=at(player.x,player.y,WH*.5);if(!demo)hole(c[0],c[1],TW2*3.4,.95);
     if(!demo)for(const o of players.values())if(o!==player&&o.alive){c=at(o.x,o.y,WH*.5);hole(c[0],c[1],TW2*2.2,.8)}
     if(qm.alive){c=at(qm.x,qm.y,WH*.5);hole(c[0],c[1],TW2*1.8,.7)}
-    for(const k of cores){c=at(k.i+.5,k.j+.5,WH);hole(c[0],c[1],TW2*3,.85)}
+    if(MAP&&MAP.city)cityLights(hole,at);else for(const k of cores){c=at(k.i+.5,k.j+.5,WH);hole(c[0],c[1],TW2*3,.85)}
     for(const e of enemies){c=at(e.x,e.y,WH*.5);hole(c[0],c[1],TW2*.9,.45)}
     for(let k=0;k<N*N;k++){const w=walls[k];if(w&&w.fire>0){c=at(k%N+.5,((k/N)|0)+.5,WH);hole(c[0],c[1],TW2*2,.8)}}
     for(const kiln of nodes)if(kiln.type===1&&!kiln.locked){c=at(kiln.i+.5,kiln.j+.5,WH*.3);hole(c[0],c[1],TW2*1.6,.6)}
@@ -391,7 +391,8 @@ function render(dt){
   }
   if(MAP&&MAP.city)cityOccluders();
   for(const n of nodes)ritem(n.i+n.j+1,drawNode,n);
-  for(const c of cores)ritem(c.i+c.j+1,drawStake,c);
+  for(const c of cores)ritem(c.i+c.j+1,c.poi?drawPoi:drawStake,c);
+  if(MAP&&MAP.city)cityLampItems();
   for(const s of sacks)ritem(s.x+s.y,itemSack,s);
   for(const c of charges)ritem(c.x+c.y,itemCharge,c);
   for(const e of enemies)ritem(e.x+e.y,itemEnemy,e);

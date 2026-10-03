@@ -122,7 +122,7 @@ function hurtEnemy(e,d,own,quiet=false){
   if(e.hp<=0&&!e.dead){e.dead=true;game.stats.dropped++;sfx('drop',e.x,e.y);for(let n=0;n<6;n++)emit(e.x,e.y,10*u,'blood');
     if(e.type==='boss'){if(!demo)bossDown(e,own);const p=own&&own!=='dell'?players.get(own):null;if(p){p.kills++;killFx(e.x,e.y,p.cos.fx)}}else award(own,e)}
 }
-function hurtStake(c,d){c.hp-=d;c.flash=.12;sfx('core',c.i+.5,c.j+.5);emit(c.i+.5,c.j+.5,WH*.8,'spark')}
+function hurtStake(c,d){if(!c||c.lost)return;c.hp-=d;c.flash=.12;sfx('core',c.i+.5,c.j+.5);emit(c.i+.5,c.j+.5,WH*.8,'spark')}
 function explode(x,y,R=1.65,power=1,own=null,raid=false){
   sfx(power>1.2?'bigboom':'boom',x,y);addShake(x,y,9*power);
   addFlash({x,y,life:.4,max:.4,r:R});
