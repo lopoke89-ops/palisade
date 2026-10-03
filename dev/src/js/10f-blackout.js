@@ -21,7 +21,7 @@ function boStart(){
   boPay(BO.purse,'STARTING PURSE');
 }
 // salvage for everyone (host); guests see it in their slow player rows
-function boPay(n,why){for(const p of players.values())p.sal+=n;flt(player.x,player.y-.6,`+${n} SALVAGE · ${why}`,'#e2b436')}
+function boPay(n,why,dy=0){for(const p of players.values())p.sal+=n;flt(player.x,player.y-.6-dy,`+${n} SALVAGE · ${why}`,'#e2b436')}
 // the gathering (the build phase's clock): the first target is called out like any other
 function boGather(){if(!game.bo)boStart();const B=game.bo,warn=boHeld('warn')?BO.warn:BO.warnNo;
   if(B.warned!==0&&game.timer<=warn){B.warned=0;const c=cores[B.order[0]];c.next=true;
@@ -55,7 +55,7 @@ function boEnd(how){const B=game.bo,cu=B.cur,c=cores[cu.ci];c.attack=false;B.cur
 }
 // v0.9.7.1: READY UP before the final push. Nobody can force it: everyone alive readies up, or the 90 s run out.
 function boReadyStage(){const B=game.bo;B.stage='ready';B.t=BO.ready;for(const p of players.values())p.boReady=false;
-  boPay(BO.pushPay,'FINAL PUSH');
+  boPay(BO.pushPay,'FINAL PUSH',.9);   // above the last attack's pay, which lands the same moment
   toastAll('READY UP',`The final push starts in ${BO.ready} seconds, or as soon as everyone is ready. Spend your salvage at any point you hold.`)}
 function boReady(p,on=true){const B=game.bo;if(!B||B.stage!=='ready'||!p)return;p.boReady=!!on}
 const boReadyCount=()=>{let r=0,n=0;for(const p of players.values())if(p.alive||p.downed){n++;if(p.boReady)r++}return[r,n]};

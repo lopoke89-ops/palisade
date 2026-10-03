@@ -37,7 +37,7 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
     return { map: g.map, me: P.player.chEvac, bot: bot.chEvac, botHp: Math.round(100 * window.__bh),   // read when the next map loads (health regenerates in the build phase)
        botSal: bot.sal - (8 + 3), mySal: P.player.sal > 40, claim: P.runClaim(3, false, 0).claim } });
   assert.equal(out.left.map, 'river'); assert.deepEqual(out.left.me, [1]); assert.deepEqual(out.left.bot, [0]);
-  assert.equal(out.left.botHp, 50); assert.equal(out.left.botSal, 0, 'left behind: no salvage carried over (just the build pay)'); assert.ok(out.left.mySal, 'the one who made it keeps salvage');
+  assert.ok(out.left.botHp >= 50 && out.left.botHp <= 51, 'left behind at half health (one regen tick can land in the same frame): ' + out.left.botHp); assert.equal(out.left.botSal, 0, 'left behind: no salvage carried over (just the build pay)'); assert.ok(out.left.mySal, 'the one who made it keeps salvage');
   assert.equal(out.left.claim.cv, 4); assert.deepEqual(out.left.claim.ch_evac, [true, null, null]);
   // 4. downed in a map evac: no respawn clock; the wire encoding round-trips
   out.down = await p.evaluate(() => { const P = __pal, g = P.game, me = P.player; endRaid(6); P.hurtPlayer(me, 1e9); run(.5); const r = { downed: me.downed || !me.alive, rt: me.rt > 1e5, mapEvac: !!(g.fb && g.fb.mapEvac) };
