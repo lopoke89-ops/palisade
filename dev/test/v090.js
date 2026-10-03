@@ -44,7 +44,8 @@ const PORT = process.env.PORT || 8080;
     const P = __pal, res = {};
     for (const map of Object.keys(P.MAPS)) for (const size of ['std', 'xl']) {
       run(map, size); const L = P.game.lay; let bad = 0; P.walls.fill(null); P.update(1 / 30); for (let i = 0; i < 12; i++) P.update(.05);
-      for (const s of L.spawns) for (const [i, j] of s.tiles) { const e = P.spawnEnemyAt('rifle', i + .5, j + .5); e.speed = 6; }
+      const step = P.N > 24 ? 6 : 1;   // v0.9.7: the city's edges are 230 tiles; every 6th keeps the crowd small enough to fit round the stake
+      for (const s of L.spawns) s.tiles.forEach(([i, j], n) => { if (n % step) return; const e = P.spawnEnemyAt('rifle', i + .5, j + .5); e.speed = 6; });
       P.qm.gone = true; P.qm.alive = false; P.qm.x = -60; for (const q of P.players.values()) { q.x = -50; q.y = -50; q.alive = false }
       for (let t = 0; t < 30 * 40; t++) { imm(); for (const e of P.enemies) { e.cd = 9; e.hp = e.max } P.update(1 / 30) }
       for (const e of P.enemies) if (Math.hypot(e.x - P.core.i - .5, e.y - P.core.j - .5) > 2.2) bad++;
@@ -131,7 +132,7 @@ const PORT = process.env.PORT || 8080;
   assert.deepEqual(out.raiders, { shieldFront: true, shieldBack: true, medicHeals: true, marked: true, woodBurns: true, groundFire: true });
   // 7. per-map boss order and the October Butcher (name, look, two Halloween Cases)
   out.bosses = await E(() => { const P = __pal, o = {}; for (const m of Object.keys(P.MAPS)) { run(m, 'std', 'endless'); o[m] = [5, 10, 15, 20].map(w => P.bossOf(w)); P.toMenu() } return o });
-  assert.deepEqual(out.bosses, { yard: ['butcher', 'demolisher', 'storm', 'butcher'], river: ['ferryman', 'butcher', 'storm', 'ferryman'], quarry: ['foreman', 'demolisher', 'storm', 'foreman'], frost: ['rime', 'storm', 'rime', 'rime'] });   // frost: v0.9.6.0 Frostpeak
+  assert.deepEqual(out.bosses, { yard: ['butcher', 'demolisher', 'storm', 'butcher'], river: ['ferryman', 'butcher', 'storm', 'ferryman'], quarry: ['foreman', 'demolisher', 'storm', 'foreman'], frost: ['rime', 'storm', 'rime', 'rime'], city: ['butcher', 'demolisher', 'storm', 'ferryman'] });   // city: v0.9.7, fallback order (Black Out draws bosses at random)   // frost: v0.9.6.0 Frostpeak
   out.oct = await E(() => {
     const P = __pal; P.locker.bag = {}; run('yard', 'std', '5'); P.game.oct = true;   // the host's October flag
     P.game.phase = 'raid'; P.spawnBoss('butcher'); const e = P.enemies.find(x => x.boss === 'butcher'); const name = P.bossInfo('butcher').name;

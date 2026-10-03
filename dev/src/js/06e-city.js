@@ -48,7 +48,9 @@ function layCity(){
   for(const p of L.pois){if(p.perk==='brick'){node({i:p.i-1,j:p.j+1,type:1,locked:false,unlock:0,solid:true});node({i:p.i+1,j:p.j+1,type:1,locked:false,unlock:0,solid:true})}
     if(p.perk==='wood'){node({i:p.i-1,j:p.j+1,type:2,locked:false,unlock:0,solid:true});node({i:p.i+1,j:p.j-1,type:0,amt:48,max:48,rt:0,locked:false})}}
   // sandbag walls: a broken ring round Main Command's plaza, and a few round each major POI
-  const ring=(ci,cj,r)=>{const out=[];for(let a=-r;a<=r;a++)for(const [i,j]of[[ci+a,cj-r],[ci+a,cj+r],[ci-r,cj+a],[ci+r,cj+a]])if(hash(i*9+1,j*3+7)>.45&&terr[idx(i,j)]===T_GROUND)out.push([i,j]);return out};
+  const used=new Set([...nodeK,idx(G.C,G.C),...L.pois.map(p=>idx(p.i,p.j))]);   // never on a pile, a stake or another sandbag
+  const ring=(ci,cj,r)=>{const out=[];for(let a=-r;a<=r;a++)for(const [i,j]of[[ci+a,cj-r],[ci+a,cj+r],[ci-r,cj+a],[ci+r,cj+a]]){const k=idx(i,j);
+    if(used.has(k)||hash(i*9+1,j*3+7)<=.45||terr[k]!==T_GROUND)continue;used.add(k);out.push([i,j])}return out};
   L.ruins.push([ring(G.C,G.C,2),1,.8,0]);for(const p of L.pois)if(p.major)L.ruins.push([ring(p.i,p.j,2),1,.6,0]);
   // raiders come in along the four edges; each attack uses the edge nearest its POI
   const edge=side=>{const out=[];for(let s=3;s<n-3;s++)out.push(side==='n'?[s,0]:side==='s'?[s,n-1]:side==='w'?[0,s]:[n-1,s]);return out};
