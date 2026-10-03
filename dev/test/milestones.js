@@ -45,7 +45,7 @@ const PORT = process.env.PORT || 8080;
   // every ladder item: rarity steps r, e, l, g (or the ladder's own list: v0.9.4.0 Blitzkrieg is r, e, e, l, g); the need matches its ladder's steps
   out.ladders = await p.evaluate(() => __pal.LADDERS.map(L => L.items.map(([c, k], i) => { const it = __pal.COS.find(x => x.id === c + ':' + k); return it && it.r === (L.rar ? L.rar.join('') : 'relg')[i] && it.need[L.st] === L.steps[i] && it.src === 'unlock' }).every(Boolean)));
   assert.ok(out.ladders.every(Boolean), 'every ladder is rare, epic, legendary, gold with its own goals');
-  assert.equal(out.ladders.length, 13);   // v0.9.4.0 adds BLITZKRIEG RUSH
+  assert.equal(out.ladders.length, 15);   // v0.9.4.0 adds BLITZKRIEG RUSH; v0.9.6.0 adds FROSTPEAK and THE RIME COLOSSUS
 
   // the after-action card for the closest milestone
   out.card = await p.evaluate(() => { __pal.showRewards({ kind: 'run', cases: {}, shards: 0, unlocked: [], toNext: 2, prog: 1 }); const c = document.querySelector('.rwMile'); return c ? c.textContent : '' });
@@ -62,7 +62,7 @@ const PORT = process.env.PORT || 8080;
     const pale = tile('Pale Butcher'), base = tile('Butcher');
     return { heads, pale: pale && pale.querySelector('.iprog') ? pale.querySelector('.iprog').textContent : '', baseBar: !!(base && base.querySelector('.iprog')), sub: document.querySelector('#lockGrid .gsec small').textContent };
   });
-  assert.equal(out.ui.heads.length, 13); assert.equal(out.ui.pale, '26 / 50'); assert.equal(out.ui.baseBar, false); assert.match(out.ui.sub, /26 Butchers beaten/);
+  assert.equal(out.ui.heads.length, 15); assert.equal(out.ui.pale, '26 / 50'); assert.equal(out.ui.baseBar, false); assert.match(out.ui.sub, /26 Butchers beaten/);
   await p.screenshot({ path: __dirname + '/out/milestones.png' });
   // Milestone cosmetics now live exclusively in MILESTONES.
   await p.click('#lockTabs [data-cat=skin]'); await p.waitForTimeout(300);

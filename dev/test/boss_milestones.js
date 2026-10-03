@@ -30,6 +30,7 @@ const claims = [];
   out.mods = await H.evaluate(() => __pal.game.mods);
   // the host kills a regular boss (raid 5) and a Boss Rush boss (raid 2 style, sb) with its own shots; the guest never fires
   await H.evaluate(() => { const P = __pal; setInterval(() => { for (const q of P.players.values()) { q.max = 1e9; q.hp = 1e9 } P.core.max = 1e9; P.core.hp = 1e9 }, 50);
+    P.game.oct = false;   // in October the Butcher is the pumpkin variant ('butcher_oct'); pinned so this passes all year
     P.game.wave = 5; P.game.phase = 'raid'; P.game.queue = []; P.game.time = 600;
     P.spawnBoss('butcher'); P.spawnBoss('demolisher', true); for (const e of P.enemies.filter(e => e.type === 'boss')) P.hurtEnemyHook(e, 1e9, 'host');
     P.game.phase = 'build'; P.game.timer = 999 });

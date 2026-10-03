@@ -44,6 +44,12 @@ function handle(method, url, h, body) {
       case 'buy_case': { if (body.p_case !== 'afterglow') return J(400, { code: '22023', message: "The supply case can't be bought with shards" }); if (L.shards < 10) return J(400, { code: '22023', message: 'That takes 10 shards' }); L.shards -= 10; L.bag.afterglow = (L.bag.afterglow | 0) + 1; return J(200, out()); }
       case 'open_case_v0935': case 'open_case_v094': { if (body.p_case === 'afterglow') { if ((L.bag.afterglow | 0) < 1) return J(400, { message: 'No afterglow cases to open' }); L.bag.afterglow--; const it = { id: 'hat:ghelm', cat: 'hat', key: 'ghelm', name: 'Gold Knight Helm', rarity: 'g' }; L.owned.push(it.id); return J(200, { case: 'afterglow', item: it, dup: false, locker: out() }) } }
       case 'open_case': { if (L.cases < 1) return J(400, { code: '22023', message: 'No supply cases to open' }); L.cases--; const it = { id: 'hat:crown', cat: 'hat', key: 'crown', name: 'Crown', rarity: 'l' }; const dup = L.owned.includes(it.id); if (dup) L.shards += 20; else L.owned.push(it.id); L.rev++; return J(200, { item: it, dup, locker: out() }); }
+      case 'open_cases_v0962': {   // v0.9.6.2 batch openings (one or five); the same items as the single-case calls above
+        const q = body.p_quantity | 0, id = body.p_case, have = id === 'supply' ? L.cases : (L.bag[id] | 0); if (![1, 5].includes(q) || have < q) return J(400, { code: '22023', message: 'Not enough cases for this opening' });
+        const results = []; for (let n = 0; n < q; n++) { if (id === 'supply') L.cases--; else L.bag[id]--;
+          const item = id === 'afterglow' ? { id: 'hat:ghelm', cat: 'hat', key: 'ghelm', name: 'Gold Knight Helm', rarity: 'g' } : { id: 'hat:crown', cat: 'hat', key: 'crown', name: 'Crown', rarity: 'l' };
+          const dup = L.owned.includes(item.id), shards = dup ? 20 : 0; if (dup) L.shards += shards; else L.owned.push(item.id); results.push({ item, dup, shards }) }
+        L.rev++; return J(200, { operation: body.p_operation, case: id, quantity: q, results, locker: out(), retry: false }) }
       case 'craft_case': { if (L.shards < 10) return J(400, { code: '22023', message: 'Crafting a case takes 10 shards' }); L.shards -= 10; L.cases++; return J(200, out()); }
       case 'equip': { const [cat, key] = body.p_item.split(':'); if (!L.owned.includes(body.p_item)) return J(403, { code: '42501', message: "You don't own that item" }); L.eq[cat] = key; L.rev++; return J(200, out()); }
       case 'set_username': { const n = body.p_name; if (Object.entries(db.names).some(([k, v]) => k !== uid && v.toLowerCase() === n.toLowerCase())) return J(409, { code: '23505', message: 'That username is taken' }); db.names[uid] = n; return J(200, { username: n }); }
@@ -84,14 +90,15 @@ function handle(method, url, h, body) {
 
   // 3. open a case: the server rolls it
   await P(() => __pal.showPage('locker')); await W(200);
-  await p.click('[data-open=supply]'); await W(600); s = await state(); log('3 open case -> cases', s.cases, 'owns crown', await P(() => __pal.locker.owned.includes('hat:crown')), 'server cases', db.lockers[u1].cases);
-  await W(4600); log('  reel shows:', await P(() => document.getElementById('caseName').textContent + ' / ' + document.getElementById('caseSub').textContent));
+  await p.click('[data-open=supply]'); await p.click('#caseIntro'); await W(600); s = await state(); log('3 open case -> cases', s.cases, 'owns crown', await P(() => __pal.locker.owned.includes('hat:crown')), 'server cases', db.lockers[u1].cases);   // v0.9.6.2: the intro waits for a tap
+  await p.waitForSelector('#caseResult:not([hidden])', { timeout: 15000 }); log('  reel shows:', await P(() => document.getElementById('caseName').textContent + ' / ' + document.getElementById('caseSub').textContent));
   await p.click('#caseEquip'); await W(400); log('  equipped on server:', db.lockers[u1].eq.hat);
 
   // 4. offline: cases wait, a finished run is kept and sent later
   db.offline = true;
   await p.click('[data-open=supply]', { timeout: 1500 }).catch(() => { }); await W(500);
   log('4 offline open ->', await P(() => document.getElementById('lockMsg').textContent), '| cases still', (await state()).cases);
+  await P(() => { if (!document.getElementById('caseOv').hidden) __pal.closeCaseOpening(false) });   // v0.9.6.2 keeps an unconfirmed opening on screen (and saved) until dismissed
   await P(() => __pal.showPage('solo')); await p.click('#startBtn'); await W(300);
   await P(() => { __pal.game.time = 400; __pal.game.won = true; __pal.game.wave = 6; __pal.player.kills = 40; __pal.showOver(); });
   await W(800); s = await state(); log('  offline run: local cases', s.cases, 'queued claims', s.claims, 'server cases', db.lockers[u1].cases);
@@ -101,10 +108,18 @@ function handle(method, url, h, body) {
 
   // 4b. afterglow with an account: buy with shards on the server, open, PvP drop result arrives from the server
   await P(() => __pal.toMenu()); await P(() => __pal.showPage('locker'));
+  // v0.9.6.2: the opening started offline in step 4 was saved and comes back now; finish it like a player would
+  const vis = sel => p.locator(sel).isVisible();
+  const lockerResume = p.locator('#caseBoxes button', { hasText: 'RESUME OPENING' });
+  if (await lockerResume.count()) { await lockerResume.first().click(); await W(300);
+    if (await vis('#caseIntro')) await p.click('#caseIntro'); await W(300); if (await vis('#caseSkip')) await p.click('#caseSkip');
+    await p.waitForSelector('#caseResult:not([hidden])', { timeout: 15000 }); await W(200);
+    if (await vis('#caseDone')) await p.click('#caseDone'); else if (await vis('#caseEquip')) await p.click('#caseEquip'); await W(300) }
+  log('  resumed offline opening: server cases', db.lockers[u1].cases, 'overlay', await P(() => document.getElementById('caseOv').hidden ? 'closed' : 'open'));
   db.lockers[u1].shards = 12; await P(() => __pal.syncLocker()); await W(300);
   await p.click('[data-buy=afterglow]'); await W(400);
   log('4b bought on server: shards', db.lockers[u1].shards, 'bag', JSON.stringify(db.lockers[u1].bag), '| game shows', await P(() => document.querySelector('.cbox:nth-child(2) b').textContent));
-  await p.click('[data-open=afterglow]'); await W(5300);
+  await p.click('[data-open=afterglow]'); await p.click('#caseIntro'); await p.waitForSelector('#caseResult:not([hidden])', { timeout: 15000 });
   log('   opened:', await P(() => document.getElementById('caseEye').textContent + ' -> ' + document.getElementById('caseName').textContent + ' / ' + document.getElementById('caseSub').textContent), '| owns', await P(() => __pal.locker.owned.includes('hat:ghelm')));
   await p.screenshot({ path: __dirname + '/out/c_gold.png' });
   await p.click('#caseDone');
