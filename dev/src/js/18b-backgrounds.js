@@ -324,7 +324,7 @@ function flagScene(x,w,h,t,id,moving){
 for(const[id,name,r]of FLAGS){const moving=r==='l'||r==='g';BGS['f_'+id]=Object.assign({name:name+' Flag',r,src:'case',box:'flags',draw(x,w,h,t){flagScene(x,w,h,t,id,moving)}},moving?{}:{still:0})}
 // the one call the lobby and the Locker use: still backgrounds are drawn once and reused
 function drawBg(id,x,w,h,t){const B=BGS[id]||BGS.campfire;if(B.still!==undefined)bgBlit(x,bgLayer('still:'+id,w,h,(c,w,h)=>B.draw(c,w,h,B.still)),w,h);else B.draw(x,w,h,t)}
-registerWinterBackgrounds();
+registerWinterBackgrounds();registerHybridBackgrounds();
 const BG_IDS=Object.keys(BGS);
 
 // backgrounds are lobby cosmetics: Locker items like the rest (cat 'bg'), never sent to other players

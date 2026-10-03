@@ -4,7 +4,7 @@
 // they talk directly. Each guest opens 'r' (reliable: hello, build, grenade, and every
 // one-off event: sounds, particles, bullets, toasts, wall changes), 'u' (fast: movement in),
 // and 'st' (never resent: game state out, 15 times a second).
-const PROTO='yard-23',ROOM_PREFIX='palisade-yard-23-';   // v0.9.6.3: slimmer state packets (trimmed player rows, slow fields on change, no height)
+const PROTO='yard-24',ROOM_PREFIX='palisade-yard-24-';   // v0.9.6.4: campaign map evacs and the Whiteout Gauntlet (fb kind/chapter/wave, chapter evac results)
 const ROOM_SESSION=(()=>{let id='';try{id=sessionStorage.getItem('palisade.roomSession')||''}catch(e){}
   if(!/^[0-9a-f]{24}$/.test(id)){id=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');try{sessionStorage.setItem('palisade.roomSession',id)}catch(e){}}
   return id})();
@@ -188,7 +188,7 @@ function hostDrop(peerId){
 // salvage and kills. Keyed by the browser's room session, which survives a reload in the same tab.
 function stashLeaver(c,p){
   if(!c.session||c.kicked||!p||game.pvp)return;
-  NET.leftBy.set(c.session,{gid:game.gid,chapter:game.chapter,prepEpoch:game.prepEpoch||0,cls:p.cls,up:{...p.up},ammoEq:p.ammoEq.slice(),sal:p.sal|0,kills:p.kills|0,deaths:p.deaths|0,out:!!p.out,
+  NET.leftBy.set(c.session,{gid:game.gid,chapter:game.chapter,prepEpoch:game.prepEpoch||0,cls:p.cls,up:{...p.up},ammoEq:p.ammoEq.slice(),sal:p.sal|0,kills:p.kills|0,deaths:p.deaths|0,out:!!p.out,chEvac:(p.chEvac||[]).slice(0,3),
     x:p.x,y:p.y,z:heightAt(p.x,p.y),hp:p.hp,max:p.max,alive:p.alive,downed:p.downed,rt:p.rt,revive:p.revive,mats:p.mats.slice(),nades:p.nades,ammo:p.ammo,rl:p.rl,rk:p.rk,rkCd:p.rkCd,stl:p.stl,stlCd:p.stlCd});
   if(NET.leftBy.size>12)NET.leftBy.delete(NET.leftBy.keys().next().value);
 }
@@ -202,7 +202,8 @@ function restoreLeaver(c,p){
     if(!prepared){p.hp=Math.min(p.max,s.hp*(p.max/s.max));p.alive=s.alive;p.downed=s.downed;p.rt=s.rt;p.revive=s.revive;p.nades=Math.min(p.maxN,s.nades);p.rk=s.rk;p.rkCd=s.rkCd;p.stl=s.stl;p.stlCd=s.stlCd;if(s.cls===p.cls&&p.gun.mag){p.ammo=Math.min(p.gun.mag,s.ammo??p.gun.mag);p.rl=s.rl||0}}
     if(s.chapter===game.chapter&&!collides(s.x,s.y,.27,pt(p))){p.x=s.x;p.y=s.y;p.z=heightAt(p.x,p.y);p.tx=p.x;p.ty=p.y;p.tp++}
   }
-  p.sal=Math.max(p.sal|0,s.sal);p.kills=s.kills;p.deaths=s.deaths;if(s.out){p.out=true;p.alive=false;p.downed=false;p.ev=BLITZ.hold}return true;   // v0.9.4.0: out is out
+  p.sal=Math.max(p.sal|0,s.sal);p.kills=s.kills;p.deaths=s.deaths;if(Array.isArray(s.chEvac))p.chEvac=s.chEvac.slice(0,3);   // v0.9.6.4: chapter evac results come back too
+  if(s.out&&game.fb&&!game.fb.done&&s.chapter===game.chapter){p.out=true;p.alive=false;p.downed=false;p.ev=BLITZ.hold}return true;   // out is out, but only for the evac that's still running
 }
 function hostKick(pid){
   if(NET.mode!=='host'||pid==='host')return;
@@ -295,7 +296,7 @@ const PL_STATE=[['id',p=>p.id],['x',p=>r2(p.x)],['y',p=>r2(p.y)],['ax',p=>r2(p.a
   ['alive',p=>p.alive?1:0],['ammo',p=>p.gun.mag?p.ammo|0:-1],['tp',p=>p.tp],['down',p=>p.downed?1:0],['rev',p=>r2(p.revive)],['rt',p=>r2(p.rt)],
   ['bcd',p=>r2(Math.max(0,p.bcd))],['bolt',p=>p.bolt>0?r2(p.bolt/p.boltT):0],['rl',p=>p.rl>0?1:0],['stun',p=>r2(p.stun||0)],['ev',p=>r2(p.ev||0)]];   // ev (v0.9.4.0): seconds stood in the evac ring
 const PL_SLOW=[['id',p=>p.id],['m0',p=>p.mats[0]],['m1',p=>p.mats[1]],['m2',p=>p.mats[2]],['nades',p=>p.nades],['sal',p=>p.sal|0],['kills',p=>p.kills|0],['deaths',p=>p.deaths|0],
-  ['prot',p=>p.prot>0?1:0],['ab',p=>p.ab|0],['out',p=>p.out?1:0]];   // out (v0.9.4.0): evacuated   // ab: class-ability state, reserved
+  ['prot',p=>p.prot>0?1:0],['ab',p=>p.ab|0],['out',p=>p.out?1:0],['ce',p=>chEvacBits(p)]];   // ce (v0.9.6.4): chapter evac results, 2 bits a chapter   // out (v0.9.4.0): evacuated   // ab: class-ability state, reserved
 const PL_INFO=[['id',p=>p.id],['name',p=>p.name],['cls',p=>p.cls],['slot',p=>p.slot],['max',p=>p.max],['maxN',p=>p.maxN],['upS',p=>p.upS],['cosS',p=>p.cosS],['team',p=>p.team||''],['ammoEq',p=>p.ammoEq.join(',')],['sk',p=>p.sk]];
 // enemies: the boss-only fields sit last and trailing zeros are dropped, so a plain raider sends 7 numbers, not 12
 const EN_STATE=[['id',e=>e.id],['type',e=>ECODE.indexOf(e.type==='boss'?'boss:'+e.boss:e.type)],['x',e=>r2(e.x)],['y',e=>r2(e.y)],['ax',e=>r2(e.aim.x)],['ay',e=>r2(e.aim.y)],
@@ -344,8 +345,9 @@ function makeSnap(withWalls){
   if(game.bossLog&&game.bossLog.length)s.bl=game.bossLog;
   if(campaign())s.cm=game.chapter;
   if(frostFields.length)s.ice=frostFields.map(f=>[r2(f.x),r2(f.y),r2(f.t),r2(f.z)]);
-  if(game.fb){const F=game.fb,E=F.evac;s.fb=[r2(F.t),F.n,F.max,E?r2(E.x):0,E?r2(E.y):0,E?r2(E.r):0,F.done?1:0]}   // v0.9.4.0: the Final Blitz clock and the evac site
+  if(game.fb){const F=game.fb,E=F.evac;s.fb=[r2(F.t),F.n,F.max,E?r2(E.x):0,E?r2(E.y):0,E?r2(E.r):0,F.done?1:0,F.mapEvac?1:F.gauntlet?2:0,F.ch|0,F.wave|0]}   // [7] kind (v0.9.6.4): 1 map evac, 2 gauntlet   // v0.9.4.0: the Final Blitz clock and the evac site
   if(game.fbLog&&game.fbLog.length)s.fl=game.fbLog;
+  if(game.gKill&&game.gKill.length)s.gk=game.gKill;   // v0.9.6.4: gauntlet kills per wave (each soldier's claim counts cleared waves)
   if(arcs.length)s.ar=flat(arcs,r=>[r2(r.x),r2(r.y),r2(r.vx),r2(r.vy)]);
   if(game.sbLog&&game.sbLog.length)s.sl=game.sbLog;   // v0.9.3.8: which in-between bosses fell (boss milestones for everyone)   // which bosses fell (each player's rewards are worked out on their own phone)
   if(terrLog.length)s.tr=terrLog;   // ground that changed (pits, a rammed bridge): a few numbers
@@ -418,7 +420,7 @@ function applySnap(s){
   for(const id of[...players.keys()])if(!seen.has(id))players.delete(id);
   player=players.get(myId)||player;
   for(const r of s.ps||[]){const p=players.get(r[PW.id]);if(!p)continue;   // v0.9.6.3: slow fields, only when they changed
-    p.mats=[r[PW.m0]|0,r[PW.m1]|0,r[PW.m2]|0];p.nades=r[PW.nades]|0;p.sal=r[PW.sal]|0;p.kills=r[PW.kills]|0;p.deaths=r[PW.deaths]|0;p.prot=r[PW.prot]?1:0;p.ab=r[PW.ab]|0;p.out=!!r[PW.out]}
+    p.mats=[r[PW.m0]|0,r[PW.m1]|0,r[PW.m2]|0];p.nades=r[PW.nades]|0;p.sal=r[PW.sal]|0;p.kills=r[PW.kills]|0;p.deaths=r[PW.deaths]|0;p.prot=r[PW.prot]?1:0;p.ab=r[PW.ab]|0;p.out=!!r[PW.out];p.chEvac=chEvacFrom(r[PW.ce]|0)}
   const q=s.qm;if(q[4]<qm.hp-.01)qm.flash=.1;qm.tx=q[0];qm.ty=q[1];qm.aim={x:q[2],y:q[3]};qm.hp=q[4];qm.max=q[5];qm.alive=!!q[6];qm.revive=q[7];game.dellLv=q[8]|0;
   const old=new Map(enemies.map(e=>[e.id,e]));enemies=[];
   for(const r of s.en){const v=k=>r[PE[k]]||0,id=r[PE.id];let e=old.get(id);
@@ -430,8 +432,9 @@ function applySnap(s){
   rockets=[];for(let o=0;o<(s.rk||[]).length;o+=4)rockets.push({x:s.rk[o],y:s.rk[o+1],vx:s.rk[o+2],vy:s.rk[o+3]});
   fires=[];for(let o=0;o<(s.fz||[]).length;o+=5)fires.push({x:s.fz[o],y:s.fz[o+1],t:s.fz[o+2],r:s.fz[o+3],nap:s.fz[o+4]|0,max:4});
   arcs=[];for(let o=0;o<(s.ar||[]).length;o+=4)arcs.push({x:s.ar[o],y:s.ar[o+1],vx:s.ar[o+2],vy:s.ar[o+3]});
-  if(Array.isArray(s.fb)){const f=s.fb;game.fb={t:f[0],n:f[1],max:f[2],evac:f[5]?{x:f[3],y:f[4],r:f[5]}:null,done:!!f[6]}}else game.fb=null;
+  if(Array.isArray(s.fb)){const f=s.fb;game.fb={t:f[0],n:f[1],max:f[2],evac:f[5]?{x:f[3],y:f[4],r:f[5]}:null,done:!!f[6],mapEvac:f[7]===1,gauntlet:f[7]===2,ch:f[8]|0,wave:f[9]|0}}else game.fb=null;
   if(Array.isArray(s.fl))game.fbLog=s.fl.slice(0,20);
+  if(Array.isArray(s.gk))game.gKill=s.gk.slice(0,6);
   if(s.bu){bullets.length=0;for(const e of s.bu)addGuestBullet(e)}
   lobs=[];for(let o=0;o<s.lo.length;o+=8)lobs.push({x0:s.lo[o],y0:s.lo[o+1],x1:s.lo[o+2],y1:s.lo[o+3],t:s.lo[o+4],T:s.lo[o+5],R:s.lo[o+6],k:s.lo[o+7]});
   charges=[];for(let o=0;o<s.ch.length;o+=3)charges.push({x:s.ch[o],y:s.ch[o+1],fuse:s.ch[o+2]});

@@ -1,6 +1,6 @@
 # PALISADE cosmetic catalog
 
-Version v0.9.6.1, protocol yard-22. 311 entries; {"skin":88,"hat":43,"trail":75,"fx":36,"bg":69}. Generated from final runtime registries and reconciled against the verified live server catalog. Inventory entries and renderer-only/default entries are identified in [catalog.json](catalog.json). Build SHA256: `3aeb523f19a283ac991b4275bee402bb94f2623c08f7a08ebdb582274cf851e9`.
+Version v0.9.6.1, protocol yard-22. 368 entries; {"skin":118,"hat":51,"trail":75,"fx":47,"bg":77}. Generated from final runtime registries and reconciled against the verified live server catalog. Inventory entries and renderer-only/default entries are identified in [catalog.json](catalog.json). Build SHA256: `584de238579616c4c1d948051cb463569e3025c1d0d481b78b4aaedab678bd1b`.
 
 Regenerate: rebuild with the bundled Python and `dev/build.py`, then `node dev/catalog/capture-cosmetics.js`. Chrome path can be overridden with CHROMIUM.
 
@@ -47,6 +47,13 @@ Character yaw 0 faces the viewer; +90° turns toward screen right, 180° shows t
 - [hat-winter-2.png](hat-winter-2.png)
 - [trail-winter-1.png](trail-winter-1.png)
 - [fx-winter-1.png](fx-winter-1.png)
+- [skin-hybrid-1.png](skin-hybrid-1.png)
+- [skin-hybrid-2.png](skin-hybrid-2.png)
+- [skin-hybrid-3.png](skin-hybrid-3.png)
+- [skin-hybrid-4.png](skin-hybrid-4.png)
+- [hat-hybrid-1.png](hat-hybrid-1.png)
+- [fx-hybrid-1.png](fx-hybrid-1.png)
+- [fx-hybrid-2.png](fx-hybrid-2.png)
 - [bg-base-1.png](bg-base-1.png)
 - [bg-halloween-1.png](bg-halloween-1.png)
 - [bg-supply-1.png](bg-supply-1.png)
@@ -58,6 +65,7 @@ Character yaw 0 faces the viewer; +90° turns toward screen right, 180° shows t
 - [bg-flags-4.png](bg-flags-4.png)
 - [bg-winter-1.png](bg-winter-1.png)
 - [bg-winter-2.png](bg-winter-2.png)
+- [bg-hybrid-1.png](bg-hybrid-1.png)
 
 ## Audit findings
 

@@ -1,7 +1,7 @@
 {
   "project": "puvjfhwxigxjpsvdwrwf",
-  "verified": "2026-10-01",
-  "migration": "20261001214620_winter_models",
+  "verified": "2026-10-03",
+  "migration": "20261003153435_v0964_gauntlet_rewards",
   "items": [
     {
       "id": "bg:arcade",
@@ -72,6 +72,17 @@
       },
       "rarity": "e",
       "catalog_version": 0
+    },
+    {
+      "id": "bg:crowncity",
+      "box": "hybrid",
+      "cat": "bg",
+      "key": "crowncity",
+      "src": "case",
+      "name": "Crown City",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 4
     },
     {
       "id": "bg:dawn",
@@ -485,6 +496,17 @@
       "catalog_version": 0
     },
     {
+      "id": "bg:fiestastrip",
+      "box": "hybrid",
+      "cat": "bg",
+      "key": "fiestastrip",
+      "src": "case",
+      "name": "Fiesta Strip",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 4
+    },
+    {
       "id": "bg:frozenriver",
       "box": "winter",
       "cat": "bg",
@@ -575,6 +597,17 @@
       "catalog_version": 0
     },
     {
+      "id": "bg:lakeblocks",
+      "box": "hybrid",
+      "cat": "bg",
+      "key": "lakeblocks",
+      "src": "case",
+      "name": "Lake Blocks",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 4
+    },
+    {
       "id": "bg:lanternoutpost",
       "box": "winter",
       "cat": "bg",
@@ -641,6 +674,28 @@
       "need": null,
       "rarity": "c",
       "catalog_version": 0
+    },
+    {
+      "id": "bg:oaknight",
+      "box": "hybrid",
+      "cat": "bg",
+      "key": "oaknight",
+      "src": "case",
+      "name": "Oak Night",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 4
+    },
+    {
+      "id": "bg:peachwire",
+      "box": "hybrid",
+      "cat": "bg",
+      "key": "peachwire",
+      "src": "case",
+      "name": "Peach Wire",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 4
     },
     {
       "id": "bg:sandbags",
@@ -720,6 +775,28 @@
       "catalog_version": 0
     },
     {
+      "id": "bg:viceblock",
+      "box": "hybrid",
+      "cat": "bg",
+      "key": "viceblock",
+      "src": "case",
+      "name": "Vice Block",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 4
+    },
+    {
+      "id": "bg:voltgrid",
+      "box": "hybrid",
+      "cat": "bg",
+      "key": "voltgrid",
+      "src": "case",
+      "name": "Volt Grid",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 4
+    },
+    {
       "id": "bg:watchtower",
       "box": "supply",
       "cat": "bg",
@@ -764,6 +841,17 @@
       "catalog_version": 0
     },
     {
+      "id": "bg:yardneon",
+      "box": "hybrid",
+      "cat": "bg",
+      "key": "yardneon",
+      "src": "case",
+      "name": "Yard Neon",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 4
+    },
+    {
       "id": "bg:yulehangar",
       "box": "winter",
       "cat": "bg",
@@ -784,6 +872,17 @@
       "need": null,
       "rarity": "e",
       "catalog_version": 2
+    },
+    {
+      "id": "fx:bands",
+      "box": "hybrid",
+      "cat": "fx",
+      "key": "bands",
+      "src": "case",
+      "name": "Money Explosion",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 4
     },
     {
       "id": "fx:bats",
@@ -852,6 +951,17 @@
       "catalog_version": 0
     },
     {
+      "id": "fx:demon",
+      "box": "hybrid",
+      "cat": "fx",
+      "key": "demon",
+      "src": "case",
+      "name": "Purple Demon",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 4
+    },
+    {
       "id": "fx:demonclaw",
       "box": "blitz",
       "cat": "fx",
@@ -861,6 +971,17 @@
       "need": null,
       "rarity": "l",
       "catalog_version": 2
+    },
+    {
+      "id": "fx:eight",
+      "box": "hybrid",
+      "cat": "fx",
+      "key": "eight",
+      "src": "case",
+      "name": "8=D Pop",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 4
     },
     {
       "id": "fx:embers",
@@ -874,6 +995,17 @@
       },
       "rarity": "r",
       "catalog_version": 0
+    },
+    {
+      "id": "fx:fire",
+      "box": "hybrid",
+      "cat": "fx",
+      "key": "fire",
+      "src": "case",
+      "name": "Fire Pop",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 4
     },
     {
       "id": "fx:frag",
@@ -957,6 +1089,28 @@
       "catalog_version": 2
     },
     {
+      "id": "fx:hundo",
+      "box": "hybrid",
+      "cat": "fx",
+      "key": "hundo",
+      "src": "case",
+      "name": "100 Pop",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 4
+    },
+    {
+      "id": "fx:leaf",
+      "box": "hybrid",
+      "cat": "fx",
+      "key": "leaf",
+      "src": "case",
+      "name": "Weed Leaf",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 4
+    },
+    {
       "id": "fx:none",
       "box": null,
       "cat": "fx",
@@ -966,6 +1120,17 @@
       "need": null,
       "rarity": "c",
       "catalog_version": 0
+    },
+    {
+      "id": "fx:nuke",
+      "box": "hybrid",
+      "cat": "fx",
+      "key": "nuke",
+      "src": "case",
+      "name": "Nuke Pop",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 4
     },
     {
       "id": "fx:ornamentpop",
@@ -988,6 +1153,17 @@
       "need": null,
       "rarity": "c",
       "catalog_version": 0
+    },
+    {
+      "id": "fx:poop",
+      "box": "hybrid",
+      "cat": "fx",
+      "key": "poop",
+      "src": "case",
+      "name": "Poop Pop",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 4
     },
     {
       "id": "fx:reticle",
@@ -1049,6 +1225,17 @@
       "need": null,
       "rarity": "l",
       "catalog_version": 0
+    },
+    {
+      "id": "fx:sixty",
+      "box": "hybrid",
+      "cat": "fx",
+      "key": "sixty",
+      "src": "case",
+      "name": "67 Pop",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 4
     },
     {
       "id": "fx:skull",
@@ -1150,6 +1337,17 @@
       "catalog_version": 0
     },
     {
+      "id": "fx:swish",
+      "box": "hybrid",
+      "cat": "fx",
+      "key": "swish",
+      "src": "case",
+      "name": "Hoop Swish",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 4
+    },
+    {
       "id": "fx:tealslash",
       "box": "blitz",
       "cat": "fx",
@@ -1183,6 +1381,17 @@
       "catalog_version": 2
     },
     {
+      "id": "fx:zzz",
+      "box": "hybrid",
+      "cat": "fx",
+      "key": "zzz",
+      "src": "case",
+      "name": "Bed Nap",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 4
+    },
+    {
       "id": "hat:acap",
       "box": "afterglow",
       "cat": "hat",
@@ -1203,6 +1412,17 @@
       "need": null,
       "rarity": "g",
       "catalog_version": 2
+    },
+    {
+      "id": "hat:ballhelm",
+      "box": "hybrid",
+      "cat": "hat",
+      "key": "ballhelm",
+      "src": "case",
+      "name": "Ball Helm",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 4
     },
     {
       "id": "hat:batcirclet",
@@ -1308,6 +1528,17 @@
       "catalog_version": 0
     },
     {
+      "id": "hat:conductor",
+      "box": "hybrid",
+      "cat": "hat",
+      "key": "conductor",
+      "src": "case",
+      "name": "Conductor Cap",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 4
+    },
+    {
       "id": "hat:crown",
       "box": "supply",
       "cat": "hat",
@@ -1330,6 +1561,17 @@
       },
       "rarity": "r",
       "catalog_version": 2
+    },
+    {
+      "id": "hat:dunce",
+      "box": "hybrid",
+      "cat": "hat",
+      "key": "dunce",
+      "src": "case",
+      "name": "Dunce Cone",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 4
     },
     {
       "id": "hat:gclownhair",
@@ -1387,6 +1629,17 @@
       "need": null,
       "rarity": "c",
       "catalog_version": 1
+    },
+    {
+      "id": "hat:gridhelm",
+      "box": "hybrid",
+      "cat": "hat",
+      "key": "gridhelm",
+      "src": "case",
+      "name": "Grid Helm",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 4
     },
     {
       "id": "hat:halo",
@@ -1490,6 +1743,17 @@
       "catalog_version": 2
     },
     {
+      "id": "hat:prop",
+      "box": "hybrid",
+      "cat": "hat",
+      "key": "prop",
+      "src": "case",
+      "name": "Prop Hat",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 4
+    },
+    {
       "id": "hat:pumpkinking",
       "box": "halloween",
       "cat": "hat",
@@ -1536,6 +1800,17 @@
       "catalog_version": 2
     },
     {
+      "id": "hat:shades",
+      "box": "hybrid",
+      "cat": "hat",
+      "key": "shades",
+      "src": "case",
+      "name": "Sunglasses",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 4
+    },
+    {
       "id": "hat:shako",
       "box": "winter",
       "cat": "hat",
@@ -1545,6 +1820,17 @@
       "need": null,
       "rarity": "l",
       "catalog_version": 2
+    },
+    {
+      "id": "hat:skullhelm",
+      "box": "hybrid",
+      "cat": "hat",
+      "key": "skullhelm",
+      "src": "case",
+      "name": "Skull Helm",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 4
     },
     {
       "id": "hat:skullseal",
@@ -1655,6 +1941,17 @@
       "need": null,
       "rarity": "r",
       "catalog_version": 0
+    },
+    {
+      "id": "hat:yamaka",
+      "box": "hybrid",
+      "cat": "hat",
+      "key": "yamaka",
+      "src": "case",
+      "name": "Yamaka",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 4
     },
     {
       "id": "hat:yulecap",
@@ -2193,6 +2490,336 @@
       },
       "rarity": "g",
       "catalog_version": 0
+    },
+    {
+      "id": "skin:hb_bakers",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_bakers",
+      "src": "case",
+      "name": "Los Angeles Bakers",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_beat",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_beat",
+      "src": "case",
+      "name": "Miami Beat",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_bricks",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_bricks",
+      "src": "case",
+      "name": "New York Bricks",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_budgets",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_budgets",
+      "src": "case",
+      "name": "Denver Budgets",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_burrs",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_burrs",
+      "src": "case",
+      "name": "San Antonio Burrs",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_captors",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_captors",
+      "src": "case",
+      "name": "Toronto Captors",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_cinderwolves",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_cinderwolves",
+      "src": "case",
+      "name": "Minnesota Cinderwolves",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_cornets",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_cornets",
+      "src": "case",
+      "name": "Charlotte Cornets",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_drizzlies",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_drizzlies",
+      "src": "case",
+      "name": "Memphis Drizzlies",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_ducks",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_ducks",
+      "src": "case",
+      "name": "Milwaukee Ducks",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_fixers",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_fixers",
+      "src": "case",
+      "name": "Philadelphia Fixers",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_hummers",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_hummers",
+      "src": "case",
+      "name": "Oklahoma City Hummers",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_jabs",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_jabs",
+      "src": "case",
+      "name": "Utah Jabs",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_kelpies",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_kelpies",
+      "src": "case",
+      "name": "Boston Kelpies",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_lizards",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_lizards",
+      "src": "case",
+      "name": "Washington Lizards",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_lockets",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_lockets",
+      "src": "case",
+      "name": "Houston Lockets",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_navaliers",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_navaliers",
+      "src": "case",
+      "name": "Cleveland Navaliers",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_placers",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_placers",
+      "src": "case",
+      "name": "Indiana Placers",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_pulls",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_pulls",
+      "src": "case",
+      "name": "Chicago Pulls",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_relicans",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_relicans",
+      "src": "case",
+      "name": "New Orleans Relicans",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_rings",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_rings",
+      "src": "case",
+      "name": "Sacramento Rings",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_runs",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_runs",
+      "src": "case",
+      "name": "Phoenix Runs",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_sailglazers",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_sailglazers",
+      "src": "case",
+      "name": "Portland Sail Glazers",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_saversicks",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_saversicks",
+      "src": "case",
+      "name": "Dallas Saversicks",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_slippers",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_slippers",
+      "src": "case",
+      "name": "Los Angeles Slippers",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_squawks",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_squawks",
+      "src": "case",
+      "name": "Atlanta Squawks",
+      "need": null,
+      "rarity": "l",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_static",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_static",
+      "src": "case",
+      "name": "Orlando Static",
+      "need": null,
+      "rarity": "e",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_vets",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_vets",
+      "src": "case",
+      "name": "Brooklyn Vets",
+      "need": null,
+      "rarity": "c",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_whistlers",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_whistlers",
+      "src": "case",
+      "name": "Detroit Whistlers",
+      "need": null,
+      "rarity": "g",
+      "catalog_version": 4
+    },
+    {
+      "id": "skin:hb_worriers",
+      "box": "hybrid",
+      "cat": "skin",
+      "key": "hb_worriers",
+      "src": "case",
+      "name": "Golden State Worriers",
+      "need": null,
+      "rarity": "r",
+      "catalog_version": 4
     },
     {
       "id": "skin:holo",

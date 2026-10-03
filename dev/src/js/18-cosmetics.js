@@ -19,7 +19,10 @@ const CASES={
     how:'A 25% chance for everyone after any win, co-op or PvP. Or 10 shards.'},
   // v0.9.4.0: Blitzkrieg Rush. Hellfire and the Blue Butcher's arc: tracers, kill effects and two lobby backgrounds
   blitz:{name:'BLITZKRIEG CASE',short:'Blitzkrieg Cases',col:'#e0433a',weights:{c:45,r:32,e:16,l:6,g:1},cost:14,
-    how:'Blitzkrieg Rush only: two for everyone each time a Blitzkrieg boss goes down, and one more for making the evacuation. Or 14 shards.'}
+    how:'Blitzkrieg Rush only: two for everyone each time a Blitzkrieg boss goes down, and one more for making the evacuation. Or 14 shards.'},
+  // v0.9.6.4: Hybrid Theory. Jerseys on their own body, headgear, kill effects and neon block-city backgrounds
+  hybrid:{name:'HYBRID THEORY CASE',short:'Hybrid Theory Cases',col:'#c1d32f',weights:{c:46,r:30,e:16,l:7,g:1},cost:12,
+    how:'One for everyone after any co-op win. Or 12 shards.'}
 };
 const CASE_IDS=Object.keys(CASES),pvpCase=m=>CASE_IDS.find(id=>CASES[id].drop&&CASES[id].drop[m]),bossCase=()=>CASE_IDS.find(id=>CASES[id].drop&&CASES[id].drop.boss),winCase=()=>CASE_IDS.find(id=>CASES[id].drop&&CASES[id].drop.win);
 const SKINS={
@@ -109,15 +112,15 @@ const SKINS={
   bluebutcher:{body:'#16465a',vest:'#0a2230',pants:'#10212a',hat:'#0c3440',boonie:'#0c3440',apron:'#0e2c38',facewrap:'#0a2a30',neon:'#3ae0e0'},
   demon:{body:'#3a0e0a',vest:'#1c0806',pants:'#1c0a08',hat:'#1a0806',boonie:'#1a0806',head:'#5a1812',demon:'#ff6a1a',headwear:{demonHorns:'#1e1210'},aura:'demon'}};
 const SKIN_FX=['neon','dots','ruff','badge','plate','stars','holo','spots','frost','glitter','chrome','ribs','web','bones','wraps','reaper','phantom',
-  'apron','facewrap','coat','cape','lining','collar','reflect','waders','charges','medals','ghillie','sheet','stitches','clownface','hockey','sack','patches','straws','medal','aura','sahur','demon'];
+  'apron','facewrap','coat','cape','lining','collar','reflect','waders','charges','medals','ghillie','sheet','stitches','clownface','hockey','sack','patches','straws','medal','aura','sahur','demon','jersey','jtrim'];
 const HALLOWEEN_HATS={gravecap:true,stemband:true,batcirclet:true,bonewrap:true,webpin:true,skullseal:true};
 const SAHUR_HATS=new Set(['crown','tophat','visor','headband','pcap','halo','witch','devilhorns']);
-registerWinterLooks();
+registerWinterLooks();registerHybridLooks();
 // Class Issue preserves the skin's own appearance. Unknown or special heads block added headwear.
 function headwearAllowed(skin,hat){
   const S=SKINS[skin];if(!S)return false;if(hat==='class')return true;
   if(S.winterModel)return false;
-  if(S.sheet)return hat==='halo';
+  if(S.sheet)return hat==='halo'||hat==='dunce';   // v0.9.6.4: the Dunce Cone sits on the sheet too
   if(S.sahur)return SAHUR_HATS.has(hat);
   return !(S.demon||S.reaper||S.wraps||S.phantom||S.sack||S.hockey||S.clownface||S.ghillie||S.facewrap||S.headwear&&Object.keys(S.headwear).length);
 }
@@ -291,7 +294,7 @@ for(const L of LADDERS)L.items.forEach(([cat,key,name],i)=>COS.push({id:cat+':'+
   need:{[L.st]:L.steps[i]},how:L.how(L.steps[i]),price:null,ladder:L.id}));
 // the Flag Case's tracers (its backgrounds are added with the other backgrounds)
 for(const[id,name,r]of FLAGS)COS.push({id:'trail:f_'+id,cat:'trail',key:'f_'+id,name:name+' Flag',r,src:'case',box:'flags',need:null,how:'Found in '+CASES.flags.short,price:null});
-registerWinterCosmetics();
+registerWinterCosmetics();registerHybridCosmetics();
 const COSBY=Object.fromEntries(COS.map(c=>[c.id,c]));
 const CATN={skin:'SKIN',hat:'HEADGEAR',trail:'TRACER',fx:'KILL FX'};
 const DEFAULT_COS={skin:'std',hat:'class',trail:'std',fx:'none'};
@@ -420,7 +423,10 @@ function bossMilestone(st,k,mode=''){if(!BOSSES[k])return;const b='boss_'+bossBa
 // up first (7 -> 4). Raids, boss kills, skill points and milestones are never halved.
 const halfUp=n=>Math.ceil(Math.max(0,n|0)/2);
 const BLITZ_EVAC={cases:1,shards:25};   // making the evacuation: one more Blitzkrieg Case and 25 shards
-const fbCap=(c)=>(c.raid_to|0)>=(c.mode==='campaign'?CAMPAIGN.waves:BLITZ.waves)?((c.mods||[]).includes('blitzclock')?BLITZ.maxDT:BLITZ.max):0;
+const fbCap=(c)=>(c.raid_to|0)>=(c.mode==='campaign'?CAMPAIGN.waves:BLITZ.waves)?(c.mode==='campaign'&&(c.cv|0)>=4?GAUNTLET.waves*(GAUNTLET.rimes+1):(c.mods||[]).includes('blitzclock')?BLITZ.maxDT:BLITZ.max):0;
+// v0.9.6.4 Whiteout Gauntlet payouts (cv:4 campaign claims): 5-10 shards per boss, +1 Winter Case per cleared wave (6 max),
+// the final evac +2 Winter Cases and 25 shards, +1 Winter Case for each chapter evac made
+const GAUNTLET_PAY={shards:[5,10],waveCase:1,evacCases:2,evacShards:25,chapterCase:1};
 // the Flag Case's chance after any win (this browser's own locker; the server rolls for accounts)
 function winDrop(){const id=winCase();if(!id||rnd()>=CASES[id].drop.win)return{};caseAdd(id,1);return{[id]:1}}
 // Rewards come back as data (for the reward cards) with a sentence alongside (toasts, older screens):
@@ -457,6 +463,9 @@ function runClaim(held,win,kills,left=false){
     salvage:sal,size:game.size||'std',duration_s:dur,game_id:game.gid,joined_s:Math.round(game.joinT||0),left_s:Math.round(game.time),left:!!left,
     upgrades:(player?player.upS:'')+':'+(game.dellLv|0),mods:game.mods||[],map:game.map,cls:player?player.cls:pick.cls,end_reason:game.endReason||''};
   if(blitz()){claim.fb_keys=fbKeys;claim.evac=res}
+  claim.cv=4;   // v0.9.6.4 claims: the server applies chapter evacs, the gauntlet payouts and the Hybrid Theory drop only to these
+  if(campaign())claim.g_cleared=gauntletCleared();
+  if(campaign())claim.ch_evac=[0,1,2].map(i=>{const r=player&&player.chEvac?player.chEvac[i]:undefined;return r===undefined||r===null?null:!!r});
   claim.claim_id=game.gid+':'+from+':'+held+':'+Math.round(game.joinT||0)+':'+claim.left_s;
   return {claim,shards};
 }
@@ -488,13 +497,22 @@ function localRun(c,shards){
   let fshards=0;
   if(BZ){   // v0.9.4.0: Final Blitz bosses (2 Blitzkrieg Cases, 15-30 shards and a skill point each), the evacuation bonus, then halving
     const fk=(c.fb_keys||[]).filter(k=>BOSSES[k]&&(BOSSES[k].base||k==='rime')).slice(0,fbCap(c));
-    for(const k of fk){caseAdd(bossBox(k),BOSSES[k].cases||2);fshards+=15+Math.floor(rnd()*16);bossMilestone(st,k,c.mode)}
+    if(c.mode==='campaign'&&(c.cv|0)>=4){
+      const G=GAUNTLET_PAY;
+      for(const k of fk){fshards+=G.shards[0]+Math.floor(rnd()*(G.shards[1]-G.shards[0]+1));bossMilestone(st,k,c.mode)}
+      caseAdd('winter',G.waveCase*Math.min(GAUNTLET.waves,c.g_cleared|0,Math.floor(fk.length/(GAUNTLET.rimes+1))));
+      if(won){caseAdd('winter',G.evacCases);fshards+=G.evacShards}
+      caseAdd('winter',G.chapterCase*(c.ch_evac||[]).slice(0,3).filter(r=>r===true).length);
+    }else{
+      for(const k of fk){caseAdd(bossBox(k),BOSSES[k].cases||2);fshards+=15+Math.floor(rnd()*16);bossMilestone(st,k,c.mode)}
+      if(won){caseAdd(c.mode==='campaign'?'winter':'blitz',BLITZ_EVAC.cases);fshards+=BLITZ_EVAC.shards}
+    }
     spGain+=fk.length;
-    if(won){caseAdd(c.mode==='campaign'?'winter':'blitz',BLITZ_EVAC.cases);fshards+=BLITZ_EVAC.shards}
     locker.shards+=fshards;
   }
   locker.sp=(locker.sp|0)+spGain;locker.spTotal=(locker.spTotal|0)+spGain;
   const wd=won?winDrop():{};
+  if(won&&(c.cv|0)>=4)caseAdd('hybrid',1);   // v0.9.6.4: one Hybrid Theory Case for every co-op win
   if(BZ&&c.evac==='left'){locker.cases-=Math.floor((locker.cases-b0.cases)/2);for(const id in locker.bag)locker.bag[id]-=Math.floor(((locker.bag[id]|0)-(b0.bag[id]|0))/2);locker.shards-=Math.floor((locker.shards-b0.shards)/2)}
   const cases={supply:locker.cases-b0.cases};for(const id in locker.bag){const d=(locker.bag[id]|0)-(b0.bag[id]|0);if(d>0)cases[id]=d}
   const got=checkUnlocks();saveLocker();

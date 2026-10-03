@@ -73,6 +73,7 @@ function paintTracer(ctx,x1,y1,x2,y2,st,w,t,heavy,colorIndex=0){
 const FINISH_LIFE={sparks:.48,smoke:1.15,confetti:.95,embers:.8,glint:.65,bolt:.48,skull:.95,pixel:.7,frost:.75,gradburst:.75,sunburst:.75,toxic:.85,supernova:.85,glitchout:.6,singularity:.85,shockwave:.7,bubbles:1.2,bats:1,spider:1.1,souls:1.2,rocketburst:.8,reticle:.7,frag:.75,salvage:.95,hellportal:1.15,cinder:.8,tealslash:.6,ashbrand:1,demonclaw:1.1};
 function paintFinish(ctx,key,progress,scale,x,y){
  if(paintWinterFinish(ctx,key,progress,scale,x,y))return;
+ if(paintHybridFinish(ctx,key,progress,scale,x,y))return;
  if(!(key in FINISH_LIFE)||progress<0||progress>=1)return;
  const p=progress,e=1-Math.pow(1-p,3),fade=Math.min(1,(1-p)*2.8),pop=Math.min(1,p*12),tau=Math.PI*2;
  ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);ctx.globalAlpha*=fade*pop;ctx.lineJoin='round';ctx.lineCap='round';

@@ -11,6 +11,7 @@ function changeChapter(ch,guest=false){
   const hp=core.hp,max=core.max,L=layMap(CAMPAIGN.maps[ch],game.size,'');
   walls=new Array(N*N).fill(null);debris=new Int8Array(N*N);dist=new Float32Array(N*N);nodes=L.nodes;
   for(const[list,mat,ratio,char]of L.ruins)for(const[i,j]of list){const w=makeWall(mat,false,ratio);w.char=char;walls[idx(i,j)]=w}
+  if(ch>=1)for(const n of nodes)n.locked=false;   // v0.9.6.4: what chapter 1 opened stays open; every later map starts with all resources
   core={team:'',i:L.core[0],j:L.core[1],hp,max,flash:0};cores=[core];coreK=idx(core.i,core.j);coreKs=new Set([coreK]);
   game.map=CAMPAIGN.maps[ch];game.chapter=ch;game.lay=L;game.flood={t:0,warned:false};game.lockC=null;
   enemies=[];bullets=[];lobs=[];charges=[];rockets=[];fires=[];arcs=[];arcHaz.length=0;parts=[];flashes=[];floats=[];sacks=[];frostFields=[];
@@ -19,13 +20,80 @@ function changeChapter(ch,guest=false){
   }
   [qm.x,qm.y]=spawnNearCore();qm.z=heightAt(qm.x,qm.y);qm.tx=qm.x;qm.ty=qm.y;qm.next=-1;qm.pathT=0;qm.job='';qm.foe=null;qm.layoutAnchor='';qm.commandJob=null;qm.planT=0;
   caches=null;TERR_SPR.clear();computeFlow();flowDirty=false;NET.wlSent=null;NET.piSent=null;
-  if(!guest)toastAll(`CHAPTER ${ch+1} · ${MAP.name}`,CAMPAIGN.story[ch]+' Your upgrades and supplies travel with you. Summit/core damage carries forward.');
+  if(!guest)toastAll(`CHAPTER ${ch+1} · ${MAP.name}`,CAMPAIGN.story[ch]+' Your upgrades and supplies travel with you, and every resource is open on this map. Core damage carries forward.');
 }
 function campaignAdvance(){
   if(!campaign())return false;
-  if((game.wave===3||game.wave===6||game.wave===9)&&game.chapter<game.wave/3){changeChapter(game.wave/3);startBuild(30+game.Df.build);toastAll(`CHAPTER ${game.chapter+1} · ${MAP.name}`,CAMPAIGN.story[game.chapter]+' Prepare at the core.');return true}
+  if((game.wave===3||game.wave===6||game.wave===9)&&game.chapter<game.wave/3){startMapEvac();return true}
   return false;
 }
+// v0.9.6.4: chapters 1-3 end with a 15-second evacuation (a "map evac"). It runs on the Final Blitz machinery: game.fb with
+// mapEvac set, no bosses, only shieldbearers and grenadiers, and the evac ring open from the first second. Whoever makes it
+// out moves on; whoever doesn't still moves on but pays (half this chapter's cases and shards on the server, 50% health and
+// no salvage on the next map). If nobody makes it, the campaign ends there.
+const MAP_EVAC={t:15,want:8,wantXL:9};
+// chapter evac results on the wire: 2 bits per chapter (0 not reached, 1 made it, 2 left behind)
+const chEvacBits=p=>{let v=0;for(let i=0;i<3;i++){const r=(p.chEvac||[])[i];if(r!==undefined&&r!==null)v|=(r?1:2)<<(2*i)}return v};
+const chEvacFrom=v=>{const o=[];for(let i=0;i<3;i++){const b=(v>>(2*i))&3;if(b)o[i]=b===1?1:0}return o};
+function startMapEvac(){
+  game.fb={t:MAP_EVAC.t,n:0,max:0,every:1e9,evac:null,shellT:1,trickT:0,done:false,mapEvac:true,ch:game.chapter};
+  game.queue=[];game.spawnT=1;game.spawnGap=1.3;
+  for(const p of players.values()){p.out=false;p.ev=0}
+  openEvac();
+}
+function finishMapEvac(){
+  const F=game.fb;if(!F||!F.mapEvac||F.done)return;F.done=true;
+  const ch=F.ch,P=[...players.values()],made=P.filter(p=>p.out),left=P.filter(p=>!p.out);
+  for(const p of P){(p.chEvac||(p.chEvac=[]))[ch]=p.out?1:0}
+  enemies=[];game.queue=[];lobs=[];arcs=[];charges=[];rockets=[];
+  if(!made.length){game.fb=null;for(const p of P){p.out=false;p.ev=0}endGame(false,'evacfail');return}
+  for(const p of P){p.out=false;p.ev=0;p.res='';p.stun=0;if(!p.alive){p.alive=true;p.downed=false;p.revive=0}p.rt=0}
+  for(const p of left)p.sal=0;
+  game.fb=null;changeChapter(ch+1);startBuild(30+game.Df.build);
+  if(left.length)qm.sup=Math.max(qm.sup||0,30);   // Delgado's +35 restock waits its usual 30 s, so the left-behind really start at half health
+  for(const p of left){p.hp=Math.ceil(p.max*.5);toastTo(p,'LEFT BEHIND','You missed the convoy. You lose half this chapter\'s cases and shards, your salvage, and half your health.')}
+  toastAll(`CHAPTER ${game.chapter+1} · ${MAP.name}`,CAMPAIGN.story[game.chapter]+(left.length?` ${left.length===1&&players.size>1?left[0].name.toUpperCase()+' was':left.length>1?left.length+' soldiers were':'You were'} left behind.`:' Everyone made it out.')+' Prepare at the core.');
+  if(players.size>1)for(const p of left)feed(`${p.name.toUpperCase()} WAS LEFT BEHIND`,'#e0a050');
+}
+// v0.9.6.4: the Whiteout Gauntlet replaces the campaign's single-boss Final Blitz. 3:30 on the clock: a wave of two Rime
+// Colossi and one boss from the pool every 30 s (six waves, 18 bosses, no ordinary raiders), then the evac opens with 30 s
+// left. At most 8 bosses are up at once; the rest wait their turn. Each one shows a warning ring for a second before it
+// lands, at least 3 tiles from the others. Gauntlet bosses have 110% of their normal health.
+const GAUNTLET={t:210,evac:30,every:30,waves:6,rimes:2,cap:8,hp:1.1,warn:1,apart:3,pool:['whitebutcher','whiteforeman','tempest','bulldozer','bluebutcher','arsonist']};
+function startGauntlet(){
+  game.fb={t:GAUNTLET.t,n:0,max:GAUNTLET.waves*(GAUNTLET.rimes+1),every:GAUNTLET.every,evac:null,shellT:1,trickT:0,done:false,gauntlet:true,wave:0,pend:[],last:''};
+  game.queue=[];game.gKill=[];
+  toastAll('THE WHITEOUT GAUNTLET','Six waves of bosses, one every 30 seconds. Then 30 seconds to reach the evac.');
+}
+function gauntletPick(F){const pool=GAUNTLET.pool.filter(k=>k!==F.last&&BOSSES[k]),k=pool[Math.floor(rnd()*pool.length)];F.last=k;return k}
+// where a boss lands: the bosses' usual spots (or the raider edges), as far as possible from bosses already up or landing
+function gauntletSpot(F){
+  const taken=[...enemies.filter(e=>e.type==='boss'&&!e.dead),...F.pend.filter(q=>q.pos).map(q=>({x:q.pos[0],y:q.pos[1]}))];
+  const L=game.lay||{},cand=[...(L.bossAt||[])];for(const s of L.spawns||[])for(const t of s.tiles||[])cand.push(t);
+  let best=null,bs=-1;
+  for(let n=0;n<cand.length;n++){const t=cand[n];if(!inb(t[0],t[1])||solidTile(t[0],t[1])||coreKs.has(idx(t[0],t[1])))continue;
+    let near=99;for(const o of taken)near=Math.min(near,Math.hypot(o.x-t[0]-.5,o.y-t[1]-.5));const sc=Math.min(near,GAUNTLET.apart*2)+rnd()*.5;if(sc>bs){bs=sc;best=t}}
+  if(!best){const t=spawnTile();best=t||[N-1,6]}
+  return[best[0]+.5,best[1]+.5];
+}
+function gauntletTick(dt){
+  const F=game.fb;F.t=Math.max(0,F.t-dt);const el=GAUNTLET.t-F.t;
+  // a wave every 30 s until the evac opens
+  while(!F.evac&&F.wave<GAUNTLET.waves&&el>=F.wave*GAUNTLET.every){
+    F.wave++;const extra=gauntletPick(F);
+    for(let i=0;i<GAUNTLET.rimes;i++)F.pend.push({k:'rime',w:F.wave,ri:i});F.pend.push({k:extra,w:F.wave,ri:-1});
+    sfx('horn');toastAll(`WAVE ${F.wave}/${GAUNTLET.waves}`,`Two Rime Colossi and ${bossInfo(extra).name}.`);
+  }
+  // waiting bosses take a spot (and show their ring) while there's room under the cap, then land a second later
+  let up=liveBosses()+F.pend.filter(q=>q.pos).length;
+  for(const q of F.pend)if(!q.pos&&up<GAUNTLET.cap){q.pos=gauntletSpot(F);q.at=game.time+GAUNTLET.warn;up++;ringFx(q.pos[0],q.pos[1],.2,1.6,GAUNTLET.warn,'#d8fff3','#426d91',2.5)}
+  for(let i=F.pend.length-1;i>=0;i--){const q=F.pend[i];if(!q.pos||game.time<q.at)continue;F.pend.splice(i,1);
+    spawnBoss(q.k,false,false,true,q.pos);const e=enemies[enemies.length-1];if(e&&e.boss===q.k){e.gw=q.w;if(q.ri>=0)e.ab=3+q.ri*1.2}F.n++}
+  if(!F.evac&&F.t<=GAUNTLET.evac){F.pend=[];openEvac()}   // no more bosses once the evac opens; the ones up keep fighting
+  if(F.evac)evacTick(dt);
+  if(F.t<=0)finishBlitz();
+}
+const gauntletCleared=()=>(game.gKill||[]).filter(n=>n>=GAUNTLET.rimes+1).length;
 Object.assign(BOSSES,{
   rime:{name:'THE RIME COLOSSUS',hp:860,speed:1.2,scan:11,bounty:50,col:'#9cebdc',think:thinkRime,box:'winter',cases:2,
     look:{body:'#678c9a',vest:'#243f50',pants:'#344e60',head:'#bedce5',helmet:'#84cad8',pack:'#375d66',bandana:'#95f0bc',gl:22,weapon:'drill',nogun:true,winterBoss:true},

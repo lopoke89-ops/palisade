@@ -75,6 +75,7 @@ function checkDeadEnd(){
  // Remaining finite projectiles can settle into the already-earned preparation revival.
  if(!game.fb&&!game.queue.length&&!enemies.some(e=>!e.dead))return false;
  if(crew.some(qmCanRevive))return false;
+ if(game.fb&&game.fb.mapEvac){finishMapEvac();return true}   // v0.9.6.4: those out move on; if nobody made it, the campaign ends
  if(game.fb){game.fb.done=true;for(const p of players.values())p.res=p.out?'evac':'left'}
  endGame(!!(player&&player.out),'deadend');return true;
 }

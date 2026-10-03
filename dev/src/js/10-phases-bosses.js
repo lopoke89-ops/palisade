@@ -12,7 +12,7 @@ function todStage(stage){
   return stage>W-(W>=10?1.5:.5)?2:stage>W*.5?1:0;
 }
 const waveEff=()=>game.mode==='endless'?1+(game.wave-1)*.55:game.mode==='blitz'?game.wave*1.2+1:game.wave;   // Blitzkrieg Rush: every raid a notch harder
-const raidName=w=>campaign()?(w>=13?'WHITEOUT · FINAL EVAC':`CHAPTER ${campaignChapter(w)+1} · RAID ${(w-1)%3+1}/3`):isFinite(game.waves)?`RAID ${w} OF ${game.waves}`:`RAID ${w}`;
+const raidName=w=>campaign()?(w>=13?'THE WHITEOUT GAUNTLET':`CHAPTER ${campaignChapter(w)+1} · RAID ${(w-1)%3+1}/3`):isFinite(game.waves)?`RAID ${w} OF ${game.waves}`:`RAID ${w}`;
 function startBuild(dur){
   qm.completedRaids=Math.max(qm.completedRaids||0,game.wave);qm.planT=0;qm.commandJob=null;
   game.phase='build';game.timer=dur;game.prepEpoch=(game.prepEpoch||0)+1;
@@ -21,6 +21,8 @@ function startBuild(dur){
   if(!qm.alive&&!qm.gone){qm.alive=true;[qm.x,qm.y]=spawnNearCore();flt(qm.x,qm.y,'DELGADO IS BACK','#a9bccb')}qm.hp=qm.max;
   game.wx=0;refillAbilities();
   let note=qm.gone?'Grenades refilled.':'Grenades refilled. Delgado will head out for materials.';
+  // v0.9.6.4 campaign: the Yard's metal opens after raid 2 (it was due at raid 4, after the map had already changed)
+  if(campaign()&&!game.chapter)for(const n of nodes)if(n.locked&&n.unlock>3)n.unlock=3;
   for(const n of nodes)if(n.locked&&n.unlock===game.wave+1){n.locked=false;note=n.type===1?'A brick kiln is lit. Brick soaks rifle fire.':'Scrap metal is open. It shrugs off bullets.'}
   if(game.wave===2)note+=' Breachers join the next raid. Shoot them before they reach a wall.';
   if(todStage(game.wave+1)===2&&todStage(game.wave)!==2)note+=isFinite(game.waves)&&game.wave+1>=game.waves?' The last raid comes at night.':' The next raid comes at night.';
@@ -29,7 +31,7 @@ function startBuild(dur){
 function startRaid(){
   if(game.pvp){startBattle();return}
   game.wave++;game.phase='raid';setTip('');closeArmory();
-  if(blitz()&&game.wave>=finalWave()){game.bossShare=1;stormRaid();sfx('siren');game.flood={t:0,warned:false};startFinalBlitz();return}
+  if(blitz()&&game.wave>=finalWave()){game.bossShare=1;stormRaid();sfx('siren');game.flood={t:0,warned:false};if(campaign())startGauntlet();else startFinalBlitz();return}
   const k=Math.floor(waveEff()),Df=game.Df,P=Math.max(1,players.size),q=[];
   // a bigger crew mostly means more riflemen; grenadiers and breachers grow much more slowly
   const boss=bossOf(game.wave),boss2=boss&&N>16?bossPartner(game.wave):'',xb=boss?'':extraBoss(game.wave),xb2=xb?nightmareSecond(game.wave,xb):'',W=modWaveMix(waveMix(k,P,Df.extra,!!(boss||xb)),k);
@@ -123,23 +125,24 @@ const ETYPES={rifle:{hp:36,speed:1.5},gren:{hp:46,speed:1.25},breach:{hp:30,spee
   shield:{hp:66,speed:1.15},medic:{hp:34,speed:1.55},spotter:{hp:30,speed:1.45},fire:{hp:40,speed:1.4}};
 // type codes for the network: never reorder, only add to the end
 const ECODE=['rifle','gren','breach','boss:demolisher','boss:butcher','boss:storm','shield','medic','spotter','fire','boss:ferryman','boss:foreman'];
-function spawnBoss(key,sb,second=false,fb=false){
+function spawnBoss(key,sb,second=false,fb=false,pos=null){
   if(key==='ferryman'&&!(game.lay&&game.lay.raftAt&&game.lay.raftAt.length))key='butcher';   // no river, no raft
   const B=BOSSES[key];if(!B)return;let x=0,y=0;
   const at=B.raft&&game.lay.raftAt&&game.lay.raftAt.length?game.lay.raftAt:(game.lay&&game.lay.bossAt)||[];
   for(let a=0;a<40&&at.length;a++){const t=at[Math.floor(rnd()*at.length)];if(!solidTile(t[0],t[1])){x=t[0]+.5;y=t[1]+.5;break}}
   if(!x){const t=spawnTile();if(t){x=t[0]+.5;y=t[1]+.5}else{x=N-.5;y=6.5}}
-  const P=Math.max(1,players.size),hp=B.hp*game.Df.hp*(1+.35*(P-1))*(1+.25*Math.floor(Math.max(0,game.wave-5)/15))*mapHp()*(game.bossShare||1)*(fb?BLITZ.fbHp:1);
+  if(pos){x=pos[0];y=pos[1]}   // v0.9.6.4: the gauntlet picks its own spots
+  const P=Math.max(1,players.size),hp=B.hp*game.Df.hp*(1+.35*(P-1))*(1+.25*Math.floor(Math.max(0,game.wave-5)/15))*mapHp()*(game.bossShare||1)*(fb?(game.fb&&game.fb.gauntlet?GAUNTLET.hp:BLITZ.fbHp):1);
   const e={id:nextId++,type:'boss',boss:key,big:true,x,y,hp,max:hp,cd:2.2,walk:0,aim:{x:-1,y:0},flash:0,speed:B.speed,scanT:0,foe:null,planted:false,st:0,stT:0,stM:1,lx:x,ly:y,shots:0,ab:3,sw:0,sb:!!sb,fb:!!fb};
   if(B.raft){e.raft=true;e.ab=9;e.crews=0;e.pathT=0;e.next=-1}
   if(key==='foreman'){e.ab=5;e.cd=2.5}
   blitzSpawnFix(e,key);
   enemies.push(e);
-  const I=bossInfo(key);sfx('horn');addShake(x,y,8);if(fb){toastAll(`BLITZ · ${game.fb.n+1}/${game.fb.max} · ${I.name}`,B.intro);return}toastAll(second?'NIGHTMARE · SECOND BOSS · '+I.name:sb&&nightmare()&&!hasMod('bossrush')?'SURPRISE · '+I.name:I.name,B.intro);
+  const I=bossInfo(key);sfx('horn');addShake(x,y,8);if(fb){if(game.fb&&game.fb.gauntlet)return;toastAll(`BLITZ · ${game.fb.n+1}/${game.fb.max} · ${I.name}`,B.intro);return}toastAll(second?'NIGHTMARE · SECOND BOSS · '+I.name:sb&&nightmare()&&!hasMod('bossrush')?'SURPRISE · '+I.name:I.name,B.intro);
 }
 function bossDown(e,own){
   const B=BOSSES[e.boss],I=bossInfo(e.boss),p=own&&own!=='dell'?players.get(own):null,share=p?15:20;game.bosses++;
-  const oct=game.oct&&e.boss==='butcher'&&!e.sb;if(e.fb){if(game.fbLog.length<20)game.fbLog.push(e.boss)}else if(e.sb){game.sbN=(game.sbN|0)+1;if(game.sbLog.length<100)game.sbLog.push(e.boss)}else game.bossLog.push(oct?'butcher_oct':e.boss);   // v0.9.4.0: Final Blitz bosses have their own list   // v0.9.3.8: in-between bosses are named too, for milestones
+  const oct=game.oct&&e.boss==='butcher'&&!e.sb;if(e.fb){if(game.fbLog.length<20)game.fbLog.push(e.boss);if(e.gw){game.gKill=game.gKill||[];game.gKill[e.gw-1]=(game.gKill[e.gw-1]|0)+1}}else if(e.sb){game.sbN=(game.sbN|0)+1;if(game.sbLog.length<100)game.sbLog.push(e.boss)}else game.bossLog.push(oct?'butcher_oct':e.boss);   // v0.9.4.0: Final Blitz bosses have their own list   // v0.9.3.8: in-between bosses are named too, for milestones
   for(const o of players.values())o.sal+=o===p?B.bounty:share;
   flt(e.x,e.y-.4,p?`+${B.bounty} SALVAGE`:`+${share} SALVAGE EACH`,'#e2b436');
   for(let n=0;n<26;n++)emit(e.x,e.y,WH*.8,n%2?'fire':'spark');addShake(e.x,e.y,11);sfx('bigboom',e.x,e.y);
@@ -299,9 +302,10 @@ function showOver(){closeGameSettings(false);
   const win=!!game.won;sfx(win?'win':'lose',undefined,undefined,true);
   $('overTitle').textContent=win?'CLAIM HELD':'CLAIM LOST';$('overTitle').className=win?'':'lost';
   const crew=players.size>1?` · CREW OF ${players.size}`:'',W=game.waves,endless=!isFinite(W);
-  const res=blitzResult(player),held=win||res?W:Math.max(0,game.wave-1),S=game.stats;
+  const res=blitzResult(player),held=win||res?W:game.endReason==='evacfail'?game.wave:Math.max(0,game.wave-1),S=game.stats;
   $('overEyebrow').textContent=`${player.C.name} · ${game.Df.name} · ${campaign()?'OPERATION WHITEOUT':endless?'ENDLESS':W+' RAIDS'}${crew} · ${win?`ALL ${W} RAIDS BROKEN`:endless?`${held} RAIDS HELD`:`STAKE FELL IN RAID ${game.wave}`}${game.mods.length?' · '+modNames(game.mods).join(' + '):''}`;
-  $('overLede').textContent=game.endReason==='deadend'?'The crew could not recover. No one left could get them back up.':win?'The stake is still standing. Try it with less wood and more nerve, or turn the threat up.':endless?`Endless only ends one way. ${held} raids is the number to beat.`:'They got to the core. Look at where they broke in. That hole is the lesson.';
+  if(game.endReason==='evacfail')$('overEyebrow').textContent=$('overEyebrow').textContent.replace(`STAKE FELL IN RAID ${game.wave}`,`EVAC FAILED · CHAPTER ${game.chapter+1}`);   // v0.9.6.4
+  $('overLede').textContent=game.endReason==='evacfail'?`Nobody made the convoy out of ${MAP.name}. The campaign ends here.`:game.endReason==='deadend'?'The crew could not recover. No one left could get them back up.':win?'The stake is still standing. Try it with less wood and more nerve, or turn the threat up.':endless?`Endless only ends one way. ${held} raids is the number to beat.`:'They got to the core. Look at where they broke in. That hole is the lesson.';
   const loot=game.rewarded?null:lockerReward(held,win,player.kills|0);game.rewarded=true;
   if(res)blitzOverText(res,crew);   // v0.9.4.0: your own evacuation result
   if(loot){$('overLoot').textContent=loot.text;$('overLoot').hidden=false;showRewards(loot)}else{$('overLoot').hidden=true;showRewards(null)}

@@ -20,7 +20,9 @@ function localCases(id,quantity,operation){
 }
 async function commitCases(p){
   if(p.owner==='local')return navigator.locks? navigator.locks.request('palisade-case-opening',()=>localCases(p.case,p.quantity,p.operation)):localCases(p.case,p.quantity,p.operation);
-  const r=await rpc('open_cases_v0962',{p_case:p.case,p_quantity:p.quantity,p_operation:p.operation});
+  // v0.9.6.4: catalog 4 (the Hybrid Theory Case). Until the server has it, PostgREST answers 404 and the catalog-3 opener runs.
+  const args={p_case:p.case,p_quantity:p.quantity,p_operation:p.operation};
+  let r=await rpc('open_cases_v0964',args);if(r.status===404&&p.case!=='hybrid')r=await rpc('open_cases_v0962',args);
   if(!r.ok){const e=Error(r.status?sbErr(r):'Opening is awaiting confirmation. Reconnect and resume; your opening ID is saved.');e.uncertain=!r.status||r.status>=500||r.status===401;throw e}
   if(myUid()!==p.owner)throw Object.assign(Error('Sign back into the account that started this opening to resume.'),{uncertain:true});
   takeLocker(r.j.locker);
