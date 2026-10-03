@@ -4,7 +4,7 @@
 // they talk directly. Each guest opens 'r' (reliable: hello, build, grenade, and every
 // one-off event: sounds, particles, bullets, toasts, wall changes), 'u' (fast: movement in),
 // and 'st' (never resent: game state out, 15 times a second).
-const PROTO='yard-22',ROOM_PREFIX='palisade-yard-22-';   // shield impacts, Delgado orders and terminal end reason
+const PROTO='yard-23',ROOM_PREFIX='palisade-yard-23-';   // v0.9.6.3: slimmer state packets (trimmed player rows, slow fields on change, no height)
 const ROOM_SESSION=(()=>{let id='';try{id=sessionStorage.getItem('palisade.roomSession')||''}catch(e){}
   if(!/^[0-9a-f]{24}$/.test(id)){id=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');try{sessionStorage.setItem('palisade.roomSession',id)}catch(e){}}
   return id})();
@@ -130,7 +130,7 @@ function hostData(peerId,d){
     c.r.send({t:'welcome',id:c.pid});
     if(NET.inGame){   // dropping into a game already running
       const p=makePlayer(c.pid,c.name,game.job||c.cls,players.size,c.cos,game.pvp==='base'?team:'',c.sk);kitUp(p);[p.x,p.y]=respawnAt(p);if(game.pvp)p.prot=PVP.prot;if(game.pvp==='base')p.sal=PVP.startSal;if(game.pvp==='ffa')p.mats=[0,0,0];const back=restoreLeaver(c,p);players.set(c.pid,p);
-      c.r.send(startMsg());NET.wlSent=null;NET.piSent=null;
+      c.r.send(startMsg());NET.wlSent=null;NET.piSent=null;NET.psLast=null;
       toastAll(`${c.name.toUpperCase()} ${back?'IS BACK':'JOINED'}`,back?'Armory and salvage restored.':game.pvp==='base'?`Dropped in on ${TEAMS[team].name}.`:game.pvp?'Dropped into the fight.':'Dropped in at the stake.')}
     broadcastLobby();return;
   }
@@ -228,7 +228,7 @@ function startOnline(){
   const why=lobbyBlock();if(why){$('lNote').textContent=why;return}
   demo=false;pick.oct=isOctober();newGame(NET.roster.map(r=>({...r})),pick.pvp,{mods:roomMods(),job:pick.job});NET.inGame=true;NET.snapN=0;
   const now=performance.now();for(const c of NET.conns.values())c.heard=now;   // the lobby wait is not silence
-  NET.sendAll(startMsg());NET.wlSent=null;NET.piSent=null;modsToast();
+  NET.sendAll(startMsg());NET.wlSent=null;NET.piSent=null;NET.psLast=null;modsToast();
   enterGame();broadcastLobby();
 }
 // keep quiet lobbies alive (and NAT mappings open), and notice players who vanish
@@ -289,16 +289,19 @@ function applyWallDiff(d){for(let q=0;q+4<d.length;q+=5)setWallTile(d[q],d[q+1],
 // One list per kind of row, used by the host to pack and by guests to unpack, so the two can't drift apart.
 // PL_STATE changes all the time and rides every state packet; PL_INFO rarely changes (joining, upgrades)
 // and goes on the reliable channel only when it does.
+// v0.9.6.3: the fields that are usually zero sit last and trailing zeros are dropped (like raider rows); height isn't sent
+// because every screen works it out from the same map. PL_SLOW rarely changes, so it goes out only when it does (see slowRows).
 const PL_STATE=[['id',p=>p.id],['x',p=>r2(p.x)],['y',p=>r2(p.y)],['ax',p=>r2(p.aim.x)],['ay',p=>r2(p.aim.y)],['hp',p=>Math.ceil(p.hp)],
-  ['alive',p=>p.alive?1:0],['down',p=>p.downed?1:0],['rev',p=>r2(p.revive)],['rt',p=>r2(p.rt)],['m0',p=>p.mats[0]],['m1',p=>p.mats[1]],['m2',p=>p.mats[2]],
-  ['nades',p=>p.nades],['tp',p=>p.tp],['bcd',p=>r2(Math.max(0,p.bcd))],['sal',p=>p.sal|0],['kills',p=>p.kills|0],['deaths',p=>p.deaths|0],
-  ['prot',p=>p.prot>0?1:0],['bolt',p=>p.bolt>0?r2(p.bolt/p.boltT):0],['ammo',p=>p.gun.mag?p.ammo|0:-1],['rl',p=>p.rl>0?1:0],['stun',p=>r2(p.stun||0)],['ab',p=>p.ab|0],['out',p=>p.out?1:0],['ev',p=>r2(p.ev||0)],['z',p=>r2(heightAt(p.x,p.y))]];   // out/ev (v0.9.4.0): evacuated, and seconds stood in the evac ring   // ab: class-ability state, reserved (always 0 until abilities land)
+  ['alive',p=>p.alive?1:0],['ammo',p=>p.gun.mag?p.ammo|0:-1],['tp',p=>p.tp],['down',p=>p.downed?1:0],['rev',p=>r2(p.revive)],['rt',p=>r2(p.rt)],
+  ['bcd',p=>r2(Math.max(0,p.bcd))],['bolt',p=>p.bolt>0?r2(p.bolt/p.boltT):0],['rl',p=>p.rl>0?1:0],['stun',p=>r2(p.stun||0)],['ev',p=>r2(p.ev||0)]];   // ev (v0.9.4.0): seconds stood in the evac ring
+const PL_SLOW=[['id',p=>p.id],['m0',p=>p.mats[0]],['m1',p=>p.mats[1]],['m2',p=>p.mats[2]],['nades',p=>p.nades],['sal',p=>p.sal|0],['kills',p=>p.kills|0],['deaths',p=>p.deaths|0],
+  ['prot',p=>p.prot>0?1:0],['ab',p=>p.ab|0],['out',p=>p.out?1:0]];   // out (v0.9.4.0): evacuated   // ab: class-ability state, reserved
 const PL_INFO=[['id',p=>p.id],['name',p=>p.name],['cls',p=>p.cls],['slot',p=>p.slot],['max',p=>p.max],['maxN',p=>p.maxN],['upS',p=>p.upS],['cosS',p=>p.cosS],['team',p=>p.team||''],['ammoEq',p=>p.ammoEq.join(',')],['sk',p=>p.sk]];
 // enemies: the boss-only fields sit last and trailing zeros are dropped, so a plain raider sends 7 numbers, not 12
 const EN_STATE=[['id',e=>e.id],['type',e=>ECODE.indexOf(e.type==='boss'?'boss:'+e.boss:e.type)],['x',e=>r2(e.x)],['y',e=>r2(e.y)],['ax',e=>r2(e.aim.x)],['ay',e=>r2(e.aim.y)],
   ['hp',e=>r2(e.hp/e.max)],['plant',e=>e.planted?1:0],['st',e=>e.st||0],['stF',e=>e.st?r2(Math.max(0,e.stT/e.stM)):0],['lx',e=>r2(e.lx||0)],['ly',e=>r2(e.ly||0)],
-  ['burn',e=>r2(e.burnT||0)],['slow',e=>r2(e.slowT||0)],['slowPct',e=>r2(e.slowPct||0)],['z',e=>r2(heightAt(e.x,e.y))],['shieldLeft',e=>e.shieldHitsLeft||0],['shieldMax',e=>e.shieldHitsMax||0],['shieldBroken',e=>e.shieldBroken?1:0]];
-const fieldIdx=L=>Object.fromEntries(L.map((f,i)=>[f[0],i])),PS=fieldIdx(PL_STATE),PI=fieldIdx(PL_INFO);
+  ['burn',e=>r2(e.burnT||0)],['slow',e=>r2(e.slowT||0)],['slowPct',e=>r2(e.slowPct||0)],['shieldLeft',e=>e.shieldHitsLeft||0],['shieldMax',e=>e.shieldHitsMax||0],['shieldBroken',e=>e.shieldBroken?1:0]];
+const fieldIdx=L=>Object.fromEntries(L.map((f,i)=>[f[0],i])),PS=fieldIdx(PL_STATE),PI=fieldIdx(PL_INFO),PW=fieldIdx(PL_SLOW);
 const packRow=(L,x)=>L.map(f=>f[1](x)),packTrim=(L,x)=>{const r=packRow(L,x);while(r.length>1&&r[r.length-1]===0)r.pop();return r},PE=fieldIdx(EN_STATE);
 // player info that changed since it was last sent (all of it after a reset: game start, someone dropping in)
 function changedInfo(){
@@ -316,12 +319,20 @@ function applyInfo(rows){
     if(r[PI.cosS]&&r[PI.cosS]!==p.cosS){p.cos=parseCos(r[PI.cosS]);p.cosS=cosStr(p.cos)}
     p.name=r[PI.name];p.slot=r[PI.slot];p.max=r[PI.max];p.maxN=r[PI.maxN];if(r[PI.team])p.team=r[PI.team]}
 }
+// a player's slow row goes out when it changes and for the next 8 packets (the state channel drops packets rather
+// than resending), every player's every 30 packets as a safety net, and all of them after someone joins
+function slowRows(){
+  if(!NET.psLast)NET.psLast=new Map();const out=[],n=NET.snapN;
+  for(const p of players.values()){const r=packRow(PL_SLOW,p),k=r.join(),o=NET.psLast.get(p.id);
+    if(!o||o.k!==k){NET.psLast.set(p.id,{k,n});out.push(r)}else if(n-o.n<8||n%30===0)out.push(r)}
+  return out;
+}
 function makeSnap(withWalls){
   const S=game.stats,flat=(a,f)=>{const o=[];for(const x of a)o.push(...f(x));return o};
   const s={t:'s',n:NET.snapN,ph:game.phase,w:game.wave,bk:game.bosses|0,tm:r2(game.timer),q:game.queue.length,tt:r2(game.time),won:game.won?1:0,wn:game.winner||'',
     sb:game.sbN|0,wx:game.wx?1:0,sd:game.sd?1:0,er:game.endReason||'',ed:r2(Math.max(0,((game.endDeadline||0)-performance.now())/1000)),qc:[qm.mode||'follow',qm.completedRaids||0,qm.layoutSize||4,qm.status||''],
     cs:flat(cores,c=>[r2(c.hp),c.max,c.flash>0?1:0]),st:[S.dropped,S.built,S.lost,S.repairs,S.revives],
-    pl:[...players.values()].map(p=>packRow(PL_STATE,p)),
+    pl:[...players.values()].map(p=>packTrim(PL_STATE,p)),ps:slowRows(),
     qm:[r2(qm.x),r2(qm.y),r2(qm.aim.x),r2(qm.aim.y),Math.ceil(qm.hp),qm.max,qm.alive?1:0,r2(qm.revive),game.dellLv|0],
     en:enemies.map(e=>packTrim(EN_STATE,e)),
     rk:flat(rockets,r=>[r2(r.x),r2(r.y),r2(r.vx),r2(r.vy)]),
@@ -392,27 +403,29 @@ function applySnap(s){
   const st=s.st;game.stats={dropped:st[0],built:st[1],lost:st[2],repairs:st[3],revives:st[4]};
   const seen=new Set();
   for(const r of s.pl){
-    const id=r[PS.id];let p=players.get(id);seen.add(id);
+    const v=k=>r[PS[k]]||0,id=r[PS.id];let p=players.get(id);seen.add(id);
     if(!p)continue;   // their details (name, job, outfit) arrive on the reliable channel; they appear a moment later
-    if(p.fresh===undefined){p.fresh=0;p.x=r[PS.x];p.y=r[PS.y]}
-    p.z=r[PS.z]||0;p.sal=r[PS.sal]|0;p.kills=r[PS.kills]|0;p.deaths=r[PS.deaths]|0;p.prot=r[PS.prot]?1:0;
+    if(p.fresh===undefined){p.fresh=0;p.x=v('x');p.y=v('y')}
+    p.z=heightAt(v('x'),v('y'));   // v0.9.6.3: worked out here, not sent
     const mine=id===myId;
-    if(mine){if(r[PS.tp]!==p.tp){p.x=r[PS.x];p.y=r[PS.y];p.tp=r[PS.tp]}}
-    else{p.tx=r[PS.x];p.ty=r[PS.y];p.aim={x:r[PS.ax],y:r[PS.ay]};p.tp=r[PS.tp]}
-    if(r[PS.hp]<p.hp-.01)p.flash=.1;
-    p.hp=r[PS.hp];p.alive=!!r[PS.alive];p.downed=!!r[PS.down];p.revive=r[PS.rev];p.rt=r[PS.rt];p.mats=[r[PS.m0],r[PS.m1],r[PS.m2]];p.nades=r[PS.nades];p.bcd=r[PS.bcd];
-    if((r[PS.bolt]||0)>(p.boltF||0)+.05)p.boltF=r[PS.bolt];
-    p.ammo=r[PS.ammo];p.rl=r[PS.rl]?1:0;p.stun=r[PS.stun]||0;p.ab=r[PS.ab]|0;p.out=!!r[PS.out];p.ev=r[PS.ev]||0;
+    if(mine){if(v('tp')!==p.tp){p.x=v('x');p.y=v('y');p.tp=v('tp')}}
+    else{p.tx=v('x');p.ty=v('y');p.aim={x:v('ax'),y:v('ay')};p.tp=v('tp')}
+    if(v('hp')<p.hp-.01)p.flash=.1;
+    p.hp=v('hp');p.alive=!!v('alive');p.downed=!!v('down');p.revive=v('rev');p.rt=v('rt');p.bcd=v('bcd');
+    if(v('bolt')>(p.boltF||0)+.05)p.boltF=v('bolt');
+    p.ammo=v('ammo');p.rl=v('rl')?1:0;p.stun=v('stun');p.ev=v('ev');
   }
   for(const id of[...players.keys()])if(!seen.has(id))players.delete(id);
   player=players.get(myId)||player;
+  for(const r of s.ps||[]){const p=players.get(r[PW.id]);if(!p)continue;   // v0.9.6.3: slow fields, only when they changed
+    p.mats=[r[PW.m0]|0,r[PW.m1]|0,r[PW.m2]|0];p.nades=r[PW.nades]|0;p.sal=r[PW.sal]|0;p.kills=r[PW.kills]|0;p.deaths=r[PW.deaths]|0;p.prot=r[PW.prot]?1:0;p.ab=r[PW.ab]|0;p.out=!!r[PW.out]}
   const q=s.qm;if(q[4]<qm.hp-.01)qm.flash=.1;qm.tx=q[0];qm.ty=q[1];qm.aim={x:q[2],y:q[3]};qm.hp=q[4];qm.max=q[5];qm.alive=!!q[6];qm.revive=q[7];game.dellLv=q[8]|0;
   const old=new Map(enemies.map(e=>[e.id,e]));enemies=[];
   for(const r of s.en){const v=k=>r[PE[k]]||0,id=r[PE.id];let e=old.get(id);
     if(!e)e={id,x:v('x'),y:v('y'),walk:rnd()*6,flash:0,max:1,hp:1};
     if(v('hp')<e.hp-.001)e.flash=.08;
     const c=ECODE[v('type')]||'rifle',bk=c.startsWith('boss:')?c.slice(5):'';
-    Object.assign(e,{type:bk?'boss':c,boss:bk||undefined,big:!!bk,raft:!!(BOSSES[bk]&&BOSSES[bk].raft)&&waterK(idx(clamp(Math.floor(v('x')),0,N-1),clamp(Math.floor(v('y')),0,N-1))),burrow:bk==='foreman'&&(v('st')===2||v('st')===4),tx:v('x'),ty:v('y'),aim:{x:v('ax'),y:v('ay')},hp:v('hp'),max:1,planted:!!v('plant'),st:v('st'),stF:v('stF'),lx:v('lx'),ly:v('ly'),burnT:v('burn'),slowT:v('slow'),slowPct:v('slowPct'),z:v('z'),shieldHitsLeft:v('shieldLeft'),shieldHitsMax:v('shieldMax'),shieldBroken:!!v('shieldBroken')});enemies.push(e)}
+    Object.assign(e,{type:bk?'boss':c,boss:bk||undefined,big:!!bk,raft:!!(BOSSES[bk]&&BOSSES[bk].raft)&&waterK(idx(clamp(Math.floor(v('x')),0,N-1),clamp(Math.floor(v('y')),0,N-1))),burrow:bk==='foreman'&&(v('st')===2||v('st')===4),tx:v('x'),ty:v('y'),aim:{x:v('ax'),y:v('ay')},hp:v('hp'),max:1,planted:!!v('plant'),st:v('st'),stF:v('stF'),lx:v('lx'),ly:v('ly'),burnT:v('burn'),slowT:v('slow'),slowPct:v('slowPct'),z:heightAt(v('x'),v('y')),shieldHitsLeft:v('shieldLeft'),shieldHitsMax:v('shieldMax'),shieldBroken:!!v('shieldBroken')});enemies.push(e)}
   frostFields=(s.ice||[]).map(f=>({x:f[0],y:f[1],t:f[2],z:f[3],r:.72,k:idx(Math.floor(f[0]),Math.floor(f[1]))}));
   rockets=[];for(let o=0;o<(s.rk||[]).length;o+=4)rockets.push({x:s.rk[o],y:s.rk[o+1],vx:s.rk[o+2],vy:s.rk[o+3]});
   fires=[];for(let o=0;o<(s.fz||[]).length;o+=5)fires.push({x:s.fz[o],y:s.fz[o+1],t:s.fz[o+2],r:s.fz[o+3],nap:s.fz[o+4]|0,max:4});

@@ -7,6 +7,18 @@ Big U's latest completed local scope is recorded in the [presentation prompt](pl
 
 The Claude audit URL still requires sign-in in the available browser session. Big U supplied an exported copy at `D:\downloads\Untitled.md`, which was read on September 29. Its newest Progress entry is v0.9.3, so its release claims are superseded by the verified v0.9.3.3 release below. The external artifact itself was not edited here.
 
+## v0.9.6.3 candidate: frame rate, CPU and network efficiency (on `claude/lucid-curie-491na1`, not published)
+
+From an October 3 audit (Big U approved items 1-4 plus the player-field change). Evidence and before/after numbers: [evidence/2026-10-03-efficiency/README.md](evidence/2026-10-03-efficiency/README.md). Protocol **`yard-23`**: the state packet layout changed, so older copies must reload.
+
+- **Desktop Auto holds 60 FPS.** Auto left desktops uncapped, so 144 and 240 Hz monitors ran the whole game 2.4-4x as often. Touch devices are unchanged (60, or 30 when struggling or on low battery).
+- **No per-frame page changes.** The frame loop and HUD re-set 5-7 `hidden` flags every frame even when unchanged; each counted as a page change and forced a style pass. A `hid()` guard (next to `cls()`) removes all of them: style passes on menus drop from 117 to 60 a second (the rest is the stage character's CSS bob).
+- **Friends polling only while the menus are in use.** Every 15 s while active; never in a hidden tab; once a minute during a match or after 5 idle minutes (the open Friends panel keeps 15 s); coming back to the tab checks at once. The Open Games list no longer refreshes in a hidden tab. Host room publishing is unchanged (the server expires a silent room after 45 s).
+- **Slimmer state packets.** Height is no longer sent (every screen works it out from the same map); player rows put usually-zero fields last and drop trailing zeros; materials, grenades, salvage, kills, deaths, spawn protection and "evacuated" go in a separate block only when they change (repeated for 8 packets because the state channel doesn't resend, every player every 30 packets as a safety net, and all of them after a join). Busy six-player scenes: 9-12% smaller on flat maps, 27-29% on Frostpeak.
+- **Server fix found during the audit (migration written, not applied):** live `room_register` still accepted only `yard-21`, so rooms hosted from v0.9.6.1 on (`yard-22`) could not register and friend room invitations failed. `20261003120000_room_register_any_yard_proto.sql` accepts any `yard-N` (the invite answer still refuses mismatched versions). Tested in PGlite (`winter_migration`); **apply only with Big U's approval.**
+- **Measured and rejected:** culling off-screen walls and raiders before drawing (skipped 36-57% of tiles, no measurable frame-time change).
+- **Tests:** new `poll_backoff`; `fps_mode` expects 60 for desktop Auto; `winter_migration` covers the proto fix.
+
 ## v0.9.6.1 published winter upgrade
 
 The [winter upgrade work order](plans/winter-cosmetics-dell-and-dead-end-work-order.md) is implemented in the checkout, with 36 affected suites passing and a complete 311-entry four-angle catalog. Source/build protocol is yard-22. The `20261001214620_winter_models` migration is live; the game changes were pushed as `526831b` and the live HTML was verified against that commit. See [completion and performance evidence](evidence/2026-10-01-winter-upgrade/README.md) and [catalog index](catalog/cosmetics/README.md). The following section records the subsequent published music/case release.
