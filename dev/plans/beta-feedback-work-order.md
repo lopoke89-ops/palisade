@@ -1,6 +1,6 @@
 # v0.9.7.1 work order: BETA FEEDBACK PASS
 
-Status: **plan; written October 3 from Big U's beta notes.** The open decisions are at the end (F1–F12). Nothing is built yet.
+Status: **plan; written October 3 from Big U's beta notes.** Big U decided F8, F9, F10 and F11 on October 3; the rest are still open (end of the doc). Nothing is built yet.
 
 Six fixes, all reported by players in the first day of City Black Out:
 
@@ -119,17 +119,17 @@ All of it is client-side. **No server migration.** Protocol goes to **`yard-27`*
 - **Each player's row shows READY** (green check) or **NOT READY**. The lobby header shows **"3 / 4 READY"**.
 - **The host's START:**
   - **lights up** when everyone is ready;
-  - if not everyone is ready, START asks **"Start without 1 player ready?"**, so the host can still go (F8);
+  - **stays locked until everyone is ready** (Big U, F8). The host must ready up too; START is their ready-and-go button, and it only works once every guest is ready;
   - **changing a setting** (mode, map, difficulty, modifiers) **clears everyone's ready**, so nobody is pulled into a game they didn't agree to.
 - Someone joining resets to "not ready" for that player only.
-- **Network:** the guest sends `{t:'ready',on:true|false}`; the host adds `ready` to each roster entry in the `lobby` message. Old guests that don't send it are treated as not ready, but the host can still start.
+- **Network:** the guest sends `{t:'ready',on:true|false}`; the host adds `ready` to each roster entry in the `lobby` message. Old guests that don't send it are treated as not ready (they can't be on the same protocol anyway: `yard-27` turns them away).
 
 **Tests:** extend `lobby`:
 - the guest's READY shows on the host;
 - the ready count;
 - START lights up when everyone is ready;
 - changing the mode clears it;
-- starting without everyone asks first.
+- START refuses while anyone is not ready.
 
 `multiplayer` stays green.
 
@@ -140,18 +140,19 @@ All of it is client-side. **No server migration.** Protocol goes to **`yard-27`*
 **What the code does now:** the tile size is set only by the screen size, `S = clamp(min(W, H·1.15)/560, .72, 1.35)`, in `resize()` (`02-view.js`). Players can't change it.
 
 **The change:**
+- **Desktop only** (Big U, F9): phones keep today's fixed view and don't get the slider.
 - **Settings → ZOOM slider**, from **70% (wider view) to 140% (closer)**, default 100%. It multiplies the screen-size scale above.
 - **Saved on this device** (like volume), so it applies to every map and mode. It is never sent to other players.
-- **Also in-game:** the in-game settings sheet gets the same slider; pinch on phones and the mouse wheel on desktop zoom too, both inside the same range (F10).
+- **Also in-game:** the in-game settings sheet gets the same slider, and the mouse wheel zooms inside the same range. No pinch zoom, since phones don't get zoom (F10).
 - **Rendering:** the caches already rebuild on resize. A zoom change rebuilds them once, after the slider stops moving (not on every step), so dragging stays smooth. City chunks and building sprites are keyed by tile size, so they rebuild on their own.
 - **Guard rails:**
-  - **Big maps:** on the 64×64 city, zoom-out stops at 80% on phones, since every extra visible tile costs frame time (measure first; see Tests).
-  - **PvP:** the same range for everyone, since a wider view is an advantage (F11).
+  - **Big maps:** desktops get the full range on the 64×64 city too; `blackout_perf` records the cost of 70%.
+  - **PvP:** allowed, the same range for every desktop player (Big U, F11).
   - **Readability:** HUD text, bars and labels don't scale with zoom; only the world does.
 
 **Tests:**
-- new `zoom_setting`: the slider changes the tile size within the range; it's saved and restored after a reload; caches rebuild once per change; the 64×64 phone floor applies; the HUD doesn't move.
-- `blackout_perf` gets a 70% / 80% zoom-out run to record the cost.
+- new `zoom_setting`: the slider changes the tile size within the range; it's saved and restored after a reload; caches rebuild once per change; phones have no slider and their view doesn't change; the HUD doesn't move.
+- `blackout_perf` gets a desktop 70% zoom-out run to record the cost.
 - `ingame_settings` shows the slider.
 
 ## Release
@@ -178,8 +179,8 @@ All of it is client-side. **No server migration.** Protocol goes to **`yard-27`*
 | F5 | Before the final push | A READY UP stage: up to 90 s, starts early when everyone's ready, host can force it |
 | F6 | Message times | Phase messages 6 s, minor 3.5 s, queued, plus a "Message time" setting |
 | F7 | Phantom headwear | Any hat, drawn solid over the see-through ghost; the other blocked skins stay as they are |
-| F8 | Lobby START when not everyone is ready | Allowed, after a confirm; any settings change clears ready |
-| F9 | Zoom range | 70%–140% (zoom-out stops at 80% on phones on the 64×64 city) |
-| F10 | Pinch / mouse-wheel zoom in-game | Yes, same range as the slider |
-| F11 | Zoom in PvP | Allowed, same range for everyone |
+| F8 | Lobby START when not everyone is ready | **Decided: everyone has to ready up.** START stays locked until all are ready; any settings change clears ready |
+| F9 | Zoom range | **Decided: desktop only, 70%–140%.** Phones keep the fixed view |
+| F10 | Pinch / mouse-wheel zoom in-game | **Decided by F9:** mouse wheel on desktop; no pinch |
+| F11 | Zoom in PvP | **Decided: allowed**, same range for everyone |
 | F12 | Apply the message changes to every mode | Yes (the same problem exists between raids everywhere) |
