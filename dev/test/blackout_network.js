@@ -1,6 +1,7 @@
 // v0.9.7 City Black Out online (yard-26): the guest sees the host's mode and city, the run's clock and stage, which POI is
 // under attack, POIs lost (and the dark city), only the raiders near them (bosses always), and the POI summary comes back
-// after the guest's own copy is wiped (what a rejoin relies on). node blackout_network.js
+// after the guest's own copy is wiped (what a rejoin relies on), and the READY UP stage waits for both players (v0.9.7.1).
+// node blackout_network.js
 const { chromium } = require('playwright'), assert = require('node:assert/strict'), fs = require('node:fs');
 const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.env.PORT || 8080;
 (async () => {
@@ -18,7 +19,7 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
   await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await H.waitForTimeout(600);
   await H.evaluate(() => { const P = __pal; window.holdIt = setInterval(() => { for (const q of P.players.values()) { q.max = 1e9; q.hp = Math.max(q.hp, 1e8) } P.core.max = 1e9; P.core.hp = 1e9; P.qm.hp = 1e9 }, 50) });
   out.mode = await G.evaluate(() => ({ mode: __pal.game.mode, map: __pal.game.map, N: __pal.N, cores: __pal.cores.length }));
-  assert.equal(out.proto, 'yard-26'); assert.deepEqual(out.mode, { mode: 'blackout', map: 'city', N: 64, cores: 9 });
+  assert.equal(out.proto, 'yard-27'); assert.deepEqual(out.mode, { mode: 'blackout', map: 'city', N: 64, cores: 9 });
   // gathering ends: the first attack, on the same POI on both phones
   await H.evaluate(() => { __pal.game.timer = .05 });
   await G.waitForFunction(() => __pal.game.bo && __pal.game.bo.stage === 'attack', null, { timeout: 8000 });
@@ -49,6 +50,12 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
   assert.ok(Math.abs(ht - gt) < 1.2, 'quiet clock in step ' + ht + ' ' + gt);
   // the final push and the Destroyer reach the guest
   await H.evaluate(() => { const B = __pal.game.bo; B.order.length = B.n; B.t = .05 });
+  // v0.9.7.1: READY UP first; nobody can force it, the push starts when both are ready
+  await G.waitForFunction(() => __pal.game.bo.stage === 'ready', null, { timeout: 6000 });
+  await H.evaluate(() => __pal.boReadyPress()); await G.waitForTimeout(700);
+  out.readyHalf = await Promise.all([H, G].map(pg => pg.evaluate(() => ({ stage: __pal.game.bo.stage, count: __pal.boReadyCount().join('/'), label: document.getElementById('phaseVal').textContent }))));
+  assert.equal(out.readyHalf[0].stage, 'ready', 'one of two ready: still waiting'); assert.equal(out.readyHalf[1].count, '1/2', 'the guest sees 1/2');
+  await G.evaluate(() => __pal.boReadyPress());
   await G.waitForFunction(() => __pal.game.bo.stage === 'push', null, { timeout: 6000 });
   await H.evaluate(() => { __pal.game.bo.push.t = 120.2 });
   await G.waitForFunction(() => __pal.enemies.some(e => e.boss === 'destroyer'), null, { timeout: 6000 });

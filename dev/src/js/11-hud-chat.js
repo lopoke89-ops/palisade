@@ -89,7 +89,7 @@ function mateRows(){
   const box=$('mates'),mates=[...players.values()].filter(p=>p!==player&&(!game.pvp||(game.pvp==='base'&&p.team===player.team)));
   while(box.children.length<mates.length){const d=document.createElement('div');d.className='meter mate';d.innerHTML='<span class="lab"></span><div class="track"><i></i></div><b></b>';box.append(d)}
   [...box.children].forEach((row,n)=>{const p=mates[n];row.hidden=!p;if(!p)return;
-    txt(row.children[0],p.name.toUpperCase());row.children[1].firstChild.style.transform=`scaleX(${Math.max(0,p.hp/p.max)})`;row.children[1].firstChild.style.background=SLOTCOL[p.slot%6];
+    txt(row.children[0],p.name.toUpperCase()+(game.bo&&game.bo.stage==='ready'&&p.boReady?' ✓':''));row.children[1].firstChild.style.transform=`scaleX(${Math.max(0,p.hp/p.max)})`;row.children[1].firstChild.style.background=SLOTCOL[p.slot%6];
     txt(row.children[2],p.alive?String(Math.ceil(p.hp)):'DOWN');cls(row,'alarm',!p.alive)});
 }
 function hud(dt){

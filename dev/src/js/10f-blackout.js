@@ -5,7 +5,9 @@
 // Then 5 minutes at Main Command: a boss with troops every 30 s (at most 4 bosses up) and, for the last 2 minutes,
 // THE SUPREME DESTROYER with shieldbearer and grenadier squads. Main Command standing at 0:00, or the Destroyer dead,
 // wins; Main Command falling loses. Host (or solo) runs all of it; guests see it in snapshots.
-const BO={gather:45,gap:30,cap:60,warn:15,warnNo:3,push:300,dest:120,every:30,squad:20,bossCap:4,minorHp:.05,repair:2,heal:3,healR:5,refill:30,highR:2.5};
+// v0.9.7.1 (beta feedback): 35 s gaps, round pay, a starting purse, a push bonus, bounties ×1.25, and a READY UP stage
+// of up to 90 s before the final push that nobody can force (it starts when everyone alive is ready, or at 0:00)
+const BO={pay:20,payStep:5,purse:40,pushPay:60,bounty:1.25,ready:90,gather:45,gap:35,cap:60,warn:15,warnNo:3,push:300,dest:120,every:30,squad:20,bossCap:4,minorHp:.05,repair:2,heal:3,healR:5,refill:30,highR:2.5};
 const blackout=()=>!!game&&game.mode==='blackout'&&!game.pvp;
 // every boss can show up, except the ones that need a river (no repeats in a row)
 const boPool=()=>Object.keys(BOSSES).filter(k=>k!=='destroyer'&&!['ferryman','whiteferryman'].includes(k));
@@ -16,13 +18,16 @@ function boStart(){
   const P=boPOIs(),idxOf=c=>cores.indexOf(c),sh=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
   const order=[...sh(P.filter(c=>!c.poi.major).map(idxOf)),...sh(P.filter(c=>c.poi.major).map(idxOf))];
   game.bo={stage:'gather',t:0,order,n:0,cur:null,q:[],qT:0,warned:-1,last:'',held:0,lost:0,refT:BO.refill,push:null,destroyer:false,log:[]};
+  boPay(BO.purse,'STARTING PURSE');
 }
+// salvage for everyone (host); guests see it in their slow player rows
+function boPay(n,why){for(const p of players.values())p.sal+=n;flt(player.x,player.y-.6,`+${n} SALVAGE · ${why}`,'#e2b436')}
 // the gathering (the build phase's clock): the first target is called out like any other
 function boGather(){if(!game.bo)boStart();const B=game.bo,warn=boHeld('warn')?BO.warn:BO.warnNo;
   if(B.warned!==0&&game.timer<=warn){B.warned=0;const c=cores[B.order[0]];c.next=true;
     toastAll(`FIRST TARGET · ${c.poi.name}`,boHeld('warn')?`The Radio Tower picked it up: ${Math.ceil(game.timer)} seconds.`:'It\'s coming now.')}}
 // the next attack starts now (t 0); gathering hands over with no gap
-function boNext(){const B=game.bo;if(B.n>=B.order.length){boPush();return}
+function boNext(){const B=game.bo;if(B.n>=B.order.length){boReadyStage();return}
   const ci=B.order[B.n],c=cores[ci];B.stage='attack';B.t=0;B.n++;game.wave=B.n;
   let k;const pool=boPool();for(let a=0;a<8;a++){k=pool[Math.floor(rnd()*pool.length)];if(k!==B.last)break}B.last=k;
   const side=cityEdgeFor(c.i,c.j),edge=game.lay.edges[side],near=edge.filter(t=>Math.abs(side==='n'||side==='s'?t[0]-c.i:t[1]-c.j)<9);
@@ -44,8 +49,16 @@ function boEnd(how){const B=game.bo,cu=B.cur,c=cores[cu.ci];c.attack=false;B.cur
     toastAll(`${c.poi.name} IS LOST`,`${c.poi.major?'Its perk is gone, and every final-push wave brings an extra squad.':'Its perk is gone, and final-push bosses get +5% health.'}`)}
   else{B.held++;toastAll(`${c.poi.name} HELD`,how==='retreat'?'He pulled back before you finished him. It keeps its damage; the quiet repairs it slowly.':'The boss is down. Patch it up before the next one.')}
   B.log.push([c.poi.id,how]);boRetreat(cu.ci);B.q=[];
-  B.stage='gap';B.t=B.n>=B.order.length?BO.gap*.5:BO.gap;
+  const pay=BO.pay+BO.payStep*B.n;boPay(how==='lost'?Math.ceil(pay/2):pay,how==='lost'?'POI LOST':'POI HELD');
+  if(B.n>=B.order.length){boReadyStage();return}
+  B.stage='gap';B.t=BO.gap;
 }
+// v0.9.7.1: READY UP before the final push. Nobody can force it: everyone alive readies up, or the 90 s run out.
+function boReadyStage(){const B=game.bo;B.stage='ready';B.t=BO.ready;for(const p of players.values())p.boReady=false;
+  boPay(BO.pushPay,'FINAL PUSH');
+  toastAll('READY UP',`The final push starts in ${BO.ready} seconds, or as soon as everyone is ready. Spend your salvage at any point you hold.`)}
+function boReady(p,on=true){const B=game.bo;if(!B||B.stage!=='ready'||!p)return;p.boReady=!!on}
+const boReadyCount=()=>{let r=0,n=0;for(const p of players.values())if(p.alive||p.downed){n++;if(p.boReady)r++}return[r,n]};
 function boLosePerk(c){const id=c.poi.perk;
   if(id==='lights'){game.dark=true;toastAll('THE POWER IS OUT','The streetlights are dead. The city is darker for the rest of the run.')}
   if(id==='wood'||id==='brick')for(const n of nodes)if(n.poi===c.poi.id)n.locked=true;
@@ -86,6 +99,8 @@ function boTick(dt){
     else if(B.cur){const s=boEdgeSpot(B.cur.tiles),e=spawnEnemyAt(x,s[0],s[1]);if(e)e.poi=B.cur.ci}}}
   boPerks(dt);
   if(B.stage==='push'){boPushTick(dt);return}
+  if(B.stage==='ready'){B.t-=dt;for(const c of boPOIs())if(!c.lost&&c.hp<c.max)c.hp=Math.min(c.max,c.hp+2*BO.repair*dt);
+    const [r,n]=boReadyCount();if(B.t<=0||n>0&&r>=n){for(const p of players.values())p.boReady=false;boPush()}return}
   if(B.stage==='attack'){B.t+=dt;const c=cores[B.cur.ci],boss=enemies.find(e=>e.id===B.cur.boss&&!e.dead);
     if(c.hp<=0)boEnd('lost');else if(!boss)boEnd('held');else if(B.t>=BO.cap)boEnd('retreat');return}
   // the quiet: POIs mend slowly, and the next one is called out (15 s ahead with the Radio Tower, else 3 s)
@@ -105,7 +120,10 @@ function boPerks(dt){
 // downed teammates near a held Hospital get up 50% faster
 const boReviveMul=p=>{if(!blackout())return 1;const H=cores.find(c=>c.poi&&c.poi.perk==='heal');return H&&!H.lost&&Math.hypot(p.x-H.i-.5,p.y-H.j-.5)<BO.healR?1.5:1};
 // +25% salvage from kills near a held Gas Station
-const boSalvage=e=>{if(!blackout())return 1;const G=cores.find(c=>c.poi&&c.poi.perk==='salvage');return G&&!G.lost&&Math.hypot(e.x-G.i-.5,e.y-G.j-.5)<8?1.25:1};
+const boSalvage=e=>{if(!blackout())return 1;const G=cores.find(c=>c.poi&&c.poi.perk==='salvage');return BO.bounty*(G&&!G.lost&&Math.hypot(e.x-G.i-.5,e.y-G.j-.5)<8?1.25:1)};   // v0.9.7.1: ×1.25 everywhere in Black Out
+// v0.9.7.1: the armory opens at any held POI's structure during a quiet gap or the ready stage, not just Main Command
+const boQuiet=()=>!!game.bo&&(game.bo.stage==='gap'||game.bo.stage==='ready');
+const boNearHeld=p=>cores.some(c=>c.poi&&!c.lost&&Math.hypot(p.x-(c.i+.5),p.y-(c.j+.5))<2.7);
 // high ground: +2 tiles of range on the Parking Garage's deck while it holds
 const boHigh=p=>{if(!blackout()||!p)return false;const G=cores.find(c=>c.poi&&c.poi.perk==='range');return!!G&&!G.lost&&Math.hypot(p.x-G.i-.5,p.y-G.j-.5)<BO.highR};
 

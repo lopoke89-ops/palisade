@@ -4,7 +4,8 @@
 // they talk directly. Each guest opens 'r' (reliable: hello, build, grenade, and every
 // one-off event: sounds, particles, bullets, toasts, wall changes), 'u' (fast: movement in),
 // and 'st' (never resent: game state out, 15 times a second).
-const PROTO='yard-26',ROOM_PREFIX='palisade-yard-26-';   // v0.9.7: City Black Out (POI summary, near-only raiders on the city, the Supreme Destroyer's states 40-47, gas and mines)
+const PROTO='yard-27',ROOM_PREFIX='palisade-yard-27-';   // v0.9.7.1: ready states (lobby and the push), round pay
+// v0.9.7 was yard-26:   // v0.9.7: City Black Out (POI summary, near-only raiders on the city, the Supreme Destroyer's states 40-47, gas and mines)
 const ROOM_SESSION=(()=>{let id='';try{id=sessionStorage.getItem('palisade.roomSession')||''}catch(e){}
   if(!/^[0-9a-f]{24}$/.test(id)){id=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');try{sessionStorage.setItem('palisade.roomSession',id)}catch(e){}}
   return id})();
@@ -147,6 +148,7 @@ function hostData(peerId,d){
   if(d.t==='ping')return;
   if(d.t==='c'){if(hostText(d.m,HOST_LIMITS.chat))hostChat(c.pid,d.m);return}
   if(d.t==='nextcls'){const p=players.get(c.pid);if(p&&NET.inGame&&game.pvp==='ffa'&&!game.job&&CLASSES[d.cls])p.nextCls=d.cls===p.cls?'':d.cls;return}
+  if(d.t==='ready'){if(!NET.inGame){const r=NET.roster.find(x=>x.id===c.pid);if(r&&typeof lobbyReady==='function')lobbyReady(r,!!d.on)}else boReady(players.get(c.pid),d.on!==false);return}   // v0.9.7.1: lobby ready and the push's ready stage
   if(d.t==='team'){if(!NET.inGame){const r=NET.roster.find(x=>x.id===c.pid);if(r){r.team=r.team==='b'?'a':'b';broadcastLobby()}}return}
   const p=players.get(c.pid);if(!p||!NET.inGame||!running())return;
   if(d.t==='i'){
@@ -297,7 +299,7 @@ const PL_STATE=[['id',p=>p.id],['x',p=>r2(p.x)],['y',p=>r2(p.y)],['ax',p=>r2(p.a
   ['alive',p=>p.alive?1:0],['ammo',p=>p.gun.mag?p.ammo|0:-1],['tp',p=>p.tp],['down',p=>p.downed?1:0],['rev',p=>r2(p.revive)],['rt',p=>r2(p.rt)],
   ['bcd',p=>r2(Math.max(0,p.bcd))],['bolt',p=>p.bolt>0?r2(p.bolt/p.boltT):0],['rl',p=>p.rl>0?1:0],['stun',p=>r2(p.stun||0)],['ev',p=>r2(p.ev||0)]];   // ev (v0.9.4.0): seconds stood in the evac ring
 const PL_SLOW=[['id',p=>p.id],['m0',p=>p.mats[0]],['m1',p=>p.mats[1]],['m2',p=>p.mats[2]],['nades',p=>p.nades],['sal',p=>p.sal|0],['kills',p=>p.kills|0],['deaths',p=>p.deaths|0],
-  ['prot',p=>p.prot>0?1:0],['ab',p=>p.ab|0],['out',p=>p.out?1:0],['ce',p=>chEvacBits(p)]];   // ce (v0.9.6.4): chapter evac results, 2 bits a chapter   // out (v0.9.4.0): evacuated   // ab: class-ability state, reserved
+  ['prot',p=>p.prot>0?1:0],['ab',p=>p.ab|0],['out',p=>p.out?1:0],['ce',p=>chEvacBits(p)],['rdy',p=>p.boReady?1:0]];   // rdy (v0.9.7.1): ready for the final push   // ce (v0.9.6.4): chapter evac results, 2 bits a chapter   // out (v0.9.4.0): evacuated   // ab: class-ability state, reserved
 const PL_INFO=[['id',p=>p.id],['name',p=>p.name],['cls',p=>p.cls],['slot',p=>p.slot],['max',p=>p.max],['maxN',p=>p.maxN],['upS',p=>p.upS],['cosS',p=>p.cosS],['team',p=>p.team||''],['ammoEq',p=>p.ammoEq.join(',')],['sk',p=>p.sk]];
 // enemies: the boss-only fields sit last and trailing zeros are dropped, so a plain raider sends 7 numbers, not 12
 const EN_STATE=[['id',e=>e.id],['type',e=>ECODE.indexOf(e.type==='boss'?'boss:'+e.boss:e.type)],['x',e=>r2(e.x)],['y',e=>r2(e.y)],['ax',e=>r2(e.aim.x)],['ay',e=>r2(e.aim.y)],
@@ -422,7 +424,7 @@ function applySnap(s){
   for(const id of[...players.keys()])if(!seen.has(id))players.delete(id);
   player=players.get(myId)||player;
   for(const r of s.ps||[]){const p=players.get(r[PW.id]);if(!p)continue;   // v0.9.6.3: slow fields, only when they changed
-    p.mats=[r[PW.m0]|0,r[PW.m1]|0,r[PW.m2]|0];p.nades=r[PW.nades]|0;p.sal=r[PW.sal]|0;p.kills=r[PW.kills]|0;p.deaths=r[PW.deaths]|0;p.prot=r[PW.prot]?1:0;p.ab=r[PW.ab]|0;p.out=!!r[PW.out];p.chEvac=chEvacFrom(r[PW.ce]|0)}
+    p.mats=[r[PW.m0]|0,r[PW.m1]|0,r[PW.m2]|0];p.nades=r[PW.nades]|0;p.sal=r[PW.sal]|0;p.kills=r[PW.kills]|0;p.deaths=r[PW.deaths]|0;p.prot=r[PW.prot]?1:0;p.ab=r[PW.ab]|0;p.out=!!r[PW.out];p.chEvac=chEvacFrom(r[PW.ce]|0);p.boReady=!!r[PW.rdy]}
   const q=s.qm;if(q[4]<qm.hp-.01)qm.flash=.1;qm.tx=q[0];qm.ty=q[1];qm.aim={x:q[2],y:q[3]};qm.hp=q[4];qm.max=q[5];qm.alive=!!q[6];qm.revive=q[7];game.dellLv=q[8]|0;
   const old=new Map(enemies.map(e=>[e.id,e]));enemies=[];
   for(const r of s.en){const v=k=>r[PE[k]]||0,id=r[PE.id];let e=old.get(id);

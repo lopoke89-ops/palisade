@@ -73,7 +73,7 @@ function gamePad(cur,hit,now){
   if(hit(M.matPrev))game.sel=(game.sel+2)%3;
   if(hit(M.matNext))game.sel=(game.sel+1)%3;
   if(hit(M.kit))toggleBuild();
-  if(hit(M.start)&&game.phase==='build'&&NET.mode!=='guest')startRaid();
+  if(hit(M.start)&&!boReadyPress()&&game.phase==='build'&&NET.mode!=='guest')startRaid();   // v0.9.7.1: Start readies up for the final push
   if(hit(M.reload))localReload();
   if(hit(M.delgado))setQMMode(qm.mode==='defend'?'follow':'defend');
 }

@@ -85,8 +85,8 @@ const BURST_N=[3,5,7,9,9],burstN=p=>BURST_N[Math.min(4,p.up.d|0)],burstGap=p=>Ma
 const upStr=p=>UPG.map(x=>p.up[x.k]).join('');
 const nearStake=p=>{const c=stakeOf(p);return!!c&&Math.hypot(p.x-(c.i+.5),p.y-(c.j+.5))<2.7};
 const lockdown=()=>hasMod('lockdown')&&game.mode==='blitz'&&game.wave>=BLITZ.waves-1;   // v0.9.4.0: the armory is shut before the Final Blitz
-const shopOpen=p=>!!p&&p.alive&&!lockdown()&&(game.pvp==='base'?game.phase!=='over':!game.pvp&&(game.phase==='build'||!!game.bo&&game.bo.stage==='gap'));   // v0.9.7: Black Out's quiet windows too
-const canShop=p=>shopOpen(p)&&nearStake(p);
+const shopOpen=p=>!!p&&p.alive&&!lockdown()&&(game.pvp==='base'?game.phase!=='over':!game.pvp&&(game.phase==='build'||boQuiet()));   // v0.9.7: Black Out's quiet windows (and the ready stage) too
+const canShop=p=>shopOpen(p)&&(nearStake(p)||blackout()&&boNearHeld(p));   // v0.9.7.1: any held POI in Black Out
 function buyUpgrade(p,k){
   if(k==='core')return repairCore(p);
   if(k==='dell')return buyDell(p);
@@ -102,7 +102,7 @@ function buyAmmo(p,id,slot){
 }
 function repairCore(p){
   const c=cores[0],cost=coreFixCost(p);
-  if(game.pvp||hasMod('nopatch')||!canShop(p)||!c||c.hp<=0||c.hp>=c.max||p.sal<cost)return false;   // full core: nothing to buy, nothing charged
+  if(game.pvp||hasMod('nopatch')||!canShop(p)||!nearStake(p)||!c||c.hp<=0||c.hp>=c.max||p.sal<cost)return false;   // full core: nothing to buy, nothing charged
   const add=Math.min(CORE_FIX.hp,c.max-c.hp);p.sal-=cost;c.hp+=add;
   flt(c.i+.5,c.j+.5,`+${Math.round(add)} CORE`,'#8fe0a0');emit(c.i+.5,c.j+.5,WH*.6,'heal');personal(p,'restock');return true;
 }

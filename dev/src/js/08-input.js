@@ -40,6 +40,7 @@ addEventListener('keydown',e=>{
   else if(k==='g'||k==='q')localNade();
   else if(k==='shift')localSprint();
   else if(k==='r')localReload();
+  else if(k==='enter'&&boReadyPress()){}   // v0.9.7.1
   else if(k==='enter'&&game.phase==='build'&&NET.mode!=='guest')startRaid();
   else if(k==='b')toggleBuild();
   else if(k==='h')setQMMode(qm.mode==='defend'?'follow':'defend');
@@ -55,7 +56,7 @@ const live=fn=>()=>{if(playing()&&!overlayOpen())fn()};
 [0,1,2].forEach(m=>tapBtn($('c'+m),live(()=>{game.sel=m})));
 tapBtn($('pWall'),live(()=>{game.piece='wall'}));tapBtn($('pDoor'),live(()=>{game.piece='door'}));
 tapBtn($('buildBtn'),live(localBuild));tapBtn($('nadeBtn'),live(localNade));tapBtn($('sprBtn'),live(localSprint));tapBtn($('abBtn'),live(localAbility));
-tapBtn($('skipBtn'),live(()=>{if(game.phase==='build'&&NET.mode!=='guest')startRaid()}));
+tapBtn($('skipBtn'),live(()=>{if(boReadyPress())return;if(game.phase==='build'&&NET.mode!=='guest')startRaid()}));
 tapBtn($('pauseBtn'),()=>{if(playing())togglePause()});
 $('chatBtn').addEventListener('click',e=>{e.preventDefault();initAudio();chatOpen()?closeChat():openChat()});
 cv.addEventListener('pointerdown',()=>{if(chatOpen())closeChat()},true);
