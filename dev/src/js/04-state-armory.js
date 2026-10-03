@@ -128,7 +128,7 @@ function newGame(roster,pvp='',opt={}){
   const mods=pick.mode==='campaign'&&!pvp?campaignMods(cleanMods(opt.mods,'')):cleanMods(opt.mods,pvp||(pick.mode==='blitz'?'blitz':'')),job=mods.includes('onejob')&&CLASSES[opt.job]?opt.job:'';
   if(job)roster=roster.map(r=>({...r,cls:job}));
   const Df=pvp?DIFF.normal:DIFF[pick.diff]||DIFF.normal;
-  const map=pick.mode==='campaign'&&!pvp?'yard':pvp&&pick.map==='frost'?'yard':pick.map,L=layMap(map,pick.size,pvp);
+  const map=pick.mode==='blackout'&&!pvp?'city':pick.mode==='campaign'&&!pvp?'yard':pvp&&pick.map==='frost'?'yard':pick.map,L=layMap(map,pick.size,pvp);
   walls=new Array(N*N).fill(null);debris=new Int8Array(N*N);dist=new Float32Array(N*N);
   const wood=(i,j)=>({i,j,type:0,amt:48,max:48,rt:0,locked:false});
   const ruin=(list,mat,ratio,ch)=>list.forEach(([i,j])=>{const w=makeWall(mat,false,ratio);w.char=ch;walls[idx(i,j)]=w});
@@ -160,11 +160,11 @@ function newGame(roster,pvp='',opt={}){
   if(pvp||mods.includes('alone'))Object.assign(qm,{alive:false,gone:true,x:-9,y:-9});   // Delgado sits PvP (and On Your Own) out
   Object.assign(qm,{mode:'follow',completedRaids:0,layout:null,layoutAnchor:'',layoutSize:4,status:'Following host',bcd:0,C:{build:1,repair:1},face:{x:1,y:0},tp:0});
   enemies=[];bullets=[];lobs=[];charges=[];parts=[];flashes=[];floats=[];sacks=[];rockets=[];fires=[];zaps=[];slashes=[];rings=[];chains=[];arcs=[];arcHaz.length=0;
-  const mode=['5','10','endless','blitz','campaign'].includes(pick.mode)?pick.mode:'5';
+  const mode=['5','10','endless','blitz','campaign','blackout'].includes(pick.mode)?pick.mode:'5';
   game={phase:pvp==='ffa'?'raid':'build',paused:false,wave:0,timer:pvp==='base'?PVP.truce:pvp==='ffa'?PVP.ffaTime:40+Df.build,queue:[],qn:0,spawnT:0,sel:game.sel||0,piece:'wall',time:0,tip:0,gathered:0,C:player.C,Df,
-    mode,waves:mode==='endless'?Infinity:mode==='blitz'?BLITZ.waves:mode==='campaign'?CAMPAIGN.waves:+mode,rewarded:false,bosses:0,pvp,goal:PVP.ffaGoal,winner:'',chapter:0,
+    mode,waves:mode==='endless'?Infinity:mode==='blackout'?8:mode==='blitz'?BLITZ.waves:mode==='campaign'?CAMPAIGN.waves:+mode,rewarded:false,bosses:0,pvp,goal:PVP.ffaGoal,winner:'',chapter:0,
     stats:{dropped:0,built:0,lost:0,repairs:0,revives:0},
-    map:MAP_IDS.includes(map)?map:'yard',size:N>16?'xl':'std',lay:L,flood:{t:0,warned:false},bossLog:[],oct:!!pick.oct,
+    map:map==='city'||MAP_IDS.includes(map)?map:'yard',size:N>16?'xl':'std',lay:L,flood:{t:0,warned:false},bossLog:[],oct:!!pick.oct,
     gid:String(opt.gid||newGid()).slice(0,40),mods,job,sbN:0,sbLog:[],fbLog:[],fb:null,joinFB:0,wx:0,wxT:0,sd:false,
     joinHeld:opt.guest?null:0,joinT:0,joinBoss:0,joinSB:0};   // join*: where this phone came in (guests learn it from the first state packet)
   for(const p of players.values())kitUp(p);

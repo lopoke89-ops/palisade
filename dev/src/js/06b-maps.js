@@ -9,11 +9,11 @@ const T_GROUND=0,T_WATER=1,T_BRIDGE=2,T_LOW=3,T_CRACK=4,T_PIT=5,T_ROCK=6,T_DRUM=
 const SIZES={std:16,xl:24};
 let terr=new Uint8Array(N*N),terrLog=[],floodOn=false,floodLv=0,MAP=null,MAPO={ox:0,oy:0,xl:false};   // terrLog: tiles changed since the start (host sends it)
 const tAt=(i,j)=>inb(i,j)?terr[idx(i,j)]:T_GROUND;
-const terrSolid=t=>t===T_PIT||t===T_ROCK||t===T_DRUM;
-const terrShot=t=>t===T_ROCK;   // what stops a bullet and blocks sight: rock outcrops only (v0.9.1: oil drums don't; a pit doesn't)
+const terrSolid=t=>t===T_PIT||t===T_ROCK||t===T_DRUM||t===T_BLDG;
+const terrShot=t=>t===T_ROCK||t===T_BLDG;   // what stops a bullet and blocks sight: rock outcrops only (v0.9.1: oil drums don't; a pit doesn't)
 const wetT=t=>t===T_WATER||(t===T_LOW&&floodOn);
 // how fast you move on this spot (1 = normal)
-function slowAt(x,y){const t=tAt(Math.floor(x),Math.floor(y)),s=(t===T_WATER?.5:t===T_LOW&&floodOn?.62:1)*stormSlow(),f=frostSlow(x,y);return f<1?Math.max(.5,s*f):s}
+function slowAt(x,y){const t=tAt(Math.floor(x),Math.floor(y)),s=(t===T_WATER?.5:t===T_LOW&&floodOn?.62:t===T_ROAD?CITY.roadSpeed:t===T_RUBBLE?CITY.rubbleSpeed:1)*stormSlow(),f=frostSlow(x,y);return f<1?Math.max(.5,s*f):s}
 function terrNoBuild(k,hasWall){
   if(connectors[k])return'Keep the mountain connector clear';
   const t=terr[k];
@@ -21,6 +21,7 @@ function terrNoBuild(k,hasWall){
   if(t===T_PIT)return'That\'s a pit now';
   if(t===T_ROCK)return'Solid rock';
   if(t===T_DRUM)return'Oil drum in the way';
+  if(t===T_BLDG)return'A building\'s in the way';
   if(t===T_LOW&&floodOn&&!hasWall)return'Flooded. Wait for the water to drop';
   return'';
 }
@@ -104,11 +105,12 @@ const scrap=([i,j],unlock)=>({i,j,type:2,locked:unlock>0,unlock,solid:true});
 function edgeTiles(side,a,b){const out=[];for(let s=Math.max(0,a);s<Math.min(N,b);s++)out.push(side==='e'?[N-1,s]:[s,0]);return out}
 // fills terrain and returns the layout for newGame; sets N for the size
 function layMap(id,size,pvp){
-  const n=pvp?16:SIZES[size]||16;
+  const n=pvp?16:id==='city'?CITY_N:SIZES[size]||16;   // v0.9.7: City Black Out has its own size
   if(n!==N){N=n}
   terr=new Uint8Array(N*N);heights=new Uint8Array(N*N);connectors=new Uint8Array(N*N);frostFields=[];terrLog=[];floodOn=false;floodLv=0;
   if(pvp){MAP=MAPS[id]||MAPS.yard;MAPO={ox:0,oy:0,xl:false,pvp};return layPvp(MAP===MAPS[id]?id:'yard',pvp)}   // v0.9.1: PvP plays on every map
   MAP=MAPS[id]||MAPS.yard;
+  if(id==='city'){MAP=MAPS.city;MAPO={ox:0,oy:0,xl:true,pvp:''};const L=MAP.lay(MAPO);for(const[i,j]of[L.core,...L.pois.map(p=>[p.i,p.j]),...L.nodes.map(n=>[n.i,n.j]),...L.ruins.flatMap(r=>r[0])])terr[idx(i,j)]=T_GROUND;return L}
   const o={ox:N>16?2:0,oy:N>16?N-16-2:0,xl:N>16,pvp:''};   // XL: the 16×16 layout moves in a little from the south-west corner
   MAPO=o;const L=MAP.lay(o);
   // piles, ruins and the stake always stand on plain ground
@@ -165,6 +167,7 @@ function floodVisual(dt){floodLv+=((floodOn?1:0)-floodLv)*Math.min(1,dt*1.2)}
 // ground colour for a tile in the cached back layer (water is painted here; bridges, pits and floods are drawn live)
 function groundCol(i,j,h){
   const t=terr[idx(i,j)],m=MAP||MAPS.yard;
+  if(m.city)return cityGroundCol(i,j,h);
   if(t===T_WATER||t===T_BRIDGE)return h<.33?'#1d3848':h<.66?'#1f3b4c':'#1b3544';
   if(m===MAPS.river)return t===T_LOW?(h<.5?'#343423':'#2f3021'):h<.2?'#35402a':h<.75?'#303a26':'#2b3322';
   if(m===MAPS.quarry)return h<.2?'#3b3731':h<.75?'#35312c':'#2f2b27';
@@ -172,6 +175,7 @@ function groundCol(i,j,h){
 }
 // ground details painted once: bank edges, cracks, gravel
 function groundDetail(i,j,h){
+  if(MAP&&MAP.city)return cityGroundDetail(i,j,h);
   const t=terr[idx(i,j)];
   if(t===T_WATER||t===T_BRIDGE){
     // a soft bank line where water meets land
@@ -225,6 +229,7 @@ function drawPit(i,j){
 // rock and drum bodies never change, so each is drawn once into a small sprite (like walls); only the flames are live
 const TERR_SPR=new Map();
 function itemTerr(k){
+  if(terr[k]===T_BLDG){cityBuilding(k%N,(k/N)|0);return}   // v0.9.7: drawn live (hundreds on screen would thrash the sprite cache)
   const i=k%N,j=(k/N)|0,t=terr[k],key=t+'|'+i+'|'+j+'|'+N+'|'+TW2+'|'+DPR;let S=TERR_SPR.get(k);
   if(!S||S.key!==key){if(TERR_SPR.size>256)TERR_SPR.clear();const pad=t===T_DRUM?0:0;
     const hz=heightAt(i+.5,j+.5)*heightPx(),x0=Math.floor(((i-j-1)*TW2-4*u)*DPR)/DPR,y0=Math.floor(((i+j)*TH2-hz-WH*1.4-4*u)*DPR)/DPR,x1=(i-j+1)*TW2+4*u,y1=(i+j+2)*TH2-hz+4*u;
