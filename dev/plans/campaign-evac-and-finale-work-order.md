@@ -166,7 +166,7 @@ This replaces the current wave 13 (the 5-minute single-boss Final Blitz) in the 
 
 **Keeping it fair and playable:**
 - **Alive cap** (Big U: D6): at most **8** bosses alive. Bosses from a wave that would go over the cap wait and arrive as others fall.
-- **Health** (Big U: D9): gauntlet bosses have **110% of their normal health**, with the game's usual crew scaling on top. This is the literal reading of "raise their base hp 10%"; confirm it at the screenshot review. If playtests show it's unwinnable solo, the first lever is the cap, not the health.
+- **Health** (Big U: D9, H4): gauntlet bosses have **110% of their normal health** (100 → 110), with the game's usual crew scaling on top. If playtests show it's unwinnable solo, the first lever is the cap, not the health.
 - **Rime ruptures:** a Rime won't start its rupture or dash while another boss is mid-tell (today's rule). Keep it, and spread the two Rimes' first tells 1.2 s apart, so they can't slam at once.
 - **Spawning:** bosses in a wave spawn at different edges, at least 3 tiles apart, never on the summit core tiles. Each spawn gets a 1-second warning ring.
 - **Boss bars:**
@@ -214,7 +214,7 @@ Approved by Big U (D7, D8). Big U also approves the exact payout table before th
 **Rime ladder (D8): no cap.** Every gauntlet Rime counts toward `boss_rime`.
 - With 2 Rimes per wave (D4), a full run gives 12 gauntlet Rimes plus the chapter-4 Rime: about 13 a run, against about 3 today.
 - So the 250 unlock comes about **4× faster** (about 20 runs instead of about 80), not the 6× quoted when waves had 3 Rimes.
-- If Big U wants 6×, count each gauntlet Rime twice for the ladder only. Decision H5.
+- Big U confirmed about 4× is right (H5); each Rime counts once.
 
 **Server work:**
 - Rebuild `claim_match_reward` from the live text, with:
@@ -368,12 +368,14 @@ This comes from Big U's prompt (`palisade_hybrid_theory_prompt.txt`, October 3).
 | D8 | **No cap** on gauntlet Rimes for the Rime ladder |
 | D9 | Gauntlet boss health **+10%** over normal |
 
-**Still open (defaults are used unless Big U changes them):**
+**Also decided by Big U (October 3):**
 
-| # | Question | Default |
-|---|---|---|
-| H1 | `hat:yamaka` is a religious head covering (a kippah). Offered next to the Dunce Cone in a joke-heavy case, some players could read it as mockery | Keep as written (Big U's call). If dropped, swap in another rare hat |
-| H2 | `fx:eight` (a phallic joke, no anatomy) and `fx:leaf` (a cannabis leaf) set an older tone for a game anyone can open in a browser | Keep as written |
-| H3 | The parody team names keep real city names and exact team colors. That avoids marks, but the look is still recognizable | Keep as written (no logos, no crests, parody names only) |
-| H4 | D9 reading: +10% over normal health, or raise the 35% solo baseline to 45%? | +10% over normal |
-| H5 | With 2 Rimes per wave the Rime ladder runs about 4× faster, not 6×. Count gauntlet Rimes twice to get 6×? | Count once (about 4×) |
+| # | Decision |
+|---|---|
+| H1 | Keep `hat:yamaka` for now; change it later if it becomes an issue |
+| H2 | Tone is fine (`fx:eight`, `fx:leaf`). The game is played with friends; a T/M-style rating is acceptable |
+| H3 | Parody team names, cities and colors kept as written (no logos, no crests) |
+| H4 | Gauntlet boss health is **110% of normal** (normal 100 → 110), with the usual crew scaling. No reduction |
+| H5 | Gauntlet Rimes count once: the Rime ladder runs about **4×** faster |
+
+All decisions are made. Nothing is open.
