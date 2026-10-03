@@ -1,7 +1,7 @@
 // Runs the real migration in disposable in-memory Postgres. Never connects to live accounts.
 const {PGlite}=require('@electric-sql/pglite'),fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const root=__dirname+'/..',migration=fs.readFileSync(root+'/supabase/migrations/20260930050715_palisade_v0935_cosmetics.sql','utf8'),schema=fs.readFileSync(root+'/supabase/schema.sql','utf8');
-const src=fs.readFileSync(root+'/src/js/18-cosmetics.js','utf8'),catalog=vm.runInNewContext('function registerWinterLooks(){}function registerWinterTrails(){}function registerWinterCosmetics(){}function registerWinterBackgrounds(){}'+src.slice(0,src.indexOf('// Saves live in this browser'))+';JSON.stringify({COS,CASES})');   // v0.9.6.0 winter looks live in a later file; this migration predates them
+const src=fs.readFileSync(root+'/src/js/18-cosmetics.js','utf8'),catalog=vm.runInNewContext('function registerWinterLooks(){}function registerWinterTrails(){}function registerWinterCosmetics(){}function registerWinterBackgrounds(){}function registerHybridLooks(){}function registerHybridCosmetics(){}'+src.slice(0,src.indexOf('// Saves live in this browser'))+';JSON.stringify({COS,CASES})');   // v0.9.6.0 winter looks live in a later file; this migration predates them
 (async()=>{const db=new PGlite(),id='11111111-1111-4111-8111-111111111111',other='22222222-2222-4222-8222-222222222222';
 await db.exec(`create role anon;create role authenticated;create schema auth;create schema private;
 create table auth.users(id uuid primary key);create table public.profiles(id uuid primary key,banned boolean default false);
