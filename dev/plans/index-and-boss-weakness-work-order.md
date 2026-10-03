@@ -1,6 +1,6 @@
 # v0.9.6.5 work order: the Index, boss weaknesses, and +25% boss health
 
-Status: **plan; Big U answered D1-D6 on October 3 (see the end). Three small points are still open (O1-O3).** Nothing is built yet.
+Status: **plan; all decisions answered by Big U on October 3, except his OK on the Bulldozer's replacement move (Overdrive, section 6).** Nothing is built yet.
 
 A small update with three parts:
 
@@ -57,7 +57,7 @@ This audit counts each distinct, telegraphed move from the boss AI code (`10-pha
 ## 3. Boss weaknesses (ammo types)
 
 - **The four special ammo types:** Armor Piercing, Incendiary, Explosive, Lightning. Players unlock them in the skill tree and load them per raid.
-- **How a weakness works:** each boss is weak to one of them. Any bullet carrying that ammo deals **+50% bullet damage** to that boss (D2). The bonus applies to the bullet's own damage only, not to Incendiary burn ticks or Explosive splash, so it can't stack twice.
+- **How a weakness works:** each boss is weak to one of them. Any bullet carrying that ammo deals **+35% bullet damage** to that boss (Big U, O1). The bonus applies to the bullet's own damage only, not to Incendiary burn ticks or Explosive splash, so it can't stack twice.
 - **Standard rounds:** unchanged.
 - **Display:**
   - Boss health bar: a small colored tag ("WEAK: INCENDIARY").
@@ -69,11 +69,11 @@ This audit counts each distinct, telegraphed move from the boss AI code (`10-pha
 | Weak to | Bosses |
 |---|---|
 | Armor Piercing | Demolisher, Bulldozer |
-| Incendiary | Harbinger, Rime Colossus, Frostbound Butcher, Icebound Ferryman, Permafrost Foreman |
+| Incendiary | Rime Colossus, Frostbound Butcher, Icebound Ferryman, Permafrost Foreman |
 | Explosive | Stormcaller, Foreman, Tempest |
-| Lightning | Butcher, Blue Butcher, Arsonist, **Ferryman** (Big U: he's in the water) |
+| Lightning | Butcher, Blue Butcher, Arsonist, **Ferryman** and **Harbinger** (Big U: they fight from the water) |
 
-Six of the 14 bosses would be weak to Incendiary, which is lopsided. That's because all four winter bosses are ice. An alternative: winter bosses keep their base boss's weakness, with only the Rime Colossus on Incendiary (D1).
+Final split: Armor Piercing 2, Incendiary 4 (all ice), Explosive 3, Lightning 5.
 
 ## 4. +25% boss health
 
@@ -107,7 +107,7 @@ Health thresholds stay as they are; the new moves join the rotation from the sta
 
 **The Bulldozer** (machine; charges):
 - **Seismic Slam:** he stops and lifts his blade (a yellow ring around him, 0.9 s), then slams. The shockwave goes out to 3.5 tiles, dealing 28 damage, knocking players back and hitting nearby walls hard.
-- **Rubble Spray:** at mid range he digs in and shows a wide cone for 0.8 s, then sprays rubble across it. It deals 20 damage per piece (up to 2 pieces) and leaves 2-3 small rubble blocks that work as cover for you or a wall in your way. It reuses the Foreman's slab blocks.
+- **Overdrive** (replaces Rubble Spray, Big U: no debris left on the map): his engine roars and three short lanes appear one after another, a zig-zag toward his target (0.5 s warning each). He rams down all three in a row: each hit deals 24 damage and throws you aside. Walls in a lane take a heavy hit, but he doesn't stop or get dazed until the last leg. Nothing is left behind on the map.
 
 **Open:** the damage numbers above are a starting point, tuned to match the existing attacks (the Stormcaller's bolt deals 40, the Butcher's cut 28). They'll be checked in playtests.
 
@@ -157,6 +157,6 @@ Health thresholds stay as they are; the new moves join the rotation from the sta
 
 | # | Question | Proposal |
 |---|---|---|
-| O1 | Weakness bonus size (D2 wasn't answered) | +50% bullet damage |
-| O2 | The Harbinger also fights from a boat, and the Icebound Ferryman is the Ferryman on ice. Lightning for them too? | Harbinger: Lightning (water). Icebound Ferryman: Incendiary (ice), like the other winter bosses |
-| O3 | The eight new attacks in section 6 | As written |
+| O1 | Weakness bonus size | **Answered:** +35% damage from bullets that win the matchup |
+| O2 | Harbinger and Icebound Ferryman | **Answered:** Harbinger weak to Lightning; Icebound Ferryman weak to Incendiary |
+| O3 | The eight new attacks | **Answered:** yes, but the Bulldozer's Rubble Spray is replaced (debris on the map could cause trouble for future updates). The replacement, Overdrive, waits for Big U's OK |
