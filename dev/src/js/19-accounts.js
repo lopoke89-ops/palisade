@@ -303,6 +303,6 @@ async function refreshLobbies(){
     b.append(nm,c,d);b.disabled=g.players>=6||NET.mode!=='solo';b.setAttribute('aria-label',`Join ${g.name}, ${d.textContent}, ${g.players} of 6 players`);
     b.addEventListener('click',()=>{initAudio();$('mCode').value=g.code;netJoin(g.code)});box.append(b)}
 }
-function lobbyBrowse(on){clearInterval(lobTimer);lobTimer=0;if(!on)return;refreshLobbies();lobTimer=setInterval(()=>{if($('pg-multi').hidden||$('menu').hidden){lobbyBrowse(false);return}refreshLobbies()},6000)}
+function lobbyBrowse(on){clearInterval(lobTimer);lobTimer=0;if(!on)return;refreshLobbies();lobTimer=setInterval(()=>{if($('pg-multi').hidden||$('menu').hidden){lobbyBrowse(false);return}if(!document.hidden)refreshLobbies()},6000)}
 addEventListener('pagehide',()=>{if(NET.mode==='host')lobbyUnpublish()});
 

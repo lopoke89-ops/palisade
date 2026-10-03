@@ -130,7 +130,12 @@ function drawStageFx(now){
 function socialMessage(){return !cloudOn?'Friends are available on the live site.':acct.state==='wait'?'Connecting to your account…':!socialAccount()?'Sign in with a saved account to add friends.':SOCIAL.status}
 // ---- Friends: a real request system on the server (friend_send / friend_answer / friend_cancel / friend_remove,
 // social_state for everything at once). "Recent" is the old saved-players list, kept in the account's metadata.
-const FR={friends:[],incoming:[],outgoing:[],notes:[],unseen:0,ok:false,loaded:false,tab:'friends',busy:false,seq:0,timer:0,rooms:[],confirm:'',confirmT:0};
+const FR={friends:[],incoming:[],outgoing:[],notes:[],unseen:0,ok:false,loaded:false,tab:'friends',busy:false,seq:0,timer:0,rooms:[],confirm:'',confirmT:0,last:0,act:Date.now()};
+// v0.9.6.3: friends checks every 15 s only while someone is actually looking at the menus. A hidden tab doesn't ask at all,
+// a match or 5 idle minutes slows it to once a minute, and coming back to the tab asks straight away.
+const FR_IDLE=300000,FR_SLOW=60000;
+for(const ev of['pointerdown','keydown','touchstart'])addEventListener(ev,()=>{FR.act=Date.now()},{passive:true,capture:true});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&FR.timer&&socialAccount()&&Date.now()-FR.last>15000){FR.act=Date.now();friendsPoll()}});
 const dropOpen=()=>!$('friendsDrop').hidden;
 const ago=t=>{const s=Math.max(0,(Date.now()-Date.parse(t))/1000);return s<60?'just now':s<3600?Math.floor(s/60)+' min ago':s<86400?Math.floor(s/3600)+' h ago':Math.floor(s/86400)+' d ago'};
 const friendIds=()=>FR.friends.map(f=>f.id);
@@ -201,7 +206,7 @@ function renderFriendBadge(){
 // the friends list, requests and mailbox in one call; the friends' listed rooms in a second
 async function friendsPoll(){
  if(!socialAccount()){FR.loaded=true;FR.ok=false;renderFriendBadge();if(dropOpen())renderSocial();return}
- const owner=myUid(),seq=++FR.seq;const r=await rpc('social_state');if(owner!==myUid()||seq!==FR.seq)return;
+ const owner=myUid(),seq=++FR.seq;FR.last=Date.now();const r=await rpc('social_state');if(owner!==myUid()||seq!==FR.seq)return;
  FR.loaded=true;
  if(r.ok&&r.j){FR.ok=true;FR.friends=r.j.friends||[];FR.incoming=r.j.incoming||[];FR.outgoing=r.j.outgoing||[];FR.notes=r.j.notes||[];FR.invites=r.j.invites||[];FR.unseen=r.j.unseen|0;
   const ids=FR.friends.map(f=>f.id).filter(id=>!SOCIAL.ids.includes(id));
@@ -219,9 +224,14 @@ const friendSend=p=>friendDo('friend_send',{p_to:p.id},j=>j.state==='friends'?`Y
 const friendAnswer=(r,yes)=>friendDo('friend_answer',{p_id:r.id,p_accept:!!yes},()=>yes?`You and ${r.user.username} are friends now.`:'Request declined.');
 const friendCancel=r=>friendDo('friend_cancel',{p_id:r.id},()=>'Request cancelled.');
 const friendRemove=f=>friendDo('friend_remove',{p_other:f.id},()=>`${f.username} removed from friends.`);
-function friendsTick(){   // every 15 s while the menu is up
+function friendsTickRun(){
+ if(!socialAccount()){clearInterval(FR.timer);FR.timer=0;return false}
+ if(document.hidden)return false;const now=Date.now();if((inRun()||now-FR.act>FR_IDLE)&&!dropOpen()&&now-FR.last<FR_SLOW)return false;
+ friendsPoll();if(dropOpen()&&SOCIAL.ids.length)refreshSocial();return true;
+}
+function friendsTick(){   // every 15 s while the menus are in use (see FR_IDLE)
  clearInterval(FR.timer);FR.timer=0;if(!socialAccount())return;
- FR.timer=setInterval(()=>{if(!socialAccount()){clearInterval(FR.timer);FR.timer=0;return}friendsPoll();if(dropOpen()&&SOCIAL.ids.length)refreshSocial()},15000);
+ FR.timer=setInterval(friendsTickRun,15000);
 }
 function openFriends(){
  if(!demo&&inRun()){document.body.append($('friendsDrop'));$('friendsDrop').classList.add('inGame')}

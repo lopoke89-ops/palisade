@@ -21,7 +21,7 @@ const PORT = process.env.PORT || 8080, Q = 'peerhost=127.0.0.1&peerport=9000&pee
   await p.evaluate(() => { __pal.cfg.fpsMode = 'auto'; __pal.applyCfg() }); out.autoDesktopCap = await p.evaluate(() => __pal.fpsCap());
   assert.ok(out.at30.fps >= 26 && out.at30.fps <= 31, JSON.stringify(out.at30)); assert.ok(out.at60.fps >= 50 && out.at60.fps <= 61, JSON.stringify(out.at60));
   assert.ok(Math.abs(out.at30.simPerReal - out.at60.simPerReal) < .08 && out.at30.simPerReal > .9, 'game time runs at the same speed capped or not ' + JSON.stringify(out));
-  assert.equal(out.autoDesktopCap, 0);
+  assert.equal(out.autoDesktopCap, 60, 'v0.9.6.3: desktop Auto holds 60 (uncapped ran 144/240 Hz monitors flat out)');
   // Auto on a touch phone: 60, and 30 once the phone is struggling
   const m = await b.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 }); m.on('pageerror', e => errors.push('m ' + e.message));
   await m.goto(`http://localhost:${PORT}/debug.html?debug=1`); await m.waitForFunction(() => window.__pal);
