@@ -105,7 +105,7 @@
     <div id="setupSheet" class="setupSheet" hidden role="dialog" aria-modal="true" aria-labelledby="setupTitle">
       <div class="ssCard">
         <header class="ssHead"><h2 id="setupTitle">MATCH SETUP</h2><button class="go" id="setupDone" type="button">DONE</button></header>
-        <div class="ssTabs" role="tablist"><button type="button" role="tab" data-sst="map">MAP</button><button type="button" role="tab" data-sst="rules">LENGTH</button><button type="button" role="tab" data-sst="job">JOB</button><button type="button" role="tab" data-sst="mods">MODIFIERS</button></div>
+        <div class="ssTabs" role="tablist"><button type="button" role="tab" data-sst="map">MAP</button><button type="button" role="tab" data-sst="rules">LENGTH</button><button type="button" role="tab" data-sst="job">CLASSES</button><button type="button" role="tab" data-sst="mods">MODIFIERS</button></div>
         <div class="ssBody">
           <section class="ssSec" data-ss="map" id="ssMap"></section>
           <section class="ssSec" data-ss="rules">
@@ -117,7 +117,7 @@
             <p class="lede sm" id="ssPvpNote" hidden>Base Battle and Free-for-all have no length or threat: they play until a stake falls, or to the score.</p>
           </section>
           <section class="ssSec" data-ss="job">
-            <h2>YOUR JOB <button class="linkBtn" type="button" data-go="classes">ABOUT THE CLASSES</button></h2>
+            <h2>YOUR CLASS <button class="linkBtn" type="button" data-go="classes">ABOUT THE CLASSES</button></h2>
             <div class="seg jobs"><button data-c="soldier" type="button">SOLDIER</button><button data-c="sniper" type="button">SNIPER</button><button data-c="grenadier" type="button">GRENADIER</button><button data-c="quartermaster" type="button">QUARTERMASTER</button></div>
             <div class="ssJobs" id="ssJobs"></div>
           </section>
@@ -230,9 +230,9 @@
       <button class="go playBtn" id="lStart" type="button" hidden>START</button>
       <p class="lede" id="lNote"></p>
       <div class="setupRows" id="roomRows"></div>
-      <h2>YOUR JOB</h2>
+      <h2>YOUR CLASS</h2>
       <div class="seg jobs" id="lJobs"><button data-lc="soldier" type="button">SOLDIER</button><button data-lc="sniper" type="button">SNIPER</button><button data-lc="grenadier" type="button">GRENADIER</button><button data-lc="quartermaster" type="button">QUARTERMASTER</button></div>
-      <div id="lOneJob" hidden><h2>ONE JOB · EVERYONE PLAYS</h2><div class="seg jobs"><button data-oj="soldier" type="button">SOLDIER</button><button data-oj="sniper" type="button">SNIPER</button><button data-oj="grenadier" type="button">GRENADIER</button><button data-oj="quartermaster" type="button">QUARTERMASTER</button></div></div>
+      <div id="lOneJob" hidden><h2>ONE CLASS · EVERYONE PLAYS</h2><div class="seg jobs"><button data-oj="soldier" type="button">SOLDIER</button><button data-oj="sniper" type="button">SNIPER</button><button data-oj="grenadier" type="button">GRENADIER</button><button data-oj="quartermaster" type="button">QUARTERMASTER</button></div></div>
       <h2>CREW</h2>
       <ul class="roster" id="lList"></ul>
       <button class="ghost" id="lTeam" type="button" hidden>SWITCH SIDES</button>

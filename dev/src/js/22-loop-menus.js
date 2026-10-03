@@ -152,6 +152,7 @@ function abandon(){if(NET.mode!=='solo')netLeave('');else toMenu()}
 // class + threat pickers exist on the Solo and Multiplayer pages; keep them in step
 function syncPicks(){
   document.querySelectorAll('[data-c]').forEach(x=>x.classList.toggle('sel',x.dataset.c===pick.cls));
+  renderSetupJobs();   // v0.9.6.4: the class cards follow the pick (they were redrawn before it changed and showed the last class)
   document.querySelectorAll('[data-mc],[data-lc]').forEach(x=>x.classList.toggle('sel',(x.dataset.mc||x.dataset.lc)===pick.cls));
   document.querySelectorAll('#diff button,[data-md]').forEach(x=>x.classList.toggle('sel',(x.dataset.d||x.dataset.md)===pick.diff));
   document.querySelectorAll('[data-m5],[data-mm]').forEach(x=>x.classList.toggle('sel',(x.dataset.m5||x.dataset.mm)===pick.mode));
