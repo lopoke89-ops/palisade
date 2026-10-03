@@ -1,5 +1,5 @@
 -- v0.9.7 beta: today's (2026-10-03, Eastern) lost runs paid as full wins. APPLIED to the live project on 2026-10-03 with Big U's approval;
--- including the Destroyer and the ladder", all of today's losses, run once.
+-- Big U chose "everything, including the Destroyer and the ladder", all of today's losses, run once.
 -- Idempotent: each grant is keyed by a 'system' notification (data.comp); running this again pays nothing extra.
 -- Amounts per game = a full win minus what that player's claims for that game already paid (never negative):
 --   City Black Out full win: 8 Supply Cases (2 progress + 4 majors + 2 win), 75 shards (10 salvage + 25 win + 40 Destroyer),
