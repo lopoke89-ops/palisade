@@ -41,7 +41,7 @@ const place = (L) => { const P = __pal, p = P.player; p.x = 1.5; p.y = L.y; p.al
   for (const [x, n] of [[H, 'H'], [G, 'G']]) { x.on('pageerror', e => errors.push(n + ' ' + e.message)); await x.goto(`http://localhost:${PORT}/debug.html?${Q}`); await x.waitForFunction(() => window.__pal) }
   await H.click('[data-nav=multi]'); await H.click('#hostBtn'); await H.waitForFunction(() => /^[A-Z0-9]{4}$/.test(document.getElementById('lCode').textContent), null, { timeout: 15000 });
   const code = await H.textContent('#lCode'); await G.click('[data-nav=multi]'); await G.fill('#mCode', code); await G.click('#joinBtn');
-  await G.waitForSelector('#pg-lobby:not([hidden])', { timeout: 15000 }); await H.click('#lStart'); await G.waitForFunction(() => __pal.NET.inGame && document.getElementById('menu').hidden, null, { timeout: 10000 });
+  await G.waitForSelector('#pg-lobby:not([hidden])', { timeout: 15000 }); await H.evaluate(()=>__pal.lobbyReadyAll());await H.click('#lStart'); await G.waitForFunction(() => __pal.NET.inGame && document.getElementById('menu').hidden, null, { timeout: 10000 });
   await H.waitForTimeout(600);
   const HL = await H.evaluate(layout); await H.evaluate(L => { const P = __pal, g = [...P.players.values()].find(q => q.id !== 'host'); g.x = 1.5; g.y = L.y; g.nades = 3; g.ncd = 0; P.game.phase = 'build'; P.game.timer = 999;
     P.spawnEnemyAt('rifle', 8.5, L.y); const e = P.enemies[P.enemies.length - 1]; e.speed = 0; e.hp = 1e6; e.max = 1e6; P.lobs.length = 0 }, HL);

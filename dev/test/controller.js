@@ -138,7 +138,7 @@ const FAKE = (id) => {
   await H.waitForSelector('#pg-lobby:not([hidden])', { timeout: 10000 }); const code = await H.textContent('#lCode');
   await G.click('[data-go=multi]'); await G.fill('#mName', 'Pad'); await G.fill('#mCode', code); await G.click('#joinBtn');
   await G.waitForSelector('#pg-lobby:not([hidden])', { timeout: 10000 }); await H.waitForTimeout(600);
-  await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await H.waitForTimeout(800);
+  await H.evaluate(()=>__pal.lobbyReadyAll());await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await H.waitForTimeout(800);
   await G.evaluate(() => { const f = __pal.NET.toHost.bind(__pal.NET); window.__sent = []; __pal.NET.toHost = (m, c) => { if (m.t === 'i') window.__sent.push(Object.keys(m).sort().join(',') + '|a' + m.a + '|f' + m.f); return f(m, c) } });
   await press(G, 12); await axes(G, [0, 0, -1, 0]); await hold(G, 7, true); await G.waitForTimeout(600);
   out.online = await H.evaluate(() => { const g = [...__pal.players.values()].find(p => p.id !== __pal.player.id); return { fire: g.fireIn, aim: g.aim, auto: g.autoFire } });

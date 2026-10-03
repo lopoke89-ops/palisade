@@ -32,7 +32,7 @@ const PORT = process.env.PORT || 8080, Q = 'peerhost=127.0.0.1&peerport=9000&pee
   for (const [x, n] of [[H, 'H'], [G, 'G']]) { x.on('pageerror', e => errors.push(n + ' ' + e.message)); await x.addInitScript(() => localStorage.setItem('palisade.cfg.v1', JSON.stringify({ fpsMode: '30' }))); await x.goto(`http://localhost:${PORT}/debug.html?${Q}`); await x.waitForFunction(() => window.__pal) }
   await H.click('[data-nav=multi]'); await H.click('#hostBtn'); await H.waitForFunction(() => /^[A-Z0-9]{4}$/.test(document.getElementById('lCode').textContent), null, { timeout: 15000 });
   const code = await H.textContent('#lCode'); await G.click('[data-nav=multi]'); await G.fill('#mCode', code); await G.click('#joinBtn');
-  await G.waitForSelector('#pg-lobby:not([hidden])', { timeout: 15000 }); await H.click('#lStart'); await G.waitForFunction(() => __pal.NET.inGame && document.getElementById('menu').hidden, null, { timeout: 10000 }); await H.waitForTimeout(800);
+  await G.waitForSelector('#pg-lobby:not([hidden])', { timeout: 15000 }); await H.evaluate(()=>__pal.lobbyReadyAll());await H.click('#lStart'); await G.waitForFunction(() => __pal.NET.inGame && document.getElementById('menu').hidden, null, { timeout: 10000 }); await H.waitForTimeout(800);
   const gpos = () => H.evaluate(() => { const g = [...__pal.players.values()].find(q => q.id !== 'host'); return [g.x, g.y] });
   const a = await gpos(); await G.bringToFront(); await G.keyboard.down('KeyD'); await G.waitForTimeout(1600); await G.keyboard.up('KeyD'); await H.waitForTimeout(500);
   const bpos = await gpos();

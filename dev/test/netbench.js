@@ -12,7 +12,7 @@ const port = process.argv[2] || 8080, Q = 'peerhost=127.0.0.1&peerport=9000&peer
   await H.waitForSelector('#pg-lobby:not([hidden])', { timeout: 10000 }); const code = await H.textContent('#lCode');
   await G.click('[data-go=multi]'); await G.fill('#mName', 'Guest'); await G.fill('#mCode', code); await G.click('#joinBtn');
   await G.waitForSelector('#pg-lobby:not([hidden])', { timeout: 10000 }); await H.waitForTimeout(500);
-  await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 6000 }); await H.waitForTimeout(800);
+  await H.evaluate(()=>__pal.lobbyReadyAll());await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 6000 }); await H.waitForTimeout(800);
   await H.evaluate(() => {
     const P = __pal, N = 16, c = P.core; let k = 0;
     for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const d = Math.max(Math.abs(i - c.i), Math.abs(j - c.j)); if ((d === 3 || d === 4) && !P.walls[j * N + i]) { P.walls[j * N + i] = P.makeWall(k % 3, k % 11 === 0); k++ } }

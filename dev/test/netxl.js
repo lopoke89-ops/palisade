@@ -14,7 +14,7 @@ const port = process.argv[2] || 8080, page = process.argv[3] || 'debug.html', Q 
     await g.waitForSelector('#pg-lobby:not([hidden])', { timeout: 15000 }); G.push(g) }
   await H.waitForFunction(() => __pal.NET.roster.length === 6, null, { timeout: 10000 });
   if (process.env.MODS) await H.evaluate(m => { for (const id of m.split(',')) __pal.toggleMod('coop', id) }, process.env.MODS);   // v0.9.2: e.g. MODS=weather,nightmare
-  await H.click('#lStart'); for (const g of G) await g.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await H.waitForTimeout(1000);
+  await H.evaluate(()=>__pal.lobbyReadyAll());await H.click('#lStart'); for (const g of G) await g.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await H.waitForTimeout(1000);
   const meter = async (label, setup) => {
     await H.evaluate(setup);
     await H.evaluate(() => {

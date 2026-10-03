@@ -31,7 +31,7 @@ const claims = [];
   await H.waitForFunction(() => /^[A-Z0-9]{4}$/.test(document.getElementById('lCode').textContent), null, { timeout: 15000 });
   const code = await H.textContent('#lCode');
   const join = async () => { await G.click('[data-nav=multi]'); await G.fill('#mCode', code); await G.click('#joinBtn'); await G.waitForFunction(() => __pal.NET.inGame || !document.getElementById('pg-lobby').hidden, null, { timeout: 15000 }) };
-  await join(); await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await H.waitForTimeout(700);
+  await join(); await H.evaluate(()=>__pal.lobbyReadyAll());await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await H.waitForTimeout(700);
   await H.evaluate(() => { const P = __pal; window.holdIt = setInterval(() => { for (const q of P.players.values()) { q.max = 1e9; q.hp = 1e9 } P.core.max = 1e9; P.core.hp = 1e9; P.qm.hp = 1e9 }, 50) });
   const gid = await H.evaluate(() => __pal.game.gid);
   // on the way: the guest's soldier fires a rocket; the host runs it and the count comes back

@@ -22,7 +22,7 @@ const Q='peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1';
     assert.equal(await h.evaluate(()=>__pal.NET.roster.length),1,'locked room admitted a guest');
     await h.click('#lLock');await other.click('#joinBtn');await other.waitForSelector('#pg-lobby:not([hidden])');
     await h.waitForFunction(()=>__pal.NET.roster.length===2);
-    await h.click('#lStart');await other.waitForFunction(()=>document.getElementById('menu').hidden);
+    await h.evaluate(()=>__pal.lobbyReadyAll());await h.click('#lStart');await other.waitForFunction(()=>document.getElementById('menu').hidden);
     await h.click('#pauseBtn');await h.locator('#pauseCrewList .crewKick').click();
     await other.waitForFunction(()=>__pal.NET.mode==='solo'&&document.getElementById('mStatus').textContent.includes('removed'));
     await h.waitForFunction(()=>__pal.NET.roster.length===1);

@@ -47,7 +47,7 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  const ca=Math.cos(angle),sa=Math.sin(angle),phase=typeof walking==="number"?walking:walking?time*7:0;
  const weight=o.downed?0:o.gaitWeight===undefined?(walking?1:0):o.gaitWeight,dir=o.gaitDir||0;
  const bob=-(1-Math.cos(phase*2))*.14*weight+(o.downed?0:(o.breath||0)*.16),faces=[];
- let sahurHatLift=0;
+ let sahurHatLift=0,solidHat=false;   // v0.9.7.1: headwear on the see-through Phantom is drawn solid
  const leg=side=>{const step=wardrobeStep(phase,side,weight,dir),ankle=[step.x,3.2+step.lift,step.z],hip=[side*2.6,14.4+bob,0];return {...step,ankle,hip,knee:reach(hip,ankle,6,6,[0,0,1])}};
  const hex=c=>{const m=/^#([0-9a-f]{6})$/i.exec(c||'');return m?m[1].match(/../g).map(s=>parseInt(s,16)):[90,95,75]};
  const tint=(c,k)=>{const v=hex(c);return '#'+v.map(x=>Math.max(0,Math.min(255,Math.round(x*k))).toString(16).padStart(2,'0')).join('')};
@@ -64,7 +64,7 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
    const nx=(x*ca+z*sa)/l,ny=y/l,nz=(-x*sa+z*ca)/l;
    if(nz+ny*.32<=.001)continue;
    const pts=ids.map(i=>projected[i]),light=.73+Math.max(0,-nx*.48+ny*.7+nz*.42)*.35;
-   vis.push({ids,pts,emission:!o.flash&&emit.has(col)?col:null,col:o.flash?"#f3e9d6":tint(col,light),depth:pts.reduce((s,p)=>s+p[2],0)/pts.length+bias,edges:[],outline,bias});
+   vis.push({solid:solidHat,ids,pts,emission:!o.flash&&emit.has(col)?col:null,col:o.flash?"#f3e9d6":tint(col,light),depth:pts.reduce((s,p)=>s+p[2],0)/pts.length+bias,edges:[],outline,bias});
   }
   const counts=new Map();for(const f of vis)for(let i=0;i<f.ids.length;i++){const a=f.ids[i],b=f.ids[(i+1)%f.ids.length],key=a<b?a*256+b:b*256+a;counts.set(key,(counts.get(key)||0)+1)}
   for(const f of vis){for(let i=0;i<f.ids.length;i++){const a=f.ids[i],b=f.ids[(i+1)%f.ids.length],key=a<b?a*256+b:b*256+a;if(counts.get(key)===1)f.edges.push([projected[a],projected[b]])}faces.push(f)}
@@ -273,7 +273,7 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  // Sahur's log reaches y=36. Move only its worn headgear to that crown. The visor
  // stays across the painted brow; the headband sits just above it. In the downed
  // projection its thin band needs the exposed crown edge or the log hides it.
- sahurHatLift=o.sahur?(o.visor?0:o.headband?(o.downed?5:1.5):o.halo?0:3.5):0;
+ sahurHatLift=o.sahur?(o.visor?0:o.headband?(o.downed?5:1.5):o.halo?0:3.5):0;solidHat=!!o.phantom;
  if(o.winterModel){
   if(o.winterModel==='yulemaw'){
    column(0,30.3+bob,1,10,7.8,8.5,B,1.1,.6);
@@ -497,7 +497,7 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
    }
   }
  }
- sahurHatLift=0;
+ sahurHatLift=0;solidHat=false;
  // Floating Halo is independent of the head branch; the sheet gets a verified clearance.
  if(o.sheet&&o.hybridHat==='dunce')dunceCone(35.1);   // v0.9.6.4: the cone sits on the sheet's crown
  if(o.halo){for(let i=0;i<16;i++){const a=i*Math.PI/8,b=(i+1)*Math.PI/8,y=(o.sheet?43:o.sahur?42:39)+bob+Math.sin(time*2.4)*.35;beam([Math.cos(a)*6,y,Math.sin(a)*4.8],[Math.cos(b)*6,y,Math.sin(b)*4.8],.22,o.halo,.22,.04)}}
@@ -717,13 +717,16 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  ctx.fillStyle='rgba(0,0,0,.23)';
 ctx.beginPath();ctx.ellipse(0,1.1,10.5,4,0,0,Math.PI*2);ctx.fill();
  faces.sort((a,b)=>a.depth-b.depth);
+ const bodyA=ctx.globalAlpha,hatA=o.phantom?Math.min(1,bodyA/.62):bodyA;
  for(const f of faces){
+  ctx.globalAlpha=f.solid?hatA:bodyA;
   ctx.beginPath();f.pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle=f.col;
   if(f.emission){ctx.shadowColor=f.emission;ctx.shadowBlur=2.2*scale;ctx.fill();ctx.shadowBlur=0}
   ctx.fill();ctx.strokeStyle=f.col;ctx.lineWidth=.13;ctx.stroke();
   ctx.strokeStyle='#070a08';ctx.lineWidth=f.outline;
   for(const[a,b]of f.edges){ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}
  }
+ ctx.globalAlpha=bodyA;
  ctx.restore();
  let left=ground?-22:-13,right=ground?22:13,top=-1,bottom=ground?11:6;
  for(const f of faces)for(const p of f.pts){const pad=f.emission?4:1;left=Math.min(left,p[0]-pad);right=Math.max(right,p[0]+pad);top=Math.min(top,p[1]-pad);bottom=Math.max(bottom,p[1]+pad)}

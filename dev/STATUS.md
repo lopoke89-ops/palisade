@@ -7,6 +7,44 @@ Big U's latest completed local scope is recorded in the [presentation prompt](pl
 
 The Claude audit URL still requires sign-in in the available browser session. Big U supplied an exported copy at `D:\downloads\Untitled.md`, which was read on September 29. Its newest Progress entry is v0.9.3, so its release claims are superseded by the verified v0.9.3.3 release below. The external artifact itself was not edited here.
 
+## v0.9.7.1: beta feedback pass
+
+From the [work order](plans/beta-feedback-work-order.md) (all decisions by Big U, October 3). Protocol **`yard-27`**. No server change. Evidence is in [evidence/v0.9.7.1](evidence/v0.9.7.1/README.md).
+
+- **City Black Out salvage:**
+  - each attack's end pays everyone 20 + 5 × attack number (half if the point fell);
+  - +40 when the gathering starts, +60 when the final push's ready stage starts;
+  - kill bounties ×1.25;
+  - the armory opens at any held point during quiet gaps, which are now 35 s;
+  - patching the core stays at Main Command.
+- **READY UP before the final push:**
+  - up to 90 s;
+  - it starts when everyone alive is ready, or when the time runs out; nobody can force it;
+  - READY button in the phase box, Enter, or a controller's Start;
+  - the ready count shows on every phone and check marks in the crew list;
+  - points repair at double speed meanwhile.
+- **Round messages:**
+  - queued instead of overwriting each other;
+  - phase messages stay 6 s on a coloured band (orange threat, green held, red lost), minor ones 3.5 s;
+  - darker panel and bigger detail text;
+  - the latest phase message stays under the phase box;
+  - tap to dismiss;
+  - Settings → Message time (×1, ×1.5, ×2).
+  - Applies to every mode.
+- **Phantom:** can wear any headwear again. Hats are drawn solid over the see-through figure, and every hat passes the fit check on him.
+- **Lobby ready up:**
+  - guests press READY, and rows and a "1 / 2 READY" count show it;
+  - the host's START stays locked until every guest is ready;
+  - any change to the settings clears everyone's ready.
+- **Zoom (desktop only):**
+  - Settings → ZOOM 70%–140% and the mouse wheel, saved per device;
+  - one scenery rebuild per change;
+  - phones keep their screen-sized view.
+- **Tests:**
+  - new: `toast_queue`, `zoom_setting`;
+  - extended: `blackout_run` (round pay, purse, armory reach, the ready stage), `blackout_network` (ready 1/2 on both phones), `blackout_perf` (desktop at 70%), `lobby` (the real ready flow), `headgear_fit` (the Phantom).
+  - The other online tests ready up through a debug hook before START.
+
 ## v0.9.7 on the branch: CITY BLACK OUT
 
 From the [work order](plans/city-blackout-work-order.md). Big U said to build it with the defaults (D1–D10). Protocol **`yard-26`**. Evidence and the Phase 0 gate are in [evidence/v0.9.7](evidence/v0.9.7/README.md).

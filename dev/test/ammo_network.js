@@ -8,7 +8,7 @@ const Q='peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1';
   await H.click('[data-nav=multi]');await H.click('#hostBtn');await H.waitForFunction(()=>/^[A-Z0-9]{4}$/.test(document.getElementById('lCode').textContent));
   const code=await H.textContent('#lCode');
   const join=async()=>{await G.click('[data-nav=multi]');await G.fill('#mCode',code);await G.click('#joinBtn');await G.waitForFunction(()=>__pal.NET.inGame||!document.getElementById('pg-lobby').hidden)};
-  await join();await H.click('#lStart');await G.waitForFunction(()=>__pal.NET.inGame);await H.waitForTimeout(300);
+  await join();await H.evaluate(()=>__pal.lobbyReadyAll());await H.click('#lStart');await G.waitForFunction(()=>__pal.NET.inGame);await H.waitForTimeout(300);
   for(const mode of ['5','10','endless','blitz']){
     await H.evaluate(mode=>{const P=__pal;P.pick.mode=mode;P.newGame(P.NET.roster,'');P.game.timer=999;for(const p of P.players.values()){p.sal=1000;p.hp=p.max;p.x=P.core.i+.5;p.y=P.core.j+.5;p.tp++}P.NET.sendAll(P.startMsg())},mode);
     await G.waitForFunction(mode=>__pal.game.mode===mode&&__pal.player.sal===1000,mode);

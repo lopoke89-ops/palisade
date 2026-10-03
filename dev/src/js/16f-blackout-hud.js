@@ -1,12 +1,14 @@
 /* ================= v0.9.7 City Black Out: HUD, mini-map, network summary ================= */
-const BO_STAGES=['gather','attack','gap','push','done'];
+const BO_STAGES=['gather','attack','gap','push','done','ready'];   // append only
 const boClock=t=>{const s=Math.max(0,Math.ceil(t));return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`};
 // the phase box: GATHER / POI ATTACK / QUIET / FINAL PUSH
 function boHudPhase(lab,host){
   const B=game.bo||{stage:'gather'},cls2=(on,ev)=>{lab.classList.toggle('raid',on);lab.classList.toggle('evac',!!ev)},set=(a,b)=>{if(lab.textContent!==a)lab.textContent=a;const v=$('phaseVal');if(v.textContent!==b)v.textContent=b};
   const nxt=cores.find(c=>c.next&&c.poi);
   if(game.phase==='build'){set('GATHER',`${boClock(game.timer)} · ${nxt?'first: '+nxt.poi.name.toLowerCase():'first attack'}`);cls2(false);$('skipBtn').hidden=!host;if($('skipLab').textContent!=='START NOW')$('skipLab').textContent='START NOW';return}
-  $('skipBtn').hidden=true;
+  if(B.stage==='ready'){let r=0,n=0;for(const o of players.values())if(o.alive||o.downed){n++;if(o.boReady)r++}   // v0.9.7.1
+    set('READY UP',`${boClock(B.t)} · ready ${r}/${n}`);cls2(false);$('skipBtn').hidden=false;const me=player&&player.boReady,l=me?'READY ✓':'READY';if($('skipLab').textContent!==l)$('skipLab').textContent=l;$('skipBtn').classList.toggle('on',!!me);return}
+  $('skipBtn').hidden=true;$('skipBtn').classList.remove('on');
   if(B.stage==='attack'&&B.cur){const c=cores[B.cur.ci];set(W<700?'ATTACK':'POI ATTACK',`${c&&c.poi?c.poi.name.toLowerCase():''} · ${boClock(BO.cap-B.t)}`);cls2(true);return}
   if(B.stage==='push'||B.stage==='done'&&B.push){const F=B.push||{t:0,n:0};set(W<700?'PUSH':'FINAL PUSH',`${boClock(F.t)} · ${F.dest?'the destroyer':'boss '+Math.min(6,F.n)+'/6'}`);cls2(true,F.dest);return}
   const held=cores.filter(c=>c.poi&&!c.lost).length;
@@ -52,7 +54,7 @@ function boSnap(){const B=game.bo;if(!B)return null;let lost=0,next=0;cores.forE
   return[BO_STAGES.indexOf(B.stage),+(B.stage==='gather'?0:B.t).toFixed(2),B.cur?B.cur.ci:-1,lost,next,game.dark?1:0,B.held|0,B.lost|0,F?+F.t.toFixed(2):0,F?F.n:0,F&&F.dest?1:0,B.destroyer?1:0]}
 function boApply(a){if(!Array.isArray(a))return;const B=game.bo||(game.bo={order:[],n:0,q:[],log:[]});
   B.stage=BO_STAGES[a[0]]||'gap';B.t=a[1]||0;B.cur=a[2]>=0?{ci:a[2]}:null;B.held=a[6]|0;B.lost=a[7]|0;B.destroyer=!!a[11];
-  B.push=a[0]>=3?{t:a[8],n:a[9],dest:!!a[10]}:null;game.dark=!!a[5];
+  B.push=a[0]===3||a[0]===4?{t:a[8],n:a[9],dest:!!a[10]}:null;game.dark=!!a[5];
   cores.forEach((c,i)=>{if(!c.poi)return;const L=!!(a[3]&1<<i);if(L&&!c.lost)c.lostAt=game.time;c.lost=L;c.next=!!(a[4]&1<<i);c.attack=a[2]===i})}
 // what's near: on the city each guest gets full rows for raiders within this many tiles of them (bosses always)
 const BO_NEAR=22;
@@ -71,3 +73,6 @@ function boLocalPay(c,st){
   const won=!!c.win&&(c.raid_to|0)>=9&&(c.raid_from|0)*2<=9&&(c.duration_s|0)>=BO_PAY.minWin,dest=won&&!!c.destroyer;
   st.bo_pois=(st.bo_pois|0)+pois;if(won){st.bo_wins=(st.bo_wins|0)+1;if(pois>=8)st.bo_perfect=(st.bo_perfect|0)+1}if(dest)st.bo_dest=(st.bo_dest|0)+1;
   return{pois,major,won,dest,cases:major+(won?BO_PAY.winCases:0),shards:(won?BO_PAY.winShards:0)+(dest?BO_PAY.destShards:0),sp:dest?1:0}}
+// the READY button (phase box, Enter, a controller's Start): toggles this player's ready for the final push
+function boReadyPress(){if(!blackout()||!game.bo||game.bo.stage!=='ready'||!player)return false;const on=!player.boReady;
+  if(NET.mode==='guest'){player.boReady=on;NET.toHost({t:'ready',on})}else boReady(player,on);uiSfx&&uiSfx('click');return true}

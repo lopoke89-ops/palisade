@@ -5,7 +5,7 @@ let players=new Map(),myId='solo',nextId=1;   // every soldier in the yard; `pla
 let game={phase:'title',paused:false,time:0,wave:0,sel:0,piece:'wall',stats:{dropped:0,built:0,lost:0,repairs:0,revives:0}};
 let pick={cls:'soldier',diff:'normal',mode:'5',pvp:'coop',map:'yard',size:'std',oct:false};
 let demo=false,demoT=0,demoAcc=0;   // the menu's live background: Delgado alone against demo raids
-const cfg={volume:.8,music:.7,shake:1,haptics:true,fps:false,fpsMode:'auto',tips:true,name:'',build:true};
+const cfg={volume:.8,music:.7,shake:1,haptics:true,fps:false,fpsMode:'auto',tips:true,name:'',build:true,msgTime:1,zoom:1};
 try{Object.assign(cfg,JSON.parse(localStorage.getItem('palisade.cfg.v1')||'{}'))}catch(e){}
 function saveCfg(){try{localStorage.setItem('palisade.cfg.v1',JSON.stringify(cfg))}catch(e){}}
 const light={L:.12,r:28,g:34,b:44,warm:0};
@@ -85,8 +85,8 @@ const BURST_N=[3,5,7,9,9],burstN=p=>BURST_N[Math.min(4,p.up.d|0)],burstGap=p=>Ma
 const upStr=p=>UPG.map(x=>p.up[x.k]).join('');
 const nearStake=p=>{const c=stakeOf(p);return!!c&&Math.hypot(p.x-(c.i+.5),p.y-(c.j+.5))<2.7};
 const lockdown=()=>hasMod('lockdown')&&game.mode==='blitz'&&game.wave>=BLITZ.waves-1;   // v0.9.4.0: the armory is shut before the Final Blitz
-const shopOpen=p=>!!p&&p.alive&&!lockdown()&&(game.pvp==='base'?game.phase!=='over':!game.pvp&&(game.phase==='build'||!!game.bo&&game.bo.stage==='gap'));   // v0.9.7: Black Out's quiet windows too
-const canShop=p=>shopOpen(p)&&nearStake(p);
+const shopOpen=p=>!!p&&p.alive&&!lockdown()&&(game.pvp==='base'?game.phase!=='over':!game.pvp&&(game.phase==='build'||boQuiet()));   // v0.9.7: Black Out's quiet windows (and the ready stage) too
+const canShop=p=>shopOpen(p)&&(nearStake(p)||blackout()&&boNearHeld(p));   // v0.9.7.1: any held POI in Black Out
 function buyUpgrade(p,k){
   if(k==='core')return repairCore(p);
   if(k==='dell')return buyDell(p);
@@ -102,7 +102,7 @@ function buyAmmo(p,id,slot){
 }
 function repairCore(p){
   const c=cores[0],cost=coreFixCost(p);
-  if(game.pvp||hasMod('nopatch')||!canShop(p)||!c||c.hp<=0||c.hp>=c.max||p.sal<cost)return false;   // full core: nothing to buy, nothing charged
+  if(game.pvp||hasMod('nopatch')||!canShop(p)||!nearStake(p)||!c||c.hp<=0||c.hp>=c.max||p.sal<cost)return false;   // full core: nothing to buy, nothing charged
   const add=Math.min(CORE_FIX.hp,c.max-c.hp);p.sal-=cost;c.hp+=add;
   flt(c.i+.5,c.j+.5,`+${Math.round(add)} CORE`,'#8fe0a0');emit(c.i+.5,c.j+.5,WH*.6,'heal');personal(p,'restock');return true;
 }
@@ -172,7 +172,7 @@ function newGame(roster,pvp='',opt={}){
     joinHeld:opt.guest?null:0,joinT:0,joinBoss:0,joinSB:0};   // join*: where this phone came in (guests learn it from the first state packet)
   for(const p of players.values())kitUp(p);
   for(const p of players.values()){if(pvp==='base')p.sal=PVP.startSal;if(pvp==='ffa'){p.mats=[0,0,0];p.prot=PVP.prot}}
-  feedClear();
+  feedClear();toastClear();
   Object.assign(light,{L:.12,r:28,g:34,b:44,warm:0});
   flowDirty=true;computeFlow();flowDirty=false;
   camSX=camX=W*(W<760?.4:.5)-(player.x-player.y)*TW2;camSY=camY=H*.52-(player.x+player.y)*TH2;

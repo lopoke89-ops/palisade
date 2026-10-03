@@ -143,7 +143,7 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
   out.guestRoom = await G.evaluate(() => ({ chips: [...document.querySelectorAll('#lMods .modChip')].map(b => b.dataset.mod), disabled: [...document.querySelectorAll('#lMods .modChip')].every(b => b.disabled), job: document.querySelector('[data-oj].sel')?.dataset.oj }));
   assert.deepEqual(out.guestRoom, { chips: ['weather', 'onejob'], disabled: true, job: 'sniper' });
   await G.click('#lMods .modChip').catch(() => { });   // a guest can't change them
-  await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await H.waitForTimeout(600);
+  await H.evaluate(()=>__pal.lobbyReadyAll());await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await H.waitForTimeout(600);
   out.guestGame = await G.evaluate(() => ({ mods: __pal.game.mods, job: __pal.game.job, cls: [...__pal.players.values()].map(p => p.cls), gid: __pal.game.gid }));
   const hostGid = await H.evaluate(() => __pal.game.gid);
   assert.deepEqual(out.guestGame.mods, ['weather', 'onejob']); assert.deepEqual(out.guestGame.cls, ['sniper', 'sniper']); assert.equal(out.guestGame.gid, hostGid, 'one game id for everyone');

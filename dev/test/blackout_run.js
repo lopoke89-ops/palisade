@@ -12,7 +12,8 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
   const step=(sec,each)=>{for(let t=0;t<sec;t+=1/20){god();if(each)each();g().paused=false;P.update(1/20);g().paused=true;if(g().phase==='over')break}};
   g().paused=true;
   r.map=g().map;r.N=P.N;r.gather=Math.round(g().timer);r.phase0=g().phase;r.pois=P.cores.length-1;
-  step(1);const B=()=>g().bo;r.order=B().order.map(i=>P.cores[i].poi.major);r.stage0=B().stage;
+  P.qm.alive=false;P.qm.gone=true;   // Delgado's kills would add salvage
+  step(1);const B=()=>g().bo;r.purse=pl.sal;r.order=B().order.map(i=>P.cores[i].poi.major);r.stage0=B().stage;
   r.shopGather=P.canShop?null:null;
   // the first target is called out before the gathering ends (15 s with the Radio Tower)
   step(30);r.warnedAt=B().warned;r.nextFlag=P.cores[B().order[0]].next;
@@ -26,13 +27,16 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
   P.hurtEnemy(boss1,1e9,pl.id);step(.2);r.held=B().held;r.after1=B().stage;r.leftOver=P.enemies.filter(e=>e.poi===c1).length;r.log1=B().log[0][1];
   r.shopGap=P.shopOpen(pl);
   // the gap is 30 s, then the next one (pulled back after 60 s: held but damaged)
-  step(29.5);r.stillGap=B().stage;step(1);r.stage2=B().stage;const c2=B().cur.ci;
-  step(61,()=>{const c=P.cores[c2];c.hp=Math.max(c.hp,c.max*.5)});r.log2=B().log[1];r.dmg2=P.cores[c2].hp<P.cores[c2].max;
+  r.shopAtPoi=(()=>{const c=P.cores.find(o=>o.poi&&!o.lost),x=pl.x,y=pl.y;pl.x=c.i+.5;pl.y=c.j+2;const s=P.canShop(pl),fix=(P.core.hp=P.core.max-60,P.repairCore(pl));P.core.hp=P.core.max;pl.x=x;pl.y=y;return[s,fix]})();
+  step(34.5);r.stillGap=B().stage;step(1);r.stage2=B().stage;const c2=B().cur.ci;
+  r.shopInAttack=(()=>{const c=P.cores.find(o=>o.poi&&!o.lost),x=pl.x,y=pl.y;pl.x=c.i+.5;pl.y=c.j+2;const s=P.canShop(pl);pl.x=x;pl.y=y;return s})();
+  const sal2=pl.sal;
+  step(61,()=>{const c=P.cores[c2];c.hp=Math.max(c.hp,c.max*.5);for(const e of P.enemies)if(e.type==='boss')e.hp=e.max});r.log2=B().log[1];r.pay2=pl.sal-sal2;r.dmg2=P.cores[c2].hp<P.cores[c2].max;
   // repairs during the quiet
   const h0=P.cores[c2].hp;step(5);r.repaired=P.cores[c2].hp>h0;
   // make the Power Station the next one and lose it: the streetlights go and the city darkens
   const pw=P.cores.findIndex(c=>c.poi&&c.poi.perk==='lights');B().order.splice(B().n,0,pw);B().order=B().order.filter((v,i,a)=>a.indexOf(v)===i);
-  step(30);r.cur3=B().cur&&B().cur.ci===pw;P.cores[pw].hp=0;step(.2);r.lost=B().lost;r.dark=!!g().dark;r.pwLost=P.cores[pw].lost;
+  step(35);r.cur3=B().cur&&B().cur.ci===pw;const sal3=pl.sal;P.cores[pw].hp=0;step(.2);r.pay3=pl.sal-sal3;r.lost=B().lost;r.dark=!!g().dark;r.pwLost=P.cores[pw].lost;
   step(3);r.lightL=+P.light.L.toFixed(2);
   // perks: Hospital heals, Gas Station pays 25% more nearby, the Parking Garage gives range
   const H=P.cores.find(c=>c.poi&&c.poi.perk==='heal'),G=P.cores.find(c=>c.poi&&c.poi.perk==='salvage'),R=P.cores.find(c=>c.poi&&c.poi.perk==='range');
@@ -43,7 +47,8 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
   const mn=P.cores.findIndex(c=>c.poi&&!c.poi.major&&!c.lost);P.cores[mn].lost=true;
   P.boReviveMul&&0;B().order.length=B().n;   // no attacks left
   if(B().stage==='attack'){P.boEnd('held')}
-  step(32);r.push=B().stage;const F=B().push;r.xs=F&&F.xs;r.hpMul=F&&F.hp;
+  for(let w=0;w<800&&B().stage!=='ready';w++)step(.05);r.readyStage=B().stage;const salR=pl.sal;r.readyT=Math.round(B().t);step(88);r.stillReady=B().stage;
+  P.boReady(pl);step(.2);r.push=B().stage;const F=B().push;r.xs=F&&F.xs;r.hpMul=F&&F.hp;
   let maxBoss=0;step(170,()=>{let n=0;for(const e of P.enemies)if(e.type==='boss'&&!e.dead)n++;maxBoss=Math.max(maxBoss,n)});r.maxBoss=maxBoss;r.pushBosses=F.n;
   step(12);r.dest=F.dest;const D=P.enemies.find(e=>e.dest);r.destUp=!!D;
   for(const e of P.enemies)e.seenT=1;const seen=new Set();step(45,()=>{for(const e of P.enemies)if(!e.seenT&&e.type!=='boss'){e.seenT=1;if(e.push&&F.dest)seen.add(e.type)}});r.squads=[...seen].sort();
@@ -61,7 +66,10 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
  assert.equal(out.held,1);assert.equal(out.after1,'gap');assert.equal(out.leftOver,0);assert.equal(out.log1,'held');assert.ok(out.shopGap,'armory open in the quiet');
  assert.equal(out.stillGap,'gap');assert.equal(out.stage2,'attack');assert.equal(out.log2[1],'retreat');assert.ok(out.dmg2);assert.ok(out.repaired);
  assert.ok(out.cur3);assert.equal(out.lost,1);assert.ok(out.dark);assert.ok(out.pwLost);assert.ok(out.lightL>.72,'darker city '+out.lightL);
- assert.ok(out.healed-out.healLost>=2.9,'the 3 HP/s is the Hospital: '+out.healed+' vs '+out.healLost);assert.deepEqual(out.gas,[1.25,1]);assert.deepEqual(out.high,[true,false]);
+ assert.ok(out.healed-out.healLost>=2.9,'the 3 HP/s is the Hospital: '+out.healed+' vs '+out.healLost);assert.deepEqual(out.gas,[1.5625,1.25],'Black Out bounties ×1.25, ×1.25 again near the Gas Station');assert.deepEqual(out.high,[true,false]);
+ assert.equal(out.purse,40,'starting purse');assert.equal(out.pay2,30,'attack 2 held (pulled back): 20 + 5×2');assert.equal(out.pay3,18,'attack 3 lost: half of 35, rounded up');
+ assert.deepEqual(out.shopAtPoi,[true,false],'armory at a held POI in the quiet, core repair only at Main Command');assert.equal(out.shopInAttack,false,'no armory during an attack');
+ assert.equal(out.readyStage,'ready','READY UP before the push');assert.ok(out.readyT>=88&&out.readyT<=90,'90 s ready stage '+out.readyT);assert.equal(out.stillReady,'ready','nobody forces it: still waiting at 1:28');
  assert.equal(out.push,'push');assert.equal(out.xs,1,'one lost major: one extra squad');assert.equal(out.hpMul,1.05,'one lost minor: +5%');
  assert.ok(out.maxBoss<=4,'boss cap '+out.maxBoss);assert.ok(out.pushBosses>=5,'push bosses '+out.pushBosses);
  assert.ok(out.dest&&out.destUp,'the Destroyer arrives at 3:00');assert.deepEqual(out.squads,['gren','shield'],'his squads: '+out.squads);
