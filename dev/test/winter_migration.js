@@ -1,5 +1,5 @@
 const {PGlite}=require('@electric-sql/pglite'),{base,U}=require('./winter-db'),fs=require('node:fs'),assert=require('node:assert/strict');
-const dir=__dirname+'/../supabase/migrations',read=n=>fs.readFileSync(dir+'/'+n,'utf8'),M='20261001081259_winter_whiteout.sql',I='20261001081316_friend_lobby_invites.sql',P='20261003120000_room_register_any_yard_proto.sql';
+const dir=__dirname+'/../supabase/migrations',read=n=>fs.readFileSync(dir+'/'+n,'utf8'),M='20261001081259_winter_whiteout.sql',I='20261001081316_friend_lobby_invites.sql',P='20261003040401_room_register_any_yard_proto.sql';
 (async()=>{const db=new PGlite(),checks=[],ok=(n,b)=>{assert.ok(b,n);checks.push(n)},B='22222222-2222-4222-8222-222222222222',C='33333333-3333-4333-8333-333333333333',inc='44444444-4444-4444-8444-444444444444';
  await db.exec(base);await db.exec(read('20260930075446_palisade_v0938_all_boss_milestones.sql'));await db.exec(read('20260930141401_palisade_v0940_blitz.sql'));
  await db.exec(`alter table profiles add column username text;alter table profiles add column cos text;create table lobbies(length text constraint lobbies_length_check check(length in ('5','10','endless','blitz')));
