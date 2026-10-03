@@ -24,8 +24,36 @@ function changeChapter(ch,guest=false){
 }
 function campaignAdvance(){
   if(!campaign())return false;
-  if((game.wave===3||game.wave===6||game.wave===9)&&game.chapter<game.wave/3){changeChapter(game.wave/3);startBuild(30+game.Df.build);toastAll(`CHAPTER ${game.chapter+1} · ${MAP.name}`,CAMPAIGN.story[game.chapter]+' Prepare at the core.');return true}
+  if((game.wave===3||game.wave===6||game.wave===9)&&game.chapter<game.wave/3){startMapEvac();return true}
   return false;
+}
+// v0.9.6.4: chapters 1-3 end with a 15-second evacuation (a "map evac"). It runs on the Final Blitz machinery: game.fb with
+// mapEvac set, no bosses, only shieldbearers and grenadiers, and the evac ring open from the first second. Whoever makes it
+// out moves on; whoever doesn't still moves on but pays (half this chapter's cases and shards on the server, 50% health and
+// no salvage on the next map). If nobody makes it, the campaign ends there.
+const MAP_EVAC={t:15,want:8,wantXL:9};
+// chapter evac results on the wire: 2 bits per chapter (0 not reached, 1 made it, 2 left behind)
+const chEvacBits=p=>{let v=0;for(let i=0;i<3;i++){const r=(p.chEvac||[])[i];if(r!==undefined&&r!==null)v|=(r?1:2)<<(2*i)}return v};
+const chEvacFrom=v=>{const o=[];for(let i=0;i<3;i++){const b=(v>>(2*i))&3;if(b)o[i]=b===1?1:0}return o};
+function startMapEvac(){
+  game.fb={t:MAP_EVAC.t,n:0,max:0,every:1e9,evac:null,shellT:1,trickT:0,done:false,mapEvac:true,ch:game.chapter};
+  game.queue=[];game.spawnT=1;game.spawnGap=1.3;
+  for(const p of players.values()){p.out=false;p.ev=0}
+  openEvac();
+}
+function finishMapEvac(){
+  const F=game.fb;if(!F||!F.mapEvac||F.done)return;F.done=true;
+  const ch=F.ch,P=[...players.values()],made=P.filter(p=>p.out),left=P.filter(p=>!p.out);
+  for(const p of P){(p.chEvac||(p.chEvac=[]))[ch]=p.out?1:0}
+  enemies=[];game.queue=[];lobs=[];arcs=[];charges=[];rockets=[];
+  if(!made.length){game.fb=null;for(const p of P){p.out=false;p.ev=0}endGame(false,'evacfail');return}
+  for(const p of P){p.out=false;p.ev=0;p.res='';p.stun=0;if(!p.alive){p.alive=true;p.downed=false;p.revive=0}p.rt=0}
+  for(const p of left)p.sal=0;
+  game.fb=null;changeChapter(ch+1);startBuild(30+game.Df.build);
+  if(left.length)qm.sup=Math.max(qm.sup||0,30);   // Delgado's +35 restock waits its usual 30 s, so the left-behind really start at half health
+  for(const p of left){p.hp=Math.ceil(p.max*.5);toastTo(p,'LEFT BEHIND','You missed the convoy. You lose half this chapter\'s cases and shards, your salvage, and half your health.')}
+  toastAll(`CHAPTER ${game.chapter+1} · ${MAP.name}`,CAMPAIGN.story[game.chapter]+(left.length?` ${left.length===1&&players.size>1?left[0].name.toUpperCase()+' was':left.length>1?left.length+' soldiers were':'You were'} left behind.`:' Everyone made it out.')+' Prepare at the core.');
+  if(players.size>1)for(const p of left)feed(`${p.name.toUpperCase()} WAS LEFT BEHIND`,'#e0a050');
 }
 Object.assign(BOSSES,{
   rime:{name:'THE RIME COLOSSUS',hp:860,speed:1.2,scan:11,bounty:50,col:'#9cebdc',think:thinkRime,box:'winter',cases:2,

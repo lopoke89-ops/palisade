@@ -8,7 +8,7 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
     await p.goto(`http://localhost:${process.env.PORT || 8080}/debug.html?debug=1`); await p.waitForFunction(() => window.__pal);
     out[size] = await p.evaluate(async size => { const P = __pal; P.pick.mode = 'campaign'; P.pick.size = size; P.showPage('solo'); document.getElementById('startBtn').click(); await new Promise(r => setTimeout(r, 300));
       const g = P.game, locks = () => P.nodes.filter(n => n.type > 0).map(n => (n.type === 1 ? 'B' : 'M') + (n.locked ? 'x' : 'o')).join(''), rows = [{ at: 'start', ch: g.chapter, map: g.map, n: locks(), label: P.nodes.filter(n => n.locked).map(n => n.unlock) }];
-      for (let w = 1; w <= 12; w++) { g.wave = w; g.phase = 'raid'; if (!P.campaignAdvance()) P.startBuild(30); if (g.cev && !g.cev.done) P.finishMapEvac && P.finishMapEvac(); rows.push({ at: 'after ' + w, ch: g.chapter, map: g.map, n: locks() }) }
+      for (let w = 1; w <= 12; w++) { g.wave = w; g.phase = 'raid'; if (!P.campaignAdvance()) P.startBuild(30); if (g.fb && g.fb.mapEvac) { P.player.out = true; P.finishMapEvac() } rows.push({ at: 'after ' + w, ch: g.chapter, map: g.map, n: locks() }) }
       return rows }, size);
     await p.close() }
   const at = (s, k) => out[s].find(r => r.at === k);

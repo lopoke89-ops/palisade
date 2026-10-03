@@ -457,6 +457,8 @@ function runClaim(held,win,kills,left=false){
     salvage:sal,size:game.size||'std',duration_s:dur,game_id:game.gid,joined_s:Math.round(game.joinT||0),left_s:Math.round(game.time),left:!!left,
     upgrades:(player?player.upS:'')+':'+(game.dellLv|0),mods:game.mods||[],map:game.map,cls:player?player.cls:pick.cls,end_reason:game.endReason||''};
   if(blitz()){claim.fb_keys=fbKeys;claim.evac=res}
+  claim.cv=4;   // v0.9.6.4 claims: the server applies chapter evacs, the gauntlet payouts and the Hybrid Theory drop only to these
+  if(campaign())claim.ch_evac=[0,1,2].map(i=>{const r=player&&player.chEvac?player.chEvac[i]:undefined;return r===undefined||r===null?null:!!r});
   claim.claim_id=game.gid+':'+from+':'+held+':'+Math.round(game.joinT||0)+':'+claim.left_s;
   return {claim,shards};
 }

@@ -46,7 +46,8 @@ function fbTick(dt){
   while(F.n<F.max&&el>=F.n*F.every&&liveBosses()<BLITZ.cap){spawnBoss(order[F.n%order.length],false,false,true);F.n++}
   // raiders keep coming alongside: small groups whenever the field thins out
   F.trickT-=dt;const P=Math.max(1,players.size);
-  if(F.trickT<=0&&!game.queue.length&&enemies.length-liveBosses()<5+2*P){F.trickT=2.5;const sp=['gren','breach','shield','fire','medic','spotter'];
+  if(F.mapEvac){if(F.trickT<=0&&!game.queue.length&&enemies.length<4+2*P){F.trickT=2.5;game.queue.push('shield','gren');if(P>=3)game.queue.push('shield')}}   // v0.9.6.4 map evac: shieldbearers and grenadiers only
+  else if(F.trickT<=0&&!game.queue.length&&enemies.length-liveBosses()<5+2*P){F.trickT=2.5;const sp=['gren','breach','shield','fire','medic','spotter'];
     game.queue.push('rifle','rifle',sp[Math.floor(rnd()*sp.length)]);if(P>=3)game.queue.push('rifle')}
   if(!F.evac&&F.t<=(hasMod('hotlz')?BLITZ.evacHot:BLITZ.evac))openEvac();
   if(F.evac)evacTick(dt);
@@ -54,7 +55,7 @@ function fbTick(dt){
 }
 // the evac site: a clear 3x3 patch a good run from the core, on foot, away from where raiders come in
 function evacSpot(){
-  const L=game.lay||{},c=L.core||[core.i,core.j],want=N>16?11:8,dist=new Int16Array(N*N).fill(-1),q=[idx(c[0],c[1])];dist[q[0]]=0;
+  const L=game.lay||{},c=L.core||[core.i,core.j],want=game.fb&&game.fb.mapEvac?(N>16?MAP_EVAC.wantXL:MAP_EVAC.want):N>16?11:8,dist=new Int16Array(N*N).fill(-1),q=[idx(c[0],c[1])];dist[q[0]]=0;
   const pass=k=>{const t=terr[k];return!terrSolid(t)&&!(nodeAt(k%N,(k/N)|0)||{}).solid};
   for(let h=0;h<q.length;h++){const k=q[h],i=k%N,j=(k/N)|0;for(const[a,b]of D4){const ni=i+a,nj=j+b;if(!heightLink(i,j,ni,nj))continue;const nk=idx(ni,nj);if(dist[nk]>=0||!pass(nk))continue;dist[nk]=dist[k]+1;q.push(nk)}}
   const clear=(i,j)=>{for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const ni=i+a,nj=j+b;if(!inb(ni,nj))return false;const k=idx(ni,nj),t=terr[k];
@@ -70,7 +71,8 @@ function evacSpot(){
 function openEvac(){
   const F=game.fb,s=evacSpot();F.evac={x:s.x,y:s.y,r:evacR()};if(game.lay)game.lay.evacAt=[Math.floor(s.x),Math.floor(s.y)];
   sfx('siren');ringFx(s.x,s.y,.2,F.evac.r+.6,1.2,'#8aff9a','#2e7a48',3);flt(s.x,s.y-.5,'EVAC','#8aff9a');
-  toastAll('EVACUATE',`The evac site is open. Stand in the green ring for ${BLITZ.hold} seconds, on your feet, to get out. Anyone still here at 0:00 is left behind.`);
+  if(F.mapEvac)toastAll('EVACUATE',`Get to the green ring. The convoy leaves in ${MAP_EVAC.t} seconds. Stand in it for ${BLITZ.hold} seconds, on your feet. Miss it and you lose half this chapter's cases and shards.`);
+  else toastAll('EVACUATE',`The evac site is open. Stand in the green ring for ${BLITZ.hold} seconds, on your feet, to get out. Anyone still here at 0:00 is left behind.`);
   for(const p of players.values()){p.ev=0;if(p.downed)p.rt=Math.max(p.rt,1e6)}
 }
 function evacTick(dt){
@@ -95,14 +97,15 @@ function extract(p){
   if(players.size>1)feed(`${p.name.toUpperCase()} EVACUATED`,'#8aff9a');
 }
 function finishBlitz(){
-  const F=game.fb;if(!F||F.done)return;F.done=true;
+  const F=game.fb;if(F&&F.mapEvac){finishMapEvac();return}
+  if(!F||F.done)return;F.done=true;
   for(const e of enemies)if(e.type==='boss'&&!e.dead)flt(e.x,e.y-.4,'RETREATS','#dcd2ba');   // they pull back; they don't count as kills
   enemies=[];game.queue=[];lobs=[];arcs=[];
   for(const p of players.values())p.res=p.out?'evac':'left';
   endGame(!!(player&&player.out));
 }
 // this soldier's evacuation result once the evac site is open: 'evac' (made it) or 'left' (left behind); '' before that
-const blitzResult=p=>!p||!blitz()?'':p.out?'evac':game.fb&&game.fb.evac?'left':'';
+const blitzResult=p=>!p||!blitz()||game.fb&&game.fb.mapEvac?'':p.out?'evac':game.fb&&game.fb.evac?'left':'';   // a map evac (v0.9.6.4) is not the final one
 function fbClock(){const F=game.fb;return F?F.t:0}
 
 /* ---------- Blitzkrieg attacks ---------- */

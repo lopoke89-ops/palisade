@@ -301,9 +301,10 @@ function showOver(){closeGameSettings(false);
   const win=!!game.won;sfx(win?'win':'lose',undefined,undefined,true);
   $('overTitle').textContent=win?'CLAIM HELD':'CLAIM LOST';$('overTitle').className=win?'':'lost';
   const crew=players.size>1?` · CREW OF ${players.size}`:'',W=game.waves,endless=!isFinite(W);
-  const res=blitzResult(player),held=win||res?W:Math.max(0,game.wave-1),S=game.stats;
+  const res=blitzResult(player),held=win||res?W:game.endReason==='evacfail'?game.wave:Math.max(0,game.wave-1),S=game.stats;
   $('overEyebrow').textContent=`${player.C.name} · ${game.Df.name} · ${campaign()?'OPERATION WHITEOUT':endless?'ENDLESS':W+' RAIDS'}${crew} · ${win?`ALL ${W} RAIDS BROKEN`:endless?`${held} RAIDS HELD`:`STAKE FELL IN RAID ${game.wave}`}${game.mods.length?' · '+modNames(game.mods).join(' + '):''}`;
-  $('overLede').textContent=game.endReason==='deadend'?'The crew could not recover. No one left could get them back up.':win?'The stake is still standing. Try it with less wood and more nerve, or turn the threat up.':endless?`Endless only ends one way. ${held} raids is the number to beat.`:'They got to the core. Look at where they broke in. That hole is the lesson.';
+  if(game.endReason==='evacfail')$('overEyebrow').textContent=$('overEyebrow').textContent.replace(`STAKE FELL IN RAID ${game.wave}`,`EVAC FAILED · CHAPTER ${game.chapter+1}`);   // v0.9.6.4
+  $('overLede').textContent=game.endReason==='evacfail'?`Nobody made the convoy out of ${MAP.name}. The campaign ends here.`:game.endReason==='deadend'?'The crew could not recover. No one left could get them back up.':win?'The stake is still standing. Try it with less wood and more nerve, or turn the threat up.':endless?`Endless only ends one way. ${held} raids is the number to beat.`:'They got to the core. Look at where they broke in. That hole is the lesson.';
   const loot=game.rewarded?null:lockerReward(held,win,player.kills|0);game.rewarded=true;
   if(res)blitzOverText(res,crew);   // v0.9.4.0: your own evacuation result
   if(loot){$('overLoot').textContent=loot.text;$('overLoot').hidden=false;showRewards(loot)}else{$('overLoot').hidden=true;showRewards(null)}
