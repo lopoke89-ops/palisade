@@ -125,7 +125,7 @@ function headwearAllowed(skin,hat){
   if(S.winterModel)return false;
   if(S.sheet)return hat==='halo'||hat==='dunce';   // v0.9.6.4: the Dunce Cone sits on the sheet too
   if(S.sahur)return SAHUR_HATS.has(hat);
-  return !(S.demon||S.reaper||S.wraps||S.phantom||S.sack||S.hockey||S.clownface||S.ghillie||S.facewrap||S.headwear&&Object.keys(S.headwear).length);
+  return !(S.demon||S.reaper||S.wraps||S.sack||S.hockey||S.clownface||S.ghillie||S.facewrap||S.headwear&&Object.keys(S.headwear).length);
 }
 const TRAILS={std:{c:'rgba(255,236,170,.95)'},green:{c:'#86ff7a'},red:{c:'#ff5a46'},blue:{c:'#9fe8ff'},pink:{c:'#ff5ad8'},
   gold:{c:'#ffd24a',w:1.35,snd:'ts_gold'},plasma:{c:'#7af2ff',w:1.5,glow:'rgba(106,240,255,.3)',len:1.7,snd:'ts_plasma'},rainbow:{rainbow:true,w:1.4,len:2.2,snd:'ts_rainbow'},
