@@ -7,6 +7,28 @@ Big U's latest completed local scope is recorded in the [presentation prompt](pl
 
 The Claude audit URL still requires sign-in in the available browser session. Big U supplied an exported copy at `D:\downloads\Untitled.md`, which was read on September 29. Its newest Progress entry is v0.9.3, so its release claims are superseded by the verified v0.9.3.3 release below. The external artifact itself was not edited here.
 
+## v0.9.6.5: the Index, boss weaknesses, +25% boss health, new boss moves
+
+From the [work order](plans/index-and-boss-weakness-work-order.md) (all decisions by Big U, October 3). Protocol **`yard-25`**. No server change.
+
+- **INDEX replaces CLASSES:** three tabs.
+  - Classes: unchanged.
+  - Raiders: 7 cards with health, speed, first raid and a portrait.
+  - Bosses: 14 cards with base health, where you meet them, every attack and its warning, the low-health phase, and the weakness.
+  - Numbers come from the game's tables.
+- **Weaknesses:** a bullet carrying the boss's weak ammo deals +35% bullet damage. Burn ticks and splash get no bonus. A "WEAK: …" tag shows on the boss bar.
+  - Armor Piercing: Demolisher, Bulldozer.
+  - Incendiary: the four winter bosses.
+  - Explosive: Stormcaller, Foreman, Tempest.
+  - Lightning: Butcher, Blue Butcher, Arsonist, Ferryman, Harbinger.
+- **+25% boss health:** one `BOSS_HP` multiplier, stacking with map, XL, crew and gauntlet scaling.
+- **New moves (boss states 20-30, no new snapshot fields; the Permafrost Foreman is unchanged):**
+  - Stormcaller: Thunderstrike, Static Pulse.
+  - Tempest: Cyclone, Storm Cage.
+  - Arsonist: Flamethrower, Ring of Fire.
+  - Bulldozer: Seismic Slam, Overdrive (replaces Rubble Spray, so nothing is left on the map).
+- **Tests:** new `v0965_bosses` and `index_page`.
+
 ## v0.9.6.4 on the branch: campaign evacs, the Whiteout Gauntlet and the Hybrid Theory Case
 
 Built from the [work order](plans/campaign-evac-and-finale-work-order.md) (all decisions D1-D9 and H1-H5 made by Big U). Branch `claude/lucid-curie-491na1`, protocol **`yard-24`**. Big U approved the payout table and catalog on October 3. **Server applied October 3:** `20261003080938_v0964_hybrid_catalog` (case row, 57 items at catalog 4, `open_cases_v0964`) and `20261003153435_v0964_gauntlet_rewards` (`claim_match_reward`; verified live, grants unchanged, advisor shows only the known warnings). The reward function no longer prunes `private.reward_receipts` older than 31 days (Big U's call: the Supabase connector held the `delete` for a confirmation it could not show); prune by hand if that table grows. The temporary `private.v0964_stage` table used to apply it is still there and should be dropped from the SQL editor (`drop table private.v0964_stage;`).
