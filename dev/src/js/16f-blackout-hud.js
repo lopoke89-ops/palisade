@@ -14,8 +14,10 @@ function boHudPhase(lab,host){
 }
 // where the mini-map goes: under the vitals when they sit top-left (and under the tip box on narrow screens), else top-left
 let BO_MAP=null;
+// on narrow screens the boss bars sit at the top too: the mini-map goes under them (heights as drawBossBars lays them out)
+const boBarsH=()=>{if(H<=500&&W>H)return 0;const n=enemies.filter(e=>e.type==='boss'&&BOSSES[e.boss]).length;return n>=4?46:n>2?23*n+4:32*n}
 function boMapBox(){const v=document.querySelector('#top .vitals'),r=v&&v.getBoundingClientRect(),desk=r&&r.top<H*.4&&r.bottom>0,
-  w=Math.round(Math.min(desk?170:128,W*.3)),y=Math.round(Math.max(desk?r.bottom+12:10,W<700?(hud.tipB||0)+8:0));return{x:desk?Math.round(r.left):12,y,w,h:Math.round(w/2)}}
+  w=Math.round(Math.min(desk?170:128,W*.3)),y=Math.round(Math.max(desk?r.bottom+12:10,W<700?(hud.tipB||0)+8+boBarsH():0));return{x:desk?Math.round(r.left):12,y,w,h:Math.round(w/2)}}
 // the city drawn once, small: roads, buildings and the plaza in the same diamond the screen shows
 function boMapImage(w,h){const key=w+'|'+N+'|'+DPR;if(BO_MAP&&BO_MAP.key===key)return BO_MAP.cv;
   const cv=document.createElement('canvas'),s=Math.min(DPR,2);cv.width=Math.ceil(w*s);cv.height=Math.ceil(h*s);const x=cv.getContext('2d');x.scale(s,s);

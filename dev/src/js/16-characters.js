@@ -1128,7 +1128,7 @@ function drawBossCombined(list,y){
   const w=Math.min(440,W-48),x=(W-w)/2,hp=list.reduce((a,e)=>a+Math.max(0,e.hp),0),max=list.reduce((a,e)=>a+e.max,0),f=max?hp/max:0;
   const me=player||{x:0,y:0},near=list.slice().sort((a,b)=>Math.hypot(a.x-me.x,a.y-me.y)-Math.hypot(b.x-me.x,b.y-me.y))[0],B=bossInfo(near.boss),nf=Math.max(0,near.hp/near.max);
   g.fillStyle='rgba(12,10,8,.8)';g.fillRect(x-3,y-3,w+6,40);
-  g.font='800 12px "Big Shoulders Stencil Display", "Arial Narrow", sans-serif';g.textAlign='left';g.fillStyle='#d8fff3';g.fillText(`GAUNTLET · ${list.length} BOSSES`,x+2,y+9);
+  g.font='800 12px "Big Shoulders Stencil Display", "Arial Narrow", sans-serif';g.textAlign='left';g.fillStyle='#d8fff3';g.fillText(`${blackout()?'FINAL PUSH':'GAUNTLET'} · ${list.length} BOSSES`,x+2,y+9);
   g.textAlign='right';g.fillStyle='#dcd2ba';g.font='600 10px "IBM Plex Mono", monospace';g.fillText(`${Math.ceil(f*100)}%`,x+w-2,y+9);
   g.fillStyle='#2a2520';g.fillRect(x,y+13,w,6);g.fillStyle='#9cebdc';g.fillRect(x,y+13,w*f,6);
   g.font='800 10px "Big Shoulders Stencil Display", "Arial Narrow", sans-serif';g.textAlign='left';g.fillStyle=B.col;g.fillText('NEAREST · '+B.name,x+2,y+29);
