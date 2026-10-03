@@ -363,7 +363,7 @@ begin
       end loop;
     end if;
     if v_blitz then v_sbreq := 0; end if;   -- no in-between bosses in Blitzkrieg Rush
-    if v_blitz and v_win then if v_g4 then v_winter:=v_winter+2;elsif v_campaign then v_winter:=v_winter+1;else v_blz := v_blz + 1;end if; v_fbshards := v_fbshards + 25; end if;
+    if v_blitz and v_win then if v_g4 then v_winter:=v_winter+2;elsif v_campaign then v_winter:=v_winter+1;else v_blz := v_blz + 1;end if; v_fbshards := v_fbshards + 25; end if;   -- making the evacuation
     -- v0.9.6.4 chapter evacs (after raids 3, 6, 9): +1 Winter Case for each one made inside this claim's raids.
     -- Missing one costs that chapter's evac case; the chapter boss's single Winter Case halves to 1 (odd counts round up).
     if v_g4 and jsonb_typeof(v_ce) = 'array' then
@@ -371,7 +371,7 @@ begin
         if v_ce->>r = 'true' and v_from < 3 * (r + 1) and v_to >= 3 * (r + 1) then v_chev := v_chev + 1; end if;
       end loop;
       v_winter := v_winter + v_chev;
-    end if;   -- making the evacuation
+    end if;
     if v_sbreq > 0 and ('bossrush' = any(v_mods) or 'nightmare' = any(v_mods)) and v_dur >= 25 * greatest(v_held, 1) then
       for r in (v_blo + 1) .. v_bhi loop
         if r % 5 <> 0 and ('nightmare' = any(v_mods) or r % 2 = 0) then v_sbcap := v_sbcap + 1; end if;
