@@ -1047,6 +1047,7 @@ function drawBossFx(){
 // a boss's name and health across the top of the screen
 function drawBossBars(top){
   // v0.9.3.9: landscape phones get one thin strip across the top centre (two XL bosses side by side), not stacked cards
+  {const list=enemies.filter(e=>e.type==='boss'&&BOSSES[e.boss]);if(list.length>=4){drawBossCombined(list,H<=500&&W>H?10:Math.max(W<700?(hud.topB||top)+10:top+10,(hud.tipB||0)+10));return}}   // v0.9.6.4
   if(H<=500&&W>H){const list=enemies.filter(e=>e.type==='boss'&&BOSSES[e.boss]);if(!list.length)return;
     const n=list.length,gap=8,tot=Math.min(460,Math.max(220,W-420)),w=(tot-gap*(n-1))/n,x0=(W-tot)/2,y=10;
     list.forEach((e,i)=>{const B=bossInfo(e.boss),f=Math.max(0,e.hp/e.max),x=x0+i*(w+gap);
@@ -1070,6 +1071,19 @@ function drawBossBars(top){
     g.fillStyle='#2a2520';g.fillRect(x,y+14,w,6);g.fillStyle=B.col;g.fillRect(x,y+14,w*f,6);
     if(e.flash>0){g.fillStyle='rgba(255,255,255,.5)';g.fillRect(x,y+14,w*f,6)}
     y+=32}
+  g.textAlign='center';
+}
+// v0.9.6.4: four or more bosses (the Whiteout Gauntlet) share one bar with their summed health, plus a row for the nearest
+function drawBossCombined(list,y){
+  const w=Math.min(440,W-48),x=(W-w)/2,hp=list.reduce((a,e)=>a+Math.max(0,e.hp),0),max=list.reduce((a,e)=>a+e.max,0),f=max?hp/max:0;
+  const me=player||{x:0,y:0},near=list.slice().sort((a,b)=>Math.hypot(a.x-me.x,a.y-me.y)-Math.hypot(b.x-me.x,b.y-me.y))[0],B=bossInfo(near.boss),nf=Math.max(0,near.hp/near.max);
+  g.fillStyle='rgba(12,10,8,.8)';g.fillRect(x-3,y-3,w+6,40);
+  g.font='800 12px "Big Shoulders Stencil Display", "Arial Narrow", sans-serif';g.textAlign='left';g.fillStyle='#d8fff3';g.fillText(`GAUNTLET · ${list.length} BOSSES`,x+2,y+9);
+  g.textAlign='right';g.fillStyle='#dcd2ba';g.font='600 10px "IBM Plex Mono", monospace';g.fillText(`${Math.ceil(f*100)}%`,x+w-2,y+9);
+  g.fillStyle='#2a2520';g.fillRect(x,y+13,w,6);g.fillStyle='#9cebdc';g.fillRect(x,y+13,w*f,6);
+  g.font='800 10px "Big Shoulders Stencil Display", "Arial Narrow", sans-serif';g.textAlign='left';g.fillStyle=B.col;g.fillText('NEAREST · '+B.name,x+2,y+29);
+  g.textAlign='right';g.fillStyle='#dcd2ba';g.font='600 9px "IBM Plex Mono", monospace';g.fillText(`${Math.ceil(nf*100)}%`,x+w-2,y+29);
+  g.fillStyle='#2a2520';g.fillRect(x,y+32,w,3);g.fillStyle=B.col;g.fillRect(x,y+32,w*nf,3);if(near.flash>0){g.fillStyle='rgba(255,255,255,.5)';g.fillRect(x,y+32,w*nf,3)}
   g.textAlign='center';
 }
 // the pump shotgun's tube, under your soldier: six shells, and LOADING while they go in

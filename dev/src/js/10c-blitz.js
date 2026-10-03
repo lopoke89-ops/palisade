@@ -41,6 +41,7 @@ function startFinalBlitz(){
 const liveBosses=()=>{let n=0;for(const e of enemies)if(!e.dead&&e.type==='boss')n++;return n};
 function fbTick(dt){
   const F=game.fb;if(!F||F.done||game.phase!=='raid')return;
+  if(F.gauntlet){gauntletTick(dt);return}   // v0.9.6.4: the campaign's finale
   F.t=Math.max(0,F.t-dt);const el=BLITZ.fb-F.t;
   const order=campaign()?['whitebutcher','whiteforeman','rime','tempest','bulldozer']:MAP===MAPS.frost?['bluebutcher','arsonist','tempest','rime','bulldozer']:BLITZ.order;
   while(F.n<F.max&&el>=F.n*F.every&&liveBosses()<BLITZ.cap){spawnBoss(order[F.n%order.length],false,false,true);F.n++}

@@ -55,6 +55,45 @@ function finishMapEvac(){
   toastAll(`CHAPTER ${game.chapter+1} · ${MAP.name}`,CAMPAIGN.story[game.chapter]+(left.length?` ${left.length===1&&players.size>1?left[0].name.toUpperCase()+' was':left.length>1?left.length+' soldiers were':'You were'} left behind.`:' Everyone made it out.')+' Prepare at the core.');
   if(players.size>1)for(const p of left)feed(`${p.name.toUpperCase()} WAS LEFT BEHIND`,'#e0a050');
 }
+// v0.9.6.4: the Whiteout Gauntlet replaces the campaign's single-boss Final Blitz. 3:30 on the clock: a wave of two Rime
+// Colossi and one boss from the pool every 30 s (six waves, 18 bosses, no ordinary raiders), then the evac opens with 30 s
+// left. At most 8 bosses are up at once; the rest wait their turn. Each one shows a warning ring for a second before it
+// lands, at least 3 tiles from the others. Gauntlet bosses have 110% of their normal health.
+const GAUNTLET={t:210,evac:30,every:30,waves:6,rimes:2,cap:8,hp:1.1,warn:1,apart:3,pool:['whitebutcher','whiteforeman','tempest','bulldozer','bluebutcher','arsonist']};
+function startGauntlet(){
+  game.fb={t:GAUNTLET.t,n:0,max:GAUNTLET.waves*(GAUNTLET.rimes+1),every:GAUNTLET.every,evac:null,shellT:1,trickT:0,done:false,gauntlet:true,wave:0,pend:[],last:''};
+  game.queue=[];game.gKill=[];
+  toastAll('THE WHITEOUT GAUNTLET','Six waves of bosses, one every 30 seconds. Then 30 seconds to reach the evac.');
+}
+function gauntletPick(F){const pool=GAUNTLET.pool.filter(k=>k!==F.last&&BOSSES[k]),k=pool[Math.floor(rnd()*pool.length)];F.last=k;return k}
+// where a boss lands: the bosses' usual spots (or the raider edges), as far as possible from bosses already up or landing
+function gauntletSpot(F){
+  const taken=[...enemies.filter(e=>e.type==='boss'&&!e.dead),...F.pend.filter(q=>q.pos).map(q=>({x:q.pos[0],y:q.pos[1]}))];
+  const L=game.lay||{},cand=[...(L.bossAt||[])];for(const s of L.spawns||[])for(const t of s.tiles||[])cand.push(t);
+  let best=null,bs=-1;
+  for(let n=0;n<cand.length;n++){const t=cand[n];if(!inb(t[0],t[1])||solidTile(t[0],t[1])||coreKs.has(idx(t[0],t[1])))continue;
+    let near=99;for(const o of taken)near=Math.min(near,Math.hypot(o.x-t[0]-.5,o.y-t[1]-.5));const sc=Math.min(near,GAUNTLET.apart*2)+rnd()*.5;if(sc>bs){bs=sc;best=t}}
+  if(!best){const t=spawnTile();best=t||[N-1,6]}
+  return[best[0]+.5,best[1]+.5];
+}
+function gauntletTick(dt){
+  const F=game.fb;F.t=Math.max(0,F.t-dt);const el=GAUNTLET.t-F.t;
+  // a wave every 30 s until the evac opens
+  while(!F.evac&&F.wave<GAUNTLET.waves&&el>=F.wave*GAUNTLET.every){
+    F.wave++;const extra=gauntletPick(F);
+    for(let i=0;i<GAUNTLET.rimes;i++)F.pend.push({k:'rime',w:F.wave,ri:i});F.pend.push({k:extra,w:F.wave,ri:-1});
+    sfx('horn');toastAll(`WAVE ${F.wave}/${GAUNTLET.waves}`,`Two Rime Colossi and ${bossInfo(extra).name}.`);
+  }
+  // waiting bosses take a spot (and show their ring) while there's room under the cap, then land a second later
+  let up=liveBosses()+F.pend.filter(q=>q.pos).length;
+  for(const q of F.pend)if(!q.pos&&up<GAUNTLET.cap){q.pos=gauntletSpot(F);q.at=game.time+GAUNTLET.warn;up++;ringFx(q.pos[0],q.pos[1],.2,1.6,GAUNTLET.warn,'#d8fff3','#426d91',2.5)}
+  for(let i=F.pend.length-1;i>=0;i--){const q=F.pend[i];if(!q.pos||game.time<q.at)continue;F.pend.splice(i,1);
+    spawnBoss(q.k,false,false,true,q.pos);const e=enemies[enemies.length-1];if(e&&e.boss===q.k){e.gw=q.w;if(q.ri>=0)e.ab=3+q.ri*1.2}F.n++}
+  if(!F.evac&&F.t<=GAUNTLET.evac){F.pend=[];openEvac()}   // no more bosses once the evac opens; the ones up keep fighting
+  if(F.evac)evacTick(dt);
+  if(F.t<=0)finishBlitz();
+}
+const gauntletCleared=()=>(game.gKill||[]).filter(n=>n>=GAUNTLET.rimes+1).length;
 Object.assign(BOSSES,{
   rime:{name:'THE RIME COLOSSUS',hp:860,speed:1.2,scan:11,bounty:50,col:'#9cebdc',think:thinkRime,box:'winter',cases:2,
     look:{body:'#678c9a',vest:'#243f50',pants:'#344e60',head:'#bedce5',helmet:'#84cad8',pack:'#375d66',bandana:'#95f0bc',gl:22,weapon:'drill',nogun:true,winterBoss:true},

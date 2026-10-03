@@ -347,6 +347,7 @@ function makeSnap(withWalls){
   if(frostFields.length)s.ice=frostFields.map(f=>[r2(f.x),r2(f.y),r2(f.t),r2(f.z)]);
   if(game.fb){const F=game.fb,E=F.evac;s.fb=[r2(F.t),F.n,F.max,E?r2(E.x):0,E?r2(E.y):0,E?r2(E.r):0,F.done?1:0,F.mapEvac?1:F.gauntlet?2:0,F.ch|0,F.wave|0]}   // [7] kind (v0.9.6.4): 1 map evac, 2 gauntlet   // v0.9.4.0: the Final Blitz clock and the evac site
   if(game.fbLog&&game.fbLog.length)s.fl=game.fbLog;
+  if(game.gKill&&game.gKill.length)s.gk=game.gKill;   // v0.9.6.4: gauntlet kills per wave (each soldier's claim counts cleared waves)
   if(arcs.length)s.ar=flat(arcs,r=>[r2(r.x),r2(r.y),r2(r.vx),r2(r.vy)]);
   if(game.sbLog&&game.sbLog.length)s.sl=game.sbLog;   // v0.9.3.8: which in-between bosses fell (boss milestones for everyone)   // which bosses fell (each player's rewards are worked out on their own phone)
   if(terrLog.length)s.tr=terrLog;   // ground that changed (pits, a rammed bridge): a few numbers
@@ -433,6 +434,7 @@ function applySnap(s){
   arcs=[];for(let o=0;o<(s.ar||[]).length;o+=4)arcs.push({x:s.ar[o],y:s.ar[o+1],vx:s.ar[o+2],vy:s.ar[o+3]});
   if(Array.isArray(s.fb)){const f=s.fb;game.fb={t:f[0],n:f[1],max:f[2],evac:f[5]?{x:f[3],y:f[4],r:f[5]}:null,done:!!f[6],mapEvac:f[7]===1,gauntlet:f[7]===2,ch:f[8]|0,wave:f[9]|0}}else game.fb=null;
   if(Array.isArray(s.fl))game.fbLog=s.fl.slice(0,20);
+  if(Array.isArray(s.gk))game.gKill=s.gk.slice(0,6);
   if(s.bu){bullets.length=0;for(const e of s.bu)addGuestBullet(e)}
   lobs=[];for(let o=0;o<s.lo.length;o+=8)lobs.push({x0:s.lo[o],y0:s.lo[o+1],x1:s.lo[o+2],y1:s.lo[o+3],t:s.lo[o+4],T:s.lo[o+5],R:s.lo[o+6],k:s.lo[o+7]});
   charges=[];for(let o=0;o<s.ch.length;o+=3)charges.push({x:s.ch[o],y:s.ch[o+1],fuse:s.ch[o+2]});

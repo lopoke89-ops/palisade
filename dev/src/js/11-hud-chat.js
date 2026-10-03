@@ -119,8 +119,8 @@ function hud(dt){
     if(bd._sig!==sig){bd._sig=sig;bd.textContent='';for(const o of rows){const li=document.createElement('li');if(o===p)li.className='me';const n=document.createElement('span');n.textContent=o===p?'YOU':o.name.toUpperCase();const b=document.createElement('b');b.textContent=o.kills;li.append(n,b);bd.append(li)}}
   }
   else if(game.phase==='build'){txt(lab,campaign()?`CH ${game.chapter+1} · BUILD`:'BUILD');cls(lab,'raid',false);txt($('phaseVal'),campaign()?`${clock(game.timer)} · ${MAP.short} · ${game.wave===12?'final evacuation':`raid ${game.wave%3+1}/3`}`:`${clock(game.timer)} until raid ${game.wave+1}`);hid($('skipBtn'),!host);txt($('skipLab'),'START RAID')}
-  else if(game.fb&&!game.fb.done){const F=game.fb,ev=!!F.evac;txt(lab,F.mapEvac?`CH ${F.ch+1} · EVAC`:ev?'EVACUATE':W<700?'BLITZ':'FINAL BLITZ');cls(lab,'raid',true);cls(lab,'evac',ev);   // v0.9.4.0
-    txt($('phaseVal'),ev?(p.out?`${clock(F.t)} · you're out`:`${clock(F.t)} · get to the green ring`):`${clock(F.t)} · boss ${Math.min(F.n,F.max)}/${F.max}`);$('skipBtn').hidden=true}
+  else if(game.fb&&!game.fb.done){const F=game.fb,ev=!!F.evac;txt(lab,F.mapEvac?`CH ${F.ch+1} · EVAC`:ev?'EVACUATE':F.gauntlet?(W<700?`WAVE ${F.wave}/6`:`GAUNTLET · WAVE ${F.wave}/6`):W<700?'BLITZ':'FINAL BLITZ');cls(lab,'raid',true);cls(lab,'evac',ev);   // v0.9.4.0
+    txt($('phaseVal'),ev?(p.out?`${clock(F.t)} · you're out`:`${clock(F.t)} · get to the green ring`):F.gauntlet?`${clock(Math.max(0,F.t-GAUNTLET.evac))} to the evac · ${liveBosses()} up`:`${clock(F.t)} · boss ${Math.min(F.n,F.max)}/${F.max}`);$('skipBtn').hidden=true}
   else{txt(lab,campaign()?`CH ${game.chapter+1} · RAID ${(game.wave-1)%3+1}/3`:isFinite(game.waves)?`RAID ${game.wave}/${game.waves}`:`RAID ${game.wave}`);cls(lab,'evac',false);cls(lab,'raid',true);txt($('phaseVal'),`${campaign()?MAP.short+' · ':''}${enemies.length+(NET.mode==='guest'?game.qn:game.queue.length)} raiders left`);$('skipBtn').hidden=true}
   for(let m=0;m<3;m++){
     const c=$('c'+m),locked=m>0&&!!(nodes.find(n=>n.type===m)||{}).locked&&p.mats[m]===0;
