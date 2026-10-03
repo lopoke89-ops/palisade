@@ -337,7 +337,7 @@ function makeSnap(withWalls){
     qm:[r2(qm.x),r2(qm.y),r2(qm.aim.x),r2(qm.aim.y),Math.ceil(qm.hp),qm.max,qm.alive?1:0,r2(qm.revive),game.dellLv|0],
     en:enemies.map(e=>packTrim(EN_STATE,e)),
     rk:flat(rockets,r=>[r2(r.x),r2(r.y),r2(r.vx),r2(r.vy)]),
-    fz:flat(fires,f=>[r2(f.x),r2(f.y),r2(f.t),r2(f.r||.9),f.nap?1:0]),
+    fz:flat(fires,f=>[r2(f.x),r2(f.y),r2(f.t),r2(f.r||.9),f.nap|0]),   // nap: 1 napalm, 2 poison gas, 3 mine (v0.9.7)
     lo:flat(lobs,l=>[r2(l.x0),r2(l.y0),r2(l.x1),r2(l.y1),r2(l.t),r2(l.T),r2(l.R),l.k|0]),
     ch:flat(charges,c=>[r2(c.x),r2(c.y),r2(c.fuse)]),
     sa:flat(sacks,k=>[r2(k.x),r2(k.y)]),

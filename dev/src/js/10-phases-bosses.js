@@ -248,8 +248,10 @@ function updateRockets(dt){
       if(hit){r.dead=true;const bx=clamp(r.x-r.vx/sp*.2,.1,N-.1),by=clamp(r.y-r.vy/sp*.2,.1,N-.1);
         if(r.pl)explode(bx,by,ABIL.rocket.R,r.pw,r.own,false);else{explode(bx,by,1.7,r.pw,null,true);fires.push({x:bx,y:by,t:4,max:4,tick:.2})}}}}
   dropDead(rockets);
+  minesTick(dt);   // v0.9.7: the Destroyer's mines
   for(const f of fires){f.t-=dt;f.tick-=dt;
     if(f.tick<=0){f.tick=.45;const R=f.r||.9;
+      if(f.nap===2){gasTick(f);continue}if(f.nap===3)continue;   // v0.9.7: poison gas; mines run in minesTick
       if(f.pl){for(const e of enemies)if(!e.dead&&!e.burrow&&groundReach(e.x,e.y,f.x,f.y,R))hurtEnemy(e,e.type==='boss'?5:9,f.own);continue}   // Molotov fire: raiders only, never your walls
       if(f.nap){napalmTick(f);continue}   // v0.9.4.0: the Arsonist's napalm
       for(const a of allies())if(a.alive&&groundReach(a.x,a.y,f.x,f.y,R))hurtAlly(a,6*game.Df.dmg);

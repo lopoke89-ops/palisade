@@ -123,7 +123,7 @@ function hurtEnemy(e,d,own,quiet=false){
     if(e.type==='boss'){if(!demo)bossDown(e,own);const p=own&&own!=='dell'?players.get(own):null;if(p){p.kills++;killFx(e.x,e.y,p.cos.fx)}}else award(own,e)}
 }
 function hurtStake(c,d){if(!c||c.lost)return;c.hp-=d;c.flash=.12;sfx('core',c.i+.5,c.j+.5);emit(c.i+.5,c.j+.5,WH*.8,'spark')}
-function explode(x,y,R=1.65,power=1,own=null,raid=false){
+function explode(x,y,R=1.65,power=1,own=null,raid=false){if(!raid&&typeof minesNear==='function')minesNear(x,y,R);
   sfx(power>1.2?'bigboom':'boom',x,y);addShake(x,y,9*power);
   addFlash({x,y,life:.4,max:.4,r:R});
   for(let n=0;n<22*power;n++)emit(x,y,4*u,'fire');for(let n=0;n<10*power;n++)emit(x,y,4*u,'smoke');

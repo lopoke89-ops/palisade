@@ -1047,13 +1047,14 @@ function drawDowned(x,y,o,prog,tag){
 function bossLine(x0,y0,x1,y1,z){const a=iso(x0,y0),b=iso(x1,y1);g.beginPath();g.moveTo(a[0],a[1]-z);g.lineTo(b[0],b[1]-z);g.stroke()}
 function drawBossFx(){
   const ch=WH*.55,t=game.time,pulse=.55+.45*Math.sin(t*22);drawEvacGround(t);
-  for(const f of fires){const c=iso(f.x,f.y),a=Math.min(1,f.t)*(.34+.1*Math.sin(t*9+f.x*3)),fr=(f.r||.9)/.9;if(f.nap){drawNapalm(f,c,a,fr,t);continue}g.fillStyle=`rgba(255,110,40,${a})`;g.beginPath();g.ellipse(c[0],c[1],TW2*.95*fr,TH2*.95*fr,0,0,Math.PI*2);g.fill()}
+  for(const f of fires){const c=iso(f.x,f.y),a=Math.min(1,f.t)*(.34+.1*Math.sin(t*9+f.x*3)),fr=(f.r||.9)/.9;if(f.nap===2){drawGas(f,c,t);continue}if(f.nap===3){drawMine(f,c,t);continue}if(f.nap){drawNapalm(f,c,a,fr,t);continue}g.fillStyle=`rgba(255,110,40,${a})`;g.beginPath();g.ellipse(c[0],c[1],TW2*.95*fr,TH2*.95*fr,0,0,Math.PI*2);g.fill()}
   // spotters: a red laser while they line up (st 1), solid with a mark over the soldier once they have them (st 2)
   for(const e of enemies){if(e.type!=='spotter'||!e.st)continue;const a=iso(e.x,e.y),b=iso(e.lx,e.ly);g.strokeStyle=e.st===2?'rgba(255,60,50,.75)':`rgba(255,60,50,${.25+.3*pulse})`;g.lineWidth=(e.st===2?1.3:.9)*u;
     g.beginPath();g.moveTo(a[0],a[1]-ch);g.lineTo(b[0],b[1]-ch);g.stroke();
     if(e.st===2){const y=b[1]-WH*1.9,s=5*u;g.fillStyle='#ff4a3a';g.beginPath();g.moveTo(b[0],y-s);g.lineTo(b[0]+s*.7,y);g.lineTo(b[0],y+s);g.lineTo(b[0]-s*.7,y);g.closePath();g.fill()}}
   for(const c of chains){const a=iso(c.x0,c.y0),b=iso(c.x1,c.y1),k=c.life/c.max;g.strokeStyle=`rgba(200,205,200,${k})`;g.lineWidth=2.2*u;g.setLineDash([4*u,2*u]);g.beginPath();g.moveTo(a[0],a[1]-ch);g.lineTo(b[0],b[1]-ch*.8);g.stroke();g.setLineDash([])}
   for(const e of enemies){if(e.type!=='boss'||!e.st)continue;const f=NET.mode==='guest'?(e.stF||0):Math.max(0,e.stT/e.stM);
+    if(drawDestroyerFx(e,f,pulse,ch))continue;   // v0.9.7: the Supreme Destroyer
     if(drawBossMove(e,f,pulse,ch))continue;   // v0.9.6.5: the new moves' warnings
     if(BOSSES[e.boss]&&BOSSES[e.boss].base&&drawBlitzFx(e,f,pulse,ch))continue;   // v0.9.4.0: a Blitzkrieg variant's own warnings
     const kb=bossBase(e.boss);

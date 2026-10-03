@@ -18,6 +18,7 @@
 10c-blitz.js   Blitzkrieg Rush phases, bosses, attacks and evacuation
 10d-winter-campaign.js   Whiteout chapters, continuity, winter bosses and terrain-clipped warnings
 10f-blackout.js   v0.9.7 City Black Out: gathering, POI attacks, perks, the final push, raider targeting per POI
+10g-destroyer.js   v0.9.7 THE SUPREME DESTROYER: five attacks with warnings, poison gas and mines (in fires), his kit
 11-hud-chat.js   best record, HUD, text chat
 12-players.js   main update, player control and simulation (triggers, bursts, gathering)
 13-dell.js   Delgado, the quartermaster AI and shotgun

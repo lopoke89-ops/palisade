@@ -41,7 +41,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
   return res});
  for(const [k,v]of Object.entries(out.hp))assert.equal(v,1.25,'hp '+k);
  for(const [k,v]of Object.entries(out.weak))assert.deepEqual(v,[1.35,1,1,1],'weak '+k);
- assert.equal(Object.keys(out.weak).length,14);
+ assert.equal(Object.keys(out.weak).length,15);   // v0.9.7: + the Supreme Destroyer
  const M=out.moves;
  for(const k of['pulse','strike','cyclone','cage','flame','firering','slam','overdrive']){assert.ok(M[k].ok,k+' starts');assert.equal(M[k].first,M[k].want,k+' warning state')}
  for(const k of['pulse','strike','cyclone','cage','flame','slam','overdrive'])assert.ok(M[k].dmg>0,k+' hits the player in its area: '+M[k].dmg);

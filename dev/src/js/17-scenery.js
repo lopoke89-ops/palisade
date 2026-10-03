@@ -303,8 +303,8 @@ function itemEnemy(e){
   if(e.type==='boss'){const B=BOSSES[e.boss];if(!B)return;const I=bossInfo(e.boss);
     if(e.burrow||(e.boss==='foreman'&&(e.st===2||e.st===4))){drawMound(e);return}
     const rf=B.raft&&e.raft!==false;if(rf)drawRaft(e);const kb=bossBase(e.boss);
-    drawPerson(e.x,e.y,Object.assign({aim:e.aim,walk:rf?0:e.walk,flash:e.flash>0,hp:e.hp/e.max,big:1.45,tag:I.name,tagCol:I.col,winterSt:e.st,swing:kb==='butcher'&&e.st<5?e.st|0:e.boss==='bluebutcher'&&e.st===5?1:0},I.look));
-    if(e.boss==='bulldozer'&&e.st===6)drawDazed(e);drawAmmoStatus(e);return}
+    drawPerson(e.x,e.y,Object.assign({aim:e.aim,walk:rf?0:e.walk,flash:e.flash>0,hp:e.hp/e.max,big:B.big||1.45,tag:I.name,tagCol:I.col,winterSt:e.st,swing:kb==='butcher'&&e.st<5?e.st|0:e.boss==='bluebutcher'&&e.st===5?1:0},I.look));
+    if(e.boss==='bulldozer'&&e.st===6)drawDazed(e);if(e.boss==='destroyer')drawDestroyerKit(e);drawAmmoStatus(e);return}
   drawPerson(e.x,e.y,Object.assign({aim:e.aim,walk:e.walk,flash:e.flash>0,hp:e.hp/e.max},LOOK[e.type]||LOOK.rifle,{satchel:e.type==='breach'&&!e.planted},e.type==='shield'?{big:1.1,shieldWear:1-(e.shieldHitsLeft??RIOT_SHIELD_HITS)/(e.shieldHitsMax||RIOT_SHIELD_HITS),...(e.shieldBroken?{weapon:'pistol'}:{})}:null));
   drawAmmoStatus(e);
   if(e.type==='medic'&&game.phase==='raid'){const c=iso(e.x,e.y);g.strokeStyle='rgba(143,224,160,.35)';g.lineWidth=1.2*u;g.beginPath();g.ellipse(c[0],c[1],TW2*2.6,TH2*2.6,0,0,Math.PI*2);g.stroke()}   // his healing reach

@@ -21,7 +21,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
  for(const [n,r]of Object.entries(out)){
   assert.equal(r.nav,'INDEX');assert.equal(r.title,'INDEX');assert.equal(r.classes,4);assert.ok(r.classesShown);
   assert.equal(r.raiders.length,7,n+' raiders');
-  assert.equal(r.bosses.length,14,n+' bosses');
+  assert.equal(r.bosses.length,15,n+' bosses');   // v0.9.7: + the Supreme Destroyer
   for(const x of r.expect){const c=r.bosses.find(b=>b.name===x.name);assert.ok(c,n+' card for '+x.name);assert.ok(c.stat.startsWith(x.hp+' base health'),n+' '+x.name+' hp '+c.stat);
     assert.ok(c.weak.includes(x.weak),n+' '+x.name+' weak '+c.weak);assert.ok(c.atk>=2,n+' '+x.name+' lists its attacks')}
   for(const k of['THE STORMCALLER','THE TEMPEST','THE ARSONIST','THE BULLDOZER'])assert.equal(r.bosses.find(b=>b.name===k).atk,3,k+' has 3 attacks');
