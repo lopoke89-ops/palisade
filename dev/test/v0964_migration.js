@@ -1,7 +1,7 @@
 // v0.9.6.4 server migration in a disposable Postgres: Whiteout Gauntlet payouts, chapter evacs, the Hybrid Theory
 // Case (catalog, buying, opening, the co-op win drop) and that pre-cv:4 claims are paid exactly as before.
 const {PGlite}=require('@electric-sql/pglite'),{base,U}=require('./winter-db'),fs=require('node:fs'),assert=require('node:assert/strict');
-const dir=__dirname+'/../supabase/migrations',read=n=>fs.readFileSync(dir+'/'+n,'utf8'),NEW='20261003120000_v0964_gauntlet_hybrid.sql';
+const dir=__dirname+'/../supabase/migrations',read=n=>fs.readFileSync(dir+'/'+n,'utf8'),NEW=['20261003080938_v0964_hybrid_catalog.sql','20261003153435_v0964_gauntlet_rewards.sql'];
 (async()=>{const db=new PGlite(),checks=[],ok=(n,b)=>{assert.ok(b,n);checks.push(n)};
  await db.exec(base);await db.exec(read('20260930075446_palisade_v0938_all_boss_milestones.sql'));await db.exec(read('20260930141401_palisade_v0940_blitz.sql'));
  await db.exec(`alter table profiles add column username text;alter table profiles add column cos text;create table lobbies(length text constraint lobbies_length_check check(length in ('5','10','endless','blitz')));
@@ -12,7 +12,7 @@ const dir=__dirname+'/../supabase/migrations',read=n=>fs.readFileSync(dir+'/'+n,
  grant usage on schema public,auth,private to authenticated;grant execute on all functions in schema auth to authenticated;`);
  for(const m of['20261001081259_winter_whiteout.sql','20261001214620_winter_models.sql','20261001225643_music_case_batches.sql'])await db.exec(read(m));
  const oldText=(await db.query(`select pg_get_functiondef('public.claim_match_reward(jsonb)'::regprocedure) d`)).rows[0].d;
- await db.exec(read(NEW));await db.exec(read(NEW));ok('migration applies twice',true);
+ for(const m of NEW)await db.exec(read(m));for(const m of NEW)await db.exec(read(m));ok('migration applies twice',true);
  await db.exec('grant select,insert,update,delete on all tables in schema public to authenticated;grant usage on schema private to authenticated;grant execute on all functions in schema private to authenticated');
  const as=async uid=>db.exec(`reset role;set role authenticated;select set_config('request.jwt.claim.sub','${uid}',false)`);
  const reset=async(extra='')=>db.exec(`reset role;delete from private.reward_receipts;delete from match_results;delete from private.case_openings;delete from lockers;delete from player_stats;insert into lockers(user_id) values('${U}');insert into player_stats(user_id) values('${U}');${extra}`);
