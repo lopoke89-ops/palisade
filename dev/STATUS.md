@@ -7,6 +7,17 @@ Big U's latest completed local scope is recorded in the [presentation prompt](pl
 
 The Claude audit URL still requires sign-in in the available browser session. Big U supplied an exported copy at `D:\downloads\Untitled.md`, which was read on September 29. Its newest Progress entry is v0.9.3, so its release claims are superseded by the verified v0.9.3.3 release below. The external artifact itself was not edited here.
 
+## v0.9.6.4 on the branch: campaign evacs, the Whiteout Gauntlet and the Hybrid Theory Case
+
+Built from the [work order](plans/campaign-evac-and-finale-work-order.md) (all decisions D1-D9 and H1-H5 made by Big U). Branch `claude/lucid-curie-491na1`, protocol **`yard-24`**. **Not published.** The server migration `20261003120000_v0964_gauntlet_hybrid` is written and tested in PGlite but **not applied**: it waits for Big U's approval of the payout table and catalog.
+
+- **Resources stay open** on later campaign maps (fixes Yard scrap never opening, no brick on Riverbend, no metal on the Quarry).
+- **Map evacs after raids 3, 6 and 9:** 15 s, shieldbearers and grenadiers only. A player left behind goes on to the next map at 50% health with no salvage and loses that chapter's evac case; if nobody gets out, the run ends ("EVAC FAILED · CHAPTER n").
+- **The Whiteout Gauntlet** replaces the old finale: 6 waves every 30 s (2 Rime + 1 random from whitebutcher, whiteforeman, tempest, bulldozer, bluebutcher, arsonist), at most 8 alive, 110% boss health, evac opens for the last 30 s.
+- **Rewards (cv:4 claims only; older clients are paid as before):** each gauntlet boss 5-10 shards, +1 SP and +1 base milestone (Rime ladder uncapped, about 4x faster); +1 Winter Case per fully cleared wave (6 max); final evac +2 Winter Cases and 25 shards; +1 Winter Case per chapter evac made. The no-account locker mirrors these rules.
+- **Hybrid Theory Case:** 57 items (30 jerseys on a new sleeveless body, 8 headgear including a Dunce Cone that fits the Sheet Ghost, 11 kill effects, 8 animated block-city backgrounds); 12 shards, c46/r30/e16/l7/g1; one for everyone after any co-op win. Cases open through `open_cases_v0964` (catalog 4), falling back to `open_cases_v0962` until the server has it.
+- **Tests:** new `campaign_resources`, `campaign_map_evac`, `campaign_gauntlet`, `campaign_network`, `hybrid_case`, `v0964_migration` (32 database checks); winter and case tests updated. The cosmetic catalog capture needs the live catalog, so it runs after the migration is applied.
+
 ## v0.9.6.3 published: frame rate, CPU and network efficiency
 
 From an October 3 audit (Big U approved items 1-4 plus the player-field change). **Published October 3** as [#11](https://github.com/lopoke89-ops/palisade/pull/11) (`674f33e`); GitHub Pages serves footer v0.9.6.3, protocol `yard-23`, service worker `palisade-44a8936c2e`; a live desktop and phone start had no page errors or CSP violations and no debug hooks. Evidence and before/after numbers: [evidence/2026-10-03-efficiency/README.md](evidence/2026-10-03-efficiency/README.md). Protocol **`yard-23`**: the state packet layout changed, so older copies must reload.
