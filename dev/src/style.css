@@ -39,7 +39,18 @@ button:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
 #toast{position:fixed;left:16px;right:16px;top:36%;text-align:center;pointer-events:none;
   font-family:var(--stencil);font-weight:900;font-size:clamp(24px,7vw,40px);letter-spacing:.06em;
   color:var(--bone);text-shadow:0 2px 0 #000,0 0 18px rgba(0,0,0,.8);opacity:0;transition:opacity .25s}
-#toast small{display:block;font-family:var(--mono);font-weight:400;font-size:12px;letter-spacing:0;color:var(--dim);margin:6px auto 0;max-width:38ch;text-wrap:balance}
+#toast small{display:block;font-family:var(--mono);font-weight:400;font-size:14px;letter-spacing:0;color:var(--bone);margin:8px auto 0;max-width:40ch;text-wrap:balance}
+/* v0.9.7.1: every message sits on a dark panel so it reads over the bright city; phase messages get a coloured band */
+#toast .tt{display:inline-block}
+#toast.on{pointer-events:auto;cursor:pointer}
+#toast{z-index:5}   /* above the build kit and the vitals, below overlays */
+.overlay{z-index:10}   /* pause, armory, settings, results: above the message panel */
+#toast.minor,#toast.phase{background:rgba(10,9,7,.82);padding:12px 16px 14px;border-radius:3px;margin:0 auto;max-width:640px;left:0;right:0;width:calc(100% - 32px)}
+#toast.phase{border-top:4px solid var(--tb,#e2b436);border-bottom:4px solid var(--tb,#e2b436);font-size:clamp(28px,8vw,46px);box-shadow:0 0 40px rgba(0,0,0,.6)}
+#toast.phase.threat{--tb:#ff8a3a}#toast.phase.good{--tb:#8fe0a0}#toast.phase.bad{--tb:#e8573a}
+#toast.phase small{font-size:15px}
+#phaseNote{font-family:var(--mono);font-size:11px;color:var(--dim);max-width:240px;margin-left:auto;text-align:right;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body:not(.desk) #phaseNote{max-width:150px;font-size:10px}
 #toast.on{opacity:1}
 
 /* ---------- kit column ---------- */
@@ -190,7 +201,7 @@ body.desk #phaseVal,body.desk #salv{font-size:14px}
 body.desk #skipBtn{font-size:16px;padding:7px 12px}
 body.desk #tip{font-size:14px;top:calc(env(safe-area-inset-top,0px) + 104px)}
 body.desk #tip span{max-width:48ch;padding:7px 12px}
-body.desk #toast small{font-size:14px}
+body.desk #toast small{font-size:16px}
 body.desk #kit{width:136px;right:20px;bottom:64px;gap:7px}
 body.desk .piece{height:32px;font-size:14px}
 body.desk .chip{height:40px}

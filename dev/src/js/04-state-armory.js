@@ -5,7 +5,7 @@ let players=new Map(),myId='solo',nextId=1;   // every soldier in the yard; `pla
 let game={phase:'title',paused:false,time:0,wave:0,sel:0,piece:'wall',stats:{dropped:0,built:0,lost:0,repairs:0,revives:0}};
 let pick={cls:'soldier',diff:'normal',mode:'5',pvp:'coop',map:'yard',size:'std',oct:false};
 let demo=false,demoT=0,demoAcc=0;   // the menu's live background: Delgado alone against demo raids
-const cfg={volume:.8,music:.7,shake:1,haptics:true,fps:false,fpsMode:'auto',tips:true,name:'',build:true};
+const cfg={volume:.8,music:.7,shake:1,haptics:true,fps:false,fpsMode:'auto',tips:true,name:'',build:true,msgTime:1};
 try{Object.assign(cfg,JSON.parse(localStorage.getItem('palisade.cfg.v1')||'{}'))}catch(e){}
 function saveCfg(){try{localStorage.setItem('palisade.cfg.v1',JSON.stringify(cfg))}catch(e){}}
 const light={L:.12,r:28,g:34,b:44,warm:0};
@@ -172,7 +172,7 @@ function newGame(roster,pvp='',opt={}){
     joinHeld:opt.guest?null:0,joinT:0,joinBoss:0,joinSB:0};   // join*: where this phone came in (guests learn it from the first state packet)
   for(const p of players.values())kitUp(p);
   for(const p of players.values()){if(pvp==='base')p.sal=PVP.startSal;if(pvp==='ffa'){p.mats=[0,0,0];p.prot=PVP.prot}}
-  feedClear();
+  feedClear();toastClear();
   Object.assign(light,{L:.12,r:28,g:34,b:44,warm:0});
   flowDirty=true;computeFlow();flowDirty=false;
   camSX=camX=W*(W<760?.4:.5)-(player.x-player.y)*TW2;camSY=camY=H*.52-(player.x+player.y)*TH2;

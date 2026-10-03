@@ -10,8 +10,23 @@ function showBest(){const m=myMods(coopMods()),b=loadBest()[bestKey(pick.mode,pi
   el.textContent=pick.mode==='endless'?`Best endless on ${DIFF[pick.diff].name.toLowerCase()}${w}: ${b.held} raids held, ${b.dropped} raiders dropped (${b.cls.toLowerCase()}).`:`Best on ${DIFF[pick.diff].name.toLowerCase()}${w}: ${b.held} of ${pick.mode==='campaign'?CAMPAIGN.waves:pick.mode==='blitz'?BLITZ.waves:pick.mode} stages held, ${b.dropped} raiders dropped (${b.cls.toLowerCase()}).`}
 
 /* ================= HUD ================= */
-let toastT=0;
-function toast(big,small){if(demo)return;const el=$('toast');el.textContent='';el.append(big);if(small){const s=document.createElement('small');s.textContent=small;el.append(s)}el.classList.add('on');toastT=3}
+// v0.9.7.1: messages wait their turn instead of wiping each other. Phase messages (raids, POIs, the push, bosses, evacs)
+// stay 6 s on a coloured band; minor ones 3.5 s. Both scale with Settings → Message time. A tap on the panel dismisses
+// it; the latest phase message also stays in small type under the phase box until the next one.
+let toastT=0,toastCur=null;const TOAST_Q=[];
+const TOAST_PHASE=/RAID|BROKEN|UNDER ATTACK|HELD|LOST|NEXT ·|FIRST TARGET|FINAL|READY UP|BLITZ|EVAC|DESTROYER|POWER IS OUT|IS DOWN|CHAPTER|GAUNTLET|BOSS|BATTLE|TRUCE|LEFT BEHIND|CLAIM/;
+function toastKind(big){const b=String(big||'').toUpperCase();if(!TOAST_PHASE.test(b))return'minor';
+  return/LOST|FELL|LEFT BEHIND|POWER IS OUT/.test(b)?'bad':/HELD|BROKEN|IS DOWN|EVACUATED/.test(b)?'good':'threat'}
+function toast(big,small){if(demo)return;const m={big:String(big),small:small?String(small):'',kind:toastKind(big)};
+  if(!toastCur){toastShow(m);return}
+  if(m.kind!=='minor'){const i=TOAST_Q.findIndex(q=>q.kind==='minor');if(i>=0)TOAST_Q.splice(i,0,m);else TOAST_Q.push(m)}else TOAST_Q.push(m);
+  while(TOAST_Q.length>3){const i=TOAST_Q.findIndex(q=>q.kind==='minor');if(i<0)break;TOAST_Q.splice(i,1)}}
+function toastShow(m){const el=$('toast');toastCur=m;el.textContent='';const t=document.createElement('span');t.className='tt';t.textContent=m.big;el.append(t);
+  if(m.small){const s=document.createElement('small');s.textContent=m.small;el.append(s)}
+  el.className='on '+(m.kind==='minor'?'minor':'phase '+m.kind);toastT=(m.kind==='minor'?3.5:6)*(cfg.msgTime||1);
+  if(m.kind!=='minor'){const n=$('phaseNote');if(n){n.textContent=m.big;n.hidden=false}}}
+function toastTick(dt){if(!toastCur)return;toastT-=dt;if(toastT>0)return;$('toast').classList.remove('on');toastCur=null;if(TOAST_Q.length)toastShow(TOAST_Q.shift())}
+function toastClear(){TOAST_Q.length=0;toastCur=null;toastT=0;const el=$('toast');if(el)el.className='';const n=$('phaseNote');if(n){n.textContent='';n.hidden=true}}
 function feed(text,col){rec(['q',text,col]);feedLocal(text,col)}
 function feedLocal(text,col){if(demo)return;const box=$('feed'),el=document.createElement('span');el.textContent=text;el.style.color=col;box.prepend(el);
   while(box.children.length>4)box.lastChild.remove();setTimeout(()=>el.classList.add('old'),5000);setTimeout(()=>el.remove(),5700)}
@@ -93,7 +108,7 @@ function mateRows(){
     txt(row.children[2],p.alive?String(Math.ceil(p.hp)):'DOWN');cls(row,'alarm',!p.alive)});
 }
 function hud(dt){
-  if(toastT>0){toastT-=dt;if(toastT<=0)$('toast').classList.remove('on')}
+  toastTick(dt);
   const p=player;if(!p)return;
   const rj=game.pvp==='ffa'&&!game.job&&!p.alive&&game.phase!=='over';if($('respawnJobs').hidden===rj){hid($('respawnJobs'),!rj);if(rj)syncJobPick()}
   $('hpF').style.transform=`scaleX(${Math.max(0,p.hp/p.max)})`;txt($('hpN'),p.alive?String(Math.ceil(p.hp)):'DOWN');cls($('hpM'),'alarm',!p.alive);

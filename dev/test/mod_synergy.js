@@ -23,7 +23,8 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
     for (let i = 0; i < 2400 && P.enemies.filter(e => e.type === 'boss').length < 2; i++) P.update(1 / 30);
     await new Promise(r => setTimeout(r, 50)); mo.disconnect();
     const bosses = P.enemies.filter(e => e.type === 'boss'); const sb0 = g.sbN | 0; for (const e of bosses) P.hurtEnemyHook(e, 1e9, P.player.id);
-    return { queue: q, bosses: bosses.map(e => [e.boss, !!e.sb]), second: toasts.some(t => /NIGHTMARE · SECOND BOSS/.test(t)), sbPaid: (g.sbN | 0) - sb0, bossLog: g.bossLog.length } });
+    return { queue: q, bosses: bosses.map(e => [e.boss, !!e.sb]), second: toasts.some(t => /NIGHTMARE · SECOND BOSS/.test(t)) || P.toastQ.some(q => /NIGHTMARE · SECOND BOSS/.test(q.big)),   // v0.9.7.1: it may wait its turn behind the raid's message
+      sbPaid: (g.sbN | 0) - sb0, bossLog: g.bossLog.length } });
   assert.equal(out.raid.queue.length, 2); assert.ok(out.raid.queue.some(t => t.endsWith(':sb2')));
   assert.equal(out.raid.bosses.length, 2); assert.ok(out.raid.bosses.every(x => x[1]), 'both are in-between bosses'); assert.ok(out.raid.second, 'announced');
   assert.equal(out.raid.sbPaid, 2); assert.equal(out.raid.bossLog, 0, 'in-between bosses stay out of the regular boss log, as before');

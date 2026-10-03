@@ -20,6 +20,7 @@
   <div class="phase">
     <div class="phaseRow"><div id="phaseLab">BUILD</div><button id="chatBtn" type="button" aria-label="Chat" hidden><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2 3h12v8H7l-3 3v-3H2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></button><button id="pauseBtn" type="button" aria-label="Pause">II</button></div>
     <div id="phaseVal">0:40</div>
+    <div id="phaseNote" hidden></div>
     <div id="salv">SALVAGE <span id="salN">0</span></div>
     <button id="skipBtn" type="button"><span id="skipLab">START RAID</span><kbd class="kc">ENTER</kbd></button>
     <ol id="board" hidden></ol>
@@ -275,6 +276,8 @@
           <label class="set"><span>MUSIC</span><input type="range" id="sMus" min="0" max="100" step="5"><b id="sMusV">70%</b></label></div>
         <div class="setCard"><h3>SCREEN</h3>
           <label class="set"><span>SCREEN SHAKE</span><input type="range" id="sShake" min="0" max="100" step="5"><b id="sShakeV">100%</b></label>
+          <div class="set"><span>MESSAGE TIME</span></div>
+          <div class="seg" id="msgSeg" role="radiogroup" aria-label="Message time"><button data-msgt="1" type="button" role="radio">NORMAL</button><button data-msgt="1.5" type="button" role="radio">LONG</button><button data-msgt="2" type="button" role="radio">VERY LONG</button></div>
           <div class="set"><span>FRAME RATE</span></div>
           <div class="seg" id="fpsSeg" role="radiogroup" aria-label="Frame rate"><button data-fpsm="auto" type="button" role="radio">AUTO</button><button data-fpsm="30" type="button" role="radio">30 FPS</button><button data-fpsm="60" type="button" role="radio">60 FPS</button></div>
           <p class="lede sm" id="fpsNote">Auto runs at 60 and drops to 30 when a phone is working hard or its battery is low. 30 FPS keeps phones coolest.</p>
