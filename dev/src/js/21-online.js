@@ -436,7 +436,7 @@ function applySnap(s){
   arcs=[];for(let o=0;o<(s.ar||[]).length;o+=4)arcs.push({x:s.ar[o],y:s.ar[o+1],vx:s.ar[o+2],vy:s.ar[o+3]});
   if(Array.isArray(s.fb)){const f=s.fb;game.fb={t:f[0],n:f[1],max:f[2],evac:f[5]?{x:f[3],y:f[4],r:f[5]}:null,done:!!f[6],mapEvac:f[7]===1,gauntlet:f[7]===2,ch:f[8]|0,wave:f[9]|0}}else game.fb=null;
   if(Array.isArray(s.fl))game.fbLog=s.fl.slice(0,20);
-  if(s.bo)boApply(s.bo);   // v0.9.7: the POIs and the run's clock
+  if(s.bo){boApply(s.bo);if(game.joinPois==null){game.joinPois=s.bo[6]|0;game.joinMajors=boMajorsHeld();game.joinHeld=(s.bo[6]|0)+(s.bo[7]|0)}}   // v0.9.7: the POIs and the run's clock (and where this phone came in)
   if(Array.isArray(s.gk))game.gKill=s.gk.slice(0,6);
   if(s.bu){bullets.length=0;for(const e of s.bu)addGuestBullet(e)}
   lobs=[];for(let o=0;o<s.lo.length;o+=8)lobs.push({x0:s.lo[o],y0:s.lo[o+1],x1:s.lo[o+2],y1:s.lo[o+3],t:s.lo[o+4],T:s.lo[o+5],R:s.lo[o+6],k:s.lo[o+7]});

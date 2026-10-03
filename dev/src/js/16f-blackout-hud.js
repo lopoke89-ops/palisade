@@ -56,3 +56,16 @@ function boApply(a){if(!Array.isArray(a))return;const B=game.bo||(game.bo={order
 const BO_NEAR=22;
 function boNearRows(rows,p){if(!p)return rows;
   return rows.filter(r=>{const c=ECODE[r[PE.type]]||'';return c.startsWith('boss:')||Math.hypot(r[PE.x]-p.x,r[PE.y]-p.y)<BO_NEAR})}
+/* ---------- rewards: what this phone's claim reports ---------- */
+// stages finished (8 POI attacks + the final push; 9 = the run was won), POIs held and majors held since this phone came in
+const boStages=()=>{const B=game.bo;if(!B)return 0;return Math.min(9,(B.held|0)+(B.lost|0)+(game.won&&game.phase==='over'?1:0))};
+function boMajorsHeld(){const B=game.bo;if(!B)return 0;const att=(B.held|0)+(B.lost|0),lost=cores.filter(c=>c.poi&&c.poi.major&&c.lost).length;return Math.max(0,Math.max(0,att-4)-lost)}
+const boPoisMine=()=>Math.max(0,((game.bo&&game.bo.held)|0)-(game.joinPois|0)),boMajorsMine=()=>Math.max(0,boMajorsHeld()-(game.joinMajors|0));
+// the no-account locker's Black Out pay (the server's rules): POIs held fill the Supply Case bar, +1 Supply Case per major,
+// a win (7 minutes or more, joined by stage 4) 2 Supply Cases and 25 shards, the Destroyer 40 shards and a skill point
+const BO_PAY={winCases:2,winShards:25,destShards:40,minWin:420};
+function boLocalPay(c,st){
+  const pois=Math.min(8,c.pois_held|0,c.held|0,Math.max(0,1+Math.floor(((c.duration_s|0)-45)/30))),major=Math.min(4,c.pois_major|0,pois);
+  const won=!!c.win&&(c.raid_to|0)>=9&&(c.raid_from|0)*2<=9&&(c.duration_s|0)>=BO_PAY.minWin,dest=won&&!!c.destroyer;
+  st.bo_pois=(st.bo_pois|0)+pois;if(won){st.bo_wins=(st.bo_wins|0)+1;if(pois>=8)st.bo_perfect=(st.bo_perfect|0)+1}if(dest)st.bo_dest=(st.bo_dest|0)+1;
+  return{pois,major,won,dest,cases:major+(won?BO_PAY.winCases:0),shards:(won?BO_PAY.winShards:0)+(dest?BO_PAY.destShards:0),sp:dest?1:0}}

@@ -67,7 +67,7 @@ function homeCard(cls,kicker,title,body,btn,act){const d=document.createElement(
   if(btn){const b=document.createElement('button');b.type='button';b.className='ghost';b.textContent=btn;b.addEventListener('click',()=>{initAudio();act()});d.append(b)}
   return d}
 function nextUnlock(){
-  let best=null;for(const L of LADDERS){const have=locker.st[L.st]|0,i=L.items.findIndex(([c,k])=>!owns(c+':'+k));if(i<0)continue;const f=have/L.steps[i];if(!best||f>best.f)best={L,i,f,have}}
+  let best=null;for(const L of LADDERS){const i=L.items.findIndex(([c,k])=>!owns(c+':'+k));if(i<0)continue;const have=ladderHave(L,i);const f=have/L.steps[i];if(!best||f>best.f)best={L,i,f,have}}
   return best;
 }
 function renderHomeSide(){
@@ -79,7 +79,7 @@ function renderHomeSide(){
     box.append(homeCard('hcCases','READY TO OPEN',`${n} CASE${n>1?'S':''}`,chips,'OPEN IN LOCKER',()=>showPage('locker')))}
   else box.append(homeCard('hcCases','CASES','NONE WAITING','You earn a Supply Case every 3 raids you hold, and bosses drop their own.'));
   if(nu){const it=COSBY[nu.L.items[nu.i][0]+':'+nu.L.items[nu.i][1]],bar=document.createElement('span');bar.className='hcBar';const f=document.createElement('i');f.style.width=Math.min(100,nu.have/nu.L.steps[nu.i]*100)+'%';bar.append(f);
-    const wrap=document.createElement('span');wrap.append(bar,document.createTextNode(`${nu.have} / ${nu.L.steps[nu.i]} ${nu.L.unit}`));
+    const wrap=document.createElement('span');wrap.append(bar,document.createTextNode(`${nu.have} / ${nu.L.steps[nu.i]} ${ladderUnit(nu.L,nu.i)}`));
     box.append(homeCard('hcNext','NEXT UNLOCK · '+nu.L.title,it?it.name:'',wrap,'MILESTONES',()=>{showPage('locker');const t=document.querySelector('#lockTabs [data-cat=ms]');if(t)t.click()}))}
   const sp=locker.sp|0;if(sp>0)box.append(homeCard('hcSp','SKILL POINTS',`${sp} TO SPEND`,locker.cloud?'Spend them on the skill tree, or trade 3 for a Supply Case in the Locker.':'Trade 3 for a Supply Case in the Locker.',locker.cloud?'SKILL TREE':'LOCKER',()=>showPage(locker.cloud?'skills':'locker')));
 }

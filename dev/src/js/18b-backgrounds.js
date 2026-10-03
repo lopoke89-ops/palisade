@@ -16,6 +16,16 @@ function bgLayer(key,w,h,paint){
   BG_CACHE.set(k,c);bgCacheBytes+=bytes;return c;
 }
 const bgBlit=(x,c,w,h)=>x.drawImage(c,0,0,w,h);
+// v0.9.7 Lit Skyline: night sky, three rows of towers with lit windows, streetlights along the bottom
+function skylineScene(x,w,h){vgrad(x,w,h,[[0,'#05070f'],[.6,'#121a30'],[1,'#3a2a20']]);
+  for(let i=0;i<50;i++){x.fillStyle='#dfe8ff';x.globalAlpha=.25+.5*hash(i,61);x.fillRect(hash(i,62)*w,hash(i,63)*h*.4,1,1)}x.globalAlpha=1;
+  const gr=x.createRadialGradient(w/2,h,0,w/2,h,h*.8);gr.addColorStop(0,'rgba(255,170,80,.35)');gr.addColorStop(1,'rgba(255,170,80,0)');x.fillStyle=gr;x.fillRect(0,0,w,h);
+  for(const[row,col,base,top,win]of[[0,'#141a26',.78,.3,.35],[1,'#0e121b',.86,.42,.5],[2,'#080a10',.95,.6,.6]]){let px=-10,n=0;
+    while(px<w){const bw=28+hash(n,row*9+1)*46,bh=h*(top+hash(n,row*9+2)*(base-top)*.6),y0=h*base-bh;x.fillStyle=col;x.fillRect(px,y0,bw,h-y0);
+      for(let wy=y0+6;wy<h*base-6;wy+=9)for(let wx=px+5;wx<px+bw-5;wx+=8)if(hash(wx|0,wy|0)<win){x.fillStyle=hash(wy|0,wx|0)<.8?'rgba(255,210,120,.8)':'rgba(180,215,255,.7)';x.fillRect(wx,wy,3,4)}
+      px+=bw+2+hash(n,row*9+3)*8;n++}}
+  x.fillStyle='#050608';x.fillRect(0,h*.95,w,h*.05);for(let px=20;px<w;px+=70){x.fillStyle='#22252a';x.fillRect(px,h*.88,2,h*.07);x.fillStyle='#ffe0a0';x.fillRect(px-2,h*.875,6,3);
+    x.globalAlpha=.35;x.drawImage(bgBlob('rgba(255,200,110,.8)'),px-26,h*.86,54,40);x.globalAlpha=1}}
 // a rounded rectangle path (the built-in one isn't in Safari before iOS 16)
 function bgRound(x,X,Y,W,H,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+W,Y,X+W,Y+H,r);x.arcTo(X+W,Y+H,X,Y+H,r);x.arcTo(X,Y+H,X,Y,r);x.arcTo(X,Y,X+W,Y,r);x.closePath()}
 const vgrad=(x,w,h,stops)=>{const gr=x.createLinearGradient(0,0,0,h);for(const[o,c]of stops)gr.addColorStop(o,c);x.fillStyle=gr;x.fillRect(0,0,w,h)};
@@ -40,6 +50,12 @@ const BGS={
       for(let i=0;i<70;i++){const sx=hash(i,5)*w,sy=hash(i,6)*h*.75;x.globalAlpha=.35+.65*Math.abs(Math.sin(t*(.6+hash(i,7))+i));x.fillStyle=i%9?'#e8eeff':'#ffe9b0';x.fillRect(sx,sy,i%7?1:1.6,i%7?1:1.6)}
       const sp=(t%11)/11;if(sp<.12){const k=sp/.12,x0=w*(.15+.5*k),y0=h*(.1+.18*k);x.globalAlpha=1-k;x.strokeStyle='#ffffff';x.lineWidth=1.4;x.beginPath();x.moveTo(x0,y0);x.lineTo(x0-40,y0-14);x.stroke()}
       x.globalAlpha=1}},
+  // v0.9.7 the BLACK OUT ladder: the city with its lights back on
+  skyline:{name:'Lit Skyline',r:'l',src:'unlock',need:{bo_perfect:1},how:'Win City Black Out holding all 8 points',ladder:'blackout',
+    draw(x,w,h,t){bgBlit(x,bgLayer('skyline',w,h,(x,w,h)=>skylineScene(x,w,h)),w,h);
+      for(let i=0;i<40;i++){const on=Math.sin(t*(.3+hash(i,71))+i*3)>-.2;if(!on)continue;x.fillStyle=i%4?'rgba(255,214,130,.85)':'rgba(190,220,255,.8)';x.fillRect(hash(i,72)*w,h*(.42+hash(i,73)*.4),2,3)}
+      const a=Math.sin(t*.35)*.5;x.save();x.translate(w*.72,h*.82);x.rotate(-Math.PI/2+a);const gr=x.createLinearGradient(0,0,h*.9,0);gr.addColorStop(0,'rgba(255,240,200,.28)');gr.addColorStop(1,'rgba(255,240,200,0)');
+      x.fillStyle=gr;x.beginPath();x.moveTo(0,0);x.lineTo(h*.9,-30);x.lineTo(h*.9,30);x.closePath();x.fill();x.restore()}},
   dawn:{name:'First Light',r:'r',src:'unlock',need:{wins:1},how:'Win any run',
     draw(x,w,h,t){const k=.5+.5*Math.sin(t*.12);vgrad(x,w,h,[[0,`hsl(${250-20*k},40%,${14+6*k}%)`],[.55,`hsl(${340+10*k},55%,${38+8*k}%)`],[1,'#ffb070']]);
       const sy=h*(.74-.06*k);x.fillStyle='rgba(255,230,170,.9)';x.beginPath();x.arc(w*.62,sy,34,0,Math.PI*2);x.fill();
@@ -329,7 +345,7 @@ const BG_IDS=Object.keys(BGS);
 
 // backgrounds are lobby cosmetics: Locker items like the rest (cat 'bg'), never sent to other players
 for(const id of BG_IDS){const B=BGS[id],box=B.src==='case'?B.box:null,c={id:'bg:'+id,cat:'bg',key:id,name:B.name,r:B.r,src:B.src,box,need:B.need||null,
-  how:B.how||(box?'Found in '+CASES[box].short:'Free'),description:B.description,collection:B.collection,animated:!!B.animated,price:null};COS.push(c);COSBY[c.id]=c}
+  how:B.how||(box?'Found in '+CASES[box].short:'Free'),description:B.description,collection:B.collection,animated:!!B.animated,price:null,...(B.ladder?{ladder:B.ladder}:{})};COS.push(c);COSBY[c.id]=c}
 CATN.bg='BACKGROUND';
 locker=normLocker(locker);   // the locker loaded before these items existed: give the free ones and check the equipped one
 const DEFAULT_BG='campfire',lobbyBgId=()=>BGS[locker.eq.bg]?locker.eq.bg:DEFAULT_BG;

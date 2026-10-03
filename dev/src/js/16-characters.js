@@ -1204,6 +1204,7 @@ function buildLook(p,cos){
   else if(WINTER_HATS[H])o.winterHat=H;
   else if(HALLOWEEN_HATS[H])o.halloweenHat=H;
   else if(H==='devilhorns')o.horns='#7a1410';   // v0.9.4.0
+  else if(H==='blackout'){o.helmet='#1d2024';o.hneon='#ffc860'}   // v0.9.7: a dark helmet with a sodium-yellow band
   else if(HYBRID_HAT_SET.has(H))o.hybridHat=H;   // v0.9.6.4
   else o.helmet=S.hat;
   if(S.headwear&&H==='class'){delete o.helmet;delete o.cap;delete o.boonie;Object.assign(o,S.headwear)}   // v0.9.3: the outfit's own hat (a hard hat, a straw hat…)
