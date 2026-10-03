@@ -44,9 +44,15 @@ const fails = [];
     ok(gaps4.every(x => x > .17 && x < .28), 'level-4 pause ~0.20 s (the floor)');
     console.log('burst table', await p.evaluate(() => [0, 1, 2, 3, 4].map(d => { const q = { up: { d } }; return __pal.burstN(q) + '@' + __pal.burstGap(q).toFixed(2) }).join(' ')));
     // ---- speed: soldier baseline
-    const walk = async () => { await p.evaluate(() => { const pl = __pal.player; pl.x = 3.5; pl.y = 8.5; window.__x0 = pl.x; window.__t0 = performance.now() });
-      await p.keyboard.down('d'); await p.waitForTimeout(700); await p.keyboard.up('d');
-      return p.evaluate(() => { const pl = __pal.player; return Math.hypot(pl.x - 3.5, pl.y - 8.5) / ((performance.now() - window.__t0) / 1000) }) };
+    // timed in game time, frame by frame, from the first frame the player moves to the last. The old wall-clock window also
+    // counted key-event round trips and slow frames (each step is capped at 50 ms), so ratios swung by up to 30% (October 2026)
+    const walk = async (pg = p, before) => {
+      await pg.evaluate(() => { const pl = __pal.player; pl.x = 3.5; pl.y = 8.5; window.__ws = []; const f = () => { window.__ws.push([__pal.game.time, pl.x, pl.y]); window.__wr = requestAnimationFrame(f) }; window.__wr = requestAnimationFrame(f) });
+      if (before) await before();
+      await pg.keyboard.down('d'); await pg.waitForTimeout(700); await pg.keyboard.up('d'); await pg.waitForTimeout(60);
+      return pg.evaluate(() => { cancelAnimationFrame(window.__wr); const s = window.__ws; let a = -1, b = -1;
+        for (let i = 1; i < s.length; i++) if (s[i][1] !== s[i - 1][1] || s[i][2] !== s[i - 1][2]) { if (a < 0) a = i - 1; b = i }
+        return a < 0 ? 0 : Math.hypot(s[b][1] - s[a][1], s[b][2] - s[a][2]) / (s[b][0] - s[a][0]) }) };
     const sp = await walk(); console.log('soldier speed', sp.toFixed(2), 'tiles/s');
     await p.close();
     // ---- 2. Sniper hold-to-fire + speed
@@ -55,27 +61,19 @@ const fails = [];
     const st = await s.evaluate(() => window.__sh), gp = st.slice(1).map((x, i) => +(x - st[i]).toFixed(2));
     console.log('sniper holding 3 s:', st.length, 'shots, gaps', gp.join(','));
     ok(st.length >= 4 && gp.every(x => x > .65 && x < .8), 'sniper fires every ~0.7 s while held');
-    const walkS = async () => { await s.evaluate(() => { const pl = __pal.player; pl.x = 3.5; pl.y = 8.5; window.__t0 = performance.now() });
-      await s.keyboard.down('d'); await s.waitForTimeout(700); await s.keyboard.up('d');
-      return s.evaluate(() => { const pl = __pal.player; return Math.hypot(pl.x - 3.5, pl.y - 8.5) / ((performance.now() - window.__t0) / 1000) }) };
-    const ss = await walkS(); console.log('sniper speed', ss.toFixed(2), '=', (ss / sp).toFixed(2) + 'x soldier');
+    const ss = await walk(s); console.log('sniper speed', ss.toFixed(2), '=', (ss / sp).toFixed(2) + 'x soldier');
     ok(ss / sp > 1.03 && ss / sp < 1.17, 'sniper ~1.1x soldier');
     await s.close();
     // ---- 3. Grenadier speed, quartermaster sprint
     const gr = await open('grenadier'); await quiet(gr);
-    await gr.evaluate(() => { const pl = __pal.player; pl.x = 3.5; pl.y = 8.5; window.__t0 = performance.now() });
-    await gr.keyboard.down('d'); await gr.waitForTimeout(700); await gr.keyboard.up('d');
-    const gs = await gr.evaluate(() => { const pl = __pal.player; return Math.hypot(pl.x - 3.5, pl.y - 8.5) / ((performance.now() - window.__t0) / 1000) });
+    const gs = await walk(gr);
     console.log('grenadier speed', gs.toFixed(2), '=', (gs / sp).toFixed(2) + 'x soldier'); ok(gs / sp > .83 && gs / sp < .97, 'grenadier ~0.9x');
     ok(await gr.evaluate(() => document.getElementById('sprBtn').hidden), 'no sprint button for the grenadier');
     await gr.keyboard.press('Shift'); ok(await gr.evaluate(() => !(__pal.player.sprT > 0)), 'Shift does nothing for the grenadier');
     await gr.close();
     const q = await open('quartermaster'); await quiet(q); await recShots(q);
     ok(await q.evaluate(() => !document.getElementById('sprBtn').hidden), 'sprint button shows for the quartermaster');
-    await q.evaluate(() => { const pl = __pal.player; pl.x = 3.5; pl.y = 8.5 });
-    await q.keyboard.press('Shift'); await q.evaluate(() => { window.__t0 = performance.now() });
-    await q.mouse.move(1250, 300); await q.mouse.down(); await q.keyboard.down('d'); await q.waitForTimeout(700); await q.keyboard.up('d');
-    const qs = await q.evaluate(() => { const pl = __pal.player; return Math.hypot(pl.x - 3.5, pl.y - 8.5) / ((performance.now() - window.__t0) / 1000) });
+    const qs = await walk(q, async () => { await q.keyboard.press('Shift'); await q.mouse.move(1250, 300); await q.mouse.down() });
     const firedSprinting = (await q.evaluate(() => window.__sh)).length;
     console.log('quartermaster sprinting', qs.toFixed(2), '=', (qs / sp).toFixed(2) + 'x soldier; shots while sprinting', firedSprinting,
       '| button', await q.evaluate(() => document.getElementById('sprN').textContent));

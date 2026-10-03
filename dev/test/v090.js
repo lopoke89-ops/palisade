@@ -80,11 +80,12 @@ const PORT = process.env.PORT || 8080;
   });
   assert.deepEqual(out.quarry, { night: 2, pit: true, wallGone: true, solid: true, build: "That's a pit now", grenadeLeavesIt: true });
   // 4. the Ferryman: on the water, harpoon drags you toward him, boarding crews come ashore, at half health a bridge goes
+  // (he's kept at full health for the first 30 s: since v0.9.6.1 Delgado shoots back, and an early ram spoiled the before/after count)
   out.ferry = await E(() => {
     const P = __pal; run('river'); clearField(); P.game.phase = 'raid'; P.game.queue = []; P.spawnBoss('ferryman');
     const f = P.enemies.find(e => e.boss === 'ferryman'), onWater = () => { const t = P.terr[idx(Math.floor(f.x), Math.floor(f.y))]; return t === 1 || t === 2 };
     const pl = P.player; let water = true, pulled = 0, maxCrews = 0;
-    for (let t = 0; t < 30 * 30; t++) { imm(); pl.x = Math.min(P.N - .5, f.x - 4); pl.y = f.y; const x0 = pl.x; P.update(1 / 30); if (Math.abs(pl.x - x0) > .6) pulled++; if (!onWater()) water = false; maxCrews = Math.max(maxCrews, f.crews | 0) }
+    for (let t = 0; t < 30 * 30; t++) { imm(); f.hp = f.max; pl.x = Math.min(P.N - .5, f.x - 4); pl.y = f.y; const x0 = pl.x; P.update(1 / 30); if (Math.abs(pl.x - x0) > .6) pulled++; if (!onWater()) water = false; maxCrews = Math.max(maxCrews, f.crews | 0) }
     const bridges0 = P.terr.filter(t => t === 2).length; f.hp = f.max * .45; step(30 * 12);
     return { water, pulled, crews: maxCrews, bridgesBefore: bridges0, bridgesAfter: P.terr.filter(t => t === 2).length, rammed: !!f.rammed };
   });
@@ -130,7 +131,7 @@ const PORT = process.env.PORT || 8080;
   assert.deepEqual(out.raiders, { shieldFront: true, shieldBack: true, medicHeals: true, marked: true, woodBurns: true, groundFire: true });
   // 7. per-map boss order and the October Butcher (name, look, two Halloween Cases)
   out.bosses = await E(() => { const P = __pal, o = {}; for (const m of Object.keys(P.MAPS)) { run(m, 'std', 'endless'); o[m] = [5, 10, 15, 20].map(w => P.bossOf(w)); P.toMenu() } return o });
-  assert.deepEqual(out.bosses, { yard: ['butcher', 'demolisher', 'storm', 'butcher'], river: ['ferryman', 'butcher', 'storm', 'ferryman'], quarry: ['foreman', 'demolisher', 'storm', 'foreman'] });
+  assert.deepEqual(out.bosses, { yard: ['butcher', 'demolisher', 'storm', 'butcher'], river: ['ferryman', 'butcher', 'storm', 'ferryman'], quarry: ['foreman', 'demolisher', 'storm', 'foreman'], frost: ['rime', 'storm', 'rime', 'rime'] });   // frost: v0.9.6.0 Frostpeak
   out.oct = await E(() => {
     const P = __pal; P.locker.bag = {}; run('yard', 'std', '5'); P.game.oct = true;   // the host's October flag
     P.game.phase = 'raid'; P.spawnBoss('butcher'); const e = P.enemies.find(x => x.boss === 'butcher'); const name = P.bossInfo('butcher').name;

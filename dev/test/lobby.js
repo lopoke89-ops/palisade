@@ -29,7 +29,7 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
   await p.click('[data-setup=map]:visible'); await p.click('.mapCard[data-map=river]'); await p.click('#sizeSeg [data-size=xl]'); await p.click('#setupDone');
   out.play = await p.evaluate(() => ({ map: __pal.pick.map, size: __pal.pick.size, cards: document.querySelectorAll('.mapCard').length, sel: document.querySelector('.mapCard.sel').dataset.map,
     title: document.getElementById('partyMode').textContent, mapRow: document.querySelector('#homeRows [data-setup=map] b').textContent }));
-  assert.equal(out.play.map, 'river'); assert.equal(out.play.size, 'xl'); assert.equal(out.play.cards, 3); assert.match(out.play.title, /RIVERBEND XL/); assert.match(out.play.mapRow, /RIVERBEND/i, 'the MAP line shows the pick');
+  assert.equal(out.play.map, 'river'); assert.equal(out.play.size, 'xl'); assert.equal(out.play.cards, 4);   // v0.9.6.0: Frostpeak is the fourth co-op map assert.match(out.play.title, /RIVERBEND XL/); assert.match(out.play.mapRow, /RIVERBEND/i, 'the MAP line shows the pick');
   await p.click('[data-nav=classes]'); out.classesSel = await p.evaluate(() => document.querySelector('#classes .sel').dataset.c); assert.equal(out.classesSel, 'grenadier');
   await p.click('#classes [data-c=sniper]'); assert.equal(await p.evaluate(() => document.getElementById('partyTitle').textContent), 'SNIPER');
   await p.click('#pg-classes [data-go=solo]');
@@ -62,7 +62,7 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
   await p.click('[data-nav=multi]');
   for (const pv of ['coop', 'base', 'ffa']) { await p.click(`[data-pv=${pv}]`); await p.waitForTimeout(120); await p.click('#hostRows [data-setup=map]');
     const o = await p.evaluate(() => ({ sheet: !document.getElementById('setupSheet').hidden, panel: getComputedStyle(document.getElementById('mapPanel')).display, cards: document.querySelectorAll('#mapCards .mapCard').length, size: !document.getElementById('sizeBox').hidden, note: !document.getElementById('pvpSizeNote').hidden, tag: document.getElementById('mapSizeTag').textContent, rules: !document.querySelector('.ssTabs [data-sst=rules]').hidden }));
-    assert.ok(o.sheet, 'setup sheet on multi/' + pv); assert.notEqual(o.panel, 'none', 'map panel on multi/' + pv); assert.equal(o.cards, 3);
+    assert.ok(o.sheet, 'setup sheet on multi/' + pv); assert.notEqual(o.panel, 'none', 'map panel on multi/' + pv); assert.equal(o.cards, pv === 'coop' ? 4 : 3, 'Frostpeak is co-op only');
     assert.equal(o.size, pv === 'coop', 'size choice only in co-op'); assert.equal(o.note, pv !== 'coop'); assert.equal(o.rules, pv === 'coop', 'no length tab in PvP'); if (pv !== 'coop') assert.equal(o.tag, '16×16');
     if (pv === 'ffa') { await p.click('.mapCard[data-map=river]'); assert.equal(await p.evaluate(() => __pal.pick.map), 'river', 'PvP picks a map too') }
     await p.click('#setupDone'); assert.equal(await p.evaluate(() => document.getElementById('setupSheet').hidden), true) }

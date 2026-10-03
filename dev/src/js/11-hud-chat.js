@@ -59,6 +59,7 @@ function clearChat(){chatLines.length=0;$('chatLog').textContent='';$('lChatLog'
 function setTip(t){const show=!!t&&cfg.tips!==false;$('tip').hidden=!show;$('tipText').textContent=show?t:''}
 const txt=(el,v)=>{if(el._v!==v){el._v=v;el.textContent=v}};
 const cls=(el,c,on)=>{if(el.classList.contains(c)!==on)el.classList.toggle(c,on)};
+const hid=(el,on)=>{on=!!on;if(el.hidden!==on)el.hidden=on};   // re-setting hidden counts as a page change and restyles every frame
 const SLOTCOL=['#8fb58a','#a9bccb','#d0b077','#c29ac4','#86c0b8','#d08f78'];
 // the desktop key bar says what the keys do right now
 function keyBar(){
@@ -94,14 +95,14 @@ function mateRows(){
 function hud(dt){
   if(toastT>0){toastT-=dt;if(toastT<=0)$('toast').classList.remove('on')}
   const p=player;if(!p)return;
-  const rj=game.pvp==='ffa'&&!game.job&&!p.alive&&game.phase!=='over';if($('respawnJobs').hidden===rj){$('respawnJobs').hidden=!rj;if(rj)syncJobPick()}
+  const rj=game.pvp==='ffa'&&!game.job&&!p.alive&&game.phase!=='over';if($('respawnJobs').hidden===rj){hid($('respawnJobs'),!rj);if(rj)syncJobPick()}
   $('hpF').style.transform=`scaleX(${Math.max(0,p.hp/p.max)})`;txt($('hpN'),p.alive?String(Math.ceil(p.hp)):'DOWN');cls($('hpM'),'alarm',!p.alive);
   mateRows();
   hud.t=(hud.t||0)-dt;if(hud.t<=0){hud.t=.5;const b=$('top').getBoundingClientRect().bottom;if(b>0){hud.topB=b;const v=Math.round(b+10)+'px';if($('tip').style.top!==v)$('tip').style.top=v}
     const tp=$('tip');hud.tipB=tp.hidden||!$('tipText').textContent?0:tp.getBoundingClientRect().bottom}
   if($('tipText').textContent&&(game.pvp==='ffa'&&game.time>9||game.pvp==='base'&&game.phase==='raid'))setTip('');
   const PV=game.pvp,clock=t=>{const s=Math.max(0,Math.ceil(t));return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`};
-  $('qmM').hidden=!!PV||!!qm.gone;$('coreM').hidden=PV==='ffa';$('core2M').hidden=PV!=='base';$('board').hidden=PV!=='ffa';$('salv').hidden=PV==='ffa';
+  hid($('qmM'),!!PV||!!qm.gone);hid($('coreM'),PV==='ffa');hid($('core2M'),PV!=='base');hid($('board'),PV!=='ffa');hid($('salv'),PV==='ffa');
   syncQMControls();
   if(!PV){$('qmF').style.transform=`scaleX(${Math.max(0,qm.hp/qm.max)})`;txt($('qmN'),qm.alive?String(Math.ceil(qm.hp)):'DOWN');cls($('qmM'),'alarm',!qm.alive)}
   if(PV!=='ffa'){txt($('coreL'),PV?'STAKE':'CORE');$('coreF').style.transform=`scaleX(${Math.max(0,core.hp/core.max)})`;txt($('coreN'),String(Math.max(0,Math.ceil(core.hp))));
@@ -110,14 +111,14 @@ function hud(dt){
   const lab=$('phaseLab'),host=NET.mode!=='guest';
   if(PV==='base'){
     let mine=0,theirs=0;for(const o of players.values())if(o.team===p.team)mine+=o.kills;else theirs+=o.kills;
-    if(game.phase==='build'){txt(lab,'TRUCE');cls(lab,'raid',false);txt($('phaseVal'),`${clock(game.timer)} until the battle`);$('skipBtn').hidden=!host;txt($('skipLab'),'START BATTLE')}
+    if(game.phase==='build'){txt(lab,'TRUCE');cls(lab,'raid',false);txt($('phaseVal'),`${clock(game.timer)} until the battle`);hid($('skipBtn'),!host);txt($('skipLab'),'START BATTLE')}
     else{txt(lab,'BATTLE');cls(lab,'raid',true);txt($('phaseVal'),`${TEAMS[p.team].name} ${mine} · ${TEAMS[p.team==='a'?'b':'a'].name} ${theirs} drops`);$('skipBtn').hidden=true}
   }else if(PV==='ffa'){
-    txt(lab,W<700?'FFA':'FREE-FOR-ALL');cls(lab,'raid',true);txt($('phaseVal'),`${clock(game.timer)} left · first to ${game.goal}`);$('skipBtn').hidden=true;
+    txt(lab,W<700?'FFA':'FREE-FOR-ALL');cls(lab,'raid',true);txt($('phaseVal'),`${clock(game.timer)} left · first to ${game.goal}`);hid($('skipBtn'),true);
     const rows=[...players.values()].sort((a,b)=>b.kills-a.kills||a.deaths-b.deaths).slice(0,6),bd=$('board'),sig=rows.map(o=>o.id+o.kills).join();
     if(bd._sig!==sig){bd._sig=sig;bd.textContent='';for(const o of rows){const li=document.createElement('li');if(o===p)li.className='me';const n=document.createElement('span');n.textContent=o===p?'YOU':o.name.toUpperCase();const b=document.createElement('b');b.textContent=o.kills;li.append(n,b);bd.append(li)}}
   }
-  else if(game.phase==='build'){txt(lab,campaign()?`CH ${game.chapter+1} · BUILD`:'BUILD');cls(lab,'raid',false);txt($('phaseVal'),campaign()?`${clock(game.timer)} · ${MAP.short} · ${game.wave===12?'final evacuation':`raid ${game.wave%3+1}/3`}`:`${clock(game.timer)} until raid ${game.wave+1}`);$('skipBtn').hidden=!host;txt($('skipLab'),'START RAID')}
+  else if(game.phase==='build'){txt(lab,campaign()?`CH ${game.chapter+1} · BUILD`:'BUILD');cls(lab,'raid',false);txt($('phaseVal'),campaign()?`${clock(game.timer)} · ${MAP.short} · ${game.wave===12?'final evacuation':`raid ${game.wave%3+1}/3`}`:`${clock(game.timer)} until raid ${game.wave+1}`);hid($('skipBtn'),!host);txt($('skipLab'),'START RAID')}
   else if(game.fb&&!game.fb.done){const F=game.fb,ev=!!F.evac;txt(lab,ev?'EVACUATE':W<700?'BLITZ':'FINAL BLITZ');cls(lab,'raid',true);cls(lab,'evac',ev);   // v0.9.4.0
     txt($('phaseVal'),ev?(p.out?`${clock(F.t)} · you're out`:`${clock(F.t)} · get to the green ring`):`${clock(F.t)} · boss ${Math.min(F.n,F.max)}/${F.max}`);$('skipBtn').hidden=true}
   else{txt(lab,campaign()?`CH ${game.chapter+1} · RAID ${(game.wave-1)%3+1}/3`:isFinite(game.waves)?`RAID ${game.wave}/${game.waves}`:`RAID ${game.wave}`);cls(lab,'evac',false);cls(lab,'raid',true);txt($('phaseVal'),`${campaign()?MAP.short+' · ':''}${enemies.length+(NET.mode==='guest'?game.qn:game.queue.length)} raiders left`);$('skipBtn').hidden=true}
@@ -126,12 +127,12 @@ function hud(dt){
     txt($('n'+m),locked?(m===1?'R2':'R4'):String(p.mats[m]));cls(c,'sel',game.sel===m);cls(c,'locked',locked);
   }
   cls($('pWall'),'sel',game.piece==='wall');cls($('pDoor'),'sel',game.piece==='door');
-  cls($('kit'),'nobuild',!cfg.build||PV==='ffa');$('bmBtn').hidden=PV==='ffa';txt($('bmLab'),cfg.build?'BUILD ON':'BUILD OFF');cls($('bmBtn'),'off',!cfg.build);
+  cls($('kit'),'nobuild',!cfg.build||PV==='ffa');hid($('bmBtn'),PV==='ffa');txt($('bmLab'),cfg.build?'BUILD ON':'BUILD OFF');cls($('bmBtn'),'off',!cfg.build);
   if(cfg.build&&PV!=='ffa'){const t=buildTarget(p,game.sel,game.piece==='door'),b=$('buildBtn');
     txt($('buildAct'),t.ok?t.act:(t.act==='SOLID'?'SOLID':'BUILD'));
     txt($('buildSub'),t.ok?`${MAT[t.mat].name} · ${t.cost}`:t.reason);cls(b,'no',!t.ok)}
   txt($('salN'),String(p.sal|0));
-  const ab=$('armBtn'),shopPhase=shopOpen(p);ab.hidden=!shopPhase;
+  const ab=$('armBtn'),shopPhase=shopOpen(p);hid(ab,!shopPhase);
   if(shopPhase){const near=nearStake(p),afford=UPG.some(U=>p.up[U.k]<ARM_MAX&&p.sal>=U.cost[p.up[U.k]])||!game.pvp&&((game.dellLv|0)<ARM_MAX&&p.sal>=DELL_UP.cost[game.dellLv|0]||ammoMode()&&p.sal>=(p.ammoEq.some(Boolean)?75:150));
     txt($('armLab'),'ARMORY');cls(ab,'far',!near);cls(ab,'pulse',near&&afford)}
   keyBar();
@@ -140,6 +141,6 @@ function hud(dt){
   const abb=$('abBtn'),hasAb=hasAbility(p);if(abb.hidden===hasAb)abb.hidden=!hasAb;
   if(hasAb){const a=p.ab|0,snipe=p.cls==='sniper';txt($('abLab'),snipe?'STEALTH':'ROCKET');
     txt($('abN'),snipe?(a>0?Math.ceil(a/10)+'s':a<0?(-a)+'s':'READY'):String(Math.max(0,a)));cls(abb,'on',snipe&&a>0);cls(abb,'empty',snipe?a<0:a<=0)}
-  const sb=$('sprBtn');sb.hidden=!p.C.sprint;if(p.C.sprint){const on=p.sprT>0,cd=p.sprCd||0;txt($('sprN'),on?'GO':cd>0?Math.ceil(cd)+'s':'READY');cls(sb,'on',on);cls(sb,'empty',!on&&cd>0)}
+  const sb=$('sprBtn');hid(sb,!p.C.sprint);if(p.C.sprint){const on=p.sprT>0,cd=p.sprCd||0;txt($('sprN'),on?'GO':cd>0?Math.ceil(cd)+'s':'READY');cls(sb,'on',on);cls(sb,'empty',!on&&cd>0)}
 }
 
