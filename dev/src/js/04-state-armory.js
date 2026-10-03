@@ -55,7 +55,7 @@ const AMMO=[
   {id:'blast',name:'EXPLOSIVE',what:'Small enemy-only blast on impact',skill:'ammo_blast',col:'#ffc05a'},
   {id:'shock',name:'LIGHTNING',what:'Slows the target and nearby enemies',skill:'ammo_shock',col:'#81dafa'}];
 const AMMO_BY=Object.fromEntries(AMMO.map(x=>[x.id,x]));
-const ammoMode=()=>!game.pvp&&['5','10','endless','blitz','campaign'].includes(game.mode);
+const ammoMode=()=>!game.pvp&&['5','10','endless','blitz','campaign','blackout'].includes(game.mode);
 const ammoRank=(p,id)=>{const A=AMMO_BY[id];return A?Math.min(4,parseSkills(p.sk)[A.skill]|0):0};
 const ammoEffect=(id,rank)=>id==='ap'?`${[50,60,70,85,100][rank]}% direct damage through frontal shields`:id==='fire'?`10 HP/s for ${3+.5*rank}s; hits refresh`:id==='blast'?`${8+2*rank} damage, 1.25-block blast; 0.4s proc limit`:`${25+5*rank}% slow for 2s; nearest 3 within 3 blocks`;
 const armBoost=(lv,oldStep,newStep)=>oldStep*Math.min(4,lv)+newStep*Math.max(0,lv-4);

@@ -4,16 +4,17 @@
 // they talk directly. Each guest opens 'r' (reliable: hello, build, grenade, and every
 // one-off event: sounds, particles, bullets, toasts, wall changes), 'u' (fast: movement in),
 // and 'st' (never resent: game state out, 15 times a second).
-const PROTO='yard-25',ROOM_PREFIX='palisade-yard-25-';   // v0.9.6.5: boss health +25%, weaknesses and new boss moves (states 20-30)
+const PROTO='yard-26',ROOM_PREFIX='palisade-yard-26-';   // v0.9.7: City Black Out (POI summary, near-only raiders on the city, the Supreme Destroyer's states 40-47, gas and mines)
 const ROOM_SESSION=(()=>{let id='';try{id=sessionStorage.getItem('palisade.roomSession')||''}catch(e){}
   if(!/^[0-9a-f]{24}$/.test(id)){id=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');try{sessionStorage.setItem('palisade.roomSession',id)}catch(e){}}
   return id})();
 const NET={mode:'solo',inGame:false,peer:null,code:'',roster:[],conns:new Map(),host:null,fxq:[],snapT:0,snapN:0,lastN:0,inT:0,nextG:1,lastHeard:0,roomLocked:false,banned:new Set(),leftBy:new Map(),
   sendTo(id,msg){for(const c of this.conns.values())if(c.pid===id&&c.r&&c.r.open){try{c.r.send(msg)}catch(e){}}},
   sendAll(msg,ch='r'){for(const c of this.conns.values()){const x=c[ch]&&c[ch].open?c[ch]:c.r;if(c.pid&&x&&x.open)try{x.send(msg)}catch(e){}}},
-  sendState(msg){let js=null;for(const c of this.conns.values()){if(!c.pid)continue;
-    if(c.st&&c.st.readyState==='open'){try{c.st.send(js||(js=JSON.stringify(msg)));continue}catch(e){}}
-    const x=c.u&&c.u.open?c.u:c.r;if(x&&x.open)try{x.send(msg)}catch(e){}}},
+  sendState(msg){let js=null;const near=!!msg.near&&Array.isArray(msg.en);for(const c of this.conns.values()){if(!c.pid)continue;
+    const m=near?{...msg,en:boNearRows(msg.en,players.get(c.pid))}:msg;   // v0.9.7 city: each guest gets the raiders near them
+    if(c.st&&c.st.readyState==='open'){try{c.st.send(near?JSON.stringify(m):js||(js=JSON.stringify(msg)));continue}catch(e){}}
+    const x=c.u&&c.u.open?c.u:c.r;if(x&&x.open)try{x.send(m)}catch(e){}}},
   toHost(msg,ch='r'){const x=this.host&&(this.host[ch]&&this.host[ch].open?this.host[ch]:this.host.r);if(x&&x.open)try{x.send(msg)}catch(e){}}
 };
 const onlineOK=()=>typeof Peer!=='undefined';
@@ -344,6 +345,7 @@ function makeSnap(withWalls){
     nd:flat(nodes,n=>[n.amt|0,n.locked?1:0]),fo:floodOn?1:0};
   if(game.bossLog&&game.bossLog.length)s.bl=game.bossLog;
   if(campaign())s.cm=game.chapter;
+  if(game.bo)s.bo=boSnap();if(isCity())s.near=1;   // v0.9.7 City Black Out
   if(frostFields.length)s.ice=frostFields.map(f=>[r2(f.x),r2(f.y),r2(f.t),r2(f.z)]);
   if(game.fb){const F=game.fb,E=F.evac;s.fb=[r2(F.t),F.n,F.max,E?r2(E.x):0,E?r2(E.y):0,E?r2(E.r):0,F.done?1:0,F.mapEvac?1:F.gauntlet?2:0,F.ch|0,F.wave|0]}   // [7] kind (v0.9.6.4): 1 map evac, 2 gauntlet   // v0.9.4.0: the Final Blitz clock and the evac site
   if(game.fbLog&&game.fbLog.length)s.fl=game.fbLog;
@@ -434,6 +436,7 @@ function applySnap(s){
   arcs=[];for(let o=0;o<(s.ar||[]).length;o+=4)arcs.push({x:s.ar[o],y:s.ar[o+1],vx:s.ar[o+2],vy:s.ar[o+3]});
   if(Array.isArray(s.fb)){const f=s.fb;game.fb={t:f[0],n:f[1],max:f[2],evac:f[5]?{x:f[3],y:f[4],r:f[5]}:null,done:!!f[6],mapEvac:f[7]===1,gauntlet:f[7]===2,ch:f[8]|0,wave:f[9]|0}}else game.fb=null;
   if(Array.isArray(s.fl))game.fbLog=s.fl.slice(0,20);
+  if(s.bo)boApply(s.bo);   // v0.9.7: the POIs and the run's clock
   if(Array.isArray(s.gk))game.gKill=s.gk.slice(0,6);
   if(s.bu){bullets.length=0;for(const e of s.bu)addGuestBullet(e)}
   lobs=[];for(let o=0;o<s.lo.length;o+=8)lobs.push({x0:s.lo[o],y0:s.lo[o+1],x1:s.lo[o+2],y1:s.lo[o+3],t:s.lo[o+4],T:s.lo[o+5],R:s.lo[o+6],k:s.lo[o+7]});

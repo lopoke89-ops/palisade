@@ -266,7 +266,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)acctResume
 // Hosts who tick "List my game" publish their room code to Supabase every 15 s while the room is open; the
 // Multiplayer page lists rooms heard from in the last 45 s that run this same version. Joining is the usual
 // room-code join, so the game itself still goes phone to phone.
-const MODE_NAME={coop:'CO-OP',base:'BASE BATTLE',ffa:'FREE-FOR-ALL'},LEN_NAME={'5':'5 RAIDS','10':'10 RAIDS',endless:'ENDLESS',blitz:'BLITZKRIEG RUSH',campaign:'OPERATION WHITEOUT'};
+const MODE_NAME={coop:'CO-OP',base:'BASE BATTLE',ffa:'FREE-FOR-ALL'},LEN_NAME={'5':'5 RAIDS','10':'10 RAIDS',endless:'ENDLESS',blitz:'BLITZKRIEG RUSH',campaign:'OPERATION WHITEOUT',blackout:'CITY BLACK OUT'};
 let lobTimer=0,lobBusy=false,pubTimer=0;
 const listing=()=>cloudOn&&cfg.listGame!==false;
 async function lobbyPublish(){

@@ -39,12 +39,12 @@ function partyInvite(){
 function renderPartyState(){
  if(!$('partyShell')||$('partyShell').hidden)return;
  {const pg=$('menu').dataset.page,m=pg==='solo'?myMods(coopMods()):pg==='lobby'?roomMods():[],el=$('partyMods'),t=m.length?'MODIFIERS · '+modNames(m).join(' · '):'';el.hidden=!t;if(el.textContent!==t)el.textContent=t}
- const room=inRoom(),rows=partyRows(),me=rows.find(r=>r.id===myId)||rows[0],pg=$('menu').dataset.page,C=CLASSES[pick.cls]||CLASSES.soldier,M=MAPS[pick.map]||MAPS.yard;
+ const room=inRoom(),rows=partyRows(),me=rows.find(r=>r.id===myId)||rows[0],pg=$('menu').dataset.page,C=CLASSES[pick.cls]||CLASSES.soldier,M=pick.mode==='blackout'?MAPS.city:MAPS[pick.map]||MAPS.yard;
  if(pg==='locker'){const eq=locker.eq,nm=(c,k)=>(COSBY[c+':'+k]||{name:k}).name;
   $('partyMode').textContent='LOCKER';$('partyTitle').textContent='YOUR KIT';$('partySubtitle').textContent=`${nm('skin',eq.skin)} · ${nm('hat',eq.hat)} · ${nm("trail",eq.trail)}${/tracer/i.test(nm("trail",eq.trail))?"":" tracer"} · ${nm('fx',eq.fx)}`;
   $('partyPlayerName').textContent=myName();$('partyPlayerState').textContent='EQUIPPED';$('partyHint').textContent='Tap an item you own to wear it.';return}
  if(pg==='solo'||pg==='classes'){
-  $('partyMode').textContent=pg==='solo'?`SOLO · ${M.name}${pick.size==='xl'?' XL':''}`:'CLASSES';$('partyTitle').textContent=pg==='solo'?'HOLD THE STAKE.':C.name;
+  $('partyMode').textContent=pg==='solo'?`SOLO · ${M.name}${pick.size==='xl'&&!M.city?' XL':''}`:'CLASSES';$('partyTitle').textContent=pg==='solo'?(M.city?'HOLD THE CITY.':'HOLD THE STAKE.'):C.name;
   $('partySubtitle').textContent=pg==='solo'?`${LEN_NAME[pick.mode]||'5 RAIDS'} · ${DIFF[pick.diff].name} · ${C.name}`:'Your class carries into solo and multiplayer.';
   $('partyPlayerName').textContent=myName();$('partyPlayerState').textContent=pg==='solo'?'READY':'CHOOSING A CLASS';
   $('partyHint').textContent=pg==='solo'?M.blurb:'';return}
@@ -328,7 +328,7 @@ function renderMapPanel(){
   const cv=document.createElement('canvas');cv.width=172;cv.height=116;cv.getContext('2d').drawImage(mapThumb(id,size,pv),0,0);
   const t=document.createElement('div'),nm=document.createElement('b'),bl=document.createElement('span'),bs=document.createElement('i');
   nm.textContent=M.name;bl.textContent=pv?((M.pvpBlurb||{})[pv]||M.blurb):M.blurb;bs.textContent=pv?(pv==='base'?'BASE BATTLE LAYOUT':'FREE-FOR-ALL ARENA'):'BOSSES · '+M.bosses.map(k=>(BOSSES[k]||{}).name||k).join(' · ').replace(/THE /g,'');
-  t.append(nm,bl,bs);b.append(cv,t);b.setAttribute('aria-pressed',pick.map===id?'true':'false');b.disabled=pick.mode==='campaign'&&!pv||guest&&pick.map!==id;b.addEventListener('click',()=>pickMap(id));box.append(b)}}
+  t.append(nm,bl,bs);b.append(cv,t);b.setAttribute('aria-pressed',pick.map===id?'true':'false');b.disabled=(pick.mode==='campaign'||pick.mode==='blackout')&&!pv||guest&&pick.map!==id;b.addEventListener('click',()=>pickMap(id));box.append(b)}}
  $('mapSizeTag').textContent=size==='xl'?'24×24':'16×16';$('sizeBox').hidden=!!pv;$('pvpSizeNote').hidden=!pv;$('mapHostNote').hidden=!guest;
  document.querySelectorAll('#sizeSeg button').forEach(b=>b.disabled=guest);
  if(typeof renderHome==='function')renderHome();   // v0.9.5: the PLAY lines show the map

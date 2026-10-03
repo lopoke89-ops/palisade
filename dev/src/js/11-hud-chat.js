@@ -105,7 +105,7 @@ function hud(dt){
   hid($('qmM'),!!PV||!!qm.gone);hid($('coreM'),PV==='ffa');hid($('core2M'),PV!=='base');hid($('board'),PV!=='ffa');hid($('salv'),PV==='ffa');
   syncQMControls();
   if(!PV){$('qmF').style.transform=`scaleX(${Math.max(0,qm.hp/qm.max)})`;txt($('qmN'),qm.alive?String(Math.ceil(qm.hp)):'DOWN');cls($('qmM'),'alarm',!qm.alive)}
-  if(PV!=='ffa'){txt($('coreL'),PV?'STAKE':'CORE');$('coreF').style.transform=`scaleX(${Math.max(0,core.hp/core.max)})`;txt($('coreN'),String(Math.max(0,Math.ceil(core.hp))));
+  if(PV!=='ffa'){txt($('coreL'),PV?'STAKE':isCity()?'COMMAND':'CORE');$('coreF').style.transform=`scaleX(${Math.max(0,core.hp/core.max)})`;txt($('coreN'),String(Math.max(0,Math.ceil(core.hp))));
     cls($('coreM'),'alarm',core.flash>0||core.hp/core.max<.3);$('coreF').style.background=PV?(TEAMS[p.team]||TEAMS.a).col:''}
   if(PV==='base'&&cores[p.team==='a'?1:0]){const ec=cores[p.team==='a'?1:0];$('core2F').style.transform=`scaleX(${Math.max(0,ec.hp/ec.max)})`;$('core2F').style.background=(TEAMS[ec.team]||TEAMS.b).col;txt($('core2N'),String(Math.max(0,Math.ceil(ec.hp))))}
   const lab=$('phaseLab'),host=NET.mode!=='guest';
@@ -118,6 +118,7 @@ function hud(dt){
     const rows=[...players.values()].sort((a,b)=>b.kills-a.kills||a.deaths-b.deaths).slice(0,6),bd=$('board'),sig=rows.map(o=>o.id+o.kills).join();
     if(bd._sig!==sig){bd._sig=sig;bd.textContent='';for(const o of rows){const li=document.createElement('li');if(o===p)li.className='me';const n=document.createElement('span');n.textContent=o===p?'YOU':o.name.toUpperCase();const b=document.createElement('b');b.textContent=o.kills;li.append(n,b);bd.append(li)}}
   }
+  else if(blackout())boHudPhase(lab,host);   // v0.9.7
   else if(game.phase==='build'){txt(lab,campaign()?`CH ${game.chapter+1} · BUILD`:'BUILD');cls(lab,'raid',false);txt($('phaseVal'),campaign()?`${clock(game.timer)} · ${MAP.short} · ${game.wave===12?'final evacuation':`raid ${game.wave%3+1}/3`}`:`${clock(game.timer)} until raid ${game.wave+1}`);hid($('skipBtn'),!host);txt($('skipLab'),'START RAID')}
   else if(game.fb&&!game.fb.done){const F=game.fb,ev=!!F.evac;txt(lab,F.mapEvac?`CH ${F.ch+1} · EVAC`:ev?'EVACUATE':F.gauntlet?(W<700?`WAVE ${F.wave}/6`:`GAUNTLET · WAVE ${F.wave}/6`):W<700?'BLITZ':'FINAL BLITZ');cls(lab,'raid',true);cls(lab,'evac',ev);   // v0.9.4.0
     txt($('phaseVal'),ev?(p.out?`${clock(F.t)} · you're out`:`${clock(F.t)} · get to the green ring`):F.gauntlet?`${clock(Math.max(0,F.t-GAUNTLET.evac))} to the evac · ${liveBosses()} up`:`${clock(F.t)} · boss ${Math.min(F.n,F.max)}/${F.max}`);$('skipBtn').hidden=true}

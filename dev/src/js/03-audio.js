@@ -19,6 +19,10 @@ function musicRoute(){
   if(!demo&&!$('over').hidden)return {k:'results',token:'results:'+game.gid};
   if(!$('menu').hidden)return {k:'menu',token:'menu'};
   if(!demo&&playing()){
+    if(game.mode==='blackout'&&!game.pvp&&game.bo&&game.phase==='raid'){const st=game.bo.stage;   // v0.9.7: raid tracks for POI attacks, the finale for the final push
+      if(st==='push'||st==='done')return {k:'finale',token:'finale:'+game.gid};
+      if(st==='attack')return {k:['attitude','cool','express'][Math.max(0,game.wave-1)%3],token:'raid:'+game.gid+':'+game.wave};
+      return {k:'between',token:'quiet:'+game.gid+':'+game.wave}}
     if((game.mode==='blitz'||game.fb&&game.fb.gauntlet)&&!game.pvp&&game.fb)return {k:'finale',token:'finale:'+game.gid};   // v0.9.6.4: the Whiteout Gauntlet gets the finale track too
     if(game.phase==='raid')return {k:['attitude','cool','express'][Math.max(0,game.wave-1)%3],token:'raid:'+game.gid+':'+game.wave};
     return {k:'between',token:'build:'+game.gid+':'+game.wave};

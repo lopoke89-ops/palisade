@@ -47,7 +47,11 @@ function renderIndex(tab){
       for(const [k,where,atk,phase]of list){const B=BOSSES[k];if(!B)continue;const wk=AMMO_BY[BOSS_WEAK[k]];
         const lines=[['idxStat',`${Math.round(B.hp*BOSS_HP)} base health · ${where||idxWhere(k)}`],['idxAtk',`${atk.length} ATTACK${atk.length>1?'S':''}`],['',atk]];
         if(phase)lines.push(['idxPhase',phase]);if(wk)lines.push(['idxWeak','WEAK TO '+wk.name+' (+35% bullet damage)',wk.col]);
-        box.append(idxCard(B.name,B.col,B.look,lines))}}}
+        box.append(idxCard(B.name,B.col,B.look,lines))}
+      if(grp==='CITY BLACK OUT'){   // v0.9.7: the eight points and what each one gives while it holds
+        const d=document.createElement('article');d.className='idxPois';const t=document.createElement('div'),h=document.createElement('h3');h.textContent='THE EIGHT POINTS';t.append(h);
+        const p=document.createElement('p');p.className='idxWhat';p.textContent='Each point gives a perk while it holds. A lost major point adds a squad to every final-push wave; a lost minor point gives final-push bosses +5% health.';t.append(p);
+        const ul=document.createElement('ul');for(const [,name,major,,what]of CITY_POIS){const li=document.createElement('li');li.textContent=`${name}${major?' (major)':''}: ${what}`;ul.append(li)}t.append(ul);d.append(t);box.append(d)}}}
 }
 function idxTab(tab){
   for(const b of document.querySelectorAll('.idxTabs [data-idx]')){const on=b.dataset.idx===tab;b.classList.toggle('sel',on);b.setAttribute('aria-selected',on?'true':'false')}

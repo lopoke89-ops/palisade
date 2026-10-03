@@ -426,7 +426,7 @@ function render(dt){
   g.globalCompositeOperation='source-over';
   drawStorm(dt);drawVignette(demo);PM('floats');
   for(const f of floats){const c=iso(f.x,f.y),a=f.life/f.max;g.globalAlpha=Math.min(1,a*2);label(f.t,c[0],c[1]-WH*1.5-(1-a)*24*u,f.col,11);g.globalAlpha=1}
-  PM('ui');if(playing()&&!overlayOpen())drawPrompts(p);if(game.fb&&!demo)drawEvacHud();
+  PM('ui');if(playing()&&!overlayOpen())drawPrompts(p);if(game.fb&&!demo)drawEvacHud();if(!demo&&MAP&&MAP.city)drawBlackoutHud();
   if(playing()&&p.alive&&!overlayOpen()){drawCrosshair(p);drawShells(p)}
   const top=110;
   for(const e of game.pvp&&!demo?foes():enemies){const c=iso(e.x,e.y);if(c[0]>14&&c[0]<W-14&&c[1]>top&&c[1]<H-14)continue;
