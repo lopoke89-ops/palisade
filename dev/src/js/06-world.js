@@ -8,7 +8,7 @@ function nodeAt(i,j){
   return NODE_IX.get(idx(i,j))||null;
 }
 // water costs about what walking round costs (wading is half speed), so raiders take a bridge when one is near
-function enterCost(k){if(k===coreK)return 0;if(coreKs.has(k))return 1e6;const t=terr[k];if(terrSolid(t))return 1e6;const w=walls[k];if(w)return 1+w.hp/8;const n=nodeAt(k%N,(k/N)|0);if(n&&n.solid)return 1e6;return(debris[k]?1.4:1)+(t===T_WATER?2.4:t===T_LOW&&floodOn?1.1:0)}
+function enterCost(k){if(k===coreK)return 0;if(coreKs.has(k))return 1e6;const t=terr[k];if(terrSolid(t))return 1e6;const w=walls[k];if(w)return 1+w.hp/8;const n=nodeAt(k%N,(k/N)|0);if(n&&n.solid)return 1e6;return(debris[k]?1.4:t===T_ROAD?.75:t===T_RUBBLE?1.25:1)+(t===T_WATER?2.4:t===T_LOW&&floodOn?1.1:0)}
 // v0.9.7: Dijkstra with a binary heap (same distances as the old full scan, which was O(tiles²): fine at 16×16,
 // 16.7 million steps a rebuild at 64×64). flowTo fills any distance field toward any target tile (the city's POIs).
 function flowTo(target,out){

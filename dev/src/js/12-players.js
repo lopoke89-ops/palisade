@@ -6,10 +6,11 @@ function update(dt){
   if(demo&&game.phase==='build'&&game.timer>8)game.timer=8;
   game.time+=dt;for(const c of cores)c.flash=Math.max(0,c.flash-dt);updateFlood(dt);if(!game.pvp&&game.phase==='raid')stormTick(dt);
   if(game.pvp){updatePvp(dt);if(game.phase==='over')return}
-  else if(game.phase==='build'){game.timer-=dt;if(game.timer<=0)startRaid()}
+  else if(game.phase==='build'){game.timer-=dt;if(blackout())boGather();if(game.timer<=0)startRaid()}
   else{
     if(game.queue.length){game.spawnT-=dt;if(game.spawnT<=0){spawnEnemy(game.queue.shift());game.spawnT=game.spawnGap||1.1}}
-    if(game.fb){fbTick(dt);if(game.phase==='over')return}   // v0.9.4.0: the Final Blitz runs on its clock, not on an empty field
+    if(game.bo){boTick(dt);if(game.phase==='over')return}   // v0.9.7 City Black Out runs on its own clock
+    else if(game.fb){fbTick(dt);if(game.phase==='over')return}   // v0.9.4.0: the Final Blitz runs on its clock, not on an empty field
     else if(!game.queue.length&&!enemies.length&&!charges.length&&!rockets.length){qm.completedRaids=Math.max(qm.completedRaids||0,game.wave);if(game.wave>=game.waves){endGame(true);return}if(!campaignAdvance())startBuild(24+game.Df.build)}
   }
   if(flowDirty){flowT-=dt;if(flowT<=0){computeFlow();flowDirty=false}}
@@ -53,7 +54,7 @@ function simPlayer(p,dt){
   if(!game.pvp)simAbility(p,dt);else if(p.ab)p.ab=0;frenzyTick(p,dt);
   if(!p.alive){p.bLeft=0;
     if(!p.downed)return;   // the menu's hidden demo soldier
-    if(game.pvp!=='ffa')for(const o of players.values())if(o!==p&&o.alive&&dist2(o,p)<1&&(!game.pvp||o.team===p.team)){p.revive+=dt*(o.perk||PERK0).revive*(p.perk||PERK0).revive;break}   // Back On Your Feet: either side
+    if(game.pvp!=='ffa')for(const o of players.values())if(o!==p&&o.alive&&dist2(o,p)<1&&(!game.pvp||o.team===p.team)){p.revive+=dt*(o.perk||PERK0).revive*(p.perk||PERK0).revive*boReviveMul(p);break}   // Back On Your Feet: either side
     if(p.revive>=2.2){revivePlayer(p);return}
     p.rt-=dt;
     if(p.rt<=0){

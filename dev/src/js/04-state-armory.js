@@ -85,7 +85,7 @@ const BURST_N=[3,5,7,9,9],burstN=p=>BURST_N[Math.min(4,p.up.d|0)],burstGap=p=>Ma
 const upStr=p=>UPG.map(x=>p.up[x.k]).join('');
 const nearStake=p=>{const c=stakeOf(p);return!!c&&Math.hypot(p.x-(c.i+.5),p.y-(c.j+.5))<2.7};
 const lockdown=()=>hasMod('lockdown')&&game.mode==='blitz'&&game.wave>=BLITZ.waves-1;   // v0.9.4.0: the armory is shut before the Final Blitz
-const shopOpen=p=>!!p&&p.alive&&!lockdown()&&(game.pvp==='base'?game.phase!=='over':!game.pvp&&game.phase==='build');
+const shopOpen=p=>!!p&&p.alive&&!lockdown()&&(game.pvp==='base'?game.phase!=='over':!game.pvp&&(game.phase==='build'||!!game.bo&&game.bo.stage==='gap'));   // v0.9.7: Black Out's quiet windows too
 const canShop=p=>shopOpen(p)&&nearStake(p);
 function buyUpgrade(p,k){
   if(k==='core')return repairCore(p);
@@ -117,7 +117,7 @@ function award(own,e){
   if(demo)return;
   if(own==='dell'){for(const p of players.values())p.sal+=1;return}
   const p=players.get(own);if(!p)return;
-  const v=BOUNTY[e.type]||4;p.sal+=v;p.kills++;flt(e.x,e.y-.2,'+'+v,'#e2b436');killFx(e.x,e.y,p.cos.fx);
+  const v=Math.round((BOUNTY[e.type]||4)*boSalvage(e));p.sal+=v;p.kills++;flt(e.x,e.y-.2,'+'+v,'#e2b436');killFx(e.x,e.y,p.cos.fx);
 }
 const myName=()=>(acct.state==='full'&&acct.name?acct.name.slice(0,12):(cfg.name||'').trim())||'Big U';
 // opt (v0.9.2): {gid: the shared game id, mods: modifier ids, job: One Job's class, guest: true on a guest's phone}
@@ -164,7 +164,7 @@ function newGame(roster,pvp='',opt={}){
   Object.assign(qm,{mode:'follow',completedRaids:0,layout:null,layoutAnchor:'',layoutSize:4,status:'Following host',bcd:0,C:{build:1,repair:1},face:{x:1,y:0},tp:0});
   enemies=[];bullets=[];lobs=[];charges=[];parts=[];flashes=[];floats=[];sacks=[];rockets=[];fires=[];zaps=[];slashes=[];rings=[];chains=[];arcs=[];arcHaz.length=0;
   const mode=['5','10','endless','blitz','campaign','blackout'].includes(pick.mode)?pick.mode:'5';
-  game={phase:pvp==='ffa'?'raid':'build',paused:false,wave:0,timer:pvp==='base'?PVP.truce:pvp==='ffa'?PVP.ffaTime:40+Df.build,queue:[],qn:0,spawnT:0,sel:game.sel||0,piece:'wall',time:0,tip:0,gathered:0,C:player.C,Df,
+  game={phase:pvp==='ffa'?'raid':'build',paused:false,wave:0,timer:pvp==='base'?PVP.truce:pvp==='ffa'?PVP.ffaTime:mode==='blackout'?BO.gather:40+Df.build,queue:[],qn:0,spawnT:0,sel:game.sel||0,piece:'wall',time:0,tip:0,gathered:0,C:player.C,Df,
     mode,waves:mode==='endless'?Infinity:mode==='blackout'?8:mode==='blitz'?BLITZ.waves:mode==='campaign'?CAMPAIGN.waves:+mode,rewarded:false,bosses:0,pvp,goal:PVP.ffaGoal,winner:'',chapter:0,
     stats:{dropped:0,built:0,lost:0,repairs:0,revives:0},
     map:map==='city'||MAP_IDS.includes(map)?map:'yard',size:N>16?'xl':'std',lay:L,flood:{t:0,warned:false},bossLog:[],oct:!!pick.oct,

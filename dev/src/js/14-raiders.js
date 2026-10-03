@@ -22,7 +22,7 @@ function lookAhead(e){
 const seen=a=>a.alive&&!(a.stl>0);
 function updateEnemies(dt){
   const Df=game.Df,NM=hasMod('nightmare'),BZ=hasMod('berserk'),EL=hasMod('elite');for(const a of allies())if(a.markT>0)a.markT-=dt;
-  for(const e of enemies){
+  for(const e of enemies){const aimed=cityAim(e);try{   // v0.9.7: a POI attacker treats his POI as the core
     if(e.dead)continue;const boss=e.type==='boss',hurry=NM&&!boss?1.18:1;
     if(e.burnT>0){const tick=Math.min(dt,e.burnT);e.burnT=Math.max(0,e.burnT-dt);hurtEnemy(e,10*tick,e.burnOwn,true);if(e.dead)continue}
     if(e.slowT>0){e.slowT=Math.max(0,e.slowT-dt);if(!e.slowT)e.slowPct=0}
@@ -93,7 +93,7 @@ function updateEnemies(dt){
         moveTo=bk>=0?{x:bk%N+.5,y:((bk/N)|0)+.5}:null}
     }
     if(!engaging&&moveTo){const dx=moveTo.x-e.x,dy=moveTo.y-e.y,l=Math.hypot(dx,dy);if(l>.02){const s=Math.min(l,e.speed*dt*Math.max(.5,slowAt(e.x,e.y)*(1-(e.slowT>0?e.slowPct||0:0)))*(NM&&!boss?1.12:1));moveEnt(e,dx/l*s,dy/l*s,false);e.walk+=dt*9;if(!tgt&&!e.foe)e.aim={x:dx/l,y:dy/l}}}
-  }
+  }finally{if(aimed)cityAimEnd()}}
   for(let a=0;a<enemies.length;a++)for(let b=a+1;b<enemies.length;b++){const A=enemies[a],B=enemies[b];if(A.raft||B.raft||A.burrow||B.burrow)continue;const dx=B.x-A.x,dy=B.y-A.y,d=Math.hypot(dx,dy);if(d<.5&&d>.001){const push=(.5-d)*.5;moveEnt(A,-dx/d*push,-dy/d*push,false);moveEnt(B,dx/d*push,dy/d*push,false)}}
   dropDead(enemies);
 }

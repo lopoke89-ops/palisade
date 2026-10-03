@@ -30,6 +30,7 @@ function startBuild(dur){
 }
 function startRaid(){
   if(game.pvp){startBattle();return}
+  if(blackout()){game.phase='raid';setTip('');closeArmory();if(!game.bo)boStart();for(const c of cores)c.next=false;boNext();return}   // v0.9.7
   game.wave++;game.phase='raid';setTip('');closeArmory();
   if(blitz()&&game.wave>=finalWave()){game.bossShare=1;stormRaid();sfx('siren');game.flood={t:0,warned:false};if(campaign())startGauntlet();else startFinalBlitz();return}
   const k=Math.floor(waveEff()),Df=game.Df,P=Math.max(1,players.size),q=[];

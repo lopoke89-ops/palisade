@@ -45,8 +45,8 @@ function layCity(){
     if(terr[idx(i,j)]===T_GROUND&&!cityPlaza(i,j,G,L.pois))node({i,j,type:0,amt:48,max:48,rt:0,locked:false})}
   // Main Command's supply: a kiln and a scrap pile just off the plaza; the Brick Works and the Hardware Store add more
   node({i:G.C-2,j:G.C+2,type:1,locked:false,unlock:0,solid:true});node({i:G.C+2,j:G.C-2,type:2,locked:false,unlock:0,solid:true});
-  for(const p of L.pois){if(p.perk==='brick'){node({i:p.i-1,j:p.j+1,type:1,locked:false,unlock:0,solid:true});node({i:p.i+1,j:p.j+1,type:1,locked:false,unlock:0,solid:true})}
-    if(p.perk==='wood'){node({i:p.i-1,j:p.j+1,type:2,locked:false,unlock:0,solid:true});node({i:p.i+1,j:p.j-1,type:0,amt:48,max:48,rt:0,locked:false})}}
+  for(const p of L.pois){if(p.perk==='brick'){node({i:p.i-1,j:p.j+1,type:1,locked:false,unlock:0,solid:true,poi:p.id});node({i:p.i+1,j:p.j+1,type:1,locked:false,unlock:0,solid:true,poi:p.id})}
+    if(p.perk==='wood'){node({i:p.i-1,j:p.j+1,type:2,locked:false,unlock:0,solid:true,poi:p.id});node({i:p.i+1,j:p.j-1,type:0,amt:48,max:48,rt:0,locked:false,poi:p.id})}}
   // sandbag walls: a broken ring round Main Command's plaza, and a few round each major POI
   const used=new Set([...nodeK,idx(G.C,G.C),...L.pois.map(p=>idx(p.i,p.j))]);   // never on a pile, a stake or another sandbag
   const ring=(ci,cj,r)=>{const out=[];for(let a=-r;a<=r;a++)for(const [i,j]of[[ci+a,cj-r],[ci+a,cj+r],[ci-r,cj+a],[ci+r,cj+a]]){const k=idx(i,j);
