@@ -143,6 +143,7 @@ function newGame(roster,pvp='',opt={}){
     cores=[{team:'',i:L.core[0],j:L.core[1],hp:Df.core,max:Df.core,flash:0}];
     nodes=L.nodes;
     for(const[list,mat,ratio,ch]of L.ruins)ruin(list,mat,ratio,ch);   // old ruins: they pay salvage when knocked down
+    if(pick.mode==='campaign')for(const n of nodes)if(n.locked&&n.unlock>3)n.unlock=3;   // v0.9.6.4: the Yard's metal opens after raid 2 in the campaign
   }
   coreKs=new Set(cores.map(c=>idx(c.i,c.j)));
   players=new Map();

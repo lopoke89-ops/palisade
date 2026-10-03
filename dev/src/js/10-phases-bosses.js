@@ -21,6 +21,8 @@ function startBuild(dur){
   if(!qm.alive&&!qm.gone){qm.alive=true;[qm.x,qm.y]=spawnNearCore();flt(qm.x,qm.y,'DELGADO IS BACK','#a9bccb')}qm.hp=qm.max;
   game.wx=0;refillAbilities();
   let note=qm.gone?'Grenades refilled.':'Grenades refilled. Delgado will head out for materials.';
+  // v0.9.6.4 campaign: the Yard's metal opens after raid 2 (it was due at raid 4, after the map had already changed)
+  if(campaign()&&!game.chapter)for(const n of nodes)if(n.locked&&n.unlock>3)n.unlock=3;
   for(const n of nodes)if(n.locked&&n.unlock===game.wave+1){n.locked=false;note=n.type===1?'A brick kiln is lit. Brick soaks rifle fire.':'Scrap metal is open. It shrugs off bullets.'}
   if(game.wave===2)note+=' Breachers join the next raid. Shoot them before they reach a wall.';
   if(todStage(game.wave+1)===2&&todStage(game.wave)!==2)note+=isFinite(game.waves)&&game.wave+1>=game.waves?' The last raid comes at night.':' The next raid comes at night.';

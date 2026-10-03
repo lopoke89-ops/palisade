@@ -11,6 +11,7 @@ function changeChapter(ch,guest=false){
   const hp=core.hp,max=core.max,L=layMap(CAMPAIGN.maps[ch],game.size,'');
   walls=new Array(N*N).fill(null);debris=new Int8Array(N*N);dist=new Float32Array(N*N);nodes=L.nodes;
   for(const[list,mat,ratio,char]of L.ruins)for(const[i,j]of list){const w=makeWall(mat,false,ratio);w.char=char;walls[idx(i,j)]=w}
+  if(ch>=1)for(const n of nodes)n.locked=false;   // v0.9.6.4: what chapter 1 opened stays open; every later map starts with all resources
   core={team:'',i:L.core[0],j:L.core[1],hp,max,flash:0};cores=[core];coreK=idx(core.i,core.j);coreKs=new Set([coreK]);
   game.map=CAMPAIGN.maps[ch];game.chapter=ch;game.lay=L;game.flood={t:0,warned:false};game.lockC=null;
   enemies=[];bullets=[];lobs=[];charges=[];rockets=[];fires=[];arcs=[];arcHaz.length=0;parts=[];flashes=[];floats=[];sacks=[];frostFields=[];
@@ -19,7 +20,7 @@ function changeChapter(ch,guest=false){
   }
   [qm.x,qm.y]=spawnNearCore();qm.z=heightAt(qm.x,qm.y);qm.tx=qm.x;qm.ty=qm.y;qm.next=-1;qm.pathT=0;qm.job='';qm.foe=null;qm.layoutAnchor='';qm.commandJob=null;qm.planT=0;
   caches=null;TERR_SPR.clear();computeFlow();flowDirty=false;NET.wlSent=null;NET.piSent=null;
-  if(!guest)toastAll(`CHAPTER ${ch+1} · ${MAP.name}`,CAMPAIGN.story[ch]+' Your upgrades and supplies travel with you. Summit/core damage carries forward.');
+  if(!guest)toastAll(`CHAPTER ${ch+1} · ${MAP.name}`,CAMPAIGN.story[ch]+' Your upgrades and supplies travel with you, and every resource is open on this map. Core damage carries forward.');
 }
 function campaignAdvance(){
   if(!campaign())return false;
