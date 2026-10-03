@@ -1,6 +1,6 @@
 # v0.9.6.5 work order: the Index, boss weaknesses, and +25% boss health
 
-Status: **plan only, awaiting Big U's decisions (D1-D6 at the end).** Nothing is built yet.
+Status: **plan; Big U answered D1-D6 on October 3 (see the end). Three small points are still open (O1-O3).** Nothing is built yet.
 
 A small update with three parts:
 
@@ -33,7 +33,7 @@ This audit counts each distinct, telegraphed move from the boss AI code (`10-pha
 
 - **Most attacks:** 4, the Frostbound Butcher and the Icebound Ferryman.
 - **Fewest attacks:** 1, the Stormcaller, Arsonist, Tempest and Bulldozer.
-- **Not in scope:** adding moves to the 1-attack bosses. That would be its own update, because each new attack needs a telegraph, network sync and tests. See D6.
+- **In scope (Big U, D6):** the four 1-attack bosses each get two new attacks that fit what they are. See section 6.
 
 ## 2. The INDEX page (replaces the CLASSES page)
 
@@ -69,9 +69,9 @@ This audit counts each distinct, telegraphed move from the boss AI code (`10-pha
 | Weak to | Bosses |
 |---|---|
 | Armor Piercing | Demolisher, Bulldozer |
-| Incendiary | Ferryman, Harbinger, Rime Colossus, Frostbound Butcher, Icebound Ferryman, Permafrost Foreman |
+| Incendiary | Harbinger, Rime Colossus, Frostbound Butcher, Icebound Ferryman, Permafrost Foreman |
 | Explosive | Stormcaller, Foreman, Tempest |
-| Lightning | Butcher, Blue Butcher, Arsonist |
+| Lightning | Butcher, Blue Butcher, Arsonist, **Ferryman** (Big U: he's in the water) |
 
 Six of the 14 bosses would be weak to Incendiary, which is lopsided. That's because all four winter bosses are ice. An alternative: winter bosses keep their base boss's weakness, with only the Rime Colossus on Incendiary (D1).
 
@@ -82,6 +82,38 @@ Six of the 14 bosses would be weak to Incendiary, which is lopsided. That's beca
 - **Stacks with the current scaling:** map health (Yard 1.0, Riverbend 1.05, Quarry 1.1), XL (+10%, and each XL twin boss at 90%), crew scaling, and the gauntlet's 110%. A gauntlet boss ends up at 1.1 × 1.25 = 1.375× today's base.
 - **Damage:** boss damage is unchanged unless D3 says otherwise.
 - **Server:** no change needed. Reward caps are based on time played, not on boss health.
+
+## 6. New attacks for the four 1-attack bosses (Big U, D6)
+
+Each new attack follows the house rules:
+- a clear warning shape for about a second before it lands, in the boss's color;
+- host-side damage only;
+- guests see the warning and the effect through the existing ring, line and particle events (no new snapshot shapes);
+- a cooldown so the boss still mixes in his original attack.
+
+Health thresholds stay as they are; the new moves join the rotation from the start of the fight.
+
+**The Stormcaller** (lightning; keeps his distance):
+- **Thunderstrike:** three blue rings appear around his target for 1.1 s, then lightning drops from the sky into each one. Each strike deals 30 damage and stuns for 0.5 s. Walls aren't hit.
+- **Static Pulse:** when someone gets within 4 tiles, he crackles (a growing blue ring, 0.8 s), then blasts outward. The blast deals 22 damage and knocks everyone back 2 tiles. It punishes rushing him.
+
+**The Tempest** (a bigger storm):
+- **Cyclone:** a marked path, then a whirlwind travels down it for 4 s. It shoves players along with it and rips wood walls off their tiles. It deals light damage, 8 per second.
+- **Storm Cage:** a ring of lightning posts snaps up around one player. The ring shrinks for 2.5 s; anyone still inside when it closes takes 35 damage and is stunned for 0.8 s. Step out through the gap in the posts.
+
+**The Arsonist** (fire):
+- **Flamethrower:** close range. He shows an orange wedge for 0.7 s, then sweeps flame across it for 1.5 s. It deals 12 damage per tick, sets anyone hit burning, and lights wood walls.
+- **Ring of Fire:** four rings land in a circle around a target, and napalm fills the ring after 1.2 s, burning for 6 s. The middle stays safe, so you either get out or wait it out.
+
+**The Bulldozer** (machine; charges):
+- **Seismic Slam:** he stops and lifts his blade (a yellow ring around him, 0.9 s), then slams. The shockwave goes out to 3.5 tiles, dealing 28 damage, knocking players back and hitting nearby walls hard.
+- **Rubble Spray:** at mid range he digs in and shows a wide cone for 0.8 s, then sprays rubble across it. It deals 20 damage per piece (up to 2 pieces) and leaves 2-3 small rubble blocks that work as cover for you or a wall in your way. It reuses the Foreman's slab blocks.
+
+**Open:** the damage numbers above are a starting point, tuned to match the existing attacks (the Stormcaller's bolt deals 40, the Butcher's cut 28). They'll be checked in playtests.
+
+**Index:** these attacks appear on each boss's card, so all four go from 1 attack to 3.
+
+**Network:** guests draw everything from existing events (rings, zap lines, fire patches, slab blocks). The one new piece is the Cyclone's position, sent the same way the Blue Butcher's arcs are. That makes it a protocol bump to `yard-25`, which this update needs anyway.
 
 ## 5. Tests and release
 
@@ -97,6 +129,7 @@ Six of the 14 bosses would be weak to Incendiary, which is lopsided. That's beca
   - the health-bar tag shows;
   - guests see the same tag.
 - `boss_hp` check: every boss spawns with 1.25× health and the gauntlet multiplier still applies.
+- New `boss_attacks` test: each of the 8 new attacks shows its warning, deals its damage only inside the marked area, respects its cooldown, and replays on a guest. A long fight checks the boss still uses his original attack too.
 - Update the tests that assert boss health or the CLASSES page (`v090`, `blitz_bosses`, `campaign_gauntlet`, `presentation`, `taborder`, and others found by search).
 - Release: full suite, screenshots at three sizes, Big U's approval, then merge.
 - Release number: v0.9.6.5, protocol `yard-25`. No server migration.
@@ -111,3 +144,19 @@ Six of the 14 bosses would be weak to Incendiary, which is lopsided. That's beca
 | D4 | Gauntlet health | Stack the multipliers (1.1 × 1.25 = 1.375×). Or keep gauntlet bosses at today's 110% |
 | D5 | Bosses you haven't met in the Index | Show everything. Alternative: silhouette and "???" until first seen |
 | D6 | The four 1-attack bosses | Leave them for a later update. Alternative: give each a second attack now (makes this a bigger update) |
+
+### Big U's answers (October 3)
+
+- **D1:** the list is right, except **the Ferryman is weak to Lightning** (he's in the water).
+- **D3:** the +25% is total boss health.
+- **D4:** stack it with the gauntlet's 110%.
+- **D5:** show every boss in the Index.
+- **D6:** give each 1-attack boss about **two more attacks** that fit the boss (section 6).
+
+### Still open
+
+| # | Question | Proposal |
+|---|---|---|
+| O1 | Weakness bonus size (D2 wasn't answered) | +50% bullet damage |
+| O2 | The Harbinger also fights from a boat, and the Icebound Ferryman is the Ferryman on ice. Lightning for them too? | Harbinger: Lightning (water). Icebound Ferryman: Incendiary (ice), like the other winter bosses |
+| O3 | The eight new attacks in section 6 | As written |
