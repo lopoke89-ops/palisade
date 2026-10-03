@@ -6,7 +6,7 @@ You are working on PALISADE (repo `lopoke89-ops/palisade`). It is a phone-first 
 - Supabase accounts and rewards;
 - a PWA on GitHub Pages.
 
-The live release is **v0.9.6.3**, protocol `yard-23`. Ship this as **v0.9.7.0**, protocol **`yard-24`**.
+The live release is **v0.9.6.3**, protocol `yard-23`. Ship this as **v0.9.6.4**, protocol **`yard-24`**.
 
 Big U asked for three changes to the Operation Whiteout campaign:
 1. Resources stay unlocked when you move to the next map.
@@ -224,9 +224,9 @@ The server caps finale bosses at 10 per run (by time) and pays 2 Winter Cases pe
 - Friend invites (`room_register` accepts any `yard-N` since v0.9.6.3), Open Games listing, and the `chapter` shown in invites.
 - Campaign modifiers: the existing exclusion list stays. Check Firestorm and Weather on the gauntlet for frame cost.
 
-## 6. Release v0.9.7.0
-- Protocol `yard-24` and footer `v0.9.7.0`.
-- `dev/STATUS.md` section, plus evidence in `dev/evidence/v0.9.7.0/`:
+## 6. Release v0.9.6.4
+- Protocol `yard-24` and footer `v0.9.6.4`.
+- `dev/STATUS.md` section, plus evidence in `dev/evidence/v0.9.6.4/`:
   - screenshots at desktop, phone portrait and phone landscape of a map evac, a gauntlet wave with 8 bosses, the combined boss bar, and the result card;
   - the before/after frame and packet numbers.
 - Full suite green.
