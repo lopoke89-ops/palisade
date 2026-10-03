@@ -1,6 +1,6 @@
 # v0.9.7.1 work order: BETA FEEDBACK PASS
 
-Status: **plan; written October 3 from Big U's beta notes.** Big U decided F8, F9, F10 and F11 on October 3; the rest are still open (end of the doc). Nothing is built yet.
+Status: **plan; written October 3 from Big U's beta notes.** **All decisions made by Big U on October 3** (F5, F8, F9, F10 and F11 changed from the proposals; the rest as proposed). Nothing is built yet.
 
 Six fixes, all reported by players in the first day of City Black Out:
 
@@ -61,7 +61,7 @@ All of it is client-side. **No server migration.** Protocol goes to **`yard-27`*
 - After the last attack ends, the clock shows **"FINAL PUSH IN 1:30 · READY UP"**, and a **READY** button appears in the phase box. Keyboard: Enter; controller: the Start button.
 - **Solo:** pressing READY starts the push now. Otherwise it starts when the 90 s run out.
 - **Co-op:** the push starts when **everyone alive has readied up**, or when the 90 s run out. The phase box shows **"READY 2/4"**, and each player's row in the crew list gets a check mark.
-- The host can still force the start with **START NOW** (as with the gathering's button today).
+- **Nobody can force it** (Big U, F5): not the host, and there's no START NOW. The push starts when everyone has readied up, or when the full 90 s run out.
 - During this stage the armory is open everywhere a held POI is (see §1), and POIs repair at double speed.
 - The +60 push bonus from §1 is paid when this stage begins, so it can be spent in it.
 - **Network:** the guest sends `{t:'ready'}`; the host keeps a ready set and sends the count in the Black Out summary (`bo` snapshot field, two new trailing numbers). Old fields keep their order.
@@ -168,19 +168,19 @@ All of it is client-side. **No server migration.** Protocol goes to **`yard-27`*
   6. Then: full suite, screenshots at three sizes (the new messages, the ready stage, the lobby, the zoom slider at both ends), Big U's OK, merge.
 - **Evidence:** `dev/evidence/v0.9.7.1/`, with the salvage totals of a scripted full Black Out run before and after.
 
-## Decisions for Big U
+## Decisions (all made by Big U, October 3)
 
 | # | Question | Proposal |
 |---|---|---|
-| F1 | Salvage per attack | 20 + 5 × attack number (25 → 60), half if the POI was lost |
-| F2 | Other salvage boosts | +40 at the start, +60 at the final push, kill bounties ×1.25 in Black Out |
-| F3 | Armory at held POIs during gaps | Yes (Main Command stays the only place to patch the core) |
-| F4 | Quiet gap length | 35 s (from 30 s) |
-| F5 | Before the final push | A READY UP stage: up to 90 s, starts early when everyone's ready, host can force it |
-| F6 | Message times | Phase messages 6 s, minor 3.5 s, queued, plus a "Message time" setting |
-| F7 | Phantom headwear | Any hat, drawn solid over the see-through ghost; the other blocked skins stay as they are |
+| F1 | Salvage per attack | **Decided (as proposed):** 20 + 5 × attack number (25 → 60), half if the POI was lost |
+| F2 | Other salvage boosts | **Decided (as proposed):** +40 at the start, +60 at the final push, kill bounties ×1.25 in Black Out |
+| F3 | Armory at held POIs during gaps | **Decided (as proposed):** yes (Main Command stays the only place to patch the core) |
+| F4 | Quiet gap length | **Decided (as proposed):** 35 s (from 30 s) |
+| F5 | Before the final push | **Decided: a READY UP stage. The push starts when everyone has readied up, or after the full 90 s. Nobody can force it, not even the host** |
+| F6 | Message times | **Decided (as proposed):** phase messages 6 s, minor 3.5 s, queued, plus a "Message time" setting |
+| F7 | Phantom headwear | **Decided (as proposed):** any hat, drawn solid over the see-through ghost; the other blocked skins stay as they are |
 | F8 | Lobby START when not everyone is ready | **Decided: everyone has to ready up.** START stays locked until all are ready; any settings change clears ready |
 | F9 | Zoom range | **Decided: desktop only, 70%–140%.** Phones keep the fixed view |
 | F10 | Pinch / mouse-wheel zoom in-game | **Decided by F9:** mouse wheel on desktop; no pinch |
 | F11 | Zoom in PvP | **Decided: allowed**, same range for everyone |
-| F12 | Apply the message changes to every mode | Yes (the same problem exists between raids everywhere) |
+| F12 | Apply the message changes to every mode | **Decided (as proposed):** yes |
