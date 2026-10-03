@@ -1,0 +1,80 @@
+{
+ "48": {
+  "N": 48,
+  "core": [
+   24,
+   24
+  ],
+  "centre": true,
+  "pois": 8,
+  "majors": 4,
+  "byRoad": [
+   true,
+   true,
+   true,
+   true,
+   true,
+   true,
+   true,
+   true
+  ],
+  "flow": [
+   true,
+   true,
+   true,
+   true,
+   true,
+   true,
+   true,
+   true,
+   true
+  ],
+  "speed": {
+   "road": 1.35,
+   "rubble": 0.8
+  },
+  "lamps": 30,
+  "holes0": 39,
+  "holesLost": 38,
+  "holesDark": 8
+ },
+ "64": {
+  "N": 64,
+  "core": [
+   32,
+   32
+  ],
+  "centre": true,
+  "pois": 8,
+  "majors": 4,
+  "byRoad": [
+   true,
+   true,
+   true,
+   true,
+   true,
+   true,
+   true,
+   true
+  ],
+  "flow": [
+   true,
+   true,
+   true,
+   true,
+   true,
+   true,
+   true,
+   true,
+   true
+  ],
+  "speed": {
+   "road": 1.35,
+   "rubble": 0.8
+  },
+  "lamps": 50,
+  "holes0": 59,
+  "holesLost": 58,
+  "holesDark": 8
+ }
+}

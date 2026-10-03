@@ -138,6 +138,8 @@ function flushClaims(){
       if(!r.status||r.status>=500||r.status===401){flushWhy='offline';break}
       if(/moment ago/.test(sbErr(r))){flushWhy='wait';clearTimeout(flushT);flushT=setTimeout(flushClaims,21000);break}
       if(/saved later/.test(sbErr(r))){flushWhy='later';clearTimeout(flushT);flushT=setTimeout(flushClaims,5*60e3);break}   // play-time budget: keep it, the server takes it once enough real time has passed
+      if(c.mode==='blackout'&&/Unknown mode/.test(sbErr(r))){   // v0.9.7: the server doesn't know City Black Out yet: keep it until it does
+        claims.push({...claims.shift(),boHeld:1});saveClaims();if(claims.every(q=>q.boHeld)){for(const q of claims)delete q.boHeld;flushWhy='later';clearTimeout(flushT);flushT=setTimeout(flushClaims,30*60e3);break}continue}
       claims.shift();saveClaims();       // refused for good: say so plainly instead of letting a reward quietly vanish
       claimShow(c,`The server didn't accept that result (${sbErr(r)}). Nothing was added.`,'NOT SAVED');
     }};

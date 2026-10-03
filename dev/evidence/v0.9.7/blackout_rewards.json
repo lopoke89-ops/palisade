@@ -1,0 +1,35 @@
+{
+ "claim": {
+  "cv": 5,
+  "mode": "blackout",
+  "to": 9,
+  "pois": 8,
+  "major": 4,
+  "dest": true,
+  "keys": 0
+ },
+ "title": "THE CITY HELD",
+ "eye": "SOLDIER · NORMAL · CITY BLACK OUT · 8 OF 8 POINTS HELD · THE DESTROYER IS DOWN",
+ "loot": "+8 supply cases · +1 hybrid theory case from bosses · +65 shards from the win and the Destroyer · +2 skill points · 8 points held · 1 more point to the next supply case · Unlocked Desert, Urban Grey, Blackout Helmet, Orbital Strike, Lit Skyline, First Light.",
+ "locker": {
+  "cases": 8,
+  "prog": 2,
+  "shards": 65,
+  "st": {
+   "p": 8,
+   "w": 1,
+   "d": 1,
+   "f": 1
+  }
+ },
+ "owns": [
+  false,
+  true,
+  false,
+  true,
+  true,
+  false
+ ],
+ "ladder": "CITY BLACK OUT8 points held · 1 win · 1 Destroyer · 3 / 6 unlocked",
+ "tiles": 6
+}

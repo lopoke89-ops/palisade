@@ -1,0 +1,102 @@
+{
+ "moves": {
+  "rockets": {
+   "states": [
+    40
+   ],
+   "dmg": 57,
+   "fires": []
+  },
+  "rocketsDodged": {
+   "states": [
+    40
+   ],
+   "dmg": 0,
+   "fires": []
+  },
+  "fire": {
+   "states": [
+    41,
+    42
+   ],
+   "dmg": 46,
+   "fires": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  "fireDodged": {
+   "states": [
+    41,
+    42
+   ],
+   "dmg": 0,
+   "fires": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  "bolt": {
+   "states": [
+    43
+   ],
+   "dmg": 54,
+   "fires": []
+  },
+  "gas": {
+   "states": [
+    44
+   ],
+   "dmg": 24,
+   "fires": [
+    2
+   ]
+  },
+  "gasFar": {
+   "states": [
+    44
+   ],
+   "dmg": 0,
+   "fires": [
+    2
+   ]
+  },
+  "orb": {
+   "states": [
+    46,
+    47
+   ],
+   "dmg": 60,
+   "fires": []
+  },
+  "orbDodged": 0
+ },
+ "draw": [
+  40,
+  41,
+  42,
+  43,
+  44,
+  45,
+  46,
+  47
+ ],
+ "hpRatio": 1.25,
+ "weak": "ap",
+ "big": 2.4,
+ "ecode": true,
+ "orbAbove": false,
+ "orbBelow": true,
+ "rage": true,
+ "mines": 10,
+ "unarmed": true,
+ "tripped": true,
+ "tripDmg": 49,
+ "shot": true,
+ "shotDmg": 0,
+ "drawFires": true
+}
