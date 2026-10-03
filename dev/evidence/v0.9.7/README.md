@@ -34,7 +34,7 @@ Measured in headless Chromium on the build container, which has **no GPU** (soft
 
 ## Server
 
-`dev/supabase/migrations/20261003200000_v097_city_blackout.sql`: **not applied yet; waiting for Big U's approval.**
+`dev/supabase/migrations/20261003200000_v097_city_blackout.sql`: **applied live October 3 with Big U's approval, and verified.**
 
 - **How it's built:** the local migration chain rebuilds `claim_match_reward` byte-for-byte as it is live (md5 `b1edbe70ad20e5ab66294d30ea5bcfe6`, 22,470 chars). The migration patches the live text in the database, and every anchor must match exactly once or it stops. It never contains the word `delete`.
 - **What it changes:**

@@ -47,7 +47,7 @@ From the [work order](plans/city-blackout-work-order.md). Big U said to build it
   - a win pays 2 Supply Cases and 25 shards;
   - the Destroyer pays +40 shards and +1 skill point.
 - **The BLACK OUT ladder** (a counter per step): Night Shift, Blackout Helmet, Streetlight, Orbital Strike, Lit Skyline, Gold Night Shift.
-- **Server:** migration `20261003200000_v097_city_blackout.sql` is written and tested in PGlite. **It is not applied yet: it waits for Big U's approval.** Until it's applied, account claims for Black Out runs stay queued on the device (retried every 30 minutes) instead of being dropped.
+- **Server:** migration `20261003200000_v097_city_blackout.sql`, tested in PGlite, **applied live October 3 with Big U's approval** and verified (claim logic, rooms, lobby length, 6 catalog-5 rows, 2 new columns). Black Out claims queued on a device before that pay on their next retry.
 - **Tests:** `blackout_map`, `blackout_run`, `blackout_destroyer`, `blackout_network`, `blackout_rewards`, `blackout_migration`, `blackout_perf`.
 
 ## v0.9.6.5: the Index, boss weaknesses, +25% boss health, new boss moves
