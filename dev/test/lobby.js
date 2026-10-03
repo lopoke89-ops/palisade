@@ -86,7 +86,7 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
     const o = await q.evaluate(() => ({ sw: document.querySelector('#menu .panel').scrollWidth, cw: document.querySelector('#menu .panel').clientWidth }));
     assert.ok(o.sw <= o.cw + 1, 'phone overflow on ' + nav + ' ' + JSON.stringify(o)) }
   await q.evaluate(() => __pal.showPage('solo')); await q.screenshot({ path: __dirname + '/out/lobby_phone.png' }); await q.close();
-  // 6. online: the host's map and size reach the guest in the lobby and in the run, with the same ground
+  // 6. online: the host's map and size reach the guest in the lobby and in the run, with the same ground; everyone readies up first (v0.9.7.1)
   const H = await open({ width: 1280, height: 800 }), G = await open({ width: 390, height: 844 }, true);
   await H.click('[data-nav=multi]'); await H.click('[data-setup=map]:visible'); await H.click('[data-mmap=quarry]'); await H.click('#sizeSeg [data-size=std]'); await H.click('#setupDone'); await H.click('#hostBtn');
   await H.waitForFunction(() => /^[A-Z0-9]{4}$/.test(document.getElementById('lCode').textContent), null, { timeout: 15000 });
@@ -97,6 +97,17 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
   assert.equal(await G.evaluate(() => { __pal.showPage('solo'); return document.getElementById('menu').dataset.page }), 'lobby', 'in a room, PLAY means the room');
   await G.click('#lJobs [data-lc=grenadier]'); await H.waitForFunction(() => __pal.NET.roster.some(r => r.id !== __pal.player.id && r.cls === 'grenadier'), null, { timeout: 5000 });
   out.roomJob = 'grenadier';
+  // v0.9.7.1 ready up: START stays locked until every guest is ready, and a settings change clears everyone
+  out.lockedStart = await H.evaluate(() => { document.getElementById('lStart').click(); return { inGame: __pal.NET.inGame, note: document.getElementById('lNote').textContent, locked: document.getElementById('lStart').classList.contains('locked') } });
+  assert.equal(out.lockedStart.inGame, false, 'START refuses while a guest is not ready'); assert.match(out.lockedStart.note, /ready up/i); assert.ok(out.lockedStart.locked);
+  assert.ok(await G.isVisible('#lReady'), 'guests get READY'); assert.ok(!(await H.isVisible('#lReady')), 'the host uses START');
+  await G.click('#lReady'); await H.waitForFunction(() => __pal.NET.roster.some(r => r.id !== 'host' && r.ready), null, { timeout: 5000 }); await H.waitForTimeout(200);
+  out.readyRow = await H.evaluate(() => ({ list: document.getElementById('lList').textContent, note: document.getElementById('lNote').textContent, locked: document.getElementById('lStart').classList.contains('locked') }));
+  assert.match(out.readyRow.list, /READY ✓/); assert.match(out.readyRow.note, /1 \/ 1 READY/); assert.ok(!out.readyRow.locked, 'START unlocks');
+  await H.evaluate(() => { __pal.pick.diff = __pal.pick.diff === 'hard' ? 'normal' : 'hard'; __pal.broadcastLobby() });
+  await H.waitForFunction(() => __pal.NET.roster.every(r => !r.ready), null, { timeout: 5000 }); out.clearedOnChange = true;
+  await G.waitForFunction(() => /NOT READY/.test(document.getElementById('lList').textContent), null, { timeout: 5000 });
+  await G.click('#lReady'); await H.waitForFunction(() => __pal.NET.roster.some(r => r.id !== 'host' && r.ready), null, { timeout: 5000 });
   await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await H.waitForTimeout(800);
   const sig = x => x.evaluate(() => ({ map: __pal.game.map, N: __pal.N, terr: [...__pal.terr].join(''), nodes: __pal.game.lay ? __pal.game.lay.nodes.length : 0 }));
   const hs = await sig(H), gs = await sig(G);

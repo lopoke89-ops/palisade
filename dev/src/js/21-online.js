@@ -216,7 +216,12 @@ function hostKick(pid){
     setTimeout(()=>hostDrop(peerId),250);return;
   }
 }
+// v0.9.7.1 ready up: every guest readies before the host can start. Changing the game's settings clears everyone.
+const lobbySig=()=>[pick.diff,pick.mode,pick.pvp,pick.map,pick.size,roomMods().join(','),pick.job||''].join('|');
+function lobbyReady(r,on){if(!r||r.id==='host')return;r.ready=!!on;broadcastLobby()}
+const lobbyGuests=()=>NET.roster.filter(r=>r.id!=='host'),lobbyAllReady=()=>lobbyGuests().every(r=>r.ready);
 function broadcastLobby(){
+  if(NET.mode==='host'&&!NET.inGame){const sig=lobbySig();if(NET.readySig!==undefined&&NET.readySig!==sig)for(const r of NET.roster)r.ready=false;NET.readySig=sig}
   const msg={t:'lobby',roster:NET.roster,code:NET.code,diff:pick.diff,mode:pick.mode,pvp:pick.pvp,map:pick.map,size:pick.size,playing:NET.inGame,mods:roomMods(),job:pick.job,locked:NET.roomLocked};
   NET.sendAll(msg);if(!NET.inGame)renderLobby();
   if(NET.mode==='host'&&pubTimer)lobbyPublish();
@@ -230,6 +235,8 @@ function lobbyBlock(){
 function startOnline(){
   if(NET.mode!=='host')return;
   const why=lobbyBlock();if(why){$('lNote').textContent=why;return}
+  if(!lobbyAllReady()){const n=lobbyGuests().filter(r=>!r.ready).length;$('lNote').textContent=`Everyone has to ready up first: ${n} player${n>1?'s':''} not ready yet.`;return}   // v0.9.7.1
+  for(const r of NET.roster)r.ready=false;   // next time back in the lobby, everyone readies again
   demo=false;pick.oct=isOctober();newGame(NET.roster.map(r=>({...r})),pick.pvp,{mods:roomMods(),job:pick.job});NET.inGame=true;NET.snapN=0;
   const now=performance.now();for(const c of NET.conns.values())c.heard=now;   // the lobby wait is not silence
   NET.sendAll(startMsg());NET.wlSent=null;NET.piSent=null;NET.psLast=null;modsToast();

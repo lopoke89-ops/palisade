@@ -39,7 +39,7 @@ const PORT = process.env.PORT || 8080, Q = 'peerhost=127.0.0.1&peerport=9000&pee
   for (const [x, n] of [[H, 'H'], [G, 'G']]) { x.on('pageerror', e => errors.push(n + ' ' + e.message)); await x.goto(`http://localhost:${PORT}/debug.html?${Q}`); await x.waitForFunction(() => window.__pal) }
   await H.click('[data-nav=multi]'); await H.click('#hostBtn'); await H.waitForFunction(() => /^[A-Z0-9]{4}$/.test(document.getElementById('lCode').textContent), null, { timeout: 15000 });
   const code = await H.textContent('#lCode'); await G.click('[data-nav=multi]'); await G.fill('#mCode', code); await G.click('#joinBtn');
-  await G.waitForSelector('#pg-lobby:not([hidden])', { timeout: 15000 }); await H.click('#lStart'); await G.waitForFunction(() => __pal.NET.inGame && document.getElementById('menu').hidden, null, { timeout: 10000 });
+  await G.waitForSelector('#pg-lobby:not([hidden])', { timeout: 15000 }); await H.evaluate(()=>__pal.lobbyReadyAll());await H.click('#lStart'); await G.waitForFunction(() => __pal.NET.inGame && document.getElementById('menu').hidden, null, { timeout: 10000 });
   await H.waitForTimeout(500); await H.evaluate(() => __pal.togglePause()); await H.click('#pSetBtn');
   const t0 = await H.evaluate(() => __pal.game.time); await H.waitForTimeout(1200); const t1 = await H.evaluate(() => __pal.game.time);
   out.online = { hostTimeAdvanced: +(t1 - t0).toFixed(2), note: await H.textContent('#igSetNote'), hostCanHost: await H.evaluate(() => !!document.getElementById('hostBtn').closest('[hidden]') === false && document.getElementById('hostBtn').getBoundingClientRect().width > 0) };

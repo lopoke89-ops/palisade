@@ -16,7 +16,7 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
   await G.click('[data-nav=multi]'); await G.fill('#mCode', code); await G.click('#joinBtn');
   await G.waitForFunction(() => !document.getElementById('pg-lobby').hidden, null, { timeout: 15000 });
   out.proto = await G.evaluate(() => __pal.PROTO);
-  await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await H.waitForTimeout(600);
+  await H.evaluate(()=>__pal.lobbyReadyAll());await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await H.waitForTimeout(600);
   await H.evaluate(() => { const P = __pal; window.holdIt = setInterval(() => { for (const q of P.players.values()) { q.max = 1e9; q.hp = Math.max(q.hp, 1e8) } P.core.max = 1e9; P.core.hp = 1e9; P.qm.hp = 1e9 }, 50) });
   out.mode = await G.evaluate(() => ({ mode: __pal.game.mode, map: __pal.game.map, N: __pal.N, cores: __pal.cores.length }));
   assert.equal(out.proto, 'yard-27'); assert.deepEqual(out.mode, { mode: 'blackout', map: 'city', N: 64, cores: 9 });

@@ -26,7 +26,7 @@ const claims = [];
   await G.goto(`http://localhost:${PORT}/debug.html?${Q}&cloud=1`); await G.waitForFunction(() => __pal.acct.state === 'full' && !!__pal.locker.cloud, null, { timeout: 15000 });
   await H.click('[data-nav=multi]'); await H.click('#hostBtn'); await H.waitForFunction(() => /^[A-Z0-9]{4}$/.test(document.getElementById('lCode').textContent), null, { timeout: 15000 });
   const code = await H.textContent('#lCode'); await G.click('[data-nav=multi]'); await G.fill('#mCode', code); await G.click('#joinBtn');
-  await G.waitForSelector('#pg-lobby:not([hidden])', { timeout: 15000 }); await H.click('#lStart'); await G.waitForFunction(() => __pal.NET.inGame && document.getElementById('menu').hidden, null, { timeout: 10000 }); await H.waitForTimeout(700);
+  await G.waitForSelector('#pg-lobby:not([hidden])', { timeout: 15000 }); await H.evaluate(()=>__pal.lobbyReadyAll());await H.click('#lStart'); await G.waitForFunction(() => __pal.NET.inGame && document.getElementById('menu').hidden, null, { timeout: 10000 }); await H.waitForTimeout(700);
   out.mods = await H.evaluate(() => __pal.game.mods);
   // the host kills a regular boss (raid 5) and a Boss Rush boss (raid 2 style, sb) with its own shots; the guest never fires
   await H.evaluate(() => { const P = __pal; setInterval(() => { for (const q of P.players.values()) { q.max = 1e9; q.hp = 1e9 } P.core.max = 1e9; P.core.hp = 1e9 }, 50);

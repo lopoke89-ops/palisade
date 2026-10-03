@@ -15,7 +15,7 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
     await H.waitForFunction(() => /^[A-Z0-9]{4}$/.test(document.getElementById('lCode').textContent), null, { timeout: 15000 });
     const code = await H.textContent('#lCode');
     await G.click('[data-nav=multi]'); await G.fill('#mCode', code); await G.click('#joinBtn'); await G.waitForSelector('#pg-lobby:not([hidden])', { timeout: 15000 }); await H.waitForTimeout(500);
-    await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await H.waitForTimeout(600);
+    await H.evaluate(()=>__pal.lobbyReadyAll());await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await H.waitForTimeout(600);
     await H.evaluate(() => { const P = __pal; window.imm = () => { for (const q of P.players.values()) { q.max = 1e9; q.hp = 1e9 } P.core.max = 1e9; P.core.hp = 1e9; P.qm.hp = 1e9 };
       window.holdIt = setInterval(imm, 50) });
     return [H, G];
@@ -72,7 +72,7 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
     // a job change in the room goes through the loadout message
     await G.click('#lJobs [data-lc=sniper]'); await H.waitForFunction(() => __pal.NET.roster.some(r => r.id !== 'host' && r.cls === 'sniper'), null, { timeout: 5000 });
     out.roomJob = await G.evaluate(() => __pal.NET.roster.map(r => r.cls).join());
-    await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await H.waitForTimeout(800);
+    await H.evaluate(()=>__pal.lobbyReadyAll());await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await H.waitForTimeout(800);
     const arena = x => x.evaluate(() => ({ map: __pal.game.map, terr: [...__pal.terr].join(''), cover: __pal.walls.filter(w => w).length, pvp: __pal.game.pvp }));
     const ha = await arena(H), ga = await arena(G); out.pvpArena = { map: ga.map, pvp: ga.pvp, same: ha.terr === ga.terr, cover: [ha.cover, ga.cover] };
     assert.equal(ga.map, 'quarry'); assert.equal(ha.terr, ga.terr, 'same arena on both'); assert.equal(ga.pvp, 'ffa');

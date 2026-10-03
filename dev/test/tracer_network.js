@@ -4,7 +4,7 @@ for(const p of[h,g]){p.on('pageerror',e=>errors.push(e.message));await p.goto(ur
 await h.evaluate(()=>{__pal.locker.owned.push('trail:f_trans','skin:sahur','hat:devilhorns');__pal.locker.eq.trail='f_trans';__pal.locker.eq.skin='sahur';__pal.locker.eq.hat='devilhorns'});
 await h.click('[data-go=multi]');await h.fill('#mName','Color Host');await h.click('#hostBtn');await h.waitForSelector('#pg-lobby:not([hidden])');const code=await h.textContent('#lCode');
 const join=async p=>{await p.click('[data-go=multi]');await p.fill('#mName','Color Guest');await p.fill('#mCode',code);await p.click('#joinBtn')};
-await join(g);await g.waitForSelector('#pg-lobby:not([hidden])');await h.click('#lStart');await g.waitForFunction(()=>__pal.NET.inGame);
+await join(g);await g.waitForSelector('#pg-lobby:not([hidden])');await h.evaluate(()=>__pal.lobbyReadyAll());await h.click('#lStart');await g.waitForFunction(()=>__pal.NET.inGame);
 const shots=await h.evaluate(()=>{const P=__pal,p=P.player;P.game.paused=true;P.bullets.length=0;p.aim={x:1,y:0};for(let i=0;i<3;i++)P.shoot(p,{...p.gun,speed:0,range:100,pellets:3,spread:.1},0);return P.bullets.map(b=>({id:b.id,tc:b.tc}))});
 await g.waitForFunction(ids=>ids.every(id=>__pal.bullets.some(b=>b.id===id)),shots.map(b=>b.id));
 const received=await g.evaluate(ids=>__pal.bullets.filter(b=>ids.includes(b.id)).map(b=>({id:b.id,tc:b.tc})),shots.map(b=>b.id));assert.deepEqual(received,shots);

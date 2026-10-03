@@ -43,6 +43,8 @@ button:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
 /* v0.9.7.1: every message sits on a dark panel so it reads over the bright city; phase messages get a coloured band */
 #toast .tt{display:inline-block}
 #toast.on{pointer-events:auto;cursor:pointer}
+#lStart.locked{opacity:.45}
+#lList li.ready{border-left-color:#8fe0a0}
 #toast{z-index:5}   /* above the build kit and the vitals, below overlays */
 .overlay{z-index:10}   /* pause, armory, settings, results: above the message panel */
 #toast.minor,#toast.phase{background:rgba(10,9,7,.82);padding:12px 16px 14px;border-radius:3px;margin:0 auto;max-width:640px;left:0;right:0;width:calc(100% - 32px)}

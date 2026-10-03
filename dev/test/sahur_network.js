@@ -12,7 +12,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
  await g.waitForFunction(()=>__pal.NET.roster.some(r=>r.cos.startsWith('sahur|devilhorns|')));
  const stage=await g.evaluate(()=>({cos:__pal.NET.roster.find(r=>r.cos.startsWith('sahur|')).cos,slots:document.querySelectorAll('.partySlot.occupied').length}));
  assert.equal(stage.slots,2);await g.screenshot({path:__dirname+'/out/sahur_remote_lobby.png'});
- await h.click('#lStart');await g.waitForFunction(()=>__pal.NET.inGame);
+ await h.evaluate(()=>__pal.lobbyReadyAll());await h.click('#lStart');await g.waitForFunction(()=>__pal.NET.inGame);
  const game=await g.evaluate(()=>{const P=__pal,remote=[...P.players.values()].find(x=>x!==P.player),look=P.playerLook(remote);return{skin:remote.cos.skin,hat:remote.cos.hat,sahur:look.sahur,horns:look.horns,demon:!!look.demon,demonHorns:!!look.demonHorns}});
  assert.equal(game.skin,'sahur');assert.equal(game.hat,'devilhorns');assert.ok(game.sahur&&game.horns);assert.equal(game.demon,false);assert.equal(game.demonHorns,false);
  await g.screenshot({path:__dirname+'/out/sahur_remote_game.png'});assert.deepEqual(errors,[]);
