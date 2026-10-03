@@ -10,7 +10,7 @@ function setupRowsFor(kind){
   const selMap=document.querySelector('#mapCards .mapCard.sel b'),pct=pv?0:modBonus(mods,pick.mode==='blitz'?'blitz':'');
   const rows=[['map','MAP',pick.mode==='campaign'&&!pv?'ALL FOUR MAPS':selMap?selMap.textContent:M.name,pv?'16×16 arena':`${pick.size==='xl'?'XL · 24×24':'16×16'} · bosses: ${(M.bosses||[]).map(k=>(BOSSES[k]||{name:k}).name.replace('THE ','').toLowerCase()).join(', ')}`]];
   if(!pv)rows.push(['rules','LENGTH',LEN_NAME[pick.mode]||'5 RAIDS',`Threat: ${DIFF[pick.diff].name.toLowerCase()}${pick.mode==='campaign'?' · 4 chapters, 12 raids + five-minute evac':pick.mode==='blitz'?' · the Final Blitz and the evacuation':''}`]);
-  if(kind!=='room'){const tg=document.querySelector(`#classes .cls[data-c=${pick.cls}] i`);rows.push(['job','JOB',C.name,tg?tg.textContent:''])}
+  if(kind!=='room'){const tg=document.querySelector(`#classes .cls[data-c=${pick.cls}] i`);rows.push(['job','CLASS',C.name,tg?tg.textContent:''])}
   rows.push(['mods','MODIFIERS',mods.length?modNames(mods).join(' · '):'NONE',mods.length?`${mods.length} on${pct?` · rewards ${pct>0?'+':''}${pct}%`:''}`:'Harder rules pay more']);
   return rows;
 }
@@ -59,7 +59,7 @@ for(const b of document.querySelectorAll('.ssTabs [data-sst]'))b.addEventListene
 $('setupDone').addEventListener('click',()=>{initAudio();closeSetup()});
 $('setupSheet').addEventListener('click',e=>{if(e.target===$('setupSheet'))closeSetup()});   // a tap outside the card closes it
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&setupOpen()){e.preventDefault();e.stopPropagation();closeSetup()}},true);
-document.querySelectorAll('#setupSheet [data-c]').forEach(b=>b.addEventListener('click',()=>{renderSetupJobs();renderHome()}));
+document.querySelectorAll('#setupSheet [data-c]').forEach(b=>b.addEventListener('click',()=>renderHome()));
 // ---- the right column of PLAY: the new mode, cases to open, the next unlock, skill points ----
 function homeCard(cls,kicker,title,body,btn,act){const d=document.createElement('div');d.className='homeCard '+cls;
   const k=document.createElement('span');k.className='hcK';k.textContent=kicker;const t=document.createElement('b');t.textContent=title;d.append(k,t);
