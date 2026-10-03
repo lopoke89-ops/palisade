@@ -124,7 +124,7 @@ Health thresholds stay as they are; the new moves join the rotation from the sta
   - the page fits at three viewport sizes;
   - controller focus moves through it.
 - New `boss_weakness` test:
-  - a matching round deals 1.5× bullet damage and a non-matching one 1×;
+  - a matching round deals 1.35× bullet damage and a non-matching one 1×;
   - burn and splash get no bonus;
   - the health-bar tag shows;
   - guests see the same tag.
