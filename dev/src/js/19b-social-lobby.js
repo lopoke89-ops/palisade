@@ -45,8 +45,8 @@ function renderPartyState(){
   $('partyPlayerName').textContent=myName();$('partyPlayerState').textContent='EQUIPPED';$('partyHint').textContent='Tap an item you own to wear it.';return}
  if(pg==='solo'||pg==='classes'){
   $('partyMode').textContent=pg==='solo'?`SOLO · ${M.name}${pick.size==='xl'?' XL':''}`:'CLASSES';$('partyTitle').textContent=pg==='solo'?'HOLD THE STAKE.':C.name;
-  $('partySubtitle').textContent=pg==='solo'?`${LEN_NAME[pick.mode]||'5 RAIDS'} · ${DIFF[pick.diff].name} · ${C.name}`:'Your job carries into solo and multiplayer.';
-  $('partyPlayerName').textContent=myName();$('partyPlayerState').textContent=pg==='solo'?'READY':'CHOOSING A JOB';
+  $('partySubtitle').textContent=pg==='solo'?`${LEN_NAME[pick.mode]||'5 RAIDS'} · ${DIFF[pick.diff].name} · ${C.name}`:'Your class carries into solo and multiplayer.';
+  $('partyPlayerName').textContent=myName();$('partyPlayerState').textContent=pg==='solo'?'READY':'CHOOSING A CLASS';
   $('partyHint').textContent=pg==='solo'?M.blurb:'';return}
  $('partyMode').textContent=MODE_NAME[pick.pvp]||'CO-OP';$('partyTitle').textContent=room?'PARTY LOBBY':'YOUR CREW. YOUR CLAIM.';
  $('partySubtitle').textContent=room?`ROOM ${NET.code} · ${rows.length} / 6 PLAYERS${pick.pvp==='coop'?' · '+M.name+(pick.size==='xl'?' XL':''):''}`:'Choose your job. Bring your crew.';

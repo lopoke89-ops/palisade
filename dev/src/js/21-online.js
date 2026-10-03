@@ -4,7 +4,7 @@
 // they talk directly. Each guest opens 'r' (reliable: hello, build, grenade, and every
 // one-off event: sounds, particles, bullets, toasts, wall changes), 'u' (fast: movement in),
 // and 'st' (never resent: game state out, 15 times a second).
-const PROTO='yard-24',ROOM_PREFIX='palisade-yard-24-';   // v0.9.6.4: campaign map evacs and the Whiteout Gauntlet (fb kind/chapter/wave, chapter evac results)
+const PROTO='yard-25',ROOM_PREFIX='palisade-yard-25-';   // v0.9.6.5: boss health +25%, weaknesses and new boss moves (states 20-30)
 const ROOM_SESSION=(()=>{let id='';try{id=sessionStorage.getItem('palisade.roomSession')||''}catch(e){}
   if(!/^[0-9a-f]{24}$/.test(id)){id=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');try{sessionStorage.setItem('palisade.roomSession',id)}catch(e){}}
   return id})();

@@ -132,7 +132,7 @@ function spawnBoss(key,sb,second=false,fb=false,pos=null){
   for(let a=0;a<40&&at.length;a++){const t=at[Math.floor(rnd()*at.length)];if(!solidTile(t[0],t[1])){x=t[0]+.5;y=t[1]+.5;break}}
   if(!x){const t=spawnTile();if(t){x=t[0]+.5;y=t[1]+.5}else{x=N-.5;y=6.5}}
   if(pos){x=pos[0];y=pos[1]}   // v0.9.6.4: the gauntlet picks its own spots
-  const P=Math.max(1,players.size),hp=B.hp*game.Df.hp*(1+.35*(P-1))*(1+.25*Math.floor(Math.max(0,game.wave-5)/15))*mapHp()*(game.bossShare||1)*(fb?(game.fb&&game.fb.gauntlet?GAUNTLET.hp:BLITZ.fbHp):1);
+  const P=Math.max(1,players.size),hp=B.hp*BOSS_HP*game.Df.hp*(1+.35*(P-1))*(1+.25*Math.floor(Math.max(0,game.wave-5)/15))*mapHp()*(game.bossShare||1)*(fb?(game.fb&&game.fb.gauntlet?GAUNTLET.hp:BLITZ.fbHp):1);
   const e={id:nextId++,type:'boss',boss:key,big:true,x,y,hp,max:hp,cd:2.2,walk:0,aim:{x:-1,y:0},flash:0,speed:B.speed,scanT:0,foe:null,planted:false,st:0,stT:0,stM:1,lx:x,ly:y,shots:0,ab:3,sw:0,sb:!!sb,fb:!!fb};
   if(B.raft){e.raft=true;e.ab=9;e.crews=0;e.pathT=0;e.next=-1}
   if(key==='foreman'){e.ab=5;e.cd=2.5}
