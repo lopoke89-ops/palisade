@@ -43,9 +43,10 @@ MUSIC_FILES=['between_raids','main_menu','raid_attitude','raid_cool','raid_expre
 for old in ('locker.m4a','locker.ogg','raid.m4a','raid.ogg'):
     p=os.path.join(SITE,old)
     if os.path.isfile(p):os.remove(p)
+MEDIA_NOW=[]   # v0.9.7.2: the current music URLs; the service worker drops cached music that isn't one of them
 for name in MUSIC_FILES:
     for ext in ('m4a','ogg'):
-        mh=hashlib.sha1(open(f'{DEV}/audio/{name}.{ext}','rb').read()).hexdigest()[:8]
+        mh=hashlib.sha1(open(f'{DEV}/audio/{name}.{ext}','rb').read()).hexdigest()[:8];MEDIA_NOW.append(f'{name}.{ext}?v={mh}')
         assert f"'{name}.{ext}'" in src,f'{name}.{ext} not referenced in the game'
         src=src.replace(f"'{name}.{ext}'",f"'{name}.{ext}?v={mh}'",1)
         shutil.copy(f'{DEV}/audio/{name}.{ext}',f'{SITE}/{name}.{ext}')
@@ -124,8 +125,10 @@ const V='palisade-{ver}';
 const FILES=['./','index.html','peerjs.min.js','manifest.webmanifest','icon-192.png','icon-512.png','apple-touch-icon.png'{FONTFILES}];
 self.addEventListener('install',e=>{{e.waitUntil(caches.open(V).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting()))}});
 // music is big and rarely changes, so it lives in its own cache that survives game updates (saved the first time it plays)
-const M='palisade-media-2';
-self.addEventListener('activate',e=>{{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==V&&k!==M).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))}});
+const M='palisade-media-2',MEDIA_NOW={json.dumps(MEDIA_NOW)};
+// a replaced track (v0.9.7.2: the new main menu music) gets a new ?v= hash; the old copy is dropped here, the rest stay
+const pruneMedia=()=>caches.open(M).then(c=>c.keys().then(rs=>Promise.all(rs.filter(r=>{{const u=new URL(r.url);return /\.(m4a|ogg)$/.test(u.pathname)&&!MEDIA_NOW.includes(u.pathname.split('/').pop()+u.search)}}).map(r=>c.delete(r)))));
+self.addEventListener('activate',e=>{{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==V&&k!==M).map(k=>caches.delete(k)))).then(pruneMedia).then(()=>self.clients.claim()))}});
 self.addEventListener('fetch',e=>{{
   const r=e.request;if(r.method!=='GET'||new URL(r.url).origin!==location.origin)return;
   // the page itself: try the network so updates land, but on a slow or dead connection

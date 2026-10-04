@@ -26,6 +26,9 @@ addEventListener('touchcancel',e=>{if(!e.touches.length)freeSticks()},{passive:t
 document.addEventListener('selectstart',e=>{if(!(e.target&&e.target.closest&&e.target.closest('input,textarea')))e.preventDefault()});
 addEventListener('pointerdown',e=>{if(e.target&&e.target.closest&&e.target.closest('input'))return;try{const sel=getSelection();if(sel&&sel.rangeCount&&!sel.isCollapsed)sel.removeAllRanges()}catch(_){}},true);
 cv.addEventListener('contextmenu',e=>e.preventDefault());
+// v0.9.7.2: browsers keep sound off until the first tap, click or key. Unlock it on the first one anywhere (it used to
+// wait for the game canvas or a menu tab, so the menu music stayed silent until you changed pages)
+for(const ev of['pointerdown','touchend','click','keydown'])addEventListener(ev,()=>{if(!AC||AC.state!=='running')initAudio()},{capture:true,passive:true});
 addEventListener('keydown',e=>{
   if(e.target&&e.target.tagName==='INPUT'){if(e.key==='Escape'&&e.target.id==='chatIn'){e.preventDefault();closeChat()}return}
   const k=e.key.toLowerCase();keys[k]=true;

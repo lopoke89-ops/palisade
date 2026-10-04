@@ -12,7 +12,7 @@ function initAudio(){
    Each track comes in two formats: AAC for Safari/iPhone/Chrome, Opus for browsers without AAC; the first one
    this browser plays is used. len: the exact release loop length in seconds; results is trimmed to the original 164-second cue.
    New track: add an entry here, a case in musicWant(), and both files to build.py's MUSIC_FILES. */
-const MUSIC={menu:{src:['main_menu.m4a','main_menu.ogg'],len:195.69160416666668},between:{src:['between_raids.m4a','between_raids.ogg'],len:160.08408333333333},attitude:{src:['raid_attitude.m4a','raid_attitude.ogg'],len:198.76572916666666},cool:{src:['raid_cool.m4a','raid_cool.ogg'],len:181.1853125},express:{src:['raid_express.m4a','raid_express.ogg'],len:115.51347916666667},finale:{src:['final_blitz.m4a','final_blitz.ogg'],len:389.4266666666667},results:{src:['results.m4a','results.ogg'],len:143.61797916666666}};
+const MUSIC={menu:{src:['main_menu.m4a','main_menu.ogg'],len:458.352},between:{src:['between_raids.m4a','between_raids.ogg'],len:160.08408333333333},attitude:{src:['raid_attitude.m4a','raid_attitude.ogg'],len:198.76572916666666},cool:{src:['raid_cool.m4a','raid_cool.ogg'],len:181.1853125},express:{src:['raid_express.m4a','raid_express.ogg'],len:115.51347916666667},finale:{src:['final_blitz.m4a','final_blitz.ogg'],len:389.4266666666667},results:{src:['results.m4a','results.ogg'],len:143.61797916666666}};
 const mus={bufs:{},loading:{},failAt:{},src:null,g:null,bus:null,cur:null,token:'',resume:null,started:0,offset:0,starts:0,retiring:null};
 // A route identity changes only at a real screen/raid entry. Snapshots and settings cannot advance it.
 function musicRoute(){

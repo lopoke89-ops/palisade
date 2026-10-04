@@ -7,6 +7,13 @@ Big U's latest completed local scope is recorded in the [presentation prompt](pl
 
 The Claude audit URL still requires sign-in in the available browser session. Big U supplied an exported copy at `D:\downloads\Untitled.md`, which was read on September 29. Its newest Progress entry is v0.9.3, so its release claims are superseded by the verified v0.9.3.3 release below. The external artifact itself was not edited here.
 
+## v0.9.7.2: new main menu music, music starts on the first click
+
+- **Main menu track:** Big U's Pali Mix (7:38) replaces Heartbeat. It's encoded like the rest (AAC 160 kbps and Opus 128 kbps, 48 kHz stereo) and loops at 458.352 s. Decoded, it takes about 168 MiB, now the largest track (Everything She Wants was 142.6 MiB). Watch for memory trouble on older phones.
+- **Music start fix:** sound used to wake only from the game screen or a menu tab, so the menu stayed silent until you changed pages. It now wakes on the first tap, click or key anywhere. Browsers allow no sound before that first touch.
+- **Offline cache:** the service worker drops cached music that is no longer current (the old menu track) and keeps the other six tracks.
+- **Test:** new `menu_music_start`. `music_assets`, `music_routing`, `reel_music` and `music_network` pass.
+
 ## v0.9.7.1: beta feedback pass
 
 From the [work order](plans/beta-feedback-work-order.md) (all decisions by Big U, October 3). Protocol **`yard-27`**. No server change. Evidence is in [evidence/v0.9.7.1](evidence/v0.9.7.1/README.md).
