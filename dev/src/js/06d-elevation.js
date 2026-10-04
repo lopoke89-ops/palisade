@@ -118,14 +118,42 @@ function paintFrostTile(i,j){
 }
 // Reinsert cliff faces into the existing world depth queue. An actor standing
 // behind a lip is partly occluded; actors on its lower/front side stay visible.
+// v0.9.8.3: a cliff face never paints over a staircase or ramp in front of it (the face next to each lane used to cut across
+// the top steps), and the faces get snow ledges and cracks. FROST_MARK paints faces in one colour for the pixel test.
+let FROST_MARK=null;
+const frostRailH=()=>11*u;
+// the connector runs (a lane of stairs or a ramp) in row j: [first column, last column]
+function frostRuns(j){const out=[];if(!inb(0,j))return out;for(let i=0;i<N;i++)if(connectors[idx(i,j)]){const i0=i;while(i+1<N&&connectors[idx(i+1,j)])i++;out.push([i0,i])}return out}
+// a run's outline on screen: its sloped top and its handrails above it (convex hull of the corners)
+function frostRunHull(j,i0,i1){const z=heights[idx(i0,j)],R=frostRailH(),pts=[];
+  for(const[x,y,h]of[[i0,j,z+1],[i1+1,j,z+1],[i1+1,j+1,z],[i0,j+1,z]]){const q=iso(x,y,h);pts.push(q,[q[0],q[1]-R])}
+  pts.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]),lo=[],up=[];
+  for(const q of pts){while(lo.length>1&&cr(lo[lo.length-2],lo[lo.length-1],q)<=0)lo.pop();lo.push(q)}
+  for(let n=pts.length-1;n>=0;n--){const q=pts[n];while(up.length>1&&cr(up[up.length-2],up[up.length-1],q)<=0)up.pop();up.push(q)}
+  return lo.slice(0,-1).concat(up.slice(0,-1))}
 function itemFrostCliff(k){
   const i=k%N,j=(k/N)|0,z=heights[k],r=connectors[k],p=(x,y,h)=>iso(x,y,h);
   if(r||!z)return;
   const c=iso(i+.5,j+.5,z);if(c[0]+TW2<0||c[0]-TW2>W||c[1]+TH2+2*heightPx()<0||c[1]-TH2>H)return;
   const s=inb(i,j+1)?heights[idx(i,j+1)]+(connectors[idx(i,j+1)]?1:0):0,e=inb(i+1,j)?heights[idx(i+1,j)]:0;
-  if(z>s){quad(p(i,j+1,z),p(i+1,j+1,z),p(i+1,j+1,s),p(i,j+1,s),'#435b6a');
-    const A=p(i+.2,j+1,z),B=p(i+.35,j+1,s);g.strokeStyle='#719aaa';g.lineWidth=u;g.beginPath();g.moveTo(...A);g.lineTo(...B);g.stroke()}
-  if(z>e)quad(p(i+1,j,z),p(i+1,j+1,z),p(i+1,j+1,e),p(i+1,j,e),'#304858');
+  const runs=[];for(const jj of[j,j+1])for(const[i0,i1]of frostRuns(jj))if(i1>=i-1&&i0<=i+2)runs.push(frostRunHull(jj,i0,i1));
+  g.save();if(runs.length){g.beginPath();g.rect(-1e5,-1e5,2e5,2e5);for(const h of runs){g.moveTo(h[0][0],h[0][1]);for(const q of h.slice(1))g.lineTo(q[0],q[1]);g.closePath()}g.clip('evenodd')}
+  const hs=hash(i+3,j+17),M=FROST_MARK;
+  if(z>s){quad(p(i,j+1,z),p(i+1,j+1,z),p(i+1,j+1,s),p(i,j+1,s),M||'#435b6a');
+    if(!M){const A=p(i+.2,j+1,z),B=p(i+.35,j+1,s);g.strokeStyle='#719aaa';g.lineWidth=u;g.beginPath();g.moveTo(...A);g.lineTo(...B);g.stroke();
+      frostFaceDetail(t=>p(i+t,j+1,z),t=>p(i+t,j+1,s),hs,'#2f4552','#dcebf1')}}
+  if(z>e){quad(p(i+1,j,z),p(i+1,j+1,z),p(i+1,j+1,e),p(i+1,j,e),M||'#304858');
+    if(!M)frostFaceDetail(t=>p(i+1,j+t,z),t=>p(i+1,j+t,e),hash(i+11,j+5),'#203644','#b9d0da')}
+  g.restore();
+}
+// snow along the lip, a short snow ledge part-way down, and a crack or two, placed by the tile's hash (same every frame)
+function frostFaceDetail(top,bot,h,crack,snow){
+  const at=(t,v)=>{const a=top(t),b=bot(t);return[a[0]+(b[0]-a[0])*v,a[1]+(b[1]-a[1])*v]};
+  g.strokeStyle=snow;g.lineWidth=2*u;g.beginPath();const a=top(0),b=top(1);g.moveTo(a[0],a[1]+u);g.lineTo(b[0],b[1]+u);g.stroke();
+  if(h>.35){const t0=.15+h*.4,v=.35+h*.3,q0=at(t0,v),q1=at(t0+.28,v-.04);g.lineWidth=1.6*u;g.beginPath();g.moveTo(...q0);g.lineTo(...q1);g.stroke()}
+  g.strokeStyle=crack;g.lineWidth=u;g.beginPath();const t1=.55+h*.35;let q=at(t1,.08);g.moveTo(...q);
+  for(const[dt,v]of[[-.06,.35],[.05,.6],[-.03,.9]]){q=at(t1+dt,v);g.lineTo(...q)}g.stroke();
+  if(h<.4){g.beginPath();q=at(.2+h,.15);g.moveTo(...q);q=at(.26+h,.5);g.lineTo(...q);g.stroke()}
 }
 function frostScenery(){
   // Expedition caches sit beyond the walkable boundary. A slim beacon and route
@@ -138,6 +166,12 @@ function frostScenery(){
   const c=iso(core.i+2.1,.8);g.strokeStyle='#405969';g.lineWidth=3*u;g.beginPath();g.moveTo(c[0],c[1]);g.lineTo(c[0],c[1]-WH*1.5);g.stroke();
   g.fillStyle='#ffd882';g.fillRect(c[0]-3*u,c[1]-WH*1.55,6*u,5*u);
   g.fillStyle='#bd5450';g.beginPath();g.moveTo(c[0]+2*u,c[1]-WH*1.35);g.lineTo(c[0]+17*u,c[1]-WH*1.25);g.lineTo(c[0]+2*u,c[1]-WH*1.1);g.fill();
+  // v0.9.8.3: handrails down both sides of every staircase and ramp (the sides already block movement)
+  {const R=frostRailH();for(let j=0;j<N;j++)for(const[i0,i1]of frostRuns(j)){const z=heights[idx(i0,j)];
+    for(const x of[i0+.04,i1+.96]){const P=[0,.5,1].map(t=>iso(x,j+t,z+1-t));
+      g.strokeStyle='#33505f';g.lineWidth=2*u;g.beginPath();for(const q of P){g.moveTo(q[0],q[1]);g.lineTo(q[0],q[1]-R)}g.stroke();
+      g.strokeStyle='#486a7c';g.lineWidth=2.4*u;g.beginPath();P.forEach((q,n)=>n?g.lineTo(q[0],q[1]-R):g.moveTo(q[0],q[1]-R));g.stroke();
+      g.strokeStyle='#a9c7d3';g.lineWidth=.8*u;g.beginPath();P.forEach((q,n)=>n?g.lineTo(q[0],q[1]-R-u):g.moveTo(q[0],q[1]-R-u));g.stroke()}}}
   for(let k=0;k<N*N;k++)if(connectors[k]&&(!inb(k%N-1,(k/N)|0)||!connectors[k-1])){
     const x=k%N+.08,y=((k/N)|0)+.5,p=iso(x,y);g.strokeStyle='#486a7c';g.lineWidth=2*u;g.beginPath();g.moveTo(p[0],p[1]);g.lineTo(p[0],p[1]-WH*.55);g.stroke();
     g.fillStyle='#efa568';g.fillRect(p[0],p[1]-WH*.55,7*u,3*u);

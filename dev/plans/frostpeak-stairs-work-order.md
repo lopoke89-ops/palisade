@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Plan. Written October 4 from Big U's bug report. Big U confirmed the dark triangle on the right of each connector is intended (a shadow); only the left side is wrong. Nothing is built yet |
+| **Status** | Plan. Written October 4 from Big U's bug report. Big U confirmed the dark triangle on the right of each connector is intended (a shadow); only the left side is wrong. Decided by Big U (D1 handrails yes, D2 cliff texture yes) and built as v0.9.8.3 |
 | **Build** | v0.9.8.3, client only. No server or protocol change: collision and heights stay exactly as they are; this is drawing only |
 | **Scope** | Frostpeak (the winter map, also the summit of Operation Whiteout), standard 16×16 and XL 24×24 |
 | **Risk** | Low. Rendering only, behind `MAP===MAPS.frost` |
@@ -18,9 +18,9 @@
 **Reported (Big U):** the winter map looks ugly: the cliffs clip into the stairs.
 
 **Repro:**
-1. Start a raid on Frostpeak (any size) and walk to any of the 8 connectors.
-   - 2 ramps and 2 staircases go from the bottom terrace to the middle one.
-   - 2 ramps and 2 staircases go from the middle terrace to the summit.
+1. Start a raid on Frostpeak (any size) and walk to any of the 4 connectors.
+   - a ramp and a staircase go from the bottom terrace to the middle one;
+   - a ramp and a staircase go from the middle terrace to the summit.
 2. Look at the left side of the connector, where it meets the upper terrace. Screenshots: `dev/evidence/v0.9.8.3/before-stairs.png` and `before-ramp.png` (top left of the steps).
 
 **Actual:** the upper terrace's cliff wall, just left of the connector, sticks out over the connector's top-left corner. It covers the top steps with a dark slab, at every connector and both map sizes.
@@ -40,10 +40,10 @@
   - players and raiders standing behind a cliff lip are still hidden by it, exactly as now;
   - players on the stairs are never covered by a cliff;
   - the right-side shadow triangle, the steps, treads, colours and the orange route flags.
-- **Performance:** the clipping applies only to the few cliff faces next to a connector (8 on the map), so there is no cost per frame worth measuring.
+- **Performance:** the clipping applies only to the few cliff faces next to a connector (4 on the map), so there is no cost per frame worth measuring.
 
 **Acceptance criteria:**
-- [ ] On Frostpeak standard and XL, for all 8 connectors, no cliff-face pixel lands inside a connector's on-screen outline. Checked by a pixel test that draws the cliffs in a marker colour.
+- [ ] On Frostpeak standard and XL, for all 4 connectors, no cliff-face pixel lands inside a connector's on-screen outline. Checked by a pixel test that draws the cliffs in a marker colour.
 - [ ] The right-side shadow triangle looks exactly as before (pixel-identical to the current build).
 - [ ] A player walking up and down every connector is never drawn under a cliff face. A player standing just behind a cliff lip is still partly hidden, as now.
 - [ ] Heights, collision and pathing are byte-for-byte unchanged (`winter_elevation` passes untouched).
@@ -59,7 +59,9 @@
 2. The new test plus the three Frostpeak tests. No full suite.
 3. Before and after screenshots, then PR and merge.
 
-## Decisions for Big U
+## Decisions (Big U, October 4): D1 **yes**, D2 **yes**
+
+### As asked
 
 | # | Question | Proposal |
 |---|---|---|
