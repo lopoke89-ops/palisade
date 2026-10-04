@@ -7,6 +7,20 @@ Big U's latest completed local scope is recorded in the [presentation prompt](pl
 
 The Claude audit URL still requires sign-in in the available browser session. Big U supplied an exported copy at `D:\downloads\Untitled.md`, which was read on September 29. Its newest Progress entry is v0.9.3, so its release claims are superseded by the verified v0.9.3.3 release below. The external artifact itself was not edited here.
 
+## v0.9.8: THE TABLES (Blackjack and Texas Hold'em for shards)
+
+From the [work order](plans/nameplates-and-tables-work-order.md), Part B (all decisions by Big U, October 4). Evidence in [evidence/v0.9.8](evidence/v0.9.8/README.md). Match protocol unchanged (`yard-27`).
+
+- **New TABLES tab** (signed-in accounts only; guests are told to make an account). Host opens a table (game, limit 100 / 250 / No limit, side bet on or off); others join by code or from the list.
+- **Straight shards:** 5-shard buy-in is your table stack; top up any time between hands (unlimited); standing up sends your stack back to your balance. Disconnected players are stood up after a minute; tables nobody touches for 3 minutes close and pay everyone out.
+- **Blackjack:** traditional rules, 4 decks reshuffled every hand (no card counting), dealer stands on soft 17 and checks for blackjack, 3:2 (rounded down on odd bets), double, double after split, split to 4 hands, insurance. Up to 5 players. Cards deal automatically once everyone has bet (12 s window).
+- **Hold'em:** one deck, blinds 1/2 shards, side pots, a 1.8% rake (max 6) on pots that see a flop. 2 people: a bot sits in (it may lose at most 25 shards a day); 3 or more: people only; 1: waits. 20-second turns.
+- **Side bet (1 shard a hand):** double aces (Blackjack), pocket aces or a full house or better (Hold'em) pays 10 Hybrid Theory or 15 Flag Cases, winner's pick (Hybrid if they leave first).
+- **Fair deal:** every deck is fingerprinted (SHA-256) at the deal and revealed after; every hand and every shard is logged.
+- **Server:** new edge function `tables` and migration `20261004200000_v098_tables.sql`.
+- **Phones:** the bottom tab bar now has 7 tabs.
+- **Tests (only what changed, per Big U):** new `tables_engine`, `tables_server`, `tables_ui`; `taborder`, `index_page`, `accounts` and `csp` pass.
+
 ## v0.9.7.3: City Black Out polish (banners, streetlamps, mini-map)
 
 From the [work order](plans/blackout-polish-work-order.md) (all decisions by Big U, October 4). Client only; protocol stays **`yard-27`**. Evidence is in [evidence/v0.9.7.3](evidence/v0.9.7.3/README.md).

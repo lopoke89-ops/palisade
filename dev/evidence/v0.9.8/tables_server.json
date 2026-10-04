@@ -1,0 +1,26 @@
+{
+ "checks": [
+  "no delete in the migration",
+  "migration applies twice",
+  "no token: refused",
+  "a guest account: refused",
+  "under the 5-shard buy-in: refused",
+  "open a table",
+  "buy-in taken",
+  "join by code",
+  "already seated: back to your own table, no second buy-in",
+  "the lobby lists it",
+  "top up",
+  "a top-up over the balance is refused and nothing moves",
+  "hands are dealt and settled automatically",
+  "every hand is logged",
+  "provably fair: each logged deck matches its hash (4 decks)",
+  "racing requests both land",
+  "a side-bet prize lands in the bag",
+  "the table closes when everyone has left",
+  "shards conserved: (A + B now) - (A + B before) = ledger total, and the ledger total is never positive",
+  "hold'em: two people get a bot",
+  "the bot's budget is spent after a 30-shard day",
+  "players are kept out of the casino tables and functions"
+ ]
+}
