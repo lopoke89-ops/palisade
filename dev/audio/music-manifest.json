@@ -4,24 +4,24 @@
   "resultsOriginalCueSeconds": 164,
   "tracks": {
     "main_menu": {
-      "title": "Heartbeat",
-      "source": "H:\\vapeor\\luxury elite - blind date - 01 heartbeat.wav",
-      "sourceSHA256": "e3e25f114811ca1944f2ff34f592f88a1d97dda45eb7fa36afacdd8807c6a5b9",
-      "sourceFrames": 9393197,
-      "sourceSeconds": 195.69160416666668,
+      "title": "Pali Mix",
+      "source": "pali_mix.mp3 (supplied by Big U, October 4)",
+      "sourceSHA256": "69ef3e7c82f12def728a782af0a6a3fbe1a671a3a00f844382a556976f000057",
+      "sourceFrames": 22000896,
+      "sourceSeconds": 458.352,
       "trimStartSeconds": 0,
-      "releaseFrames": 9393197,
-      "loopSeconds": 195.69160416666668,
+      "releaseFrames": 22000896,
+      "loopSeconds": 458.352,
       "formats": {
         "m4a": {
-          "bytes": 4066298,
-          "SHA256": "fbf4ac8becdd90a9a2b2518d53a7b14dfde45e142ba621d9623d0f47585ecd60",
-          "decodedFrames": 9394176
+          "bytes": 9315729,
+          "SHA256": "da29a034fd958d1f282c863ab31b8d90f6f97af1f3b3f36804141c853de5ca52",
+          "decodedFrames": 22001664
         },
         "ogg": {
-          "bytes": 3004612,
-          "SHA256": "61fa3052b18766f33bd108e7885e5bc761178ee28f353d8dd02402c01f9fd43f",
-          "decodedFrames": 9393197
+          "bytes": 7266271,
+          "SHA256": "fd30ae4917fc1f3218768307f40f01a3a3296e0966f228db4ed826104bd2d33f",
+          "decodedFrames": 22000896
         }
       }
     },

@@ -7,7 +7,7 @@ FFMPEG = os.environ.get('FFMPEG') or shutil.which('ffmpeg')
 if not FFMPEG:
     raise SystemExit('Set FFMPEG to an installed ffmpeg binary.')
 TRACKS = [
-    ('main_menu', 'Heartbeat', Path('H:/vapeor/luxury elite - blind date - 01 heartbeat.wav'), 0),
+    ('main_menu', 'Pali Mix', Path('pali_mix.mp3'), 0),   # v0.9.7.2: Big U's mix (the uploaded file; not kept in the repo)
     ('between_raids', 'Cold', Path('H:/vapeor/luxury elite - blind date - 02 cold.wav'), 0),
     ('raid_attitude', 'Attitude', Path('H:/vapeor/Luxury Elite - World Class - 04 Attitude.wav'), 0),
     ('raid_cool', 'Cool', Path('H:/vapeor/Luxury Elite - World Class - 12 Cool.wav'), 0),
