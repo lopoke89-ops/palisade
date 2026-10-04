@@ -1114,3 +1114,31 @@ u.rw,u.rp,u.rl{text-decoration:none;font-weight:600}u.rw{color:#8fe0a0}u.rp{colo
 #tbHelp{font-family:var(--mono);font-size:12px;color:#c9bfa8;margin:6px 0}#tbHelp summary,#tbFair summary{cursor:pointer;color:var(--bone);font-family:var(--stencil);letter-spacing:.1em;font-size:13px;padding:6px 0}
 #tbHelp p{margin:6px 0;line-height:1.5}#tbHelp b{color:var(--bone)}
 @media (max-width:520px){.tbFoot{grid-template-columns:1fr 1fr}.tbFoot button{min-height:40px}}
+
+/* v0.9.9 core health under the timer; Delgado's button with it */
+.phase .coreBar{display:grid;grid-template-columns:auto minmax(70px,120px) auto;gap:6px;align-items:center;justify-self:end;margin:2px 0}
+.phase .coreBar .lab{font-size:10px;letter-spacing:.08em}.phase .coreBar .track{height:7px}.phase .coreBar b{font-size:10px;min-width:26px}
+.phase .qmCommand{justify-self:end;font-size:10px;padding:3px 8px;min-height:24px;width:auto}
+body:not(.desk) .phase .coreBar{grid-template-columns:auto 70px auto}
+#top>.phase{margin-left:auto}   /* v0.9.9: the health panel on the left is gone; the phase box stays top right */
+#top .phase .coreBar .track{width:110px}body:not(.desk) #top .phase .coreBar .track{width:72px}
+#top .phase .qmCommand{font-size:9px;min-width:0;max-width:none;white-space:nowrap;min-height:22px;padding:2px 8px;align-self:auto}
+body.desk #top .phase .qmCommand{font-size:10px;min-height:24px}
+/* landscape phones: the build kit climbs up from the bottom and the mini-map sits left of the phase box, so the box
+   stays narrow: core health goes under the timer, Delgado's button (just FOLLOW / DEFEND) to the left of the title */
+@media (max-height:500px) and (orientation:landscape){
+  #top .phase{grid-template-columns:auto auto;column-gap:8px;align-items:start}
+  #top .phase>*{grid-column:2}#top .phase>#qmCommand{grid-column:1;grid-row:1;margin-top:4px}#top .phase .qmWho{display:none}
+}
+/* desktop too: core health and Delgado's button beside the timer, so the phase box keeps its old height (the mini-map
+   and the build kit are laid out under it) */
+body.desk #top .phase{grid-template-columns:auto auto;column-gap:14px;align-items:start}
+body.desk #top .phase>*{grid-column:2}body.desk #top .phase>.phaseRow{grid-column:1/-1}
+body.desk #top .phase>#coreM{grid-column:1;grid-row:2;margin-top:6px}body.desk #top .phase>#core2M{grid-column:1;grid-row:3}body.desk #top .phase>#qmCommand{grid-column:1;grid-row:3}
+body.desk #top .phase>#core2M:not([hidden])~#qmCommand{grid-row:4}
+/* the round-message line under the timer keeps its space in the two-column layout, so the first message moves nothing */
+body.desk #top .phase>#phaseNote[hidden]{display:block!important;visibility:hidden}
+body.desk #top .phase>#phaseNote{min-height:1.35em;line-height:1.35em}
+@media (max-height:500px) and (orientation:landscape){#top .phase>#phaseNote[hidden]{display:block!important;visibility:hidden}#top .phase>#phaseNote{min-height:1.35em;line-height:1.35em;width:150px}
+  /* and a narrower core bar, so the box beside the mini-map leaves the message banner its room */
+  #top .phase .coreBar{gap:4px}#top .phase .coreBar .lab{font-size:9px}body:not(.desk) #top .phase .coreBar .track{width:44px}#top .phase .coreBar b{min-width:22px;font-size:9px}}

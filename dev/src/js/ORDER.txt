@@ -44,5 +44,6 @@
 20b-case-openings.js   Atomic single/batch rewards, durable receipts and shared reel sessions.
 20b-winter-effects.js   shared winter snowflake and six kill effect painters
 21-online.js   online co-op and PvP networking
+16h-nameplates.js   v0.9.9 health above heads, teammate edge arrows, low-health edge
 21b-tables.js   v0.9.8 the Tables (blackjack and hold'em for shards; the server deals)
 22-loop-menus.js   main loop, menus, install prompt, debug hooks

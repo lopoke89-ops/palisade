@@ -29,14 +29,17 @@ function toastTick(dt){if(!toastCur)return;toastPlace();toastT-=dt;if(toastT>0)r
 // v0.9.7.3: where the banner goes, from the live HUD: the top row between the vitals and the phase box on desktop,
 // the top-left beside the mini-map on landscape phones, under the top bar (and tip) on portrait phones; and always
 // below the boss bars where they would overlap (the bars keep their place)
+// landscape boss strip width: centred, and its right end stays left of the phase box (v0.9.9: Delgado's button sits there)
+const bossStripW=()=>Math.max(220,Math.min(460,W-420,2*((hud.phL||W-150)-8)-W));
 function bossBarsBox(){if(!Array.isArray(enemies))return null;const list=enemies.filter(e=>e.type==='boss'&&BOSSES[e.boss]),n=list.length;if(!n||demo||game.pvp)return null;
-  if(H<=500&&W>H){if(n>=4){const w=Math.min(440,W-48);return{left:(W-w)/2-3,right:(W+w)/2+3,top:7,bottom:47}}const tot=Math.min(460,Math.max(220,W-420));return{left:(W-tot)/2,right:(W+tot)/2,top:8,bottom:29}}
+  if(H<=500&&W>H){if(n>=4){const w=Math.min(440,W-48);return{left:(W-w)/2-3,right:(W+w)/2+3,top:7,bottom:47}}const tot=bossStripW();return{left:(W-tot)/2,right:(W+tot)/2,top:8,bottom:29}}
   const y=Math.max(W<700?(hud.topB||110)+10:120,(hud.tipB||0)+10),w=Math.min(440,W-48),h=n>=4?40:n>2?23*n:32*n;return{left:(W-w)/2-3,right:(W+w)/2+3,top:y-3,bottom:y-3+h}}
 let toastBox=null;
 function toastPlace(){const el=$('toast');if(!toastCur||!el||!$('top'))return;
-  const q=s=>{const e=document.querySelector(s);return e?e.getBoundingClientRect():null},ph=q('#top .phase'),vt=q('#top .vitals'),tp=$('tip').hidden||!$('tipText').textContent?null:q('#tip');
-  const land=H<=500&&W>H,deskRow=vt&&ph&&vt.top<H*.4&&ph.left-vt.right>360;let left,right,top;
-  if(deskRow){left=vt.right+16;right=ph.left-16;top=12}
+  const q=s=>{const e=document.querySelector(s);return e?e.getBoundingClientRect():null},ph=q('#top .phase'),vt=$('top').querySelector('.vitals:not([hidden])')?q('#top .vitals'):null,tp=$('tip').hidden||!$('tipText').textContent?null:q('#tip');
+  const land=H<=500&&W>H,vl=vt&&vt.top<H*.4?vt.right:0,deskRow=!land&&ph&&ph.left-vl>360;   /* v0.9.9: no health panel in matches, the row starts at the left edge */
+  let left,right,top;
+  if(deskRow){left=vl+16;right=ph.left-16;top=12}
   else if(land){const mm=typeof isCity==='function'&&isCity()&&typeof boMapBox==='function'?boMapBox():null;left=16;right=(mm?mm.x:ph?ph.left:W)-8;top=12}
   else{left=12;right=W-12;top=Math.max(q('#top').bottom,tp?tp.bottom:0)+8}
   const w=Math.min(640,Math.max(200,right-left)),x=Math.round(left+(right-left-w)/2);
@@ -135,7 +138,7 @@ function hud(dt){
   const rj=game.pvp==='ffa'&&!game.job&&!p.alive&&game.phase!=='over';if($('respawnJobs').hidden===rj){hid($('respawnJobs'),!rj);if(rj)syncJobPick()}
   $('hpF').style.transform=`scaleX(${Math.max(0,p.hp/p.max)})`;txt($('hpN'),p.alive?String(Math.ceil(p.hp)):'DOWN');cls($('hpM'),'alarm',!p.alive);
   mateRows();
-  hud.t=(hud.t||0)-dt;if(hud.t<=0){hud.t=.5;const b=$('top').getBoundingClientRect().bottom;if(b>0){hud.topB=b;const v=Math.round(b+10)+'px';if($('tip').style.top!==v)$('tip').style.top=v}
+  hud.t=(hud.t||0)-dt;if(hud.t<=0){hud.t=.5;const b=$('top').getBoundingClientRect().bottom;{const ph=document.querySelector('#top .phase');if(ph)hud.phL=ph.getBoundingClientRect().left}if(b>0){hud.topB=b;const v=Math.round(b+10)+'px';if($('tip').style.top!==v)$('tip').style.top=v}
     const tp=$('tip');hud.tipB=tp.hidden||!$('tipText').textContent?0:tp.getBoundingClientRect().bottom}
   if($('tipText').textContent&&(game.pvp==='ffa'&&game.time>9||game.pvp==='base'&&game.phase==='raid'))setTip('');
   const PV=game.pvp,clock=t=>{const s=Math.max(0,Math.ceil(t));return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`};

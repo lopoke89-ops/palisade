@@ -22,8 +22,8 @@ let BO_MAP=null;
 let BO_BOX=null;
 function boMapBox(){const now=performance.now(),bb=typeof bossBarsBox==='function'?bossBarsBox():null,bk=bb?bb.bottom+'|'+bb.left:'';
   if(BO_BOX&&now-BO_BOX.t<500&&BO_BOX.W===W&&BO_BOX.H===H&&BO_BOX.bk===bk)return BO_BOX;
-  const ph=document.querySelector('#top .phase').getBoundingClientRect(),land=H<=500&&W>H,w=Math.round(Math.min(DESK?170:128,W*.3)),h=Math.round(w/2),tipH=DESK?50:40;
-  const nt=$('phaseNote'),noteH=nt.hidden||!nt.textContent?(DESK?18:17):0;   // room kept for the phase note (below the box; on landscape its 150 px width), so the first one doesn't move the map
+  const ph=document.querySelector('#top .phase').getBoundingClientRect(),land=H<=500&&W>H,w=Math.round(Math.min(DESK?170:128,W*.3)),h=Math.round(w/2),tipH=DESK?0:40;   /* desktop: the tip is a narrow centred line, it never reaches the mini-map */
+  const nt=$('phaseNote'),noteH=(nt.hidden||!nt.textContent)&&!nt.offsetHeight?(DESK?18:17):0;   /* v0.9.9: where the empty line already keeps its space, nothing extra */   // room kept for the phase note (below the box; on landscape its 150 px width), so the first one doesn't move the map
   const b=land?{x:Math.round(Math.min(ph.left,ph.right-150)-8-w),y:Math.round(ph.top)}:{x:Math.round(ph.right-w),y:Math.round(Math.max(ph.bottom+noteH,Math.max(hud.topB||0,ph.bottom+noteH)+10+tipH)+8)};
   // v0.9.7.3: the boss bars keep their place, so while they're up the mini-map steps below them (landscape: below the
   // strip; portrait: below the bars, or to the left edge if the build kit is in the way there)

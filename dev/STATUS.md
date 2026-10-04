@@ -7,6 +7,30 @@ Big U's latest completed local scope is recorded in the [presentation prompt](pl
 
 The Claude audit URL still requires sign-in in the available browser session. Big U supplied an exported copy at `D:\downloads\Untitled.md`, which was read on September 29. Its newest Progress entry is v0.9.3, so its release claims are superseded by the verified v0.9.3.3 release below. The external artifact itself was not edited here.
 
+## v0.9.9: health above heads
+
+From Part A of the [work order](plans/nameplates-and-tables-work-order.md) (Big U, October 4: H1–H5).
+- **The top-left health panel is gone during matches.** Health is drawn above heads instead, after the lighting so it reads at night:
+  - **you (H1):** a bar and your number, the only number shown;
+  - **teammates and Delgado:** their name and a bar;
+  - **PvP (H5):** the other side shows names only, no bar.
+- **Core health (H2)** sits in the phase box under the timer.
+- **Delgado's FOLLOW / DEFEND (H3)** is a small button in the phase box, shown to the host only. On landscape phones it reads just FOLLOW or DEFEND, to the left of the title.
+- **Off-screen teammates (H4):** an arrow on the screen edge with their name, blinking red with "· DOWN" while they're downed.
+- **Also:**
+  - low health pulses your bar and adds a faint red edge to the screen;
+  - downed players keep the revive ring;
+  - the Black Out ready ✓ moves onto the nameplate.
+- **Layout:**
+  - desktop and landscape phones put core health and Delgado's button beside the timer, so the phase box stays short and the mini-map and build kit keep their room;
+  - the message banner uses the old panel's space on desktop;
+  - the landscape boss strip stays left of the phase box.
+- **Tests:**
+  - New `nameplates`.
+  - `hud_layout` was rewritten for the removed panel.
+  - `blackout_hud`, `toast_queue`, `delgado`, `ammo_armory`, `tips_toggle`, `solo` and `blackout_run` pass.
+  - Screenshots in [evidence/v0.9.9](evidence/v0.9.9/).
+
 ## v0.9.8.3: Frostpeak cliffs stop clipping into the stairs
 
 From the [work order](plans/frostpeak-stairs-work-order.md) (Big U, October 4).

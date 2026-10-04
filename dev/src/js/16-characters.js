@@ -1101,7 +1101,7 @@ function drawBossBars(top){
   // v0.9.3.9: landscape phones get one thin strip across the top centre (two XL bosses side by side), not stacked cards
   {const list=enemies.filter(e=>e.type==='boss'&&BOSSES[e.boss]);if(list.length>=4){drawBossCombined(list,H<=500&&W>H?10:Math.max(W<700?(hud.topB||top)+10:top+10,(hud.tipB||0)+10));return}}   // v0.9.6.4
   if(H<=500&&W>H){const list=enemies.filter(e=>e.type==='boss'&&BOSSES[e.boss]);if(!list.length)return;
-    const n=list.length,gap=8,tot=Math.min(460,Math.max(220,W-420)),w=(tot-gap*(n-1))/n,x0=(W-tot)/2,y=10;
+    const n=list.length,gap=8,tot=bossStripW(),w=(tot-gap*(n-1))/n,x0=(W-tot)/2,y=10;
     list.forEach((e,i)=>{const B=bossInfo(e.boss),f=Math.max(0,e.hp/e.max),x=x0+i*(w+gap);
       g.fillStyle='rgba(12,10,8,.72)';g.fillRect(x-2,y-2,w+4,19);
       g.font='800 11px "Big Shoulders Stencil Display", "Arial Narrow", sans-serif';g.textAlign='left';g.fillStyle=B.col;g.fillText(B.name,x+2,y+8);
