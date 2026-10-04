@@ -2,17 +2,17 @@
 
 | | |
 |---|---|
-| **Status** | Plan. Written October 4 from Big U's bug report. Decisions B1–B6 at the end; nothing is built yet |
+| **Status** | Plan. Written October 4 from Big U's bug report. **All decisions made by Big U on October 4** (B1, B2, B4 and B5 changed from the proposals). Nothing is built yet |
 | **Build** | v0.9.7.3, client only. Protocol stays `yard-27` (presentation only; nothing new goes over the network) |
 | **Server** | None |
-| **Scope** | City Black Out HUD and lighting. Other modes are untouched unless a decision says otherwise |
+| **Scope** | Messages in **every mode** (B1, B2). Streetlamps and the mini-map in City Black Out |
 | **Risk** | Low. Every change is layout, timing or lighting values, each behind `isCity()` / `blackout()` |
 
 ## Tickets
 
 | ID | Title | Severity | Area |
 |---|---|---|---|
-| PAL-0973-1 | Phase banners too big and in the way in City Black Out | **High**: blocks the play area during fights | HUD / messages |
+| PAL-0973-1 | Phase banners too big, off-centre and in the way (every mode) | **High**: blocks the play area during fights | HUD / messages |
 | PAL-0973-2 | Streetlamps barely light the city | Medium: hurts readability at night | Rendering / lighting |
 | PAL-0973-3 | Mini-map in the wrong corner | Medium: layout | HUD / mini-map |
 
@@ -20,7 +20,7 @@
 
 ## PAL-0973-1: Phase banners too big and in the way
 
-**Reported (Big U):** the pop-ups are too big in City Black Out. Keep the style, move them out of the way toward the top, and make them fade 1.5 seconds sooner.
+**Reported (Big U):** the pop-ups are too big in City Black Out. Keep the style, move them out of the way toward the top, and make them fade 1.5 seconds sooner. Follow-up: do it in **every mode**, bring the times **closer to the original** (3 s before v0.9.7.1), and **centre the text**, which reads off-centre.
 
 **Repro:**
 1. Start City Black Out, any size, solo or co-op.
@@ -34,7 +34,7 @@
 
 **Root cause:** v0.9.7.1 made phase messages bigger and longer for readability, in every mode. The positioning is one rule for all modes (`style.css`, `#toast` / `#toast.phase`), and the times are fixed in `toastShow()` (`11-hud-chat.js`: phase 6 s, minor 3.5 s). In Black Out, messages arrive back to back (attack, held, next target), so a big banner in the centre is on screen most of the run.
 
-**Fix spec (City Black Out only; class `bo` on `#toast` while `isCity()`):**
+**Fix spec (every mode, B1):**
 - **Smaller banner, same style:**
   - title from `clamp(28px, 8vw, 46px)` to `clamp(18px, 4.6vw, 28px)`;
   - detail line 13 px (14 px on desktop), up to two lines;
@@ -45,24 +45,31 @@
   - **Desktop:** top of the screen (12 px + safe area), centred in the gap between the vitals (right edge 324) and the phase box (left edge 1164), at most 640 px wide.
   - **Phone landscape:** top of the screen, from the left gutter to the mini-map's left edge minus 8 px (see PAL-0973-3); the vitals sit bottom-left there, so the top-left is free.
   - **Phone portrait:** the top row is full (vitals left, phase box right, y 12–135), so the banner goes **right under the top HUD**, full width, below the tip box if one is showing. See B3 for how it shares space with the mini-map.
-- **Boss bars:** the canvas boss bars are drawn at the top centre (`drawBossBars`, below the HUD row). While a banner is up on desktop, the bars move down by the banner's height so they never overlap (B4).
-- **Times:** 1.5 s shorter in Black Out:
-  - **phase messages 6 → 4.5 s, minor 3.5 → 2 s;**
+- **Centred text:**
+  - the title and the detail line are centred on the panel's own centre, not the screen's or the gap's;
+  - the panel's box is the measured gap, with no stray side padding from the old `left: 16px / right: 16px` rule;
+  - check: the text's centre is within 2 px of the panel's centre at all three sizes.
+- **Boss bars stay where they are** (B4). The banner gets out of their way:
+  - **desktop:** no clash, since the banner is in the top row and the bars are under the HUD;
+  - **phone portrait:** the bars sit right under the top HUD, so while any are drawn the banner goes just below them;
+  - **phone landscape:** the bars are a strip across the top, so the banner goes just below the strip.
+  - The banner reads the bars' height from `drawBossBars`' own layout (one, two, three to four, or the combined bar) each frame.
+- **Times (every mode, B2), back toward the original 3 s:**
+  - **phase messages 6 → 4.5 s, minor 3.5 → 3 s** (the pre-v0.9.7.1 time);
   - Settings → Message time still multiplies these (×1.5, ×2);
   - the queue, tap-to-dismiss and the "latest phase message under the phase box" stay as in v0.9.7.1.
-- **Other modes keep v0.9.7.1's centred banner and times** (B1, B2).
 
 **Acceptance criteria:**
-- [ ] At 1366×820, 390×844 and 844×390, a Black Out phase banner sits in the top band and overlaps none of: vitals, phase box (pause, timer, READY / START button, phase note), build kit, mini-map (except as B3 allows), joysticks.
+- [ ] At 1366×820, 390×844 and 844×390, in Black Out and in a normal raid, a phase banner sits in the top band and overlaps none of: vitals, phase box (pause, timer, READY / START button, phase note), build kit, mini-map (except as B3 allows), joysticks, **boss bars** (with one, two, and four bosses up).
+- [ ] Title and detail text are centred on the panel (within 2 px).
 - [ ] Banner height is at most 90 px on desktop and 100 px on phones, with a two-line detail.
-- [ ] A phase message is gone 4.5 s after it shows, a minor one after 2 s (×1); ×1.5 and ×2 scale them.
+- [ ] A phase message is gone 4.5 s after it shows, a minor one after 3 s (×1); ×1.5 and ×2 scale them.
 - [ ] Back-to-back messages still queue in order; none is lost.
-- [ ] Outside Black Out, banners are unchanged (`toast_queue` passes as is).
 
 **Tests:**
-- Extend `toast_queue`:
-  - a Black Out pass at the three sizes covering placement, height, no overlaps and the 4.5 / 2 s times;
-  - the existing assertions stay for the other modes.
+- Update `toast_queue`:
+  - new times (4.5 / 3 s);
+  - top placement, height, text centring and no overlaps at the three sizes, in Black Out and in a normal raid, with boss bars up.
 - `hud_layout` gains Black Out with a banner up.
 
 ---
@@ -81,14 +88,14 @@
 - The night darkness in the city is `L .70` (`.80` with the power out).
 
 **Fix spec:**
-- **Bigger, stronger pools:** radius **1.9 → 3.2 tiles**, strength **0.60 → 0.85**. With lamps 6 tiles apart, neighbouring pools now overlap, so a road reads as one lit strip.
+- **Bigger, stronger pools** (B5): radius **1.9 → 3.2 tiles**, strength **0.60 → 0.85**.
+- **More lamps** (B5): spacing **6 → 4 tiles** along every sidewalk (about 50 → 75 lamps on the 64×64 city). With 3.2-tile pools 4 tiles apart, the roads read as one continuous lit strip, with brighter spots under each lamp.
 - **Warm colour:** a faint sodium-orange glow on each pool (the same additive glow sprite the muzzle flashes use, at about 18% strength), so lamplight reads as streetlight, not just less dark.
 - **Lamp heads:** the lit bulb on each lamp post gets a small bright halo, so the source is visible from a distance.
 - **Unchanged:**
   - the Power Station rule: lose it and the lamps go dark, and the city's darkness rises to `.80`;
   - Main Command's floodlights and the POI light pools;
-  - lamp positions, so the spacing stays 6 tiles (B5).
-- **Cost:** the hole sprites are cached per size and only on-screen lamps are stamped. Expect about 10–20 more stamps a frame at most, plus the same number of glow sprites. `blackout_perf` records it.
+- **Cost:** the hole sprites are cached per size and only on-screen lamps are stamped. More lamps means roughly 15–30 lamp stamps a frame instead of 10–20, plus the same number of glow sprites. `blackout_perf` records it.
 
 **Acceptance criteria:**
 - [ ] With the Power Station held, a road between two lamps reads as continuously lit: the darkness between pools is no more than half of the unlit night darkness. A pixel test samples the midpoint between two lamps.
@@ -97,7 +104,7 @@
 
 **Tests:**
 - Extend `blackout_map`:
-  - lamp hole radius and strength;
+  - lamp spacing (4 tiles) and count, hole radius and strength;
   - a midpoint brightness sample between two lamps, with power held and with power lost.
 - `blackout_perf` re-run for the gate.
 
@@ -151,13 +158,13 @@
 
 There is no server work and no protocol change, so guests on v0.9.7.2 can still play with v0.9.7.3 hosts.
 
-## Decisions for Big U
+## Decisions (all made by Big U, October 4)
 
-| # | Question | Proposal |
+| # | Question | Decision |
 |---|---|---|
-| B1 | Smaller top banner: Black Out only, or every mode? | Black Out only (other modes are fine centred, and have far fewer messages) |
-| B2 | 1.5 s shorter: Black Out only, or every mode? | Black Out only, to match B1 (phase 4.5 s, minor 2 s) |
-| B3 | Phone portrait: the banner and the mini-map both want the space under the top HUD | The banner goes there for its 4.5 s and the mini-map fades out underneath it, then comes back |
-| B4 | Boss bars while a banner is up (desktop) | They move down by the banner's height, so both stay readable |
-| B5 | Streetlamps: bigger pools only, or more lamps too? | Bigger, brighter pools (3.2 tiles, 85%) plus a warm glow; lamp spacing stays 6 tiles |
-| B6 | Portrait mini-map when the tip box hides | Stays where it is for the whole run (no jumping) |
+| B1 | Smaller top banner: Black Out only, or every mode? | **Every mode**, same style, with the text centred |
+| B2 | 1.5 s shorter: Black Out only, or every mode? | **Every mode**, closer to the original 3 s: phase 4.5 s, minor 3 s |
+| B3 | Phone portrait: the banner and the mini-map both want the space under the top HUD | **As proposed:** the banner goes there for its 4.5 s and the mini-map fades out underneath it, then comes back |
+| B4 | Boss bars while a banner is up | **They stay where they are**; the banner moves to avoid them (below them on phones) |
+| B5 | Streetlamps: bigger pools only, or more lamps too? | **Both:** bigger, brighter pools (3.2 tiles, 85%) plus a warm glow, and lamps every 4 tiles instead of 6 |
+| B6 | Portrait mini-map when the tip box hides | **As proposed:** stays where it is for the whole run (no jumping) |
