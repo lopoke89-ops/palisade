@@ -7,6 +7,19 @@ Big U's latest completed local scope is recorded in the [presentation prompt](pl
 
 The Claude audit URL still requires sign-in in the available browser session. Big U supplied an exported copy at `D:\downloads\Untitled.md`, which was read on September 29. Its newest Progress entry is v0.9.3, so its release claims are superseded by the verified v0.9.3.3 release below. The external artifact itself was not edited here.
 
+## v0.9.8.3: Frostpeak cliffs stop clipping into the stairs
+
+From the [work order](plans/frostpeak-stairs-work-order.md) (Big U, October 4).
+- **The bug:** the upper cliff wall just left of each staircase and ramp painted over the top steps. Stairs are drawn into the ground layer first; cliff faces come later in the depth-sorted pass (so they can hide players behind a lip), so they always landed on top.
+- **The fix:** each cliff face now skips the on-screen outline of any staircase or ramp in front of it (rails included). Players behind a lip are still hidden as before.
+- **Handrails (D1):** posts and a rail down both sides of every staircase and ramp. The sides already blocked movement.
+- **Cliff texture (D2):** a snow lip, a small snow ledge and a crack or two on each face, placed by tile so they're the same every frame.
+- **Unchanged:** the dark triangle on the right of each connector is intended (a shadow, Big U). Heights, collision and pathing are unchanged.
+- **Tests:**
+  - New `frost_connectors` (cliffs drawn in magenta: 0 magenta pixels on every connector at both sizes; the old build had 360 on each).
+  - `winter_elevation`, `winter_combat` and `campaign_map_evac` pass.
+  - Before and after screenshots in [evidence/v0.9.8.3](evidence/v0.9.8.3/).
+
 ## v0.9.8.2: animated menu backgrounds move on every page
 
 From the [work order](plans/menu-backgrounds-work-order.md) (Big U, October 4: full speed everywhere, Account too, keep reduce motion).
