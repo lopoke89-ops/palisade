@@ -23,14 +23,36 @@ function toast(big,small){if(demo)return;const m={big:String(big),small:small?St
   while(TOAST_Q.length>3){const i=TOAST_Q.findIndex(q=>q.kind==='minor');if(i<0)break;TOAST_Q.splice(i,1)}}
 function toastShow(m){const el=$('toast');toastCur=m;el.textContent='';const t=document.createElement('span');t.className='tt';t.textContent=m.big;el.append(t);
   if(m.small){const s=document.createElement('small');s.textContent=m.small;el.append(s)}
-  el.className='on '+(m.kind==='minor'?'minor':'phase '+m.kind);toastT=(m.kind==='minor'?3.5:6)*(cfg.msgTime||1);
+  el.className='on '+(m.kind==='minor'?'minor':'phase '+m.kind);toastT=(m.kind==='minor'?3:4.5)*(cfg.msgTime||1);toastPlace();   // v0.9.7.3: 4.5 s / 3 s
   if(m.kind!=='minor'){const n=$('phaseNote');if(n){n.textContent=m.big;n.hidden=false}}}
-function toastTick(dt){if(!toastCur)return;toastT-=dt;if(toastT>0)return;$('toast').classList.remove('on');toastCur=null;if(TOAST_Q.length)toastShow(TOAST_Q.shift())}
-function toastClear(){TOAST_Q.length=0;toastCur=null;toastT=0;const el=$('toast');if(el)el.className='';const n=$('phaseNote');if(n){n.textContent='';n.hidden=true}}
+function toastTick(dt){if(!toastCur)return;toastPlace();toastT-=dt;if(toastT>0)return;$('toast').classList.remove('on');toastCur=null;if(TOAST_Q.length)toastShow(TOAST_Q.shift())}
+// v0.9.7.3: where the banner goes, from the live HUD: the top row between the vitals and the phase box on desktop,
+// the top-left beside the mini-map on landscape phones, under the top bar (and tip) on portrait phones; and always
+// below the boss bars where they would overlap (the bars keep their place)
+function bossBarsBox(){const list=enemies.filter(e=>e.type==='boss'&&BOSSES[e.boss]),n=list.length;if(!n||demo||game.pvp)return null;
+  if(H<=500&&W>H){if(n>=4){const w=Math.min(440,W-48);return{left:(W-w)/2-3,right:(W+w)/2+3,top:7,bottom:47}}const tot=Math.min(460,Math.max(220,W-420));return{left:(W-tot)/2,right:(W+tot)/2,top:8,bottom:29}}
+  const y=Math.max(W<700?(hud.topB||110)+10:120,(hud.tipB||0)+10),w=Math.min(440,W-48),h=n>=4?40:n>2?23*n:32*n;return{left:(W-w)/2-3,right:(W+w)/2+3,top:y-3,bottom:y-3+h}}
+let toastBox=null;
+function toastPlace(){const el=$('toast');if(!toastCur||!el)return;
+  const q=s=>{const e=document.querySelector(s);return e?e.getBoundingClientRect():null},ph=q('#top .phase'),vt=q('#top .vitals'),tp=$('tip').hidden||!$('tipText').textContent?null:q('#tip');
+  const land=H<=500&&W>H,deskRow=vt&&ph&&vt.top<H*.4&&ph.left-vt.right>360;let left,right,top;
+  if(deskRow){left=vt.right+16;right=ph.left-16;top=12}
+  else if(land){const mm=typeof isCity==='function'&&isCity()&&typeof boMapBox==='function'?boMapBox():null;left=16;right=(mm?mm.x:ph?ph.left:W)-8;top=12}
+  else{left=12;right=W-12;top=Math.max(q('#top').bottom,tp?tp.bottom:0)+8}
+  const w=Math.min(640,Math.max(200,right-left)),x=Math.round(left+(right-left-w)/2);
+  const bb=bossBarsBox();if(bb&&bb.left<x+w&&bb.right>x){const h=el.offsetHeight||90;if(top<bb.bottom&&top+h>bb.top)top=bb.bottom+6}
+  const put=(x,w)=>{const sx=x+'px',sy=Math.round(top)+'px',sw=Math.round(w)+'px';if(el.style.left!==sx)el.style.left=sx;if(el.style.top!==sy)el.style.top=sy;if(el.style.width!==sw)el.style.width=sw;
+    toastBox={left:x,right:x+w,top:Math.round(top),bottom:Math.round(top)+(el.offsetHeight||0)}};
+  put(x,w);
+  // pushed down onto the build kit (portrait phones with boss bars up): narrow to the room left of the kit column
+  if(!deskRow&&!land){let kl=W,kt=H;for(const k of document.querySelectorAll('#kit > *')){if(k.hidden||k.closest('[hidden]'))continue;const r=k.getBoundingClientRect();if(!r.width)continue;kl=Math.min(kl,r.left);kt=Math.min(kt,r.top)}
+    if(kl<x+w&&toastBox.bottom>kt-4){const w2=Math.max(200,kl-8-left);put(left,w2)}}}
+const toastRect=()=>toastCur&&$('toast').classList.contains('on')?toastBox:null;
+function toastClear(){TOAST_Q.length=0;toastCur=null;toastT=0;toastBox=null;const el=$('toast');if(el){el.className='';el.style.left=el.style.top=el.style.width=''}const n=$('phaseNote');if(n){n.textContent='';n.hidden=true}}
 function feed(text,col){rec(['q',text,col]);feedLocal(text,col)}
 function feedLocal(text,col){if(demo)return;const box=$('feed'),el=document.createElement('span');el.textContent=text;el.style.color=col;box.prepend(el);
   while(box.children.length>4)box.lastChild.remove();setTimeout(()=>el.classList.add('old'),5000);setTimeout(()=>el.remove(),5700)}
-function feedClear(){$('feed').textContent=''}
+function feedClear(){const f=$('feed');f.textContent='';f.style.position=f.style.top=f.style.right=f.style.marginTop=''}   // v0.9.7.3: the Black Out placement goes too
 /* ---- text chat: the host relays every line, so it reaches everyone in the lobby and in the game ---- */
 const chatLines=[];let chatNew=false;
 const chatOpen=()=>!$('chatBar').hidden;

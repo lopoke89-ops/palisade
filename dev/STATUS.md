@@ -1,11 +1,30 @@
 # PALISADE project status
 
-Updated October 3, 2026. This is the current status record for the clone. The older project handoff and v0.9.3 hardening prompt describe a superseded release order.
+Updated October 4, 2026. This is the current status record for the clone. The older project handoff and v0.9.3 hardening prompt describe a superseded release order.
 
 For a consolidated list of what remains from those documents, see the [current project blueprint](PROJECT_BLUEPRINT_2026-09-29.md).
 Big U's latest completed local scope is recorded in the [presentation prompt](plans/backgrounds-and-character-animation-prompt.md). The earlier [cosmetic and hardening prompt](plans/next-cosmetics-and-hardening-prompt.md) remains the record of v0.9.3.2 and its deferred work.
 
 The Claude audit URL still requires sign-in in the available browser session. Big U supplied an exported copy at `D:\downloads\Untitled.md`, which was read on September 29. Its newest Progress entry is v0.9.3, so its release claims are superseded by the verified v0.9.3.3 release below. The external artifact itself was not edited here.
+
+## v0.9.7.3: City Black Out polish (banners, streetlamps, mini-map)
+
+From the [work order](plans/blackout-polish-work-order.md) (all decisions by Big U, October 4). Client only; protocol stays **`yard-27`**. Evidence is in [evidence/v0.9.7.3](evidence/v0.9.7.3/README.md).
+
+- **Banners (every mode):**
+  - smaller, same style: title 18-28 px, detail 13 px (14 on desktop) and at most two lines, 3 px bands; at most 86 px tall on desktop;
+  - at the top of the screen: desktop in the gap between the vitals and the phase box; landscape phones top-left up to the mini-map or phase box; portrait phones right under the top bar (and tip);
+  - placed from the live HUD each frame; they drop below the boss bars when they'd overlap (the bars keep their place), and on portrait phones they narrow to the room left of the build kit if pushed that far;
+  - **off-centre text fixed.** The banner's `phase` class also matched the HUD phase box's rule (a right-aligned grid), so titles sat to the right. Text is now centred on the panel (checked within 2 px);
+  - times: phase messages 6 → 4.5 s, minor 3.5 → 3 s (Message time still multiplies them).
+- **Streetlamps:** every 4 tiles instead of 6 (50 → 60 lamps on the 64×64 city), pools 1.9 → 3.5 tiles at 60 → 85%, a faint warm glow on each pool and a halo on each bulb. Still dark when the Power Station falls.
+  - **Changed from the work order:** the radius is 3.5 tiles, not 3.2. Two lamps 4 tiles apart only meet the order's own bar (the darkness at their midpoint at most half the night's) from 3.4 up; at 3.5 the worst pair is at 48%.
+- **Mini-map:** top right under the phase box (desktop and portrait), beside it on its left on landscape phones.
+  - Room is kept for the phase note, so the first message doesn't move it; it stays put when the tip hides (B6).
+  - While boss bars are up it steps below them (on portrait phones, to the left edge if the build kit is in the way).
+  - On portrait phones it fades out under a banner and comes back after (B3).
+  - **Changed from the work order:** the kill feed sits beside the mini-map on its left, not under it. Under it, the feed ran into the build kit at all three sizes.
+- **Tests:** new `blackout_hud`; `toast_queue` (new times, placement, centring and overlaps at three sizes, in a normal raid and Black Out, with 0/1/2/4 bosses) and `blackout_map` (lamp spacing, pool size, midpoint brightness) extended.
 
 ## v0.9.7.2: new main menu music, music starts on the first click
 

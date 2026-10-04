@@ -416,7 +416,7 @@ function render(dt){
   PM('parts');for(const q of parts){if(q.kind.startsWith('finish:'))continue;const c=iso(q.x,q.y);paintSceneParticle(g,q,c[0],c[1]-q.z,u,game.time)}
   PM('front');drawCache(caches.front);PM('light');
   drawLighting();drawFinishEffects();drawBossFx();PM('flash');
-  g.globalCompositeOperation='lighter';
+  g.globalCompositeOperation='lighter';cityLampGlow();
   // glows stamped 1:1 from pre-drawn sizes, like the light holes (stretching the 64 px glow was the slow part)
   if(flashes.length){g.setTransform(1,0,0,1,0,0);
     for(const f of flashes){const c=flashPoint(f),a=f.life/f.max,r=TW2*f.r*(f.muzzle?1:2.2)*(f.muzzle?1:1.4-a*.4),im=softDot(GLOW_DOTS,r*DPR,SOFT_GLOW);
