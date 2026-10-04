@@ -351,7 +351,7 @@ locker=normLocker(locker);   // the locker loaded before these items existed: gi
 const DEFAULT_BG='campfire',lobbyBgId=()=>BGS[locker.eq.bg]?locker.eq.bg:DEFAULT_BG;
 // the lobby background canvas: shown whenever the menu is up outside a game (the demo yard behind it is never drawn)
 let bgDrawn='',bgAt=0;
-const LOBBY={bgFps:DESK?30:15,bgDpr:DESK?1.5:1,stageTouch:100,stageDesk:50};
+const LOBBY={bgFps:DESK?30:15,bgDpr:DESK?1.5:.75,stageTouch:100,stageDesk:50};   // v0.9.8.2: phones paint the soft background at 3/4 resolution (looks the same, about a quarter of the cost)
 function syncBg(){const on=!$('menu').hidden&&demo;$('lobbyBg').hidden=!on;bgDrawn=''}
 const RM=matchMedia('(prefers-reduced-motion: reduce)'),reduceMotion=()=>RM.matches;
 function drawLobbyBg(now){

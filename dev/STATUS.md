@@ -12,10 +12,19 @@ The Claude audit URL still requires sign-in in the available browser session. Bi
 From the [work order](plans/menu-backgrounds-work-order.md) (Big U, October 4: full speed everywhere, Account too, keep reduce motion).
 - Animated backgrounds now move behind the Locker, Tables, Skills, Settings and Account pages, at the same rate as PLAY. They used to freeze there: a v0.9.1 speed choice that every later page inherited.
 - Still only for still backgrounds, or when the system asks for reduced motion.
-- **Cost (measured):** phone viewport with the CPU slowed 4×, Hellgate equipped:
-  - **Locker:** went from 47.6 to 33.8 frames per second (its character stage and grid were already the heaviest page).
-  - **PLAY and Skills:** unchanged (38-39 and 60).
-  - **If phones struggle on the Locker:** run the background at a lower rate on that page only.
+- **Speed work so the Locker keeps up** (it has three stage-sized character layers on top of the background):
+  - phones paint the soft background at 3/4 resolution;
+  - your figure repaints only a box around itself instead of wiping the whole layer each turn step. New `stage_box_fit` checks every skin and headwear × class × 6 angles (4,128 combinations) fits the box with room to spare;
+  - the Locker's demo tracer shot clears only where it was.
+- **Locker frame rate, phone viewport, Hellgate equipped:**
+
+| CPU | still background (before) | animated, first try | animated, final |
+|---|---|---|---|
+| normal | 60 | 60 | 60 |
+| 2× slower | 57 | 57 | 57 |
+| 4× slower | 47.6 | 33.8 | 47 |
+
+The test machine has no graphics chip (everything is composited in software), so the slow-CPU numbers are worse than a real phone's.
 - Test: new `menu_bg_motion` (8 pages × 3 sizes, animated and reduced motion). Evidence in [evidence/v0.9.8.2](evidence/v0.9.8.2/).
 
 ## v0.9.8.1: Tables fixes (Big U's feedback)

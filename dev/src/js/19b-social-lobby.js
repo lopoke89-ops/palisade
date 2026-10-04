@@ -26,7 +26,7 @@ function renderIdentity(){
 function syncPartyShell(){
  const pg=$('menu').dataset.page,on=STAGE_PAGES.includes(pg);$('partyShell').hidden=!on;$('menu').classList.toggle('partyMenu',on);$('menu').classList.toggle('cardMenu',CARD_PAGES.includes(pg));
  document.querySelectorAll('[data-nav]').forEach(b=>{const cur=b.dataset.nav===pg||(b.dataset.nav==='multi'&&pg==='lobby');if(cur)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
- if(on){renderIdentity();renderPartyState();partyPaintAt=0;partySig='';partyMeSig='';stageLay=''}
+ if(on){renderIdentity();renderPartyState();partyPaintAt=0;partySig='';partyMeSig='';stageLay='';partyMeBox=''}
  if(!FR.timer&&socialAccount()){friendsPoll();friendsTick()}
  if(on&&MAP_PAGES.includes(pg))renderMapPanel();
  if(typeof renderHome==='function')renderHome();
@@ -103,7 +103,12 @@ function drawPartyPreview(now){
  const charSig=sig+'|'+me.cls+me.cos+'|'+step.toFixed(4)+'|'+tick+'|'+lk.breath,meSig=charSig+'|'+at;
  if(meSig===partyMeSig)return;partyMeSig=meSig;partyPaintAt=now;
  const cv=$('partyMe'),x=cv.getContext('2d'),[mx,my,ms]=stageMe(L);
- if(!lk.aura){x.clearRect(0,0,cv.width,cv.height);paintWardrobeCharacter(x,lk,step,tick,ms,mx,my-4,false);return}
+ // v0.9.8.2: without an aura only a generous box around the figure is cleared and repainted (wiping the whole stage-sized
+ // layer on every turn step was a big part of the Locker's frame cost on slow phones)
+ if(!lk.aura){const T0=x.getTransform(),k0=T0.a,qx=Math.max(0,Math.floor((mx-ms*40)*k0+T0.e)),qy=Math.max(0,Math.floor((my-4-ms*70)*k0+T0.f)),qw=Math.min(cv.width-qx,Math.ceil(ms*80*k0)),qh=Math.min(cv.height-qy,Math.ceil(ms*86*k0)),q=qx+','+qy+','+qw+','+qh;
+   x.save();x.setTransform(1,0,0,1,0,0);if(partyMeBox!==q){x.clearRect(0,0,cv.width,cv.height);partyMeBox=q}else x.clearRect(qx,qy,qw,qh);x.beginPath();x.rect(qx,qy,qw,qh);x.clip();x.setTransform(T0);
+   paintWardrobeCharacter(x,lk,step,tick,ms,mx,my-4,false);x.restore();return}
+ partyMeBox='';   // an aura outfit draws wider: the next plain outfit starts from a full clear
  // only the box around the figure is cleared and redrawn for each frame of the effect (the whole layer only when the figure turns)
  const T=x.getTransform(),k=T.a,bx=Math.max(0,Math.floor((mx-ms*24)*k+T.e)),by=Math.max(0,Math.floor((my-4-ms*50)*k+T.f)),bw=Math.min(cv.width-bx,Math.ceil(ms*48*k)),bh=Math.min(cv.height-by,Math.ceil(ms*62*k));
  let full=false;
@@ -113,19 +118,24 @@ function drawPartyPreview(now){
  x.save();x.setTransform(1,0,0,1,0,0);if(full)x.drawImage(partyCharCv,0,0);else x.drawImage(partyCharCv,bx,by,bw,bh,bx,by,bw,bh);x.restore();
  x.save();x.beginPath();x.rect((bx-T.e)/k,(by-T.f)/k,bw/k,bh/k);x.clip();paintAura(x,lk.aura,mx,my-4,ms,ta,1,'moving');x.restore();
 }
-let stageFxAt=0,stageFxOn=false;
+let stageFxAt=0,stageFxOn=false,partyMeBox='',stageFxBox=null;
 function drawStageFx(now){
  const on=stageVisible()&&$('menu').dataset.page==='locker';
- if(!on||reduceMotion()){if(stageFxOn){stageFxOn=false;const c=$('partyFx');c.getContext('2d').clearRect(0,0,c.width,c.height)}return}
+ // v0.9.8.2: only the boxes the shot covered are cleared (wiping the stage-sized layer every frame of the shot was costly on slow phones)
+ const fxClear=()=>{const c=$('partyFx'),x=c.getContext('2d'),b=stageFxBox;x.save();x.setTransform(1,0,0,1,0,0);if(b)x.clearRect(b[0],b[1],b[2],b[3]);else x.clearRect(0,0,c.width,c.height);x.restore();stageFxBox=null};
+ if(!on||reduceMotion()){if(stageFxOn){stageFxOn=false;fxClear()}return}
  // one quick shot every 1.3 s; between shots the layer is left alone (clearing a stage-sized layer costs as much as drawing)
  const ph=(now%1300)/1300,live=ph>.05&&ph<.4;
- if(!live){if(stageFxOn){stageFxOn=false;const c=$('partyFx');c.getContext('2d').clearRect(0,0,c.width,c.height)}return}
+ if(!live){if(stageFxOn){stageFxOn=false;fxClear()}return}
  if(now-stageFxAt<33)return;stageFxAt=now;stageFxOn=true;
- const cv=$('partyFx'),x=cv.getContext('2d');x.clearRect(0,0,cv.width,cv.height);
+ const cv=$('partyFx'),x=cv.getContext('2d');fxClear();
  const L=STAGE[stageLayout()],[mx,my,ms]=stageMe(L),lk=Object.assign(lookOf(locker.eq,pick.cls),{breath:stageBreath(now/1000)}),ang=stageAngle(-1,now/1000),step=Math.round(ang*90/Math.PI)*Math.PI/90;
  const m=paintWardrobeCharacter(null,lk,step,0,1,0,0,false),tip=[mx+m.tip[0]*ms,my-4+m.tip[1]*ms],dx=m.tip[0]-m.root[0],dy=m.tip[1]-m.root[1],dl=Math.hypot(dx,dy)||1,sd={x:dx/dl,y:dy/dl};
  const st=TRAILS[locker.eq.trail]||TRAILS.std,d0=(ph-.05)/.35*560,len=90*(st.len||1);
- traceSeg(x,tip[0]+sd.x*d0,tip[1]+sd.y*d0,tip[0]+sd.x*Math.max(0,d0-len),tip[1]+sd.y*Math.max(0,d0-len),st,8*(st.w||1),now/1000,false);
+ const ax=tip[0]+sd.x*d0,ay=tip[1]+sd.y*d0,bx=tip[0]+sd.x*Math.max(0,d0-len),by=tip[1]+sd.y*Math.max(0,d0-len),T=x.getTransform(),pad=40*(st.w||1);
+ const x0=Math.max(0,Math.floor((Math.min(ax,bx)-pad)*T.a+T.e)),y0=Math.max(0,Math.floor((Math.min(ay,by)-pad)*T.d+T.f)),x1=Math.min(cv.width,Math.ceil((Math.max(ax,bx)+pad)*T.a+T.e)),y1=Math.min(cv.height,Math.ceil((Math.max(ay,by)+pad)*T.d+T.f));
+ stageFxBox=[x0,y0,Math.max(0,x1-x0),Math.max(0,y1-y0)];
+ x.save();x.setTransform(1,0,0,1,0,0);x.beginPath();x.rect(x0,y0,x1-x0,y1-y0);x.clip();x.setTransform(T);traceSeg(x,ax,ay,bx,by,st,8*(st.w||1),now/1000,false);x.restore();
 }
 function socialMessage(){return !cloudOn?'Friends are available on the live site.':acct.state==='wait'?'Connecting to your account…':!socialAccount()?'Sign in with a saved account to add friends.':SOCIAL.status}
 // ---- Friends: a real request system on the server (friend_send / friend_answer / friend_cancel / friend_remove,
