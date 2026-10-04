@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Plan. Written October 4 from Big U's request. **All decisions made by Big U on October 4 (H1–H5, T1–T9, R1–R5)**; nothing is built yet |
+| **Status** | Plan. Written October 4 from Big U's request. **All decisions made by Big U on October 4 (H1–H5, T1–T9, R1–R5).** Part B (the Tables) built as v0.9.8; Part A (nameplates) next as v0.9.9 |
 | **Build** | **v0.9.8 = the Tables first** (Part B; server migration, Big U approves before it's applied). **v0.9.9 = nameplates** (Part A, client only) |
 | **Protocol** | Part A: `yard-27` → `yard-28` only if nameplate data needs new fields (it shouldn't: hp, max, alive and downed already sync). Part B never touches the match protocol; it's menu only |
 | **Scope** | The in-match HUD in **every mode**; a new main-menu tab with Blackjack and Texas Hold'em played for shards |
