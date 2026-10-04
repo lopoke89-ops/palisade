@@ -180,7 +180,7 @@
           <div><h3>CONTROLLER</h3><p>Left stick move · right stick aim · RT fire<br>LT grenade · A build (hold to keep building)<br>B ability, or sprint if your class has no ability · X armory at the stake<br>Y wall/door · d-pad left/right material · d-pad down build kit<br>View start raid · Menu pause. Change any button in Settings.</p></div>
         </div>
       </details>
-      <p class="foot">v0.9.8 · phone, desktop and controller · online co-op and PvP for up to six</p>
+      <p class="foot">v0.9.8.1 · phone, desktop and controller · online co-op and PvP for up to six</p>
     </section>
 
     <section class="page" id="pg-classes" hidden>
@@ -262,22 +262,32 @@
     <section class="page" id="pg-tables" hidden>
       <h2 class="pt">TABLES</h2>
       <div id="tbLobby">
-        <p class="lede sm">Blackjack and Texas Hold'em for shards. Sit down with 5 shards, top up any time, and whatever is in front of you goes back to your balance when you stand up.</p>
-        <div class="tbBal"><b id="tbBal">0</b> shards</div>
-        <div class="seg seg2" id="tbGame"><button type="button" data-g="bj" class="sel">BLACKJACK</button><button type="button" data-g="he">HOLD'EM</button></div>
-        <div class="seg" id="tbLim"><button type="button" data-l="100" class="sel">LIMIT 100</button><button type="button" data-l="250">LIMIT 250</button><button type="button" data-l="0">NO LIMIT</button></div>
-        <label class="tog"><input type="checkbox" id="tbSide"><span>Side bet: 1 shard a hand. Double aces or a full house pays 10 Hybrid Theory or 15 Flag Cases</span></label>
-        <button class="go" type="button" id="tbOpenBtn">OPEN A TABLE · 5 SHARDS</button>
-        <div class="tbJoin"><input id="tbCode" maxlength="4" autocomplete="off" placeholder="TABLE CODE" aria-label="Table code"><button type="button" id="tbJoinBtn">JOIN</button></div>
+        <div class="tbBal"><span>YOUR SHARDS</span><b id="tbBal">0</b></div>
+        <p class="lede sm">Play for real shards with your crew. You sit down with 5 shards (the buy-in), top up whenever you like, and whatever is in front of you goes back to your balance when you stand up.</p>
+        <h3 class="tbStep">1 · PICK A GAME</h3>
+        <div class="tbGames" id="tbGame">
+          <button type="button" data-g="bj" class="sel"><b>BLACKJACK</b><span>Beat the dealer to 21. Everyone plays against the house. 1-5 players.</span></button>
+          <button type="button" data-g="he"><b>TEXAS HOLD'EM</b><span>Best poker hand takes the pot. You play each other. 2-6 players (a bot sits in when there are 2).</span></button>
+        </div>
+        <h3 class="tbStep">2 · TABLE RULES</h3>
+        <p class="tbHint">Biggest single bet allowed:</p>
+        <div class="seg" id="tbLim"><button type="button" data-l="100" class="sel">100</button><button type="button" data-l="250">250</button><button type="button" data-l="0">NO LIMIT</button></div>
+        <label class="tog"><input type="checkbox" id="tbSide"><span>Side bet (1 shard a hand, each player opts in): double aces or a full house wins 10 Hybrid Theory or 15 Flag Cases</span></label>
+        <button class="go" type="button" id="tbOpenBtn">OPEN A TABLE · 5 SHARD BUY-IN</button>
+        <h3 class="tbStep">OR JOIN A FRIEND</h3>
+        <div class="tbJoin"><input id="tbCode" maxlength="4" autocomplete="off" placeholder="4-LETTER CODE" aria-label="Table code"><button type="button" id="tbJoinBtn">JOIN</button></div>
+        <h3 class="tbStep">OPEN TABLES</h3>
         <ul id="tbList"></ul>
       </div>
       <div id="tbTable" hidden>
-        <div class="tbHead"><b id="tbTitle"></b><span id="tbInfo"></span></div>
+        <div class="tbHead"><div><b id="tbTitle"></b><span id="tbInfo"></span></div><div class="tbCode"><span>TABLE CODE</span><b id="tbCodeTxt"></b></div></div>
+        <div id="tbStatus" class="tbStatus"><b></b><span></span><div id="tbTimer"><i></i></div></div>
         <div id="tbFelt"></div>
-        <div id="tbTimer"><i></i></div>
         <div id="tbActs"></div>
-        <div class="tbFoot"><span id="tbStack"></span><button type="button" data-top="5">+5</button><button type="button" data-top="25">+25</button><button type="button" id="tbLeave">STAND UP</button></div>
+        <div class="tbFoot"><div><span>AT THE TABLE</span><b id="tbStack">0</b></div><div><span>BALANCE</span><b id="tbBalT">0</b></div>
+          <button type="button" data-top="5">+5</button><button type="button" data-top="25">+25</button><button type="button" id="tbLeave">STAND UP</button></div>
         <p class="tbLog" id="tbLog"></p>
+        <details id="tbHelp"><summary>HOW TO PLAY</summary><div id="tbHelpTxt"></div></details>
         <details id="tbFair"><summary>FAIR DEAL: CHECK THE DECK</summary><p id="tbFairTxt"></p></details>
       </div>
       <div id="tbPick" class="tbPick" hidden><b>SIDE BET HIT!</b><p id="tbPickWhy"></p><button type="button" class="go" data-pick="hybrid">10 HYBRID THEORY CASES</button><button type="button" class="go" data-pick="flags">15 FLAG CASES</button></div>

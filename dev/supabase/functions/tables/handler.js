@@ -57,6 +57,8 @@ export async function handle(body,token,D){
     side:st=>{const s=st.seats[E.seatIx(st,u.id)];if(!s)return 'Not seated';s.side=!!body.on;return null},
     topup:(st,ctx)=>E.topup(st,u.id,body.amt,ctx),
     leave:(st,ctx)=>E.leave(st,u.id,ctx),
+    start:st=>E.start(st,u.id),
+    ready:st=>E.ready(st,u.id),
     settings:st=>E.settings(st,u.id,{lim:body.lim===undefined?undefined:+body.lim,side:body.side}),
     pick:(st,ctx)=>E.pick(st,u.id,body.kind,ctx)};
   if(!(op in M))return err(400,'Unknown request');

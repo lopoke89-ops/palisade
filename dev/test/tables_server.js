@@ -36,6 +36,7 @@ const MIG=__dirname+'/../supabase/migrations/20261004200000_v098_tables.sql';
  ok('buy-in taken',await bal(A)===95);
  r=await call('b',{op:'join',code});ok('join by code',r.status===200&&r.body.view.seats.filter(Boolean).length===2&&await bal(B)===35);
  r=await call('a',{op:'open',game:'he'});ok('already seated: back to your own table, no second buy-in',r.body.id===id&&await bal(A)===95);
+ r=await call('b',{op:'start',id});ok('only the host starts the table',/host/.test(r.body.error));r=await call('a',{op:'start',id});ok('the host starts it',r.body.view.started===true);
  ok('the lobby lists it',(await call('b',{op:'lobby'})).body.tables.some(t=>t.code===code&&t.seated===2));
  // top up, and a top-up bigger than the balance
  r=await call('a',{op:'topup',id,amt:50});ok('top up',r.body.view.seats[0].stack===55&&await bal(A)===45);
@@ -43,12 +44,12 @@ const MIG=__dirname+'/../supabase/migrations/20261004200000_v098_tables.sql';
  // play hands until a few are done, with simple strategy
  let hands=0;for(let k=0;k<400&&hands<6;k++){clock+=300;
   for(const who of['a','b']){const v=(await call(who,{op:'state',id})).body.view;
-   if(v.phase==='bet'&&v.bets&&v.bets[v.me]===undefined)await call(who,{op:'bet',id,amt:2,side:true});
+   if(v.phase==='bet'&&v.bets&&v.bets[v.me]===undefined){if(v.seats[v.me].stack<3)await call(who,{op:'topup',id,amt:5});await call(who,{op:'bet',id,amt:2,side:true})}
    if(v.insure)await call(who,{op:'insure',id,yes:false});
    if(v.myTurn){const p=v.players.find(p=>p.seat===v.me),hh=p.hands[v.turn.h];await call(who,{op:'move',id,a:hh.total<17?'hit':'stand'})}
-   if(v.phase==='done'&&v.last&&v.last.no>hands)hands=v.last.no}
+   if(v.last&&v.last.no>hands)hands=v.last.no}
   if(k%10===0)clock+=E.PAUSE_MS}
- ok('hands are dealt and settled automatically',hands>=6);
+ if(hands<6)console.log('STUCK',hands,JSON.stringify((await call('a',{op:'state',id})).body).slice(0,600)); ok('hands are dealt and settled automatically',hands>=6);
  const logged=await svc('select hash,salt,deck,hand_no from casino_hands where table_id=$1 order by id',[id]);
  ok('every hand is logged',logged.length>=6);
  {let good=true;for(const h of logged)good=good&&h.hash===await H.deckHash(h.salt,h.deck)&&h.deck.length===208;ok('provably fair: each logged deck matches its hash (4 decks)',good)}
@@ -63,7 +64,7 @@ const MIG=__dirname+'/../supabase/migrations/20261004200000_v098_tables.sql';
  const L=await svc(`select coalesce(sum(shards),0)::int s from casino_ledger where table_id=$1 and kind<>'case'`,[id]),rake=0;
  ok('shards conserved: (A + B now) - (A + B before) = ledger total, and the ledger total is never positive',(await bal(A))+(await bal(B))-140===L[0].s&&L[0].s<=0);
  // hold'em: two people, the bot joins; the bot's daily budget
- r=await call('a',{op:'open',game:'he',lim:250});const hid=r.body.id;await call('b',{op:'join',code:r.body.code});clock+=1000;r=await call('a',{op:'state',id:hid});
+ r=await call('a',{op:'open',game:'he',lim:250});const hid=r.body.id;await call('b',{op:'join',code:r.body.code});clock+=1000;r=await call('a',{op:'state',id:hid});ok('hold\'em waits for the host',r.body.view.phase==='wait'&&!r.body.view.started);await call('a',{op:'start',id:hid});r=await call('a',{op:'state',id:hid});
  ok('hold\'em: two people get a bot',r.body.view.seats.some(s=>s&&s.bot)&&r.body.view.players.length===3);
  await svc(`insert into casino_ledger(table_id,kind,shards) values(0,'bot',-30)`);ok('the bot\'s budget is spent after a 30-shard day',(await D.botLeft())===0);
  // players can't read or write the casino directly

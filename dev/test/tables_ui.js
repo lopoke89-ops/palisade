@@ -32,9 +32,12 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
  // blackjack: the host opens, the guest joins from the list
  await host.click('#tbOpenBtn');await host.waitForSelector('#tbTable:not([hidden])');assert.equal(bal[users.A.id],55,'buy-in taken');
  await tab(guest);await guest.waitForSelector('#tbList button[data-code]',{timeout:8000});await guest.screenshot({path:__dirname+'/out/tables_lobby_portrait.png'});await guest.click('#tbList button[data-code]');await guest.waitForSelector('#tbTable:not([hidden])');
- for(const p of[host,guest]){await until(p,v=>v.phase==='bet');await p.click('[data-act="chip:1"]');await p.click('[data-act=bet]')}
+ {const v0=await until(guest,v=>v.seats.filter(Boolean).length===2);assert.ok(!v0.started&&v0.phase==='wait','nothing is dealt until the host starts');
+  assert.match(await guest.textContent('#tbStatus'),/WAITING FOR THE HOST/,'the guest is told the host starts');await host.screenshot({path:__dirname+'/out/tables_start_desktop.png'});
+  await host.click('[data-act=start]')}
+ for(const p of[host,guest]){await until(p,v=>v.phase==='bet');assert.match(await p.textContent('#tbStatus'),/PLACE YOUR BET/);await p.click('[data-act="set:1"]');await p.click('[data-act=bet]')}
  for(let k=0;k<30;k++){let moved=false;for(const p of[host,guest]){const v=await V(p);if(v.insure){await p.click('[data-act="ins:0"]');moved=true}if(v.myTurn){await p.click('[data-act=stand]');moved=true}}if(!moved){const v=await V(host);if(v.phase==='done')break}await host.waitForTimeout(300)}
- let v=await until(host,v=>v.phase==='done'&&v.last&&v.last.no===1);out.bj=v.last.result;assert.ok(await host.textContent('.tresult'),'the result shows');
+ let v=await until(host,v=>v.last&&v.last.no===1);out.bj=v.last.result;await host.waitForTimeout(1200);assert.match(await host.textContent('#tbFelt'),/LAST HAND/,'the last hand stays on the table while betting');
  assert.ok(v.last.hash&&v.last.deck.length===208&&(await H.deckHash(v.last.salt,v.last.deck))===v.last.hash,'the fair-deal check matches the 4-deck shoe');
  await host.screenshot({path:__dirname+'/out/tables_bj_desktop.png'});await guest.screenshot({path:__dirname+'/out/tables_bj_portrait.png'});
  // both stand up: shards back, table closes
@@ -44,11 +47,12 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
  // hold'em: two people, the bot sits down; hole cards stay hidden
  await host.click('#tbGame [data-g=he]');await host.click('#tbOpenBtn');await host.waitForSelector('#tbTable:not([hidden])');
  {const code=await host.evaluate(()=>__pal.TB.code);await guest.evaluate(()=>__pal.TB.lobbyT=0);await guest.waitForSelector(`#tbList button[data-code="${code}"]`,{timeout:10000});await guest.click(`#tbList button[data-code="${code}"]`)}
- v=await until(host,v=>v.phase==='play');assert.ok(v.seats.some(s=>s&&s.bot),'the bot takes the third seat');
+ await until(host,v=>v.seats.filter(s=>s&&!s.bot).length===2);await host.click('[data-act=start]');v=await until(host,v=>v.phase==='play');assert.ok(v.seats.some(s=>s&&s.bot),'the bot takes the third seat');
  const hidden=await host.evaluate(()=>{const v=__pal.TB.v;return v.players.filter(p=>p.seat!==v.me).every(p=>p.cards[0]===null)});assert.ok(hidden,'other players\' cards are face down');
  await host.screenshot({path:__dirname+'/out/tables_he_desktop.png'});
  for(let k=0;k<80;k++){let any=false;for(const p of[host,guest]){const v=await V(p);if(v&&v.myTurn){await p.click(v.can.check?'[data-act=check]':'[data-act=call]');any=true}}const hv=await V(host);if(hv.phase==='done')break;await host.waitForTimeout(any?200:400)}
  v=await until(host,v=>v.phase==='done',30000);out.he=v.last.result;assert.ok(v.last.result.players.length===3,'a 3-handed hand finishes');
+ assert.ok(v.left>50000,'a 60-second break between hands');await until(guest,v=>v.phase==='done');for(const p of[host,guest]){const pv=await V(p);if(pv.seats[pv.me].stack<2){await p.click('[data-top="5"]');await p.waitForTimeout(600)}}for(const p of[host,guest]){await p.waitForTimeout(1200);if(await p.$('[data-act=ready]'))await p.click('[data-act=ready]')}v=await until(host,v=>v.handNo===2,10000);assert.ok(v.handNo===2,'everyone ready: the next hand deals early');
  await guest.screenshot({path:__dirname+'/out/tables_he_portrait.png'});
  const land=await open(users.B,{width:844,height:390},true);await tab(land);await land.waitForSelector('#tbTable:not([hidden])',{timeout:8000});await land.waitForTimeout(800);await land.screenshot({path:__dirname+'/out/tables_he_landscape.png'});
  // a guest account is refused
