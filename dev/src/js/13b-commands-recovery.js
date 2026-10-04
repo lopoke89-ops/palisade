@@ -7,8 +7,8 @@ let qmControlKey='';
 function syncQMControls(){
  const visible=!demo&&!game.pvp&&!qm.gone&&game.phase!=='over',guest=NET.mode==='guest';
  const key=[visible,guest,qm.mode,qm.status,qm.layoutSize,qm.completedRaids].join('|');if(key===qmControlKey)return;qmControlKey=key;
- $('qmCommand').hidden=!visible;$('qmOrders').hidden=!visible;
- $('qmCommand').disabled=guest;$('qmCommand').textContent=qm.mode==='defend'?'DELGADO · DEFEND':'DELGADO · FOLLOW';
+ $('qmCommand').hidden=!visible||guest;$('qmOrders').hidden=!visible;   // v0.9.9: the quick button is the host's only
+ $('qmCommand').disabled=guest;{const b=$('qmCommand'),t=qm.mode==='defend'?'DEFEND':'FOLLOW';if(b.dataset.m!==t){b.dataset.m=t;b.innerHTML='<span class="qmWho">DELGADO · </span>'+t}}
  $('qmCommand').title=guest?'The host commands Delgado':'Switch Delgado between following the host and defending the core';
  for(const b of document.querySelectorAll('[data-qm]')){b.disabled=guest;b.classList.toggle('sel',b.dataset.qm===qm.mode);b.setAttribute('aria-pressed',String(b.dataset.qm===qm.mode))}
  $('qmOrderStatus').textContent=(guest?'Host command · ':'')+(qm.status||'')+(qm.mode==='defend'?` · ${qm.layoutSize||4}×${qm.layoutSize||4} · tier ${1+Math.min(2,Math.floor((qm.completedRaids||0)/5))}`:'');

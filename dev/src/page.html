@@ -9,19 +9,20 @@
 <canvas id="game" aria-label="Palisade game field"></canvas>
 
 <div id="top" hidden>
-  <div class="vitals">
+  <!-- v0.9.9: health lives on the nameplates above heads; this panel stays (hidden) for the numbers other code reads -->
+  <div class="vitals" hidden>
     <div class="meter" id="hpM"><span class="lab">YOU</span><div class="track"><i id="hpF"></i></div><b id="hpN">100</b></div>
     <div id="mates"></div>
     <div class="meter" id="qmM"><span class="lab">DELGADO</span><div class="track"><i id="qmF"></i></div><b id="qmN">90</b></div>
-    <button id="qmCommand" class="qmCommand" type="button" hidden>DELGADO · FOLLOW</button>
-    <div class="meter" id="coreM"><span class="lab" id="coreL">CORE</span><div class="track"><i id="coreF"></i></div><b id="coreN">500</b></div>
-    <div class="meter" id="core2M" hidden><span class="lab">ENEMY</span><div class="track"><i id="core2F"></i></div><b id="core2N">700</b></div>
   </div>
   <div class="phase">
     <div class="phaseRow"><div id="phaseLab">BUILD</div><button id="chatBtn" type="button" aria-label="Chat" hidden><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2 3h12v8H7l-3 3v-3H2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></button><button id="pauseBtn" type="button" aria-label="Pause">II</button></div>
     <div id="phaseVal">0:40</div>
+    <div class="meter coreBar" id="coreM"><span class="lab" id="coreL">CORE</span><div class="track"><i id="coreF"></i></div><b id="coreN">500</b></div>
+    <div class="meter coreBar" id="core2M" hidden><span class="lab">ENEMY</span><div class="track"><i id="core2F"></i></div><b id="core2N">700</b></div>
     <div id="phaseNote" hidden></div>
     <div id="salv">SALVAGE <span id="salN">0</span></div>
+    <button id="qmCommand" class="qmCommand" type="button" hidden>DELGADO · FOLLOW</button>
     <button id="skipBtn" type="button"><span id="skipLab">START RAID</span><kbd class="kc">ENTER</kbd></button>
     <ol id="board" hidden></ol>
     <div id="feed"></div>
@@ -180,7 +181,7 @@
           <div><h3>CONTROLLER</h3><p>Left stick move · right stick aim · RT fire<br>LT grenade · A build (hold to keep building)<br>B ability, or sprint if your class has no ability · X armory at the stake<br>Y wall/door · d-pad left/right material · d-pad down build kit<br>View start raid · Menu pause. Change any button in Settings.</p></div>
         </div>
       </details>
-      <p class="foot">v0.9.8.3 · phone, desktop and controller · online co-op and PvP for up to six</p>
+      <p class="foot">v0.9.9 · phone, desktop and controller · online co-op and PvP for up to six</p>
     </section>
 
     <section class="page" id="pg-classes" hidden>
