@@ -7,6 +7,12 @@ Big U's latest completed local scope is recorded in the [presentation prompt](pl
 
 The Claude audit URL still requires sign-in in the available browser session. Big U supplied an exported copy at `D:\downloads\Untitled.md`, which was read on September 29. Its newest Progress entry is v0.9.3, so its release claims are superseded by the verified v0.9.3.3 release below. The external artifact itself was not edited here.
 
+## October 4: 250-shard account bonus (server only)
+
+- Every account (not guests) got 250 shards, with a notification: 7 accounts at the time.
+- Anyone who makes an account later (a new sign-up, or a guest adding an email) gets it automatically, once.
+- Migration `20261004230000_account_bonus_250.sql`, applied live at Big U's request. The grant can never block a sign-up (errors are swallowed).
+
 ## v0.9.8: THE TABLES (Blackjack and Texas Hold'em for shards)
 
 From the [work order](plans/nameplates-and-tables-work-order.md), Part B (all decisions by Big U, October 4). Evidence in [evidence/v0.9.8](evidence/v0.9.8/README.md). Match protocol unchanged (`yard-27`).
