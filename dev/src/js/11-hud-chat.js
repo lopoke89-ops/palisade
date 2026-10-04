@@ -29,11 +29,11 @@ function toastTick(dt){if(!toastCur)return;toastPlace();toastT-=dt;if(toastT>0)r
 // v0.9.7.3: where the banner goes, from the live HUD: the top row between the vitals and the phase box on desktop,
 // the top-left beside the mini-map on landscape phones, under the top bar (and tip) on portrait phones; and always
 // below the boss bars where they would overlap (the bars keep their place)
-function bossBarsBox(){const list=enemies.filter(e=>e.type==='boss'&&BOSSES[e.boss]),n=list.length;if(!n||demo||game.pvp)return null;
+function bossBarsBox(){if(!Array.isArray(enemies))return null;const list=enemies.filter(e=>e.type==='boss'&&BOSSES[e.boss]),n=list.length;if(!n||demo||game.pvp)return null;
   if(H<=500&&W>H){if(n>=4){const w=Math.min(440,W-48);return{left:(W-w)/2-3,right:(W+w)/2+3,top:7,bottom:47}}const tot=Math.min(460,Math.max(220,W-420));return{left:(W-tot)/2,right:(W+tot)/2,top:8,bottom:29}}
   const y=Math.max(W<700?(hud.topB||110)+10:120,(hud.tipB||0)+10),w=Math.min(440,W-48),h=n>=4?40:n>2?23*n:32*n;return{left:(W-w)/2-3,right:(W+w)/2+3,top:y-3,bottom:y-3+h}}
 let toastBox=null;
-function toastPlace(){const el=$('toast');if(!toastCur||!el)return;
+function toastPlace(){const el=$('toast');if(!toastCur||!el||!$('top'))return;
   const q=s=>{const e=document.querySelector(s);return e?e.getBoundingClientRect():null},ph=q('#top .phase'),vt=q('#top .vitals'),tp=$('tip').hidden||!$('tipText').textContent?null:q('#tip');
   const land=H<=500&&W>H,deskRow=vt&&ph&&vt.top<H*.4&&ph.left-vt.right>360;let left,right,top;
   if(deskRow){left=vt.right+16;right=ph.left-16;top=12}

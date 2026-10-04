@@ -24,6 +24,7 @@ From the [work order](plans/blackout-polish-work-order.md) (all decisions by Big
   - While boss bars are up it steps below them (on portrait phones, to the left edge if the build kit is in the way).
   - On portrait phones it fades out under a banner and comes back after (B3).
   - **Changed from the work order:** the kill feed sits beside the mini-map on its left, not under it. Under it, the feed ran into the build kit at all three sizes.
+- **Caught in testing:** a banner shown while the page was still starting (after a reload) ran the new placement before the game state existed and stopped the page loading. Guarded; `tips_toggle` covers it.
 - **Tests:** new `blackout_hud`; `toast_queue` (new times, placement, centring and overlaps at three sizes, in a normal raid and Black Out, with 0/1/2/4 bosses) and `blackout_map` (lamp spacing, pool size, midpoint brightness) extended.
 
 ## v0.9.7.2: new main menu music, music starts on the first click

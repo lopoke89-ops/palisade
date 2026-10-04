@@ -1,0 +1,491 @@
+{
+ "desktop": {
+  "first": "RAID 3 BROKEN",
+  "cls": "on phase good",
+  "waiting": [
+   "POI UNDER ATTACK · HOSPITAL",
+   "CASE DROP"
+  ],
+  "at43": "RAID 3 BROKEN",
+  "at47": "POI UNDER ATTACK · HOSPITAL",
+  "third": "CASE DROP",
+  "note": "POI UNDER ATTACK · HOSPITAL",
+  "noteShown": true,
+  "empty": true,
+  "capped": [
+   "NEXT · GARAGE",
+   "MINOR 2",
+   "MINOR 3"
+  ],
+  "afterTap": "NEXT · GARAGE",
+  "long": "THE FINAL PUSH",
+  "longDone": "",
+  "onScreen": true,
+  "overlapPhase": false,
+  "small": 14
+ },
+ "portrait": {
+  "first": "RAID 3 BROKEN",
+  "cls": "on phase good",
+  "waiting": [
+   "POI UNDER ATTACK · HOSPITAL",
+   "CASE DROP"
+  ],
+  "at43": "RAID 3 BROKEN",
+  "at47": "POI UNDER ATTACK · HOSPITAL",
+  "third": "CASE DROP",
+  "note": "POI UNDER ATTACK · HOSPITAL",
+  "noteShown": true,
+  "empty": true,
+  "capped": [
+   "NEXT · GARAGE",
+   "MINOR 2",
+   "MINOR 3"
+  ],
+  "afterTap": "NEXT · GARAGE",
+  "long": "THE FINAL PUSH",
+  "longDone": "",
+  "onScreen": true,
+  "overlapPhase": false,
+  "small": 13
+ },
+ "landscape": {
+  "first": "RAID 3 BROKEN",
+  "cls": "on phase good",
+  "waiting": [
+   "POI UNDER ATTACK · HOSPITAL",
+   "CASE DROP"
+  ],
+  "at43": "RAID 3 BROKEN",
+  "at47": "POI UNDER ATTACK · HOSPITAL",
+  "third": "CASE DROP",
+  "note": "POI UNDER ATTACK · HOSPITAL",
+  "noteShown": true,
+  "empty": true,
+  "capped": [
+   "NEXT · GARAGE",
+   "MINOR 2",
+   "MINOR 3"
+  ],
+  "afterTap": "NEXT · GARAGE",
+  "long": "THE FINAL PUSH",
+  "longDone": "",
+  "onScreen": true,
+  "overlapPhase": false,
+  "small": 13
+ },
+ "desktop/5/0 bosses": {
+  "banner": {
+   "l": 424,
+   "t": 12,
+   "r": 1064,
+   "b": 98
+  },
+  "bb": null,
+  "mm": null,
+  "fade": 1
+ },
+ "desktop/5/1 bosses": {
+  "banner": {
+   "l": 439,
+   "t": 12,
+   "r": 1079,
+   "b": 92
+  },
+  "bb": {
+   "l": 460,
+   "t": 202,
+   "r": 906,
+   "b": 234
+  },
+  "mm": null,
+  "fade": 1
+ },
+ "desktop/5/2 bosses": {
+  "banner": {
+   "l": 439,
+   "t": 12,
+   "r": 1079,
+   "b": 92
+  },
+  "bb": {
+   "l": 460,
+   "t": 202,
+   "r": 906,
+   "b": 266
+  },
+  "mm": null,
+  "fade": 1
+ },
+ "desktop/5/4 bosses": {
+  "banner": {
+   "l": 439,
+   "t": 12,
+   "r": 1079,
+   "b": 92
+  },
+  "bb": {
+   "l": 460,
+   "t": 202,
+   "r": 906,
+   "b": 242
+  },
+  "mm": null,
+  "fade": 1
+ },
+ "desktop/blackout/0 bosses": {
+  "banner": {
+   "l": 424,
+   "t": 12,
+   "r": 1064,
+   "b": 98
+  },
+  "bb": null,
+  "mm": {
+   "l": 1172,
+   "t": 213,
+   "r": 1342,
+   "b": 298
+  },
+  "fade": 1
+ },
+ "desktop/blackout/1 bosses": {
+  "banner": {
+   "l": 433,
+   "t": 12,
+   "r": 1073,
+   "b": 92
+  },
+  "bb": {
+   "l": 460,
+   "t": 201,
+   "r": 906,
+   "b": 233
+  },
+  "mm": {
+   "l": 1172,
+   "t": 213,
+   "r": 1342,
+   "b": 298
+  },
+  "fade": 1
+ },
+ "desktop/blackout/2 bosses": {
+  "banner": {
+   "l": 433,
+   "t": 12,
+   "r": 1073,
+   "b": 92
+  },
+  "bb": {
+   "l": 460,
+   "t": 201,
+   "r": 906,
+   "b": 265
+  },
+  "mm": {
+   "l": 1172,
+   "t": 213,
+   "r": 1342,
+   "b": 298
+  },
+  "fade": 1
+ },
+ "desktop/blackout/4 bosses": {
+  "banner": {
+   "l": 433,
+   "t": 12,
+   "r": 1073,
+   "b": 92
+  },
+  "bb": {
+   "l": 460,
+   "t": 201,
+   "r": 906,
+   "b": 241
+  },
+  "mm": {
+   "l": 1172,
+   "t": 213,
+   "r": 1342,
+   "b": 298
+  },
+  "fade": 1
+ },
+ "portrait/5/0 bosses": {
+  "banner": {
+   "l": 12,
+   "t": 193,
+   "r": 378,
+   "b": 266.5
+  },
+  "bb": null,
+  "mm": null,
+  "fade": 1
+ },
+ "portrait/5/1 bosses": {
+  "banner": {
+   "l": 12,
+   "t": 214,
+   "r": 378,
+   "b": 281.5
+  },
+  "bb": {
+   "l": 21,
+   "t": 176,
+   "r": 369,
+   "b": 208
+  },
+  "mm": null,
+  "fade": 1
+ },
+ "portrait/5/2 bosses": {
+  "banner": {
+   "l": 12,
+   "t": 246,
+   "r": 272,
+   "b": 313.5
+  },
+  "bb": {
+   "l": 21,
+   "t": 176,
+   "r": 369,
+   "b": 240
+  },
+  "mm": null,
+  "fade": 1
+ },
+ "portrait/5/4 bosses": {
+  "banner": {
+   "l": 12,
+   "t": 222,
+   "r": 378,
+   "b": 289.5
+  },
+  "bb": {
+   "l": 21,
+   "t": 176,
+   "r": 369,
+   "b": 216
+  },
+  "mm": null,
+  "fade": 1
+ },
+ "portrait/blackout/0 bosses": {
+  "banner": {
+   "l": 12,
+   "t": 185,
+   "r": 378,
+   "b": 258.5
+  },
+  "bb": null,
+  "mm": {
+   "l": 257,
+   "t": 185,
+   "r": 374,
+   "b": 244
+  },
+  "fade": 0
+ },
+ "portrait/blackout/1 bosses": {
+  "banner": {
+   "l": 12,
+   "t": 214,
+   "r": 378,
+   "b": 281.5
+  },
+  "bb": {
+   "l": 21,
+   "t": 176,
+   "r": 369,
+   "b": 208
+  },
+  "mm": {
+   "l": 257,
+   "t": 214,
+   "r": 374,
+   "b": 273
+  },
+  "fade": 0
+ },
+ "portrait/blackout/2 bosses": {
+  "banner": {
+   "l": 12,
+   "t": 246,
+   "r": 272,
+   "b": 313.5
+  },
+  "bb": {
+   "l": 21,
+   "t": 176,
+   "r": 369,
+   "b": 240
+  },
+  "mm": {
+   "l": 16,
+   "t": 246,
+   "r": 133,
+   "b": 305
+  },
+  "fade": 0
+ },
+ "portrait/blackout/4 bosses": {
+  "banner": {
+   "l": 12,
+   "t": 222,
+   "r": 378,
+   "b": 289.5
+  },
+  "bb": {
+   "l": 21,
+   "t": 176,
+   "r": 369,
+   "b": 216
+  },
+  "mm": {
+   "l": 257,
+   "t": 222,
+   "r": 374,
+   "b": 281
+  },
+  "fade": 0
+ },
+ "landscape/5/0 bosses": {
+  "banner": {
+   "l": 23,
+   "t": 12,
+   "r": 663,
+   "b": 95.5
+  },
+  "bb": null,
+  "mm": null,
+  "fade": 1
+ },
+ "landscape/5/1 bosses": {
+  "banner": {
+   "l": 42,
+   "t": 35,
+   "r": 682,
+   "b": 112.5
+  },
+  "bb": {
+   "l": 210,
+   "t": 8,
+   "r": 634,
+   "b": 29
+  },
+  "mm": null,
+  "fade": 1
+ },
+ "landscape/5/2 bosses": {
+  "banner": {
+   "l": 42,
+   "t": 35,
+   "r": 682,
+   "b": 112.5
+  },
+  "bb": {
+   "l": 210,
+   "t": 8,
+   "r": 634,
+   "b": 29
+  },
+  "mm": null,
+  "fade": 1
+ },
+ "landscape/5/4 bosses": {
+  "banner": {
+   "l": 42,
+   "t": 53,
+   "r": 682,
+   "b": 130.5
+  },
+  "bb": {
+   "l": 199,
+   "t": 7,
+   "r": 645,
+   "b": 47
+  },
+  "mm": null,
+  "fade": 1
+ },
+ "landscape/blackout/0 bosses": {
+  "banner": {
+   "l": 16,
+   "t": 12,
+   "r": 534,
+   "b": 95.5
+  },
+  "bb": null,
+  "mm": {
+   "l": 542,
+   "t": 12,
+   "r": 670,
+   "b": 76
+  },
+  "fade": 1
+ },
+ "landscape/blackout/1 bosses": {
+  "banner": {
+   "l": 16,
+   "t": 35,
+   "r": 534,
+   "b": 112.5
+  },
+  "bb": {
+   "l": 210,
+   "t": 8,
+   "r": 634,
+   "b": 29
+  },
+  "mm": {
+   "l": 542,
+   "t": 35,
+   "r": 670,
+   "b": 99
+  },
+  "fade": 1
+ },
+ "landscape/blackout/2 bosses": {
+  "banner": {
+   "l": 16,
+   "t": 35,
+   "r": 534,
+   "b": 112.5
+  },
+  "bb": {
+   "l": 210,
+   "t": 8,
+   "r": 634,
+   "b": 29
+  },
+  "mm": {
+   "l": 542,
+   "t": 35,
+   "r": 670,
+   "b": 99
+  },
+  "fade": 1
+ },
+ "landscape/blackout/4 bosses": {
+  "banner": {
+   "l": 16,
+   "t": 53,
+   "r": 534,
+   "b": 130.5
+  },
+  "bb": {
+   "l": 199,
+   "t": 7,
+   "r": 645,
+   "b": 47
+  },
+  "mm": {
+   "l": 542,
+   "t": 53,
+   "r": 670,
+   "b": 117
+  },
+  "fade": 1
+ }
+}
