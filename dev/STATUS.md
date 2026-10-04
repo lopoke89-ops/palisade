@@ -7,6 +7,17 @@ Big U's latest completed local scope is recorded in the [presentation prompt](pl
 
 The Claude audit URL still requires sign-in in the available browser session. Big U supplied an exported copy at `D:\downloads\Untitled.md`, which was read on September 29. Its newest Progress entry is v0.9.3, so its release claims are superseded by the verified v0.9.3.3 release below. The external artifact itself was not edited here.
 
+## v0.9.8.2: animated menu backgrounds move on every page
+
+From the [work order](plans/menu-backgrounds-work-order.md) (Big U, October 4: full speed everywhere, Account too, keep reduce motion).
+- Animated backgrounds now move behind the Locker, Tables, Skills, Settings and Account pages, at the same rate as PLAY. They used to freeze there: a v0.9.1 speed choice that every later page inherited.
+- Still only for still backgrounds, or when the system asks for reduced motion.
+- **Cost (measured):** phone viewport with the CPU slowed 4×, Hellgate equipped:
+  - **Locker:** went from 47.6 to 33.8 frames per second (its character stage and grid were already the heaviest page).
+  - **PLAY and Skills:** unchanged (38-39 and 60).
+  - **If phones struggle on the Locker:** run the background at a lower rate on that page only.
+- Test: new `menu_bg_motion` (8 pages × 3 sizes, animated and reduced motion). Evidence in [evidence/v0.9.8.2](evidence/v0.9.8.2/).
+
 ## v0.9.8.1: Tables fixes (Big U's feedback)
 
 - **The host starts the table:** nothing is dealt until the host presses START (Hold'em needs 2 players). Table rules can be changed until then.

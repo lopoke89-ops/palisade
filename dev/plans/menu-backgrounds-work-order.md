@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Plan. Written October 4 from Big U's bug report. Decisions D1–D3 open at the bottom; nothing is built yet |
+| **Status** | Decided by Big U on October 4 (D1 full speed everywhere, D2 Account too, D3 keep reduce motion). Built as v0.9.8.2 |
 | **Build** | v0.9.8.2, client only. No server change, no protocol change |
 | **Scope** | The main menu's background canvas (`#lobbyBg`) behind every menu page |
 | **Risk** | Low for correctness, medium for performance: the reason these pages were made still was frame cost on phones |
@@ -66,7 +66,9 @@
 2. Re-run `presentation_perf`, `tables_ui` and `taborder`. No full suite (Big U, October 4).
 3. Screenshots at three sizes. PR and merge.
 
-## Decisions for Big U
+## Decisions (Big U, October 4): D1 **full speed on every page** (not the lower rate proposed), D2 **yes**, D3 **yes**
+
+### As proposed
 
 | # | Question | Proposal |
 |---|---|---|
