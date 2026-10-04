@@ -39,18 +39,20 @@ button:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
 #toast{position:fixed;left:16px;right:16px;top:36%;text-align:center;pointer-events:none;
   font-family:var(--stencil);font-weight:900;font-size:clamp(24px,7vw,40px);letter-spacing:.06em;
   color:var(--bone);text-shadow:0 2px 0 #000,0 0 18px rgba(0,0,0,.8);opacity:0;transition:opacity .25s}
-#toast small{display:block;font-family:var(--mono);font-weight:400;font-size:14px;letter-spacing:0;color:var(--bone);margin:8px auto 0;max-width:40ch;text-wrap:balance}
+#toast small{display:block;font-family:var(--mono);font-weight:400;font-size:13px;letter-spacing:0;color:var(--bone);margin:4px auto 0;max-width:62ch;line-height:1.25;text-wrap:balance;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}   /* v0.9.7.3: two lines at most */
 /* v0.9.7.1: every message sits on a dark panel so it reads over the bright city; phase messages get a coloured band */
-#toast .tt{display:inline-block}
+#toast .tt{display:inline-block;vertical-align:top;margin-right:-.06em}   /* v0.9.7.3: the trailing letter-space no longer pushes the title left */
 #toast.on{pointer-events:auto;cursor:pointer}
 #lStart.locked{opacity:.45}
 #lList li.ready{border-left-color:#8fe0a0}
 #toast{z-index:5}   /* above the build kit and the vitals, below overlays */
 .overlay{z-index:10}   /* pause, armory, settings, results: above the message panel */
-#toast.minor,#toast.phase{background:rgba(10,9,7,.82);padding:12px 16px 14px;border-radius:3px;margin:0 auto;max-width:640px;left:0;right:0;width:calc(100% - 32px)}
-#toast.phase{border-top:4px solid var(--tb,#e2b436);border-bottom:4px solid var(--tb,#e2b436);font-size:clamp(28px,8vw,46px);box-shadow:0 0 40px rgba(0,0,0,.6)}
+/* v0.9.7.3: smaller and at the top of the screen in every mode; toastPlace() sets left/top/width from the live HUD each frame */
+#toast.minor,#toast.phase{box-sizing:border-box;background:rgba(10,9,7,.82);padding:6px 12px 7px;border-radius:3px;margin:0;right:auto;font-size:clamp(18px,4.6vw,28px);line-height:1}
+#toast.phase{display:block;text-align:center;justify-items:normal;gap:0;   /* v0.9.7.3: the HUD phase box rule (.phase: right-aligned grid) was pushing the title right */
+  border-top:3px solid var(--tb,#e2b436);border-bottom:3px solid var(--tb,#e2b436);box-shadow:0 0 30px rgba(0,0,0,.55)}
 #toast.phase.threat{--tb:#ff8a3a}#toast.phase.good{--tb:#8fe0a0}#toast.phase.bad{--tb:#e8573a}
-#toast.phase small{font-size:15px}
+#toast.phase small{font-size:13px}
 #phaseNote{font-family:var(--mono);font-size:11px;color:var(--dim);max-width:240px;margin-left:auto;text-align:right;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 body:not(.desk) #phaseNote{max-width:150px;font-size:10px}
 #toast.on{opacity:1}
@@ -203,7 +205,7 @@ body.desk #phaseVal,body.desk #salv{font-size:14px}
 body.desk #skipBtn{font-size:16px;padding:7px 12px}
 body.desk #tip{font-size:14px;top:calc(env(safe-area-inset-top,0px) + 104px)}
 body.desk #tip span{max-width:48ch;padding:7px 12px}
-body.desk #toast small{font-size:16px}
+body.desk #toast small{font-size:14px}
 body.desk #kit{width:136px;right:20px;bottom:64px;gap:7px}
 body.desk .piece{height:32px;font-size:14px}
 body.desk .chip{height:40px}

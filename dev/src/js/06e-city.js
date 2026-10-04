@@ -52,9 +52,9 @@ function layCity(){
   const ring=(ci,cj,r)=>{const out=[];for(let a=-r;a<=r;a++)for(const [i,j]of[[ci+a,cj-r],[ci+a,cj+r],[ci-r,cj+a],[ci+r,cj+a]]){const k=idx(i,j);
     if(used.has(k)||hash(i*9+1,j*3+7)<=.45||terr[k]!==T_GROUND)continue;used.add(k);out.push([i,j])}return out};
   L.ruins.push([ring(G.C,G.C,2),1,.8,0]);for(const p of L.pois)if(p.major)L.ruins.push([ring(p.i,p.j,2),1,.6,0]);
-  // streetlamps: every sixth sidewalk tile along a road, leaning out over it (lit while the Power Station holds)
+  // streetlamps: every fourth sidewalk tile along a road, leaning out over it (lit while the Power Station holds; v0.9.7.3: was every sixth)
   L.lamps=[];for(let j=0;j<n;j++)for(let i=0;i<n;i++){if(terr[idx(i,j)]!==T_WALK||nodeK.has(idx(i,j)))continue;
-    for(const [a,b]of D4)if(tAt(i+a,j+b)===T_ROAD&&(a?j%6===0:i%6===0)){L.lamps.push([i,j,a,b]);break}}
+    for(const [a,b]of D4)if(tAt(i+a,j+b)===T_ROAD&&(a?j%LAMP_GAP===0:i%LAMP_GAP===0)){L.lamps.push([i,j,a,b]);break}}
   // raiders come in along the four edges; each attack uses the edge nearest its POI
   const edge=side=>{const out=[];for(let s=3;s<n-3;s++)out.push(side==='n'?[s,0]:side==='s'?[s,n-1]:side==='w'?[0,s]:[n-1,s]);return out};
   L.edges={n:edge('n'),e:edge('e'),s:edge('s'),w:edge('w')};
@@ -190,6 +190,7 @@ function drawPoi(c){
 // streetlamps (queued only when on screen)
 function drawLamp(l){const [i,j,a,b]=l,on=!game.dark;const x=i+.5+a*.38,y=j+.5+b*.38,p=poiPole(x,y,WH*1.7,'#3e4245',1.6);
   const q=iso(x+a*.3,y+b*.3,heightAt(x,y));const h=[q[0],q[1]-WH*1.75];g.strokeStyle='#3e4245';g.lineWidth=1.4*u;g.beginPath();g.moveTo(p[0],p[1]);g.lineTo(h[0],h[1]);g.stroke();
+  if(on){const r=TW2*.32;g.globalCompositeOperation='lighter';g.globalAlpha=.8;g.drawImage(SOFT.glow,h[0]-r,h[1]+1.5*u-r,r*2,r*2);g.globalAlpha=1;g.globalCompositeOperation='source-over'}   // v0.9.7.3: the bulb's halo
   oval(h[0],h[1]+1.5*u,3*u,1.6*u,on?'#ffe7a8':'#2a2c2e')}
 function cityLampItems(){const L=game.lay;if(!L||!L.lamps)return;
   for(const l of L.lamps){const c=iso(l[0]+.5,l[1]+.5);if(c[0]<-40||c[0]>W+40||c[1]<-40||c[1]>H+WH*3)continue;ritem(l[0]+l[1]+1,drawLamp,l)}}
@@ -202,5 +203,14 @@ function cityLights(hole,at){
     let s=k.poi.major?.9:.8;if(k.lost){const d=game.time-(k.lostAt||-9);if(d>1.6)continue;s*=(1-d/1.6)*(Math.sin(d*40)>0?1:.15)}
     hole(c[0],c[1],TW2*(k.poi.major?3.8:3),s)}
   if(game.dark)return;const L=game.lay;if(!L||!L.lamps)return;
-  for(const l of L.lamps){const c=at(l[0]+.5+l[2]*.7,l[1]+.5+l[3]*.7);if(vis(c))hole(c[0],c[1],TW2*1.9,.6)}
+  for(const l of L.lamps){const c=at(l[0]+.5+l[2]*.7,l[1]+.5+l[3]*.7);if(vis(c))hole(c[0],c[1],TW2*LAMP_R,LAMP_S)}
 }
+// v0.9.7.3: bigger, stronger lamp pools (3.5 tiles at 85%; 1.9 tiles at 60% before. The work order said 3.2, but two
+// lamps 4 tiles apart only meet its "half the night darkness at the midpoint" bar from 3.4 up), lamps closer together, and a faint warm
+// sodium glow on each pool after the darkness, so the lit roads read as streetlight
+const LAMP_GAP=4,LAMP_R=3.5,LAMP_S=.85,LAMP_GLOW=.18;
+function cityLampGlow(){if(!(MAP&&MAP.city)||game.dark||light.L<=.25)return;const L=game.lay;if(!L||!L.lamps)return;
+  const im=softDot(GLOW_DOTS,TW2*LAMP_R*.9*DPR,SOFT_GLOW),hw=im.width>>1,m=TW2*3;let n=0;
+  for(const l of L.lamps){const c=iso(l[0]+.5+l[2]*.7,l[1]+.5+l[3]*.7);if(c[0]<-m||c[0]>W+m||c[1]<-m||c[1]>H+m)continue;
+    if(!n++){g.setTransform(1,0,0,1,0,0);g.globalAlpha=LAMP_GLOW}g.drawImage(im,Math.round(c[0]*DPR)-hw,Math.round(c[1]*DPR)-hw)}
+  if(n)g.setTransform(DPR,0,0,DPR,0,0);cityLampGlow.n=n}

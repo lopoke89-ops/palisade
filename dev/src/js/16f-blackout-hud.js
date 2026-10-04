@@ -17,9 +17,21 @@ function boHudPhase(lab,host){
 // where the mini-map goes: under the vitals when they sit top-left (and under the tip box on narrow screens), else top-left
 let BO_MAP=null;
 // on narrow screens the boss bars sit at the top too: the mini-map goes under them (heights as drawBossBars lays them out)
-const boBarsH=()=>{if(H<=500&&W>H)return 0;const n=enemies.filter(e=>e.type==='boss'&&BOSSES[e.boss]).length;return n>=4?46:n>2?23*n+4:32*n}
-function boMapBox(){const v=document.querySelector('#top .vitals'),r=v&&v.getBoundingClientRect(),desk=r&&r.top<H*.4&&r.bottom>0,
-  w=Math.round(Math.min(desk?170:128,W*.3)),y=Math.round(Math.max(desk?r.bottom+12:10,W<700?(hud.tipB||0)+8+boBarsH():0));return{x:desk?Math.round(r.left):12,y,w,h:Math.round(w/2)}}
+// v0.9.7.3: top right, under the phase box (pause and timer). It sits below a slot kept for the tip box, so it never
+// jumps when a tip comes or goes; landscape phones have the build kit right under the phase box, so there it sits beside it.
+let BO_BOX=null;
+function boMapBox(){const now=performance.now(),bb=typeof bossBarsBox==='function'?bossBarsBox():null,bk=bb?bb.bottom+'|'+bb.left:'';
+  if(BO_BOX&&now-BO_BOX.t<500&&BO_BOX.W===W&&BO_BOX.H===H&&BO_BOX.bk===bk)return BO_BOX;
+  const ph=document.querySelector('#top .phase').getBoundingClientRect(),land=H<=500&&W>H,w=Math.round(Math.min(DESK?170:128,W*.3)),h=Math.round(w/2),tipH=DESK?50:40;
+  const nt=$('phaseNote'),noteH=nt.hidden||!nt.textContent?(DESK?18:17):0;   // room kept for the phase note (below the box; on landscape its 150 px width), so the first one doesn't move the map
+  const b=land?{x:Math.round(Math.min(ph.left,ph.right-150)-8-w),y:Math.round(ph.top)}:{x:Math.round(ph.right-w),y:Math.round(Math.max(ph.bottom+noteH,Math.max(hud.topB||0,ph.bottom+noteH)+10+tipH)+8)};
+  // v0.9.7.3: the boss bars keep their place, so while they're up the mini-map steps below them (landscape: below the
+  // strip; portrait: below the bars, or to the left edge if the build kit is in the way there)
+  if(bb&&bb.left<b.x+w&&bb.right>b.x&&bb.top<b.y+h&&bb.bottom>b.y){b.y=Math.round(bb.bottom+6);
+    if(!land&&!DESK){let kt=H;for(const k of document.querySelectorAll('#kit > *')){if(k.hidden||k.closest('[hidden]'))continue;const r=k.getBoundingClientRect();if(r.width&&r.right>b.x)kt=Math.min(kt,r.top)}
+      if(b.y+h>kt-8)b.x=16}}
+  BO_BOX={...b,w,h,t:now,W,H,bk};return BO_BOX}
+let BO_FADE=1;   // B3: on portrait phones the mini-map fades out while a message banner covers its spot
 // the city drawn once, small: roads, buildings and the plaza in the same diamond the screen shows
 function boMapImage(w,h){const key=w+'|'+N+'|'+DPR;if(BO_MAP&&BO_MAP.key===key)return BO_MAP.cv;
   const cv=document.createElement('canvas'),s=Math.min(DPR,2);cv.width=Math.ceil(w*s);cv.height=Math.ceil(h*s);const x=cv.getContext('2d');x.scale(s,s);
@@ -32,6 +44,18 @@ function boMapImage(w,h){const key=w+'|'+N+'|'+DPR;if(BO_MAP&&BO_MAP.key===key)r
 function drawBlackoutHud(){
   if(!isCity()||!game.lay||game.phase==='over')return;
   const M=boMapBox(),k=M.w/(2*N),P=(i,j)=>[M.x+(i-j)*k+M.w/2,M.y+(i+j)*k*.5],t=game.time,blink=Math.sin(t*8)>0;
+  // the kill feed sits beside the mini-map on its left in Black Out (it used to sit where the mini-map now is; under the
+  // map it would run into the build kit, which starts right below it at every size)
+  {const f=$('feed'),top=M.y+'px',right=Math.max(0,Math.round(W-M.x+8))+'px';if(f.style.top!==top||f.style.right!==right){f.style.position='fixed';f.style.top=top;f.style.right=right;f.style.marginTop='0'}}
+  const cover=typeof toastRect==='function'&&toastRect(),hit=cover&&cover.left<M.x+M.w&&cover.right>M.x&&cover.top<M.y+M.h&&cover.bottom>M.y;
+  BO_FADE=Math.max(0,Math.min(1,BO_FADE+(hit?-1:1)*.12));if(BO_FADE>0){g.save();g.globalAlpha=BO_FADE;try{boMapDraw(M,k,P,t,blink)}finally{g.restore()}}
+  // a POI under attack off screen gets an arrow at the edge, like the evac site
+  const A=cores.find(c=>c.attack&&c.poi);if(A){const c=iso(A.i+.5,A.j+.5),top=110;
+    if(!(c[0]>20&&c[0]<W-20&&c[1]>top&&c[1]<H-20)){const ex=clamp(c[0],26,W-26),ey=clamp(c[1],top+14,H-26),a=Math.atan2(c[1]-H/2,c[0]-W/2),pz=.8+.2*Math.sin(t*6);
+      g.save();g.translate(ex,ey);g.rotate(a);g.scale(1.9*pz,1.9*pz);g.fillStyle='#ff5a3a';g.strokeStyle='rgba(12,10,8,.8)';g.lineWidth=1.5;g.beginPath();g.moveTo(9,0);g.lineTo(-5,-7);g.lineTo(-2,0);g.lineTo(-5,7);g.closePath();g.stroke();g.fill();g.restore();
+      label(A.poi.name,ex,ey+(ey>H/2?-20:24),'#ff8a6a',10)}}
+}
+function boMapDraw(M,k,P,t,blink){
   g.drawImage(boMapImage(M.w,M.h),M.x,M.y,M.w,M.h);
   // POIs: lit while held, red while attacked, dark once lost; the next target pulses
   for(const c of cores){const q=P(c.i+.5,c.j+.5),r=c.poi?(c.poi.major?3.4:2.6):4;
@@ -42,11 +66,6 @@ function drawBlackoutHud(){
   for(const e of enemies)if(e.type==='boss'){const q=P(e.x,e.y),s=e.boss==='destroyer'?5:3.5;g.fillStyle=e.boss==='destroyer'?'#ff6a2a':'#ff3a2a';g.beginPath();g.moveTo(q[0],q[1]-s);g.lineTo(q[0]+s,q[1]);g.lineTo(q[0],q[1]+s);g.lineTo(q[0]-s,q[1]);g.closePath();g.fill()}
   for(const o of players.values())if(o!==player&&(o.alive||o.downed)){const q=P(o.x,o.y);g.fillStyle=o.alive?'#8fd0ff':'#d65a3a';g.beginPath();g.arc(q[0],q[1],2,0,Math.PI*2);g.fill()}
   if(player){const q=P(player.x,player.y);g.fillStyle='#fff';g.strokeStyle='#000';g.lineWidth=1;g.beginPath();g.arc(q[0],q[1],2.6,0,Math.PI*2);g.fill();g.stroke()}
-  // a POI under attack off screen gets an arrow at the edge, like the evac site
-  const A=cores.find(c=>c.attack&&c.poi);if(A){const c=iso(A.i+.5,A.j+.5),top=110;
-    if(!(c[0]>20&&c[0]<W-20&&c[1]>top&&c[1]<H-20)){const ex=clamp(c[0],26,W-26),ey=clamp(c[1],top+14,H-26),a=Math.atan2(c[1]-H/2,c[0]-W/2),pz=.8+.2*Math.sin(t*6);
-      g.save();g.translate(ex,ey);g.rotate(a);g.scale(1.9*pz,1.9*pz);g.fillStyle='#ff5a3a';g.strokeStyle='rgba(12,10,8,.8)';g.lineWidth=1.5;g.beginPath();g.moveTo(9,0);g.lineTo(-5,-7);g.lineTo(-2,0);g.lineTo(-5,7);g.closePath();g.stroke();g.fill();g.restore();
-      label(A.poi.name,ex,ey+(ey>H/2?-20:24),'#ff8a6a',10)}}
 }
 /* ---------- network: the run's summary for guests (and rejoins) ---------- */
 // [stage, t, attacked POI (core index, -1 none), lost bits, next bits, dark, held, lost, push t, push n, Destroyer up, Destroyer killed]
