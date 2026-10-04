@@ -7,6 +7,27 @@ Big U's latest completed local scope is recorded in the [presentation prompt](pl
 
 The Claude audit URL still requires sign-in in the available browser session. Big U supplied an exported copy at `D:\downloads\Untitled.md`, which was read on September 29. Its newest Progress entry is v0.9.3, so its release claims are superseded by the verified v0.9.3.3 release below. The external artifact itself was not edited here.
 
+## v0.9.8.1: Tables fixes (Big U's feedback)
+
+- **The host starts the table:** nothing is dealt until the host presses START (Hold'em needs 2 players). Table rules can be changed until then.
+- **No clock during a hand:** nobody is auto-folded or auto-stood. (A player who closes the game is still stood up after a minute and gets their shards back.)
+- **60 seconds between hands:** Blackjack's betting window is 60 s and deals as soon as everyone has bet; Hold'em has a 60 s break that deals as soon as everyone taps READY (busted players aren't waited on).
+- **Clearer screens:**
+  - **Lobby:** game cards that explain each game, numbered steps.
+  - **Table code:** shown big at the top so it's easy to share.
+  - **Status line:** always says what's happening and what to do ("YOUR TURN · You have 15 · the dealer shows 10").
+  - **Buttons:** each has a short hint underneath. Bets use a −/+ stepper and quick chips; Hold'em raises use a slider.
+  - **Last hand:** stays on the felt while you bet.
+  - **How to play:** a panel for each game.
+- Tables opened before this update keep running. Edge function redeployed (version 3); no database change.
+- Tests: `tables_engine`, `tables_server` (25 checks), `tables_ui`, `csp`, `taborder`.
+
+## October 4: 250-shard account bonus (server only)
+
+- Every account (not guests) got 250 shards, with a notification: 7 accounts at the time.
+- Anyone who makes an account later (a new sign-up, or a guest adding an email) gets it automatically, once.
+- Migration `20261004230000_account_bonus_250.sql`, applied live at Big U's request. The grant can never block a sign-up (errors are swallowed).
+
 ## v0.9.8: THE TABLES (Blackjack and Texas Hold'em for shards)
 
 From the [work order](plans/nameplates-and-tables-work-order.md), Part B (all decisions by Big U, October 4). Evidence in [evidence/v0.9.8](evidence/v0.9.8/README.md). Match protocol unchanged (`yard-27`).

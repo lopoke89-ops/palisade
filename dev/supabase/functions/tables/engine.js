@@ -2,7 +2,9 @@
 // reshuffled before every hand (so counting cards is worthless); Texas Hold'em from one 52-card deck. Straight shards:
 // a seat's stack is shards brought to the table; the limit caps a single bet. No I/O here: the caller passes the time,
 // a cryptographic rng(n) -> 0..n-1, and collects `ctx.ops` (shard and case moves for the ledger) and `ctx.hands` (the log).
-export const BUYIN=5,TURN_MS=20000,BET_MS=12000,INS_MS=10000,PAUSE_MS=5000,BOT_MS=1300,AWAY_MS=60000,
+// v0.9.8.1: no clock during a hand (nobody is auto-folded or auto-stood); 60 s between hands (Blackjack: the betting window,
+// dealt as soon as everyone has bet; Hold'em: a break, dealt as soon as everyone taps READY). The host starts the table.
+export const BUYIN=5,BET_MS=60000,NEXT_MS=60000,PAUSE_MS=0,BOT_MS=1300,AWAY_MS=60000,
   RAKE=.018,RAKE_CAP=6,SIDE_COST=1,BOT_DAILY=25,SB=1,BB=2,SEATS={bj:5,he:6},LIMITS=[100,250,0];
 export const PRIZES={hybrid:10,flags:15};   // the side bet: 10 Hybrid Theory Cases or 15 Flag Cases, the winner picks
 
@@ -36,7 +38,7 @@ const natural=h=>h.cards.length===2&&!h.split&&bjTotal(h.cards).t===21;
 // ---------- the table ----------
 export function newTable({game,lim,side,host}){
   return{game,lim:LIMITS.includes(lim)?lim:100,side:!!side,host,seats:Array(SEATS[game]).fill(null),phase:'wait',deadline:0,handNo:0,button:-1,
-    hand:null,last:null,picks:{},log:[]}}
+    hand:null,last:null,picks:{},log:[],started:false,ready:{}}}
 const humans=st=>st.seats.filter(s=>s&&!s.bot);
 export const seatIx=(st,uid)=>st.seats.findIndex(s=>s&&s.uid===uid);
 const note=(st,t)=>{st.log.push(t);if(st.log.length>8)st.log.shift()};
@@ -61,7 +63,11 @@ export function leave(st,uid,ctx){
     return null}
   if(st.phase==='bet'&&st.hand&&st.hand.bets[uid]){s.stack+=st.hand.bets[uid].bet+st.hand.bets[uid].side;delete st.hand.bets[uid]}
   standUp(st,i,ctx);return null}
-export function settings(st,uid,{lim,side}){if(st.host!==uid)return 'Only the host can change the table';if(st.handNo>0)return 'Settings lock once the first hand is dealt';
+// the host deals the first hand (Blackjack: anyone seated; Hold'em: at least two people). After that it runs by itself.
+export function start(st,uid){if(st.host!==uid)return 'Only the host can start the table';if(st.started)return null;
+  const n=humans(st).length;if(st.game==='he'&&n<2)return 'Hold\'em needs at least 2 players';if(!n)return 'Nobody is seated';st.started=true;note(st,'The host started the table');return null}
+export function ready(st,uid){if(seatIx(st,uid)<0)return 'You are not at this table';if(st.phase!=='done')return null;st.ready=st.ready||{};st.ready[uid]=true;return null}
+export function settings(st,uid,{lim,side}){if(st.host!==uid)return 'Only the host can change the table';if(st.started)return 'Settings lock once the host starts the table';
   if(lim!==undefined){if(!LIMITS.includes(lim))return 'Pick 100, 250 or No limit';st.lim=lim}if(side!==undefined)st.side=!!side;return null}
 export function pick(st,uid,kind,ctx){if(!(st.picks[uid]>0))return 'No prize to pick';if(!PRIZES[kind])return 'Pick Hybrid Theory or Flag Cases';
   st.picks[uid]--;if(!st.picks[uid])delete st.picks[uid];ctx.ops.push({uid,k:'case',bag:kind,n:PRIZES[kind]});return null}
@@ -75,23 +81,21 @@ function step(st,ctx){
   const now=ctx.now;
   // a player who stopped polling for a minute is stood up (their shards go back to their balance)
   for(let i=0;i<st.seats.length;i++){const s=st.seats[i];if(s&&!s.bot&&now-s.seen>AWAY_MS&&!s.leaving){if(inHand(st,s.uid))leave(st,s.uid,ctx);else standUp(st,i,ctx)}}
+  if(st.started===false)return;   // waiting for the host (tables opened before v0.9.8.1 have no flag and keep running)
   if(st.phase==='wait'){if(st.game==='bj')bjOpen(st,ctx);else heTryDeal(st,ctx);return}
-  if(st.phase==='done'){if(now>=st.deadline)cleanup(st,ctx);return}
+  if(st.phase==='done'){const hs=humans(st).filter(s=>!s.leaving&&s.stack>=BB);if(now>=st.deadline||hs.length&&hs.every(s=>(st.ready||{})[s.uid]))cleanup(st,ctx);return}   // busted players can't be dealt in, so nobody waits on them
   if(st.game==='bj'){
     if(st.phase==='bet'){const el=bjEligible(st);if(now>=st.deadline||el.length&&el.every(s=>st.hand.bets[s.uid]))bjDeal(st,ctx);return}
-    if(st.phase==='ins'){const h=st.hand;if(now>=st.deadline||h.players.every(p=>p.ins!==null))bjPeek(st,ctx);return}
-    if(st.phase==='play'&&now>=st.deadline){const p=st.hand.players[st.hand.turn.p];if(p){p.hands[st.hand.turn.h].done=true;timeoutMark(st,p.uid)}bjAdvance(st,ctx)}
+    if(st.phase==='ins'){const h=st.hand;if(h.players.every(p=>p.ins!==null))bjPeek(st,ctx);return}
     return}
   if(st.phase==='play'){const h=st.hand,p=h.players[h.cur];if(!p)return;
-    if(p.bot){if(now>=h.botAt){const c=heToCall(h,p);if(heAct(st,p.uid,botMove(st,p,ctx),ctx)&&heAct(st,p.uid,{a:c?'call':'check'},ctx))heAct(st,p.uid,{a:'fold'},ctx)}}
-    else if(now>=st.deadline){timeoutMark(st,p.uid);heAct(st,p.uid,{a:heToCall(h,p)?'fold':'check'},ctx)}}
+    if(p.bot&&now>=h.botAt){const c=heToCall(h,p);if(heAct(st,p.uid,botMove(st,p,ctx),ctx)&&heAct(st,p.uid,{a:c?'call':'check'},ctx))heAct(st,p.uid,{a:'fold'},ctx)}}
 }
-function timeoutMark(st,uid){const s=st.seats[seatIx(st,uid)];if(s)s.sitout++}
 function cleanup(st,ctx){
   for(let i=0;i<st.seats.length;i++){const s=st.seats[i];if(!s)continue;
     if(s.leaving||!s.bot&&s.sitout>=3)standUp(st,i,ctx);
     else if(s.bot&&(s.stack<BB||st.game==='he'&&humans(st).length!==2))standUp(st,i,ctx)}
-  st.phase='wait';st.hand=null;st.deadline=0}
+  st.phase='wait';st.hand=null;st.deadline=0;st.ready={}}
 
 // ---------- blackjack ----------
 const bjEligible=st=>st.seats.filter(s=>s&&!s.bot&&!s.leaving&&s.stack>=1);
@@ -110,7 +114,7 @@ function bjDeal(st,ctx){
   Object.assign(h,{game:'bj',no:st.handNo,shoe:shuffle(208,ctx.rng),pos:0,salt:ctx.salt(),hash:null,players,dealer:[],revealed:false,turn:{p:0,h:0},step:h.step+1});delete h.bets;
   const dealer=h.dealer;for(let r=0;r<2;r++){for(const p of players)p.hands[0].cards.push(draw(h));dealer.push(draw(h))}
   for(const p of players){const c=p.hands[0].cards;if(p.side&&rankOf(c[0])===12&&rankOf(c[1])===12)sideHit(st,p.uid,'DOUBLE ACES')}
-  if(rankOf(dealer[0])===12){st.phase='ins';st.deadline=ctx.now+INS_MS;for(const p of players)if(natural(p.hands[0])||p.hands[0].bet<2||st.seats[p.seat].stack<Math.floor(p.hands[0].bet/2))p.ins=0;return}
+  if(rankOf(dealer[0])===12){st.phase='ins';st.deadline=0;for(const p of players)if(natural(p.hands[0])||p.hands[0].bet<2||st.seats[p.seat].stack<Math.floor(p.hands[0].bet/2))p.ins=0;return}
   bjPeek(st,ctx)}
 function cleanupIdle(st,ctx){for(let i=0;i<st.seats.length;i++){const s=st.seats[i];if(s&&!s.bot&&(s.sitout>=3||s.leaving))standUp(st,i,ctx)}}
 const draw=h=>(h.shoe||h.deck)[h.pos++];
@@ -125,7 +129,7 @@ function bjAdvance(st,ctx,fresh){const h=st.hand;
   for(let pi=fresh?0:h.turn.p;pi<h.players.length;pi++){const p=h.players[pi];
     for(let hi=pi===h.turn.p&&!fresh?h.turn.h:0;hi<p.hands.length;hi++){const hh=p.hands[hi];
       if(!hh.done&&bjTotal(hh.cards).t>=21)hh.done=true;
-      if(!hh.done){h.turn={p:pi,h:hi};st.deadline=ctx.now+TURN_MS;h.step++;return}}}
+      if(!hh.done){h.turn={p:pi,h:hi};st.deadline=0;h.step++;return}}}
   h.turn={p:-1,h:-1};bjDealer(st,ctx)}
 export function bjAct(st,uid,a,ctx){
   if(st.phase!=='play')return 'Not now';const h=st.hand,p=h.players[h.turn.p];if(!p||p.uid!==uid)return 'Not your turn';
@@ -154,7 +158,7 @@ function bjSettle(st,ctx){const h=st.hand,d=bjTotal(h.dealer).t,dbj=h.dealer.len
       if(s)s.stack+=back;hh.result=res;net+=back-hh.bet}
     if(p.side)net-=SIDE_COST;p.net=net}
   finish(st,ctx,{dealer:h.dealer,total:d,players:h.players.map(p=>({uid:p.uid,name:p.name,net:p.net,hands:p.hands.map(x=>({cards:x.cards,bet:x.bet,result:x.result}))}))})}
-function finish(st,ctx,result){const h=st.hand;st.phase='done';st.deadline=ctx.now+PAUSE_MS;h.step++;h.result=result;
+function finish(st,ctx,result){const h=st.hand;st.phase='done';st.deadline=ctx.now+(st.game==='he'?NEXT_MS:PAUSE_MS);st.ready={};h.step++;h.result=result;
   st.last={no:h.no,hash:h.hash,salt:h.salt,deck:h.shoe||h.deck,result,sideHits:h.sideHits};   // the whole deck, so the hash can be checked
   ctx.hands.push({game:st.game,no:h.no,hash:h.hash,salt:h.salt,deck:h.shoe||h.deck,result,rake:h.rake||0,sideHits:h.sideHits});
   for(const x of h.sideHits)note(st,(st.seats.find(s=>s&&s.uid===x.uid)||{name:'?'}).name+' hit '+x.why+'!')}
@@ -184,7 +188,7 @@ function post(st,p,amt){const s=st.seats[p.seat],x=Math.min(amt,s.stack);s.stack
 export const heToCall=(h,p)=>Math.max(0,h.toCall-p.bet);
 const active=h=>h.players.filter(p=>!p.folded);
 function heTurn(st,ctx,fresh){const h=st.hand,n=h.players.length;
-  for(let k=0;k<n;k++){const i=(h.cur+k)%n,p=h.players[i];if(!p.folded&&!p.allin){h.cur=i;st.deadline=ctx.now+TURN_MS;h.botAt=ctx.now+BOT_MS;h.step++;return}}
+  for(let k=0;k<n;k++){const i=(h.cur+k)%n,p=h.players[i];if(!p.folded&&!p.allin){h.cur=i;st.deadline=0;h.botAt=ctx.now+BOT_MS;h.step++;return}}
   heStreet(st,ctx)}
 // a betting round is over when everyone who can still bet has acted and matched the bet (or only one such player is left, matched)
 function roundDone(h){const live=h.players.filter(p=>!p.folded&&!p.allin);
@@ -256,7 +260,8 @@ export function botMove(st,p,ctx){const h=st.hand,s=st.seats[p.seat],call=heToCa
 // ---------- what one player may see ----------
 export function view(st,uid,now){
   const h=st.hand,me=seatIx(st,uid),v={game:st.game,lim:st.lim,side:st.side,host:st.host===uid,hostName:(st.seats.find(s=>s&&s.uid===st.host)||{}).name||'',phase:st.phase,
-    left:Math.max(0,st.deadline-now),handNo:st.handNo,me,picks:st.picks[uid]|0,log:st.log.slice(-5),
+    left:st.deadline?Math.max(0,st.deadline-now):0,handNo:st.handNo,me,picks:st.picks[uid]|0,log:st.log.slice(-5),started:st.started!==false,
+    readyMe:!!(st.ready||{})[uid],readyN:Object.keys(st.ready||{}).length,
     seats:st.seats.map((s,i)=>s&&{i,name:s.name,stack:s.stack,bot:!!s.bot,me:i===me,side:!!s.side,leaving:!!s.leaving}),
     last:st.last&&{no:st.last.no,hash:st.last.hash,salt:st.last.salt,deck:st.last.deck,result:st.last.result,sideHits:st.last.sideHits},fair:h&&h.hash||null};
   if(!h)return v;
