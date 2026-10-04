@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Plan. Written October 4 from Big U's request. **Round 1 decided by Big U on October 4 (H1–H5, T1–T9). Round 2 open (R1–R5)**; nothing is built yet |
+| **Status** | Plan. Written October 4 from Big U's request. **All decisions made by Big U on October 4 (H1–H5, T1–T9, R1–R5)**; nothing is built yet |
 | **Build** | **v0.9.8 = the Tables first** (Part B; server migration, Big U approves before it's applied). **v0.9.9 = nameplates** (Part A, client only) |
 | **Protocol** | Part A: `yard-27` → `yard-28` only if nameplate data needs new fields (it shouldn't: hp, max, alive and downed already sync). Part B never touches the match protocol; it's menu only |
 | **Scope** | The in-match HUD in **every mode**; a new main-menu tab with Blackjack and Texas Hold'em played for shards |
@@ -109,16 +109,16 @@ The economy is tiny, so every number below is checked against it.
 - **Tables are lobbies, like matches:** a host opens a table, picks the game and the settings, and others join by code, by invite, or from a browse list. Max seats: Blackjack 5, Hold'em 6.
 - **Table settings (host, before the first hand; T5):**
   - **Game:** Blackjack or Hold'em.
-  - **Limit:** **100**, **250** or **No limit** (see R1 for what the limit caps).
-  - **Buy-in: 5 shards** to sit down.
+  - **Limit:** **100**, **250** or **No limit**: the biggest single bet, **in shards** (R1). No chips: you play with straight shards.
+  - **Buy-in: 5 shards** to sit down. That's your starting table stack, and you can add more shards to it at any time between hands (unlimited, R4). Bets come out of your table stack.
   - **Side bet** on or off (T2, R2).
 - **Cards are dealt automatically (T1):** no deal button. After a hand settles there's a 5-second pause, then the next hand deals to everyone seated.
   - Blackjack: a 12-second betting window; anyone who hasn't bet sits that hand out.
   - Your turn has a 20-second timer; on timeout Blackjack stands, Hold'em checks if it can, otherwise folds.
   - Sitting out 3 hands in a row stands you up and cashes you out.
-- **Leaving:** you can stand up between hands and your stack is cashed out to shards. Leaving mid-hand folds (Hold'em) or stands (Blackjack), and the hand settles normally.
-- **Rebuy:** when your stack runs out, you can buy in again for 5 shards (limit: R4).
-- **Screens:** felt table, seats round it with names and stacks, your cards large at the bottom, the action buttons, the pot, a hand-history strip, and a results card when you stand up (bought in / cashed out / net). Same style as the rest of the game: stencil type, cards drawn on canvas, a chip rack in shard colours. Touch, mouse, keyboard and controller.
+- **Leaving:** you can stand up between hands and your table stack goes back to your balance. Leaving mid-hand folds (Hold'em) or stands (Blackjack), and the hand settles normally.
+- **Rebuy / top up:** unlimited (R4): add shards to your table stack between hands, as many times as you like.
+- **Screens:** felt table, seats round it with names and stacks, your cards large at the bottom, the action buttons, the pot, a hand-history strip, and a results card when you stand up (brought / left with / net). Same style as the rest of the game: stencil type, cards drawn on canvas, a chip rack in shard colours. Touch, mouse, keyboard and controller.
 - **Chat:** the existing lobby chat, at the table.
 
 ## PAL-098-4: Blackjack (traditional rules, 4-deck shoe)
@@ -145,18 +145,18 @@ The economy is tiny, so every number below is checked against it.
   - **3 or more:** real players only. When a third person sits down, the bot finishes the hand it's in and leaves.
   - **1 player alone:** see R3.
 - **Standard no-frills Hold'em:**
-  - **Blinds:** small 5 / big 10 chips; with a 500-chip stack that's 50 big blinds, a normal cash-game depth;
+  - **Blinds:** 1 / 2 shards; you need at least the 5-shard buy-in at the table to be dealt in;
   - **Button:** the dealer button moves each hand;
   - **Betting:** pre-flop, flop, turn, river; check, bet, call, raise, fold, all-in;
-  - **Bet sizes:** set by the table's limit (R1);
+  - **Bet sizes:** up to the table's limit, in shards (100, 250, or your whole table stack at No limit);
   - **Pots:** side pots for all-ins;
   - **Showdown:** split pots on ties, cards shown in the standard order, and a loser may muck.
-- **House cut (T4: 1.8):** players play against each other, so the house's share is a **1.8% rake** on each pot that sees a flop (R5), capped at 3 big blinds per pot. It's a slow shard sink and the only house edge at this table.
+- **House cut (T4: 1.8):** players play against each other, so the house's share is a **1.8% rake** on each pot that sees a flop (R5), capped at 6 shards per pot, rounded down to whole shards (a pot under 56 shards pays no rake). It's a slow shard sink and the only house edge at this table.
 - **The bot:**
   - **Bankroll:** it buys in with house chips. Shards it wins disappear (a sink); shards it loses are paid by the house.
   - **Strength:** it plays a solid, standard strategy: a starting-hand chart by seat, and bets after the flop from its hand's real winning chances against two random hands (simulated), with some randomness so it can't be read by a pattern.
   - **Not farmable on purpose:** a strong player can beat any bot over time. Two guard rails stop that from printing shards:
-    - the bot can lose at most 25 shards a day to the house across all tables;
+    - the bot sits with the 5-shard buy-in and tops up like a player; across all tables it can lose at most 25 shards a day;
     - after that, two-player tables wait for a third human.
 - **Hand rankings:** checked by an evaluator that's tested against every one of the 2,598,960 five-card hands (exact counts per rank).
 
@@ -177,7 +177,7 @@ The economy is tiny, so every number below is checked against it.
   - **Double aces (either game) → 10 Hybrid or 15 Flag:** the house keeps 16–46% of side-bet money. That's normal for casino side bets, and it's a big shard sink.
   - **Full house → 10 Hybrid / 15 Flag:** every shard put in returns 3.35–4.19 shards, so it prints cases. Recommended: **full house or better pays 3 Hybrid or 3 Flag** instead. 3 Hybrid is almost exactly even (the player is 0.6% ahead); 3 Flag gives the house 16%.
   - The winner picks Hybrid or Flag when it hits.
-- Decision: R2.
+- **Decided (R2: "I want fun"): Big U's amounts as asked.** A 1-shard side bet each hand (on or off per table). Double aces (either game) **or** a full house or better pays **10 Hybrid Theory or 15 Flag Cases**; the winner picks. Over time a full-house side bet pays out about 3 to 4 shards' worth of cases for every shard put in, so the Tables will hand out a lot of cases; Big U accepted that. The weekly report watches cases granted.
 
 ## PAL-098-6: Fairness, anti-exploit and economy guard rails
 
@@ -193,31 +193,28 @@ The economy is tiny, so every number below is checked against it.
 - **Shuffling:** `pgcrypto` `gen_random_bytes` (cryptographic), Fisher–Yates with rejection sampling (no modulo bias). Never `random()`.
 - **Hidden cards stay hidden:** other players' hole cards, the dealer's hole card and the rest of the deck are never sent until revealed.
 - **Provably fair (T7):** at the deal, the table shows a hash of the shuffled deck; after the hand, the deck itself. Anyone can check the hand came from the deck it committed to.
-- **Chip dumping** (losing on purpose to move shards from an alt account to a main one): with no daily cap (T6), the rebuy limit (R4) is what bounds it. Every transfer is in the ledger, and Big U's report flags any pair of accounts that keeps sitting together with one-sided results.
+- **Chip dumping** (losing on purpose to move shards from an alt account to a main one): with no daily cap (T6) and unlimited top-ups (R4), nothing in the rules bounds it. Every transfer is in the ledger, and Big U's report flags any pair of accounts that keeps sitting together with one-sided results.
 - **No `delete`** anywhere in the migration (project rule); old hands are the audit log.
 - **Report for Big U** (`dev/supabase/reports/tables.sql`): shards bought in, cashed out, raked, side-bet in/out and cases granted, per day and per account.
 
 ## Acceptance criteria (B)
 
-- [ ] **Odds by simulation** (against the server's own SQL):
-  - Blackjack basic strategy over 50 million hands: house edge at the documented figure ±0.02%;
-  - side-bet hit rates match the table above ±2%;
-  - the bot's win rate against a simple honest strategy is recorded.
-- [ ] **Hand evaluator:** exact counts for all 2,598,960 five-card hands; best-of-seven agrees with a brute-force check on 1 million random deals.
-- [ ] **Deck integrity:** every hand's cards match its committed deck; 1 million shuffles pass a chi-squared test on card positions.
+- [ ] **Odds check** (quick, against the server's own SQL): 1 million Blackjack hands with basic strategy land near the documented edge; side-bet hit rates match the table above ±10%.
+- [ ] **Hand evaluator:** exact counts for all 2,598,960 five-card hands; best-of-seven agrees with a brute-force check on 100,000 random deals.
+- [ ] **Deck integrity:** every hand's cards match its committed deck; 100,000 shuffles pass a chi-squared test on card positions.
 - [ ] **Counting is useless:** Blackjack edge after ten-rich and ten-poor hands is the same within noise.
 - [ ] **No double spends:** 50 parallel buy-ins or bets from one account place exactly what the balance allows.
-- [ ] **No peeking:** over 100,000 hands, no reply to any player holds a card that player shouldn't see.
+- [ ] **No peeking:** over 10,000 hands, no reply to any player holds a card that player shouldn't see.
 - [ ] **Turns and timeouts:** acting out of turn is refused; a timed-out player is checked, folded or stood by the next request; leaving mid-hand settles correctly.
 - [ ] **Bot:** joins at 2 real players, leaves when a third sits down, stops after its daily 25-shard loss limit.
-- [ ] **Ledger:** for every table, buy-ins = cash-outs + rake + chips still on the table, to the chip. Shards are never created.
+- [ ] **Ledger:** for every table, shards brought = shards taken away + rake + shards still on the table, to the shard; side-bet case grants are logged. Shards are never created.
 - [ ] Screens work at the three sizes, by touch, mouse, keyboard and controller.
 
-**Tests:**
-- `tables_migration` (PGlite: every RPC and refusal, races, timeouts, bot rules, ledger, migration applies twice, no `delete`);
-- `tables_sim` (odds, evaluator, shuffle statistics);
-- `tables_ui` (screens and flows at three sizes);
-- `tables_network` (3 browsers at one table: auto-deal, turns, hidden cards, a player leaving).
+**Tests (kept to what this update touches; no full suite, per Big U):**
+- `tables_migration` (PGlite: the RPCs, refusals, a parallel-bet race, timeouts, bot rules, ledger, side bet, no `delete`);
+- `tables_odds` (quick: evaluator, shuffle, 1M Blackjack hands);
+- `tables_ui` (3 browsers at one table at the three sizes: auto-deal, turns, hidden cards, a player leaving);
+- plus the existing tests for anything the update edits (the main menu nav: `taborder`, `index_page`).
 
 ---
 
@@ -229,7 +226,7 @@ The economy is tiny, so every number below is checked against it.
    3. Apply it live.
    4. Ship the client.
 2. **v0.9.9: nameplate health** (Part A, client only).
-3. Full suite each time; screenshots at three sizes in `dev/evidence/v0.9.8/` and `v0.9.9/`.
+3. **Testing (Big U, October 4): only the tests for what changed, not the full suite.** Screenshots at three sizes in `dev/evidence/v0.9.8/` and `v0.9.9/`.
 
 ## Decisions (Big U, October 4)
 
@@ -250,12 +247,12 @@ The economy is tiny, so every number below is checked against it.
 | T8 | Signed-in only | **Yes** |
 | T9 | Nameplates first? | **No: the Tables first** |
 
-## Still open (round 2)
+## Round 2 decisions (Big U, October 4)
 
-| # | Question | Proposal |
+| # | Question | Decision |
 |---|---|---|
-| R1 | What do 100 / 250 / No limit cap, and what does the 5-shard buy-in buy? | **Chips:** 5 shards buy a 500-chip stack (1 shard = 100 chips); the limit is the biggest single bet in chips (100, 250, or your whole stack); you cash out at the same rate when you stand up. The most you can lose at a sitting is your buy-ins. *(The alternative, bets in shards with a 100/250/unlimited cap, would let one No-limit hand move more shards than most players have ever earned.)* |
-| R2 | The side bet | A **1-shard paid side bet**, toggled per table; the winner picks the case type. Double aces (either game): 10 Hybrid or 15 Flag. **Full house or better: 3 Hybrid or 3 Flag** (10/15 for a 1-in-36 hit prints cases) |
-| R3 | One player alone at a Hold'em table | Waits for a second player (the bot only fills the third seat for two humans) |
-| R4 | Rebuys per table sitting | Up to 3 (20 shards in total at most), then stand up and sit back down |
-| R5 | "1.8" = a 1.8% rake on Hold'em pots, and Blackjack keeps its traditional ~0.5% edge? | Yes |
+| R1 | Chips or shards? | **Straight shards.** The limit (100 / 250 / No limit) is the biggest single bet in shards; the 5-shard buy-in is your starting table stack |
+| R2 | Side bet amounts | **"I want fun":** as asked: 1-shard side bet, double aces or a full house or better pays 10 Hybrid Theory or 15 Flag Cases |
+| R3 | One player alone at Hold'em | **Waits for a second player** |
+| R4 | Rebuys / top-ups | **Unlimited** |
+| R5 | 1.8% Hold'em rake, Blackjack traditional edge | **Yes** |
