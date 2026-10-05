@@ -126,7 +126,7 @@ function tbShow(v){TB.v=v;
       const inner=p?`<div class="tcards">${p.cards.map(tbCard).join('')}</div><em>${p.folded?'FOLDED':p.allin?'ALL IN':p.bet?'bet '+p.bet+'◆':'·'}${p.put?' · in pot '+p.put+'◆':''}</em>`:'<em>not in this hand</em>';
       return seat(s,inner,p&&p.turn,s.bot?' <i>BOT</i>':'')}).join('')+'</div>'}
   if(v.phase==='done'&&v.last&&v.last.result&&v.game==='he')felt+=`<div class="tresult">${tbResult(v)}</div>`;
-  $('tbFelt').innerHTML=felt;tbActions(v,me);
+  const fe=$('tbFelt');if(fe._h!==felt){fe._h=felt;fe.innerHTML=felt}tbActions(v,me);   // untouched when nothing changed (a rebuild mid-tap loses the tap)
   $('tbLog').textContent=v.log.join(' · ');$('tbHelpTxt').innerHTML=TB_HELP[v.game];
   $('tbFairTxt').innerHTML=tbFairText(v);const si=$('tbSeedIn');if(document.activeElement!==si)si.value=v.seed||'';
   const pk=$('tbPick');pk.hidden=!(v.picks>0);if(v.picks>0){const hit=v.last&&v.last.sideHits&&v.last.sideHits.find(x=>x);txt($('tbPickWhy'),(hit?hit.why+'! ':'')+'Pick your prize.')}}
@@ -201,14 +201,15 @@ function rlPos(k){const m=String(k).match(/^([a-z]+)(?::([0-9-]+))?$/);if(!m)ret
   return null}
 const RL_CHIPS=[1,5,25,100,500,1000],rlChipCol=a=>a>=1000?'#d6aa46':a>=500?'#8a4ad0':a>=100?'#141214':a>=25?'#1f8a4a':a>=5?'#c02030':'#e8e4dc';
 const rlChipH=(a,cl='')=>`<i class="rchip${cl}" style="--c:${rlChipCol(a)}">${a>=1000?(a/1000).toFixed(a%1000?1:0)+'K':a}</i>`;
-// keep your local board in step with the server's (it adopts what the server holds unless you've changed it since)
+// keep your local board in step with the server's. It adopts what the server holds only when you haven't touched the board
+// for 2 s and nothing is on its way: a poll answered from before your last tap would otherwise wipe that tap.
 function rlSync(v){const R=TB.rl;if(v.handNo!==R.hand){if(R.hand>=0&&rlTotalC(R.sentBets))R.last={...R.sentBets};R.hand=v.handNo;R.bets={};R.sent='';R.sentBets={}}
   if(v.phase!=='bet'){R.bets={...(v.myBets||{})};return}
-  if(!R.dirty&&JSON.stringify(v.myBets||{})!==R.sent){R.bets={...(v.myBets||{})};R.sent=JSON.stringify(R.bets);R.sentBets={...R.bets}}}
+  if(!R.dirty&&!R.inflight&&performance.now()-(R.at||0)>2000&&JSON.stringify(v.myBets||{})!==R.sent){R.bets={...(v.myBets||{})};R.sent=JSON.stringify(R.bets);R.sentBets={...R.bets}}}
 let rlSendT=0;
-function rlQueue(){const R=TB.rl;R.dirty=1;TB.key='';if(TB.v)tbShow(TB.v);clearTimeout(rlSendT);rlSendT=setTimeout(rlFlush,260)}
-async function rlFlush(){const R=TB.rl;if(!TB.id||!R.dirty)return;const want=JSON.stringify(R.bets);R.dirty=0;
-  const r=await tbSend({op:'rlbets',id:TB.id,bets:R.bets},true);if(r&&r.error){toast('ROULETTE',r.error);R.dirty=0;R.sent='';if(TB.v)rlSync(TB.v)}else{R.sent=want;R.sentBets=JSON.parse(want)}if(TB.v){TB.key='';tbShow(TB.v)}}
+function rlQueue(){const R=TB.rl;R.dirty=1;R.at=performance.now();TB.key='';if(TB.v)tbShow(TB.v);clearTimeout(rlSendT);rlSendT=setTimeout(rlFlush,260)}
+async function rlFlush(){const R=TB.rl;if(!TB.id||!R.dirty)return;const want=JSON.stringify(R.bets);R.dirty=0;R.inflight=1;
+  const r=await tbSend({op:'rlbets',id:TB.id,bets:R.bets},true).finally(()=>{R.inflight=0;R.at=performance.now()});if(r&&r.error){toast('ROULETTE',r.error);R.dirty=0;R.sent='';if(TB.v)rlSync(TB.v)}else{R.sent=want;R.sentBets=JSON.parse(want)}if(TB.v){TB.key='';tbShow(TB.v)}}
 function rlFelt(v){const R=TB.rl,open=v.phase==='bet'&&!v.readyMe,mine=open?R.bets:(v.myBets||{});let cells='';
   // a 6-row grid: each number spans two rows, so 00 (top) and 0 (bottom) can each take half the left column
   for(let row=0;row<3;row++)for(let col=0;col<12;col++){const n=col*3+(3-row);cells+=`<span class="rn ${RL_RED.has(n)?'r':'b'}${v.number===n&&v.phase==='done'?' hit':''}" style="grid-area:${row*2+1}/${col+2}/span 2/span 1">${n}</span>`}
@@ -231,10 +232,18 @@ function rlActions(v,me){const R=TB.rl,open=v.phase==='bet'&&!v.readyMe,tot=rlTo
 <div class="trow">${tbBtn('rlspin','SPIN',{cl:'go big',on:tot>0,hint:tot?tot+'◆ on the board':'place a bet first'})}</div>`}
 function rlAdd(k){const R=TB.rl,v=TB.v;if(!v||v.phase!=='bet'||v.readyMe)return;const me=v.seats[v.me],free=me.stack+rlTotalC(v.myBets)-rlTotalC(R.bets);
   if(free<1){toast('ROULETTE','Not enough shards at the table: top up (+5 or +25)');return}R.bets[k]=(R.bets[k]||0)+Math.min(R.chip,free);rlQueue()}
-$('tbFelt').addEventListener('click',e=>{const b=e.target.closest('[data-spot]');if(b){if(!b.disabled)rlAdd(b.dataset.spot);return}
-  const g2=e.target.closest('#rlNums');if(!g2||!TB.v||TB.v.game!=='rl')return;const r=g2.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*13-1,y=(e.clientY-r.top)/r.height*3;
+// bets go down on release, from where you pressed: the board can be rebuilt by a poll between press and release, which
+// would swallow a plain click. A keyboard press on an outside box still comes as a click (detail 0).
+function rlTapAt(x0,y0,el){const b=el&&el.closest&&el.closest('[data-spot]');if(b){if(!b.disabled)rlAdd(b.dataset.spot);return}
+  const g2=$('rlNums');if(!g2||!TB.v||TB.v.game!=='rl')return;const r=g2.getBoundingClientRect();if(x0<r.left||x0>r.right||y0<r.top||y0>r.bottom)return;
+  const x=(x0-r.left)/r.width*13-1,y=(y0-r.top)/r.height*3;
   if(x<0){rlAdd(Math.abs(y-1.5)<.25?'sp:0-37':y<1.5?'n:37':'n:0');return}
-  const col=Math.min(11,Math.floor(x)),row=Math.min(2,Math.max(0,Math.floor(y)));rlAdd(rlHit(col,row,x-col,y-row))});
+  const col=Math.min(11,Math.floor(x)),row=Math.min(2,Math.max(0,Math.floor(y)));rlAdd(rlHit(col,row,x-col,y-row))}
+let rlDown=null;
+$('tbFelt').addEventListener('pointerdown',e=>{rlDown=e.isPrimary?{x:e.clientX,y:e.clientY,t:performance.now()}:null});
+$('tbFelt').addEventListener('pointerup',e=>{const d=rlDown;rlDown=null;if(!d||performance.now()-d.t>700||Math.hypot(e.clientX-d.x,e.clientY-d.y)>12)return;   // a scroll or a drag isn't a bet
+  rlTapAt(d.x,d.y,document.elementFromPoint(d.x,d.y))});
+$('tbFelt').addEventListener('click',e=>{if(e.detail===0){const b=e.target.closest('[data-spot]');if(b&&!b.disabled)rlAdd(b.dataset.spot)}});
 $('tbActs').addEventListener('click',e=>{const b=e.target.closest('button[data-act]');if(!b||b.disabled)return;const a=b.dataset.act,v=TB.v;if(!v)return;const me=v.seats[v.me],R=TB.rl;
   if(a.startsWith('chip:')){R.chip=+a.slice(5);TB.key='';tbActions(v,me);return}
   if(a==='rlclear'){R.bets={};rlQueue();return}

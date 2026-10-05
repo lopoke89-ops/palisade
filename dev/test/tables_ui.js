@@ -9,10 +9,10 @@ const {chromium}=require('playwright'),{ready,quiet}=require('./lib'),assert=req
 const Q='peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1&cloud=1';
 (async()=>{const H=await import('../supabase/functions/tables/handler.js');
  const users={A:{id:'a0000000-0000-4000-8000-00000000000a',anon:false,name:'BigU'},B:{id:'b0000000-0000-4000-8000-00000000000b',anon:false,name:'Rab'},G:{id:'d0000000-0000-4000-8000-00000000000d',anon:true,name:'Guest'}};
- const bal={[users.A.id]:600,[users.B.id]:400,[users.G.id]:50},tables=new Map(),hands=[];let nid=1;
+ const bal={[users.A.id]:600,[users.B.id]:400,[users.G.id]:50},tables=new Map(),hands=[],allOps=[];let nid=1;
  const tok=u=>'x.'+Buffer.from(JSON.stringify({sub:u.id,exp:4e9})).toString('base64url')+'.y';
  const byTok=t=>Object.values(users).find(u=>tok(u)===t);
- const applyOps=ops=>{for(const o of ops)if(o.uid&&o.d&&bal[o.uid]+o.d<0)return false;for(const o of ops)if(o.uid&&o.d)bal[o.uid]+=o.d;return true};
+ const applyOps=ops=>{for(const o of ops)if(o.uid&&o.d&&bal[o.uid]+o.d<0)return false;for(const o of ops)if(o.uid&&o.d)bal[o.uid]+=o.d;allOps.push(...ops);return true};
  const D={now:()=>Date.now(),auth:async t=>{const u=byTok(t);return u&&{id:u.id,anon:u.anon}},name:async id=>Object.values(users).find(u=>u.id===id).name,balance:async id=>bal[id]||0,
   load:async id=>{const t=tables.get(id);return t&&JSON.parse(JSON.stringify(t))},byRoom:async(room,game)=>[...tables.values()].find(t=>t.open&&t.room===room&&t.game===game)||null,
   seatOf:async id=>{const t=[...tables.values()].find(t=>t.open&&t.humans.includes(id));return t?{id:t.id,code:t.code,game:t.game,room:t.room}:null},stale:async()=>[],botLeft:async()=>25,
@@ -69,7 +69,7 @@ const Q='peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1&cloud=1';
  {const v0=await until(guest,v=>v.seats.filter(Boolean).length===2);assert.ok(!v0.started,'nothing is dealt until the first to sit starts it');assert.match(await guest.textContent('#tbStatus'),/WAITING FOR BIGU/i);
   await host.click('[data-act=start]')}
  for(const p of[host,guest]){await until(p,v=>v.phase==='bet');await p.click('[data-act="set:1"]');await p.click('[data-act=bet]')}
- for(let k=0;k<160;k++){let moved=false;for(const p of[host,guest]){const v=await V(p);if(v.insure){await p.click('[data-act="ins:0"]');moved=true}if(v.myTurn){await p.click('[data-act=stand]');moved=true}}
+ for(let k=0;k<160;k++){let moved=false;for(const p of[host,guest]){const v=await V(p);if(v.insure){await p.click('[data-act="ins:0"]');moved=true}if(v.myTurn){await p.click('[data-act=stand]');await quiet(p);moved=true}}
   if(!moved){const v=await V(host);if(v.phase==='done'||(v.phase==='bet'&&v.last))break;await poke(host);await poke(guest);await host.waitForTimeout(100)}}
  let v=await until(host,v=>v.last&&v.last.no===1);out.bj=v.last.result;await host.waitForTimeout(400);
  await host.screenshot({path:__dirname+'/out/tables_bj_desktop.png'});await guest.screenshot({path:__dirname+'/out/tables_bj_portrait.png'});
@@ -93,10 +93,11 @@ const Q='peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1&cloud=1';
   v=await until(host,v=>Object.keys(v.myBets||{}).length===5);assert.deepEqual(v.myBets,{'n:17':5,'sp:17-20':5,'st:1':5,'n:37':5,red:2},'what you tap is what the server holds');
   await host.screenshot({path:__dirname+'/out/tables_rl_desktop.png'});
   const before=v.seats[2].stack;await host.click('[data-act=rlspin]');v=await until(host,v=>v.phase==='spin');assert.ok(v.number>=0&&v.number<=37,'the number shows once the ball goes');
+  await poke(host);await quiet(host);assert.equal(await host.$$eval('#rlNums .rn.hit',x=>x.length),0,'the board doesn\'t light the number while the ball is still spinning');
   await host.waitForTimeout(1500);await host.screenshot({path:__dirname+'/out/tables_rl_spin_desktop.png'});
   v=await until(host,v=>v.phase==='done'||v.phase==='bet'&&v.last,15000);const L=v.last,n=L.result.number,E=await import('../supabase/functions/tables/engine.js');
   const back=E.rlPay({'n:17':5,'sp:17-20':5,'st:1':5,'n:37':5,red:2},n);out.rl={n,back};assert.equal(v.seats[2].stack,before+back,'paid exactly what the spots pay');
-  assert.ok((v.hist||[]).includes(n),'last spins shows it');await poke(host);await quiet(host);assert.match(await host.textContent('#tbFelt'),/LAST SPINS/);
+  assert.ok((v.hist||[]).includes(n),'last spins shows it');await poke(host);await quiet(host);if((await V(host)).phase==='done')assert.equal(await host.$$eval('#rlNums .rn.hit',x=>x.length),1,'once it lands, the number lights up');await poke(host);await quiet(host);assert.match(await host.textContent('#tbFelt'),/LAST SPINS/);
   // REBET puts the same bets back
   await until(host,v=>v.phase==='bet'&&!v.number);await host.click('[data-act=rlrebet]');await host.waitForTimeout(700);v=await until(host,v=>Object.keys(v.myBets||{}).length===5);out.rebet=true}
  // the guest's phone shows roulette too: stand up at blackjack, sit at the wheel
@@ -128,7 +129,8 @@ const Q='peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1&cloud=1';
  await standUp(guest,host);const g0=bal[users.B.id];
  await host.evaluate(()=>__pal.leaveRun());await host.waitForTimeout(800);assert.equal(await host.evaluate(()=>__pal.TB.id),0,'leaving the casino stands you up');
  assert.ok(![...tables.values()].some(t=>t.open&&t.humans.includes(users.A.id)),'not seated anywhere');out.after={a:bal[users.A.id],b:bal[users.B.id]};
- assert.ok(Math.abs(bal[users.A.id]+bal[users.B.id]-1000)<=60,'shards home (give or take what was played) '+JSON.stringify(out.after));void g0;
+ {const tables0=[...tables.values()].filter(t=>t.open);assert.equal(tables0.length,0,'every table closed');const house=hands.reduce((x,h)=>x+(h.result.house|0),0),bot=allOps.filter(o=>o.k==='bot').reduce((x,o)=>x+o.d,0);
+  out.books={lost:1000-bal[users.A.id]-bal[users.B.id],house,bot};assert.equal(out.books.lost,house+bot,'the books balance to the shard: what left the balances = the house\'s take + the bot '+JSON.stringify(out.books))}void g0;
  // 8. a guest account is refused at the door
  const gp=await open(users.G,{width:390,height:844},true);await tab(gp);out.guestMsg=await gp.textContent('#tbMsg');assert.match(out.guestMsg,/account/i);assert.ok(await gp.isDisabled('#casEnterBtn'),'ENTER is off for guests');
  assert.deepEqual(errors,[],'no page errors');
