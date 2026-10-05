@@ -132,6 +132,8 @@ toast_queue            hud blackout
 blackout_hud           hud blackout
 
 # The Tables
+roulette_engine        node tables
+fair_play              node tables server
 tables_engine          node tables
 tables_server          node tables server
 tables_ui              tables
