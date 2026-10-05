@@ -258,12 +258,14 @@ export function botMove(st,p,ctx){const h=st.hand,s=st.seats[p.seat],call=heToCa
   return{a:'call'}}
 
 // ---------- what one player may see ----------
+// v0.9.9.1: Hold'em never sends the deck after a hand (cards are dealt in order, so it would show what folded players held);
+// the whole deck stays in the server's hand log (casino_hands) for checks. Blackjack's shoe is fresh every hand and all face up.
 export function view(st,uid,now){
   const h=st.hand,me=seatIx(st,uid),v={game:st.game,lim:st.lim,side:st.side,host:st.host===uid,hostName:(st.seats.find(s=>s&&s.uid===st.host)||{}).name||'',phase:st.phase,
     left:st.deadline?Math.max(0,st.deadline-now):0,handNo:st.handNo,me,picks:st.picks[uid]|0,log:st.log.slice(-5),started:st.started!==false,
     readyMe:!!(st.ready||{})[uid],readyN:Object.keys(st.ready||{}).length,
     seats:st.seats.map((s,i)=>s&&{i,name:s.name,stack:s.stack,bot:!!s.bot,me:i===me,side:!!s.side,leaving:!!s.leaving}),
-    last:st.last&&{no:st.last.no,hash:st.last.hash,salt:st.last.salt,deck:st.last.deck,result:st.last.result,sideHits:st.last.sideHits},fair:h&&h.hash||null};
+    last:st.last&&{no:st.last.no,hash:st.last.hash,salt:st.last.salt,deck:st.game==='he'?null:st.last.deck,result:st.last.result,sideHits:st.last.sideHits},fair:h&&h.hash||null};
   if(!h)return v;
   if(st.game==='bj'){
     if(st.phase==='bet'){v.bets=Object.fromEntries(Object.entries(h.bets).map(([u,b])=>[seatIx(st,u),b.bet]));return v}

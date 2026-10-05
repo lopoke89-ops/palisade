@@ -30,7 +30,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs');
   if(!process.env.BJ_HANDS)assert.ok(edge>-0.013&&edge<0.004,'blackjack player return near the house edge (about -0.5%): '+(edge*100).toFixed(2)+'%')}
  // 4. hold'em: 3 players acting at random for 3,000 hands, side bets on
  {const st=E.newTable({game:'he',lim:0,side:true,host:'a'}),ctx=mk();for(const u of['a','b','c'])E.sit(st,{uid:u,name:u.toUpperCase()},ctx);E.start(st,'a');
-  for(const x of st.seats)if(x){x.stack=300;x.brought=300;x.side=true}let start=900,rake=0,side=0,hands=0,leaks=0,showdowns=0,sidePots=0;
+  for(const x of st.seats)if(x){x.stack=300;x.brought=300;x.side=true}let start=900,rake=0,side=0,hands=0,leaks=0,folded=0,showdowns=0,sidePots=0;
   while(hands<3000){ctx.now+=100;for(const x of st.seats)if(x)x.seen=ctx.now;
    const before=st.hand;E.tick(st,ctx);if(st.hand&&st.hand!==before&&st.phase==='play')side+=st.hand.players.filter(p=>p.side).length;
    if(st.phase==='play'){const h=st.hand,p=h.players[h.cur];
@@ -38,10 +38,12 @@ const assert=require('node:assert/strict'),fs=require('node:fs');
     const v=E.view(st,p.uid,ctx.now),c=v.can,r=rng(10);
     const m=r<2&&c.call?{a:'fold'}:r<6?{a:c.call?'call':'check'}:r<9&&c.raise&&c.maxPut>c.minPut?{a:'raise',amt:c.minPut+rng(c.maxPut-c.minPut+1)}:{a:'allin'};
     assert.equal(E.heAct(st,p.uid,m,ctx),null,'legal move refused '+JSON.stringify(m)+JSON.stringify(c))}
-   if(st.phase==='done'){hands++;rake+=st.hand.rake;if(st.hand.shown)showdowns++;if(E.pots(st.hand).length>1)sidePots++;ctx.now+=E.NEXT_MS;
+   if(st.phase==='done'){   // v0.9.9.1: after the hand, nobody gets the deck or a folded hand
+    for(const q of st.hand.players){const v=E.view(st,q.uid,ctx.now);if(v.last.deck)folded++;for(const f of st.hand.players)if(f.folded&&f.uid!==q.uid){const o=v.players.find(o=>o.seat===f.seat);if(o.cards[0]!==null)folded++;const r=v.last.result.players.find(r=>r.uid===f.uid);if(r.cards)folded++}}
+    hands++;rake+=st.hand.rake;if(st.hand.shown)showdowns++;if(E.pots(st.hand).length>1)sidePots++;ctx.now+=E.NEXT_MS;
     for(const x of st.seats)if(x&&x.stack<E.BB){x.stack+=100;x.brought+=100;start+=100}}}
-  const sum=st.seats.reduce((a,x)=>a+(x?x.stack:0),0);out.he={hands,rake,side,showdowns,sidePots,leaks,sideHits:ctx.hands.reduce((a,h)=>a+h.sideHits.length,0)};
-  assert.equal(sum+rake+side,start,'no shard created or lost: stacks + rake + side bets = shards brought');assert.equal(leaks,0,'nobody sees another hole card mid-hand');
+  const sum=st.seats.reduce((a,x)=>a+(x?x.stack:0),0);out.he={hands,rake,side,showdowns,sidePots,leaks,folded,sideHits:ctx.hands.reduce((a,h)=>a+h.sideHits.length,0)};
+  assert.equal(sum+rake+side,start,'no shard created or lost: stacks + rake + side bets = shards brought');assert.equal(leaks,0,'nobody sees another hole card mid-hand');assert.equal(folded,0,'after the hand: no deck and no folded hand reaches anyone');
   assert.ok(showdowns>300&&sidePots>20,'showdowns and side pots happen');
   const rate=out.he.sideHits/side;out.he.sideRate=+rate.toFixed(4);assert.ok(rate>.022&&rate<.042,'side bet hit rate near 1 in 31 (full house or better 2.8% + pocket aces 0.45%): '+rate)}
  // 5. the bot: joins two people, leaves when a third sits, its result goes to the ledger as the house's

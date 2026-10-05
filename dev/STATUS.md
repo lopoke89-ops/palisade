@@ -7,6 +7,20 @@ Big U's latest completed local scope is recorded in the [presentation prompt](pl
 
 The Claude audit URL still requires sign-in in the available browser session. Big U supplied an exported copy at `D:\downloads\Untitled.md`, which was read on September 29. Its newest Progress entry is v0.9.3, so its release claims are superseded by the verified v0.9.3.3 release below. The external artifact itself was not edited here.
 
+## v0.9.9.1: Hold'em no longer reveals folded hands (hotfix)
+
+Found in the October 5 audit of the casino work order (PAL-0100-9).
+- **The bug:**
+  - after each Hold'em hand, every player was sent the whole deck so the deck fingerprint could be checked, and the panel printed it as numbers;
+  - cards are dealt in order, so the deck showed what folded players held (and the cards that would have come);
+  - Blackjack wasn't affected: a fresh shoe every hand, all cards face up.
+- **The fix:**
+  - Hold'em no longer sends the deck after a hand; it stays in the server's hand log (`casino_hands`) for checks like the hand #23 audit;
+  - the panel says so;
+  - per-card fingerprints, so players can check the deal themselves without seeing folded hands, come with v0.10.0.
+- **Deployed:** the `tables` edge function (version 5), then the site.
+- **Tests:** `tables_engine` gained an after-the-hand check (no deck and no folded hand reaches any player over 3,000 random hands); `tables_engine`, `tables_server` and `tables_ui` pass.
+
 ## Test suite speed-up (October 5, no game change)
 
 - **New runner** (`dev/test/run_suite.js`, wrapped by `run_all.sh` / `run_targeted.sh` / `run_targeted.ps1`):
