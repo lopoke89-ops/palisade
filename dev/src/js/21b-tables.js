@@ -211,8 +211,8 @@ async function rlFlush(){const R=TB.rl;if(!TB.id||!R.dirty)return;const want=JSO
   const r=await tbSend({op:'rlbets',id:TB.id,bets:R.bets},true);if(r&&r.error){toast('ROULETTE',r.error);R.dirty=0;R.sent='';if(TB.v)rlSync(TB.v)}else{R.sent=want;R.sentBets=JSON.parse(want)}if(TB.v){TB.key='';tbShow(TB.v)}}
 function rlFelt(v){const R=TB.rl,open=v.phase==='bet'&&!v.readyMe,mine=open?R.bets:(v.myBets||{});let cells='';
   // a 6-row grid: each number spans two rows, so 00 (top) and 0 (bottom) can each take half the left column
-  for(let row=0;row<3;row++)for(let col=0;col<12;col++){const n=col*3+(3-row);cells+=`<span class="rn ${RL_RED.has(n)?'r':'b'}${v.number===n&&v.phase!=='bet'?' hit':''}" style="grid-area:${row*2+1}/${col+2}/span 2/span 1">${n}</span>`}
-  for(const[n,r0]of[[37,1],[0,4]])cells+=`<span class="rn g${v.number===n&&v.phase!=='bet'?' hit':''}" style="grid-area:${r0}/1/span 3/span 1">${n===37?'00':0}</span>`;
+  for(let row=0;row<3;row++)for(let col=0;col<12;col++){const n=col*3+(3-row);cells+=`<span class="rn ${RL_RED.has(n)?'r':'b'}${v.number===n&&v.phase==='done'?' hit':''}" style="grid-area:${row*2+1}/${col+2}/span 2/span 1">${n}</span>`}
+  for(const[n,r0]of[[37,1],[0,4]])cells+=`<span class="rn g${v.number===n&&v.phase==='done'?' hit':''}" style="grid-area:${r0}/1/span 3/span 1">${n===37?'00':0}</span>`;
   const others={};for(const[si,b]of Object.entries(v.bets||{}))if(+si!==v.me)for(const[k,a]of Object.entries(b))others[k]=(others[k]||0)+a;
   const chipAt=(k,a,cl)=>{const p=rlPos(k);if(!p)return '';return `<span class="rspot" style="left:${(p[0]+1)/13*100}%;top:${p[1]/3*100}%">${rlChipH(a,cl)}</span>`};
   let chips='';for(const[k,a]of Object.entries(others))chips+=chipAt(k,a,' other');for(const[k,a]of Object.entries(mine))chips+=chipAt(k,a,'');
