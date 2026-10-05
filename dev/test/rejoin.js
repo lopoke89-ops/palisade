@@ -1,7 +1,7 @@
 // v0.9.2 rejoin: a guest with an account leaves a co-op run after raid 3 and comes back. The first claim covers raids
 // 1-3 (marked as left early), the second only raids 4-5, both with the host's game id, and each boss is paid once.
 // Also: a guest who comes in late only claims from the raid they came in on. node rejoin.js
-const { chromium } = require('playwright'), assert = require('node:assert/strict');
+const { chromium } = require('playwright'), assert = require('node:assert/strict'), { ready, frames, synced } = require('./lib');
 const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.env.PORT || 8080;
 const A = 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa';
 const token = id => Buffer.from('{}').toString('base64url') + '.' + Buffer.from(JSON.stringify({ sub: id, is_anonymous: false })).toString('base64url') + '.test';
@@ -12,7 +12,7 @@ const claims = [];
   const b = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--disable-features=WebRtcHideLocalIpsWithMdns'] });
   const errors = [], out = {}; process.on('exit', () => console.log('OUT', JSON.stringify(out)));
   const H = await b.newPage({ viewport: { width: 1100, height: 760 } }); H.on('pageerror', e => errors.push('H ' + e.message));
-  await H.goto(`http://localhost:${PORT}/debug.html?${Q}`); await H.waitForTimeout(800);
+  await H.goto(`http://localhost:${PORT}/debug.html?${Q}`); await ready(H);
   const gctx = await b.newContext({ viewport: { width: 900, height: 700 } });
   await gctx.route('https://puvjfhwxigxjpsvdwrwf.supabase.co/**', async route => {
     const req = route.request(), path = new URL(req.url()).pathname; let data = {}, status = 200;
@@ -31,7 +31,7 @@ const claims = [];
   await H.waitForFunction(() => /^[A-Z0-9]{4}$/.test(document.getElementById('lCode').textContent), null, { timeout: 15000 });
   const code = await H.textContent('#lCode');
   const join = async () => { await G.click('[data-nav=multi]'); await G.fill('#mCode', code); await G.click('#joinBtn'); await G.waitForFunction(() => __pal.NET.inGame || !document.getElementById('pg-lobby').hidden, null, { timeout: 15000 }) };
-  await join(); await H.evaluate(()=>__pal.lobbyReadyAll());await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await H.waitForTimeout(700);
+  await join(); await H.evaluate(()=>__pal.lobbyReadyAll());await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await synced(H, G);
   await H.evaluate(() => { const P = __pal; window.holdIt = setInterval(() => { for (const q of P.players.values()) { q.max = 1e9; q.hp = 1e9 } P.core.max = 1e9; P.core.hp = 1e9; P.qm.hp = 1e9 }, 50) });
   const gid = await H.evaluate(() => __pal.game.gid);
   // on the way: the guest's soldier fires a rocket; the host runs it and the count comes back

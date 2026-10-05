@@ -1,9 +1,9 @@
 // every skin and headgear looks different from the standard kit on the 3D model (none silently falls back). node wardrobe3d.js
-const { chromium } = require('playwright');
+const { chromium } = require('playwright'), { ready, frames } = require('./lib');
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined }), p = await b.newPage(), errors = [];
   p.on('pageerror', e => errors.push(e.message));
-  await p.goto(`http://localhost:${process.env.PORT || 8080}/debug.html?debug=1`); await p.waitForTimeout(900);
+  await p.goto(`http://localhost:${process.env.PORT || 8080}/debug.html?debug=1`); await ready(p);
   const r = await p.evaluate(async () => {
     const P = __pal, shot = look => { const c = document.createElement('canvas'); c.width = 160; c.height = 220; const x = c.getContext('2d');
       P.drawWardrobeCharacter(x, look, .35, 0, 4, 80, 205, false); return c.toDataURL() };

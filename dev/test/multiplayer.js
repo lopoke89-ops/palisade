@@ -1,12 +1,12 @@
 // host (QM, desktop) + guest (grenadier, phone): class sync, shells, QM revive, bosses, rockets, lightning on the guest
-const { chromium } = require('playwright');
+const { chromium } = require('playwright'), { ready, frames, synced } = require('./lib');
 const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', O = __dirname + '/out';
 (async () => {
   const b = await chromium.launch({ executablePath:process.env.CHROMIUM||undefined, args: ['--disable-features=WebRtcHideLocalIpsWithMdns'] });
   const mk = async (opts, tag) => { const p = await b.newPage(opts); p.errs = []; p.on('pageerror', e => p.errs.push(tag + ' ' + e.message + ' @ ' + (e.stack || '').split('\n')[1])); return p };
   const H = await mk({ viewport: { width: 1280, height: 720 } }, 'HOST');
   const G = await mk({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 }, 'GUEST');
-  await H.goto('http://localhost:8080/debug.html?' + Q); await G.goto('http://localhost:8080/debug.html?' + Q); await H.waitForTimeout(700);
+  await H.goto('http://localhost:8080/debug.html?' + Q); await G.goto('http://localhost:8080/debug.html?' + Q); await ready(H); await ready(G);
   await H.click('[data-go=multi]'); await H.fill('#mName', 'Big U'); await H.click('[data-setup=job]:visible'); await H.click('#setupSheet [data-c=quartermaster]'); await H.click('#setupDone'); await H.click('#hostBtn');
   await H.waitForSelector('#pg-lobby:not([hidden])', { timeout: 10000 }); const code = await H.textContent('#lCode');
   await G.click('[data-go=multi]'); await G.screenshot({ path: O + '/m_phone_multi.png' });
@@ -19,7 +19,7 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', O = __dirname +
   await G.waitForFunction(()=>__pal.NET.roster.length===2&&__pal.NET.roster.every(r=>r.cos.split('|')[1]==='cap'));
   if(await H.locator('.partySlot.occupied').count()!==2)throw new Error('Party slots do not match roster');
   await H.screenshot({path:O+'/party-host.jpg'});await G.screenshot({path:O+'/party-guest.jpg'});
-  await H.evaluate(()=>__pal.lobbyReadyAll());await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 6000 }); await H.waitForTimeout(1200);
+  await H.evaluate(()=>__pal.lobbyReadyAll());await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 6000 }); await synced(H, G);
   console.log('guest sees classes:', await G.evaluate(() => [...__pal.players.values()].map(p => p.name + ':' + p.cls + (p.gun.mag ? ' ammo ' + p.ammo : '')).join(', ')));
   // yard-21 adds ground height as the fifth calibrated visual coordinate.
   await G.evaluate(() => { window.__muzzleIds=new Set(); window.__muzzleTimer=setInterval(()=>{for(const b of __pal.bullets)if(b.visual&&b.visual.length===5&&b.visual.every(Number.isFinite))window.__muzzleIds.add(b.id)},10) });

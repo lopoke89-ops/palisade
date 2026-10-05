@@ -1,14 +1,14 @@
 // v0.9.0/v0.9.1 lobby: navigation (SOLO), the shared map panel in every mode, backgrounds, starting a run, phone
 // layout, the Friends dropdown, the full party on the stage, a job change in the room, and the host's map reaching a guest.
 // node lobby.js
-const { chromium } = require('playwright');
+const { chromium } = require('playwright'), { ready, frames, synced } = require('./lib');
 const assert = require('assert');
 const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.env.PORT || 8080;
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--disable-features=WebRtcHideLocalIpsWithMdns'] });
   const errors = [], out = {};
   const open = async (vp, mobile) => { const p = await b.newPage({ viewport: vp, isMobile: !!mobile, hasTouch: !!mobile }); p.on('pageerror', e => errors.push(e.message));
-    await p.goto(`http://localhost:${PORT}/debug.html?${Q}`); await p.waitForTimeout(1200); return p };
+    await p.goto(`http://localhost:${PORT}/debug.html?${Q}`); await ready(p); return p };
   const page = p => p.evaluate(() => document.getElementById('menu').dataset.page);
   const cur = p => p.evaluate(() => [...document.querySelectorAll('[data-nav][aria-current=page]')].map(b => b.dataset.nav).join());
   // 1. desktop: lands on PLAY, background up, every nav button goes where it says
@@ -34,7 +34,7 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
   await p.click('#classes [data-c=sniper]'); assert.equal(await p.evaluate(() => document.getElementById('partyTitle').textContent), 'SNIPER');
   await p.click('#pg-classes [data-go=solo]');
   // 3. start: the run is on the chosen map and size, and the background canvas is gone
-  await p.click('#startBtn'); await p.waitForTimeout(500);
+  await p.click('#startBtn'); await frames(p, 3);
   out.run = await p.evaluate(() => ({ map: __pal.game.map, size: __pal.game.size, N: __pal.N, cls: __pal.player.cls, menu: document.getElementById('menu').hidden, bg: document.getElementById('lobbyBg').hidden,
     water: [...__pal.terr].filter(t => t === 1).length }));
   assert.deepEqual([out.run.map, out.run.size, out.run.N, out.run.cls, out.run.menu, out.run.bg], ['river', 'xl', 24, 'sniper', true, true]);
@@ -108,7 +108,7 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
   await H.waitForFunction(() => __pal.NET.roster.every(r => !r.ready), null, { timeout: 5000 }); out.clearedOnChange = true;
   await G.waitForFunction(() => /NOT READY/.test(document.getElementById('lList').textContent), null, { timeout: 5000 });
   await G.click('#lReady'); await H.waitForFunction(() => __pal.NET.roster.some(r => r.id !== 'host' && r.ready), null, { timeout: 5000 });
-  await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await H.waitForTimeout(800);
+  await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await synced(H, G);
   const sig = x => x.evaluate(() => ({ map: __pal.game.map, N: __pal.N, terr: [...__pal.terr].join(''), nodes: __pal.game.lay ? __pal.game.lay.nodes.length : 0 }));
   const hs = await sig(H), gs = await sig(G);
   assert.equal(gs.map, 'quarry'); assert.equal(gs.N, hs.N); assert.equal(gs.terr, hs.terr, 'same ground on both');

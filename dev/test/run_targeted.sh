@@ -1,15 +1,5 @@
 #!/bin/bash
-# Run only the tests related to a changed area. Use run_all.sh for an explicit full sweep.
-set -e
-case "${1:-}" in
-  cosmetics) tests='locker_fit cosmetics wardrobe3d cosmetic_network tracer_cycle tracer_network ultimate_cloud cosmetics_expansion cosmetics_migration headgear_fit' ;;
-  locker) tests='locker_collections locker_fit milestones flagcase accounts taborder csp sp_cases sp_cases_migration' ;;
-  presentation) tests='presentation presentation_posefit flagcase wardrobe3d locker_fit muzzle presentation_network cosmetic_network csp' ;;
-  music) tests='music_routing' ;;
-  combat) tests='solo bosses multiplayer muzzle rewards_lobby_shotgun touch_lock mod_synergy boss_milestones blitz_mode blitz_bosses blitz_network blitz_milestones ammo_armory armory_layout ammo_migration ammo_network ammo_stress blitz_lobby_migration' ;;
-  host) tests='hostcheck room_controls multiplayer rejoin rejoin_drop rejoin_migration' ;;
-  smoke) tests='solo lobby reel_music csp fps_mode delgado ingame_settings hud_layout tips_toggle' ;;
-  all) exec "$(dirname "$0")/run_all.sh" ;;
-  *) echo 'Usage: ./run_targeted.sh {cosmetics|locker|presentation|music|combat|host|smoke|all}' >&2; exit 2 ;;
-esac
-TESTS="$tests" exec "$(dirname "$0")/run_all.sh"
+# Run only the tests for one area (the groups are tags in suite.txt). ./run_targeted.sh hud, or several: hud tables
+[ -z "$1" ] && { echo "Usage: ./run_targeted.sh <area> [area...]   areas: $(grep -v '^#' "$(dirname "$0")/suite.txt" | awk '{for(i=2;i<=NF;i++)print $i}' | grep -vxE 'node|serial|extra' | sort -u | tr '\n' ' ')" >&2; exit 2; }
+[ "$1" = all ] && exec "$(dirname "$0")/run_all.sh"
+exec "$(dirname "$0")/run_all.sh" $(printf '@%s ' "$@")

@@ -1,11 +1,11 @@
 // local (no account) case logic: odds, pools, buying, opening, mode-specific drops
-const { chromium } = require('playwright');
+const { chromium } = require('playwright'), { ready, frames } = require('./lib');
 (async () => {
   const b = await chromium.launch({ executablePath:process.env.CHROMIUM||undefined });
   const p = await b.newPage({ viewport: { width: 520, height: 1000 } });
   const errs = []; p.on('pageerror', e => errs.push(e.message + ' ' + (e.stack || '').split('\n')[1]));
   const P = (f, a) => p.evaluate(f, a);
-  await p.goto('http://localhost:8080/debug.html?debug=1'); await p.waitForTimeout(600);
+  await p.goto('http://localhost:8080/debug.html?debug=1'); await ready(p);
   console.log('odds (100k rolls each):', await P(() => { const out = {}; for (const id of ['supply', 'afterglow']) { const c = {}; let wrong = 0;
     for (let i = 0; i < 100000; i++) { const it = __pal.rollCase(id); c[it.r] = (c[it.r] || 0) + 1; if (it.box !== id) wrong++ }
     out[id] = Object.entries(c).sort((a, b) => a[1] - b[1]).map(([k, v]) => k + ' ' + (v / 1000).toFixed(2) + '%').join(', ') + (wrong ? ` WRONG POOL ${wrong}` : ' · pool ok') } return out }));
@@ -15,7 +15,7 @@ const { chromium } = require('playwright');
   console.log('buttons:', await P(() => [...document.querySelectorAll('#caseBoxes button')].map(b => b.textContent + (b.disabled ? ' (off)' : '')).join(' | ')));
   await p.click('[data-buy=afterglow]'); await p.waitForTimeout(100); await p.click('[data-buy=afterglow]'); await p.waitForTimeout(100);
   console.log('after 2 buys:', await P(() => ({ shards: __pal.locker.shards, bag: __pal.locker.bag, buyOff: document.querySelector('[data-buy=afterglow]').disabled })));
-  await p.click('[data-open=afterglow]'); await p.waitForTimeout(5200);
+  await p.click('[data-open=afterglow]'); await p.waitForSelector('#caseDone', { state: 'visible', timeout: 15000 });
   console.log('opened afterglow:', await P(() => ({ eyebrow: document.getElementById('caseEye').textContent, got: document.getElementById('caseName').textContent + ' / ' + document.getElementById('caseSub').textContent, bag: __pal.locker.bag })));
   await p.screenshot({ path: __dirname + '/out/c_open.png' });
   await p.click('#caseDone');
@@ -28,7 +28,7 @@ const { chromium } = require('playwright');
     return res });
   // call the reward functions directly with demo off (they no-op in the menu demo), so start a quick solo
   await p.click('#pg-locker [data-go=main]').catch(() => { });
-  await P(() => __pal.showPage('solo')); await p.click('#startBtn'); await p.waitForTimeout(300);
+  await P(() => __pal.showPage('solo')); await p.click('#startBtn'); await frames(p, 3);
   const dr = await P(() => { const P = __pal, L = P.locker, g = P.game, out = {};
     for (const [mode, win] of [['base', true], ['base', false], ['ffa', true], ['ffa', false]]) { let sup = 0, ag = 0; const N = 2000;
       g.pvp = mode; for (let i = 0; i < N; i++) { const s0 = L.cases, a0 = L.bag.afterglow | 0; g.time = 300; P.pvpReward(win, 3); sup += L.cases - s0; ag += (L.bag.afterglow | 0) - a0 }

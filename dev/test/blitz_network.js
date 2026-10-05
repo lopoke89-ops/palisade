@@ -2,21 +2,21 @@
 // napalm, the evac site and extract progress; each player's own evacuation decides their result (guest out = EVACUATED,
 // host left behind = LEFT BEHIND), the guest's no-account locker gets its Blitzkrieg Cases, and an extracted player who
 // drops and comes back is still out. node blitz_network.js
-const { chromium } = require('playwright'), assert = require('node:assert/strict'), fs = require('node:fs');
+const { chromium } = require('playwright'), assert = require('node:assert/strict'), fs = require('node:fs'), { ready, frames, synced } = require('./lib');
 const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.env.PORT || 8080;
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--disable-features=WebRtcHideLocalIpsWithMdns'] });
   const errors = [], out = {};
   const H = await b.newPage({ viewport: { width: 1100, height: 760 } }); H.on('pageerror', e => errors.push('H ' + e.message));
   const G = await (await b.newContext({ viewport: { width: 900, height: 700 } })).newPage(); G.on('pageerror', e => errors.push('G ' + e.message));
-  await H.goto(`http://localhost:${PORT}/debug.html?${Q}`); await G.goto(`http://localhost:${PORT}/debug.html?${Q}`); await H.waitForTimeout(800);
+  await H.goto(`http://localhost:${PORT}/debug.html?${Q}`); await G.goto(`http://localhost:${PORT}/debug.html?${Q}`); await ready(H); await ready(G);
   await H.click('[data-nav=multi]'); await H.click('[data-setup=rules]:visible'); await H.click('#setupSheet [data-m5=blitz]'); await H.click('#setupDone'); await H.click('#hostBtn');
   await H.waitForFunction(() => /^[A-Z0-9]{4}$/.test(document.getElementById('lCode').textContent), null, { timeout: 15000 });
   const code = await H.textContent('#lCode');
   await G.click('[data-nav=multi]'); await G.fill('#mCode', code); await G.click('#joinBtn');
   await G.waitForFunction(() => !document.getElementById('pg-lobby').hidden, null, { timeout: 15000 });
   out.proto = await G.evaluate(() => __pal.PROTO || null);
-  await H.evaluate(()=>__pal.lobbyReadyAll());await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await H.waitForTimeout(600);
+  await H.evaluate(()=>__pal.lobbyReadyAll());await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await synced(H, G);
   await H.evaluate(() => { const P = __pal; window.holdIt = setInterval(() => { for (const q of P.players.values()) { q.max = 1e9; q.hp = Math.max(q.hp, 1e8) } P.core.max = 1e9; P.core.hp = 1e9; P.qm.hp = 1e9; for (const e of P.enemies) if (e.type === 'boss') e.hp = e.max }, 50) });
   out.mode = await G.evaluate(() => ({ mode: __pal.game.mode, waves: __pal.game.waves }));
   assert.deepEqual(out.mode, { mode: 'blitz', waves: 15 });

@@ -2,7 +2,7 @@
 // follows the server's rules), each threshold unlocks its item, a class change mid-run counts for the class you ended
 // as, PvP adds nothing to them, and the Locker shows progress bars and the MILESTONES view.
 // The server side is the same rules in claim_match_reward (tested in a rolled-back transaction).  node milestones.js
-const { chromium } = require('playwright');
+const { chromium } = require('playwright'), { ready, frames } = require('./lib');
 const assert = require('node:assert/strict');
 const PORT = process.env.PORT || 8080;
 (async () => {
@@ -10,8 +10,8 @@ const PORT = process.env.PORT || 8080;
   const p = await b.newPage({ viewport: { width: 1280, height: 800 } });
   const errors = [], out = {};
   p.on('pageerror', e => errors.push(e.message));
-  await p.goto(`http://localhost:${PORT}/debug.html?debug=1`); await p.waitForTimeout(900);
-  await p.click('#startBtn'); await p.waitForTimeout(400);
+  await p.goto(`http://localhost:${PORT}/debug.html?debug=1`); await ready(p);
+  await p.click('#startBtn'); await frames(p, 3);
 
   // a won 5-raid run on Riverbend as a sniper; the Butcher went down on raid 5 (a second, bogus boss is over the cap)
   out.run1 = await p.evaluate(() => {
@@ -53,7 +53,7 @@ const PORT = process.env.PORT || 8080;
 
   // the Locker: MILESTONES lists all 12 ladders; a locked item shows its progress, an owned one doesn't
   await p.evaluate(() => { __pal.endRun ? __pal.endRun() : 0 });
-  await p.goto(`http://localhost:${PORT}/debug.html?debug=1`); await p.waitForTimeout(900);
+  await p.goto(`http://localhost:${PORT}/debug.html?debug=1`); await ready(p);
   await p.evaluate(() => { const L = __pal.locker; L.st.boss_butcher = 26; L.owned.push('skin:butcher'); document.querySelector('[data-nav=locker]').click() });
   await p.waitForTimeout(500); await p.click('#lockTabs [data-cat=ms]'); await p.waitForTimeout(1500);
   out.ui = await p.evaluate(() => {

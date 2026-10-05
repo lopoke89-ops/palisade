@@ -7,6 +7,23 @@ Big U's latest completed local scope is recorded in the [presentation prompt](pl
 
 The Claude audit URL still requires sign-in in the available browser session. Big U supplied an exported copy at `D:\downloads\Untitled.md`, which was read on September 29. Its newest Progress entry is v0.9.3, so its release claims are superseded by the verified v0.9.3.3 release below. The external artifact itself was not edited here.
 
+## Test suite speed-up (October 5, no game change)
+
+- **New runner** (`dev/test/run_suite.js`, wrapped by `run_all.sh` / `run_targeted.sh` / `run_targeted.ps1`):
+  - tests run in parallel, longest first; no-browser tests go first, and timing-sensitive or six-player tests run alone at the end;
+  - one list with area tags (`suite.txt`), so `./run_all.sh @hud` runs one area;
+  - `--build` does the single build tests need, and a stale build is refused;
+  - `--failed` and `--changed` re-runs; it starts and stops its own servers.
+- **Tests wait for conditions, not fixed pauses:**
+  - `dev/test/lib.js` has the helpers;
+  - the debug build has `__pal.ready` (frames running, fonts in, account boot done);
+  - 36 tests changed.
+  - Three tests that failed under load (`v090_net`, `ingame_settings`, `winter_network`) now check game state instead of wall time.
+- **Result:**
+  - the full suite (95 tests) passes in **9.6 min**;
+  - on the 45 slowest tests, total test time dropped from 17.4 to 12.2 min;
+  - `menu_bg_motion` went from 145 to 44 s, `rewards_lobby_shotgun` 64 to 18 s, `poll_backoff` 17 to 2 s.
+
 ## v0.9.9: health above heads
 
 From Part A of the [work order](plans/nameplates-and-tables-work-order.md) (Big U, October 4: H1–H5).

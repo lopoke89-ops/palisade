@@ -1,5 +1,5 @@
 // v0.9.3.6: Dell is shown as Delgado everywhere a player reads it; internal ids stay 'dell'. node delgado.js
-const { chromium } = require('playwright'), assert = require('node:assert/strict'), fs = require('node:fs');
+const { chromium } = require('playwright'), assert = require('node:assert/strict'), fs = require('node:fs'), { ready, frames } = require('./lib');
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined }), errors = [], out = {};
   for (const vp of [{ width: 390, height: 844 }, { width: 844, height: 390 }]) {
@@ -7,7 +7,7 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
     await p.goto(`http://localhost:${process.env.PORT || 8080}/debug.html?debug=1`); await p.waitForFunction(() => window.__pal);
     const text = await p.evaluate(() => document.body.innerText + ' ' + document.body.innerHTML.replace(/<[^>]+>/g, ' '));
     await p.click('[data-go=solo]'); const lede = await p.textContent('#pg-solo .lede').catch(() => '');
-    await p.click('#startBtn'); await p.waitForTimeout(600);
+    await p.click('#startBtn'); await frames(p, 3);
     const hud = await p.evaluate(() => { const lab = document.querySelector('#qmM .lab'), r = lab.getBoundingClientRect(), m = document.getElementById('qmM').getBoundingClientRect(); return { lab: lab.textContent, fits: r.right <= m.right + 1 && lab.scrollWidth <= lab.clientWidth + 1 } });
     const armory = await p.evaluate(() => { const P = __pal; P.player.sal = 999; P.game.phase = 'build'; P.renderArmory(); return [...document.querySelectorAll('#armory .aRow b, #armory [data-k] b, #armory b')].map(e => e.textContent).filter(t => /DEL/.test(t)) });
     await p.screenshot({ path: `${__dirname}/out/delgado_${vp.width}x${vp.height}.png` });

@@ -1,0 +1,148 @@
+# PALISADE test suite: every test the full run covers, one per line, with its tags.
+#   node run_suite.js              everything below (parallel; see run_suite.js for options)
+#   node run_suite.js @hud @tables  only tests carrying one of these tags
+#   node run_suite.js solo lobby    exact tests
+# Special tags:
+#   node    no browser (PGlite migrations, the Tables engine); runs first, so a broken server change fails in seconds
+#   serial  measures time or frame rate, or runs six players; runs alone after the parallel batch so load can't skew it
+# Area tags (also the old run_targeted.sh groups): smoke combat bosses host net menu hud music cosmetics presentation
+#   locker blitz winter campaign blackout tables server
+# A new test: add a line here with its area tag(s). Tests in this folder that aren't listed are tools or benchmarks
+# (bench, caseperf, mapbench, render_*, *_sheet, ...) or Windows-only extras (see the bottom).
+
+
+# Combat
+solo                   combat smoke
+rewards_lobby_shotgun  combat
+v087                   combat
+modifiers              combat
+skilltree              combat
+mod_synergy            combat
+ammo_armory            combat
+armory_layout          combat
+ammo_stress            serial combat
+
+# Bosses
+bosses                 combat bosses
+boss_milestones        combat bosses
+v0965_bosses           bosses
+index_page             menu bosses
+
+# HUD
+fps_mode               serial smoke hud
+delgado                smoke hud
+touch_lock             combat hud
+ingame_settings        smoke hud
+hud_layout             smoke hud
+tips_toggle            smoke hud
+nameplates             hud
+
+# Menus
+social_lobby           menu
+lobby                  smoke menu
+v090                   menu
+rewards_screen         menu
+controller             menu
+poll_backoff           serial menu
+zoom_setting           menu hud
+menu_music_start       music menu
+
+# Music
+reel_music             music smoke
+music_routing          music
+v086                   music
+
+# Host and guest over the network
+multiplayer            combat host net
+cosmetic_network       cosmetics presentation net
+v090_net               host net
+hostcheck              serial host net
+room_controls          host net
+rejoin                 host net
+presentation_network   presentation net
+tracer_network         cosmetics net
+rejoin_drop            host net
+ammo_network           combat net
+
+# Cosmetics
+cosmetics              cosmetics
+locker_fit             cosmetics locker presentation
+wardrobe3d             cosmetics presentation
+tracer_cycle           cosmetics
+cosmetics_expansion    cosmetics
+headgear_fit           cosmetics
+stage_box_fit          cosmetics locker
+
+# Presentation
+muzzle                 presentation combat
+csp                    locker presentation smoke menu
+flagcase               locker presentation
+presentation           presentation
+presentation_posefit   presentation
+
+# Locker and cases
+cases                  locker
+locker_collections     locker
+taborder               locker menu
+milestones             locker
+sp_cases               locker
+menu_bg_motion         locker menu
+
+# Server migrations and accounts
+accounts               locker server
+friends                menu server
+ultimate_cloud         cosmetics server
+cosmetics_migration    node cosmetics server
+rejoin_migration       node host server
+sp_cases_migration     node locker server
+ammo_migration         node combat server
+
+# Blitzkrieg Rush
+blitz_mode             blitz
+blitz_bosses           bosses blitz
+blitz_network          blitz net
+blitz_milestones       blitz
+blitz_reward_migration node blitz server
+blitz_lobby_migration  node blitz server
+
+# Frostpeak and winter
+winter_network         serial winter net
+winter_reconnect       winter net
+frost_connectors       winter
+
+# Campaign and Whiteout
+winter_combat          winter campaign
+winter_elevation       winter campaign
+campaign_resources     campaign
+campaign_map_evac      campaign
+campaign_gauntlet      bosses campaign
+campaign_network       campaign net
+hybrid_case            cosmetics campaign
+v0964_migration        node campaign server
+
+# City Black Out
+blackout_run           blackout
+blackout_destroyer     bosses blackout
+blackout_network       blackout net
+blackout_migration     node blackout server
+blackout_rewards       blackout
+blackout_map           blackout
+blackout_perf          serial blackout
+toast_queue            hud blackout
+blackout_hud           hud blackout
+
+# The Tables
+tables_engine          node tables
+tables_server          node tables server
+tables_ui              tables
+
+# Windows-only extras from the old run_targeted.ps1 groups; not in the default run (they were never in run_all.sh).
+# Run them with @extra.
+case_skip              extra locker
+case_batches           extra locker
+case_layout            extra locker
+case_memory            extra locker
+case_batch_migration   extra locker node
+restore_schema         extra server node
+music_network          extra music net
+music_assets           extra music

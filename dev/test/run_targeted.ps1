@@ -1,63 +1,13 @@
-param(
-  [ValidateSet('cosmetics','locker','presentation','music','combat','host','smoke','all')]
-  [string]$Group = 'smoke',
-  [string]$Tests = ''
-)
-
+# Windows: run one area's tests (the groups are tags in suite.txt), or everything.
+#   powershell -File .\run_targeted.ps1 -Group hud        powershell -File .\run_targeted.ps1 -Group all
+#   powershell -File .\run_targeted.ps1 -Tests "solo lobby"
+# Same runner as Linux (run_suite.js): parallel, starts and stops its own servers, writes out\<test>.log.
+param([string]$Group = 'smoke', [string]$Tests = '', [switch]$Build)
 $ErrorActionPreference = 'Stop'
-$testDir = $PSScriptRoot
-$siteDir = (Resolve-Path -LiteralPath (Join-Path $testDir '..\..')).Path
-$outDir = Join-Path $testDir 'out'
-New-Item -ItemType Directory -Path $outDir -Force | Out-Null
-$groups = @{
-  cosmetics = 'locker_fit cosmetics wardrobe3d cosmetic_network tracer_cycle tracer_network ultimate_cloud cosmetics_expansion cosmetics_migration rejoin_migration rejoin_drop fps_mode delgado touch_lock ingame_settings mod_synergy boss_milestones sp_cases sp_cases_migration hud_layout tips_toggle headgear_fit'
-  locker = 'case_skip case_batches case_layout case_memory case_batch_migration locker_collections locker_fit milestones flagcase accounts taborder csp sp_cases sp_cases_migration'
-  presentation = 'presentation presentation_posefit flagcase wardrobe3d locker_fit muzzle presentation_network cosmetic_network csp'
-  music = 'music_routing music_network music_assets'
-  combat = 'solo bosses multiplayer muzzle rewards_lobby_shotgun touch_lock mod_synergy boss_milestones sp_cases sp_cases_migration hud_layout tips_toggle headgear_fit blitz_mode blitz_bosses blitz_network blitz_milestones blitz_reward_migration ammo_armory armory_layout ammo_migration ammo_network ammo_stress blitz_lobby_migration'
-  host = 'hostcheck room_controls multiplayer rejoin rejoin_drop rejoin_migration'
-  smoke = 'solo lobby reel_music csp fps_mode delgado ingame_settings hud_layout tips_toggle'
-  all = 'case_skip case_batches case_layout case_memory case_batch_migration restore_schema music_network music_assets solo bosses multiplayer cases accounts rewards_lobby_shotgun reel_music music_routing v086 v087 muzzle cosmetics locker_fit locker_collections cosmetic_network social_lobby lobby v090 v090_net hostcheck room_controls csp wardrobe3d friends rewards_screen modifiers skilltree rejoin controller taborder milestones flagcase presentation presentation_posefit presentation_network tracer_cycle tracer_network ultimate_cloud cosmetics_expansion cosmetics_migration rejoin_migration rejoin_drop fps_mode delgado touch_lock ingame_settings mod_synergy boss_milestones sp_cases sp_cases_migration hud_layout tips_toggle headgear_fit blitz_mode blitz_bosses blitz_network blitz_milestones blitz_reward_migration ammo_armory armory_layout ammo_migration ammo_network ammo_stress blitz_lobby_migration'
-}
-$selectedTests = $(if ($Tests) { $Tests } else { $groups[$Group] }).Split(' ', [System.StringSplitOptions]::RemoveEmptyEntries)
-foreach ($t in $selectedTests) { if ($t -notmatch '^[a-z0-9_]+$' -or -not (Test-Path -LiteralPath (Join-Path $testDir "$t.js"))) { throw "Unknown test: $t" } }
-if (-not $env:CHROMIUM -and (Test-Path -LiteralPath 'C:\Program Files\Google\Chrome\Application\chrome.exe')) {
-  $env:CHROMIUM = 'C:\Program Files\Google\Chrome\Application\chrome.exe'
-}
-$started = @()
-function Test-Port([int]$Port) {
-  try { $client = [System.Net.Sockets.TcpClient]::new('127.0.0.1', $Port); $client.Dispose(); return $true }
-  catch { return $false }
-}
-try {
-  if (-not (Test-Port 8080)) {
-    $python = (Get-Command python -ErrorAction Stop).Source
-    $started += Start-Process -FilePath $python -ArgumentList @('-m','http.server','8080','--directory',"`"$siteDir`"") -WorkingDirectory $siteDir -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $outDir 'http.log') -RedirectStandardError (Join-Path $outDir 'http.err.log')
-  }
-  if (-not (Test-Port 9000)) {
-    $started += Start-Process -FilePath (Get-Command node -ErrorAction Stop).Source -ArgumentList @('peer-server.js') -WorkingDirectory $testDir -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $outDir 'peer.log') -RedirectStandardError (Join-Path $outDir 'peer.err.log')
-  }
-  Start-Sleep -Seconds 2
-  if (-not (Test-Port 8080) -or -not (Test-Port 9000)) { throw 'Local test servers did not start.' }
-  $failed = @()
-  Push-Location $testDir
-  try {
-    foreach ($t in $selectedTests) {
-      # Windows PowerShell turns native stderr into ErrorRecords. Capture a failed assertion in its log
-      # and continue the selected tests instead of terminating the runner before the log is written.
-      $previousErrorAction = $ErrorActionPreference
-      try { $ErrorActionPreference = 'Continue'; $result = & node "$t.js" 2>&1 | Out-String; $testExitCode = $LASTEXITCODE }
-      finally { $ErrorActionPreference = $previousErrorAction }
-      $result | Set-Content -LiteralPath (Join-Path $outDir "$t.log")
-      if ($testExitCode -eq 0 -and $result -match '(?i)errors?:?\s*(none|\[\])|ERRS \[\]' -and $result -notmatch '(?i)Error:|TypeError|timed out') {
-        Write-Output "PASS  $t"
-      } else {
-        Write-Output "FAIL  $t  (see out/$t.log)"
-        $failed += $t
-      }
-    }
-  } finally { Pop-Location }
-  if ($failed.Count) { exit 1 }
-} finally {
-  foreach ($process in $started) { Stop-Process -Id $process.Id -ErrorAction SilentlyContinue }
-}
+Set-Location $PSScriptRoot
+$runArgs = @()
+if ($Build) { $runArgs += '--build' }
+if ($Tests) { $runArgs += $Tests.Split(' ', [System.StringSplitOptions]::RemoveEmptyEntries) }
+elseif ($Group -ne 'all') { $runArgs += $Group.Split(' ', [System.StringSplitOptions]::RemoveEmptyEntries) | ForEach-Object { "@$_" } }
+node run_suite.js @runArgs
+exit $LASTEXITCODE

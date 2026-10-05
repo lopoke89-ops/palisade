@@ -1,5 +1,5 @@
 // End-to-end test of the v0.8 account flows against a stand-in Supabase (same endpoints and answers).
-const { chromium } = require('playwright');
+const { chromium } = require('playwright'), { ready, quiet } = require('./lib');
 const O = __dirname + '/out';
 const FREE = ['skin:std', 'hat:class', 'hat:cap', 'trail:std', 'fx:none'];
 const B64 = o => Buffer.from(JSON.stringify(o)).toString('base64url');
@@ -76,33 +76,33 @@ function handle(method, url, h, body) {
   // 1. a player with a v0.7 save on this device opens v0.8
   await p.goto('http://localhost:8080/index.html');
   await P(() => localStorage.setItem('palisade.locker.v1', JSON.stringify({ owned: ['skin:std', 'hat:class', 'hat:cap', 'trail:std', 'fx:none', 'skin:gold', 'hat:future_thing'], eq: { skin: 'gold', hat: 'class', trail: 'std', fx: 'none' }, cases: 2, shards: 3, prog: 1, st: { raids: 7, wins: 1, drops: 60, endless: 0, hardWins: 0 } })));
-  await p.goto(URL0); await W(1500);
+  await p.goto(URL0); await ready(p);
   let s = await state(); log('1 boot with old save:', JSON.stringify(s));
   const u1 = s.cloud && s.cloud.id;
   log('  server locker got the old save:', JSON.stringify({ owned: db.lockers[u1].owned.length, cases: db.lockers[u1].cases, raids: db.lockers[u1].st.raids, imported: db.lockers[u1].imported, future: db.lockers[u1].owned.includes('hat:future_thing') }));
 
   // 2. account page as a guest; pick a username
-  await p.click('#identityButton'); await W(200);
+  await p.click('#identityButton'); await quiet(p, 120);
   await p.screenshot({ path: O + '/a_guest.png', fullPage: false });
-  await p.fill('#aUser', 'x'); await p.click('#aNameBox button'); await W(200); log('2 bad name ->', (await state()).status);
-  db.names['someone'] = 'Taken_Name'; await p.fill('#aUser', 'taken_name'); await p.click('#aNameBox button'); await W(300); log('  taken name ->', (await state()).status);
-  await p.fill('#aUser', 'BigU'); await p.click('#aNameBox button'); await W(300); s = await state(); log('  name ->', s.status, '| btn:', s.btn, '| cfg name:', await P(() => document.getElementById('mName').value));
+  await p.fill('#aUser', 'x'); await p.click('#aNameBox button'); await quiet(p, 120); log('2 bad name ->', (await state()).status);
+  db.names['someone'] = 'Taken_Name'; await p.fill('#aUser', 'taken_name'); await p.click('#aNameBox button'); await quiet(p, 120); log('  taken name ->', (await state()).status);
+  await p.fill('#aUser', 'BigU'); await p.click('#aNameBox button'); await quiet(p, 120); s = await state(); log('  name ->', s.status, '| btn:', s.btn, '| cfg name:', await P(() => document.getElementById('mName').value));
 
   // 3. open a case: the server rolls it
-  await P(() => __pal.showPage('locker')); await W(200);
-  await p.click('[data-open=supply]'); await p.click('#caseIntro'); await W(600); s = await state(); log('3 open case -> cases', s.cases, 'owns crown', await P(() => __pal.locker.owned.includes('hat:crown')), 'server cases', db.lockers[u1].cases);   // v0.9.6.2: the intro waits for a tap
+  await P(() => __pal.showPage('locker')); await quiet(p, 120);
+  await p.click('[data-open=supply]'); await p.click('#caseIntro'); await quiet(p, 120); s = await state(); log('3 open case -> cases', s.cases, 'owns crown', await P(() => __pal.locker.owned.includes('hat:crown')), 'server cases', db.lockers[u1].cases);   // v0.9.6.2: the intro waits for a tap
   await p.waitForSelector('#caseResult:not([hidden])', { timeout: 15000 }); log('  reel shows:', await P(() => document.getElementById('caseName').textContent + ' / ' + document.getElementById('caseSub').textContent));
-  await p.click('#caseEquip'); await W(400); log('  equipped on server:', db.lockers[u1].eq.hat);
+  await p.click('#caseEquip'); await quiet(p, 120); log('  equipped on server:', db.lockers[u1].eq.hat);
 
   // 4. offline: cases wait, a finished run is kept and sent later
   db.offline = true;
-  await p.click('[data-open=supply]', { timeout: 1500 }).catch(() => { }); await W(500);
+  await p.click('[data-open=supply]', { timeout: 1500 }).catch(() => { }); await quiet(p, 120);
   log('4 offline open ->', await P(() => document.getElementById('lockMsg').textContent), '| cases still', (await state()).cases);
   await P(() => { if (!document.getElementById('caseOv').hidden) __pal.closeCaseOpening(false) });   // v0.9.6.2 keeps an unconfirmed opening on screen (and saved) until dismissed
-  await P(() => __pal.showPage('solo')); await p.click('#startBtn'); await W(300);
+  await P(() => __pal.showPage('solo')); await p.click('#startBtn'); await quiet(p, 120);
   await P(() => { __pal.game.time = 400; __pal.game.won = true; __pal.game.wave = 6; __pal.player.kills = 40; __pal.showOver(); });
-  await W(800); s = await state(); log('  offline run: local cases', s.cases, 'queued claims', s.claims, 'server cases', db.lockers[u1].cases);
-  db.offline = false; await P(() => { __pal.acct.t = 0; window.dispatchEvent(new Event('online')); }); await W(1200);
+  await quiet(p, 120); s = await state(); log('  offline run: local cases', s.cases, 'queued claims', s.claims, 'server cases', db.lockers[u1].cases);
+  db.offline = false; await P(() => { __pal.acct.t = 0; window.dispatchEvent(new Event('online')); }); await quiet(p, 120);
   log('  calls since offline:', db.calls.slice(-6).join(' | '), await P(() => JSON.stringify({ busy: __pal.acct.busy, st: __pal.acct.state, t: Date.now() - __pal.acct.t, booting: __pal.acct.booting })));
   s = await state(); log('  back online: claims', s.claims, 'server cases', db.lockers[u1].cases, 'local cases', s.cases, 'claim sent', JSON.stringify(db.lastClaim));
 
@@ -111,57 +111,57 @@ function handle(method, url, h, body) {
   // v0.9.6.2: the opening started offline in step 4 was saved and comes back now; finish it like a player would
   const vis = sel => p.locator(sel).isVisible();
   const lockerResume = p.locator('#caseBoxes button', { hasText: 'RESUME OPENING' });
-  if (await lockerResume.count()) { await lockerResume.first().click(); await W(300);
-    if (await vis('#caseIntro')) await p.click('#caseIntro'); await W(300); if (await vis('#caseSkip')) await p.click('#caseSkip');
-    await p.waitForSelector('#caseResult:not([hidden])', { timeout: 15000 }); await W(200);
+  if (await lockerResume.count()) { await lockerResume.first().click(); await quiet(p, 120);
+    if (await vis('#caseIntro')) await p.click('#caseIntro'); await quiet(p, 120); if (await vis('#caseSkip')) await p.click('#caseSkip');
+    await p.waitForSelector('#caseResult:not([hidden])', { timeout: 15000 }); await quiet(p, 120);
     if (await vis('#caseDone')) await p.click('#caseDone'); else if (await vis('#caseEquip')) await p.click('#caseEquip'); await W(300) }
   log('  resumed offline opening: server cases', db.lockers[u1].cases, 'overlay', await P(() => document.getElementById('caseOv').hidden ? 'closed' : 'open'));
-  db.lockers[u1].shards = 12; await P(() => __pal.syncLocker()); await W(300);
-  await p.click('[data-buy=afterglow]'); await W(400);
+  db.lockers[u1].shards = 12; await P(() => __pal.syncLocker()); await quiet(p, 120);
+  await p.click('[data-buy=afterglow]'); await quiet(p, 120);
   log('4b bought on server: shards', db.lockers[u1].shards, 'bag', JSON.stringify(db.lockers[u1].bag), '| game shows', await P(() => document.querySelector('.cbox:nth-child(2) b').textContent));
   await p.click('[data-open=afterglow]'); await p.click('#caseIntro'); await p.waitForSelector('#caseResult:not([hidden])', { timeout: 15000 });
   log('   opened:', await P(() => document.getElementById('caseEye').textContent + ' -> ' + document.getElementById('caseName').textContent + ' / ' + document.getElementById('caseSub').textContent), '| owns', await P(() => __pal.locker.owned.includes('hat:ghelm')));
   await p.screenshot({ path: __dirname + '/out/c_gold.png' });
   await p.click('#caseDone');
-  await P(() => { __pal.showPage('solo') }); await p.click('#startBtn'); await W(300);
+  await P(() => { __pal.showPage('solo') }); await p.click('#startBtn'); await quiet(p, 120);
   const pv = await P(async () => { const P = __pal; P.game.pvp = 'base'; P.game.time = 300; const txt = P.pvpReward(true, 4); await new Promise(r => setTimeout(r, 900)); return { txt, bag: P.locker.bag, toast: document.getElementById('toast').textContent } });
   log('   pvp win with account:', JSON.stringify(pv), '| claim sent', JSON.stringify(db.lastClaim));
   await P(() => { __pal.game.pvp = ''; __pal.toMenu() });
   // 5. guest adds an email, confirms from the email link, sets a password
-  await P(() => __pal.toMenu()); await P(() => __pal.showPage('account')); await W(200);
-  await p.fill('#aLinkMail', 'nope'); await p.click('#aLinkBox button'); await W(100); log('5 bad email ->', (await state()).status);
-  await p.fill('#aLinkMail', 'bigu@example.com'); await p.click('#aLinkBox button'); await W(400); log('  link ->', (await state()).status);
+  await P(() => __pal.toMenu()); await P(() => __pal.showPage('account')); await quiet(p, 120);
+  await p.fill('#aLinkMail', 'nope'); await p.click('#aLinkBox button'); await quiet(p, 120); log('5 bad email ->', (await state()).status);
+  await p.fill('#aLinkMail', 'bigu@example.com'); await p.click('#aLinkBox button'); await quiet(p, 120); log('  link ->', (await state()).status);
   const us = db.users[u1]; us.email = us.pending; us.is_anonymous = false; // the user clicks the email link
   const ss = session(u1);
-  await p.goto('about:blank'); await p.goto(URL0 + `#access_token=${ss.access_token}&refresh_token=${ss.refresh_token}&expires_in=3600&token_type=bearer&type=email_change`); await W(1500);
+  await p.goto('about:blank'); await p.goto(URL0 + `#access_token=${ss.access_token}&refresh_token=${ss.refresh_token}&expires_in=3600&token_type=bearer&type=email_change`); await ready(p);
   s = await state(); log('  after link:', s.st, s.status, '| url hash gone:', await P(() => location.hash === ''), '| pw box shown:', await P(() => !document.getElementById('aPwBox').hidden), '| page:', await P(() => !document.getElementById('pg-account').hidden));
   await p.screenshot({ path: O + '/a_setpw.png' });
-  await p.fill('#aPwIn', 'short'); await p.click('#aPwBox button'); await W(100); log('  short pw ->', (await state()).status);
-  await p.fill('#aPwIn', 'correct horse'); await p.click('#aPwBox button'); await W(400); s = await state();
+  await p.fill('#aPwIn', 'short'); await p.click('#aPwBox button'); await quiet(p, 120); log('  short pw ->', (await state()).status);
+  await p.fill('#aPwIn', 'correct horse'); await p.click('#aPwBox button'); await quiet(p, 120); s = await state();
   log('  pw ->', s.status, '| pw box hidden:', await P(() => document.getElementById('aPwBox').hidden), '| btn:', s.btn);
   await p.screenshot({ path: O + '/a_full.png' });
 
   // 6. sign out -> a fresh guest; then sign back in -> locker returns
-  await p.click('#aOut'); await W(1200); s = await state(); log('6 signed out:', s.st, s.guest, 'cases', s.cases, 'owned', s.owned, '|', s.status);
-  await p.fill('#aInMail', 'bigu@example.com'); await p.fill('#aInPw', 'wrong pass'); await p.click('#aInBox button[type=submit]'); await W(400); log('  wrong pw ->', (await state()).status);
-  await p.fill('#aInPw', 'correct horse'); await p.click('#aInBox button[type=submit]'); await W(1000); s = await state();
+  await p.click('#aOut'); await quiet(p, 120); s = await state(); log('6 signed out:', s.st, s.guest, 'cases', s.cases, 'owned', s.owned, '|', s.status);
+  await p.fill('#aInMail', 'bigu@example.com'); await p.fill('#aInPw', 'wrong pass'); await p.click('#aInBox button[type=submit]'); await quiet(p, 120); log('  wrong pw ->', (await state()).status);
+  await p.fill('#aInPw', 'correct horse'); await p.click('#aInBox button[type=submit]'); await quiet(p, 120); s = await state();
   log('  signed in:', s.st, s.name, 'cases', s.cases, 'owned', s.owned, 'crown', await P(() => __pal.locker.owned.includes('hat:crown')), '|', s.status, '| guest kept:', await P(() => !!localStorage.getItem('palisade.auth.guest')));
 
   // 7. forgot password needs an email typed
-  await p.click('#aOut'); await W(1200);
-  await p.fill('#aInMail', ''); await p.click('#aForgot'); await W(100); log('7 forgot w/o email ->', (await state()).status);
-  await p.fill('#aInMail', 'bigu@example.com'); await p.click('#aForgot'); await W(300); log('  forgot ->', (await state()).status);
+  await p.click('#aOut'); await quiet(p, 120);
+  await p.fill('#aInMail', ''); await p.click('#aForgot'); await quiet(p, 120); log('7 forgot w/o email ->', (await state()).status);
+  await p.fill('#aInMail', 'bigu@example.com'); await p.click('#aForgot'); await quiet(p, 120); log('  forgot ->', (await state()).status);
 
   // 8. a sign-in that has ended (revoked elsewhere) falls back cleanly
-  await p.fill('#aInPw', 'correct horse'); await p.click('#aInBox button[type=submit]'); await W(900);
-  db.failRefresh = true; await P(() => { __pal.acct.s.expires_at = 0; __pal.acct.t = 0; }); await P(() => __pal.syncLocker()); await W(300);
+  await p.fill('#aInPw', 'correct horse'); await p.click('#aInBox button[type=submit]'); await quiet(p, 120);
+  db.failRefresh = true; await P(() => { __pal.acct.s.expires_at = 0; __pal.acct.t = 0; }); await P(() => __pal.syncLocker()); await quiet(p, 120);
   s = await state(); log('8 revoked:', s.st, '|', s.msg, '| cases', s.cases);
   db.failRefresh = false;
   // 9. reload keeps the sign-in
 
-  await p.goto(URL0); await W(1200); s = await state(); log('9 reload:', s.st, s.guest, 'btn', s.btn);
+  await p.goto(URL0); await ready(p); s = await state(); log('9 reload:', s.st, s.guest, 'btn', s.btn);
   // 10. not the hosted site and no ?cloud=1: accounts stay off, local play as before
-  const p2 = await ctx.newPage(); await p2.goto('http://localhost:8080/debug.html?debug=1'); await p2.waitForTimeout(800);
+  const p2 = await ctx.newPage(); await p2.goto('http://localhost:8080/debug.html?debug=1'); await ready(p2);
   log('10 local copy:', await p2.evaluate(() => ({ st: __pal.acct.state, btnHidden: document.getElementById('identityButton').hidden })));
   log('calls:', db.calls.length, 'errors:', errs.length ? errs : 'none');
   await b.close();

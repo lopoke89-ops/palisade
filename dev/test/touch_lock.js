@@ -1,7 +1,7 @@
 // v0.9.3.7 touch aim assist: grenades and rockets on a touch screen lock onto the nearest raider 6+ tiles away with a
 // clear line; closer raiders and raiders behind walls are ignored; mouse aim and PvP stay manual; a guest's locked
 // throw reaches the host as an ordinary target point. node touch_lock.js
-const { chromium } = require('playwright'), assert = require('node:assert/strict'), fs = require('node:fs');
+const { chromium } = require('playwright'), assert = require('node:assert/strict'), fs = require('node:fs'), { ready, frames } = require('./lib');
 const PORT = process.env.PORT || 8080, Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1';
 const layout = () => { const P = __pal, N = P.N; P.walls.fill(null); for (const e of P.enemies) e.dead = true; P.enemies.length = 0; P.game.queue = [];
   for (let j = 2; j < N - 2; j++) { const y = j + .5; if (Math.abs(j - P.core.j) < 2) continue;
@@ -18,7 +18,7 @@ const place = (L) => { const P = __pal, p = P.player; p.x = 1.5; p.y = L.y; p.al
   const b = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--disable-features=WebRtcHideLocalIpsWithMdns'] }), errors = [], out = {};
   const p = await b.newPage({ viewport: { width: 900, height: 700 } }); p.on('pageerror', e => errors.push(e.message));
   await p.goto(`http://localhost:${PORT}/debug.html?debug=1`); await p.waitForFunction(() => window.__pal);
-  await p.click('[data-go=solo]'); await p.click('#startBtn'); await p.waitForTimeout(400);
+  await p.click('[data-go=solo]'); await p.click('#startBtn'); await frames(p, 3);
   const L = await p.evaluate(layout); assert.ok(L, 'found a clear test row');
   const ids = await p.evaluate(place, L); out.ids = ids; assert.equal(ids.hidClear, false, 'the wall blocks the hidden raider'); assert.ok(ids.far, 'placed a clear far raider');
   out.solo = await p.evaluate(ids => { const P = __pal, p = P.player; P.game.paused = true;

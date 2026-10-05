@@ -1,7 +1,7 @@
 // v0.9.2.1 controller: a fake controller drives the menus (highlight, pages, tabs, sliders, toggles, button changes),
 // then a raid (move, aim, trigger, grenade, build keys, pause card, armory), then hands back to mouse, keys and touch.
 // node controller.js
-const { chromium } = require('playwright');
+const { chromium } = require('playwright'), { ready, frames } = require('./lib');
 const assert = require('assert');
 const PORT = process.env.PORT || 8080;
 // the fake controller: the page reads it through navigator.getGamepads like a real one
@@ -18,7 +18,9 @@ const FAKE = (id) => {
   const open = async (vp, mobile, id, nopad) => {
     const p = await b.newPage({ viewport: vp, isMobile: !!mobile, hasTouch: !!mobile }); p.on('pageerror', e => errors.push(e.message));
     if (!nopad) await p.addInitScript(FAKE, id || 'Xbox Wireless Controller (STANDARD GAMEPAD Vendor: 045e Product: 0b13)');
-    await p.goto(`http://localhost:${PORT}/debug.html?peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1`); await p.waitForTimeout(1300); return p;
+    await p.goto(`http://localhost:${PORT}/debug.html?peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1`); await ready(p);
+    if (!nopad) await p.waitForFunction(() => __pal.pad.idx >= 0, null, { timeout: 5000 });   // with no controller seen yet the game looks once a second
+    return p;
   };
   const press = async (p, i, hold = 70) => { await p.evaluate(i => { const b = __fakePad.buttons[i]; b.pressed = true; b.value = 1 }, i); await p.waitForTimeout(hold);
     await p.evaluate(i => { const b = __fakePad.buttons[i]; b.pressed = false; b.value = 0 }, i); await p.waitForTimeout(70) };
@@ -79,7 +81,7 @@ const FAKE = (id) => {
 
   // 2. a raid
   await p.click('[data-setup=job]:visible'); await p.click('#setupSheet [data-c=soldier]'); await p.click('#setupDone'); await press(p, 12);
-  await focusOn(p, '#startBtn'); await press(p, 0); await p.waitForTimeout(500);
+  await focusOn(p, '#startBtn'); await press(p, 0); await p.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 5000 }); await frames(p, 3);
   const st = () => p.evaluate(() => { const q = __pal.player; return { phase: __pal.game.phase, x: q.x, y: q.y, aim: q.aim, fire: q.fireIn, auto: q.autoFire, sel: __pal.game.sel, piece: __pal.game.piece,
     build: __pal.cfg ? __pal.cfg.build : null, paused: __pal.game.paused, keys: document.getElementById('keys').textContent } });
   let g = await st(); out.start = g; assert.equal(g.phase, 'build', 'A on START starts the run'); assert.ok(/RT/.test(g.keys) && /fire/.test(g.keys) && !/MOUSE/.test(g.keys), 'key bar shows controller buttons');
