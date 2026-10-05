@@ -132,9 +132,12 @@ toast_queue            hud blackout
 blackout_hud           hud blackout
 
 # The Tables
+roulette_engine        node tables
+fair_play              node tables server
 tables_engine          node tables
 tables_server          node tables server
-tables_ui              tables
+tables_ui              tables casino
+casino_map             casino net
 
 # Windows-only extras from the old run_targeted.ps1 groups; not in the default run (they were never in run_all.sh).
 # Run them with @extra.

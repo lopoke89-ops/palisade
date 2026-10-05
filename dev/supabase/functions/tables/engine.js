@@ -4,14 +4,53 @@
 // a cryptographic rng(n) -> 0..n-1, and collects `ctx.ops` (shard and case moves for the ledger) and `ctx.hands` (the log).
 // v0.9.8.1: no clock during a hand (nobody is auto-folded or auto-stood); 60 s between hands (Blackjack: the betting window,
 // dealt as soon as everyone has bet; Hold'em: a break, dealt as soon as everyone taps READY). The host starts the table.
+// v0.10.0: Roulette (American, 0 and 00, always no limit); every deal and spin comes from the server's seed (committed by its
+// SHA-256 before anyone's seed locks) mixed with every seated player's own seed, so not even the server can pick a result;
+// Hold'em also commits to each card on its own, so a hand can be checked without showing what folded players held.
 export const BUYIN=5,BET_MS=60000,NEXT_MS=60000,PAUSE_MS=0,BOT_MS=1300,AWAY_MS=60000,
-  RAKE=.018,RAKE_CAP=6,SIDE_COST=1,BOT_DAILY=25,SB=1,BB=2,SEATS={bj:5,he:6},LIMITS=[100,250,0];
+  RAKE=.018,RAKE_CAP=6,SIDE_COST=1,BOT_DAILY=25,SB=1,BB=2,SEATS={bj:5,he:6,rl:6},LIMITS=[100,250,0],SPIN_MS=6000,RL_SHOW_MS=4000,FV=2;
 export const PRIZES={hybrid:10,flags:15};   // the side bet: 10 Hybrid Theory Cases or 15 Flag Cases, the winner picks
 
 // ---------- cards ----------
 // a card is 0..51 (in a shoe, any int: c%52): rank c%13 (0 = 2 … 8 = 10, 9 J, 10 Q, 11 K, 12 A), suit ((c%52)/13)|0
 export const rankOf=c=>c%52%13,suitOf=c=>((c%52)/13)|0;
 export function shuffle(n,rng){const d=Array.from({length:n},(_,i)=>i);for(let i=n-1;i>0;i--){const j=rng(i+1),t=d[i];d[i]=d[j];d[j]=t}return d}
+
+// ---------- fair play (v0.10.0) ----------
+// SHA-256 written out (synchronous, the same in Deno, Node and the browser's check; tested against Web Crypto)
+const K256=new Int32Array([0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+  0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+  0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+  0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]);
+const SW=new Uint32Array(64),SBUF=new Uint8Array(4096);
+export function sha256hex(str){
+  str=String(str);let l=0,m=SBUF;
+  if(/^[\x00-\x7f]*$/.test(str)&&str.length<=4000){for(let i=0;i<str.length;i++)SBUF[i]=str.charCodeAt(i);l=str.length}else{m=new TextEncoder().encode(str);l=m.length}   // ASCII fast path (seeds, numbers)
+  const nb=((l+9+63)>>6)<<6,b=new Uint8Array(nb);b.set(m.subarray(0,l));b[l]=0x80;
+  const bits=l*8;for(let i=0;i<8;i++)b[nb-1-i]=i<4?(bits>>>(8*i))&255:Math.floor(bits/2**(8*i))&255;
+  let h0=0x6a09e667,h1=0xbb67ae85,h2=0x3c6ef372,h3=0xa54ff53a,h4=0x510e527f,h5=0x9b05688c,h6=0x1f83d9ab,h7=0x5be0cd19;const w=SW;
+  for(let o=0;o<nb;o+=64){for(let i=0;i<16;i++)w[i]=(b[o+4*i]<<24)|(b[o+4*i+1]<<16)|(b[o+4*i+2]<<8)|b[o+4*i+3];
+    for(let i=16;i<64;i++){const x=w[i-15],y=w[i-2];w[i]=(w[i-16]+(((x>>>7)|(x<<25))^((x>>>18)|(x<<14))^(x>>>3))+w[i-7]+(((y>>>17)|(y<<15))^((y>>>19)|(y<<13))^(y>>>10)))|0}
+    let a=h0,c=h1,d=h2,e=h3,f=h4,g=h5,h=h6,k=h7;
+    for(let i=0;i<64;i++){const t1=(k+(((f>>>6)|(f<<26))^((f>>>11)|(f<<21))^((f>>>25)|(f<<7)))+((f&g)^(~f&h))+K256[i]+w[i])|0,
+      t2=((((a>>>2)|(a<<30))^((a>>>13)|(a<<19))^((a>>>22)|(a<<10)))+((a&c)^(a&d)^(c&d)))|0;k=h;h=g;g=f;f=(e+t1)|0;e=d;d=c;c=a;a=(t1+t2)|0}
+    h0=(h0+a)|0;h1=(h1+c)|0;h2=(h2+d)|0;h3=(h3+e)|0;h4=(h4+f)|0;h5=(h5+g)|0;h6=(h6+h)|0;h7=(h7+k)|0}
+  let out='';for(const x of [h0,h1,h2,h3,h4,h5,h6,h7])out+=(x>>>0).toString(16).padStart(8,'0');return out}
+// the round's random numbers. key = the first 48 hex digits of SHA-256("server seed:players' seeds joined by |:round");
+// then SHA-256("key:0"), SHA-256("key:1"), … read 32 bits at a time, with rejection sampling so every outcome is exactly as
+// likely (no modulo bias). Anyone with the revealed seed can rerun it (the in-game check does exactly this).
+export function fairRng(seed,seeds,nonce){let ctr=0,buf=[],pos=0;const key=sha256hex(seed+':'+seeds.join('|')+':'+nonce).slice(0,48)+':';
+  const next=()=>{if(pos>=buf.length){const hx=sha256hex(key+(ctr++));buf=[];for(let i=0;i<64;i+=8)buf.push(parseInt(hx.slice(i,i+8),16));pos=0}return buf[pos++]};
+  return n=>{if(n<=1)return 0;const lim=Math.floor(4294967296/n)*n;for(;;){const x=next();if(x<lim)return x%n}}}
+export const cleanSeed=x=>String(x||'').replace(/[^0-9A-Za-z_-]/g,'').slice(0,64);
+const mkNext=ctx=>{const seed=ctx.seed?ctx.seed():(ctx.salt()+ctx.salt());return{seed,hash:sha256hex(seed)}};   // next round's server seed and its public fingerprint
+// take the committed seed for this round (and commit to the next one right away)
+function lockFair(st,ctx,seeds){if(!st.next)st.next=mkNext(ctx);const f={seed:st.next.seed,commit:st.next.hash,seeds,nonce:(st.tid||'t')+':'+st.handNo};st.next=mkNext(ctx);return f}
+// Hold'em: each deck position has its own fingerprint; the hand's fingerprint (root) is built from all 52
+export const cardSalt=(seed,i)=>sha256hex(seed+':card:'+i).slice(0,32);
+export const cardHash=(salt,c)=>sha256hex(salt+':'+c);
+export function cardHashes(seed,deck){return deck.map((c,i)=>cardHash(cardSalt(seed,i),c))}
+export const rootOf=hs=>sha256hex(hs.join(','));
 
 // ---------- poker hand values ----------
 // a single number per 5-card hand: category (8 straight flush … 0 high card) then up to five kickers, base 13
@@ -36,32 +75,38 @@ export function bjTotal(cs){let t=0,a=0;for(const c of cs){const v=bjVal(c);t+=v
 const natural=h=>h.cards.length===2&&!h.split&&bjTotal(h.cards).t===21;
 
 // ---------- the table ----------
-export function newTable({game,lim,side,host}){
-  return{game,lim:LIMITS.includes(lim)?lim:100,side:!!side,host,seats:Array(SEATS[game]).fill(null),phase:'wait',deadline:0,handNo:0,button:-1,
-    hand:null,last:null,picks:{},log:[],started:false,ready:{}}}
+export function newTable({game,lim,side,host,tid,room}){const rl=game==='rl';
+  return{game,lim:rl?0:LIMITS.includes(lim)?lim:100,side:rl?false:!!side,host,seats:Array(SEATS[game]).fill(null),phase:'wait',deadline:0,handNo:0,button:-1,
+    hand:null,last:null,picks:{},log:[],started:rl,ready:{},fv:FV,tid:tid||'t',room:room||null,next:null,hist:[]}}   // roulette has no settings and no host start
 const humans=st=>st.seats.filter(s=>s&&!s.bot);
 export const seatIx=(st,uid)=>st.seats.findIndex(s=>s&&s.uid===uid);
 const note=(st,t)=>{st.log.push(t);if(st.log.length>8)st.log.shift()};
-export function sit(st,{uid,name},ctx){
+export function sit(st,{uid,name,seed,seat},ctx){
   if(seatIx(st,uid)>=0)return 'You are already at this table';
-  const i=st.seats.findIndex(s=>!s);if(i<0)return 'The table is full';
-  st.seats[i]={uid,name,stack:BUYIN,brought:BUYIN,sitout:0,side:false,seen:ctx.now};ctx.ops.push({uid,k:'buyin',d:-BUYIN});note(st,name+' sat down');return null}
+  const want=Number.isInteger(seat)&&seat>=0&&seat<st.seats.length&&!st.seats[seat]?seat:-1,i=want>=0?want:st.seats.findIndex(s=>!s);   // the seat you walked up to, if it's free
+  if(i<0)return 'The table is full';
+  st.seats[i]={uid,name,stack:BUYIN,brought:BUYIN,sitout:0,side:false,seen:ctx.now,seed:cleanSeed(seed)||ctx.salt()};ctx.ops.push({uid,k:'buyin',d:-BUYIN});note(st,name+' sat down');return null}
+// your own seed: mixed into every deal or spin from the next one on (the server has already committed to its seed)
+export function setSeed(st,uid,seed){const s=st.seats[seatIx(st,uid)];if(!s)return 'You are not at this table';const v=cleanSeed(seed);if(!v)return 'Pick a seed (letters and numbers)';s.seed=v;return null}
 export function topup(st,uid,amt,ctx){
   const s=st.seats[seatIx(st,uid)];if(!s)return 'You are not at this table';amt=Math.floor(+amt);if(!(amt>=1&&amt<=100000))return 'Pick an amount';
   if(inHand(st,uid))return 'Top up between hands';
   s.stack+=amt;s.brought+=amt;ctx.ops.push({uid,k:'topup',d:-amt});return null}
-function inHand(st,uid){const h=st.hand;if(!h||st.phase==='wait'||st.phase==='done'||st.phase==='bet')return false;return h.players.some(p=>p.uid===uid)}
+function inHand(st,uid){const h=st.hand;if(!h||st.phase==='wait'||st.phase==='done'||st.phase==='bet')return false;if(st.game==='rl')return !!(h.bets[uid]);return h.players.some(p=>p.uid===uid)}
 function standUp(st,i,ctx){const s=st.seats[i];if(!s)return;
   while(st.picks[s.uid]>0)pick(st,s.uid,'hybrid',ctx);   // an unpicked side-bet prize is never lost: Hybrid Theory by default
   if(s.bot)ctx.ops.push({k:'bot',d:s.stack-s.brought});else{if(s.stack>0)ctx.ops.push({uid:s.uid,k:'cashout',d:s.stack});note(st,s.name+' stood up')}
   st.seats[i]=null;if(st.host===s.uid){const h=humans(st)[0];st.host=h?h.uid:null}}
+// the last person has left: the bot stands up too, so its result reaches the ledger before the table closes (v0.10.0)
+export function closeOut(st,ctx){for(let i=0;i<st.seats.length;i++)if(st.seats[i]&&st.seats[i].bot)standUp(st,i,ctx)}
 export function leave(st,uid,ctx){
   const i=seatIx(st,uid);if(i<0)return 'You are not at this table';const s=st.seats[i];
-  if(inHand(st,uid)){s.leaving=true;const h=st.hand,p=h.players.find(p=>p.uid===uid);
+  if(inHand(st,uid)){s.leaving=true;if(st.game==='rl')return null;   // roulette: the spin settles, then cleanup stands you up
+    const h=st.hand,p=h.players.find(p=>p.uid===uid);
     if(st.game==='he'){if(!p.folded){p.folded=true;p.acted=true;if(h.players[h.cur]===p)heAdvance(st,ctx);else heCheckEnd(st,ctx)}}
     else{for(const hh of p.hands)hh.done=true;if(st.phase==='ins')p.ins=0;if(st.phase==='play')bjAdvance(st,ctx)}
     return null}
-  if(st.phase==='bet'&&st.hand&&st.hand.bets[uid]){s.stack+=st.hand.bets[uid].bet+st.hand.bets[uid].side;delete st.hand.bets[uid]}
+  if(st.phase==='bet'&&st.hand&&st.hand.bets[uid]){if(st.game==='rl')s.stack+=rlTotal(st.hand.bets[uid]);else s.stack+=st.hand.bets[uid].bet+st.hand.bets[uid].side;delete st.hand.bets[uid]}
   standUp(st,i,ctx);return null}
 // the host deals the first hand (Blackjack: anyone seated; Hold'em: at least two people). After that it runs by itself.
 export function start(st,uid){if(st.host!==uid)return 'Only the host can start the table';if(st.started)return null;
@@ -81,7 +126,9 @@ function step(st,ctx){
   const now=ctx.now;
   // a player who stopped polling for a minute is stood up (their shards go back to their balance)
   for(let i=0;i<st.seats.length;i++){const s=st.seats[i];if(s&&!s.bot&&now-s.seen>AWAY_MS&&!s.leaving){if(inHand(st,s.uid))leave(st,s.uid,ctx);else standUp(st,i,ctx)}}
+  if(!st.next)st.next=mkNext(ctx);   // the next round's server seed is committed (fingerprint shown) before anyone's seed locks
   if(st.started===false)return;   // waiting for the host (tables opened before v0.9.8.1 have no flag and keep running)
+  if(st.game==='rl'){rlStep(st,ctx);return}
   if(st.phase==='wait'){if(st.game==='bj')bjOpen(st,ctx);else heTryDeal(st,ctx);return}
   if(st.phase==='done'){const hs=humans(st).filter(s=>!s.leaving&&s.stack>=BB);if(now>=st.deadline||hs.length&&hs.every(s=>(st.ready||{})[s.uid]))cleanup(st,ctx);return}   // busted players can't be dealt in, so nobody waits on them
   if(st.game==='bj'){
@@ -111,7 +158,8 @@ function bjDeal(st,ctx){
   if(!order.length){st.phase='wait';st.hand=null;cleanupIdle(st,ctx);return}
   st.handNo++;
   const players=order.map(([s,i])=>({seat:i,uid:s.uid,name:s.name,hands:[{cards:[],bet:bets[s.uid].bet,done:false}],ins:null,side:bets[s.uid].side>0}));
-  Object.assign(h,{game:'bj',no:st.handNo,shoe:shuffle(208,ctx.rng),pos:0,salt:ctx.salt(),hash:null,players,dealer:[],revealed:false,turn:{p:0,h:0},step:h.step+1});delete h.bets;
+  const f=lockFair(st,ctx,players.map(p=>st.seats[p.seat].seed||''));
+  Object.assign(h,{game:'bj',no:st.handNo,shoe:shuffle(208,fairRng(f.seed,f.seeds,f.nonce)),pos:0,salt:f.seed,hash:f.commit,fair:f,players,dealer:[],revealed:false,turn:{p:0,h:0},step:h.step+1});delete h.bets;
   const dealer=h.dealer;for(let r=0;r<2;r++){for(const p of players)p.hands[0].cards.push(draw(h));dealer.push(draw(h))}
   for(const p of players){const c=p.hands[0].cards;if(p.side&&rankOf(c[0])===12&&rankOf(c[1])===12)sideHit(st,p.uid,'DOUBLE ACES')}
   if(rankOf(dealer[0])===12){st.phase='ins';st.deadline=0;for(const p of players)if(natural(p.hands[0])||p.hands[0].bet<2||st.seats[p.seat].stack<Math.floor(p.hands[0].bet/2))p.ins=0;return}
@@ -157,13 +205,17 @@ function bjSettle(st,ctx){const h=st.hand,d=bjTotal(h.dealer).t,dbj=h.dealer.len
       else if(t>21){res='BUST'}else if(d>21||t>d){back=hh.bet*2;res='WIN'}else if(t===d){back=hh.bet;res='PUSH'}else res='LOSE';
       if(s)s.stack+=back;hh.result=res;net+=back-hh.bet}
     if(p.side)net-=SIDE_COST;p.net=net}
-  finish(st,ctx,{dealer:h.dealer,total:d,players:h.players.map(p=>({uid:p.uid,name:p.name,net:p.net,hands:p.hands.map(x=>({cards:x.cards,bet:x.bet,result:x.result}))}))})}
-function finish(st,ctx,result){const h=st.hand;st.phase='done';st.deadline=ctx.now+(st.game==='he'?NEXT_MS:PAUSE_MS);st.ready={};h.step++;h.result=result;
-  st.last={no:h.no,hash:h.hash,salt:h.salt,deck:h.shoe||h.deck,result,sideHits:h.sideHits};   // the whole deck, so the hash can be checked
-  ctx.hands.push({game:st.game,no:h.no,hash:h.hash,salt:h.salt,deck:h.shoe||h.deck,result,rake:h.rake||0,sideHits:h.sideHits});
+  finish(st,ctx,{house:-h.players.reduce((a,p)=>a+p.net,0),dealer:h.dealer,total:d,players:h.players.map(p=>({uid:p.uid,name:p.name,net:p.net,hands:p.hands.map(x=>({cards:x.cards,bet:x.bet,result:x.result}))}))})}
+function finish(st,ctx,result){const h=st.hand;st.phase='done';st.deadline=ctx.now+(st.game==='he'?NEXT_MS:st.game==='rl'?RL_SHOW_MS:PAUSE_MS);st.ready={};h.step++;h.result=result;
+  const deck=st.game==='rl'?[h.number]:h.shoe||h.deck;if(h.fair)Object.assign(result,{seeds:h.fair.seeds,nonce:h.fair.nonce,commit:h.fair.commit},h.root?{root:h.root}:{});
+  // st.last stays on the server; view() decides what each player gets (Hold'em: never the seed or the deck)
+  st.last={no:h.no,hash:h.hash,salt:h.salt,deck,result,sideHits:h.sideHits,fair:h.fair||null,root:h.root||null,cardHashes:h.cardHashes||null,pos:h.posOf||null,shownSeats:h.shownSeats||null,
+    holes:st.game==='he'&&h.players?h.players.map(p=>({uid:p.uid,seat:p.seat,pos:p.pos||[]})):null};
+  ctx.hands.push({game:st.game,no:h.no,hash:h.hash,salt:h.salt,deck,result,rake:h.rake||0,sideHits:h.sideHits});
   for(const x of h.sideHits)note(st,(st.seats.find(s=>s&&s.uid===x.uid)||{name:'?'}).name+' hit '+x.why+'!')}
 
 // ---------- hold'em ----------
+const drawB=h=>{if(h.posOf)h.posOf.board.push(h.pos);return draw(h)};   // a board card, its deck position remembered for the per-card check
 const heEligible=st=>st.seats.map((s,i)=>[s,i]).filter(([s])=>s&&!s.leaving&&s.stack>=BB);
 function heTryDeal(st,ctx){
   const hs=humans(st).filter(s=>!s.leaving&&s.stack>=BB);
@@ -173,13 +225,14 @@ function heTryDeal(st,ctx){
   if(hs.length!==2){const b=st.seats.findIndex(s=>s&&s.bot);if(b>=0)standUp(st,b,ctx)}
   const el=heEligible(st);if(hs.length<2||el.length<2){cleanupIdle(st,ctx);return}
   for(const s of st.seats)if(s&&!s.bot&&s.stack<BB)s.sitout++;   // counted once per hand dealt without them
-  st.handNo++;const deck=shuffle(52,ctx.rng),salt=ctx.salt();
+  st.handNo++;
   const seats=el.map(([,i])=>i);let b=seats.find(i=>i>st.button);if(b===undefined)b=seats[0];st.button=b;
   const order=[...seats.filter(i=>i>b),...seats.filter(i=>i<=b)];   // left of the button first; the button acts last after the flop
-  const players=order.map(i=>{const s=st.seats[i];return{seat:i,uid:s.uid,name:s.name,bot:!!s.bot,cards:[],folded:false,allin:false,committed:0,bet:0,acted:false,side:false}});
-  const h=st.hand={game:'he',no:st.handNo,deck,salt,hash:null,pos:0,board:[],players,street:0,cur:0,toCall:0,minRaise:BB,step:1,sideHits:[],shown:false,rake:0,botAt:0};
+  const players=order.map(i=>{const s=st.seats[i];return{seat:i,uid:s.uid,name:s.name,bot:!!s.bot,cards:[],pos:[],folded:false,allin:false,committed:0,bet:0,acted:false,side:false}});
+  const f=lockFair(st,ctx,players.map(p=>st.seats[p.seat].seed||'')),deck=shuffle(52,fairRng(f.seed,f.seeds,f.nonce)),chs=cardHashes(f.seed,deck);
+  const h=st.hand={game:'he',no:st.handNo,deck,salt:f.seed,hash:f.commit,fair:f,cardHashes:chs,root:rootOf(chs),posOf:{board:[],side:[]},pos:0,board:[],players,street:0,cur:0,toCall:0,minRaise:BB,step:1,sideHits:[],shown:false,rake:0,botAt:0};
   for(const p of players){const s=st.seats[p.seat];if(st.side&&s.side&&s.stack>=BB+SIDE_COST){s.stack-=SIDE_COST;p.side=true}}
-  for(let r=0;r<2;r++)for(const p of players)p.cards.push(draw(h));
+  for(let r=0;r<2;r++)for(const p of players){p.pos.push(h.pos);p.cards.push(draw(h))}
   for(const p of players)if(p.side&&rankOf(p.cards[0])===12&&rankOf(p.cards[1])===12)sideHit(st,p.uid,'POCKET ACES');
   const n=players.length,sbI=n===2?n-1:0,bbI=n===2?0:1;   // heads-up: the button posts the small blind and acts first before the flop
   post(st,players[sbI],SB);post(st,players[bbI],BB);h.toCall=BB;h.minRaise=BB;
@@ -200,7 +253,7 @@ function heStreet(st,ctx){const h=st.hand;
   for(const p of h.players){p.bet=0;p.acted=false}h.toCall=0;h.minRaise=BB;
   if(h.street===3){heShowdown(st,ctx);return}
   h.pos++;   // burn
-  if(h.street===0)h.board.push(draw(h),draw(h),draw(h));else h.board.push(draw(h));h.street++;h.step++;
+  if(h.street===0)h.board.push(drawB(h),drawB(h),drawB(h));else h.board.push(drawB(h));h.street++;h.step++;
   const canAct=h.players.filter(p=>!p.folded&&!p.allin).length;
   if(canAct<2){heStreet(st,ctx);return}   // everyone left is all in: run the board out
   h.cur=0;heTurn(st,ctx,true)}
@@ -229,17 +282,70 @@ function heShowdown(st,ctx){const h=st.hand,live=active(h),ps=pots(h);
   // the house cut: 1.8% of a pot that saw a flop, at most 6 shards, rounded down
   const total=ps.reduce((a,x)=>a+x.amount,0);h.rake=h.board.length>=3?Math.min(RAKE_CAP,Math.floor(total*RAKE)):0;if(h.rake&&ps.length)ps[0].amount-=h.rake;
   const contest=live.length>1;h.shown=contest;
-  if(contest)while(h.board.length<5){if(h.board.length===0){h.pos++;h.board.push(draw(h),draw(h),draw(h))}else{h.pos++;h.board.push(draw(h))}}
+  if(contest)while(h.board.length<5){if(h.board.length===0){h.pos++;h.board.push(drawB(h),drawB(h),drawB(h))}else{h.pos++;h.board.push(drawB(h))}}
   const val=new Map(live.map(p=>[p,contest?best([...p.cards,...h.board]):0])),won=new Map();
   for(const pot of ps){const top=Math.max(...pot.eligible.map(p=>val.get(p))),ws=pot.eligible.filter(p=>val.get(p)===top),share=Math.floor(pot.amount/ws.length);let odd=pot.amount-share*ws.length;
     for(const w of ws){const x=share+(odd>0?1:0);if(odd>0)odd--;won.set(w,(won.get(w)||0)+x)}}
   for(const [p,x]of won){const s=st.seats[p.seat];if(s)s.stack+=x}
   // the side bet: pocket aces (at the deal), or a full house or better with the whole board (dealt out for the side bet if the hand ended early)
-  const full=h.board.slice(),dk={pos:h.pos,deck:h.deck};while(full.length<5){if(full.length===0){dk.pos++;full.push(dk.deck[dk.pos++],dk.deck[dk.pos++],dk.deck[dk.pos++])}else{dk.pos++;full.push(dk.deck[dk.pos++])}}
+  const full=h.board.slice(),dk={pos:h.pos,deck:h.deck},sp=h.posOf?h.posOf.side:[],dd=()=>{sp.push(dk.pos);return dk.deck[dk.pos++]};while(full.length<5){if(full.length===0){dk.pos++;full.push(dd(),dd(),dd())}else{dk.pos++;full.push(dd())}}
   h.sideBoard=full;
   for(const p of h.players)if(p.side&&!h.sideHits.some(x=>x.uid===p.uid)&&catOf(best([...p.cards,...full]))>=6)sideHit(st,p.uid,CAT[catOf(best([...p.cards,...full]))]);
-  finish(st,ctx,{board:h.board,rake:h.rake,players:h.players.map(p=>({uid:p.uid,name:p.name,cards:contest&&!p.folded?p.cards:null,folded:p.folded,put:p.committed,won:won.get(p)||0,
+  h.shownSeats=contest?live.map(p=>p.seat):[];
+  finish(st,ctx,{house:h.rake+h.players.filter(p=>p.side).length*SIDE_COST,board:h.board,rake:h.rake,players:h.players.map(p=>({uid:p.uid,name:p.name,cards:contest&&!p.folded?p.cards:null,folded:p.folded,put:p.committed,won:won.get(p)||0,
     hand:contest&&!p.folded?CAT[catOf(val.get(p))]:null}))})}
+
+// ---------- roulette (v0.10.0): the American wheel (0 and 00; 00 is pocket 37), always no limit ----------
+// A round: 60 s of betting (the ball goes early once everyone seated has pressed SPIN and someone has a bet down), a 6 s spin,
+// the result on the felt for 4 s. Bets are a map of spot -> shards; every spot is checked here, never trusted from a phone.
+export const RL_RED=[1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
+export const RL_WHEEL=[0,28,9,26,30,11,7,20,32,17,5,22,34,15,3,24,36,13,1,37,27,10,25,29,12,8,19,31,18,6,21,33,16,4,23,35,14,2];
+const RL_PAYS={1:35,2:17,3:11,4:8,5:6,6:5,12:2,18:1},RED=new Set(RL_RED),RL_SP0=new Set(['0-37','0-1','0-2','2-37','3-37']),RL_TR=new Set(['0-1-2','0-2-37','2-3-37']);
+const rng36=(a,b)=>Array.from({length:b-a+1},(_,i)=>a+i);
+// a spot's numbers and what it pays, or null for anything that isn't a real spot on the layout
+export function rlSpot(key){const k=String(key),m=k.match(/^([a-z]+)(?::([0-9-]+))?$/);if(!m)return null;const t=m[1],arg=m[2],ns=arg?arg.split('-').map(Number):[];
+  if(arg&&!arg.split('-').every(x=>/^(0|[1-9][0-9]?)$/.test(x)))return null;   // plain numbers only: "00" is pocket 37, never a second spelling of 0
+  if(ns.some(x=>!Number.isInteger(x)))return null;let nums=null;
+  if(t==='n'&&ns.length===1&&ns[0]>=0&&ns[0]<=37)nums=ns;
+  else if(t==='sp'&&ns.length===2&&ns[0]<ns[1]){const[a,b]=ns;if(RL_SP0.has(arg)||a>=1&&b<=36&&(b-a===1&&a%3!==0||b-a===3))nums=ns}
+  else if(t==='st'&&ns.length===1&&ns[0]>=1&&ns[0]<=34&&ns[0]%3===1)nums=rng36(ns[0],ns[0]+2);
+  else if(t==='tr'&&RL_TR.has(arg))nums=ns;
+  else if(t==='co'&&ns.length===1&&ns[0]>=1&&ns[0]<=32&&ns[0]%3!==0)nums=[ns[0],ns[0]+1,ns[0]+3,ns[0]+4];
+  else if(t==='tl'&&!arg)nums=[0,37,1,2,3];
+  else if(t==='sl'&&ns.length===1&&ns[0]>=1&&ns[0]<=31&&ns[0]%3===1)nums=rng36(ns[0],ns[0]+5);
+  else if(t==='dz'&&ns.length===1&&ns[0]>=1&&ns[0]<=3)nums=rng36(ns[0]*12-11,ns[0]*12);
+  else if(t==='col'&&ns.length===1&&ns[0]>=1&&ns[0]<=3)nums=rng36(1,36).filter(x=>x%3===ns[0]%3);
+  else if(!arg&&t==='red')nums=RL_RED;else if(!arg&&t==='black')nums=rng36(1,36).filter(x=>!RED.has(x));
+  else if(!arg&&t==='odd')nums=rng36(1,36).filter(x=>x%2);else if(!arg&&t==='even')nums=rng36(1,36).filter(x=>!(x%2));
+  else if(!arg&&t==='low')nums=rng36(1,18);else if(!arg&&t==='high')nums=rng36(19,36);
+  return nums?{nums,pays:RL_PAYS[nums.length]}:null}
+export const rlTotal=b=>Object.values(b||{}).reduce((a,x)=>a+x,0);
+// what a set of bets returns on a number (the stake back plus the win; 0 if it lost)
+export function rlPay(bets,n){let back=0;for(const[k,a]of Object.entries(bets||{})){const sp=rlSpot(k);if(sp&&sp.nums.includes(n))back+=a*(sp.pays+1)}return back}
+// replace your bets for this spin (place, remove, clear, rebet and double are all one call)
+export function rlSetBets(st,uid,bets){if(st.game!=='rl')return 'Not a roulette table';if(st.phase!=='bet')return 'No more bets';const s=st.seats[seatIx(st,uid)];if(!s)return 'You are not at this table';
+  const nb={},ent=Object.entries(bets||{});if(ent.length>80)return 'Too many spots';
+  for(const[k,a0]of ent){const a=Math.floor(+a0);if(!a)continue;if(!rlSpot(k))return 'That isn\'t a spot on the table';if(!(a>=1&&a<=1e9))return 'Bet at least 1 shard';nb[k]=(nb[k]||0)+a}
+  const h=st.hand,old=rlTotal(h.bets[uid]),tot=rlTotal(nb);if(tot>s.stack+old)return 'Not enough shards at the table';
+  s.stack+=old-tot;if(tot)h.bets[uid]=nb;else{delete h.bets[uid];delete h.ready[uid]}h.step++;return null}
+export function rlReady(st,uid){if(st.game!=='rl'||st.phase!=='bet')return null;if(seatIx(st,uid)<0)return 'You are not at this table';st.hand.ready[uid]=true;st.hand.step++;return null}
+function rlStep(st,ctx){const now=ctx.now,hs=humans(st).filter(s=>!s.leaving);
+  if(st.phase==='wait'){if(hs.length){st.phase='bet';st.deadline=now+BET_MS;st.hand={bets:{},ready:{},step:(st.hand&&st.hand.step||0)+1,sideHits:[]}}return}
+  if(st.phase==='bet'){const h=st.hand,bettors=Object.keys(h.bets);
+    if(now>=st.deadline){if(bettors.length)rlSpin(st,ctx);else{st.deadline=now+BET_MS;h.ready={};h.step++}return}
+    if(bettors.length&&hs.length&&hs.every(s=>h.ready[s.uid]))rlSpin(st,ctx);return}
+  if(st.phase==='spin'){if(now>=st.deadline)rlSettle(st,ctx);return}
+  if(st.phase==='done'&&now>=st.deadline)cleanup(st,ctx)}
+function rlSpin(st,ctx){const h=st.hand;st.handNo++;
+  for(const s of st.seats)if(s&&!s.bot)s.sitout=h.bets[s.uid]?0:s.sitout+1;
+  const f=lockFair(st,ctx,st.seats.filter(s=>s&&!s.bot).map(s=>s.seed||''));
+  Object.assign(h,{game:'rl',no:st.handNo,fair:f,hash:f.commit,salt:f.seed,number:fairRng(f.seed,f.seeds,f.nonce)(38)});
+  st.phase='spin';st.deadline=ctx.now+SPIN_MS;h.step++}
+function rlSettle(st,ctx){const h=st.hand,n=h.number;let tb=0,tr=0;
+  const players=Object.entries(h.bets).map(([uid,b])=>{const i=seatIx(st,uid),s=st.seats[i],bet=rlTotal(b),won=rlPay(b,n);if(s)s.stack+=won;tb+=bet;tr+=won;
+    return{uid,name:s?s.name:'?',seat:i,bets:b,bet,won,net:won-bet}});
+  st.hist=(st.hist||[]).concat(n).slice(-12);
+  finish(st,ctx,{number:n,house:tb-tr,players})}
 
 // ---------- the bot: a solid, honest player (it never sees anyone's cards) ----------
 function equity(cards,board,opp,rng,n=160){
@@ -258,6 +364,15 @@ export function botMove(st,p,ctx){const h=st.hand,s=st.seats[p.seat],call=heToCa
   return{a:'call'}}
 
 // ---------- what one player may see ----------
+// the last round, as this player may see it. Blackjack and roulette: everything (the seed, the players' seeds, the deck or the
+// number), so it can be rerun. Hold'em: the card fingerprints, and only the cards this player saw (with each card's salt), so
+// nothing about a folded hand gets out; the seed itself stays on the server (hand history shows it after 24 hours).
+function lastView(st,uid){const L=st.last;if(!L)return null;const o={no:L.no,hash:L.hash,result:L.result,sideHits:L.sideHits};
+  if(st.game!=='he'){o.deck=L.deck;o.salt=L.salt;if(L.fair)o.seed=L.fair.seed;return o}
+  o.deck=null;if(!L.fair||!L.cardHashes)return o;
+  const vis=new Set([...(L.pos?L.pos.board:[]),...(L.pos?L.pos.side:[])]);
+  for(const x of L.holes||[])if(x.uid===uid||(L.shownSeats||[]).includes(x.seat))for(const i of x.pos)vis.add(i);
+  o.root=L.root;o.cardHashes=L.cardHashes;o.cards=[...vis].sort((a,b)=>a-b).map(i=>[i,L.deck[i],cardSalt(L.fair.seed,i)]);return o}
 // v0.9.9.1: Hold'em never sends the deck after a hand (cards are dealt in order, so it would show what folded players held);
 // the whole deck stays in the server's hand log (casino_hands) for checks. Blackjack's shoe is fresh every hand and all face up.
 export function view(st,uid,now){
@@ -265,8 +380,15 @@ export function view(st,uid,now){
     left:st.deadline?Math.max(0,st.deadline-now):0,handNo:st.handNo,me,picks:st.picks[uid]|0,log:st.log.slice(-5),started:st.started!==false,
     readyMe:!!(st.ready||{})[uid],readyN:Object.keys(st.ready||{}).length,
     seats:st.seats.map((s,i)=>s&&{i,name:s.name,stack:s.stack,bot:!!s.bot,me:i===me,side:!!s.side,leaving:!!s.leaving}),
-    last:st.last&&{no:st.last.no,hash:st.last.hash,salt:st.last.salt,deck:st.game==='he'?null:st.last.deck,result:st.last.result,sideHits:st.last.sideHits},fair:h&&h.hash||null};
+    last:lastView(st,uid),fair:h&&h.hash||null,next:st.next?st.next.hash:null,seed:me>=0?st.seats[me].seed||'':''};
+  if(st.game==='rl'){v.hist=st.hist||[];if(!h)return v;
+    v.bets=Object.fromEntries(Object.entries(h.bets||{}).map(([u,b])=>[seatIx(st,u),b]));v.myBets=(h.bets||{})[uid]||{};
+    v.readyMe=!!(h.ready||{})[uid];v.readyN=Object.keys(h.ready||{}).length;
+    if(st.phase==='bet')v.fair=v.next;   // this spin's server seed is the committed one until the ball goes
+    if(st.phase==='spin'||st.phase==='done')v.number=h.number;   // never before betting has closed
+    return v}
   if(!h)return v;
+  if(h.root)v.root=h.root;
   if(st.game==='bj'){
     if(st.phase==='bet'){v.bets=Object.fromEntries(Object.entries(h.bets).map(([u,b])=>[seatIx(st,u),b.bet]));return v}
     v.dealer=h.revealed||st.phase==='done'?h.dealer:[h.dealer[0],null];v.dealerTotal=h.revealed?bjTotal(h.dealer).t:bjTotal([h.dealer[0]]).t;

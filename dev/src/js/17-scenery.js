@@ -5,7 +5,7 @@ const BAND=7;
 const treesBack=[],treesFront=[];
 // the trees (or, in the quarry, boulders and dead trees) round the outside; each map and size has its own
 function genForest(){
-  treesBack.length=0;treesFront.length=0;const m=MAP||MAPS.yard,Q=m===MAPS.quarry;
+  treesBack.length=0;treesFront.length=0;const m=MAP||MAPS.yard,Q=m===MAPS.quarry;if(m.casino)return;   // v0.10.0: indoors
   for(let j=-BAND;j<N+BAND;j++)for(let i=-BAND;i<N+BAND;i++){
     if(i>=0&&j>=0&&i<N&&j<N)continue;
     if(m.outWater&&m.outWater(i,j,MAPO))continue;   // the river runs on past the fence
@@ -75,9 +75,9 @@ function drawEdge(side,s){
 }
 function paintBack(){
   const m=MAP||MAPS.yard,Q=m===MAPS.quarry;
-  quad(iso(-BAND-6,-BAND-6),iso(N+BAND+6,-BAND-6),iso(N+BAND+6,N+BAND+6),iso(-BAND-6,N+BAND+6),Q?'#161412':'#151a12');
+  quad(iso(-BAND-6,-BAND-6),iso(N+BAND+6,-BAND-6),iso(N+BAND+6,N+BAND+6),iso(-BAND-6,N+BAND+6),m.casino?'#0a0608':Q?'#161412':'#151a12');
   forTiles(-BAND,N+BAND,paintRange(-BAND,N+BAND,TH2),(i,j)=>{
-    if(i>=0&&j>=0&&i<N&&j<N)return;
+    if(i>=0&&j>=0&&i<N&&j<N||m.casino)return;   // the casino's outside is dark
     if(PAINT_RECT&&!tileVis(i,j,TH2))return;
     const dx=i<0?-i:(i>=N?i-N+1:0),dy=j<0?-j:(j>=N?j-N+1:0),d=Math.max(dx,dy),h=hash(i+400,j+77);
     if(m.outWater&&m.outWater(i,j,MAPO)){quad(iso(i,j),iso(i+1,j),iso(i+1,j+1),iso(i,j+1),h<.5?'#1d3848':'#1b3544');return}
@@ -96,7 +96,7 @@ function paintBack(){
   });
   g.strokeStyle='rgba(0,0,0,.22)';g.lineWidth=1;g.beginPath();
   if(m!==MAPS.frost)for(let s=0;s<=N;s++){let a=iso(s,0),b=iso(s,N);g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);a=iso(0,s);b=iso(N,s);g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1])}g.stroke();
-  for(let s=0;s<N;s++){drawEdge('n',s);drawEdge('w',s)}
+  if(m.casino)paintCasinoWalls();else for(let s=0;s<N;s++){drawEdge('n',s);drawEdge('w',s)}
   if(m===MAPS.frost)frostScenery();
   if(m.city)paintCityBuildings();   // v0.9.7: buildings are part of the painted city; only the ones in front of someone are redrawn live
 }
@@ -104,7 +104,7 @@ function paintBack(){
 // tree is redrawn in the cached image, never the whole thing (a full redraw was the hitch).
 function paintFront(){
   let n=0;   // what landed in the chunk being painted (0: the chunk is empty)
-  for(let s=0;s<N;s++){if(!PAINT_RECT||tileVis(s,N-1,WH*2)||tileVis(N-1,s,WH*2))n++;drawEdge('s',s);drawEdge('e',s)}
+  if(!(MAP&&MAP.casino))for(let s=0;s<N;s++){if(!PAINT_RECT||tileVis(s,N-1,WH*2)||tileVis(N-1,s,WH*2))n++;drawEdge('s',s);drawEdge('e',s)}
   for(const t of treesFront){if(PAINT_RECT){const b=treeBox(t);if(!paintVis(b[0],b[1],b[2],b[3]))continue}n++;drawTree(t,t.a)}
   return n;
 }
@@ -254,6 +254,7 @@ function drawLighting(){
     let c=at(player.x,player.y,WH*.5);if(!demo)hole(c[0],c[1],TW2*3.4,.95);
     if(!demo)for(const o of players.values())if(o!==player&&o.alive){c=at(o.x,o.y,WH*.5);hole(c[0],c[1],TW2*2.2,.8)}
     if(qm.alive){c=at(qm.x,qm.y,WH*.5);hole(c[0],c[1],TW2*1.8,.7)}
+    if(MAP&&MAP.casino)casinoLights(hole,at);
     if(MAP&&MAP.city)cityLights(hole,at);else for(const k of cores){c=at(k.i+.5,k.j+.5,WH);hole(c[0],c[1],TW2*3,.85)}
     for(const e of enemies){c=at(e.x,e.y,WH*.5);hole(c[0],c[1],TW2*.9,.45)}
     for(let k=0;k<N*N;k++){const w=walls[k];if(w&&w.fire>0){c=at(k%N+.5,((k/N)|0)+.5,WH);hole(c[0],c[1],TW2*2,.8)}}
@@ -333,6 +334,7 @@ function itemPlayer(o){
   if(o._shotDrawUntil>game.time)PL.syncRender=true;
   if(game.pvp){PL.mark=teamCol(o);if(game.pvp==='base')PL.ring=teamCol(o);else if(me)PL.ring='#e2b436'}
   const bf=NET.mode==='guest'?(o.boltF||0):(o.bolt>0?o.bolt/o.boltT:0);if(bf>0)PL.bolt=1-bf;
+  if(casino()){PL.nogun=true;const dr=()=>drawPerson(o.x,o.y,Object.assign({aim:o.aim,walk:o.seat?0:o.walk,flash:false},PL));if(o.seat)casSeated(o,dr);else dr();return}   // v0.10.0: no weapons; seated players sit
   if(o.alive)drawPerson(o.x,o.y,Object.assign({aim:o.aim,walk:o.walk,flash:o.flash>0,tag,tagCol:game.pvp?teamCol(o):SLOTCOL[o.slot%6],faded:o.prot>0||stealthed(o)},PL));
   else drawDowned(o.x,o.y,PL,o.revive/2.2,me?(o.rt>1e5?'DOWN · UNTIL THE RAID IS BROKEN':`DOWN · ${Math.ceil(o.rt)}`):`${o.name.toUpperCase()} · DOWN`);
 }
@@ -393,12 +395,13 @@ function render(dt){
   for(const n of nodes)ritem(n.i+n.j+1,drawNode,n);
   for(const c of cores)ritem(c.i+c.j+1,c.poi?drawPoi:drawStake,c);
   if(MAP&&MAP.city)cityLampItems();
+  if(MAP&&MAP.casino)casinoItems();
   for(const s of sacks)ritem(s.x+s.y,itemSack,s);
   for(const c of charges)ritem(c.x+c.y,itemCharge,c);
   for(const e of enemies)ritem(e.x+e.y,itemEnemy,e);
   if(qm.alive)ritem(qm.x+qm.y,itemQM,qm);else if(!qm.gone)ritem(qm.x+qm.y,itemQMDown,qm);
   if(!demo)for(const o of players.values())if(o.alive||o.downed)ritem(o.x+o.y,itemPlayer,o);
-  if(playing()&&p.alive&&cfg.build&&game.pvp!=='ffa'){const t=buildTarget(p,game.sel,game.piece==='door');ritem(t.i+t.j+1.05,drawGhost,t)}
+  if(playing()&&p.alive&&cfg.build&&game.pvp!=='ffa'&&!casino()){const t=buildTarget(p,game.sel,game.piece==='door');ritem(t.i+t.j+1.05,drawGhost,t)}
   const O=RI.o;O.length=RI.n;for(let k=0;k<RI.n;k++)O[k]=k;O.sort(byDepth);
   for(let q=0;q<RI.n;q++){const k=O[q];RI.f[k](RI.a[k],RI.b[k])}
   RI.a.fill(null,0,RI.n);PM('bullets');
@@ -416,7 +419,7 @@ function render(dt){
   PM('parts');for(const q of parts){if(q.kind.startsWith('finish:'))continue;const c=iso(q.x,q.y);paintSceneParticle(g,q,c[0],c[1]-q.z,u,game.time)}
   PM('front');drawCache(caches.front);PM('light');
   drawLighting();drawFinishEffects();drawBossFx();PM('flash');
-  g.globalCompositeOperation='lighter';cityLampGlow();
+  g.globalCompositeOperation='lighter';cityLampGlow();casinoGlow();
   // glows stamped 1:1 from pre-drawn sizes, like the light holes (stretching the 64 px glow was the slow part)
   if(flashes.length){g.setTransform(1,0,0,1,0,0);
     for(const f of flashes){const c=flashPoint(f),a=f.life/f.max,r=TW2*f.r*(f.muzzle?1:2.2)*(f.muzzle?1:1.4-a*.4),im=softDot(GLOW_DOTS,r*DPR,SOFT_GLOW);
@@ -427,7 +430,7 @@ function render(dt){
   drawStorm(dt);drawVignette(demo);drawNameplates();PM('floats');
   for(const f of floats){const c=iso(f.x,f.y),a=f.life/f.max;g.globalAlpha=Math.min(1,a*2);label(f.t,c[0],c[1]-WH*1.5-(1-a)*24*u,f.col,11);g.globalAlpha=1}
   PM('ui');if(playing()&&!overlayOpen())drawPrompts(p);if(game.fb&&!demo)drawEvacHud();if(!demo&&MAP&&MAP.city)drawBlackoutHud();
-  if(playing()&&p.alive&&!overlayOpen()){drawCrosshair(p);drawShells(p)}
+  if(playing()&&p.alive&&!overlayOpen()&&!casino()){drawCrosshair(p);drawShells(p)}
   const top=110;
   for(const e of game.pvp&&!demo?foes():enemies){const c=iso(e.x,e.y);if(c[0]>14&&c[0]<W-14&&c[1]>top&&c[1]<H-14)continue;
     const ex=clamp(c[0],18,W-18),ey=clamp(c[1],top+8,H-18),a=Math.atan2(c[1]-H/2,c[0]-W/2);

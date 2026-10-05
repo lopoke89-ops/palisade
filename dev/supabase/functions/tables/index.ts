@@ -1,5 +1,6 @@
 // v0.9.8 THE TABLES edge function: checks who is calling, then hands the request to handler.js (the same code the tests run).
 // Uses the service role for the database; players can't touch the casino tables or functions directly.
+// v0.10.0: tables are found by casino room; hand history; the daily books check.
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { handle } from './handler.js';
 const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
@@ -17,9 +18,11 @@ const D = {
   name: async (uid: string) => (await one(sb.from('profiles').select('username').eq('id', uid).maybeSingle()))?.username || 'PLAYER',
   balance: async (uid: string) => (await one(sb.from('lockers').select('shards').eq('user_id', uid).maybeSingle()))?.shards ?? 0,
   load: async (id: number) => await one(sb.from('casino_tables').select('id,code,game,st,ver,open').eq('id', id).maybeSingle()),
-  byCode: async (code: string) => await one(sb.from('casino_tables').select('id,code').eq('code', code).eq('open', true).maybeSingle()),
-  seatOf: async (uid: string) => (await one(sb.from('casino_tables').select('id,code').eq('open', true).contains('humans', [uid]).limit(1)))[0] || null,
-  list: async () => await one(sb.from('casino_tables').select('id,code,game,st').eq('open', true).order('updated_at', { ascending: false }).limit(30)),
+  byRoom: async (room: string, game: string) => await one(sb.from('casino_tables').select('id,code').eq('room', room).eq('game', game).eq('open', true).maybeSingle()),
+  seatOf: async (uid: string) => (await one(sb.from('casino_tables').select('id,code,game,room').eq('open', true).contains('humans', [uid]).limit(1)))[0] || null,
+  history: async (uid: string, n: number) => await one(sb.from('casino_hands').select('game,hand_no,hash,salt,deck,result,created_at')
+    .contains('result->players', JSON.stringify([{ uid }])).order('id', { ascending: false }).limit(n)),
+  books: async () => { const { error } = await sb.rpc('casino_books_run'); if (error) console.error('books', error.message); },
   stale: async (ms: number) => await one(sb.from('casino_tables').select('id').eq('open', true).lt('updated_at', new Date(Date.now() - ms).toISOString()).limit(10)),
   botLeft: async () => (await one(sb.rpc('casino_bot_left'))) ?? 0,
   commit: async (a: any) => {
@@ -27,7 +30,7 @@ const D = {
     if (error) return { error: /insufficient/.test(error.message) ? 'insufficient' : 'Server error' }; return data;
   },
   create: async (a: any) => {
-    const { data, error } = await sb.rpc('casino_open', { p_code: a.code, p_game: a.game, p_st: a.st, p_humans: a.humans, p_ops: a.ops });
+    const { data, error } = await sb.rpc('casino_open', { p_code: a.code, p_game: a.game, p_st: a.st, p_humans: a.humans, p_ops: a.ops, p_room: a.room });
     if (error) return { error: /insufficient/.test(error.message) ? 'insufficient' : 'Server error' }; return data;
   },
 };

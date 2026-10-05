@@ -204,7 +204,7 @@
   - no bet bigger than your stack;
   - bets only on real spots (the client's grid is never trusted).
 - **Economy check:**
-  - a 1,000,000-spin simulation in the tests has to land within the expected edge (5.26%, and 7.89% on the top line) to within 0.1%;
+  - a 1,000,000-spin simulation in the tests has to land within the expected edge (5.26%, and 7.89% on the top line) to within 0.4 percentage points on red (the measured edge over a million spins has a standard error of about 0.1 points, so a tighter bound fails by chance); the exact edge of every one of the 161 spots is checked by enumerating all 38 pockets;
   - the payout table is checked bet type by bet type against the table above.
 - **Watching it:** a short query in the STATUS file sums shards in and out per day at the roulette table, so we can see it isn't leaking.
 
@@ -315,7 +315,7 @@ Checked against Big U's decisions, the live database and the code. Everything be
 | A3 | Ticket 6 still said "payout caps"; roulette is always no limit | PAL-0100-6 |
 | A4 | The roulette number must never reach a phone before the ball stops; now stated, and tested | PAL-0100-3, tests |
 | A5 | `tables_ui` sits down from the menu list that C2 removes, so it has to be rewritten, not re-run; `taborder` also touches the TABLES tab | Tests |
-| A6 | The new room messages need a protocol bump (`yard-27` to `yard-28`). The live `room_register` accepts any `yard-N`, and the lobby row's `mode` column takes `casino`, so no lobby migration | PAL-0100-2, header |
+| A6 | The new room messages need a protocol bump (`yard-27` to `yard-28`). The live `room_register` accepts any `yard-N`. **Corrected during the build:** the lobby row's `length` check and `room_register`'s own `length`/`map` lists reject `casino`, so a second migration (`20261005200100_v0100_casino_rooms.sql`) adds `casino` to both | PAL-0100-2, header |
 | A7 | Guests (no account) weren't covered: they can walk, but can't sit | PAL-0100-2 |
 | A8 | What happens to seated players when the host leaves wasn't covered: they're stood up straight away, and their shards go home | PAL-0100-2 |
 | A9 | Walk-only has to be enforced by the server too, or an old client could still open a menu table | PAL-0100-2 |

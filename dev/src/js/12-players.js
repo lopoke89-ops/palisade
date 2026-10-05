@@ -4,6 +4,7 @@ function update(dt){
   updateParticles(dt);
   if(!running()||game.phase==='over'||game.paused||(NET.mode==='guest'&&NET.inGame))return;
   if(demo&&game.phase==='build'&&game.timer>8)game.timer=8;
+  if(casino()){game.time+=dt;for(const p of players.values())if(p.seat)p.walk=0;return}   // v0.10.0: the casino has no raid clock, no raiders and no stake
   game.time+=dt;for(const c of cores)c.flash=Math.max(0,c.flash-dt);updateFlood(dt);if(!game.pvp&&game.phase==='raid')stormTick(dt);
   if(game.pvp){updatePvp(dt);if(game.phase==='over')return}
   else if(game.phase==='build'){game.timer-=dt;if(blackout())boGather();if(game.timer<=0)startRaid()}
@@ -30,6 +31,7 @@ function assist(d){
 function controlLocal(dt){
   const p=player;if(!p||demo)return;p.fireIn=false;if(game.phase==='over')return;
   if(!p.alive||overlayOpen()||chatOpen())return;
+  if(p.seat){p.fireIn=false;return}   // v0.10.0: seated at a casino table
   let mx=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),my=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
   if(stickMove.id!==null){mx+=stickMove.vx;my+=stickMove.vy}
   if(padMode){mx+=pad.mx;my+=pad.my}
@@ -43,6 +45,7 @@ function controlLocal(dt){
   else if(!touchMode&&mouse.seen){const w=bodyUnder(mouse.x,mouse.y,p)||screenToWorld(mouse.x,mouse.y+WH*.55);const dx=w.x-p.x,dy=w.y-p.y,l=Math.hypot(dx,dy)||1;p.aim={x:dx/l,y:dy/l};p.face=p.aim;firing=mouse.down}
   else if(stickAim.id!==null&&stickAim.mag>.2){const d=assist(sdirToWorld(stickAim.vx,stickAim.vy));p.aim=d;p.face=d;firing=stickAim.mag>.5}
   else if(mag>.12){p.face=p.moveDir;p.aim=p.moveDir}
+  if(casino())firing=false;   // no weapons in the casino
   p.fireIn=firing&&!spr;p.autoFire=!padMode&&(touchMode||!mouse.seen);
   if(p.pullIn!==mouse.pulls){if(p.pullIn===undefined)p.pullUsed=mouse.pulls;p.pullIn=mouse.pulls;p.pullT=game.time}
 }

@@ -1,11 +1,54 @@
 # PALISADE project status
 
-Updated October 4, 2026. This is the current status record for the clone. The older project handoff and v0.9.3 hardening prompt describe a superseded release order.
+Updated October 5, 2026. This is the current status record for the clone. The older project handoff and v0.9.3 hardening prompt describe a superseded release order.
 
 For a consolidated list of what remains from those documents, see the [current project blueprint](PROJECT_BLUEPRINT_2026-09-29.md).
 Big U's latest completed local scope is recorded in the [presentation prompt](plans/backgrounds-and-character-animation-prompt.md). The earlier [cosmetic and hardening prompt](plans/next-cosmetics-and-hardening-prompt.md) remains the record of v0.9.3.2 and its deferred work.
 
 The Claude audit URL still requires sign-in in the available browser session. Big U supplied an exported copy at `D:\downloads\Untitled.md`, which was read on September 29. Its newest Progress entry is v0.9.3, so its release claims are superseded by the verified v0.9.3.3 release below. The external artifact itself was not edited here.
+
+## v0.10.0: THE PALISADE FALLS CASINO
+
+The work order is [casino-map-and-roulette-work-order.md](plans/casino-map-and-roulette-work-order.md) (decisions C1-C12).
+- **The casino:**
+  - a 16x16 map in the yard's style: blackjack, poker and roulette tables, slot banks (decoration), a bar, a cashier cage, chandeliers, neon and a marquee;
+  - dealers Vinnie, Rosa and Marco, plus a barkeep, built as looks so they can become a case collection later;
+  - no raiders, no building, no weapons; names over heads (no health bars).
+- **Walk-only (C2):**
+  - TABLES is now the front door: your balance, ENTER THE CASINO, JOIN BY CODE, HAND HISTORY and HOUSE RULES;
+  - you sit by walking up to a free seat and pressing E (SIT on touch);
+  - the server refuses the old open/join requests;
+  - one table of each game per casino room, for up to 6 players (C1); the host's room is the casino, and alone you get a room of your own;
+  - the seat travels on the network (yard-28); the host only gives a guest a free seat right next to them, and puts them on it.
+- **Roulette:**
+  - American double zero (C3), always no limit (C6), 60 s betting (C7), playable alone (C4);
+  - the full board (C5): every one of the 161 spots, with chips, CLEAR, REBET, DOUBLE, SPIN and the last spins;
+  - the wheel on the table spins and lands on the number.
+- **Fair play:**
+  - the server commits to its seed before players' seeds lock, and players can set their own seed;
+  - every Blackjack shoe and roulette spin reruns from what's revealed;
+  - Hold'em has a fingerprint per card, so you can check the cards you saw without anyone seeing a folded hand (the seed and the whole deck show after 24 hours);
+  - HAND HISTORY's CHECK reruns it all in the browser;
+  - the daily books check: for every closed table, shards in - shards out = what the house kept + bot.
+- **Server:**
+  - the `tables` edge function: ops sit, peek, history, seed, rlbets and rlready;
+  - migrations `20261005200000_v0100_casino.sql` (roulette, rooms, history indexes, `casino_books`) and `20261005200100_v0100_casino_rooms.sql` (`casino` in the lobby length check and `room_register`);
+  - both were tested twice-applied in PGlite;
+  - the second contains a `delete` (the live room_register's close branch), so Big U runs it in the SQL editor.
+- **Tests:**
+  - new: `roulette_engine`, `fair_play`, `casino_map`;
+  - rewritten: `tables_ui` (the casino flow at three sizes, with the history check for all three games);
+  - updated: `tables_server`, `blackout_network` and `campaign_network` (yard-28);
+  - `campaign_network` timed out once and passed unchanged on the re-run.
+- **Evidence:** `dev/evidence/v0.10.0/`.
+- **Fixed before release:**
+  - roulette taps could be lost or wiped when a poll answered mid-tap; bets now go down on release and the board only rebuilds when it changed;
+  - a full table now refuses a seat (the check had slipped into a comment, so it would have taken a buy-in for a seat that doesn't exist).
+- **Deployed October 5:**
+  - the first migration was applied through the connector, except the roulette game check;
+  - Big U ran the game check and the rooms migration in the SQL editor;
+  - the `tables` edge function is version 7, checked byte for byte against the repo;
+  - then the site.
 
 ## v0.9.9.1: Hold'em no longer reveals folded hands (hotfix)
 

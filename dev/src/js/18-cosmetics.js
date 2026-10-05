@@ -537,7 +537,7 @@ function localRun(c,shards){
 const DRAFT_KEY='palisade.runDraft.v1';
 function runHeldNow(){return blackout()?boStages():game.phase==='build'?game.wave:Math.max(0,game.wave-1)}
 function runDraftDue(){
-  if(demo||!running()||game.pvp||game.phase==='over'||game.rewarded||!player)return false;
+  if(demo||!running()||game.pvp||game.phase==='over'||game.rewarded||!player||casino())return false;
   const held=runHeldNow();
   return !(held<=(game.joinHeld|0)&&(game.bossLog||[]).length<=(game.joinBoss|0)&&(game.sbN|0)<=(game.joinSB|0)&&(game.fbLog||[]).length<=(game.joinFB|0)&&!blitzResult(player));
 }
