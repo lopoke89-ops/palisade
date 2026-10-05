@@ -29,7 +29,7 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
   await G.waitForFunction(() => __pal.game.map === 'river', null, { timeout: 20000 }); await H.evaluate(() => clearInterval(walkIn)); await G.waitForTimeout(700);
   out.after = await G.evaluate(() => { const P = __pal, me = P.player, host = [...P.players.values()].find(q => q !== me); return { map: P.game.map, me: me.chEvac, host: host && host.chEvac, claim: P.runClaim(3, false, 0).claim.ch_evac } });
   out.hostView = await H.evaluate(() => { const P = __pal; return { me: P.player.chEvac, hpPct: Math.round(100 * P.player.hp / P.player.max) } });
-  assert.equal(out.proto, 'yard-27'); assert.equal(out.mode, 'campaign');
+  assert.equal(out.proto, 'yard-28'); assert.equal(out.mode, 'campaign');
   assert.deepEqual({ ...out.guestEvac, t: out.guestEvac.t <= 15 && out.guestEvac.t >= 13 }, { t: true, r: 1.5, ch: 0, label: 'CH 1 · EVAC' });
   assert.deepEqual(out.after, { map: 'river', me: [1], host: [0], claim: [true, null, null] }); assert.deepEqual(out.hostView.me, [0]);
   // 2. the Whiteout Gauntlet: the guest sees the wave label and the bosses; a cleared wave counts in the guest's claim

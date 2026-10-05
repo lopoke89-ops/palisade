@@ -53,7 +53,10 @@ const MIG=__dirname+'/../supabase/migrations/20261004200000_v098_tables.sql',MIG
  ok('buy-in taken',await bal(A)===95);
  r=await call('b',{op:'sit',room:ROOM,game:'bj'});ok('the second lands at the same table',r.status===200&&r.body.id===id&&r.body.view.seats.filter(Boolean).length===2&&await bal(B)===35);
  ok('another room has its own table',(await svc(`select count(*)::int n from casino_tables where room='OTHR:x:1'`))[0].n===0);
- r=await call('a',{op:'sit',room:ROOM,game:'he'});ok('already seated: back to your own table, no second buy-in',r.body.id===id&&await bal(A)===95);
+ r=await call('a',{op:'sit',room:ROOM,game:'he'});ok('seated at another table: stand up there first, no second buy-in',/still seated/.test(r.body.error)&&await bal(A)===95);
+ r=await call('a',{op:'sit',room:ROOM,game:'bj'});ok('the same seat again: back to it',r.body.id===id&&await bal(A)===95);
+ r=await call('a',{op:'peek',room:ROOM,game:'bj'});ok('peek: the table as anyone walking past sees it',r.status===200&&r.body.view&&r.body.view.me===-1&&r.body.view.seats.filter(Boolean).length===2&&r.body.balance===undefined);
+ r=await call('a',{op:'peek',room:ROOM,game:'rl'});ok('peek at a table nobody has opened: nothing',r.status===200&&r.body.view===null);
  r=await call('b',{op:'start',id});ok('only the host starts the table',/host/.test(r.body.error));r=await call('a',{op:'start',id});ok('the host starts it',r.body.view.started===true);
  ok('the lobby tells you where you sit',(await call('b',{op:'lobby'})).body.mine.id===id);
  // top up, and a top-up bigger than the balance

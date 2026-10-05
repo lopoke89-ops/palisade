@@ -55,16 +55,20 @@ export async function handle(body,token,D){
   // v0.10.0: walk to a table. One table of each game per casino room, found by the room; the first to sit opens it.
   if(op==='sit'){
     const room=String(body.room||''),game=GAMES.includes(body.game)?body.game:null;if(!ROOM.test(room)||!game)return err(400,'Walk up to a table in THE PALISADE FALLS CASINO to play');
-    const mine=await D.seatOf(u.id);if(mine)return run(D,mine.id,u.id,null);   // already sitting somewhere: back to that table
+    const mine=await D.seatOf(u.id);if(mine){if(mine.room===room&&mine.game===game)return run(D,mine.id,u.id,null);   // already in this seat: back to it
+      return err(400,'You are still seated at another table. Stand up there first.')}
     if(await D.balance(u.id)<E.BUYIN)return err(400,'The buy-in is '+E.BUYIN+' shards');
-    const name=(await D.name(u.id)||'PLAYER').toUpperCase(),sd=E.cleanSeed(body.seed);
+    const name=(await D.name(u.id)||'PLAYER').toUpperCase(),sd=E.cleanSeed(body.seed),seat=Number.isInteger(body.seat)?body.seat:-1;
     for(let k=0;k<6;k++){
-      const t=await D.byRoom(room,game);if(t)return run(D,t.id,u.id,(st,ctx)=>E.sit(st,{uid:u.id,name,seed:sd},ctx));
+      const t=await D.byRoom(room,game);if(t)return run(D,t.id,u.id,(st,ctx)=>E.sit(st,{uid:u.id,name,seed:sd,seat},ctx));
       const lim=E.LIMITS.includes(+body.lim)?+body.lim:100,st=E.newTable({game,lim,side:!!body.side,host:u.id,tid:salt(),room}),ctx={now:D.now(),rng,salt,seed,ops:[],hands:[]};
-      E.sit(st,{uid:u.id,name,seed:sd},ctx);st.seats[0].seen=ctx.now;
+      E.sit(st,{uid:u.id,name,seed:sd,seat},ctx);st.seats[E.seatIx(st,u.id)].seen=ctx.now;
       const code=Array.from({length:4},()=>CODE[rng(CODE.length)]).join(''),c=await D.create({code,game,st,humans:[u.id],ops:ctx.ops,room});
       if(c.ok)return run(D,c.id,u.id,null);if(c.error)return err(400,c.error==='insufficient'?'Not enough shards':c.error)}   // a conflict (someone opened it at the same moment, or the code was taken): look again
     return err(500,'Could not open a table')}
+  // what's on a table you're standing next to (what anyone walking past could see: no hole cards)
+  if(op==='peek'){const room=String(body.room||''),game=GAMES.includes(body.game)?body.game:null;if(!ROOM.test(room)||!game)return err(400,'Which table?');
+    const t=await D.byRoom(room,game);if(!t)return R(200,{view:null});const r=await run(D,t.id,null,null);if(r.body&&r.body.view)delete r.body.balance;return r}
   if(op==='open'||op==='join')return err(400,'The tables are in THE PALISADE FALLS CASINO now: walk up to one to play');
   if(!id)return err(400,'Which table?');
   const M={state:null,

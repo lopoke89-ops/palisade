@@ -75,6 +75,9 @@ const assert=require('node:assert/strict'),fs=require('node:fs');
   E.rlSetBets(st,'b',{even:2});E.rlReady(st,'b');E.tick(st,ctx);assert.equal(st.phase,'spin');E.leave(st,'b',ctx);assert.ok(st.seats[1]&&st.seats[1].leaving,'leaving mid-spin waits for the result');
   ctx.now+=E.SPIN_MS;E.tick(st,ctx);ctx.now+=E.RL_SHOW_MS;E.tick(st,ctx);assert.equal(st.seats[1],null,'then stands up');
   const back=ctx.ops.filter(o=>o.uid==='b'&&o.k==='cashout').reduce((a,o)=>a+o.d,0);assert.equal(back,3+E.rlPay({even:2},st.last.deck[0]),'paid before standing up')}
+ // the seat you walked up to, if it's free; otherwise the next free one
+ {const st=E.newTable({game:'rl',host:'a',tid:'t5'}),ctx=mk(0);E.sit(st,{uid:'a',name:'A',seat:3},ctx);E.sit(st,{uid:'b',name:'B',seat:3},ctx);E.sit(st,{uid:'c',name:'C',seat:9},ctx);
+  assert.equal(st.seats[3].uid,'a','the seat you walked up to');assert.equal(st.seats[0].uid,'b','taken: the next free seat');assert.equal(st.seats[1].uid,'c','no such seat: the next free seat')}
  // nobody bets: betting stays open, no spin is logged
  {const st=E.newTable({game:'rl',host:'a',tid:'t4'}),ctx=mk(0);E.sit(st,{uid:'a',name:'A'},ctx);E.tick(st,ctx);const d=st.deadline;ctx.now=d+1;st.seats[0].seen=ctx.now;E.tick(st,ctx);
   assert.equal(st.phase,'bet');assert.ok(st.deadline>d,'a fresh 60 s');assert.equal(ctx.hands.length,0,'no empty spins');

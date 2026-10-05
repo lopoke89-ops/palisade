@@ -63,6 +63,7 @@ function netFail(err){
     'socket-error':'Couldn’t reach the matchmaking service. Check your connection and try again.',
     'browser-incompatible':'This browser can’t do online play. Try Safari or Chrome.',
     'timeout':'The room didn’t answer. Some mobile networks block direct connections; try both being on Wi-Fi.'}[err&&err.type]||`Couldn’t connect (${err&&err.type||'unknown'}).`;
+  if(NET.autoCasino){NET.autoCasino=false;netReset();casSolo();return}   // v0.10.0: no room today, the casino still opens (just you)
   netReset();showPage('multi');mStatus(why);
 }
 function netReset(){
@@ -82,7 +83,7 @@ async function netHost(){
   const ice=await getIce();
   if(NET.mode!=='opening')return;   // they backed out while the relay logins loaded
   const code=genCode(),peer=new Peer(ROOM_PREFIX+code,peerOpts(ice));NET.peer=peer;NET.mode='opening';
-  peer.on('open',()=>{NET.incarnation=crypto.randomUUID();NET.mode='host';NET.code=code;NET.roomLocked=false;NET.banned=new Set();myId='host';NET.roster=[{id:'host',name:myName(),cls:pick.cls,cos:cosStr(myCos()),team:'a',sk:mySkills()}];mStatus('');showLobby();lobbyStartPublishing()});
+  peer.on('open',()=>{NET.incarnation=crypto.randomUUID();NET.mode='host';NET.code=code;NET.roomLocked=false;NET.banned=new Set();myId='host';NET.roster=[{id:'host',name:myName(),cls:pick.cls,cos:cosStr(myCos()),team:'a',sk:mySkills()}];mStatus('');lobbyStartPublishing();if(NET.autoCasino){NET.autoCasino=false;startOnline();return}showLobby()});   // v0.10.0: ENTER THE CASINO skips the lobby
   peer.on('connection',hostConn);
   peer.on('error',err=>{
     if(err.type==='unavailable-id'&&NET.mode==='opening'){try{peer.destroy()}catch(e){}netHost();return}
@@ -133,7 +134,7 @@ function hostData(peerId,d){
     if(NET.inGame){   // dropping into a game already running
       const p=makePlayer(c.pid,c.name,game.job||c.cls,players.size,c.cos,game.pvp==='base'?team:'',c.sk);kitUp(p);[p.x,p.y]=respawnAt(p);if(game.pvp)p.prot=PVP.prot;if(game.pvp==='base')p.sal=PVP.startSal;if(game.pvp==='ffa')p.mats=[0,0,0];const back=restoreLeaver(c,p);players.set(c.pid,p);
       c.r.send(startMsg());NET.wlSent=null;NET.piSent=null;NET.psLast=null;
-      toastAll(`${c.name.toUpperCase()} ${back?'IS BACK':'JOINED'}`,back?'Armory and salvage restored.':game.pvp==='base'?`Dropped in on ${TEAMS[team].name}.`:game.pvp?'Dropped into the fight.':'Dropped in at the stake.')}
+      toastAll(`${c.name.toUpperCase()} ${back?'IS BACK':'JOINED'}`,casino()?'Walked into the casino.':back?'Armory and salvage restored.':game.pvp==='base'?`Dropped in on ${TEAMS[team].name}.`:game.pvp?'Dropped into the fight.':'Dropped in at the stake.')}
     broadcastLobby();return;
   }
   if(!c.pid)return;
@@ -156,7 +157,8 @@ function hostData(peerId,d){
     if(!hostFinite(d.x,0,N)||!hostFinite(d.y,0,N)||!hostFinite(d.ax,-1.1,1.1)||!hostFinite(d.ay,-1.1,1.1)||
        !hostInt(d.tp,0,1000000)||(d.n!==undefined&&(!Number.isSafeInteger(d.n)||d.n<0))||
        !hostInt(d.f,0,1)||!hostInt(d.a,0,1)||(d.st!==undefined&&!hostInt(d.st,0,99)))return;
-    if(casino()){const want=d.st|0,s=casSeatOf(want);p.seat=want&&s&&s.t&&s.t.seats[s.k]&&!(casTaken(want)&&casTaken(want)!==p)?want:0}   // v0.10.0: a casino seat nobody else has
+    if(casino()&&(d.st|0)!==(p.seat|0)){const want=d.st|0,s=casSeatOf(want),pos=want&&s&&s.t&&s.t.seats[s.k];   // v0.10.0: a casino seat nobody else has, next to where they stand
+      p.seat=pos&&Math.hypot(p.x-pos[0],p.y-pos[1])<1.2&&!(casTaken(want)&&casTaken(want)!==p)?want:0;if(p.seat){p.x=pos[0];p.y=pos[1];c.moveBudget=0}}
     const l=Math.hypot(d.ax,d.ay);if(l>.01){p.aim={x:d.ax/l,y:d.ay/l};p.face=p.aim}
     p.fireIn=!!d.f&&p.alive;p.autoFire=d.a!==0;if(d.n!==undefined&&d.n!==p.pullIn){if(p.pullIn===undefined)p.pullUsed=d.n;p.pullIn=d.n;p.pullT=game.time}
     if(p.alive&&d.tp===p.tp){

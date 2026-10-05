@@ -1142,3 +1142,48 @@ body.desk #top .phase>#phaseNote{min-height:1.35em;line-height:1.35em}
 @media (max-height:500px) and (orientation:landscape){#top .phase>#phaseNote[hidden]{display:block!important;visibility:hidden}#top .phase>#phaseNote{min-height:1.35em;line-height:1.35em;width:150px}
   /* and a narrower core bar, so the box beside the mini-map leaves the message banner its room */
   #top .phase .coreBar{gap:4px}#top .phase .coreBar .lab{font-size:9px}body:not(.desk) #top .phase .coreBar .track{width:44px}#top .phase .coreBar b{min-width:22px;font-size:9px}}
+/* v0.10.0 THE PALISADE FALLS CASINO: the front door, the table sheet over the casino floor, roulette, history, rules */
+.casMarq{text-align:center;margin:10px 0 6px;padding:12px 8px;border:2px solid #d6aa46;background:radial-gradient(ellipse at 50% 0%,rgba(255,140,40,.25),rgba(80,8,20,.5) 70%);box-shadow:0 0 24px rgba(255,160,60,.25),inset 0 0 18px rgba(0,0,0,.5)}
+.casMarq b{display:block;font-family:var(--stencil);font-size:26px;letter-spacing:.1em;color:#fff3d6;text-shadow:0 0 10px #ff8a2a,0 0 2px #ff8a2a}.casMarq span{font-family:var(--stencil);font-size:16px;letter-spacing:.3em;color:#ff4a6a;text-shadow:0 0 8px #ff4a6a}
+#casEnterBtn{width:100%;min-height:56px;font-size:20px;margin:10px 0}
+.tbDoorBtns{margin-top:12px}.tbMine{border:1px solid #e8573a;padding:8px 10px;margin:10px 0;font-family:var(--mono);font-size:12px;color:#ffb39e;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.tbMine p{flex:1 1 200px;margin:0}
+.tbMine button{min-height:36px;background:transparent;border:1px solid #e8573a;color:#ffb39e;font-family:var(--stencil);font-weight:800;padding:0 12px;cursor:pointer}
+.casSheet{position:fixed;right:10px;top:84px;bottom:10px;width:min(400px,calc(100vw - 20px));z-index:9;overflow-y:auto;overscroll-behavior:contain;background:rgba(18,12,10,.94);border:1px solid #6a4a20;box-shadow:0 0 40px rgba(0,0,0,.7);padding:10px 12px;color:var(--bone)}
+.casSheet .tbHead{margin-bottom:4px}.tbHeadBtns{display:flex;gap:6px}.tbHeadBtns button{min-height:34px;padding:0 10px;background:transparent;border:1px solid var(--line);color:var(--bone);font-family:var(--stencil);font-weight:800;font-size:13px;letter-spacing:.06em;cursor:pointer}
+#tbLeave{border-color:#e8573a;color:#ffb39e}
+.casSheet .tbFoot{grid-template-columns:1fr 1fr auto auto}.casSheet #tbFelt{min-height:160px;padding:10px}.tbSheetBtns{margin-top:8px}
+@media (max-width:700px){.casSheet{left:0;right:0;top:auto;bottom:0;width:auto;max-height:64vh;border-width:1px 0 0;padding:8px 10px calc(8px + env(safe-area-inset-bottom))}}
+.tbSeed{display:flex;gap:6px;margin:6px 0}.tbSeed input{flex:1;min-width:0;font-family:var(--mono);font-size:14px;padding:6px 8px;background:#0f0d0a;border:1px solid var(--line);color:var(--bone)}
+.tbSeed button,#tbFair button{min-height:34px;padding:0 10px;background:transparent;border:1px solid var(--line);color:var(--bone);font-family:var(--stencil);font-weight:800;cursor:pointer}
+#tbFair code{color:#9fd8ff;word-break:break-all}
+.casSitBtn{position:fixed;left:50%;bottom:calc(120px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:8;min-width:140px;min-height:54px;font-family:var(--stencil);font-weight:900;font-size:22px;letter-spacing:.1em;background:#d6aa46;color:#17140f;border:0;box-shadow:0 0 20px rgba(214,170,70,.5)}
+/* roulette */
+.rhist{display:flex;flex-wrap:wrap;gap:3px;align-items:center;font-family:var(--mono);font-size:10px;color:var(--dim);margin-bottom:6px}.rhist span{margin-right:4px;letter-spacing:.1em}.rhist em{font-style:normal}
+.rhist b{min-width:22px;height:20px;display:inline-grid;place-items:center;font-family:var(--stencil);font-size:12px;color:#fff;border-radius:3px}.rhist b.r{background:#b8202c}.rhist b.b{background:#141214;border:1px solid #444}.rhist b.g{background:#0e7a3a}.rhist b.new{box-shadow:0 0 0 2px #ffd88a}
+.rnum{display:flex;align-items:center;gap:10px;justify-content:center;margin:4px 0 8px}.rnum b{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-family:var(--stencil);font-size:26px;color:#fff;border:3px solid #d6aa46}
+.rnum.r b{background:#b8202c}.rnum.b b{background:#141214}.rnum.g b{background:#0e7a3a}.rnum span{font-family:var(--stencil);letter-spacing:.1em;font-size:16px}.rnum.spin b{background:#333;animation:rspin .6s linear infinite}
+@keyframes rspin{to{transform:rotate(360deg)}}
+.rboard{display:grid;grid-template-columns:1fr 26px;gap:2px;user-select:none;-webkit-user-select:none}.rboard.shut{opacity:.8}
+.rnums{position:relative;display:grid;grid-template-columns:repeat(13,1fr);grid-template-rows:repeat(6,1fr);height:118px;gap:1px;background:rgba(240,230,200,.5);border:1px solid rgba(240,230,200,.6);cursor:pointer;touch-action:manipulation}
+.rboard.shut .rnums{cursor:default}
+.rn{display:grid;place-items:center;font-family:var(--stencil);font-weight:800;font-size:13px;color:#fff;pointer-events:none}.rn.r{background:#9a1a24}.rn.b{background:#121012}.rn.g{background:#0b6a32}.rn.hit{box-shadow:inset 0 0 0 3px #ffd88a;z-index:1}
+.rchips{position:absolute;inset:0;pointer-events:none}.rspot{position:absolute;transform:translate(-50%,-50%);z-index:2}
+.rchip{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 2px;border-radius:50%;background:var(--c);color:#fff;border:2px dashed rgba(255,255,255,.75);font-family:var(--mono);font-style:normal;font-weight:700;font-size:9px;box-shadow:0 1px 3px rgba(0,0,0,.6);text-shadow:0 0 2px #000}
+.rchip.other{opacity:.7;transform:scale(.8);border-style:dotted}
+.rcols{display:grid;grid-template-rows:repeat(3,1fr);gap:1px}.rcol,.rout{position:relative;background:#0f5a34;border:1px solid rgba(240,230,200,.5);color:#fff;font-family:var(--stencil);font-weight:800;font-size:12px;padding:0;cursor:pointer}
+.rcol .rchip,.rout .rchip{position:absolute;right:1px;top:50%;transform:translateY(-50%)}.rcol .rchip{right:auto;left:50%;transform:translate(-50%,-50%)}
+.routs{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;margin:3px 26px 0 calc((100% - 26px)/13)}.rout{min-height:30px}.rout.r{background:#9a1a24}.rout.b{background:#121012}
+.rcol:disabled,.rout:disabled{cursor:default}
+.trow.rchips2 button{flex:1 1 40px;min-height:44px;padding:0}.trow.rchips2 .rchip{min-width:28px;height:28px;font-size:10px}.trow.rchips2 button.sel{background:rgba(226,180,54,.25);border-color:#e2b436}
+/* history and rules */
+.tbModal{position:fixed;inset:0;z-index:14;background:rgba(0,0,0,.7);display:grid;place-items:center;padding:12px}.tbModal[hidden]{display:none}
+.tbModalIn{background:#14110d;border:1px solid #6a4a20;width:min(620px,100%);max-height:88vh;overflow-y:auto;padding:12px 14px;color:var(--bone)}
+.tbModalHead{display:flex;justify-content:space-between;align-items:center;position:sticky;top:-12px;background:#14110d;padding:4px 0 8px}.tbModalHead b{font-family:var(--stencil);font-size:22px;letter-spacing:.1em;color:#e2b436}
+.tbModalHead button,.hlist button{min-height:34px;padding:0 12px;background:transparent;border:1px solid var(--line);color:var(--bone);font-family:var(--stencil);font-weight:800;cursor:pointer}
+.hlist{list-style:none;padding:0;margin:0;display:grid;gap:6px}.hlist li{border:1px solid var(--line);padding:8px;background:rgba(0,0,0,.25)}
+.hrow{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.hrow b{font-family:var(--stencil);letter-spacing:.06em}.hrow span{font-family:var(--mono);font-size:11px;color:var(--dim);flex:1}.hrow em{font-style:normal;font-family:var(--mono);font-weight:700}.hrow em.w{color:#8fe0a0}.hrow em.l{color:#ff8a6a}
+.hwhat{font-family:var(--mono);font-size:12px;margin:4px 0;display:flex;flex-wrap:wrap;gap:4px;align-items:center}.hwhat .tcard{width:24px;height:34px;font-size:11px}.hwhat .tcard i{font-size:11px}
+.hcheck{font-family:var(--mono);font-size:12px;margin:4px 0 0;min-height:1em}.hcheck.ok{color:#8fe0a0}.hcheck.bad{color:#ff8a6a}
+#tbRulesTxt h4{font-family:var(--stencil);letter-spacing:.1em;color:#e2b436;margin:12px 0 4px}#tbRulesTxt p,#tbRulesTxt li{font-family:var(--mono);font-size:12.5px;line-height:1.5;color:#dcd2ba}
+.casSheet .tbStatus span{min-height:2.8em}.casSheet .tbStatus b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rout[data-spot^=dz]{grid-column:span 2}

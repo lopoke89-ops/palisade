@@ -159,7 +159,8 @@ function casinoItems(){
   for(const [x,y]of CAS.bar.stools)ritem(x+y,()=>casStool(x,y));
   ritem(1+13+2,casCageDraw);for(const [i,j]of CAS.pillars)ritem(i+j+1,()=>casPillar(i,j));ritem(12+14+1.2,casCouch);ritem(1.4+9,casRopes);
   for(const t of CAS.tables){ritem(t.dealer.x+t.dealer.y,casDealer,t);ritem(t.c[0]+t.c[1]+.6,casTableBody,t);ritem(t.c[0]+t.c[1]+.65,casFelt,t);
-    t.seats.forEach(([x,y],k)=>{const code=seatCode(t.n,k),taken=casTaken(code);ritem(x+y-.05,()=>t.game==='he'?casChair(x,y):casStool(x,y,taken?'#7a1020':'#a01830'))})}
+    t.seats.forEach(([x,y],k)=>{const code=seatCode(t.n,k),taken=casTaken(code);ritem(x+y-.05,()=>t.game==='he'?casChair(x,y):casStool(x,y,taken?'#7a1020':'#a01830'));
+      if(taken&&taken.bot){const dx=t.c[0]-x,dy=t.c[1]-y,l=Math.hypot(dx,dy)||1;ritem(x+y,()=>casSeated({x,y},()=>drawPerson(x,y,Object.assign({aim:{x:dx/l,y:dy/l},walk:0,flash:false},CAS_BOT))))}})}
   // neon over the tables, the bar and the cage, and the marquee over the door wall
   for(const t of CAS.tables)casGlowQ.push(['sign',t.sign[0],t.sign[1],t.name,t.col,WH*2.7]);
   casGlowQ.push(['sign',1,14.5,'CASHIER','#4aff9a',WH*2.3],['sign',14,1.4,'BAR ▽','#ff6ad0',WH*2.6]);
@@ -195,14 +196,14 @@ function casinoLights(hole,at){
 
 // ---------- seats: sitting down by walking up ----------
 // who is in which seat, from every player's seat code (the host relays it like a position)
-function casTaken(code){for(const o of players.values())if(o.seat===code)return o;return null}
+function casTaken(code){for(const o of players.values())if(o.seat===code)return o;const q=casSeatOf(code);return q&&q.t&&casBotAt(q.t,q.k)?{bot:true}:null}
 // the free seat you're standing next to, if any
 function casSeatNear(p){let best=null,bd=.75;for(const t of CAS.tables)t.seats.forEach(([x,y],k)=>{const d=Math.hypot(p.x-x,p.y-y);if(d<bd&&!casTaken(seatCode(t.n,k))){bd=d;best={t,k}}});return best}
 // take the seat: snap onto it, face the table, and ask the server for that seat at that table
 function casSit(){const p=player;if(!casino()||!p||p.seat)return;const s=casSeatNear(p);if(!s)return;
   const no=tbCanPlay();if(no){toast('TABLES',no);return}
   const [x,y]=s.t.seats[s.k];p.x=x;p.y=y;p.seat=seatCode(s.t.n,s.k);const dx=s.t.c[0]-x,dy=s.t.c[1]-y,l=Math.hypot(dx,dy)||1;p.aim=p.face={x:dx/l,y:dy/l};
-  tbSitAt(s.t.game,s.k)}
+  setTip('');tbSitAt(s.t.game,s.k)}
 function casStand(){const p=player;if(!p||!p.seat)return;p.seat=0;if(TB.id)tbSend({op:'leave',id:TB.id});tbSheet(false)}
 // a seated player is drawn sitting: the lower half tucked behind the stool, a little lower
 function casSeated(o,draw){const c=iso(o.x,o.y);g.save();g.beginPath();g.rect(-1e4,-1e4,2e4,c[1]-1.5*u+1e4);g.clip();g.translate(0,5*u);draw();g.restore()}
@@ -212,10 +213,29 @@ function casPlates(){const rec=drawNameplates.out=[];
     label((me?'YOU':o.name||'PLAYER').toUpperCase(),c[0],top-2*u,SLOTCOL[o.slot%6],9)}
   for(const t of CAS.tables){const d=t.dealer,c=iso(d.x,d.y);label(d.name+' · DEALER',c[0],c[1]-48*u,'#d6aa46',8)}}
 // the SIT prompt over a free seat you're next to (touch: the SIT button does it)
-function casPrompts(p){if(p.seat)return;const s=casSeatNear(p);hid($('casSitBtn'),!s||!touchMode||padMode);if(!s)return;
+function casPrompts(p){if(p.seat){if(!TB.sheet){const c=iso(p.x,p.y);keyCap(c[0],c[1]-50*u,ctl('','E',padKey('armory')),touchMode&&!padMode?'TAP TABLE':'OPEN THE TABLE','#d6aa46')}return}const s=casSeatNear(p);if(!s)return;
   const [x,y]=s.t.seats[s.k],c=iso(x,y);keyCap(c[0],c[1]-34*u,ctl('','E',padKey('armory')),touchMode&&!padMode?'TAP SIT':'SIT · '+s.t.name,'#d6aa46')}
 // the top bar in the casino: where you are, the room code, your balance
 function casHud(){hid($('qmM'),true);hid($('coreM'),true);hid($('core2M'),true);hid($('board'),true);hid($('salv'),true);hid($('skipBtn'),true);hid($('qmCommand'),true);
   const lab=$('phaseLab');txt(lab,W<700?'CASINO':'PALISADE FALLS CASINO');cls(lab,'raid',false);cls(lab,'evac',false);
   txt($('phaseVal'),(NET.mode!=='solo'&&NET.code?'ROOM '+NET.code+' · ':'')+'◆ '+(TB.balance||locker.shards||0)+(player&&player.seat?' · seated':''));
-  if(!player||!player.seat)hid($('casSitBtn'),!casSeatNear(player)||!touchMode||padMode);else hid($('casSitBtn'),true)}
+  const b=$('casSitBtn'),seated=!!(player&&player.seat);txt(b,seated?'TABLE':'SIT');hid(b,!touchMode||padMode||(seated?TB.sheet:!player||!casSeatNear(player)))}
+// touch: SIT next to a free seat; TABLE when you're seated with the table hidden
+$('casSitBtn').addEventListener('click',()=>{if(!casino()||!player)return;if(player.seat)tbSheet(true);else casSit()});
+
+// ---------- the room: who's in this casino ----------
+// a host's casino is its room code and incarnation; guests get it in the start message; alone, a room of your own
+let CAS_PREV='5';
+function casRoom(){if(NET.mode==='host'&&NET.code&&NET.incarnation)return 'R:'+NET.code+':'+NET.incarnation;if(NET.mode==='guest'&&NET.casRoom)return NET.casRoom;
+  return game.casRoom||(game.casRoom='SOLO:'+String(myUid()||'x').slice(0,8)+':'+Date.now().toString(36))}
+// ENTER THE CASINO: open a room (so the crew can drop in by code or invite) and walk straight in; offline, just you
+async function casEnter(){const no=tbCanPlay();if(no){tbMsg(no);return}if(inRun()&&$('menu').hidden)return;
+  if(pick.mode!=='casino')CAS_PREV=pick.mode;pick.mode='casino';pick.pvp='coop';initAudio();tbMsg('Opening the doors…');
+  if(NET.mode==='host'&&!NET.inGame){startOnline();return}   // already hosting a lobby: everyone in it comes too
+  NET.autoCasino=true;await netHost();if(NET.autoCasino&&NET.mode==='solo'){NET.autoCasino=false;casSolo()}}
+function casSolo(){pick.mode='casino';tbMsg('');start()}
+// JOIN BY CODE from the TABLES page: the same join as MULTIPLAYER (the host's start message brings you into their casino)
+function casJoin(code){if(pick.mode!=='casino')CAS_PREV=pick.mode;showPage('multi');$('mCode').value=code;initAudio();netJoin(code)}
+// a bot in a Hold'em seat (no player walks it in): drawn sitting there in a dealer's waistcoat
+const CAS_BOT={body:'#d8d2c4',vest:'#2a2a33',pants:'#1c1b1f',head:'#9a9aa6',hat:'#33333c',gl:14,nogun:true};
+function casBotAt(t,k){const v=casView(t.game);return !!(v&&v.seats&&v.seats[k]&&v.seats[k].bot)}
