@@ -77,7 +77,9 @@ const assert=require('node:assert/strict'),fs=require('node:fs');
   const back=ctx.ops.filter(o=>o.uid==='b'&&o.k==='cashout').reduce((a,o)=>a+o.d,0);assert.equal(back,3+E.rlPay({even:2},st.last.deck[0]),'paid before standing up')}
  // the seat you walked up to, if it's free; otherwise the next free one
  {const st=E.newTable({game:'rl',host:'a',tid:'t5'}),ctx=mk(0);E.sit(st,{uid:'a',name:'A',seat:3},ctx);E.sit(st,{uid:'b',name:'B',seat:3},ctx);E.sit(st,{uid:'c',name:'C',seat:9},ctx);
-  assert.equal(st.seats[3].uid,'a','the seat you walked up to');assert.equal(st.seats[0].uid,'b','taken: the next free seat');assert.equal(st.seats[1].uid,'c','no such seat: the next free seat')}
+  assert.equal(st.seats[3].uid,'a','the seat you walked up to');assert.equal(st.seats[0].uid,'b','taken: the next free seat');assert.equal(st.seats[1].uid,'c','no such seat: the next free seat');
+  for(const u of['d','e','f'])E.sit(st,{uid:u,name:u},ctx);const n0=ctx.ops.length;assert.equal(E.sit(st,{uid:'g',name:'G',seat:2},ctx),'The table is full','a full table says so');
+  assert.equal(ctx.ops.length,n0,'and takes no buy-in');assert.equal(Object.keys(st.seats).length,6,'no seat made up')}
  // nobody bets: betting stays open, no spin is logged
  {const st=E.newTable({game:'rl',host:'a',tid:'t4'}),ctx=mk(0);E.sit(st,{uid:'a',name:'A'},ctx);E.tick(st,ctx);const d=st.deadline;ctx.now=d+1;st.seats[0].seen=ctx.now;E.tick(st,ctx);
   assert.equal(st.phase,'bet');assert.ok(st.deadline>d,'a fresh 60 s');assert.equal(ctx.hands.length,0,'no empty spins');

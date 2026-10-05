@@ -83,7 +83,8 @@ export const seatIx=(st,uid)=>st.seats.findIndex(s=>s&&s.uid===uid);
 const note=(st,t)=>{st.log.push(t);if(st.log.length>8)st.log.shift()};
 export function sit(st,{uid,name,seed,seat},ctx){
   if(seatIx(st,uid)>=0)return 'You are already at this table';
-  const want=Number.isInteger(seat)&&seat>=0&&seat<st.seats.length&&!st.seats[seat]?seat:-1,i=want>=0?want:st.seats.findIndex(s=>!s);   // the seat you walked up to, if it's freeif(i<0)return 'The table is full';
+  const want=Number.isInteger(seat)&&seat>=0&&seat<st.seats.length&&!st.seats[seat]?seat:-1,i=want>=0?want:st.seats.findIndex(s=>!s);   // the seat you walked up to, if it's free
+  if(i<0)return 'The table is full';
   st.seats[i]={uid,name,stack:BUYIN,brought:BUYIN,sitout:0,side:false,seen:ctx.now,seed:cleanSeed(seed)||ctx.salt()};ctx.ops.push({uid,k:'buyin',d:-BUYIN});note(st,name+' sat down');return null}
 // your own seed: mixed into every deal or spin from the next one on (the server has already committed to its seed)
 export function setSeed(st,uid,seed){const s=st.seats[seatIx(st,uid)];if(!s)return 'You are not at this table';const v=cleanSeed(seed);if(!v)return 'Pick a seed (letters and numbers)';s.seed=v;return null}
