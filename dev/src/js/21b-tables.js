@@ -81,7 +81,7 @@ function tbShow(v){TB.v=v;
   if(v.phase==='done'&&v.last&&v.last.result&&v.game==='he')felt+=`<div class="tresult">${tbResult(v)}</div>`;
   $('tbFelt').innerHTML=felt;tbActions(v,me);
   $('tbLog').textContent=v.log.join(' · ');$('tbHelpTxt').innerHTML=TB_HELP[v.game];
-  $('tbFairTxt').textContent=(v.fair?'This hand\'s deck fingerprint (SHA-256): '+v.fair+'. ':'')+(v.last?`Last hand #${v.last.no}: salt ${v.last.salt}, deck ${JSON.stringify(v.last.deck)}. SHA-256 of "salt:deck" (cards joined by commas) = ${v.last.hash}.`:'');
+  $('tbFairTxt').textContent=(v.fair?'This hand\'s deck fingerprint (SHA-256): '+v.fair+'. ':'')+(v.last?(v.last.deck?`Last hand #${v.last.no}: salt ${v.last.salt}, deck ${JSON.stringify(v.last.deck)}. SHA-256 of "salt:deck" (cards joined by commas) = ${v.last.hash}.`:`Last hand #${v.last.no}: fingerprint ${v.last.hash}. In Hold'em the deck stays in the server's hand log so folded hands stay private.`):'');
   const pk=$('tbPick');pk.hidden=!(v.picks>0);if(v.picks>0){const hit=v.last&&v.last.sideHits&&v.last.sideHits.find(x=>x);txt($('tbPickWhy'),(hit?hit.why+'! ':'')+'Pick your prize.')}}
 function tbResult(v){const r=v.last.result;
   if(v.game==='bj'){const mine=r.players.find(p=>p.name===v.seats[v.me].name);return 'Dealer '+r.total+(r.total>21?' (bust)':'')+(mine?' · you '+(mine.net>0?'won +':mine.net<0?'lost ':'broke even ')+(mine.net?Math.abs(mine.net)+'◆':''):'')}
