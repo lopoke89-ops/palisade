@@ -30,7 +30,7 @@ dev/
   build.py              builds the site into the repo root
   audio/                music, AAC (.m4a) and Opus (.ogg)
   vendor/               PeerJS 1.5.5 and the two fonts (bundled so builds work offline)
-  test/                 browser tests + run_all.sh
+  test/                 tests (suite.txt lists them; run_all.sh / run_suite.js run them)
   supabase/schema.sql   restore script for the server (tables, rules, functions, case data)
 ```
 
@@ -60,7 +60,8 @@ Needs Node 18+ and Python 3.
 cd dev/test
 npm install
 npx playwright install chromium
-./run_targeted.sh cosmetics  # choose the changed area; see the map below
+./run_all.sh --build @hud        # build, then the tests for one area (tags are in suite.txt)
+./run_all.sh --build             # build, then the whole suite
 ```
 
 Profiling: `NOMIN=1 python3 dev/build.py` keeps debug.html unminified (readable function names), and
@@ -70,18 +71,22 @@ raid 20, and memory over a 30-minute Endless run); `PROFILE=1` adds the busiest 
 `caseperf.js` measures case intro and reel CPU on a phone-sized, software-drawn page;
 set `PAGE` to each build's debug page and run both on the same machine for comparison.
 
-`run_targeted.sh` serves the built site on localhost:8080, starts a PeerJS server on :9000,
-and runs a small group. Choose `cosmetics` for model/art changes, `locker` for collection UI,
-milestone/catalog browsing and equip changes, `presentation` for background/character/muzzle changes, `music` for audio changes,
-`combat` for weapon and gunplay changes, `host` for guest input/network validation, or `smoke`
-for a quick open/lobby/audio check. The `all` group or `run_all.sh` runs every browser test.
-`TESTS="cosmetics wardrobe3d" ./run_all.sh` remains available for an exact selection.
-On Windows, use `powershell -File .\run_targeted.ps1 -Group cosmetics` (or another group);
-it uses installed Chrome when `CHROMIUM` is unset. `-Tests "locker_fit"` runs one named test.
-Run broader checks only when shared code or a failing targeted check gives a reason. Logs and
-screenshots go to `dev/test/out/`. The account and reward tests fake Supabase, so they don't
-touch real players. New behavior without an existing relevant test warrants a focused regression
-check, not an automatic full-suite run.
+The runner is `run_suite.js` (`run_all.sh` and `run_targeted.sh` are thin wrappers; on Windows,
+`powershell -File .\run_targeted.ps1 -Group hud`, or `-Group all`, or `-Tests "solo lobby"`). It:
+- reads the list from `suite.txt`: one test per line with its area tags (`smoke combat bosses host net menu hud
+  music cosmetics presentation locker blitz winter campaign blackout tables server`). A new test needs a line there;
+- runs browser tests in parallel (`--jobs N`, default half the CPU cores), longest first using the last run's
+  timings (`out/timings.json`). The no-browser tests (PGlite migrations, the Tables engine) go first, so a broken
+  server change fails in seconds. Frame-rate and timer tests (tag `serial`) run alone at the end;
+- refuses to run on a stale build (the site older than `dev/src`): `--build` does the one build tests need
+  (`NOMIN=1`; `index.html` is minified either way), or pass `--stale-ok`;
+- starts the static server (:8080) and PeerJS server (:9000) only if they aren't up, waits until they answer,
+  and stops the ones it started;
+- re-runs only the last run's failures with `--failed`, picks tests whose own file changed against main with
+  `--changed`, stops at the first failure with `--bail`, and prints the selection without running with `--list`.
+`TESTS="cosmetics wardrobe3d" ./run_all.sh` still works. Logs (`out/<test>.log`) and screenshots go to
+`dev/test/out/`, and the summary names the slowest tests. The account, reward and Tables tests fake Supabase, so
+they don't touch real players. Run the area you changed; the whole suite only when shared code gives a reason.
 
 For this slice: `powershell -File .\run_targeted.ps1 -Group presentation` runs nine checks.
 `presentation_capture.js` saves catalogue sheets and an eight-second pose clip; set `BASELINE=1`
