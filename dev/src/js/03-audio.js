@@ -11,15 +11,28 @@ function initAudio(){
    ~20 MB), so only the track needed by the current screen or phase stays decoded.
    Each track comes in two formats: AAC for Safari/iPhone/Chrome, Opus for browsers without AAC; the first one
    this browser plays is used. len: the exact release loop length in seconds; results is trimmed to the original 164-second cue.
-   New track: add an entry here, a case in musicWant(), and both files to build.py's MUSIC_FILES. */
+   New track: add an entry here, a case in musicRoute(), and both files to build.py's MUSIC_FILES. */
 const MUSIC={menu:{src:['main_menu.m4a','main_menu.ogg'],len:458.352},between:{src:['between_raids.m4a','between_raids.ogg'],len:160.08408333333333},attitude:{src:['raid_attitude.m4a','raid_attitude.ogg'],len:198.76572916666666},cool:{src:['raid_cool.m4a','raid_cool.ogg'],len:181.1853125},express:{src:['raid_express.m4a','raid_express.ogg'],len:115.51347916666667},finale:{src:['final_blitz.m4a','final_blitz.ogg'],len:389.4266666666667},results:{src:['results.m4a','results.ogg'],len:143.61797916666666}};
+/* v0.10.1: the casino's own playlist, heard only in the casino. A true shuffle: every track once in a random order,
+   then a fresh shuffle (never the track that just ended first). After the first track, each one crossfades into the
+   next over its last CASINO_XF seconds. Only the playing track and the next one are ever decoded. */
+const CASINO=[['casino_1.m4a','casino_1.ogg',391.44],['casino_2.m4a','casino_2.ogg',84.0],['casino_3.m4a','casino_3.ogg',209.256],['casino_4.m4a','casino_4.ogg',233.832],['casino_5.m4a','casino_5.ogg',392.016],['casino_6.m4a','casino_6.ogg',336.6],['casino_7.m4a','casino_7.ogg',120.96],['casino_8.m4a','casino_8.ogg',192.0],['casino_9.m4a','casino_9.ogg',301.176],['casino_10.m4a','casino_10.ogg',321.48],['casino_11.m4a','casino_11.ogg',221.832]].map(([a,o,len],i)=>{const k='casino'+(i+1);MUSIC[k]={src:[a,o],len,list:1};return k}),CASINO_XF=5;
+// equal-power crossfade curves (the two tracks are unrelated, so their powers add)
+const XF_IN=new Float32Array(65).map((_,i)=>Math.sin(i/64*Math.PI/2)),XF_OUT=XF_IN.slice().reverse();
+const cas={bag:[],up:null,last:null};
+function casinoUp(){
+  if(cas.up)return cas.up;
+  if(!cas.bag.length){const b=CASINO.slice();for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}   // Math.random: the game's rnd() stays untouched
+    if(b.length>1&&b[b.length-1]===cas.last)[b[0],b[b.length-1]]=[b[b.length-1],b[0]];cas.bag=b}
+  return cas.up=cas.bag.pop();
+}
 const mus={bufs:{},loading:{},failAt:{},src:null,g:null,bus:null,cur:null,token:'',resume:null,started:0,offset:0,starts:0,retiring:null};
 // A route identity changes only at a real screen/raid entry. Snapshots and settings cannot advance it.
 function musicRoute(){
   if(!demo&&!$('over').hidden)return {k:'results',token:'results:'+game.gid};
   if(!$('menu').hidden)return {k:'menu',token:'menu'};
   if(!demo&&playing()){
-    if(game.mode==='casino')return {k:'menu',token:'menu'};   // v0.10.0: the casino plays the lounge (menu) track until it has its own
+    if(game.mode==='casino')return {k:'casino',token:'casino:'+game.gid};   // v0.10.1: the casino's own shuffled playlist
     if(game.mode==='blackout'&&!game.pvp&&game.bo&&game.phase==='raid'){const st=game.bo.stage;   // v0.9.7: raid tracks for POI attacks, the finale for the final push
       if(st==='push'||st==='done')return {k:'finale',token:'finale:'+game.gid};
       if(st==='attack')return {k:['attitude','cool','express'][Math.max(0,game.wave-1)%3],token:'raid:'+game.gid+':'+game.wave};
@@ -30,8 +43,10 @@ function musicRoute(){
   }
   return null;
 }
-function musicWant(){const r=musicRoute();return cfg.music>0&&!document.hidden&&r?r.k:null}
-const musicKeep=k=>k===musicWant();
+// the casino route wants whichever playlist track is playing, or the next one up when none is
+function musicWant(){const r=musicRoute();if(!(cfg.music>0&&!document.hidden&&r))return null;
+  return r.k!=='casino'?r.k:mus.cur&&MUSIC[mus.cur].list&&mus.token===r.token?mus.cur:casinoUp()}
+const musicKeep=k=>{const w=musicWant();return k===w||!!w&&MUSIC[w].list&&k===cas.up};
 function musicLoad(k){
   if(mus.bufs[k]||mus.loading[k]||performance.now()-(mus.failAt[k]||-1e9)<30000||!AC)return;
   const ctl=new AbortController();mus.loading[k]=ctl;
@@ -41,29 +56,51 @@ function musicLoad(k){
   list.reduce((pr,u)=>pr.catch(()=>{if(ctl.signal.aborted)throw 0;return get(u)}),Promise.reject())
     .then(b=>{delete mus.loading[k];if(musicKeep(k))mus.bufs[k]=b},()=>{delete mus.loading[k];if(!ctl.signal.aborted)mus.failAt[k]=performance.now()});
 }
-function musicStart(k,token){
-  const b=mus.bufs[k],s=AC.createBufferSource(),g=AC.createGain(),t=AC.currentTime,len=Math.min(b.duration,MUSIC[k].len);
-  const off=mus.resume?.token===token?mus.resume.offset%len:0;
-  s.buffer=b;s.loop=true;s.loopStart=0;s.loopEnd=len;
-  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(1,t+1.6);
-  s.connect(g);g.connect(mus.bus);s.start(t,off);mus.src=s;mus.g=g;mus.cur=k;mus.token=token;mus.started=t;mus.offset=off;mus.starts++;
-  s.onended=()=>{s.disconnect();g.disconnect();if(mus.retiring===s)mus.retiring=null};
+function musicStart(k,token,xf){
+  const b=mus.bufs[k],s=AC.createBufferSource(),g=AC.createGain(),len=Math.min(b.duration,MUSIC[k].len);let t=AC.currentTime;
+  const off=mus.resume?.token===token&&mus.resume.k===k?mus.resume.offset%len:0,list=MUSIC[k].list;
+  s.buffer=b;s.loop=!list;s.loopStart=0;s.loopEnd=len;
+  if(xf){t=xf.t;g.gain.setValueAtTime(0,AC.currentTime);g.gain.setValueCurveAtTime(XF_IN,t,xf.d)}   // a playlist crossfade: in while the last track goes out
+  else{g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(1,t+1.6)}
+  s.connect(g);g.connect(mus.bus);s.start(t,off);
+  if(list){if(cas.up===k)cas.up=null;cas.last=k;casinoUp()}   // draw the next one now, so it can load in time
+  mus.src=s;mus.g=g;mus.cur=k;mus.token=token;mus.started=t;mus.offset=off;mus.end=t+len-off;mus.starts++;
+  s.g=g;s.onended=()=>{s.disconnect();g.disconnect();if(mus.retiring===s)mus.retiring=null};
+}
+// the source still fading out: cut short, faded over `fade` where the browser can hold a ramp mid-curve
+function musicRetire(t,fade){
+  const r=mus.retiring;if(!r)return;
+  if(fade&&r.g.gain.cancelAndHoldAtTime){r.g.gain.cancelAndHoldAtTime(t);r.g.gain.linearRampToValueAtTime(0,t+fade);try{r.stop(t+fade+.05)}catch(e){}}
+  else try{r.stop(t)}catch(e){}
 }
 function musicStop(fade){
-  const s=mus.src,g=mus.g,t=AC.currentTime;
-  if(mus.retiring){try{mus.retiring.stop(t)}catch(e){}}mus.retiring=s;
-  mus.resume={token:mus.token,offset:(mus.offset+t-mus.started)%s.loopEnd};mus.src=mus.g=null;mus.cur=null;
+  const s=mus.src,g=mus.g,t=AC.currentTime,k=mus.cur;
+  musicRetire(t,fade);mus.retiring=s;
+  mus.resume={token:mus.token,k,offset:Math.max(0,mus.offset+t-mus.started)%s.loopEnd};mus.src=mus.g=null;mus.cur=null;
+  if(MUSIC[k].list&&cas.up!==k){if(cas.up)cas.bag.push(cas.up);cas.up=k}   // a playlist track picks up where it stopped if the casino comes back
   g.gain.cancelScheduledValues(t);g.gain.setValueAtTime(Math.max(g.gain.value,.0001),t);g.gain.exponentialRampToValueAtTime(.0001,t+fade);
   try{s.stop(t+fade+.05)}catch(e){}
+}
+// playlist: the playing track goes out over its last CASINO_XF seconds while the next one comes in
+function musicCrossfade(k,token){
+  const s=mus.src,g=mus.g,now=AC.currentTime,t=Math.max(now+.05,mus.end-CASINO_XF),d=mus.end-t;
+  musicRetire(now,0);mus.retiring=s;mus.resume=null;
+  g.gain.cancelScheduledValues(now);g.gain.setValueAtTime(1,now);g.gain.setValueCurveAtTime(XF_OUT,t,d);
+  try{s.stop(t+d+.05)}catch(e){}
+  musicStart(k,token,{t,d});
 }
 function musicTick(){
   if(!AC)return;
   if(!mus.bus){mus.bus=AC.createGain();mus.bus.connect(master)}
   mus.bus.gain.value=.5*cfg.music;
-  const route=musicRoute(),want=musicWant();
+  const route=musicRoute();let want=musicWant();
   if(mus.src&&(mus.cur!==want||mus.token!==route?.token))musicStop(game.phase==='raid'?.9:1.2);
-  if(mus.resume&&mus.resume.token!==route?.token)mus.resume=null;
-  for(const k in mus.loading)if(k!==want)mus.loading[k].abort();
+  if(mus.resume&&mus.resume.token!==route?.token){if(cas.up===mus.resume.k)cas.up=null;mus.resume=null}   // left the casino: the next visit moves on
+  if(want&&mus.src&&MUSIC[want].list){const left=mus.end-AC.currentTime,nx=cas.up;
+    if(left<60)musicLoad(nx);   // the next track decodes during this one's last minute, not before (a decoded minute is ~22 MB)
+    if(left>.3&&left<=CASINO_XF+.25&&mus.bufs[nx])musicCrossfade(nx,route.token);
+    else if(left<=0){try{mus.src.stop()}catch(e){}mus.src=mus.g=null;mus.cur=null;want=musicWant()}}   // the next one wasn't ready in time: it starts with a normal fade-in once it is
+  for(const k in mus.loading)if(!musicKeep(k))mus.loading[k].abort();
   if(want){musicLoad(want);if(!mus.src&&mus.bufs[want])musicStart(want,route.token)}
   for(const k in mus.bufs)if(!musicKeep(k))delete mus.bufs[k];
 }

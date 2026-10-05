@@ -38,7 +38,7 @@ src=head+src.replace('<script>\n(()=>{','<script>window.PEER_SRC=\'peerjs.min.js
 src=src.replace('</style>\n','</style>\n</head>\n<body>\n',1)
 src=src.replace('\n</html>\n','\n</body>\n</html>\n')
 # music: each file name carries its content hash, so a new track reaches players instead of the cached old one
-MUSIC_FILES=['between_raids','main_menu','raid_attitude','raid_cool','raid_express','final_blitz','results']
+MUSIC_FILES=['between_raids','main_menu','raid_attitude','raid_cool','raid_express','final_blitz','results',*(f'casino_{n}' for n in range(1,12))]   # v0.10.1: the casino playlist
 # Only obsolete generated release files are removed; original masters are preserved.
 for old in ('locker.m4a','locker.ogg','raid.m4a','raid.ogg'):
     p=os.path.join(SITE,old)

@@ -51,6 +51,7 @@ menu_music_start       music menu
 reel_music             music smoke
 music_routing          music
 v086                   music
+casino_music           music casino
 
 # Host and guest over the network
 multiplayer            combat host net

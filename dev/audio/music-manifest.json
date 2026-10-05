@@ -156,6 +156,248 @@
           "decodedFrames": 6893663
         }
       }
+    },
+    "casino_1": {
+      "title": "Ambience 1",
+      "source": "casino music/ambience 1.mp3",
+      "sourceSHA256": "bcd90ed059db287fef47b28b7abc7963b235218c572d836c85de62636aa3925d",
+      "sourceFrames": 18789120,
+      "sourceSeconds": 391.44,
+      "trimStartSeconds": 0,
+      "releaseFrames": 18789120,
+      "loopSeconds": 391.44,
+      "formats": {
+        "m4a": {
+          "bytes": 7945360,
+          "SHA256": "a4bc0377277ece4068669f4a243d160b17952d457815161a3e9adebb3847f1ea",
+          "decodedFrames": 18789376
+        },
+        "ogg": {
+          "bytes": 5974897,
+          "SHA256": "a43c9752d4d87afc0790578e50a7aa7b9f620632ada276ef42c2a9b8bd172a63",
+          "decodedFrames": 18789120
+        }
+      }
+    },
+    "casino_2": {
+      "title": "Ambience 2",
+      "source": "casino music/ambience 2.mp3",
+      "sourceSHA256": "2a79d70a93b63edbbfae095fe0c41e967c570480dd1e9a3ba45a749e690ef332",
+      "sourceFrames": 4032000,
+      "sourceSeconds": 84.0,
+      "trimStartSeconds": 0,
+      "releaseFrames": 4032000,
+      "loopSeconds": 84.0,
+      "formats": {
+        "m4a": {
+          "bytes": 1705367,
+          "SHA256": "0d0d34659cffe25ad1c88e58c4788197ac7ceb71012bc61dd657fb68387539e0",
+          "decodedFrames": 4032512
+        },
+        "ogg": {
+          "bytes": 1279392,
+          "SHA256": "a6f45faa9c119deea507a8581c839724569bedcf4c4b715b64f6b61cd10c6a16",
+          "decodedFrames": 4032000
+        }
+      }
+    },
+    "casino_3": {
+      "title": "Ambience 3",
+      "source": "casino music/ambience 3.mp3",
+      "sourceSHA256": "8daad7a520c889d1541b5039ab3f8b66acc99af015ddecf215fa9dece13d779c",
+      "sourceFrames": 10044288,
+      "sourceSeconds": 209.256,
+      "trimStartSeconds": 0,
+      "releaseFrames": 10044288,
+      "loopSeconds": 209.256,
+      "formats": {
+        "m4a": {
+          "bytes": 4245801,
+          "SHA256": "525751d3ad01d97bfbc99cdee630861a18b1558eb2ddb9d8ddaee6d8b5a02114",
+          "decodedFrames": 10044416
+        },
+        "ogg": {
+          "bytes": 3211966,
+          "SHA256": "326f295010fa6a35026c1bef0de3c72baedc2f46170c94f78b5a337491b880b5",
+          "decodedFrames": 10044288
+        }
+      }
+    },
+    "casino_4": {
+      "title": "Ambience 4",
+      "source": "casino music/ambience 4.mp3",
+      "sourceSHA256": "dccfb39e052c3e5411ad50ddbad9fdcf584a2eafa316152c32e150988406efd3",
+      "sourceFrames": 11223936,
+      "sourceSeconds": 233.832,
+      "trimStartSeconds": 0,
+      "releaseFrames": 11223936,
+      "loopSeconds": 233.832,
+      "formats": {
+        "m4a": {
+          "bytes": 4747472,
+          "SHA256": "d9b23dc4e2645389b2bd8084b9c396089a4b45e2bb61ce56fa364b69f4391d85",
+          "decodedFrames": 11224064
+        },
+        "ogg": {
+          "bytes": 3580199,
+          "SHA256": "2ddb3855e9fc44a2365b7058f8b4be8bd48d94b2a7712dbe248adaba05d5410c",
+          "decodedFrames": 11223936
+        }
+      }
+    },
+    "casino_5": {
+      "title": "Ambience 5",
+      "source": "casino music/ambience 5.mp3",
+      "sourceSHA256": "940b53a1a7fe7a31091e3d3ce0f91689ed07b131214b018ea78af3bf1952fef4",
+      "sourceFrames": 18816768,
+      "sourceSeconds": 392.016,
+      "trimStartSeconds": 0,
+      "releaseFrames": 18816768,
+      "loopSeconds": 392.016,
+      "formats": {
+        "m4a": {
+          "bytes": 7956931,
+          "SHA256": "3f82ee6583107b58299b46aaf0509654f10e9b3bfae380b3428dbf697c19f9a0",
+          "decodedFrames": 18817024
+        },
+        "ogg": {
+          "bytes": 5990998,
+          "SHA256": "24edbbccb44ca5d7d7b1af7beef41b592e7ada5d1eefec7d6d52705e0fb89ca3",
+          "decodedFrames": 18816768
+        }
+      }
+    },
+    "casino_6": {
+      "title": "Ambience 6",
+      "source": "casino music/ambience 6.mp3",
+      "sourceSHA256": "5b3017a3f0514e3d2647ce31fcbf0cc1775217ba317b9824a94fae502bf4c25d",
+      "sourceFrames": 16156800,
+      "sourceSeconds": 336.6,
+      "trimStartSeconds": 0,
+      "releaseFrames": 16156800,
+      "loopSeconds": 336.6,
+      "formats": {
+        "m4a": {
+          "bytes": 6828224,
+          "SHA256": "7dbbeb191568526f1ef1d2e6a1ba224af1d846d8e6d89491bddd4741c4481353",
+          "decodedFrames": 16157696
+        },
+        "ogg": {
+          "bytes": 5139517,
+          "SHA256": "a06c38ada47e0e40173d0d418f0053eb5dcb22b56fcb9fc6bc31f4054abb855e",
+          "decodedFrames": 16156800
+        }
+      }
+    },
+    "casino_7": {
+      "title": "Ambience 7",
+      "source": "casino music/ambience 7.mp3",
+      "sourceSHA256": "7cad3575ecc2a20b0546a3d7add716363031c3efab0f43b82195326c4ae85f04",
+      "sourceFrames": 5806080,
+      "sourceSeconds": 120.96,
+      "trimStartSeconds": 0,
+      "releaseFrames": 5806080,
+      "loopSeconds": 120.96,
+      "formats": {
+        "m4a": {
+          "bytes": 2455597,
+          "SHA256": "0d81feb9726c9ec788d45bd472e71c49f7038aba5ac319de7917e9159a4cb29b",
+          "decodedFrames": 5806080
+        },
+        "ogg": {
+          "bytes": 1863986,
+          "SHA256": "3d815164e5f7c60ae6c4fcf6482c6af3dfd56ec7c3aa19d3d1718b6fcf35d4e2",
+          "decodedFrames": 5806080
+        }
+      }
+    },
+    "casino_8": {
+      "title": "Ambience 8",
+      "source": "casino music/ambience 8.mp3",
+      "sourceSHA256": "285b78730bc4437f0d8134f49131bccf755d350187bc22ca4f106eac60c641c8",
+      "sourceFrames": 9216000,
+      "sourceSeconds": 192.0,
+      "trimStartSeconds": 0,
+      "releaseFrames": 9216000,
+      "loopSeconds": 192.0,
+      "formats": {
+        "m4a": {
+          "bytes": 3895868,
+          "SHA256": "87a4b94d19f256bfef0a682f17b243b644869e789811132f7f7106061c9eb12f",
+          "decodedFrames": 9216000
+        },
+        "ogg": {
+          "bytes": 2942707,
+          "SHA256": "80cff609828f0058569deed808a714f3740d2e2ced8248c6b0908b158dbe5e73",
+          "decodedFrames": 9216000
+        }
+      }
+    },
+    "casino_9": {
+      "title": "Ambience 9",
+      "source": "casino music/ambience 9.mp3",
+      "sourceSHA256": "c2a5a073c8bf0e197a2055e0cf603a26bb906b2a6b12c520ea826ef399e0df6b",
+      "sourceFrames": 14456448,
+      "sourceSeconds": 301.176,
+      "trimStartSeconds": 0,
+      "releaseFrames": 14456448,
+      "loopSeconds": 301.176,
+      "formats": {
+        "m4a": {
+          "bytes": 6113916,
+          "SHA256": "d295c68a3a2082e16860dc9e6f1d567023ac992d7e209f24c9e34bea7c4ca2a7",
+          "decodedFrames": 14456832
+        },
+        "ogg": {
+          "bytes": 4617523,
+          "SHA256": "2b91978823411e12fdc3ce70d1550f4d092853cf80a92f0aca4a3030955a5c0d",
+          "decodedFrames": 14456448
+        }
+      }
+    },
+    "casino_10": {
+      "title": "Ambience 10",
+      "source": "casino music/ambience 10.mp3",
+      "sourceSHA256": "04c065abd04f49251ce3d476873a4d5cd16314ba1a0564643d9edec65d41e7a7",
+      "sourceFrames": 15431040,
+      "sourceSeconds": 321.48,
+      "trimStartSeconds": 0,
+      "releaseFrames": 15431040,
+      "loopSeconds": 321.48,
+      "formats": {
+        "m4a": {
+          "bytes": 6530800,
+          "SHA256": "7fba418f9d5cafa7b964bfbb18e798821c28c87323bbb06935605c786ce55cc5",
+          "decodedFrames": 15431680
+        },
+        "ogg": {
+          "bytes": 4960003,
+          "SHA256": "9e68b49e5bccf2d7ea6930c46b95a0d9a871de7a73258019362d867a2f9151bf",
+          "decodedFrames": 15431040
+        }
+      }
+    },
+    "casino_11": {
+      "title": "Ambience 11",
+      "source": "casino music/ambience 11.mp3",
+      "sourceSHA256": "74373411f7d1bea7a211890c4127812ce7de60fad6d0ab3cbeca58781ed51a9b",
+      "sourceFrames": 10647936,
+      "sourceSeconds": 221.832,
+      "trimStartSeconds": 0,
+      "releaseFrames": 10647936,
+      "loopSeconds": 221.832,
+      "formats": {
+        "m4a": {
+          "bytes": 4501155,
+          "SHA256": "4b23f0410d69a00650ec7f0bb4d00249bee3235f9f7962016bce7578b5902956",
+          "decodedFrames": 10648576
+        },
+        "ogg": {
+          "bytes": 3391259,
+          "SHA256": "781ed7a4ab7df08c72478a23bc02af2ffe9ed3ffd4ed82525359d58d713f114d",
+          "decodedFrames": 10647936
+        }
+      }
     }
   }
 }
