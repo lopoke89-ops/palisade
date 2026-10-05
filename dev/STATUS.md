@@ -7,7 +7,7 @@ Big U's latest completed local scope is recorded in the [presentation prompt](pl
 
 The Claude audit URL still requires sign-in in the available browser session. Big U supplied an exported copy at `D:\downloads\Untitled.md`, which was read on September 29. Its newest Progress entry is v0.9.3, so its release claims are superseded by the verified v0.9.3.3 release below. The external artifact itself was not edited here.
 
-## v0.10.0: THE PALISADE FALLS CASINO (built; waiting on Big U's approval of the migrations)
+## v0.10.0: THE PALISADE FALLS CASINO
 
 The work order is [casino-map-and-roulette-work-order.md](plans/casino-map-and-roulette-work-order.md) (decisions C1-C12).
 - **The casino:**
@@ -41,6 +41,14 @@ The work order is [casino-map-and-roulette-work-order.md](plans/casino-map-and-r
   - updated: `tables_server`, `blackout_network` and `campaign_network` (yard-28);
   - `campaign_network` timed out once and passed unchanged on the re-run.
 - **Evidence:** `dev/evidence/v0.10.0/`.
+- **Fixed before release:**
+  - roulette taps could be lost or wiped when a poll answered mid-tap; bets now go down on release and the board only rebuilds when it changed;
+  - a full table now refuses a seat (the check had slipped into a comment, so it would have taken a buy-in for a seat that doesn't exist).
+- **Deployed October 5:**
+  - the first migration was applied through the connector, except the roulette game check;
+  - Big U ran the game check and the rooms migration in the SQL editor;
+  - the `tables` edge function is version 7, checked byte for byte against the repo;
+  - then the site.
 
 ## v0.9.9.1: Hold'em no longer reveals folded hands (hotfix)
 
