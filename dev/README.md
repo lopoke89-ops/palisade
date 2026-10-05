@@ -84,6 +84,12 @@ The runner is `run_suite.js` (`run_all.sh` and `run_targeted.sh` are thin wrappe
   and stops the ones it started;
 - re-runs only the last run's failures with `--failed`, picks tests whose own file changed against main with
   `--changed`, stops at the first failure with `--bail`, and prints the selection without running with `--list`.
+**Writing tests:** wait for a condition, never a fixed pause. `test/lib.js` has the helpers:
+`ready(p)` after loading the debug page (waits for `__pal.ready`: frames running, fonts in, account boot done),
+`quiet(p)` after an action that talks to the (faked) server, `frames(p)` for a redraw, `until(p, fn)` for a known
+state, and `synced(H, G)` when a networked raid starts. Check game state in game time, not wall time: a busy machine
+draws fewer frames, so "wait 1.5 s, then the flood is on" fails under load while "wait until the flood is on" doesn't.
+Timer tests can jump time with Playwright's clock (`ctx.clock.install()`, then `p.clock.fastForward(ms)`).
 `TESTS="cosmetics wardrobe3d" ./run_all.sh` still works. Logs (`out/<test>.log`) and screenshots go to
 `dev/test/out/`, and the summary names the slowest tests. The account, reward and Tables tests fake Supabase, so
 they don't touch real players. Run the area you changed; the whole suite only when shared code gives a reason.

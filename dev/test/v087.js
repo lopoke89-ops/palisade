@@ -1,6 +1,6 @@
 // v0.8.7 checks: soldier bursts, sniper hold-to-fire, class speeds + quartermaster sprint, Repair Core,
 // Dell's shared upgrade and shotgun, leftover salvage -> shards, and aiming at the drawn body (hitboxes).
-const { chromium } = require('playwright');
+const { chromium } = require('playwright'), L = require('./lib');
 const O = __dirname + '/out';
 const ok = (c, m) => { if (!c) { fails.push(m); console.log('  NOT OK:', m) } };
 const fails = [];
@@ -10,9 +10,9 @@ const fails = [];
   const open = async (cls) => {
     const p = await b.newPage({ viewport: { width: 1600, height: 900 } });
     p.on('pageerror', e => errs.push(e.message + ' ' + (e.stack || '').split('\n')[1]));
-    await p.goto('http://localhost:8080/debug.html?debug=1'); await p.waitForTimeout(700);
+    await p.goto('http://localhost:8080/debug.html?debug=1'); await L.ready(p);
     await p.mouse.move(800, 450);
-    await p.click('[data-go=solo]'); await p.click('[data-setup=job]:visible'); await p.click(`#setupSheet [data-c=${cls}]`); await p.click('#setupDone'); await p.click('#startBtn'); await p.waitForTimeout(400);
+    await p.click('[data-go=solo]'); await p.click('[data-setup=job]:visible'); await p.click(`#setupSheet [data-c=${cls}]`); await p.click('#setupDone'); await p.click('#startBtn'); await L.frames(p, 3);
     return p;
   };
   // records the game time of every bullet the player fires (poll each frame; bullet ids only go up)
@@ -78,7 +78,7 @@ const fails = [];
     console.log('quartermaster sprinting', qs.toFixed(2), '=', (qs / sp).toFixed(2) + 'x soldier; shots while sprinting', firedSprinting,
       '| button', await q.evaluate(() => document.getElementById('sprN').textContent));
     ok(qs / sp > 1.3 && qs / sp < 1.5, 'sprint ~1.4x'); ok(firedSprinting === 0, 'no shooting while sprinting');
-    await q.waitForTimeout(2200);
+    await L.until(q, () => !(__pal.player.sprT > 0) && window.__sh.length > 0, null, 6000).catch(() => { });   // the sprint ran out and shooting resumed
     const after = await q.evaluate(() => ({ spr: __pal.player.sprT, cd: +__pal.player.sprCd.toFixed(1), n: window.__sh.length, lab: document.getElementById('sprN').textContent }));
     console.log('after the sprint ends:', JSON.stringify(after)); ok(after.spr === 0 && after.n > 0 && after.cd > 5, 'sprint ends, shooting resumes, ~6 s recharge');
     await q.keyboard.press('Shift'); ok(await q.evaluate(() => !(__pal.player.sprT > 0)), 'no sprint while recharging');

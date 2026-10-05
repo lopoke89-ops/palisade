@@ -1,14 +1,14 @@
 // v0.9.0 gameplay: maps (layouts, water, floods, pits, night), the Ferryman and the Foreman, the four new raiders,
 // the October Butcher and boss-by-boss case drops, plus the before/after wave table.
 // v0.9.1: per-map enemy health, two bosses on XL, oil drums no longer stop shots, and the PvP layouts. node v090.js
-const { chromium } = require('playwright');
+const { chromium } = require('playwright'), { ready, frames } = require('./lib');
 const assert = require('assert');
 const PORT = process.env.PORT || 8080;
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined });
   const p = await b.newPage({ viewport: { width: 1280, height: 800 } }); const errors = [];
   p.on('pageerror', e => errors.push(e.message + ' ' + (e.stack || '').split('\n')[1]));
-  await p.goto(`http://localhost:${PORT}/debug.html?debug=1`); await p.waitForTimeout(1000);
+  await p.goto(`http://localhost:${PORT}/debug.html?debug=1`); await ready(p);
   const E = f => p.evaluate(f), out = {};
   // helpers inside the page: start a run on a map, keep everyone alive, step the game
   await E(() => {

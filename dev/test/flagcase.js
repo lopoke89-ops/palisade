@@ -1,6 +1,6 @@
 // v0.9.3 the Flag Case: its odds, its 64 items (32 backgrounds, 32 tracers), the win drop, opening and buying it,
 // duplicates turning into shards, every flag background drawing, and older tracers keeping their numbers.  node flagcase.js
-const { chromium } = require('playwright');
+const { chromium } = require('playwright'), { ready, frames } = require('./lib');
 const assert = require('node:assert/strict');
 const PORT = process.env.PORT || 8080;
 // the tracer list as of v0.9.2.1: a shot sends its tracer as its place in this list, so these must never move
@@ -11,7 +11,7 @@ const OLD_TRAILS = ['std', 'green', 'red', 'blue', 'pink', 'gold', 'plasma', 'ra
   const p = await b.newPage({ viewport: { width: 1280, height: 800 } });
   const errors = [], out = {};
   p.on('pageerror', e => errors.push(e.message));
-  await p.goto(`http://localhost:${PORT}/debug.html?debug=1`); await p.waitForTimeout(900);
+  await p.goto(`http://localhost:${PORT}/debug.html?debug=1`); await ready(p);
 
   out.basics = await p.evaluate(OLD => {
     const P = __pal, C = P.CASES.flags, items = P.COS.filter(c => c.box === 'flags');

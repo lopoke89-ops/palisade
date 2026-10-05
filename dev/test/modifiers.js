@@ -1,13 +1,13 @@
 // v0.9.2 modifiers: which ones each mode lists, what every one of the 15 does when it's on (and that it does nothing
 // when it's off), the reward bonus and the in-between (shard) bosses, best scores per modifier set, and a host and
 // guest online: the host's picks reach the guest's room and game. node modifiers.js
-const { chromium } = require('playwright');
+const { chromium } = require('playwright'), { ready, frames, synced } = require('./lib');
 const assert = require('assert');
 const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.env.PORT || 8080;
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--disable-features=WebRtcHideLocalIpsWithMdns'] });
   const errors = [], out = {};process.on('exit', () => console.log('OUT', JSON.stringify(out)));
-  const open = async (vp = { width: 1280, height: 800 }) => { const p = await b.newPage({ viewport: vp }); p.on('pageerror', e => errors.push(e.message)); await p.goto(`http://localhost:${PORT}/debug.html?${Q}`); await p.waitForTimeout(800); return p };
+  const open = async (vp = { width: 1280, height: 800 }) => { const p = await b.newPage({ viewport: vp }); p.on('pageerror', e => errors.push(e.message)); await p.goto(`http://localhost:${PORT}/debug.html?${Q}`); await ready(p); return p };
   const P = await open();
   // 1. the lists per mode
   out.lists = await P.evaluate(() => ({ coop: __pal.MODS.filter(m => m.modes.includes('coop')).map(m => m.id), base: __pal.MODS.filter(m => m.modes.includes('base')).map(m => m.id), ffa: __pal.MODS.filter(m => m.modes.includes('ffa')).map(m => m.id),
@@ -143,7 +143,7 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
   out.guestRoom = await G.evaluate(() => ({ chips: [...document.querySelectorAll('#lMods .modChip')].map(b => b.dataset.mod), disabled: [...document.querySelectorAll('#lMods .modChip')].every(b => b.disabled), job: document.querySelector('[data-oj].sel')?.dataset.oj }));
   assert.deepEqual(out.guestRoom, { chips: ['weather', 'onejob'], disabled: true, job: 'sniper' });
   await G.click('#lMods .modChip').catch(() => { });   // a guest can't change them
-  await H.evaluate(()=>__pal.lobbyReadyAll());await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await H.waitForTimeout(600);
+  await H.evaluate(()=>__pal.lobbyReadyAll());await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await synced(H, G);
   out.guestGame = await G.evaluate(() => ({ mods: __pal.game.mods, job: __pal.game.job, cls: [...__pal.players.values()].map(p => p.cls), gid: __pal.game.gid }));
   const hostGid = await H.evaluate(() => __pal.game.gid);
   assert.deepEqual(out.guestGame.mods, ['weather', 'onejob']); assert.deepEqual(out.guestGame.cls, ['sniper', 'sniper']); assert.equal(out.guestGame.gid, hostGid, 'one game id for everyone');

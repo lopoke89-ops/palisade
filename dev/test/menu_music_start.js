@@ -1,9 +1,9 @@
 // v0.9.7.2: the main menu's music starts on the first click anywhere (it used to wait for a menu tab, so the opening
 // menu stayed silent), and it is the new Pali Mix: the menu track's loop is its full 458.352 s.
-const {chromium}=require('playwright'),assert=require('node:assert/strict');
+const {chromium}=require('playwright'),assert=require('node:assert/strict'), { ready, frames } = require('./lib');
 (async()=>{const b=await chromium.launch({executablePath:process.env.CHROMIUM||undefined,args:['--autoplay-policy=user-gesture-required']}),errors=[];
  const p=await b.newPage({viewport:{width:1280,height:800}});p.on('pageerror',e=>errors.push(e.message));
- await p.goto(`http://localhost:${process.env.PORT||8080}/debug.html?debug=1`);await p.waitForFunction(()=>window.__pal);await p.waitForTimeout(500);
+ await p.goto(`http://localhost:${process.env.PORT||8080}/debug.html?debug=1`);await ready(p);
  const before=await p.evaluate(()=>({ac:__pal.AC?__pal.AC.state:null,cur:__pal.mus.cur}));
  // a first click on the page itself, not on a menu tab (the old code only woke the sound from the tabs or the game)
  await p.mouse.click(640,30);

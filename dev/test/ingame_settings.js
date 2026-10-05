@@ -1,14 +1,14 @@
 // v0.9.3.7: SETTINGS during a run opens an in-game overlay, not the main menu; no way to start or host another game
 // from it; settings still work; pause/Escape and BACK return to the pause menu; online, the host keeps running.
 // The main-menu Settings page still works outside a run. node ingame_settings.js
-const { chromium } = require('playwright'), assert = require('node:assert/strict'), fs = require('node:fs');
+const { chromium } = require('playwright'), assert = require('node:assert/strict'), fs = require('node:fs'), { ready, frames, until } = require('./lib');
 const PORT = process.env.PORT || 8080, Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1';
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--disable-features=WebRtcHideLocalIpsWithMdns'] }), errors = [], out = {};
   for (const vp of [{ width: 390, height: 844, isMobile: true, hasTouch: true }, { width: 1280, height: 800 }]) {
     const p = await b.newPage({ viewport: { width: vp.width, height: vp.height }, isMobile: !!vp.isMobile, hasTouch: !!vp.hasTouch }); p.on('pageerror', e => errors.push(e.message));
     await p.goto(`http://localhost:${PORT}/debug.html?debug=1`); await p.waitForFunction(() => window.__pal);
-    await p.click('[data-go=solo]'); await p.click('#startBtn'); await p.waitForTimeout(400);
+    await p.click('[data-go=solo]'); await p.click('#startBtn'); await frames(p, 3);
     const gid = await p.evaluate(() => __pal.game.gid);
     await p.evaluate(() => __pal.togglePause()); await p.click('#pSetBtn');
     const r = await p.evaluate(() => { const vis = id => { const e = document.getElementById(id); return !!e && !e.closest('[hidden]') && e.getBoundingClientRect().width > 0 };
@@ -41,7 +41,7 @@ const PORT = process.env.PORT || 8080, Q = 'peerhost=127.0.0.1&peerport=9000&pee
   const code = await H.textContent('#lCode'); await G.click('[data-nav=multi]'); await G.fill('#mCode', code); await G.click('#joinBtn');
   await G.waitForSelector('#pg-lobby:not([hidden])', { timeout: 15000 }); await H.evaluate(()=>__pal.lobbyReadyAll());await H.click('#lStart'); await G.waitForFunction(() => __pal.NET.inGame && document.getElementById('menu').hidden, null, { timeout: 10000 });
   await H.waitForTimeout(500); await H.evaluate(() => __pal.togglePause()); await H.click('#pSetBtn');
-  const t0 = await H.evaluate(() => __pal.game.time); await H.waitForTimeout(1200); const t1 = await H.evaluate(() => __pal.game.time);
+  const t0 = await H.evaluate(() => __pal.game.time); await until(H, t0 => __pal.game.time - t0 > .8, t0, 8000).catch(() => { }); const t1 = await H.evaluate(() => __pal.game.time);   // game time, not wall time: a busy machine draws fewer frames
   out.online = { hostTimeAdvanced: +(t1 - t0).toFixed(2), note: await H.textContent('#igSetNote'), hostCanHost: await H.evaluate(() => !!document.getElementById('hostBtn').closest('[hidden]') === false && document.getElementById('hostBtn').getBoundingClientRect().width > 0) };
   assert.ok(out.online.hostTimeAdvanced > .8 && /keeps going/.test(out.online.note) && !out.online.hostCanHost, JSON.stringify(out.online));
   fs.writeFileSync(__dirname + '/out/ingame_settings.json', JSON.stringify({ out, errors }, null, 2)); assert.deepEqual(errors, []);

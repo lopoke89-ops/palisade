@@ -1,7 +1,7 @@
 // v0.9.3.6: a guest with an account whose page reloads mid-run (no clean leave) is still paid for raids 1-3 on the
 // next start, and on rejoining the same game the host restores their armory, salvage and kills.
 // A no-account solo run that reloads is paid into this browser's locker. node rejoin_drop.js
-const { chromium } = require('playwright'), assert = require('node:assert/strict'), fs = require('node:fs');
+const { chromium } = require('playwright'), assert = require('node:assert/strict'), fs = require('node:fs'), { ready, frames, synced } = require('./lib');
 const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.env.PORT || 8080;
 const A = 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa';
 const token = id => Buffer.from('{}').toString('base64url') + '.' + Buffer.from(JSON.stringify({ sub: id, is_anonymous: false })).toString('base64url') + '.test';
@@ -12,7 +12,7 @@ const claims = [];
   const b = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--disable-features=WebRtcHideLocalIpsWithMdns'] });
   const errors = [], out = {};
   const H = await b.newPage({ viewport: { width: 1100, height: 760 } }); H.on('pageerror', e => errors.push('H ' + e.message));
-  await H.goto(`http://localhost:${PORT}/debug.html?${Q}`); await H.waitForTimeout(800);
+  await H.goto(`http://localhost:${PORT}/debug.html?${Q}`); await ready(H);
   const gctx = await b.newContext({ viewport: { width: 900, height: 700 } });
   await gctx.route('https://puvjfhwxigxjpsvdwrwf.supabase.co/**', async route => {
     const req = route.request(), path = new URL(req.url()).pathname; let data = {}, status = 200;
@@ -32,7 +32,7 @@ const claims = [];
   await H.waitForFunction(() => /^[A-Z0-9]{4}$/.test(document.getElementById('lCode').textContent), null, { timeout: 15000 });
   const code = await H.textContent('#lCode');
   const join = async () => { await G.click('[data-nav=multi]'); await G.fill('#mCode', code); await G.click('#joinBtn'); await G.waitForFunction(() => __pal.NET.inGame || !document.getElementById('pg-lobby').hidden, null, { timeout: 15000 }) };
-  await join(); await H.evaluate(()=>__pal.lobbyReadyAll());await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await H.waitForTimeout(700);
+  await join(); await H.evaluate(()=>__pal.lobbyReadyAll());await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await synced(H, G);
   await H.evaluate(() => { const P = __pal; window.holdIt = setInterval(() => { for (const q of P.players.values()) { q.max = 1e9; q.hp = 1e9 } P.core.max = 1e9; P.core.hp = 1e9; P.qm.hp = 1e9 }, 50) });
   const gid = await H.evaluate(() => __pal.game.gid);
   // raids 1-3 held; the host gives the guest armory upgrades, salvage and kills
@@ -68,7 +68,7 @@ const claims = [];
   // no-account solo: a reload mid-run pays this browser's locker
   const S = await b.newPage({ viewport: { width: 900, height: 700 } }); S.on('pageerror', e => errors.push('S ' + e.message));
   await S.goto(`http://localhost:${PORT}/debug.html?debug=1`); await S.waitForFunction(() => window.__pal);
-  await S.click('[data-go=solo]'); await S.click('#startBtn'); await S.waitForTimeout(500);
+  await S.click('[data-go=solo]'); await S.click('#startBtn'); await frames(S, 3);
   const raids0 = await S.evaluate(() => __pal.locker.st.raids | 0);
   await S.evaluate(() => { const P = __pal; P.game.wave = 4; P.game.phase = 'build'; P.game.time = 300; P.saveRunDraft() });
   await S.reload(); await S.waitForFunction(() => window.__pal);

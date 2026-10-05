@@ -2,21 +2,21 @@
 // result; a guest who gets out and a host who doesn't both move on to Riverbend, each with the right chapter result on both
 // screens and in the guest's claim; then the Whiteout Gauntlet: the guest sees GAUNTLET · WAVE n/6 and the bosses, and the
 // waves the host's crew clears count in the guest's claim. node campaign_network.js
-const { chromium } = require('playwright'), assert = require('node:assert/strict');
+const { chromium } = require('playwright'), assert = require('node:assert/strict'), { ready, frames, synced } = require('./lib');
 const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.env.PORT || 8080;
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--disable-features=WebRtcHideLocalIpsWithMdns'] });
   const errors = [], out = {};
   const H = await b.newPage({ viewport: { width: 1100, height: 760 } }); H.on('pageerror', e => errors.push('H ' + e.message));
   const G = await (await b.newContext({ viewport: { width: 1100, height: 760 } })).newPage(); G.on('pageerror', e => errors.push('G ' + e.message));
-  await H.goto(`http://localhost:${PORT}/debug.html?${Q}`); await G.goto(`http://localhost:${PORT}/debug.html?${Q}`); await H.waitForTimeout(800);
+  await H.goto(`http://localhost:${PORT}/debug.html?${Q}`); await G.goto(`http://localhost:${PORT}/debug.html?${Q}`); await ready(H); await ready(G);
   await H.click('[data-nav=multi]'); await H.click('[data-setup=rules]:visible'); await H.click('#setupSheet [data-m5=campaign]'); await H.click('#setupDone'); await H.click('#hostBtn');
   await H.waitForFunction(() => /^[A-Z0-9]{4}$/.test(document.getElementById('lCode').textContent), null, { timeout: 15000 });
   const code = await H.textContent('#lCode');
   await G.click('[data-nav=multi]'); await G.fill('#mCode', code); await G.click('#joinBtn');
   await G.waitForFunction(() => !document.getElementById('pg-lobby').hidden, null, { timeout: 15000 });
   out.proto = await G.evaluate(() => __pal.PROTO);
-  await H.evaluate(()=>__pal.lobbyReadyAll());await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await H.waitForTimeout(600);
+  await H.evaluate(()=>__pal.lobbyReadyAll());await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await synced(H, G);
   await H.evaluate(() => { const P = __pal; window.holdIt = setInterval(() => { for (const q of P.players.values()) { q.max = 1e9; q.hp = Math.max(q.hp, 1e8) } P.core.max = 1e9; P.core.hp = 1e9; P.qm.hp = 1e9 }, 50) });
   out.mode = await G.evaluate(() => __pal.game.mode);
   // 1. the map evac after raid 3: the guest gets out (the host walks it into the ring), the host stays at the core

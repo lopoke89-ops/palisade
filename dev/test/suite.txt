@@ -4,7 +4,7 @@
 #   node run_suite.js solo lobby    exact tests
 # Special tags:
 #   node    no browser (PGlite migrations, the Tables engine); runs first, so a broken server change fails in seconds
-#   serial  measures time or frame rate; runs alone after the parallel batch so other tests can't skew it
+#   serial  measures time or frame rate, or runs six players; runs alone after the parallel batch so load can't skew it
 # Area tags (also the old run_targeted.sh groups): smoke combat bosses host net menu hud music cosmetics presentation
 #   locker blitz winter campaign blackout tables server
 # A new test: add a line here with its area tag(s). Tests in this folder that aren't listed are tools or benchmarks
@@ -106,7 +106,7 @@ blitz_reward_migration node blitz server
 blitz_lobby_migration  node blitz server
 
 # Frostpeak and winter
-winter_network         winter net
+winter_network         serial winter net
 winter_reconnect       winter net
 frost_connectors       winter
 

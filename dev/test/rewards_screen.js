@@ -1,6 +1,6 @@
 // v0.9.1 after-action reward cards: cases with counts, a shard counter, UNLOCKED cards with the locker
 // thumbnails, and the progress bar to the next Supply Case. A tap shows them all at once. node rewards_screen.js
-const { chromium } = require('playwright');
+const { chromium } = require('playwright'), { ready, frames } = require('./lib');
 const assert = require('assert');
 const PORT = process.env.PORT || 8080;
 (async () => {
@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 8080;
   await p.goto(`http://localhost:${PORT}/debug.html?debug=1`); await p.waitForFunction(() => window.__pal);
   // a fresh local locker, 2 raids toward the next case; a 5-raid win with a boss down and salvage left
   await p.evaluate(() => { const P = __pal, L = P.locker; L.cases = 0; L.bag = {}; L.prog = 2; L.shards = 0; L.st.wins = 0; L.owned = L.owned.filter(id => id !== 'bg:dawn' && id !== 'skin:desert'); L.st.raids = 0 });
-  await p.click('#startBtn'); await p.waitForTimeout(300);
+  await p.click('#startBtn'); await frames(p, 3);
   const R = await p.evaluate(() => { const P = __pal; P.game.time = 600; P.game.wave = 5; P.game.waves = 5; P.game.won = true; P.game.bossLog = ['demolisher']; P.game.bosses = 1; P.player.sal = 90; P.player.kills = 20;
     P.game.phase = 'over'; P.showOver(); return null });
   await p.waitForSelector('#over:not([hidden])', { timeout: 3000 });

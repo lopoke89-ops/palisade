@@ -1,4 +1,4 @@
-const { chromium } = require('playwright');
+const { chromium } = require('playwright'), { ready, quiet, frames, until } = require('./lib');
 const B64 = o => Buffer.from(JSON.stringify(o)).toString('base64url');
 const db = { users: {}, lockers: {}, lobbies: {}, n: 0, refuse: false, claims: [] };
 const jwt = uid => B64({ alg: 'HS256' }) + '.' + B64({ sub: uid }) + '.s';
@@ -34,10 +34,10 @@ function handle(m, url, h, body) {
   await ctx.route('https://puvjfhwxigxjpsvdwrwf.supabase.co/**', async r => { const q = r.request(); let body = null; try { body = q.postDataJSON() } catch (e) { } await r.fulfill(handle(q.method(), q.url(), q.headers(), body)) });
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message + ' @ ' + (e.stack || '').split('\n')[1]));
   const P = (f, a) => p.evaluate(f, a), W = ms => p.waitForTimeout(ms), log = (...a) => console.log(...a);
-  await p.goto('http://localhost:8080/debug.html?debug=1&cloud=1'); await W(1500); await p.mouse.move(600, 400);
+  await p.goto('http://localhost:8080/debug.html?debug=1&cloud=1'); await ready(p); await p.mouse.move(600, 400);
   log('account:', await P(() => __pal.acct.state));
   // 1. shotgun: fast clicks vs holding
-  await P(() => __pal.showPage('solo')); await p.click('[data-setup=job]:visible'); await p.click('#setupSheet [data-c=grenadier]'); await p.click('#setupDone'); await p.click('#startBtn'); await W(300);
+  await P(() => __pal.showPage('solo')); await p.click('[data-setup=job]:visible'); await p.click('#setupSheet [data-c=grenadier]'); await p.click('#setupDone'); await p.click('#startBtn'); await frames(p, 3);
   log('gun', await P(() => { const g = __pal.player.gun; return { dmg: g.dmg, cd: g.cd, clickCd: g.clickCd, per: g.dmg * g.pellets } }));
   const count = () => P(() => window.__sh || 0);
   await P(() => { window.__sh = 0; const pl = __pal.player; let a = pl.ammo; setInterval(() => { if (pl.ammo < a) window.__sh += a - pl.ammo; a = pl.ammo }, 4) });
@@ -49,34 +49,33 @@ function handle(m, url, h, body) {
   log('holding 1.6 s ->', await count(), 'shots (expect 4: at 0, 0.5, 1.0, 1.5)');
   // 2. a run with a boss: server answer replaces the text
   const r1 = await P(async () => { const P = __pal; P.game.time = 300; P.game.wave = 5; P.game.bosses = 1; P.game.won = false; P.game.phase = 'over'; P.showOver(); const t0 = document.getElementById('overLoot').textContent;
-    await new Promise(r => setTimeout(r, 1500)); return { first: t0, after: document.getElementById('overLoot').textContent, locker: { cases: P.locker.cases, bag: P.locker.bag } } });
+    for (let i = 0; i < 150 && document.getElementById('overLoot').textContent === t0; i++) await new Promise(r => setTimeout(r, 20)); return { first: t0, after: document.getElementById('overLoot').textContent, locker: { cases: P.locker.cases, bag: P.locker.bag } } });
   log('run end, first text:', r1.first); log('  after server:', r1.after, JSON.stringify(r1.locker)); log('  claim sent:', JSON.stringify(db.claims.at(-1)));
   await p.screenshot({ path: __dirname + '/out/over.png' });
   // 3. refused result says so
-  db.refuse = true; await P(() => __pal.toMenu()); await P(() => __pal.showPage('solo')); await p.click('#startBtn'); await W(300);
-  const r2 = await P(async () => { const P = __pal; P.game.time = 90; P.game.wave = 6; P.game.won = true; P.game.phase = 'over'; P.showOver(); await new Promise(r => setTimeout(r, 1500)); return document.getElementById('overLoot').textContent });
+  db.refuse = true; await P(() => __pal.toMenu()); await P(() => __pal.showPage('solo')); await p.click('#startBtn'); await frames(p, 3);
+  const r2 = await P(async () => { const P = __pal; P.game.time = 90; P.game.wave = 6; P.game.won = true; P.game.phase = 'over'; P.showOver(); const t0 = document.getElementById('overLoot').textContent; for (let i = 0; i < 150 && document.getElementById('overLoot').textContent === t0; i++) await new Promise(r => setTimeout(r, 20)); return document.getElementById('overLoot').textContent });
   log('refused:', r2); db.refuse = false;
-  db.later = true; await P(() => __pal.toMenu()); await P(() => __pal.showPage('solo')); await p.click('#startBtn'); await W(300); await W(21000);
-  const r3 = await P(async () => { const P = __pal; P.game.time = 90; P.game.wave = 3; P.game.won = false; P.game.phase = 'over'; P.showOver(); await new Promise(r => setTimeout(r, 1500)); return { txt: document.getElementById('overLoot').textContent, queued: JSON.parse(localStorage.getItem('palisade.claims.v1') || '{}') } });
+  db.later = true; await P(() => __pal.toMenu()); await P(() => __pal.showPage('solo')); await p.click('#startBtn'); await frames(p, 3);
+  const r3 = await P(async () => { const P = __pal; P.game.time = 90; P.game.wave = 3; P.game.won = false; P.game.phase = 'over'; P.showOver(); const t0 = document.getElementById('overLoot').textContent; for (let i = 0; i < 150 && document.getElementById('overLoot').textContent === t0; i++) await new Promise(r => setTimeout(r, 20)); return { txt: document.getElementById('overLoot').textContent, queued: JSON.parse(localStorage.getItem('palisade.claims.v1') || '{}') } });
   log('deferred:', r3.txt, '| still queued:', JSON.stringify(r3.queued).length > 20); db.later = false;
   // 4. leaving a run early banks the raids held
-  await P(() => __pal.toMenu()); await P(() => __pal.showPage('solo')); await p.click('#startBtn'); await W(300);
+  await P(() => __pal.toMenu()); await P(() => __pal.showPage('solo')); await p.click('#startBtn'); await frames(p, 3);
   await P(() => { const P = __pal; P.game.time = 200; P.game.wave = 4; P.game.phase = 'build'; });
-  await W(21500);   // server keeps a 20 s gap between claims
-  const before = db.claims.length; await P(() => __pal.toMenu()); await W(1500);
+  const before = db.claims.length; await P(() => __pal.toMenu()); await quiet(p);
   log('left during build after raid 4:', JSON.stringify(db.claims.slice(before)), '| toast:', await P(() => document.getElementById('toast').textContent));
   // 5. open games list
   db.lobbies.x = { host_id: 'x', code: 'QW12', name: "Rook's game", mode: 'coop', length: '10', diff: 'hard', players: 3, in_game: true, proto: 'yard-8' };
   db.lobbies.y = { host_id: 'y', code: 'ZZ99', name: 'Old version', mode: 'ffa', players: 2, in_game: false, proto: 'yard-7' };
   db.lobbies.z = { host_id: 'z', code: 'FU11', name: 'Full house', mode: 'base', players: 6, in_game: true, proto: 'yard-8' };
-  await P(() => __pal.showPage('multi')); await W(900);
+  await P(() => __pal.showPage('multi')); await until(p, () => document.querySelectorAll('#lobList .lob').length > 0).catch(() => { });
   log('list:', await P(() => [...document.querySelectorAll('#lobList .lob')].map(b => b.textContent + (b.disabled ? ' [full]' : '')).join(' | ') || document.getElementById('lobList').textContent));
   await p.screenshot({ path: __dirname + '/out/list.png', fullPage: true });
   // hosting publishes, leaving removes it (PeerJS needs the local peer server)
-  await p.goto('http://localhost:8080/debug.html?debug=1&cloud=1&peerhost=127.0.0.1&peerport=9000&peerpath=/'); await W(1500);
-  await P(() => __pal.showPage('multi')); await p.click('#hostBtn'); await p.waitForSelector('#pg-lobby:not([hidden])', { timeout: 10000 }); await W(800);
+  await p.goto('http://localhost:8080/debug.html?debug=1&cloud=1&peerhost=127.0.0.1&peerport=9000&peerpath=/'); await ready(p);
+  await P(() => __pal.showPage('multi')); await p.click('#hostBtn'); await p.waitForSelector('#pg-lobby:not([hidden])', { timeout: 10000 }); for (let i = 0; i < 200 && !db.lastLobby; i++) await W(20);
   log('host listed:', JSON.stringify(db.lastLobby));
-  await p.click('#lLeave'); await W(600);
+  await p.click('#lLeave'); for (let i = 0; i < 100 && Object.keys(db.lobbies).some(k => !['x', 'y', 'z'].includes(k)); i++) await W(20);
   log('after leaving, listed rooms:', Object.keys(db.lobbies).filter(k => !['x', 'y', 'z'].includes(k)).length);
   log('errors:', errs.length ? errs : 'none'); await b.close();
 })();
