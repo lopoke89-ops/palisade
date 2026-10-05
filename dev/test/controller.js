@@ -18,7 +18,9 @@ const FAKE = (id) => {
   const open = async (vp, mobile, id, nopad) => {
     const p = await b.newPage({ viewport: vp, isMobile: !!mobile, hasTouch: !!mobile }); p.on('pageerror', e => errors.push(e.message));
     if (!nopad) await p.addInitScript(FAKE, id || 'Xbox Wireless Controller (STANDARD GAMEPAD Vendor: 045e Product: 0b13)');
-    await p.goto(`http://localhost:${PORT}/debug.html?peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1`); await ready(p); return p;
+    await p.goto(`http://localhost:${PORT}/debug.html?peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1`); await ready(p);
+    if (!nopad) await p.waitForFunction(() => __pal.pad.idx >= 0, null, { timeout: 5000 });   // with no controller seen yet the game looks once a second
+    return p;
   };
   const press = async (p, i, hold = 70) => { await p.evaluate(i => { const b = __fakePad.buttons[i]; b.pressed = true; b.value = 1 }, i); await p.waitForTimeout(hold);
     await p.evaluate(i => { const b = __fakePad.buttons[i]; b.pressed = false; b.value = 0 }, i); await p.waitForTimeout(70) };
