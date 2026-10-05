@@ -15,6 +15,15 @@ const MIG=__dirname+'/../supabase/migrations/20261004200000_v098_tables.sql',MIG
  const sql=fs.readFileSync(MIG,'utf8');ok('no delete in the migration',!/delete/i.test(sql));
  await db.exec(sql);await db.exec(sql);ok('migration applies twice',true);
  const sql2=fs.readFileSync(MIG2,'utf8');ok('no delete in the v0.10.0 migration',!/delete/i.test(sql2));await db.exec(sql2);await db.exec(sql2);ok('the v0.10.0 migration applies twice',true);
+ // casino rooms (the second v0.10.0 file: Open Games and friend invites accept length and map 'casino')
+ {await db.exec(`create table if not exists lobbies(host_id uuid primary key,code text,name text,mode text,length text check (length = any (array['5','10','endless','blitz','campaign','blackout'])),diff text,players int,in_game boolean,proto text,updated_at timestamptz default now());
+   create table if not exists private.room_sessions(host_id uuid primary key,incarnation uuid,code text,proto text,mode text,length text,map text,chapter int default 0,players int,locked boolean,updated_at timestamptz default now());
+   create or replace function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claims',true),'')::jsonb,'{}'::jsonb) $$;`);
+  const sql3=fs.readFileSync(__dirname+'/../supabase/migrations/20261005200100_v0100_casino_rooms.sql','utf8');await db.exec(sql3);await db.exec(sql3);
+  await db.exec(`insert into lobbies(host_id,code,name,mode,length,players,in_game,proto) values('a0000000-0000-4000-8000-00000000000a','QWER','x','coop','casino',1,true,'yard-28')`);
+  await db.exec(`select set_config('request.jwt.claim.sub','a0000000-0000-4000-8000-00000000000a',false)`);
+  let reg=null;try{reg=(await db.query(`select public.room_register('{"incarnation":"11111111-2222-4333-8444-555555555555","code":"QWER","proto":"yard-28","mode":"coop","length":"casino","map":"casino","players":2}'::jsonb) r`)).rows[0].r}catch(e){reg={error:e.message}}
+  ok('casino rooms: listed in Open Games and registered for invites (the rooms file applies twice)',reg&&reg.registered===true)}
  const A='a0000000-0000-4000-8000-00000000000a',B='b0000000-0000-4000-8000-00000000000b',C='c0000000-0000-4000-8000-00000000000c',G='d0000000-0000-4000-8000-00000000000d';
  await db.exec(`insert into lockers(user_id,shards) values('${A}',100),('${B}',40),('${C}',3),('${G}',50);insert into profiles(id,username) values('${A}','BigU'),('${B}','Rab'),('${C}','Broke');`);
  const svc=async(q,p)=>{await db.exec('set role service_role');try{return(await db.query(q,p)).rows}finally{await db.exec('reset role')}};

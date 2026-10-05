@@ -37,7 +37,7 @@ function frame(now){
   if(demo&&game.phase==='over'){demoT+=dt;if(demoT>4)startDemo()}
   const on=playing();
   if(on&&!game.paused)hud(dt);else if(!game.paused)toastTick(dt);
-  hid($('top'),!on);hid($('kit'),!on);if(!on)hid($('respawnJobs'),true);hid($('chat'),!on||NET.mode==='solo');hid($('chatBtn'),NET.mode==='solo');if(!on&&chatOpen())closeChat();hid($('keys'),touchMode||!on);cls(document.body,'desk',!touchMode);hid($('tip'),!on||!$('tipText').textContent);
+  hid($('top'),!on);hid($('kit'),!on||casino());if(!on)hid($('respawnJobs'),true);hid($('chat'),!on||NET.mode==='solo');hid($('chatBtn'),NET.mode==='solo');if(!on&&chatOpen())closeChat();hid($('keys'),touchMode||!on);cls(document.body,'desk',!touchMode);hid($('tip'),!on||!$('tipText').textContent);
   fpsN++;fpsT+=now-(frame.prev||now);frame.prev=now;
   if(fpsT>=1000){if(cfg.fps)$('fpsLab').textContent=Math.round(fpsN*1000/fpsT)+' FPS'+(cap?' / '+cap:'');fpsN=0;fpsT=0}
   if(on&&now-(frame.draftT||0)>3000){frame.draftT=now;saveRunDraft()}   // v0.9.3.6: a crash or killed app still pays the run
@@ -150,6 +150,7 @@ const isOctober=()=>new URLSearchParams(location.search).has('oct')||new Date().
 function start(){if(inRun()&&$('menu').hidden)return;initAudio();netReset();demo=false;pick.oct=isOctober();newGame(null,'',{mods:myMods(coopMods())});enterGame();modsToast()}
 function again(){if(NET.mode==='host')startOnline();else start()}
 function leaveRun(){
+  if(casino()){if(TB.id)tbSend({op:'leave',id:TB.id});if(player)player.seat=0;tbSheet(false);return}   // v0.10.0: leaving the casino stands you up (your shards go home); there's no run to pay
   if(demo||!running()||game.pvp||game.phase==='over'||game.rewarded||!player)return;
   const held=blackout()?boStages():game.phase==='build'?game.wave:Math.max(0,game.wave-1);
   if(held<=(game.joinHeld|0)&&(game.bossLog||[]).length<=(game.joinBoss|0)&&(game.sbN|0)<=(game.joinSB|0)&&(game.fbLog||[]).length<=(game.joinFB|0)&&!blitzResult(player))return;   // nothing new since this phone came in

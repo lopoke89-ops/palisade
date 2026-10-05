@@ -128,7 +128,7 @@ function newGame(roster,pvp='',opt={}){
   const mods=pick.mode==='campaign'&&!pvp?campaignMods(cleanMods(opt.mods,'')):cleanMods(opt.mods,pvp||(pick.mode==='blitz'?'blitz':'')),job=mods.includes('onejob')&&CLASSES[opt.job]?opt.job:'';
   if(job)roster=roster.map(r=>({...r,cls:job}));
   const Df=pvp?DIFF.normal:DIFF[pick.diff]||DIFF.normal;
-  const map=pick.mode==='blackout'&&!pvp?'city':pick.mode==='campaign'&&!pvp?'yard':pvp&&pick.map==='frost'?'yard':pick.map,L=layMap(map,pick.size,pvp);
+  const map=pick.mode==='casino'&&!pvp?'casino':pick.mode==='blackout'&&!pvp?'city':pick.mode==='campaign'&&!pvp?'yard':pvp&&pick.map==='frost'?'yard':pick.map,L=layMap(map,pick.size,pvp);
   walls=new Array(N*N).fill(null);debris=new Int8Array(N*N);dist=new Float32Array(N*N);
   const wood=(i,j)=>({i,j,type:0,amt:48,max:48,rt:0,locked:false});
   const ruin=(list,mat,ratio,ch)=>list.forEach(([i,j])=>{const w=makeWall(mat,false,ratio);w.char=ch;walls[idx(i,j)]=w});
@@ -139,6 +139,7 @@ function newGame(roster,pvp='',opt={}){
   }else if(pvp==='ffa'){
     cores=[];nodes=L.nodes||[];
     for(const[i,j,style]of L.cover){const w=makeWall(3,false);w.cov=style||'';walls[idx(i,j)]=w}   // the arena's cover can't be broken
+  }else if(L.casino){cores=[];nodes=[];   // v0.10.0 the casino: no stake, no piles
   }else{
     cores=[{team:'',i:L.core[0],j:L.core[1],hp:Df.core,max:Df.core,flash:0}];
     nodes=L.nodes;
@@ -153,21 +154,22 @@ function newGame(roster,pvp='',opt={}){
   roster.forEach((r,n)=>{const team=pvp==='base'?(r.team==='a'||r.team==='b'?r.team:n%2?'b':'a'):'';players.set(r.id,makePlayer(r.id,r.name,r.cls,n,r.cos,team,r.sk))});
   if(pvp==='base'){const cnt={a:0,b:0},TS=L.teamSpawns;for(const p of players.values()){const s=TS[cnt[p.team]++%TS.length];[p.x,p.y]=p.team==='b'?[N-s[0],N-s[1]]:s}}
   if(pvp==='ffa'){let n=0;const S=L.pspawns;for(const p of players.values())[p.x,p.y]=S[(n++*5)%S.length]}
-  const off=pvp?[0,0]:[cores[0].i-4,cores[0].j-11];   // the spawn spots are laid out round a stake at (4,11)
-  if(!pvp)for(const p of players.values()){p.x+=off[0];p.y+=off[1]}
+  const off=pvp||L.casino?[0,0]:[cores[0].i-4,cores[0].j-11];   // the spawn spots are laid out round a stake at (4,11)
+  if(L.casino){let n=0;for(const p of players.values())[p.x,p.y]=CAS.spawn[n++%CAS.spawn.length]}   // in at the door
+  else if(!pvp)for(const p of players.values()){p.x+=off[0];p.y+=off[1]}
   player=players.get(myId)||[...players.values()][0];
   core=pvp==='base'?cores[player.team==='b'?1:0]:cores[0]||{team:'',i:-9,j:-9,hp:1,max:1,flash:0};
   coreK=cores.length?idx(core.i,core.j):-1;
   game.dellLv=0;
   qm={x:3.5+off[0],y:11.5+off[1],hp:180,max:180,alive:true,revive:0,aim:{x:1,y:0},cd:0,sup:8,gt:0,work:0,job:'',next:-1,pathT:0,scanT:0,foe:null,walk:0,flash:0,mats:[24,0,0],hurt:9};
-  if(pvp||mods.includes('alone'))Object.assign(qm,{alive:false,gone:true,x:-9,y:-9});   // Delgado sits PvP (and On Your Own) out
+  if(pvp||mods.includes('alone')||L.casino)Object.assign(qm,{alive:false,gone:true,x:-9,y:-9});   // Delgado sits PvP (and On Your Own) out
   Object.assign(qm,{mode:'follow',completedRaids:0,layout:null,layoutAnchor:'',layoutSize:4,status:'Following host',bcd:0,C:{build:1,repair:1},face:{x:1,y:0},tp:0});
   enemies=[];bullets=[];lobs=[];charges=[];parts=[];flashes=[];floats=[];sacks=[];rockets=[];fires=[];zaps=[];slashes=[];rings=[];chains=[];arcs=[];arcHaz.length=0;
-  const mode=['5','10','endless','blitz','campaign','blackout'].includes(pick.mode)?pick.mode:'5';
-  game={phase:pvp==='ffa'?'raid':'build',paused:false,wave:0,timer:pvp==='base'?PVP.truce:pvp==='ffa'?PVP.ffaTime:mode==='blackout'?BO.gather:40+Df.build,queue:[],qn:0,spawnT:0,sel:game.sel||0,piece:'wall',time:0,tip:0,gathered:0,C:player.C,Df,
+  const mode=['5','10','endless','blitz','campaign','blackout','casino'].includes(pick.mode)&&!(pick.mode==='casino'&&pvp)?pick.mode:'5';
+  game={phase:pvp==='ffa'?'raid':'build',paused:false,wave:0,timer:pvp==='base'?PVP.truce:pvp==='ffa'?PVP.ffaTime:mode==='blackout'?BO.gather:mode==='casino'?1e9:40+Df.build,queue:[],qn:0,spawnT:0,sel:game.sel||0,piece:'wall',time:0,tip:0,gathered:0,C:player.C,Df,
     mode,waves:mode==='endless'?Infinity:mode==='blackout'?8:mode==='blitz'?BLITZ.waves:mode==='campaign'?CAMPAIGN.waves:+mode,rewarded:false,bosses:0,pvp,goal:PVP.ffaGoal,winner:'',chapter:0,
     stats:{dropped:0,built:0,lost:0,repairs:0,revives:0},
-    map:map==='city'||MAP_IDS.includes(map)?map:'yard',size:N>16?'xl':'std',lay:L,flood:{t:0,warned:false},bossLog:[],oct:!!pick.oct,
+    map:map==='city'||map==='casino'||MAP_IDS.includes(map)?map:'yard',size:N>16?'xl':'std',lay:L,flood:{t:0,warned:false},bossLog:[],oct:!!pick.oct,
     gid:String(opt.gid||newGid()).slice(0,40),mods,job,sbN:0,sbLog:[],fbLog:[],fb:null,joinFB:0,wx:0,wxT:0,sd:false,
     joinHeld:opt.guest?null:0,joinT:0,joinBoss:0,joinSB:0};   // join*: where this phone came in (guests learn it from the first state packet)
   for(const p of players.values())kitUp(p);
@@ -180,6 +182,7 @@ function newGame(roster,pvp='',opt={}){
     setTip(`You're ${me.name}. Truce for ${PVP.truce} seconds: gather and wall in your stake. Then knock down the ${them.name} stake. ${ctl('ARMORY','E',padKey('armory'))} at your stake spends salvage.`)}
   else if(pvp==='ffa'){game.tip=9;setTip(`Free-for-all. First to ${PVP.ffaGoal} drops wins. The cover can't be broken.`)}
   else if(campaign())setTip(`CHAPTER 1 · THE YARD. ${CAMPAIGN.story[0]} Three raids here, then your kit travels onward. Prepare at the core.`);
+  else if(mode==='casino')setTip(touchMode?'Walk up to a free seat at a table and tap SIT.':'Walk up to a free seat at a table and press E to sit.');
   else setTip(touchMode?'Stand next to a wood pile to gather. Delgado is gathering too.':'Walk next to a wood pile to gather. Delgado is gathering too.');
 }
 

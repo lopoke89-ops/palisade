@@ -19,6 +19,7 @@ function musicRoute(){
   if(!demo&&!$('over').hidden)return {k:'results',token:'results:'+game.gid};
   if(!$('menu').hidden)return {k:'menu',token:'menu'};
   if(!demo&&playing()){
+    if(game.mode==='casino')return {k:'menu',token:'menu'};   // v0.10.0: the casino plays the lounge (menu) track until it has its own
     if(game.mode==='blackout'&&!game.pvp&&game.bo&&game.phase==='raid'){const st=game.bo.stage;   // v0.9.7: raid tracks for POI attacks, the finale for the final push
       if(st==='push'||st==='done')return {k:'finale',token:'finale:'+game.gid};
       if(st==='attack')return {k:['attitude','cool','express'][Math.max(0,game.wave-1)%3],token:'raid:'+game.gid+':'+game.wave};

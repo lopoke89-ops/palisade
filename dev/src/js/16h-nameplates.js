@@ -8,6 +8,7 @@ function plateBar(x,y,w,h,frac,col,pulse){
   const low=frac<.3,c=low?(pulse?'#ff5a3a':'#d6402a'):col;g.fillStyle=c;g.fillRect(x-w/2,y,w*Math.max(0,Math.min(1,frac)),h)}
 function drawNameplates(){
   if(demo||!player)return;
+  if(casino()){casPlates();return}   // v0.10.0: in the casino, names only (nobody gets hurt there)
   const p=player,t=game.time,pulse=Math.sin(t*9)>0,bo=game.bo&&game.bo.stage==='ready',rec=drawNameplates.out=[];   // rec: what was drawn, for the tests
   const W1=Math.max(26,Math.min(44,34*u)),W0=Math.max(30,Math.min(50,40*u)),BH=Math.max(3.5,Math.min(6,4.4*u));
   for(const o of players.values()){if(!o.alive)continue;const me=o===p,friend=plateFriend(o);if(!me&&stealthed(o)&&!friend)continue;

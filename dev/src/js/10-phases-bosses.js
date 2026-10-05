@@ -3,7 +3,7 @@ function spawnNearCore(c=core,team=true){for(const[a,b]of[[1,0],[0,1],[-1,0],[0,
 // free-for-all: come back in at the spot furthest from everyone still standing
 function ffaSpawn(p){const S=(game.lay&&game.lay.pspawns)||FFA_SPAWNS;let best=S[0],bd=-1;for(const s of S){let m=1e9;for(const o of players.values())if(o!==p&&o.alive)m=Math.min(m,Math.hypot(o.x-s[0],o.y-s[1]));m+=rnd()*.5;if(m>bd){bd=m;best=s}}return best.slice()}
 const truce=()=>game.pvp==='base'&&game.phase==='build';
-const respawnAt=p=>game.pvp==='ffa'?ffaSpawn(p):game.pvp==='base'?spawnNearCore(stakeOf(p),p.team):spawnNearCore();
+const respawnAt=p=>casino()?CAS.spawn[Math.floor(rnd()*CAS.spawn.length)].slice():game.pvp==='ffa'?ffaSpawn(p):game.pvp==='base'?spawnNearCore(stakeOf(p),p.team):spawnNearCore();
 // 0 day, 1 golden hour, 2 night. Endless cycles; fixed-length runs end in the dark.
 function todStage(stage){
   if(MAP&&MAP.night&&!game.pvp||hasMod('nightmare'))return 2;   // Ashfall Quarry is always night (and Nightmare is, everywhere)

@@ -36,6 +36,7 @@ addEventListener('keydown',e=>{
   if(k==='p'||k==='escape'){if(!$('armory').hidden)return;if(playing())togglePause();return}
   if(!playing()||overlayOpen())return;
   if((k==='t'||k==='/')&&NET.mode!=='solo'){e.preventDefault();keys[k]=false;openChat();return}
+  if(casino()){if(k==='e'||k==='u'||k==='enter'){if(player.seat)tbSheet(true);else casSit()}if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k))e.preventDefault();return}   // v0.10.0: in the casino, E sits (no building, no weapons)
   if(k===' '){e.preventDefault();localBuild()}
   else if(k==='1'||k==='2'||k==='3')game.sel=+k-1;
   else if(k==='f')game.piece=game.piece==='wall'?'door':'wall';

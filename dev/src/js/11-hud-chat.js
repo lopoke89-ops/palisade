@@ -141,6 +141,7 @@ function hud(dt){
   hud.t=(hud.t||0)-dt;if(hud.t<=0){hud.t=.5;const b=$('top').getBoundingClientRect().bottom;{const ph=document.querySelector('#top .phase');if(ph)hud.phL=ph.getBoundingClientRect().left}if(b>0){hud.topB=b;const v=Math.round(b+10)+'px';if($('tip').style.top!==v)$('tip').style.top=v}
     const tp=$('tip');hud.tipB=tp.hidden||!$('tipText').textContent?0:tp.getBoundingClientRect().bottom}
   if($('tipText').textContent&&(game.pvp==='ffa'&&game.time>9||game.pvp==='base'&&game.phase==='raid'))setTip('');
+  if(casino()){casHud();return}   // v0.10.0
   const PV=game.pvp,clock=t=>{const s=Math.max(0,Math.ceil(t));return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`};
   hid($('qmM'),!!PV||!!qm.gone);hid($('coreM'),PV==='ffa');hid($('core2M'),PV!=='base');hid($('board'),PV!=='ffa');hid($('salv'),PV==='ffa');
   syncQMControls();

@@ -90,6 +90,7 @@ function keyCap(x,y,key,text,col){
 }
 function drawPrompts(p){
   if(!p||!p.alive)return;
+  if(casino()){casPrompts(p);return}   // v0.10.0
   if(canShop(p)&&$('armory').hidden){const c=stakeOf(p),s=iso(c.i+.5,c.j+.5);keyCap(s[0],s[1]-WH*1.15-(game.pvp==='base'?66:52)*u,ctl('','E',padKey('armory')),touchMode&&!padMode?'TAP ARMORY':'ARMORY',null)}
   for(const o of players.values())if(o!==p&&o.downed&&(!game.pvp||(game.pvp==='base'&&o.team===p.team))){const d=dist2(o,p);if(d<2.2){const s=iso(o.x,o.y);keyCap(s[0],s[1]-34*u,'',d<1?'REVIVING · STAY CLOSE':'STAND CLOSE TO REVIVE','#a9bccb')}}
   if(!qm.gone&&!qm.alive&&dist2(qm,p)<2.2){const s=iso(qm.x,qm.y);keyCap(s[0],s[1]-34*u,'',dist2(qm,p)<1?'REVIVING DELGADO':'STAND CLOSE TO REVIVE DELGADO','#a9bccb')}
@@ -370,7 +371,8 @@ $('overRewards').addEventListener('click',()=>$('overRewards').classList.add('sk
 
 /* ---------- armory screen ---------- */
 let armSig='',armTab='upgrades',armSlot=0;
-function tryArmory(){const p=player;if(p&&p.alive&&game.phase==='build'&&lockdown()){toast('ARMORY','Lockdown: the armory stays shut until the run is over.');return}if(!shopOpen(p))return;if(!nearStake(p)){toast('ARMORY',game.pvp?'Walk back to your stake to spend salvage.':'Walk back to the stake to spend salvage.');return}openArmory()}
+function tryArmory(){if(casino()){if(player.seat)tbSheet(true);else casSit();return}   // v0.10.0: the action button sits you down in the casino
+  const p=player;if(p&&p.alive&&game.phase==='build'&&lockdown()){toast('ARMORY','Lockdown: the armory stays shut until the run is over.');return}if(!shopOpen(p))return;if(!nearStake(p)){toast('ARMORY',game.pvp?'Walk back to your stake to spend salvage.':'Walk back to the stake to spend salvage.');return}openArmory()}
 function openArmory(){$('armEyebrow').textContent=game.pvp?'ARMORY · AT YOUR STAKE':'ARMORY · BETWEEN RAIDS';$('armory').hidden=false;if(NET.mode==='solo')game.paused=true;freeSticks();renderArmory();if(padMode)navFocus($('armRows').querySelector('button:not(:disabled)')||$('armClose'))}
 function closeArmory(){if($('armory').hidden)return;$('armory').hidden=true;if(NET.mode==='solo'&&$('pause').hidden)game.paused=false}
 const armorySig=p=>p.sal+'|'+upStr(p)+'|'+p.ammoEq.join(',')+'|'+p.sk+'|'+p.cls+'|'+canShop(p)+'|'+(game.dellLv|0)+'|'+(cores[0]?Math.ceil(cores[0].hp):'');
