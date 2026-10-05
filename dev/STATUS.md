@@ -7,6 +7,15 @@ Big U's latest completed local scope is recorded in the [presentation prompt](pl
 
 The Claude audit URL still requires sign-in in the available browser session. Big U supplied an exported copy at `D:\downloads\Untitled.md`, which was read on September 29. Its newest Progress entry is v0.9.3, so its release claims are superseded by the verified v0.9.3.3 release below. The external artifact itself was not edited here.
 
+## v0.10.1: the casino's own music
+
+- **The casino playlist:** Big U's 11 ambience tracks (the `casino music` folder) play only in the casino, which no longer borrows the menu track.
+  - True shuffle: every track once in a random order, then a fresh shuffle; never the same track twice in a row.
+  - After the first track, each one crossfades into the next over the last 5 seconds (equal power).
+  - At most two tracks decoded (the next one loads in the current one's last minute); mute and a hidden tab resume the same track; leaving and coming back moves on.
+- **Assets:** AAC 160k + Opus 128k like the rest of the soundtrack (55 MB + 41 MB); the 320 kbps masters stay in `casino music/`, not published. See [audio/README.md](audio/README.md).
+- **Test:** `casino_music` (tags music, casino), both formats.
+
 ## v0.10.0: THE PALISADE FALLS CASINO
 
 The work order is [casino-map-and-roulette-work-order.md](plans/casino-map-and-roulette-work-order.md) (decisions C1-C12).
