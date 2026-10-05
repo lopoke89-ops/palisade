@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Plan. Written October 5 from Big U's request. **Waiting on decisions C1–C12** (bottom of this file) |
+| **Status** | Plan. Written October 5 from Big U's request. **All decisions made by Big U on October 5 (C1–C12, bottom of this file).** Ready to build |
 | **Build** | v0.10.0. Client, the `tables` edge function, and one server migration (needs Big U's approval before it's applied) |
 | **Scope** | A 16×16 Vegas casino map in the game's isometric style that players walk around in; a blackjack table, a poker table and a new roulette table on it; Roulette as a third Tables game |
 | **Risk** | Medium. Shards are real currency: Roulette is new money logic (server only, logged, hash-checked like the other two games). The map itself is rendering and room code we already have |
@@ -36,7 +36,7 @@
 
 | Area | Tiles (approx.) | What's there |
 |---|---|---|
-| Entrance and marquee | south-east edge | Glass doors, red carpet runner, a big marquee sign with chasing bulbs and the casino's name (C9) |
+| Entrance and marquee | south-east edge | Glass doors, red carpet runner, a big marquee sign with chasing bulbs: **THE PALISADE FALLS CASINO** (C9) |
 | Main floor | centre | Patterned carpet (deep red with gold diamonds, the classic casino carpet), brass pillars, a ceiling of chandeliers (drawn as glow pools on the floor) |
 | Blackjack | west of centre | One half-moon table, green felt, 5 stools, a dealer spot, a chip rack, a shoe |
 | Poker | north of centre | One oval table, green felt with a gold rail, 6 chairs, a dealer spot |
@@ -50,8 +50,11 @@
 - **Palette:** deep red and black, gold and brass trim, green felt, neon pink, cyan and amber. Night outside the doors.
 - **Neon:** signs over each table ("BLACKJACK", "POKER", "ROULETTE"), the marquee, and the bar sign. They glow, light the floor around them, and flicker now and then.
 - **Motion:** the marquee bulbs chase, the slot screens blink, the roulette wheel turns slowly when idle, and dealers idle. All of it is cheap, drawn into the cached layer where possible.
-- **Characters:** players appear with their equipped skins, hats and trails, as in every mode. In the casino their weapons are holstered (C11).
-- **Dealers (C8):** an NPC at each table, so a table never looks empty.
+- **Characters:** players appear with their equipped skins, hats and trails, as in every mode. **No weapons in the casino (C11):** guns aren't drawn or usable on this map only. Every other mode is unchanged.
+- **Dealers (C8):** a 3D dealer at each table, built like our player models: same body, poses and lighting.
+  - the outfit: white shirt, black vest, bow tie, sleeve garters, a name badge;
+  - they deal, shuffle, spin the wheel, sweep chips and idle between hands;
+  - they're built as a proper skin set (body, hat/hair and accessories in the cosmetics format), so they can become a **Dealer collection** in a later case without new art work. That case is not part of this release.
 
 **Rules of the map:**
 - No raiders, no building, no damage, no weapons, no resources, no core.
@@ -81,6 +84,7 @@
 - **What the host does and doesn't control:** the host only relays where people are standing and sitting. All shard logic stays on the server (the `tables` edge function), so a host can't touch anyone's shards.
 
 **Sitting down:**
+- **The only way to play is to walk to a table (C2):** the TABLES tab's quick list goes away.
 - Walk up to a free seat. A prompt shows: **SIT** (tap or Enter on desktop, A on a controller).
 - **Taking the seat:** you take that seat. If nobody is playing at that table yet, sitting opens a server table for it with the room's settings. Otherwise you join the one already running: each physical table is one server table, found by the room code.
 - **The table panel:** the existing table panel (Blackjack and Hold'em today, plus Roulette) opens as a sheet over the bottom of the screen. The casino stays visible and alive above it.
@@ -105,26 +109,25 @@
 
 ## PAL-0100-3: Roulette (rules and odds)
 
-**The wheel (C3):** proposed European, single zero, 37 pockets (0–36), with **la partage**: an even-money bet that loses to zero gets half back.
+**The wheel (C3, Big U: American):** double zero, 38 pockets (0, 00, 1–36), the classic Las Vegas wheel. No la partage (it isn't played on American wheels).
 
 | Bet | Covers | Pays | House edge |
 |---|---|---|---|
-| Straight | 1 number | 35:1 | 2.70% |
-| Split | 2 | 17:1 | 2.70% |
-| Street | 3 | 11:1 | 2.70% |
-| Corner | 4 | 8:1 | 2.70% |
-| Six line | 6 | 5:1 | 2.70% |
-| Dozen / Column | 12 | 2:1 | 2.70% |
-| Red/Black, Odd/Even, 1–18/19–36 | 18 | 1:1 | **1.35%** (la partage) |
+| Straight (any number, 0 and 00 too) | 1 | 35:1 | 5.26% |
+| Split (0–00 included) | 2 | 17:1 | 5.26% |
+| Street (and 0-1-2, 00-2-3) | 3 | 11:1 | 5.26% |
+| Corner | 4 | 8:1 | 5.26% |
+| Top line (0, 00, 1, 2, 3) | 5 | 6:1 | **7.89%**: the one worse bet on an American table. It's on the real board, so it's kept (C5) and the panel marks it |
+| Six line | 6 | 5:1 | 5.26% |
+| Dozen / Column | 12 | 2:1 | 5.26% (0 and 00 lose) |
+| Red/Black, Odd/Even, 1–18/19–36 | 18 | 1:1 | 5.26% (0 and 00 lose) |
 
-**Why this wheel:**
-- It's the fairest real wheel there is.
-- The house still keeps a small edge, so nobody can print shards (your rule from v0.8).
-- American (00) would be 5.26%, twice as harsh.
-- With la partage the even-money bets sit near Blackjack's edge, and the long shots stay at 2.7%.
+**Why it fits (Big U chose the double-zero wheel):**
+- It's the real Vegas wheel.
+- The house keeps 5.26% on every bet except the top line. That's harsher than Blackjack or the Hold'em cut, so roulette is the game where the house wins over time; your v0.8 rule (nobody prints shards) holds by a wide margin.
 
 **A round:**
-1. **Betting** (60 s, C7): place chips on the layout. **SPIN** marks you ready. The ball goes when everyone seated is ready, or when the timer runs out (with at least one bet down).
+1. **Betting** (60 s, C7, Big U: yes): place chips on the layout. **SPIN** marks you ready. The ball goes when everyone seated is ready, or when the timer runs out (with at least one bet down).
 2. **No more bets:** the wheel spins for about 5 seconds, the same length on every phone.
 3. **Result:** the number and colour are shown, winning bets are paid, losing chips are swept, and the round is logged.
 4. Back to betting. Your last bets can be repeated with **REBET**.
@@ -133,7 +136,7 @@
 - **Fixed before betting:** when betting opens, the server draws the number with the same unbiased crypto RNG (`rng()` in `handler.js`) and publishes `sha256(salt + ':' + number)`.
 - **Checkable after the spin:** the salt and number are shown, so anyone can check the result wasn't picked after the bets went down. The table panel shows the fingerprint, as it does for the deck.
 
-**Players (C4):** Roulette is you against the house, so it can run with one player. Your earlier rule for Blackjack and Hold'em is to wait for a second player; C4 asks whether Roulette follows that rule or can be played alone.
+**Players (C4, Big U: yes):** Roulette can be played alone (you against the house). Blackjack and Hold'em keep their rule: wait for a second real player (Hold'em still adds the bot as a third).
 
 **Code:** `engine.js` gets `rlNewRound`, `rlBet`, `rlClear`, `rlReady`, `rlSpin` and `rlSettle`, plus a pure `rlPay(bets, n)` that the tests check bet by bet. Like the other games, it runs through the tick loop and the `run()` commit in `handler.js`.
 
@@ -169,24 +172,27 @@
 ## PAL-0100-6: Guard rails
 
 - **Buy-in:** 5 shards to sit, as at the other tables. Top up between spins.
-- **Limits per spin** (the table's limit is the most you can have on the layout in one spin):
-  - 100 / 250 / no limit, as today;
-  - **C6 on the no-limit table:** at most 50 on any single number, so a straight-up win pays at most 1,750. A single hit stays a great story without wrecking the economy.
+- **Roulette is always no limit (C6, Big U):**
+  - there's no limit setting and no per-number cap;
+  - you can bet anything up to your stack (top up between spins), so a straight-up hit pays 35× whatever was on it;
+  - the 5.26% edge does the economy's work over time, and the daily in/out query below shows if a few big hits ever swing it.
+- Blackjack and Hold'em keep their 100 / 250 / no-limit settings.
 - **Server checks:**
   - no bets after "no more bets";
   - no bet bigger than your stack;
   - bets only on real spots (the client's grid is never trusted).
 - **Economy check:**
-  - a 1,000,000-spin simulation in the tests has to land within the expected edge (2.70% / 1.35%) to within 0.1%;
+  - a 1,000,000-spin simulation in the tests has to land within the expected edge (5.26%, and 7.89% on the top line) to within 0.1%;
   - the payout table is checked bet type by bet type against the table above.
 - **Watching it:** a short query in the STATUS file sums shards in and out per day at the roulette table, so we can see it isn't leaking.
 
 ## PAL-0100-7: Entry points
 
-- **The TABLES tab:**
+- **The TABLES tab becomes the casino's front door (C2):**
   - **ENTER THE CASINO:** hosts a casino room and drops you at the doors;
-  - **JOIN BY CODE;**
-  - the existing quick list (C2).
+  - **JOIN BY CODE** and a list of open casino rooms;
+  - your balance and the fair-play note.
+- The old quick list and sitting down from the menu are removed; anyone mid-hand at a menu table when the update lands is stood up and their stack goes home (the existing stale-table sweep).
 - **Open Games:** casino rooms show as "CASINO · n/6".
 - **Friends:** invites to a casino room work like raid invites.
 - **Music:** a new loop for the casino (lounge jazz) is optional. Until one is picked, the menu track plays.
@@ -197,7 +203,7 @@
 
 | Test | Checks |
 |---|---|
-| `roulette_engine` (no browser) | Every bet type pays right on every number. La partage. Edge over 1,000,000 spins. The hash matches the revealed number. Bets refused after the close and over the stack or limit. The single-number cap |
+| `roulette_engine` (no browser) | Every bet type pays right on all 38 pockets (0 and 00 included). Edge over 1,000,000 spins. The hash matches the revealed number. Bets refused after the close and over the stack. No cap on a bet within your stack |
 | `roulette_server` (no browser) | The handler with a fake database: two players bet, spin, settle. Conflict retries. Standing up mid-round returns your stack |
 | `casino_map` | The map renders at three sizes. Collision: every seat can be reached and no wall can be crossed. The SIT/STAND prompts. Screenshots in `out/casino_*.png` |
 | `casino_network` | Host and guest walk, sit at the same table and land at the same server table; the panel opens on both. Leaving stands you up |
@@ -214,19 +220,19 @@
 
 ---
 
-## Decisions for Big U (reply with the numbers)
+## Decisions (Big U, October 5)
 
-| # | Question | Proposal |
-|---|---|---|
-| C1 | Is the casino shared (other players walking around with you, a room of up to 6 like co-op), or does everyone walk it alone and just meet at the tables? | Shared room |
-| C2 | Keep the current quick TABLES list (sit down from the menu without walking), alongside the casino? | Yes, keep both |
-| C3 | Which wheel: European with la partage (2.7%, 1.35% on even-money bets), plain European (2.7%), or American (5.26%)? | European with la partage |
-| C4 | Can Roulette be played alone (it's you against the house), or wait for a second player like Blackjack and Hold'em? | Allow alone |
-| C5 | Full betting board (straight, split, street, corner, six line, dozens, columns, even-money), or a simple one (numbers, red/black, odd/even, high/low, dozens)? | Full board |
-| C6 | Cap on a single number at the no-limit table (proposed 50, so the biggest win is 1,750)? | Yes, 50 |
-| C7 | Betting window: 60 s, ending early when everyone has pressed SPIN? | Yes |
-| C8 | Dealers at each table (NPCs in vests)? Delgado could deal blackjack | Yes; Delgado deals blackjack |
-| C9 | Casino name on the marquee: THE GOLDEN STAKE, PALISADE PALACE, LUCKY FENCE, or your own? | Your call |
-| C10 | Slot machines: decoration only for now, or a playable slots game later? | Decoration now |
-| C11 | Weapons holstered and no damage anywhere in the casino? | Yes |
-| C12 | A roulette side bet like the Blackjack and Hold'em one (cases instead of shards)? | No; roulette already has long shots |
+| # | Question | Proposal | **Big U** |
+|---|---|---|---|
+| C1 | Shared casino (a room of up to 6) or everyone alone? | Shared | **Shared** |
+| C2 | Keep the quick TABLES list alongside the casino? | Keep both | **No: it has to feel real, you walk to a table to play** |
+| C3 | Which wheel? | European with la partage | **American, double zero** |
+| C4 | Roulette alone? | Allow alone | **Yes, alone if they want** |
+| C5 | Full or simple board? | Full | **Full board** (the top line included) |
+| C6 | Single-number cap at no limit? | 50 | **Roulette is always no limit** (no cap) |
+| C7 | 60 s betting window, early when all press SPIN? | Yes | **Yes, 60 s** |
+| C8 | Dealers? | NPCs, Delgado at blackjack | **Yes, 3D dealer models, built so they can be a case skin later** |
+| C9 | Casino name? | Your call | **THE PALISADE FALLS CASINO** |
+| C10 | Slots? | Decoration | **Decoration only** (cases already scratch that itch) |
+| C11 | Weapons in the casino? | Holstered | **No weapons, on the casino map only** |
+| C12 | Roulette side bet? | No | **No; keep the Blackjack and Hold'em side bets as they are** |
