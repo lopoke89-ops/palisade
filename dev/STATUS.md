@@ -15,7 +15,7 @@ Built from [the casino expansion work order](plans/casino-expansion-and-result-r
   - Database (03:00 UTC): the migration went in two parts. The MCP tool times out on statements needing confirmation (DROP, DELETE), so Big U ran those in the SQL editor. History row `20261006200000 v0110_casino_games`.
   - Backup: schema `backup_20261006` holds lockers, profiles and the casino tables as they were before the migration. Owner-only.
   - Function `tables` version 9 (03:17 UTC), byte-identical to the repo.
-  - Site: `main` at `29ad4c3` (pushed 03:20 UTC).
+  - Site: `main` at `29ad4c3` (pushed 03:20 UTC); live at 03:22 UTC (Pages run 84). The served `index.html` and `sw.js` are byte-identical to the build, and the footer reads v0.11.0.
 
 - **New games (server-run, whole shards, provably fair):**
   - **Baccarat:** 8-deck mini-baccarat from a persistent shoe. Banker bets go in 20s (pays 19:20), Tie 8:1. Each hand's cards check against fingerprints fixed when the shoe starts; the seed and the whole shoe come out when it retires.
