@@ -19,6 +19,7 @@ Built from [the casino expansion work order](plans/casino-expansion-and-result-r
 - **Relabelled v0.10.3 the same day, at Big U's request.** It first went out labelled v0.11.0; the commits up to `f97149f` still say so.
   - Renamed to match: the footer, the comments, the migration file (`20261006200000_v0103_casino_games.sql`, with its history row renamed), the plans, and `evidence/v0.10.3/`.
   - Nothing about the games changed.
+  - Live at 04:28 UTC (Pages run 85), together with the Plinko fix below; `tables` version 11.
 - **Fixed after the deploy: the Plinko ball froze mid-drop.**
   - The board's animation was tied to the view that drew it. The table's once-a-second poll brings a new view, and the board's HTML doesn't change mid-drop, so the canvas wasn't redrawn. The ball stopped within a second, then jumped to its pocket when the result showed.
   - It now draws from the latest view.
