@@ -22,9 +22,10 @@ const PORT = process.env.PORT || 8080;
     window.dummy = () => { const d = P.spawnEnemyAt('rifle', P.N - .5, .5); d.speed = 0; d.hp = d.max = 1e9; d.cd = 1e9; return d };   // keeps a raid going
   });
   // 1. layouts: for every map and size the stake, piles and spawns sit on usable ground, and every spawn reaches the stake
+  //    (the casino has no stake, piles or raiders by design since v0.10.0; casino_map checks its floor and every seat)
   out.layouts = await E(() => {
     const P = __pal, r = {};
-    for (const map of Object.keys(P.MAPS)) for (const size of ['std', 'xl']) {
+    for (const map of Object.keys(P.MAPS).filter(m => !P.MAPS[m].casino)) for (const size of ['std', 'xl']) {
       run(map, size); const N = P.N, L = P.game.lay, bad = [], seen = new Set();
       const put = (i, j, what) => { const k = idx(i, j); if (i < 0 || j < 0 || i >= N || j >= N) bad.push(what + ' off map'); if (seen.has(k)) bad.push(what + ' overlaps'); seen.add(k); if (P.terr[k] !== 0 && P.terr[k] !== 3) bad.push(what + ' on terrain ' + P.terr[k]) };
       put(P.core.i, P.core.j, 'stake'); for (const n of L.nodes) put(n.i, n.j, 'node'); for (const [t] of L.ruins) for (const [i, j] of t) put(i, j, 'ruin');
@@ -42,7 +43,7 @@ const PORT = process.env.PORT || 8080;
   // every spawn tile reaches the stake (a walk along the flow field ends at the stake)
   out.reach = await E(() => {
     const P = __pal, res = {};
-    for (const map of Object.keys(P.MAPS)) for (const size of ['std', 'xl']) {
+    for (const map of Object.keys(P.MAPS).filter(m => !P.MAPS[m].casino)) for (const size of ['std', 'xl']) {
       run(map, size); const L = P.game.lay; let bad = 0; P.walls.fill(null); P.update(1 / 30); for (let i = 0; i < 12; i++) P.update(.05);
       const step = P.N > 24 ? 6 : 1;   // v0.9.7: the city's edges are 230 tiles; every 6th keeps the crowd small enough to fit round the stake
       for (const s of L.spawns) s.tiles.forEach(([i, j], n) => { if (n % step) return; const e = P.spawnEnemyAt('rifle', i + .5, j + .5); e.speed = 6; });
@@ -131,7 +132,7 @@ const PORT = process.env.PORT || 8080;
   });
   assert.deepEqual(out.raiders, { shieldFront: true, shieldBack: true, medicHeals: true, marked: true, woodBurns: true, groundFire: true });
   // 7. per-map boss order and the October Butcher (name, look, two Halloween Cases)
-  out.bosses = await E(() => { const P = __pal, o = {}; for (const m of Object.keys(P.MAPS)) { run(m, 'std', 'endless'); o[m] = [5, 10, 15, 20].map(w => P.bossOf(w)); P.toMenu() } return o });
+  out.bosses = await E(() => { const P = __pal, o = {}; for (const m of Object.keys(P.MAPS).filter(m => !P.MAPS[m].casino)) { run(m, 'std', 'endless'); o[m] = [5, 10, 15, 20].map(w => P.bossOf(w)); P.toMenu() } return o });
   assert.deepEqual(out.bosses, { yard: ['butcher', 'demolisher', 'storm', 'butcher'], river: ['ferryman', 'butcher', 'storm', 'ferryman'], quarry: ['foreman', 'demolisher', 'storm', 'foreman'], frost: ['rime', 'storm', 'rime', 'rime'], city: ['butcher', 'demolisher', 'storm', 'ferryman'] });   // city: v0.9.7, fallback order (Black Out draws bosses at random)   // frost: v0.9.6.0 Frostpeak
   out.oct = await E(() => {
     const P = __pal; P.locker.bag = {}; run('yard', 'std', '5'); P.game.oct = true;   // the host's October flag

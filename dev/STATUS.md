@@ -1,11 +1,60 @@
 # PALISADE project status
 
-Updated October 5, 2026. This is the current status record for the clone. The older project handoff and v0.9.3 hardening prompt describe a superseded release order.
+Updated October 6, 2026. This is the current status record for the clone. The older project handoff and v0.9.3 hardening prompt describe a superseded release order.
 
 For a consolidated list of what remains from those documents, see the [current project blueprint](PROJECT_BLUEPRINT_2026-09-29.md).
 Big U's latest completed local scope is recorded in the [presentation prompt](plans/backgrounds-and-character-animation-prompt.md). The earlier [cosmetic and hardening prompt](plans/next-cosmetics-and-hardening-prompt.md) remains the record of v0.9.3.2 and its deferred work.
 
 The Claude audit URL still requires sign-in in the available browser session. Big U supplied an exported copy at `D:\downloads\Untitled.md`, which was read on September 29. Its newest Progress entry is v0.9.3, so its release claims are superseded by the verified v0.9.3.3 release below. The external artifact itself was not edited here.
+
+## v0.11.0: craps, baccarat, slots, Plinko, and a result review for every game (candidate, not deployed)
+
+Built from [the casino expansion work order](plans/casino-expansion-and-result-review-work-order.md). Rules, paytables and exact math are in [casino-games-v0110-rules-and-math.md](plans/casino-games-v0110-rules-and-math.md); the order of the live steps, compatibility and rollback are in [v0.11.0-deploy-and-rollback.md](plans/v0.11.0-deploy-and-rollback.md). **Nothing is live:** the migration, the `tables` function and the site all wait for Big U's go-ahead. Branch `claude/nice-brahmagupta-dm3mx6`.
+
+- **New games (server-run, whole shards, provably fair):**
+  - **Baccarat:** 8-deck mini-baccarat from a persistent shoe. Banker bets go in 20s (pays 19:20), Tie 8:1. Each hand's cards check against fingerprints fixed when the shoe starts; the seed and the whole shoe come out when it retires.
+  - **Craps:** the full first-release bet set, with persistent bets and working toggles, 3-4-5x odds, a shooter and the dealer. Bets that must stay when you leave are rolled out by the dealer.
+  - **16 playable slot cabinets:** PALISADE RUN, returning 96.025% exactly.
+  - **One Plinko board:** returns 96.006% exactly.
+- **Result review, every game:**
+  - The server holds the result from the final reveal: 8 s for cards, 6 s for dice and roulette, 3 s for slots and Plinko. Nothing (READY included) skips it. Blackjack no longer clears in the same request (`PAUSE_MS` was 0).
+  - The receipt shows WIN / LOSS / PUSH / PARTIAL RESULT in words, BET / RETURNED / NET, the itemized bets (commission, side bet, insurance), what decided it ("Your 13 lost to the dealer's 17", Hold'em pots with the five cards, uncontested said plainly), and balance / table stack / on the felt separately.
+  - LAST RESULT shows the receipt again after the next round opens, after you stand up, and after you come back.
+- **Money safety:**
+  - Every money move carries an operation id, saved in the same transaction (`casino_ops`). A repeat or a retry after a lost answer returns the first result; the same id with a changed request is refused.
+  - One seat per account is enforced inside the transaction (`casino_seats`).
+  - Stations (`room, game, station`) keep sixteen cabinets apart.
+  - The books cover the new games.
+- **Floor:**
+  - Craps by the cashier and baccarat mid-floor (dealers Duke and Lena); Plinko on the east side; every slot cabinet playable.
+  - Seat codes come from one registry: v0.10.0 codes unchanged, craps 41-46, baccarat 51-56, machines 101-117.
+  - Protocol `yard-29`.
+  - Fixed on the way: the host's input check capped seat codes at 99, which would have dropped every message from a guest at a machine.
+- **Tests:**
+  - New: `casino_games_engine`, `casino_server`, `casino_games_ui`.
+  - Extended: `tables_ui` (review receipts), `casino_map` (every seat and machine reachable; registry codes; a guest claiming a machine), `restore_schema` (the v0.11.0 casino restores).
+  - `schema.sql` regenerated through v0.11.0 with `refresh-restore.py` (it had stopped at October 1).
+  - Regression, all passing: `@tables @casino @music @net csp restore_schema @smoke` (40/40), plus `accounts friends menu_audit index_page`.
+  - The two baseline failures from `ca90257` were stale test expectations, now fixed: `v090` looped over the casino map (no stake by design since v0.10.0), and `controller` expected the guest input fields from before the v0.10.0 `st` field.
+  - The full default suite was not run.
+- **Performance:** same machine (Xeon 2.1 GHz x4, headless Chromium, software rendering), `casino_perf.js`.
+
+  | Scene | v0.10.1 | v0.11.0 |
+  |---|---|---|
+  | Frame time, median / p95 | 16.7 / 16.7-16.8 ms in every scene (the 60 fps cap) | the same |
+  | JS heap | 8.4-9.5 MB | 8.3-10.2 MB |
+  | Requests, standing | 0/min | 0/min |
+  | Requests, seated at a table | 60/min | 60/min |
+  | Requests, slots or Plinko played non-stop | — | about 72/min |
+
+  This container can't show differences under the 60 fps cap; a physical phone check is still to do before claiming phone performance.
+- **Evidence:** `evidence/v0.11.0/` (screenshots at 1366x820, 390x844 and 844x390; perf runs; test outputs).
+- **Known limits:**
+  - The unattended craps roll-out runs on the existing request-triggered sweep (any casino lobby request; up to 60 rolls a batch), not a scheduler.
+  - Other players' slot cabinets show a busy glow, not their reels.
+  - Tested with three players across stations (host and two phones), not six.
+  - Gamepad navigation of the new sheets relies on the existing button navigation (no new gamepad test).
+  - The PUBLIC CASINOS list, more machine themes and Plinko risk settings remain follow-ups.
 
 ## v0.10.1: the casino's own music
 

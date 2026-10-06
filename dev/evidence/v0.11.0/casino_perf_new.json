@@ -1,0 +1,51 @@
+{
+ "label": "new",
+ "machine": "Intel(R) Xeon(R) Processor @ 2.10GHz x4, headless Chromium (software rendering)",
+ "scenes": [
+  {
+   "name": "standing",
+   "frames": 600,
+   "median": 16.7,
+   "p95": 16.8,
+   "max": 16.8,
+   "heapMB": 10,
+   "reqPerMin": 0
+  },
+  {
+   "name": "walking",
+   "frames": 599,
+   "median": 16.7,
+   "p95": 16.8,
+   "max": 33.3,
+   "heapMB": 8.6,
+   "reqPerMin": 12
+  },
+  {
+   "name": "blackjack sheet",
+   "frames": 712,
+   "median": 16.7,
+   "p95": 16.7,
+   "max": 66.7,
+   "heapMB": 8.8,
+   "reqPerMin": 59.9
+  },
+  {
+   "name": "slots spinning",
+   "frames": 1193,
+   "median": 16.7,
+   "p95": 16.7,
+   "max": 16.8,
+   "heapMB": 10.2,
+   "reqPerMin": 72.3
+  },
+  {
+   "name": "plinko dropping",
+   "frames": 1249,
+   "median": 16.7,
+   "p95": 16.7,
+   "max": 33.4,
+   "heapMB": 8.3,
+   "reqPerMin": 71.8
+  }
+ ]
+}

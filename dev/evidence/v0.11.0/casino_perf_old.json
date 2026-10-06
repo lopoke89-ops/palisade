@@ -1,0 +1,33 @@
+{
+ "label": "old",
+ "machine": "Intel(R) Xeon(R) Processor @ 2.10GHz x4, headless Chromium (software rendering)",
+ "scenes": [
+  {
+   "name": "standing",
+   "frames": 593,
+   "median": 16.7,
+   "p95": 16.7,
+   "max": 100,
+   "heapMB": 8.8,
+   "reqPerMin": 0
+  },
+  {
+   "name": "walking",
+   "frames": 600,
+   "median": 16.7,
+   "p95": 16.8,
+   "max": 16.8,
+   "heapMB": 8.4,
+   "reqPerMin": 11.9
+  },
+  {
+   "name": "blackjack sheet",
+   "frames": 709,
+   "median": 16.7,
+   "p95": 16.8,
+   "max": 66.6,
+   "heapMB": 9.5,
+   "reqPerMin": 59.9
+  }
+ ]
+}

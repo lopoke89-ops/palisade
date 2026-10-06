@@ -50,7 +50,7 @@ const TB_RULES=`<h4>THE HOUSE</h4><p>Every table is run by the server: it shuffl
 <li><b>Side bets:</b> 1 shard a hand.</li>
 <li><b>Baccarat</b> (8 decks): Banker 1.06% (1:1 less 5% commission, so Banker bets go in 20s), Player 1.24%, Tie 14.36% (8:1).</li>
 <li><b>Craps:</b> Pass and Come 1.41%, Don't Pass and Don't Come 1.40% (bar 12), odds 0%, Place 6/8 1.52%, Place 5/9 4.00%, Place 4/10 6.67%, Field 5.56%, Hard 6/8 9.09%, Hard 4/10 11.11%, Any Craps 11.11%, 3 and 11 11.11%, 2 and 12 13.89%, Any Seven 16.67%.</li>
-<li><b>Slots</b> (PALISADE RUN, math sl-1): returns 96.03% of what's bet over every one of its 8,000 stop combinations; a winning line 37.5% of spins; the top award is 250x.</li>
+<li><b>Slots</b> (PALISADE RUN, math sl-1): returns 96.03% of what's bet over every one of its 8,000 stop combinations. The line pays on 37.5% of spins, but only 16.3% pay more than the stake (21.25% just give it back); the top award is 250x, 1 spin in 8,000.</li>
 <li><b>Plinko</b> (math pk-1): returns 96.01% (all 4,096 paths); a ball pays 0.5x to 30x.</li></ul>
 <p>Slots and Plinko are this casino's own games (no real casino's machines or odds). The house's share is a project choice, kept under 100%.</p>
 <p>What the house keeps is gone: it isn't paid to anyone. Shards can never be bought or cashed out.</p>

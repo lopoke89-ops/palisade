@@ -147,7 +147,7 @@ const FAKE = (id) => {
   await hold(G, 7, false); await axes(G, [0, 0, 0, 0]);
   out.sent = await G.evaluate(() => [...new Set(window.__sent)].slice(-3));
   assert.equal(out.online.fire, true, 'the host sees the guest pulling the trigger'); assert.ok(out.online.aim.x < -.5, 'the host sees the guest aiming left');
-  assert.ok(out.sent.some(x => x.startsWith('a,ax,ay,f,n,t,tp,x,y|a0|f1')), 'same message fields as before, trigger mode');
+  assert.ok(out.sent.some(x => x.startsWith('a,ax,ay,f,n,st,t,tp,x,y|a0|f1')), 'same message fields as before, trigger mode');
   await H.close(); await G.close();
 
   console.log(JSON.stringify(out, null, 1));
