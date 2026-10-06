@@ -136,6 +136,7 @@ blackout_hud           hud blackout
 roulette_engine        node tables
 fair_play              node tables server
 tables_engine          node tables
+casino_games_engine    node tables casino
 tables_server          node tables server
 tables_ui              tables casino
 casino_map             casino net

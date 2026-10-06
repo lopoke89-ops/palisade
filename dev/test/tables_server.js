@@ -6,7 +6,7 @@
 // commit-and-rerun check on every logged hand, hand history, and the daily books check (balanced, then a planted error).
 // node tables_server.js
 const {PGlite}=require('@electric-sql/pglite'),{base}=require('./winter-db'),fs=require('node:fs'),assert=require('node:assert/strict');
-const MIG=__dirname+'/../supabase/migrations/20261004200000_v098_tables.sql',MIG2=__dirname+'/../supabase/migrations/20261005200000_v0100_casino.sql';
+const MIG=__dirname+'/../supabase/migrations/20261004200000_v098_tables.sql',MIG2=__dirname+'/../supabase/migrations/20261005200000_v0100_casino.sql',MIG3=__dirname+'/../supabase/migrations/20261006200000_v0110_casino_games.sql';
 (async()=>{const H=await import('../supabase/functions/tables/handler.js'),E=await import('../supabase/functions/tables/engine.js');
  const db=new PGlite(),checks=[],ok=(n,b)=>{assert.ok(b,n);checks.push(n)};
  await db.exec(base);await db.exec(`do $$begin if not exists(select 1 from pg_roles where rolname='service_role') then create role service_role; end if; end$$;alter role service_role bypassrls;
@@ -15,6 +15,7 @@ const MIG=__dirname+'/../supabase/migrations/20261004200000_v098_tables.sql',MIG
  const sql=fs.readFileSync(MIG,'utf8');ok('no delete in the migration',!/delete/i.test(sql));
  await db.exec(sql);await db.exec(sql);ok('migration applies twice',true);
  const sql2=fs.readFileSync(MIG2,'utf8');ok('no delete in the v0.10.0 migration',!/delete/i.test(sql2));await db.exec(sql2);await db.exec(sql2);ok('the v0.10.0 migration applies twice',true);
+ const sql3=fs.readFileSync(MIG3,'utf8');ok('v0.11.0: the only deletes are seat rows',(sql3.match(/delete from public\.(\w+)/g)||[]).every(x=>/casino_seats/.test(x)));await db.exec(sql3);await db.exec(sql3);ok('the v0.11.0 migration applies twice',true);
  // casino rooms (the second v0.10.0 file: Open Games and friend invites accept length and map 'casino')
  {await db.exec(`create table if not exists lobbies(host_id uuid primary key,code text,name text,mode text,length text check (length = any (array['5','10','endless','blitz','campaign','blackout'])),diff text,players int,in_game boolean,proto text,updated_at timestamptz default now());
    create table if not exists private.room_sessions(host_id uuid primary key,incarnation uuid,code text,proto text,mode text,length text,map text,chapter int default 0,players int,locked boolean,updated_at timestamptz default now());
@@ -27,19 +28,22 @@ const MIG=__dirname+'/../supabase/migrations/20261004200000_v098_tables.sql',MIG
  const A='a0000000-0000-4000-8000-00000000000a',B='b0000000-0000-4000-8000-00000000000b',C='c0000000-0000-4000-8000-00000000000c',G='d0000000-0000-4000-8000-00000000000d';
  await db.exec(`insert into lockers(user_id,shards) values('${A}',100),('${B}',40),('${C}',3),('${G}',50);insert into profiles(id,username) values('${A}','BigU'),('${B}','Rab'),('${C}','Broke');`);
  const svc=async(q,p)=>{await db.exec('set role service_role');try{return(await db.query(q,p)).rows}finally{await db.exec('reset role')}};
+ const failed=m=>/insufficient/.test(m)?{error:'insufficient'}:/seated elsewhere/.test(m)?{error:'seated'}:/duplicate op/.test(m)?{dup:true}:{error:m};
  let clock=1e12;const T={a:{id:A,anon:false},b:{id:B,anon:false},c:{id:C,anon:false},g:{id:G,anon:true}};
  const D={now:()=>clock,auth:async t=>T[t]||null,
   name:async u=>(await svc('select username from profiles where id=$1',[u]))[0]?.username,
   balance:async u=>(await svc('select shards from lockers where user_id=$1',[u]))[0]?.shards??0,
   load:async id=>(await svc('select id,code,game,st,ver,open from casino_tables where id=$1',[id]))[0],
-  byRoom:async(room,game)=>(await svc('select id,code from casino_tables where room=$1 and game=$2 and open',[room,game]))[0],
-  seatOf:async u=>(await svc('select id,code,game,room from casino_tables where open and humans @> array[$1::uuid]',[u]))[0]||null,
-  history:async(u,n)=>svc(`select game,hand_no,hash,salt,deck,result,created_at from casino_hands where result->'players' @> $1::jsonb order by id desc limit $2`,[JSON.stringify([{uid:u}]),n]),
+  byRoom:async(room,game,station)=>(await svc('select id,code from casino_tables where room=$1 and game=$2 and station=$3 and open',[room,game,station||'']))[0],
+  seatOf:async u=>(await svc('select id,code,game,room,station from casino_tables where open and humans @> array[$1::uuid]',[u]))[0]||null,
+  opGet:async(u,o)=>(await svc('select req,table_id,res from casino_ops where user_id=$1 and op_id=$2',[u,o]))[0]||null,
+  history:async(u,n)=>svc(`select id,game,hand_no,hash,salt,deck,result,created_at from casino_hands where result->'players' @> $1::jsonb order by id desc limit $2`,[JSON.stringify([{uid:u}]),n]),
   books:async()=>svc('select public.casino_books_run()'),
   stale:async ms=>svc(`select id from casino_tables where open and updated_at < now()-($1||' milliseconds')::interval`,[String(ms)]),
   botLeft:async()=>(await svc('select public.casino_bot_left() v'))[0].v,
-  commit:async a=>{try{return(await svc('select public.casino_commit($1,$2,$3,$4,$5,$6,$7) r',[a.id,a.ver,JSON.stringify(a.st),a.humans,a.open,JSON.stringify(a.ops),JSON.stringify(a.hands)]))[0].r}catch(e){return{error:/insufficient/.test(e.message)?'insufficient':e.message}}},
-  create:async a=>{try{return(await svc('select public.casino_open($1,$2,$3,$4,$5,$6) r',[a.code,a.game,JSON.stringify(a.st),a.humans,JSON.stringify(a.ops),a.room]))[0].r}catch(e){return{error:/insufficient/.test(e.message)?'insufficient':e.message}}}};
+  // the edge function's calls (index.ts): casino_step / casino_start, and what a refusal means
+  commit:async a=>{try{return(await svc('select public.casino_step($1,$2,$3,$4,$5,$6,$7,$8) r',[a.id,a.ver,JSON.stringify(a.st),a.humans,a.open,JSON.stringify(a.ops),JSON.stringify(a.hands),a.op?JSON.stringify(a.op):null]))[0].r}catch(e){return failed(e.message)}},
+  create:async a=>{try{return(await svc('select public.casino_start($1,$2,$3,$4,$5,$6,$7,$8) r',[a.code,a.game,JSON.stringify(a.st),a.humans,JSON.stringify(a.ops),a.room,a.station||'',a.op?JSON.stringify(a.op):null]))[0].r}catch(e){return failed(e.message)}}};
  const call=(who,body)=>H.handle(body,who,D),bal=async u=>D.balance(u);
  // who may play
  ok('no token: refused',(await call('x',{op:'lobby'})).status===401);
@@ -69,7 +73,7 @@ const MIG=__dirname+'/../supabase/migrations/20261004200000_v098_tables.sql',MIG
    if(v.insure)await call(who,{op:'insure',id,yes:false});
    if(v.myTurn){const p=v.players.find(p=>p.seat===v.me),hh=p.hands[v.turn.h];await call(who,{op:'move',id,a:hh.total<17?'hit':'stand'})}
    if(v.last&&v.last.no>hands)hands=v.last.no}
-  if(k%10===0)clock+=E.PAUSE_MS}
+  if(k%10===0)clock+=E.REVIEW.bj}
  if(hands<6)console.log('STUCK',hands,JSON.stringify((await call('a',{op:'state',id})).body).slice(0,600)); ok('hands are dealt and settled automatically',hands>=6);
  const logged=await svc('select hash,salt,deck,hand_no from casino_hands where table_id=$1 order by id',[id]);
  ok('every hand is logged',logged.length>=6);
