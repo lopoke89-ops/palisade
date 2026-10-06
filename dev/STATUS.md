@@ -7,9 +7,15 @@ Big U's latest completed local scope is recorded in the [presentation prompt](pl
 
 The Claude audit URL still requires sign-in in the available browser session. Big U supplied an exported copy at `D:\downloads\Untitled.md`, which was read on September 29. Its newest Progress entry is v0.9.3, so its release claims are superseded by the verified v0.9.3.3 release below. The external artifact itself was not edited here.
 
-## v0.11.0: craps, baccarat, slots, Plinko, and a result review for every game (candidate, not deployed)
+## v0.11.0: craps, baccarat, slots, Plinko, and a result review for every game (deployed October 6)
 
-Built from [the casino expansion work order](plans/casino-expansion-and-result-review-work-order.md). Rules, paytables and exact math are in [casino-games-v0110-rules-and-math.md](plans/casino-games-v0110-rules-and-math.md); the order of the live steps, compatibility and rollback are in [v0.11.0-deploy-and-rollback.md](plans/v0.11.0-deploy-and-rollback.md). **Nothing is live:** the migration, the `tables` function and the site all wait for Big U's go-ahead. Branch `claude/nice-brahmagupta-dm3mx6`.
+Built from [the casino expansion work order](plans/casino-expansion-and-result-review-work-order.md). Rules, paytables and exact math are in [casino-games-v0110-rules-and-math.md](plans/casino-games-v0110-rules-and-math.md); the order of the live steps, compatibility and rollback are in [v0.11.0-deploy-and-rollback.md](plans/v0.11.0-deploy-and-rollback.md).
+
+- **Deployed October 6, with Big U's go-ahead** (record in the deploy plan):
+  - Database (03:00 UTC): the migration went in two parts. The MCP tool times out on statements needing confirmation (DROP, DELETE), so Big U ran those in the SQL editor. History row `20261006200000 v0110_casino_games`.
+  - Backup: schema `backup_20261006` holds lockers, profiles and the casino tables as they were before the migration. Owner-only.
+  - Function `tables` version 9 (03:17 UTC), byte-identical to the repo.
+  - Site: `main` at `29ad4c3` (pushed 03:20 UTC).
 
 - **New games (server-run, whole shards, provably fair):**
   - **Baccarat:** 8-deck mini-baccarat from a persistent shoe. Banker bets go in 20s (pays 19:20), Tie 8:1. Each hand's cards check against fingerprints fixed when the shoe starts; the seed and the whole shoe come out when it retires.
