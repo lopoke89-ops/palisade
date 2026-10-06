@@ -1,5 +1,5 @@
 {
- "room": "HBBZ",
+ "room": "E2VT",
  "baBets": {
   "B": 40,
   "P": 5
@@ -8,38 +8,120 @@
   "verdict": "PARTIAL RESULT",
   "nums": [
    "45◆",
-   "10◆",
-   "−35◆"
+   "78◆",
+   "+33◆"
   ],
-  "text": "PARTIAL RESULTBACCARAT · round 1BET45◆RETURNED10◆NET−35◆PLAYER5◆ → 10◆BANKER40◆ → 0◆PLAYER 6 A♣5♠BANKER 0 4♦9♠7♣Player 6 beats Banker 0Balance 1895◆ · at the table 70◆ · on the felt 0◆Result on screen for 8s more · then betting opens · HIDE keeps your seat · STAND UP takes your shards home"
+  "text": "PARTIAL RESULTBACCARAT · round 1BET45◆RETURNED78◆NET+33◆PLAYER5◆ → 0◆BANKER40◆ → 78◆ (commission 2◆)Banker commission 2◆ (5% of the Banker win)PLAYER 4 4♦K♦10♥BANKER 6 6♦10♣Banker 6 beats Player 4Balance 1895◆ · at the table 138◆ · on the felt 0◆Result on screen for 8s more · then betting opens · HIDE keeps your seat · STAND UP takes your shards home"
  },
- "baReviewMs": 7535,
+ "baReviewMs": 7709,
  "crapsFirst": {
-  "verdict": "LOSS",
+  "verdict": "NO DECISION",
   "nums": [
-   "10◆",
    "0◆",
-   "−10◆"
+   "0◆",
+   "0◆"
   ],
-  "text": "LOSSCRAPS · round 1BET10◆RETURNED0◆NET−10◆PASS LINE10◆ → 0◆ · loseTHE DICE  33: craps · point off → offBalance 1860◆ · at the table 95◆ · on the felt 0◆Result on screen for 6s more · then betting opens · HIDE keeps your seat · STAND UP takes your shards home"
+  "text": "NO DECISIONCRAPS · round 1BET0◆RETURNED0◆NET0◆THE DICE  8Point is 8 · point off → now 8Still working: PASS LINE 10◆Balance 1928◆ · at the table 95◆ · on the felt 10◆Result on screen for 6s more · then betting opens · HIDE keeps your seat · STAND UP takes your shards home"
  },
  "craps": {
-  "rolls": 2,
-  "point": 4
+  "rolls": 1,
+  "point": 8
  },
  "crapsPendingAfterStand": true,
  "slots": {
-  "verdict": "LOSS",
+  "verdict": "PUSH",
   "nums": [
    "5◆",
-   "0◆",
-   "−5◆"
+   "5◆",
+   "0◆"
   ],
-  "text": "LOSSSLOTS · round 1BET5◆RETURNED0◆NET−5◆◆WALLNADEHELMWALLHELMWALLNo win on the lineBalance 1935◆ · at the table 25◆ · on the felt 0◆Result on screen for 3s more · HIDE keeps your seat · STAND UP takes your shards home"
+  "text": "PUSHSLOTS · round 1BET5◆RETURNED5◆NET0◆HELM◆WALLCORENADE◆NADEHELMONE SHARD (STAKE BACK) pays 1xBalance 1993◆ · at the table 30◆ · on the felt 0◆Result on screen for 3s more · HIDE keeps your seat · STAND UP takes your shards home"
  },
  "retry": {
-  "id": "o2h35285v090t236n2d0g3a"
+  "id": "o6z4g4u373f2u3w4c072o2c"
  },
+ "plinkoTrack": [
+  [
+   3,
+   17
+  ],
+  [
+   164,
+   25
+  ],
+  [
+   315,
+   37
+  ],
+  [
+   465,
+   50
+  ],
+  [
+   616,
+   58
+  ],
+  [
+   767,
+   75
+  ],
+  [
+   918,
+   81
+  ],
+  [
+   1071,
+   94
+  ],
+  [
+   1230,
+   107
+  ],
+  [
+   1381,
+   115
+  ],
+  [
+   1532,
+   132
+  ],
+  [
+   1683,
+   137
+  ],
+  [
+   1834,
+   151
+  ],
+  [
+   1985,
+   161
+  ],
+  [
+   2136,
+   171
+  ],
+  [
+   2297,
+   189
+  ],
+  [
+   2448,
+   194
+  ],
+  [
+   2599,
+   209
+  ],
+  [
+   2750,
+   218
+  ],
+  [
+   2901,
+   229
+  ]
+ ],
  "plinko": {
   "verdict": "LOSS",
   "nums": [
@@ -47,22 +129,22 @@
    "12◆",
    "−8◆"
   ],
-  "text": "LOSSPLINKO · round 1BET20◆RETURNED12◆NET−8◆Pocket 8 of 13 pays 0.6xBalance 1925◆ · at the table 22◆ · on the felt 0◆Result on screen for 3s more · HIDE keeps your seat · STAND UP takes your shards home"
+  "text": "LOSSPLINKO · round 1BET20◆RETURNED12◆NET−8◆Pocket 6 of 13 pays 0.6xBalance 1988◆ · at the table 22◆ · on the felt 0◆Result on screen for 3s more · HIDE keeps your seat · STAND UP takes your shards home"
  },
  "history": [
-  "PLINKO #1: ✓ FAIR. The seed matches its fingerprint and the ball reruns to pocket 8.",
+  "PLINKO #1: ✓ FAIR. The seed matches its fingerprint and the ball reruns to pocket 6.",
   "SLOTS #2: ✓ FAIR. The seed matches its fingerprint and the reels rerun to the same stops.",
   "SLOTS #1: ✓ FAIR. The seed matches its fingerprint and the reels rerun to the same stops.",
-  "CRAPS #8: ✓ FAIR. The seed matches its fingerprint and the roll reruns to 3 and 1.",
-  "CRAPS #7: ✓ FAIR. The seed matches its fingerprint and the roll reruns to 5 and 3.",
-  "CRAPS #6: ✓ FAIR. The seed matches its fingerprint and the roll reruns to 1 and 5.",
-  "CRAPS #5: ✓ FAIR. The seed matches its fingerprint and the roll reruns to 5 and 3.",
+  "CRAPS #8: ✓ FAIR. The seed matches its fingerprint and the roll reruns to 2 and 5.",
+  "CRAPS #7: ✓ FAIR. The seed matches its fingerprint and the roll reruns to 5 and 5.",
+  "CRAPS #6: ✓ FAIR. The seed matches its fingerprint and the roll reruns to 1 and 3.",
+  "CRAPS #5: ✓ FAIR. The seed matches its fingerprint and the roll reruns to 2 and 3.",
   "CRAPS #4: ✓ FAIR. The seed matches its fingerprint and the roll reruns to 5 and 4.",
-  "CRAPS #3: ✓ FAIR. The seed matches its fingerprint and the roll reruns to 6 and 3.",
-  "CRAPS #2: ✓ FAIR. The seed matches its fingerprint and the roll reruns to 1 and 3.",
-  "CRAPS #1: ✓ FAIR. The seed matches its fingerprint and the roll reruns to 2 and 1.",
-  "BACCARAT SHOE #1: ✓ FAIR. The seed matches its fingerprint, the whole shoe reruns card for card (9 dealt), and its card fingerprints build the root every hand was checked against.",
-  "BACCARAT #1: ✓ FAIR. The 5 cards of this hand each match the fingerprint fixed when the shoe started (cards 4-8 of 416). The shoe is finished: its own row reruns the whole shuffle."
+  "CRAPS #3: ✓ FAIR. The seed matches its fingerprint and the roll reruns to 5 and 1.",
+  "CRAPS #2: ✓ FAIR. The seed matches its fingerprint and the roll reruns to 3 and 6.",
+  "CRAPS #1: ✓ FAIR. The seed matches its fingerprint and the roll reruns to 2 and 6.",
+  "BACCARAT SHOE #1: ✓ FAIR. The seed matches its fingerprint, the whole shoe reruns card for card (16 dealt), and its card fingerprints build the root every hand was checked against.",
+  "BACCARAT #1: ✓ FAIR. The 5 cards of this hand each match the fingerprint fixed when the shoe started (cards 11-15 of 416). The shoe is finished: its own row reruns the whole shuffle."
  ],
  "guestSlots": {
   "verdict": "LOSS",
@@ -71,7 +153,7 @@
    "0◆",
    "−1◆"
   ],
-  "text": "LOSSSLOTS · round 1BET1◆RETURNED0◆NET−1◆WALLCORENADEHELMWALL◆◆No win on the lineBalance 395◆ · at the table 4◆ · on the felt 0◆Result on screen for 3s more · HIDE keeps your seat · STAND UP takes your shards home"
+  "text": "LOSSSLOTS · round 1BET1◆RETURNED0◆NET−1◆◆◆WALLNADENADE◆No win on the lineBalance 395◆ · at the table 4◆ · on the felt 0◆Result on screen for 3s more · HIDE keeps your seat · STAND UP takes your shards home"
  },
  "twoCabinets": [
   "s4"

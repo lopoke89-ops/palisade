@@ -23,6 +23,8 @@ Built from [the casino expansion work order](plans/casino-expansion-and-result-r
   - The board's animation was tied to the view that drew it. The table's once-a-second poll brings a new view, and the board's HTML doesn't change mid-drop, so the canvas wasn't redrawn. The ball stopped within a second, then jumped to its pocket when the result showed.
   - It now draws from the latest view.
   - `casino_games_ui` tracks the ball on the canvas through the drop. It reproduced the freeze before the fix (stuck at the same height from 0.9 s to 2.9 s) and passes after it.
+  - Regression after both changes: 45 of 46 passed (`@tables @casino @music @net csp restore_schema @smoke accounts friends menu_audit index_page v090 controller`).
+  - The one failure, `blackout_network` (a raider spawned next to the guest isn't on the guest's screen 800 ms later: `near: false`), is intermittent and not from this release. Alone it failed 1 in 3 here, and 1 in 6 on v0.10.1 (`ca90257`) with the same assertion. Not yet root-caused.
 
 - **New games (server-run, whole shards, provably fair):**
   - **Baccarat:** 8-deck mini-baccarat from a persistent shoe. Banker bets go in 20s (pays 19:20), Tie 8:1. Each hand's cards check against fingerprints fixed when the shoe starts; the seed and the whole shoe come out when it retires.
