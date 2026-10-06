@@ -59,7 +59,7 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
   await H.waitForTimeout(400); out.guestSeesOwn = await G.evaluate(() => __pal.player.seat); assert.equal(out.guestSeesOwn, 12);
   out.hostSeenByGuest = await G.evaluate(() => [...__pal.players.values()].find(p => p.id === 'host').seat); assert.equal(out.hostSeenByGuest, 11);
   void rx; void ry;
-  // v0.11.0: a machine is a seat too: the guest takes slot cabinet 3 (code 103) from in front of it; a made-up code is refused
+  // v0.10.3: a machine is a seat too: the guest takes slot cabinet 3 (code 103) from in front of it; a made-up code is refused
   { const m = await H.evaluate(() => __pal.CAS.machines[10]); await gAt(bx + .3, by + .3, 0); await walk(2.2, 6.6); await walk(m.stand[0] + .1, m.stand[1] + .2); await gAt(m.stand[0] + .1, m.stand[1] + .2, m.code);   // around the blackjack table to cabinet 11 on the west wall
     assert.equal(await gSeat(), m.code, 'the cabinet it stands at'); await gAt(m.stand[0], m.stand[1], 0); await gAt(m.stand[0], m.stand[1], 999); assert.equal(await gSeat(), 0, 'a seat code that isn\'t in the registry is refused');
     await gAt(m.stand[0], m.stand[1], 0); await walk(2.2, 6.6); await walk(bx + .3, by + .3) }

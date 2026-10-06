@@ -76,7 +76,7 @@ const Q='peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1&cloud=1';
   if(!moved){const v=await V(host);if(v.phase==='done'||(v.phase==='bet'&&v.last))break;await poke(host);await poke(guest);await host.waitForTimeout(100)}}
  let v=await until(host,v=>v.last&&v.last.no===1);out.bj=v.last.result;await host.waitForTimeout(400);
  await host.screenshot({path:__dirname+'/out/tables_bj_desktop.png'});await guest.screenshot({path:__dirname+'/out/tables_bj_portrait.png'});
- // v0.11.0 the review: the receipt stays up 8 s from the dealer's last card, with the reason in words; repeated polls don't clear it
+ // v0.10.3 the review: the receipt stays up 8 s from the dealer's last card, with the reason in words; repeated polls don't clear it
  {await host.waitForSelector('#tbFelt .trcpt:not(.live)',{timeout:8000});const t=await host.textContent('#tbFelt .trcpt');out.bjReceipt=t.slice(0,240);
   assert.match(t,/WIN|LOSS|PUSH|PARTIAL RESULT/);assert.match(t,/BET\s*\d+◆/);assert.match(t,/Your \d+ (beat|lost to|ties) the dealer|busted|Blackjack|dealer has blackjack|dealer busted/,'the plain reason');
   for(let k=0;k<4;k++){await poke(host);await host.waitForTimeout(250)}const w=await V(host);assert.equal(w.phase,'done','still in review after repeated polls (no zero-time cleanup)');assert.ok(w.review>1500);

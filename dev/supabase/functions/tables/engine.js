@@ -7,7 +7,7 @@
 // v0.10.0: Roulette (American, 0 and 00, always no limit); every deal and spin comes from the server's seed (committed by its
 // SHA-256 before anyone's seed locks) mixed with every seated player's own seed, so not even the server can pick a result;
 // Hold'em also commits to each card on its own, so a hand can be checked without showing what folded players held.
-// v0.11.0: every round ends in a review the server holds: nobody (readiness included) moves past it before the minimum,
+// v0.10.3: every round ends in a review the server holds: nobody (readiness included) moves past it before the minimum,
 // measured from the moment the last card turns, the dice stop or the ball lands (revealAt), not from the deal. Baccarat,
 // craps, slots and Plinko (games.js) run through the same clock, ledger and receipts.
 export const BUYIN=5,BET_MS=60000,NEXT_MS=60000,PAUSE_MS=0,BOT_MS=1300,AWAY_MS=60000,
@@ -15,7 +15,7 @@ export const BUYIN=5,BET_MS=60000,NEXT_MS=60000,PAUSE_MS=0,BOT_MS=1300,AWAY_MS=6
   CARD_MS=700,REVIEW={bj:8000,he:8000,ba:8000,rl:6000,cr:6000,sl:3000,pk:3000},
   RV={bj:'bj-2',he:'he-2',rl:'rl-2',ba:'ba-1',cr:'cr-1',sl:'sl-1',pk:'pk-1'};
 export const PRIZES={hybrid:10,flags:15};   // the side bet: 10 Hybrid Theory Cases or 15 Flag Cases, the winner picks
-import * as X from './games.js';   // v0.11.0: baccarat, craps, slots, Plinko
+import * as X from './games.js';   // v0.10.3: baccarat, craps, slots, Plinko
 const XG=g=>X.GAMES[g]||null;
 
 // ---------- cards ----------
@@ -84,7 +84,7 @@ const natural=h=>h.cards.length===2&&!h.split&&bjTotal(h.cards).t===21;
 // ---------- the table ----------
 export function newTable({game,lim,side,host,tid,room,station}){const rl=game==='rl',x=XG(game);
   const st={game,lim:rl||x?0:LIMITS.includes(lim)?lim:100,side:rl||x?false:!!side,host,seats:Array(SEATS[game]).fill(null),phase:'wait',deadline:0,handNo:0,button:-1,
-    hand:null,last:null,picks:{},log:[],started:rl||!!x,ready:{},fv:FV,tid:tid||'t',room:room||null,station:station||'',next:null,hist:[],minAt:0};   // roulette and the v0.11.0 games have no settings and no host start
+    hand:null,last:null,picks:{},log:[],started:rl||!!x,ready:{},fv:FV,tid:tid||'t',room:room||null,station:station||'',next:null,hist:[],minAt:0};   // roulette and the v0.10.3 games have no settings and no host start
   if(x&&x.init)x.init(st);return st}
 const humans=st=>st.seats.filter(s=>s&&!s.bot);
 export const humansAt=st=>st.seats.filter(s=>s&&!s.bot);
@@ -95,14 +95,14 @@ export function sit(st,{uid,name,seed,seat},ctx){
   const want=Number.isInteger(seat)&&seat>=0&&seat<st.seats.length&&!st.seats[seat]?seat:-1,i=want>=0?want:st.seats.findIndex(s=>!s);   // the seat you walked up to, if it's free
   if(i<0)return 'The table is full';
   st.seats[i]={uid,name,stack:BUYIN,brought:BUYIN,sitout:0,side:false,seen:ctx.now,seed:cleanSeed(seed)||ctx.salt()};ctx.ops.push({uid,k:'buyin',d:-BUYIN});note(st,name+' sat down');return null}
-// v0.11.0: back to a seat you left while bets were still working (craps): you're playing again
+// v0.10.3: back to a seat you left while bets were still working (craps): you're playing again
 export function rejoin(st,uid,ctx){const s=st.seats[seatIx(st,uid)];if(s&&(s.gone||s.leaving)&&!inHandLocked(st,uid)){s.gone=false;s.leaving=false;s.seen=ctx.now;note(st,s.name+' is back')}return null}
 const inHandLocked=(st,uid)=>!XG(st.game)&&inHand(st,uid);   // a blackjack or hold'em hand you're leaving still has to finish
 // your own seed: mixed into every deal or spin from the next one on (the server has already committed to its seed)
 export function setSeed(st,uid,seed){const s=st.seats[seatIx(st,uid)];if(!s)return 'You are not at this table';const v=cleanSeed(seed);if(!v)return 'Pick a seed (letters and numbers)';s.seed=v;return null}
 export function topup(st,uid,amt,ctx){
   const s=st.seats[seatIx(st,uid)];if(!s)return 'You are not at this table';amt=Math.floor(+amt);if(!(amt>=1&&amt<=100000))return 'Pick an amount';
-  if(s.gone)return 'You have left this table';if(!XG(st.game)&&inHand(st,uid))return 'Top up between hands';   // v0.11.0: craps tops up while bets work
+  if(s.gone)return 'You have left this table';if(!XG(st.game)&&inHand(st,uid))return 'Top up between hands';   // v0.10.3: craps tops up while bets work
   s.stack+=amt;s.brought+=amt;ctx.ops.push({uid,k:'topup',d:-amt});return null}
 export function inHand(st,uid){const x=XG(st.game);if(x)return x.inHand(st,uid);const h=st.hand;if(!h||st.phase==='wait'||st.phase==='done'||st.phase==='bet')return false;if(st.game==='rl')return !!(h.bets[uid]);return h.players.some(p=>p.uid===uid)}
 export function standUp(st,i,ctx){const s=st.seats[i];if(!s)return;

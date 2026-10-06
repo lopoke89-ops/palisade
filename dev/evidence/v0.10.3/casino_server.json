@@ -1,6 +1,6 @@
 {
  "checks": [
-  "the casino migrations apply (v0.11.0 twice)",
+  "the casino migrations apply (v0.10.3 twice)",
   "a slot cabinet: sit (5-shard buy-in)",
   "top up 100",
   "the same top-up id again: its first answer, no second debit",

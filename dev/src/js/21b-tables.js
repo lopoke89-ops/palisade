@@ -6,7 +6,7 @@
 // v0.10.0: the tables are in THE PALISADE FALLS CASINO (06f-casino.js). You sit by walking up to a seat; the table opens in
 // a sheet over the casino floor. Roulette (American, always no limit); your own seed; hand history with the check, run here
 // in the browser; the house rules. The TABLES page is the front door.
-// v0.11.0: baccarat, craps, slots and Plinko (their sheets are in 21c-casino-games.js). Every round ends in a review the server
+// v0.10.3: baccarat, craps, slots and Plinko (their sheets are in 21c-casino-games.js). Every round ends in a review the server
 // holds (the receipt: what you bet, what came back, the net, and why); LAST RESULT shows it again any time, after you stand
 // up or come back too. Money moves carry an operation id kept until the server answers, so a retry never pays twice.
 const TB={id:0,code:'',v:null,busy:false,lobbyT:0,amt:2,raise:0,balance:0,key:'',sheet:false,mine:null,station:'',
@@ -97,7 +97,7 @@ async function tbSend(body,quiet){if(TB.busy&&!quiet)return;if(!quiet)TB.busy=tr
   if(r.view){TB.id=r.id;TB.code=r.code;TB.balance=r.balance;tbShow(r.view);tbMsg(r.error||'')}
   if(r.rcpt&&typeof cgOnRcpt==='function')cgOnRcpt(r.rcpt);
   if(body.op==='leave'&&r.view&&r.view.me<0){tbGone();toast('TABLES','RETURNED TO WALLET');if(typeof syncLocker==='function')syncLocker()}
-  // v0.11.0 craps: you left with a Pass or Come bet on its number: it stays and the dealer rolls it out; shards home after
+  // v0.10.3 craps: you left with a Pass or Come bet on its number: it stays and the dealer rolls it out; shards home after
   else if(body.op==='leave'&&r.view&&r.view.gone&&r.view.gone[r.view.me]){const n=(r.view.locked||[]).length;tbGone();TB.mine={id:r.id,game:r.view.game,pending:{bets:n}};
     toast('CRAPS','BET STILL RESOLVING: '+n+' bet'+(n>1?'s':'')+' working; your shards come home once the dealer has rolled '+(n>1?'them':'it')+' out')}
   return r}finally{if(!quiet)TB.busy=false}}
@@ -136,7 +136,7 @@ function tbStatus(v,me){if(CG[v.game])return CG[v.game].status(v,me);const P=v.p
   if(v.game==='bj'){
     if(v.phase==='bet')return v.bets&&v.bets[v.me]!==undefined?['BET PLACED',`Waiting for the others · cards in ${tbSecs(v)}s at most`,'wait']:['PLACE YOUR BET',`Pick an amount and press BET · ${tbSecs(v)}s left`,'you'];
     if(v.phase==='ins')return v.insure?['DEALER SHOWS AN ACE','Insurance costs half your bet and pays 2:1 if the dealer has blackjack. Most players say no.','you']:['INSURANCE','Waiting for the others to decide.','wait'];
-    // v0.11.0 the review: the dealer's cards turn one by one, then the verdict and the reason stay up for 8 s
+    // v0.10.3 the review: the dealer's cards turn one by one, then the verdict and the reason stay up for 8 s
     if(v.phase==='done'&&v.last&&v.last.result){if(cgLeft(v)>0)return['THE DEALER PLAYS','The hole card turns, then the dealer draws to 17','wait'];const p=mineOf(v.last.result),rl=Math.ceil(cgReviewLeft(v)/1000);
       return[p?cgVerdict(p):'HAND OVER',(p?p.hands.map(h=>h.why).join(' · ')+' · ':'')+(rl>0?`next bets in ${rl}s`:'betting opens now'),'done']}
     if(v.phase==='play'){if(v.myTurn){const h=cur.hands[v.turn.h];return['YOUR TURN',`You have ${h.total}${h.soft&&h.total<21?' (soft)':''} · the dealer shows ${v.dealerTotal}`+(cur.hands.length>1?` · hand ${v.turn.h+1} of ${cur.hands.length}`:''),'you']}
@@ -146,7 +146,7 @@ function tbStatus(v,me){if(CG[v.game])return CG[v.game].status(v,me);const P=v.p
   if(v.phase==='play'){if(v.myTurn){const c=v.can;return['YOUR TURN',(c.call?`${c.call} to call`:'Nobody has bet: check or bet')+` · pot ${v.pot}`,'you']}return['WAITING',`${cur?cur.name:'…'} is thinking${cur&&cur.bot?' (bot)':''}`,'wait']}
   if(v.phase==='done')return['HAND OVER',(v.last&&v.last.result?tbResult(v)+' · ':'')+(v.readyMe?`You're ready · next hand in ${tbSecs(v)}s (or when everyone's ready)`:`Next hand in ${tbSecs(v)}s · tap READY to deal sooner`),'done'];
   return['','','wait']}
-function tbShow(v){TB.v=v;if(!v._t)v._t=performance.now();   // v0.11.0: when this view arrived (the reveal and the review count from it)
+function tbShow(v){TB.v=v;if(!v._t)v._t=performance.now();   // v0.10.3: when this view arrived (the reveal and the review count from it)
   if(v.me<0){tbGone();return}
   const me=v.seats[v.me];
   if(v.game==='rl')rlSync(v);
@@ -328,7 +328,7 @@ async function tbVerify(h){const r=h.result||{};
   if(h.seed){if(await tbSha(h.seed)!==h.commit)return[false,'The seed does not match the fingerprint shown before the round.'];
     const rr=await tbFairRng(h.seed,r.seeds,r.nonce);
     if(h.game==='rl'){const n=await rr(38);return n===r.number?[true,`The seed matches its fingerprint and the spin reruns to ${rlName(n)}.`]:[false,'The spin does not rerun to the same number.']}
-    // v0.11.0: each roll, spin and drop reruns from its own seed
+    // v0.10.3: each roll, spin and drop reruns from its own seed
     if(h.game==='cr'){const d=[1+await rr(6),1+await rr(6)];return d[0]===r.dice[0]&&d[1]===r.dice[1]?[true,`The seed matches its fingerprint and the roll reruns to ${d[0]} and ${d[1]}.`]:[false,'The roll does not rerun to the same dice.']}
     if(h.game==='sl'){const st=[await rr(20),await rr(20),await rr(20)];return st.every((x,i)=>x===r.stops[i])?[true,'The seed matches its fingerprint and the reels rerun to the same stops.']:[false,'The reels do not rerun to the same stops.']}
     if(h.game==='pk'){const p=[];for(let i=0;i<12;i++)p.push(await rr(2));return p.every((x,i)=>x===r.path[i])?[true,`The seed matches its fingerprint and the ball reruns to pocket ${r.pocket+1}.`]:[false,'The path does not rerun.']}

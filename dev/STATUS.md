@@ -7,15 +7,22 @@ Big U's latest completed local scope is recorded in the [presentation prompt](pl
 
 The Claude audit URL still requires sign-in in the available browser session. Big U supplied an exported copy at `D:\downloads\Untitled.md`, which was read on September 29. Its newest Progress entry is v0.9.3, so its release claims are superseded by the verified v0.9.3.3 release below. The external artifact itself was not edited here.
 
-## v0.11.0: craps, baccarat, slots, Plinko, and a result review for every game (deployed October 6)
+## v0.10.3: craps, baccarat, slots, Plinko, and a result review for every game (deployed October 6)
 
-Built from [the casino expansion work order](plans/casino-expansion-and-result-review-work-order.md). Rules, paytables and exact math are in [casino-games-v0110-rules-and-math.md](plans/casino-games-v0110-rules-and-math.md); the order of the live steps, compatibility and rollback are in [v0.11.0-deploy-and-rollback.md](plans/v0.11.0-deploy-and-rollback.md).
+Built from [the casino expansion work order](plans/casino-expansion-and-result-review-work-order.md). Rules, paytables and exact math are in [casino-games-v0103-rules-and-math.md](plans/casino-games-v0103-rules-and-math.md); the order of the live steps, compatibility and rollback are in [v0.10.3-deploy-and-rollback.md](plans/v0.10.3-deploy-and-rollback.md).
 
 - **Deployed October 6, with Big U's go-ahead** (record in the deploy plan):
-  - Database (03:00 UTC): the migration went in two parts. The MCP tool times out on statements needing confirmation (DROP, DELETE), so Big U ran those in the SQL editor. History row `20261006200000 v0110_casino_games`.
+  - Database (03:00 UTC): the migration went in two parts. The MCP tool times out on statements needing confirmation (DROP, DELETE), so Big U ran those in the SQL editor.
   - Backup: schema `backup_20261006` holds lockers, profiles and the casino tables as they were before the migration. Owner-only.
   - Function `tables` version 9 (03:17 UTC), byte-identical to the repo.
-  - Site: `main` at `29ad4c3` (pushed 03:20 UTC); live at 03:22 UTC (Pages run 84). The served `index.html` and `sw.js` are byte-identical to the build, and the footer reads v0.11.0.
+  - Site: `main` at `29ad4c3` (pushed 03:20 UTC); live at 03:22 UTC (Pages run 84).
+- **Relabelled v0.10.3 the same day, at Big U's request.** It first went out labelled v0.11.0; the commits up to `f97149f` still say so.
+  - Renamed to match: the footer, the comments, the migration file (`20261006200000_v0103_casino_games.sql`, with its history row renamed), the plans, and `evidence/v0.10.3/`.
+  - Nothing about the games changed.
+- **Fixed after the deploy: the Plinko ball froze mid-drop.**
+  - The board's animation was tied to the view that drew it. The table's once-a-second poll brings a new view, and the board's HTML doesn't change mid-drop, so the canvas wasn't redrawn. The ball stopped within a second, then jumped to its pocket when the result showed.
+  - It now draws from the latest view.
+  - `casino_games_ui` tracks the ball on the canvas through the drop. It reproduced the freeze before the fix (stuck at the same height from 0.9 s to 2.9 s) and passes after it.
 
 - **New games (server-run, whole shards, provably fair):**
   - **Baccarat:** 8-deck mini-baccarat from a persistent shoe. Banker bets go in 20s (pays 19:20), Tie 8:1. Each hand's cards check against fingerprints fixed when the shoe starts; the seed and the whole shoe come out when it retires.
@@ -38,14 +45,14 @@ Built from [the casino expansion work order](plans/casino-expansion-and-result-r
   - Fixed on the way: the host's input check capped seat codes at 99, which would have dropped every message from a guest at a machine.
 - **Tests:**
   - New: `casino_games_engine`, `casino_server`, `casino_games_ui`.
-  - Extended: `tables_ui` (review receipts), `casino_map` (every seat and machine reachable; registry codes; a guest claiming a machine), `restore_schema` (the v0.11.0 casino restores).
-  - `schema.sql` regenerated through v0.11.0 with `refresh-restore.py` (it had stopped at October 1).
+  - Extended: `tables_ui` (review receipts), `casino_map` (every seat and machine reachable; registry codes; a guest claiming a machine), `restore_schema` (the v0.10.3 casino restores).
+  - `schema.sql` regenerated through v0.10.3 with `refresh-restore.py` (it had stopped at October 1).
   - Regression, all passing: `@tables @casino @music @net csp restore_schema @smoke` (40/40), plus `accounts friends menu_audit index_page`.
   - The two baseline failures from `ca90257` were stale test expectations, now fixed: `v090` looped over the casino map (no stake by design since v0.10.0), and `controller` expected the guest input fields from before the v0.10.0 `st` field.
   - The full default suite was not run.
 - **Performance:** same machine (Xeon 2.1 GHz x4, headless Chromium, software rendering), `casino_perf.js`.
 
-  | Scene | v0.10.1 | v0.11.0 |
+  | Scene | v0.10.1 | v0.10.3 |
   |---|---|---|
   | Frame time, median / p95 | 16.7 / 16.7-16.8 ms in every scene (the 60 fps cap) | the same |
   | JS heap | 8.4-9.5 MB | 8.3-10.2 MB |
@@ -54,7 +61,7 @@ Built from [the casino expansion work order](plans/casino-expansion-and-result-r
   | Requests, slots or Plinko played non-stop | — | about 72/min |
 
   This container can't show differences under the 60 fps cap; a physical phone check is still to do before claiming phone performance.
-- **Evidence:** `evidence/v0.11.0/` (screenshots at 1366x820, 390x844 and 844x390; perf runs; test outputs).
+- **Evidence:** `evidence/v0.10.3/` (screenshots at 1366x820, 390x844 and 844x390; perf runs; test outputs).
 - **Known limits:**
   - The unattended craps roll-out runs on the existing request-triggered sweep (any casino lobby request; up to 60 rolls a batch), not a scheduler.
   - Other players' slot cabinets show a busy glow, not their reels.

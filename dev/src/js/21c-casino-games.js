@@ -1,4 +1,4 @@
-/* ================= v0.11.0 THE PALISADE FALLS CASINO: baccarat, craps, slots, Plinko, and the result review ================= */
+/* ================= v0.10.3 THE PALISADE FALLS CASINO: baccarat, craps, slots, Plinko, and the result review ================= */
 // The sheets for the four new games, and the review every game shares: after a round the server holds the result on screen
 // (8 s for cards, 6 for dice and roulette, 3 for slots and Plinko, counted from the last card or the ball landing) and the
 // receipt says what you bet, what came back, the net and why. The server decides everything (games.js); this file shows
@@ -186,13 +186,15 @@ CG.pk={info:()=>'12 rows · stakes in 10s · 0.5x to 30x · returns 96.01%',key:
   felt(v){const r=v.last&&v.last.result,done=v.phase==='done'&&cgLeft(v)<=0;
     return `<canvas id="cgPk" width="360" height="300" aria-label="Plinko board"></canvas><div class="pkrow">${PK_MULT_D.map((m,k)=>`<b class="${m>=90?'hi':m>=30?'md':m>=10?'lo':'bl'}${done&&r&&r.pocket===k?' hit':''}">${m/10}x</b>`).join('')}</div>
 <p class="tbHint">Each bounce is 50/50, so the middle pockets are the likeliest (pocket 7: 22.6%) and the edges the rarest (1 in 4,096 each). 1x returns your stake; under 1x some shards come back but it's a loss. Returns 96.01% (math pk-1).</p>`},
-  after(v){const c=$('cgPk');if(!c)return;const x=c.getContext('2d'),W=c.width,H=c.height,rows=12,top=24,dy=(H-70)/rows,px=(r,k)=>W/2+(k-r/2)*(W*.84/12),py=r=>top+r*dy;
+  // v0.10.3: the ball is drawn from the latest view (TB.v), not the one that made the canvas. The poll brings a new view every
+  // second while the board's HTML stays the same, so the canvas isn't rebuilt; tied to its first view, the ball froze mid-drop.
+  after(){const c=$('cgPk');if(!c)return;const x=c.getContext('2d'),W=c.width,H=c.height,rows=12,top=24,dy=(H-70)/rows,px=(r,k)=>W/2+(k-r/2)*(W*.84/12),py=r=>top+r*dy;
     const draw=()=>{x.clearRect(0,0,W,H);x.fillStyle='#e8e0cf';for(let r=0;r<=rows;r++)for(let k=0;k<=r;k++){x.beginPath();x.arc(px(r,k),py(r),2.4,0,7);x.fill()}
-      const r0=v.last&&v.last.result;if(!r0||!r0.path)return false;const left=cgLeft(v),f=v.phase==='done'?(left<=0?rows:(3100-left)/3100*rows):rows;
-      const rr=Math.min(rows,Math.floor(f)),fr=f-rr,col=r0.path.slice(0,rr).reduce((a,b)=>a+b,0),nx=col+(r0.path[rr]||0);if(v===TB.v)cgSound(v,rr,'cas_peg');
+      const v=TB.v;if(!v||v.game!=='pk')return false;const r0=v.last&&v.last.result;if(!r0||!r0.path)return false;const left=cgLeft(v),f=v.phase==='done'?(left<=0?rows:(3100-left)/3100*rows):rows;
+      const rr=Math.min(rows,Math.floor(f)),fr=f-rr,col=r0.path.slice(0,rr).reduce((a,b)=>a+b,0),nx=col+(r0.path[rr]||0);cgSound(v,rr,'cas_peg');
       const bx=rr>=rows?px(rows,col):px(rr,col)+(px(rr+1,nx)-px(rr,col))*fr,by=rr>=rows?py(rows)+10:py(rr)+(py(rr+1)-py(rr))*fr-dy*.35*Math.sin(fr*Math.PI);
       x.fillStyle='#ffd24a';x.beginPath();x.arc(bx,by-6,6,0,7);x.fill();return left>0};
-    cancelAnimationFrame(CG.pk.raf);const loop=()=>{if(draw()&&TB.v===v)CG.pk.raf=requestAnimationFrame(loop)};loop()},
+    cancelAnimationFrame(CG.pk.raf);const loop=()=>{if(c.isConnected&&draw())CG.pk.raf=requestAnimationFrame(loop)};loop()},
   acts(v,me){const busy=v.phase!=='idle',am=CGS.pk.amt;return `<div class="trow chips">${[10,20,50,100,250,500].map(a=>tbBtn('set:'+a,String(a),{cl:am===a?'sel':''})).join('')}</div>
 <div class="trow">${tbBtn('drop',busy?'…':'DROP '+am+'◆',{cl:'go big',on:!busy&&me.stack>=am,hint:busy?'the result stays up 3 s after the ball lands':me.stack<am?'top up to drop':'one ball per press'})}</div>`},
   act(a,v,me){if(a.startsWith('set:')){CGS.pk.amt=+a.slice(4);TB.key='';tbActions(v,me);return}if(a==='drop'&&v.phase==='idle'){if(typeof uiSfx==='function')uiSfx('cas_chip');tbSend({op:'drop',id:TB.id,amt:CGS.pk.amt})}}};

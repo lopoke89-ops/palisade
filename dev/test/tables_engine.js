@@ -25,7 +25,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs');
    if(st.phase==='bet'){E.bjBet(st,'u1',2,false,ctx);wag+=2;E.tick(st,ctx)}
    if(st.phase==='ins')E.bjInsure(st,'u1',false),E.tick(st,ctx);
    while(st.phase==='play'){const v=E.view(st,'u1',ctx.now),h=st.hand.players[0].hands[st.hand.turn.h],a=basic(h,E.bjVal(st.hand.dealer[0]),v.can);if(a==='double'||a==='split')wag+=h.bet;E.bjAct(st,'u1',a,ctx)}
-   if(st.phase==='done'){hands++;ctx.now=Math.max(ctx.now,st.minAt);E.tick(st,ctx)}}   // v0.11.0: the result stays up for its review first
+   if(st.phase==='done'){hands++;ctx.now=Math.max(ctx.now,st.minAt);E.tick(st,ctx)}}   // v0.10.3: the result stays up for its review first
   const edge=(s.stack-1e9)/wag;out.bj={hands,wagered:wag,return:+(edge*100).toFixed(3)};
   if(!process.env.BJ_HANDS)assert.ok(edge>-0.013&&edge<0.004,'blackjack player return near the house edge (about -0.5%): '+(edge*100).toFixed(2)+'%')}
  // 4. hold'em: 3 players acting at random for 3,000 hands, side bets on

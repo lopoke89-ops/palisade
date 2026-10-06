@@ -3,7 +3,7 @@
 // the edge function, a Map in the tests). Randomness and the deck hashes use Web Crypto, the same in Deno and Node.
 // v0.10.0: tables live in THE PALISADE FALLS CASINO: you sit at a table by walking to it (op 'sit' with the casino room),
 // never from a menu list. Roulette; your own seed; hand history (with the check); the daily books check.
-// v0.11.0: baccarat, craps, slots and Plinko. Machines are stations (one session per cabinet: station 's1'…'s16', 'p1').
+// v0.10.3: baccarat, craps, slots and Plinko. Machines are stations (one session per cabinet: station 's1'…'s16', 'p1').
 // Money moves carry an operation id the client keeps until it has an answer: the same id again returns the first answer
 // (never a second debit or payout), the same id with a different request is refused. The id is saved in the same database
 // transaction as the move. Craps bets that must finish keep your account at that table until the dealer has rolled them out.
@@ -19,7 +19,7 @@ const ROOM=/^[A-Za-z0-9:_-]{4,80}$/,GAMES=['bj','he','rl','ba','cr','sl','pk'],D
 // which stations a game has: the tables one each (''), sixteen slot cabinets, one Plinko board
 export const STATIONS={sl:/^s(1[0-6]|[1-9])$/,pk:/^p1$/};
 export const stationOk=(game,st)=>STATIONS[game]?STATIONS[game].test(st):st==='';
-// the moves that can move shards: these take an operation id (the v0.11.0 games require one)
+// the moves that can move shards: these take an operation id (the v0.10.3 games require one)
 const MONEY=new Set(['sit','topup','leave','bet','insure','move','rlbets','babets','crbet','spin','drop','pick']),NEEDS_OP=new Set(['babets','crbet','spin','drop']);
 const OPID=/^[A-Za-z0-9_-]{8,64}$/;
 const canon=x=>Array.isArray(x)?'['+x.map(canon).join(',')+']':x&&typeof x==='object'?'{'+Object.keys(x).sort().map(k=>JSON.stringify(k)+':'+canon(x[k])).join(',')+'}':JSON.stringify(x===undefined?null:x);

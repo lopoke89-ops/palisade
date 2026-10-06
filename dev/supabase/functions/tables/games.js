@@ -1,4 +1,4 @@
-// v0.11.0 the casino's new games, run only on the server like the rest of the tables (engine.js owns the seats, the clock,
+// v0.10.3 the casino's new games, run only on the server like the rest of the tables (engine.js owns the seats, the clock,
 // the ledger ops and the receipts; this file owns each game's rules). Baccarat (8-deck mini-baccarat from a persistent shoe),
 // craps (the full first-release bet set, persistent bets), slots (3 reels, one line) and Plinko (12 rows). Every payout is
 // whole shards: a bet whose payout ratio would make a fraction is refused before it is taken, never rounded afterwards.

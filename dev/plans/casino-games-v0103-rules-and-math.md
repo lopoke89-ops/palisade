@@ -1,4 +1,4 @@
-# v0.11.0 casino games: rules, paytables and math
+# v0.10.3 casino games: rules, paytables and math
 
 The rules as built in `dev/supabase/functions/tables/games.js` (new games) and `engine.js` (result review, receipts). Every number below is produced or checked by `dev/test/casino_games_engine.js` (output in `dev/test/out/casino_games_engine.json`). These are this project's house rules: real casinos vary.
 
@@ -8,7 +8,7 @@ Shards stay play currency: never bought, never cashed out. Every payout is whole
 
 Each settled round's receipt carries `rv` (rules version) and `rid` (table id and round number).
 
-| Game | rv | Changed in v0.11.0 |
+| Game | rv | Changed in v0.10.3 |
 |---|---|---|
 | Blackjack | `bj-2` | 8 s review from the dealer's last card; receipt with the reason |
 | Hold'em | `he-2` | 8 s minimum inside the 60 s break; pots with winners, hand name and five cards; uncontested said plainly |

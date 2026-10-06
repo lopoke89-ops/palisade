@@ -1,4 +1,4 @@
-// v0.11.0 the new casino games in the browser, through the real buttons, with the real request handler behind a mocked
+// v0.10.3 the new casino games in the browser, through the real buttons, with the real request handler behind a mocked
 // Supabase (in-memory tables, balances and operation ids) and a real PeerJS room. A desktop host (1366x820) plays baccarat
 // (chips, Banker in 20s, DEAL, the cards turning, the receipt held for its review), craps (Pass Line, ROLL, Place 6 in 6s,
 // the take-down mode, the receipt with what is still working), a slot cabinet (SPIN locked through the reels and the review;
@@ -99,7 +99,15 @@ const Q='peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1&cloud=1';
  // 4. PLINKO: the 10-shard minimum and the top-up path, then a drop
  await sit(host,T.p1);v=await until(host,v=>v.game==='pk'&&v.phase==='idle',15000,'plinko');
  assert.match(await host.textContent('#tbStatus'),/TOP UP/,'5 shards at the board: top up first');assert.ok(await host.$eval('#tbActs [data-act="drop"]',b=>b.disabled));
- await host.click('[data-top="25"]');await until(host,v=>v.seats[0].stack===30,8000);await act(host,'set:20');await act(host,'drop');await host.waitForTimeout(1200);
+ await host.click('[data-top="25"]');await until(host,v=>v.seats[0].stack===30,8000);await act(host,'set:20');await act(host,'drop');
+ // v0.10.3: the ball keeps falling through the whole drop. The table polls once a second, and each poll's view used to stop the
+ // board's animation (the ball froze within a second, then jumped to its pocket). Tracked on the canvas: its height every 150 ms.
+ await host.waitForFunction(()=>__pal.TB.v&&__pal.TB.v.phase==='done',null,{timeout:8000});
+ const track=await host.evaluate(()=>new Promise(res=>{const out=[],t0=performance.now();const tick=()=>{const c=document.getElementById('cgPk');let y=null;
+  if(c){const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let n=0,s=0;for(let i=0;i<d.length;i+=4)if(d[i]>240&&d[i+1]>195&&d[i+1]<225&&d[i+2]<110){n++;s+=Math.floor(i/4/c.width)}if(n)y=Math.round(s/n)}
+  out.push([Math.round(performance.now()-t0),y]);if(performance.now()-t0<2900)setTimeout(tick,150);else res(out)};tick()}));
+ out.plinkoTrack=track;const late=new Set(track.filter(([t,y])=>t>=1300&&t<=2700&&y!==null).map(([,y])=>y));
+ assert.ok(late.size>=4,'the ball still moves after the first poll (1.3-2.7 s into the drop): '+JSON.stringify(track));
  await host.screenshot({path:__dirname+'/out/casino_games_plinko_drop.png'});await host.waitForSelector('#tbFelt .trcpt:not(.live)',{timeout:8000});
  const rp=await rcpt(host);out.plinko=rp;assert.equal(rp.nums[0],'20◆');assert.match(rp.text,/Pocket \d+ of 13 pays/);await host.screenshot({path:__dirname+'/out/casino_games_plinko_review.png'});
  await until(host,v=>v.phase==='idle',10000);await stand(host);

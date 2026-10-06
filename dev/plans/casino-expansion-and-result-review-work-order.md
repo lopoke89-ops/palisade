@@ -23,7 +23,7 @@ This document specifies an implementation candidate. It does not itself authoriz
 
 ## 1. Inspect the actual baseline
 
-Read the relevant source, current migrations, tests, and release evidence before editing. Establish which local, GitHub, website, and backend versions agree. Preserve unrelated work and choose the release version after checking the current branch. The footer version is a hand-written string in `dev/src/page.html` (`<p class="foot">`); bump it, and add a `dev/STATUS.md` entry, as part of the release. Because the station/protocol changes are expected, this is a minor version (v0.11.0 unless the branch has moved on), not a v0.10.x patch.
+Read the relevant source, current migrations, tests, and release evidence before editing. Establish which local, GitHub, website, and backend versions agree. Preserve unrelated work and choose the release version after checking the current branch. The footer version is a hand-written string in `dev/src/page.html` (`<p class="foot">`); bump it, and add a `dev/STATUS.md` entry, as part of the release. Because the station/protocol changes are expected, this is a minor version (v0.10.3 unless the branch has moved on), not a v0.10.x patch.
 
 Relevant source:
 

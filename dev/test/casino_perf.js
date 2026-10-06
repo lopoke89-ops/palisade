@@ -1,6 +1,6 @@
-// v0.11.0 casino performance: frame time (median and p95), JS heap and request rate in THE PALISADE FALLS CASINO, on the
+// v0.10.3 casino performance: frame time (median and p95), JS heap and request rate in THE PALISADE FALLS CASINO, on the
 // same machine and browser for two builds. Scenes both builds have: standing in the casino, walking round the floor, seated
-// at blackjack with the sheet open (it polls once a second). The v0.11.0 build also: a slot cabinet spinning, the Plinko
+// at blackjack with the sheet open (it polls once a second). The v0.10.3 build also: a slot cabinet spinning, the Plinko
 // board dropping. The tables function runs locally behind a mocked Supabase (no network cost in the numbers).
 // PORT=8080 node casino_perf.js new     (this checkout's build)
 // PORT=8083 HANDLER=/path/to/old/dev/supabase/functions/tables/handler.js node casino_perf.js old

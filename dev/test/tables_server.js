@@ -6,7 +6,7 @@
 // commit-and-rerun check on every logged hand, hand history, and the daily books check (balanced, then a planted error).
 // node tables_server.js
 const {PGlite}=require('@electric-sql/pglite'),{base}=require('./winter-db'),fs=require('node:fs'),assert=require('node:assert/strict');
-const MIG=__dirname+'/../supabase/migrations/20261004200000_v098_tables.sql',MIG2=__dirname+'/../supabase/migrations/20261005200000_v0100_casino.sql',MIG3=__dirname+'/../supabase/migrations/20261006200000_v0110_casino_games.sql';
+const MIG=__dirname+'/../supabase/migrations/20261004200000_v098_tables.sql',MIG2=__dirname+'/../supabase/migrations/20261005200000_v0100_casino.sql',MIG3=__dirname+'/../supabase/migrations/20261006200000_v0103_casino_games.sql';
 (async()=>{const H=await import('../supabase/functions/tables/handler.js'),E=await import('../supabase/functions/tables/engine.js');
  const db=new PGlite(),checks=[],ok=(n,b)=>{assert.ok(b,n);checks.push(n)};
  await db.exec(base);await db.exec(`do $$begin if not exists(select 1 from pg_roles where rolname='service_role') then create role service_role; end if; end$$;alter role service_role bypassrls;
@@ -15,7 +15,7 @@ const MIG=__dirname+'/../supabase/migrations/20261004200000_v098_tables.sql',MIG
  const sql=fs.readFileSync(MIG,'utf8');ok('no delete in the migration',!/delete/i.test(sql));
  await db.exec(sql);await db.exec(sql);ok('migration applies twice',true);
  const sql2=fs.readFileSync(MIG2,'utf8');ok('no delete in the v0.10.0 migration',!/delete/i.test(sql2));await db.exec(sql2);await db.exec(sql2);ok('the v0.10.0 migration applies twice',true);
- const sql3=fs.readFileSync(MIG3,'utf8');ok('v0.11.0: the only deletes are seat rows',(sql3.match(/delete from public\.(\w+)/g)||[]).every(x=>/casino_seats/.test(x)));await db.exec(sql3);await db.exec(sql3);ok('the v0.11.0 migration applies twice',true);
+ const sql3=fs.readFileSync(MIG3,'utf8');ok('v0.10.3: the only deletes are seat rows',(sql3.match(/delete from public\.(\w+)/g)||[]).every(x=>/casino_seats/.test(x)));await db.exec(sql3);await db.exec(sql3);ok('the v0.10.3 migration applies twice',true);
  // casino rooms (the second v0.10.0 file: Open Games and friend invites accept length and map 'casino')
  {await db.exec(`create table if not exists lobbies(host_id uuid primary key,code text,name text,mode text,length text check (length = any (array['5','10','endless','blitz','campaign','blackout'])),diff text,players int,in_game boolean,proto text,updated_at timestamptz default now());
    create table if not exists private.room_sessions(host_id uuid primary key,incarnation uuid,code text,proto text,mode text,length text,map text,chapter int default 0,players int,locked boolean,updated_at timestamptz default now());

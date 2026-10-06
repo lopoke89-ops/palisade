@@ -1,6 +1,6 @@
--- v0.11.0 THE PALISADE FALLS CASINO, more games: baccarat, craps, slots and Plinko. Like v0.9.8 and v0.10.0 nothing here
+-- v0.10.3 THE PALISADE FALLS CASINO, more games: baccarat, craps, slots and Plinko. Like v0.9.8 and v0.10.0 nothing here
 -- is reachable by players directly (service role only). Safe to run twice. The v0.10.0 functions (casino_open and
--- casino_commit) are left in place so the edge function that is live before this deploy keeps working; the v0.11.0 edge
+-- casino_commit) are left in place so the edge function that is live before this deploy keeps working; the v0.10.3 edge
 -- function calls casino_start and casino_step instead. No game record is deleted: the only rows ever removed are
 -- casino_seats rows, when that player stands up.
 

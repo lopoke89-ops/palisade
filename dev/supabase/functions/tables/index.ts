@@ -1,7 +1,7 @@
 // v0.9.8 THE TABLES edge function: checks who is calling, then hands the request to handler.js (the same code the tests run).
 // Uses the service role for the database; players can't touch the casino tables or functions directly.
 // v0.10.0: tables are found by casino room; hand history; the daily books check.
-// v0.11.0: stations (one session per machine), operation ids, and casino_step / casino_start (seats enforced in the transaction).
+// v0.10.3: stations (one session per machine), operation ids, and casino_step / casino_start (seats enforced in the transaction).
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { handle } from './handler.js';
 const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });

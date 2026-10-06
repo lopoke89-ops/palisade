@@ -1,4 +1,4 @@
-// v0.11.0 THE PALISADE FALLS CASINO on a disposable Postgres with all three casino migrations and the real request handler
+// v0.10.3 THE PALISADE FALLS CASINO on a disposable Postgres with all three casino migrations and the real request handler
 // (the edge function's code, with the database calls index.ts makes). Operation ids: a repeat returns its first answer and
 // never moves shards twice (one at a time, racing, after a "timeout", and a spin's outcome too), a changed request under the
 // same id is refused, a new-game move without one is refused. Stations: two slot cabinets in one room are two sessions, two
@@ -9,13 +9,13 @@
 // shoe's last row has the seed and reruns. The books balance for the new games; players can't reach the new tables or
 // functions. node casino_server.js
 const {PGlite}=require('@electric-sql/pglite'),{base}=require('./winter-db'),fs=require('node:fs'),assert=require('node:assert/strict');
-const MIGS=['20261004200000_v098_tables.sql','20261005200000_v0100_casino.sql','20261006200000_v0110_casino_games.sql'].map(f=>__dirname+'/../supabase/migrations/'+f);
+const MIGS=['20261004200000_v098_tables.sql','20261005200000_v0100_casino.sql','20261006200000_v0103_casino_games.sql'].map(f=>__dirname+'/../supabase/migrations/'+f);
 (async()=>{const H=await import('../supabase/functions/tables/handler.js'),E=await import('../supabase/functions/tables/engine.js'),X=await import('../supabase/functions/tables/games.js');
  const db=new PGlite(),checks=[],ok=(n,b)=>{assert.ok(b,n);checks.push(n)};
  await db.exec(base);await db.exec(`do $$begin if not exists(select 1 from pg_roles where rolname='service_role') then create role service_role; end if; end$$;alter role service_role bypassrls;
    alter table profiles add column if not exists username text;alter table lockers add column if not exists rev integer default 0;alter table lockers add column if not exists updated_at timestamptz;
    alter table lockers add column if not exists bag jsonb default '{}'::jsonb;grant usage on schema public,private to service_role,authenticated;grant select on lockers,profiles to service_role;`);
- for(const f of MIGS)await db.exec(fs.readFileSync(f,'utf8'));await db.exec(fs.readFileSync(MIGS[2],'utf8'));ok('the casino migrations apply (v0.11.0 twice)',true);
+ for(const f of MIGS)await db.exec(fs.readFileSync(f,'utf8'));await db.exec(fs.readFileSync(MIGS[2],'utf8'));ok('the casino migrations apply (v0.10.3 twice)',true);
  const A='a0000000-0000-4000-8000-00000000000a',B='b0000000-0000-4000-8000-00000000000b',C='c0000000-0000-4000-8000-00000000000c';
  await db.exec(`insert into lockers(user_id,shards) values('${A}',5000),('${B}',5000),('${C}',4);insert into profiles(id,username) values('${A}','BigU'),('${B}','Rab'),('${C}','Broke');`);
  const svc=async(q,p)=>{await db.exec('set role service_role');try{return(await db.query(q,p)).rows}finally{await db.exec('reset role')}};

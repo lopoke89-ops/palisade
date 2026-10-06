@@ -1188,7 +1188,7 @@ body.desk #top .phase>#phaseNote{min-height:1.35em;line-height:1.35em}
 .casSheet .tbStatus span{min-height:2.8em}.casSheet .tbStatus b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rout[data-spot^=dz]{grid-column:span 2}
 
-/* v0.11.0 the result review (every game): verdict in words, BET / RETURNED / NET, what decided it, the countdown */
+/* v0.10.3 the result review (every game): verdict in words, BET / RETURNED / NET, what decided it, the countdown */
 .trcpt{border:2px solid #6f8a96;background:rgba(0,0,0,.35);padding:10px;margin:0 0 10px;border-radius:6px}
 .trcpt.w{border-color:#8fe0a0}.trcpt.l{border-color:#e8573a}.trcpt.p{border-color:#e2d39a}.trcpt.m{border-color:#e2b436}.trcpt.live{border-style:dashed}
 .trv{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}.trv b{font-family:var(--stencil);font-size:26px;letter-spacing:.08em;color:#fff}

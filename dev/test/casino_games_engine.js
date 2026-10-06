@@ -1,4 +1,4 @@
-// v0.11.0 the casino's new games (games.js) and the result review for every game (engine.js), with no browser and no
+// v0.10.3 the casino's new games (games.js) and the result review for every game (engine.js), with no browser and no
 // database. Baccarat: every Banker third-card decision against the printed table, naturals, ties, commission, the exact
 // infinite-deck edges, the 8-deck shoe (burn, cut card, a started hand always finishes, nothing undealt ever shown, every
 // dealt card checkable against the shoe's fingerprint, the retired shoe reruns). Craps: all 36 rolls for every bet in

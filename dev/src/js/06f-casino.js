@@ -3,7 +3,7 @@
 // banks, a bar and a cashier cage, all lit by chandeliers and neon. No raiders, no building, no weapons. You sit by
 // walking to a free seat; the table itself (the cards, the wheel, every shard) is run by the server (21b-tables.js).
 // Everything here is laid out from fixed numbers, so the host and every guest build the same room.
-// v0.11.0: a craps table (south, by the cashier), a baccarat table (mid-floor), all sixteen slot cabinets playable (one
+// v0.10.3: a craps table (south, by the cashier), a baccarat table (mid-floor), all sixteen slot cabinets playable (one
 // player each), and a Plinko board on the east side. Every place you can play has a seat code from one registry (CAS_SEAT):
 // tables keep their v0.10.0 codes (table n, seat k -> n*10+k+1), machines are 101-117. You walk up and press E / tap PLAY.
 const casino=()=>!!game&&game.mode==='casino';
@@ -17,7 +17,7 @@ const CAS={name:'THE PALISADE FALLS CASINO',
      dealer:{x:8.5,y:2.5,face:{x:0,y:1},name:'ROSA',look:'rosa'},seats:[20,70,110,160,200,340].map(a=>[8.5+2.05*Math.cos(a*Math.PI/180),4+1.55*Math.sin(a*Math.PI/180)])},
     {n:3,game:'rl',name:'ROULETTE',col:'#ffb43a',solid:[[11,7],[12,7],[13,7],[11,8],[12,8],[13,8],[14,8],[14,7]],c:[12.5,8],sign:[12.3,7.6],wheel:[13.45,8],
      dealer:{x:14.5,y:7.9,face:{x:-1,y:0},name:'MARCO',look:'marco'},seats:[[11.2,6.4],[12.2,6.4],[13.2,6.4],[11.2,9.6],[12.2,9.6],[13.2,9.6]]},
-    // v0.11.0: craps on a long table, three a side, the stickman at the east end; baccarat a half-moon like blackjack
+    // v0.10.3: craps on a long table, three a side, the stickman at the east end; baccarat a half-moon like blackjack
     {n:4,game:'cr',name:'CRAPS',col:'#4aff9a',solid:[[4,12],[5,12],[6,12],[7,12],[4,13],[5,13],[6,13],[7,13]],c:[6,13],sign:[6,12.5],
      dealer:{x:8.45,y:13,face:{x:-1,y:0},name:'DUKE',look:'duke'},seats:[[4.5,11.55],[5.7,11.55],[6.9,11.55],[4.5,14.45],[5.7,14.45],[6.9,14.45]]},
     {n:5,game:'ba',name:'BACCARAT',col:'#c98aff',solid:[[7,7],[8,7],[9,7],[8,6]],c:[8.5,7.3],sign:[8.5,6.95],
@@ -33,7 +33,7 @@ const CAS={name:'THE PALISADE FALLS CASINO',
     keep:{body:'#e9e2d2',vest:'#2a1a12',pants:'#1c1b1f',head:'#c99a72',hat:'#1a1210',gl:14,nogun:true},
     duke:{body:'#ece6d8',vest:'#1d3a24',pants:'#1c1b1f',head:'#8a5a3c',hat:'#2a2420',gl:14,nogun:true},
     lena:{body:'#f2ede4',vest:'#3a1a4a',pants:'#1c1b1f',head:'#e8c4a0',hat:'#3a2614',gl:14,nogun:true}}};
-// v0.11.0 the machines: ten slot cabinets on the north wall (s1-s10), six on the west wall (s11-s16), the Plinko board (p1).
+// v0.10.3 the machines: ten slot cabinets on the north wall (s1-s10), six on the west wall (s11-s16), the Plinko board (p1).
 // You play standing at its front; one player per machine.
 CAS.machines=[...CAS.slotsN.map((i,k)=>({id:'s'+(k+1),game:'sl',name:'SLOTS',at:[i+.5,.55],face:'s',stand:[i+.5,1.4]})),
   ...CAS.slotsW.map((j,k)=>({id:'s'+(11+k),game:'sl',name:'SLOTS',at:[.55,j+.5],face:'e',stand:[1.4,j+.5]})),
@@ -209,7 +209,7 @@ function casRopes(){for(let q=0;q<5;q++)for(const y of[8.75,11.25]){const x=1.4+
 // everything above, queued into the depth-sorted draw list
 function casinoItems(){
   casGlowQ.length=0;
-  CAS.machines.forEach((m,k)=>{if(m.game==='sl')ritem(m.at[0]+m.at[1]+.45,()=>casSlot(m.at[0],m.at[1],m.face,k))});   // v0.11.0: k is the cabinet (s1 = 0)
+  CAS.machines.forEach((m,k)=>{if(m.game==='sl')ritem(m.at[0]+m.at[1]+.45,()=>casSlot(m.at[0],m.at[1],m.face,k))});   // v0.10.3: k is the cabinet (s1 = 0)
   ritem(13+2+1.5,casBarDraw);ritem(CAS.bar.keep.x+CAS.bar.keep.y,()=>drawPerson(CAS.bar.keep.x,CAS.bar.keep.y,Object.assign({aim:{x:0,y:1},walk:0},CAS.looks.keep)));
   for(const [x,y]of CAS.bar.stools)ritem(x+y,()=>casStool(x,y));
   ritem(CAS.plinko.at[0]+CAS.plinko.at[1]+.4,casPlinko);

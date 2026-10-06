@@ -233,7 +233,7 @@ function sfx(name,x,y,noRec,ui){
     case'deny':osc(dest,t,.1,'square',150,.08);break;
     case'chat':osc(dest,t,.05,'sine',1320,.07);osc(dest,t+.06,.07,'sine',1760,.06);break;
     case'win':[392,494,587,784].forEach((f,i)=>osc(master,t+i*.12,.5,'triangle',f,.14));break;
-    // v0.11.0 the casino's games: a card turning, a reel stopping, the lever, a chip, a peg, the dice, a win (restrained)
+    // v0.10.3 the casino's games: a card turning, a reel stopping, the lever, a chip, a peg, the dice, a win (restrained)
     case'cas_card':nz(dest,t,.05,'highpass',3000,.8,.12);osc(dest,t,.04,'triangle',900,.03);break;
     case'cas_reel':nz(dest,t,.04,'lowpass',900,1,.25);osc(dest,t,.06,'square',220,.06,140);break;
     case'cas_lever':nz(dest,t,.18,'bandpass',600,1.2,.15,300);osc(dest,t+.12,.08,'triangle',300,.06);break;

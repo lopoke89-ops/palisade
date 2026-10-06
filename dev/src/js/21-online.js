@@ -4,7 +4,7 @@
 // they talk directly. Each guest opens 'r' (reliable: hello, build, grenade, and every
 // one-off event: sounds, particles, bullets, toasts, wall changes), 'u' (fast: movement in),
 // and 'st' (never resent: game state out, 15 times a second).
-const PROTO='yard-29',ROOM_PREFIX='palisade-yard-27-';   // v0.11.0 yard-29: casino seat codes for craps, baccarat and the machines   // v0.9.7.1: ready states (lobby and the push), round pay
+const PROTO='yard-29',ROOM_PREFIX='palisade-yard-27-';   // v0.10.3 yard-29: casino seat codes for craps, baccarat and the machines   // v0.9.7.1: ready states (lobby and the push), round pay
 // v0.9.7 was yard-26:   // v0.9.7: City Black Out (POI summary, near-only raiders on the city, the Supreme Destroyer's states 40-47, gas and mines)
 const ROOM_SESSION=(()=>{let id='';try{id=sessionStorage.getItem('palisade.roomSession')||''}catch(e){}
   if(!/^[0-9a-f]{24}$/.test(id)){id=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');try{sessionStorage.setItem('palisade.roomSession',id)}catch(e){}}
@@ -156,8 +156,8 @@ function hostData(peerId,d){
     // Ignore malformed guest coordinates/aim before they reach collision, rendering or simulation.
     if(!hostFinite(d.x,0,N)||!hostFinite(d.y,0,N)||!hostFinite(d.ax,-1.1,1.1)||!hostFinite(d.ay,-1.1,1.1)||
        !hostInt(d.tp,0,1000000)||(d.n!==undefined&&(!Number.isSafeInteger(d.n)||d.n<0))||
-       !hostInt(d.f,0,1)||!hostInt(d.a,0,1)||(d.st!==undefined&&!hostInt(d.st,0,199)))return;   // v0.11.0: machines are 101-117 (only codes in CAS_SEAT take a seat)
-    if(casino()&&(d.st|0)!==(p.seat|0)){const want=d.st|0,s=casSeatOf(want),pos=want&&s&&s.pos;   // v0.10.0: a casino seat nobody else has, next to where they stand (v0.11.0: or a machine; only codes in CAS_SEAT)
+       !hostInt(d.f,0,1)||!hostInt(d.a,0,1)||(d.st!==undefined&&!hostInt(d.st,0,199)))return;   // v0.10.3: machines are 101-117 (only codes in CAS_SEAT take a seat)
+    if(casino()&&(d.st|0)!==(p.seat|0)){const want=d.st|0,s=casSeatOf(want),pos=want&&s&&s.pos;   // v0.10.0: a casino seat nobody else has, next to where they stand (v0.10.3: or a machine; only codes in CAS_SEAT)
       p.seat=pos&&Math.hypot(p.x-pos[0],p.y-pos[1])<1.2&&!(casTaken(want)&&casTaken(want)!==p)?want:0;if(p.seat){p.x=pos[0];p.y=pos[1];c.moveBudget=0}}
     const l=Math.hypot(d.ax,d.ay);if(l>.01){p.aim={x:d.ax/l,y:d.ay/l};p.face=p.aim}
     p.fireIn=!!d.f&&p.alive;p.autoFire=d.a!==0;if(d.n!==undefined&&d.n!==p.pullIn){if(p.pullIn===undefined)p.pullUsed=d.n;p.pullIn=d.n;p.pullT=game.time}
