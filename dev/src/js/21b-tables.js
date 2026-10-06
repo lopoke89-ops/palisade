@@ -6,12 +6,15 @@
 // v0.10.0: the tables are in THE PALISADE FALLS CASINO (06f-casino.js). You sit by walking up to a seat; the table opens in
 // a sheet over the casino floor. Roulette (American, always no limit); your own seed; hand history with the check, run here
 // in the browser; the house rules. The TABLES page is the front door.
-const TB={id:0,code:'',v:null,busy:false,lobbyT:0,amt:2,raise:0,balance:0,key:'',sheet:false,mine:null,
-  peek:{},peekT:0,rl:{chip:5,bets:{},sent:'',dirty:0,last:{},hand:-1}};
+// v0.11.0: baccarat, craps, slots and Plinko (their sheets are in 21c-casino-games.js). Every round ends in a review the server
+// holds (the receipt: what you bet, what came back, the net, and why); LAST RESULT shows it again any time, after you stand
+// up or come back too. Money moves carry an operation id kept until the server answers, so a retry never pays twice.
+const TB={id:0,code:'',v:null,busy:false,lobbyT:0,amt:2,raise:0,balance:0,key:'',sheet:false,mine:null,station:'',
+  peek:{},peekT:0,rl:{chip:5,bets:{},sent:'',dirty:0,last:{},hand:-1},pend:null,rcpt:null,animT:0};
 const TB_SUIT=['♣','♦','♥','♠'],TB_RANK=['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
 const tbCard=c=>c===null||c===undefined?'<span class="tcard back"></span>':`<span class="tcard${(c%52/13|0)===1||(c%52/13|0)===2?' red':''}">${TB_RANK[c%52%13]}<i>${TB_SUIT[c%52/13|0]}</i></span>`;
 const tbEsc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const TB_NAME={bj:'BLACKJACK',he:'TEXAS HOLD\'EM',rl:'ROULETTE'};
+const TB_NAME={bj:'BLACKJACK',he:'TEXAS HOLD\'EM',rl:'ROULETTE',ba:'BACCARAT',cr:'CRAPS',sl:'SLOTS',pk:'PLINKO'};
 const TB_HELP={bj:`<p><b>Goal:</b> finish closer to 21 than the dealer without going over. Number cards count their number, J/Q/K count 10, an ace counts 1 or 11.</p>
 <p><b>Each hand:</b> place a bet (60 seconds; the cards come as soon as everyone has bet). You get two cards; the dealer shows one.</p>
 <p><b>HIT</b> takes a card. <b>STAND</b> keeps what you have. <b>DOUBLE</b> doubles your bet for exactly one more card. <b>SPLIT</b> turns a pair into two hands (one more bet).</p>
@@ -25,19 +28,43 @@ he:`<p><b>Goal:</b> make the best five-card hand from your two cards and the fiv
 rl:`<p><b>Goal:</b> guess where the ball lands. The wheel has 38 pockets: 1 to 36 (red or black), 0 and 00 (green).</p>
 <p><b>Each spin:</b> 60 seconds to bet. Pick a chip, then tap the board: a number, the line between two numbers (split), the bottom edge of a column of three (street), a corner of four, the bottom corner between two streets (six line), or the outside boxes. Tap again to add another chip. The ball goes as soon as everyone with a bet taps SPIN.</p>
 <p><b>Pays:</b> a number 35:1, split 17:1, street 11:1, corner 8:1, the top line (0, 00, 1, 2, 3) 6:1, six line 5:1, a dozen or a column 2:1, red/black, odd/even, 1-18/19-36 1:1. 0 and 00 lose every outside bet.</p>
-<p>No limit: bet anything you have at the table.</p>`};
+<p>No limit: bet anything you have at the table.</p>`,
+ba:`<p><b>Goal:</b> bet on which hand ends closer to 9: <b>PLAYER</b> or <b>BANKER</b> (or a <b>TIE</b>). Those are just the hands' names: nobody plays them, the cards are dealt by the rules.</p>
+<p><b>Counting:</b> aces 1, 2-9 face value, 10/J/Q/K 0; only the last digit counts (7 + 8 = 15 counts 5). Two cards each; an 8 or 9 is a natural and the hand is over. Otherwise the third-card rules decide (they're in HOUSE RULES); nobody chooses.</p>
+<p><b>Pays:</b> Player 1:1. Banker 1:1 less 5% commission, so Banker bets go in 20s: 20 on Banker pays 19 plus your 20 back. Tie 8:1, and a tie gives Player and Banker bets back.</p>
+<p><b>Each hand:</b> 30 seconds to bet; DEAL when you're done (the cards come once everyone has, but never in the first 5 seconds). Eight decks in one shoe, burned and cut 16 cards from the end. The ROAD shows what happened, not what will.</p>`,
+cr:`<p><b>The easy way in:</b> on the come-out roll put a bet on the <b>PASS LINE</b>. 7 or 11 wins, 2, 3 or 12 loses; anything else becomes the <b>point</b>. Then you want the point again before a 7. Pays 1:1.</p>
+<p><b>Once a point is on</b> you can add <b>PASS ODDS</b> (up to 3x on 4/10, 4x on 5/9, 5x on 6/8; true odds, the house keeps nothing), and <b>COME</b> bets, which work like a Pass bet of their own on the next roll. <b>DON'T PASS / DON'T COME</b> are the other side (12 on the come-out is a tie).</p>
+<p><b>PLACE 6 / 8</b> win 7:6 when that number rolls before a 7 and stay up; <b>FIELD</b> is one roll. ALL BETS shows Place 4/5/9/10, Hardways and the one-roll bets. Every bet's payout is on its box.</p>
+<p><b>Rules you can't change:</b> a Pass bet with a point on can't come down; a Come bet on its number stays until it's decided; Don't bets can come down but not go back up. Place, Hardways and Come odds rest on the come-out unless you turn them on (the toggles). TAKE DOWN, then tap a bet, takes it off.</p>
+<p><b>The dice:</b> the shooter's ROLL (or everyone's READY) starts the roll; the dice are the server's, not your timing. The shooter keeps the dice until a seven-out.</p>`,
+sl:`<p><b>PALISADE RUN:</b> pick 1 to 100 shards and SPIN. Three reels, one line across the middle. The line pays its single highest award (the PAYTABLE has them all): three crests 250x down to one shard on the first reel, which gives your stake back.</p>
+<p>Every spin is on its own, one per press: no autoplay, no jackpot. The machine returns 96.03% of what's bet over all its combinations; any one session can be far above or below that.</p>`,
+pk:`<p><b>PLINKO:</b> pick a stake (in 10s) and DROP. The ball bounces left or right twelve times, each one 50/50, and lands in one of thirteen pockets: the edges pay 30x, the middle 0.5x.</p>
+<p>The bounces are decided by the server before the ball moves; the board just shows that path. 1x gives your stake back; under 1x some shards come back but it's a loss. Returns 96.01% over all 4,096 paths.</p>`};
 // the house rules (the TABLES page and the sheet both show them)
 const TB_RULES=`<h4>THE HOUSE</h4><p>Every table is run by the server: it shuffles, deals, spins and pays. Your screen only shows what the server says you may see.</p>
 <h4>WHAT THE HOUSE KEEPS</h4><ul><li><b>Blackjack:</b> about 0.5% of what's bet with perfect play (4 decks, dealer stands on 17, blackjack pays 3:2).</li>
 <li><b>Hold'em:</b> 1.8% of pots that reach the flop, 6 shards at most. Nothing from pots that end before the flop.</li>
 <li><b>Roulette:</b> the American double-zero wheel keeps 5.26% of every bet (2 pockets in 38); the top line (0, 00, 1, 2, 3) keeps 7.89%.</li>
-<li><b>Side bets:</b> 1 shard a hand.</li></ul><p>What the house keeps is gone: it isn't paid to anyone. Shards can never be bought or cashed out.</p>
-<h4>FAIR PLAY</h4><p>Before every hand or spin the server shows the fingerprint (SHA-256) of its secret seed. Your own seed (set it under FAIR PLAY at the table) and everyone else's are mixed in when the round starts, so nobody, the server included, can pick the cards. After the round the seed is revealed and anyone can rerun the shuffle or the spin: HAND HISTORY does it for you, right in your browser.</p>
+<li><b>Side bets:</b> 1 shard a hand.</li>
+<li><b>Baccarat</b> (8 decks): Banker 1.06% (1:1 less 5% commission, so Banker bets go in 20s), Player 1.24%, Tie 14.36% (8:1).</li>
+<li><b>Craps:</b> Pass and Come 1.41%, Don't Pass and Don't Come 1.40% (bar 12), odds 0%, Place 6/8 1.52%, Place 5/9 4.00%, Place 4/10 6.67%, Field 5.56%, Hard 6/8 9.09%, Hard 4/10 11.11%, Any Craps 11.11%, 3 and 11 11.11%, 2 and 12 13.89%, Any Seven 16.67%.</li>
+<li><b>Slots</b> (PALISADE RUN, math sl-1): returns 96.03% of what's bet over every one of its 8,000 stop combinations; a winning line 37.5% of spins; the top award is 250x.</li>
+<li><b>Plinko</b> (math pk-1): returns 96.01% (all 4,096 paths); a ball pays 0.5x to 30x.</li></ul>
+<p>Slots and Plinko are this casino's own games (no real casino's machines or odds). The house's share is a project choice, kept under 100%.</p>
+<p>What the house keeps is gone: it isn't paid to anyone. Shards can never be bought or cashed out.</p>
+<h4>FAIR PLAY</h4><p>Before every hand, spin, roll or drop the server shows the fingerprint (SHA-256) of its secret seed. Your own seed (set it under FAIR PLAY at the table) and everyone else's are mixed in when the round starts, so nobody, the server included, can pick the cards. After the round the seed is revealed and anyone can rerun the shuffle or the spin: HAND HISTORY does it for you, right in your browser.</p>
 <p>In Hold'em each card has its own fingerprint, so you can check the cards you saw without anyone seeing a folded hand. The seed and the whole deck show in your history after 24 hours.</p>
+<p>Baccarat deals from one shoe for many hands, so its seed can't be shown until the shoe is finished (it would show the cards still to come). Every card of the shoe has its own fingerprint, all of them fixed when the shoe starts: each hand's cards come with their salts, and CHECK compares them with those fingerprints right away. When the shoe is done (cut card, or the table closes) its seed and every card go to your history, and CHECK reruns the whole shuffle. Your seed is mixed in from the next shoe on.</p>
+<p>Craps: each roll has its own committed seed (shown after the roll; it can't tell you the next one). Slots and Plinko: each spin or drop likewise, and the reels stop and the ball falls exactly where those numbers say.</p>
+<p>What CHECK proves: the result came from the committed seed and the players' seeds, so it was fixed before anyone could see it. It doesn't prove anything else about the server; the books check below is a separate audit of the shards.</p>
 <h4>THE BOOKS</h4><p>Every day the server checks every table that closed: shards brought in minus shards taken home must equal what the house kept plus what was lost to the bot, to the shard.</p>
 <h4>AT THE TABLE</h4><ul><li>The buy-in is 5 shards. Top up between hands. Standing up sends what's in front of you back to your balance.</li>
 <li>Sit out 3 hands, or close the game for a minute, and you're stood up (your shards go home).</li>
-<li>Blackjack and Hold'em: up to 5 and 6 players; the first to sit sets the table's limit and side bet and starts it. Roulette: up to 6, always no limit, nothing to start.</li>
+<li>Blackjack and Hold'em: up to 5 and 6 players; the first to sit sets the table's limit and side bet and starts it. Roulette, baccarat and craps: up to 6, always no limit, nothing to start. Slots and Plinko: one player per machine.</li>
+<li>After every round the result stays up: 8 seconds for cards, 6 for dice and roulette, 3 for slots and Plinko, counted from the last card, the dice stopping or the ball landing. Nothing (READY included) skips it. Standing up is never held back by it.</li>
+<li>Craps: if you leave with a Pass Line bet on a point or a Come bet on its number, those bets stay and the dealer rolls them out; you can't sit elsewhere until they're decided, then your shards go home.</li>
 <li>A bot sits in at Hold'em when there are only two of you; it never sees anyone's cards.</li></ul>`;
 async function tbCall(body){
   if(!await freshToken())return{error:'Sign in to play at the tables'};
@@ -48,22 +75,37 @@ const tbMsg=t=>{txt($('tbMsg'),t||'');txt($('tbSheetMsg'),t||'')};
 function tbCanPlay(){if(!cloudOn)return 'The tables need the online version of the game.';if(!acct.s)return 'Sign in to play at the tables.';
   if(isGuest())return 'Make an account on the Account page to play at the tables. Guests can\'t.';return null}
 // ---------- the front door (the TABLES page) ----------
+const tbMineText=m=>m.pending?`BET STILL RESOLVING: you left the ${TB_NAME[m.game]} table with ${m.pending.bets||'a'} bet${m.pending.bets===1?'':'s'} still working. The dealer is rolling ${m.pending.bets===1?'it':'them'} out; your shards come home once ${m.pending.bets===1?'it is':'they are'} decided.`
+  :`You're still seated at the ${TB_NAME[m.game]||'casino'} ${m.station?'machine':'table'} from before. Stand up to take your shards home.`;
 function renderTables(){const no=tbCanPlay();$('casEnterBtn').disabled=$('tbJoinBtn').disabled=!!no;tbMsg(no||'');
-  const m=TB.mine;hid($('tbMine'),!m||casino());if(m)txt($('tbMine').firstChild,`You're still seated at the ${TB_NAME[m.game]||'casino'} table from before. Stand up to take your shards home.`);
+  const m=TB.mine;hid($('tbMine'),!m||casino());if(m){txt($('tbMine').firstChild,tbMineText(m));hid($('tbMineLeave'),!!m.pending)}
   if(!no)tbLobby()}
 async function tbLobby(){if(TB.busy||tbCanPlay())return;TB.lobbyT=performance.now();const r=await tbCall({op:'lobby'});if(r.error){tbMsg(r.error);return}
   TB.balance=r.balance;txt($('tbBal'),String(r.balance));TB.mine=r.mine||null;hid($('tbMine'),!TB.mine||casino());
-  if(TB.mine)txt($('tbMine').firstChild,`You're still seated at the ${TB_NAME[TB.mine.game]||'casino'} table from before. Stand up to take your shards home.`)}
-async function tbSend(body,quiet){if(TB.busy&&!quiet)return;if(!quiet)TB.busy=true;try{const r=await tbCall(body);
+  if(TB.mine){txt($('tbMine').firstChild,tbMineText(TB.mine));hid($('tbMineLeave'),!!TB.mine.pending)}}
+// moves that can move shards carry an operation id. It's made before the first send and kept until the server answers: a
+// timeout or a dropped connection resends the same id (the server answers it from its record instead of moving shards twice)
+const TB_MONEY=new Set(['sit','topup','leave','bet','insure','move','rlbets','babets','crbet','spin','drop','pick']);
+const tbOpId=()=>{const a=new Uint8Array(12);crypto.getRandomValues(a);return 'o'+[...a].map(x=>x.toString(36).padStart(2,'0')).join('').slice(0,22)};
+async function tbCallOp(body){if(!TB_MONEY.has(body.op))return tbCall(body);
+  const key=JSON.stringify({...body,opId:undefined});if(!TB.pend||TB.pend.key!==key||performance.now()-TB.pend.t>120000)TB.pend={key,id:tbOpId(),t:performance.now()};
+  const b={...body,opId:TB.pend.id};let r=await tbCall(b);
+  for(let k=0;k<2&&r&&!r.view&&/connection|busy/i.test(r.error||'');k++){await new Promise(f=>setTimeout(f,700*(k+1)));r=await tbCall(b)}   // same id: never a second debit
+  if(r&&(r.view||r.replay||!/connection|busy/i.test(r.error||'')))TB.pend=null;return r}
+async function tbSend(body,quiet){if(TB.busy&&!quiet)return;if(!quiet)TB.busy=true;try{const r=await tbCallOp(body);
   if(r.error&&!r.view){tbMsg(r.error);if(/closed/.test(r.error))tbGone();return r}
   if(r.view){TB.id=r.id;TB.code=r.code;TB.balance=r.balance;tbShow(r.view);tbMsg(r.error||'')}
-  if(body.op==='leave'&&r.view&&r.view.me<0){tbGone();if(typeof syncLocker==='function')syncLocker()}
+  if(r.rcpt&&typeof cgOnRcpt==='function')cgOnRcpt(r.rcpt);
+  if(body.op==='leave'&&r.view&&r.view.me<0){tbGone();toast('TABLES','RETURNED TO WALLET');if(typeof syncLocker==='function')syncLocker()}
+  // v0.11.0 craps: you left with a Pass or Come bet on its number: it stays and the dealer rolls it out; shards home after
+  else if(body.op==='leave'&&r.view&&r.view.gone&&r.view.gone[r.view.me]){const n=(r.view.locked||[]).length;tbGone();TB.mine={id:r.id,game:r.view.game,pending:{bets:n}};
+    toast('CRAPS','BET STILL RESOLVING: '+n+' bet'+(n>1?'s':'')+' working; your shards come home once the dealer has rolled '+(n>1?'them':'it')+' out')}
   return r}finally{if(!quiet)TB.busy=false}}
 // you're no longer at a table: off the seat in the casino, the sheet closed
-function tbGone(){TB.id=0;TB.v=null;TB.key='';TB.rl.bets={};TB.rl.sent='';if(casino()&&player&&player.seat)player.seat=0;tbSheet(false)}
+function tbGone(){TB.id=0;TB.v=null;TB.key='';TB.station='';TB.rl.bets={};TB.rl.sent='';if(typeof cgReset==='function')cgReset();if(casino()&&player&&player.seat)player.seat=0;tbSheet(false)}
 // ---------- sitting down (called from the casino when you walk up to a seat) ----------
-async function tbSitAt(gm,k){const p=player;tbMsg('Taking a seat…');
-  const r=await tbSend({op:'sit',room:casRoom(),game:gm,seat:k,seed:tbSeedPref()});
+async function tbSitAt(gm,k,station=''){const p=player;tbMsg(station?'Starting the machine…':'Taking a seat…');TB.station=station;
+  const r=await tbSend({op:'sit',room:casRoom(),game:gm,seat:k,station,seed:tbSeedPref()});
   if(!r||!r.view||r.view.me<0){if(p&&casino())p.seat=0;toast('TABLES',(r&&r.error)||'Could not sit down');return}
   if(p&&casino()){const t=casTable(gm),me=r.view.me;if(me!==k&&t&&t.seats[me]){const [x,y]=t.seats[me];p.x=x;p.y=y;p.seat=seatCode(t.n,me)}}   // the server gave you the next free seat
   TB.key='';tbSheet(true)}
@@ -71,16 +113,18 @@ const tbSeedPref=()=>{try{return localStorage.getItem('pal_seed')||''}catch(e){r
 // the sheet: your table over the casino floor (HIDE keeps you seated; STAND UP takes your shards home)
 function tbSheet(open){TB.sheet=!!open&&!!TB.id;hid($('casSheet'),!TB.sheet);if(TB.sheet&&TB.v){TB.key='';tbShow(TB.v)}}
 // what's on a table in the casino: your own from your seat, the one you're standing next to from a peek
-function casView(gm){if(TB.v&&TB.v.game===gm&&TB.id)return TB.v;const pk=TB.peek[gm];return pk&&performance.now()-pk.t<6000?pk.v:null}
-async function tbPeek(gm){const r=await tbCall({op:'peek',room:casRoom(),game:gm});if(r&&!r.error)TB.peek[gm]={v:r.view,t:performance.now()}}
+function casView(gm,station=''){if(TB.v&&TB.v.game===gm&&(TB.v.station||'')===station&&TB.id)return TB.v;const pk=TB.peek[gm+':'+station];return pk&&performance.now()-pk.t<6000?pk.v:null}
+async function tbPeek(gm,station=''){const r=await tbCall({op:'peek',room:casRoom(),game:gm,station});if(r&&!r.error){if(r.view)r.view._t=performance.now();TB.peek[gm+':'+station]={v:r.view,t:performance.now()}}}
 setInterval(()=>{if(document.hidden)return;
   if(casino()){if(TB.id){tbSend({op:'state',id:TB.id},true);return}
     if(!player||tbCanPlay()||performance.now()-TB.peekT<2000)return;TB.peekT=performance.now();   // standing: look at the nearest table every 2 s
-    let best=null,bd=3.6;for(const t of CAS.tables){const d=Math.hypot(player.x-t.c[0],player.y-t.c[1]);if(d<bd){bd=d;best=t}}if(best)tbPeek(best.game);return}
+    let best=null,bd=3.6;for(const t of CAS.tables){const d=Math.hypot(player.x-t.c[0],player.y-t.c[1]);if(d<bd){bd=d;best=t}}
+    let bm=null,dm=2.2;for(const m of CAS.machines){if(!casTaken(m.code))continue;const d=Math.hypot(player.x-m.at[0],player.y-m.at[1]);if(d<dm){dm=d;bm=m}}   // a machine someone is playing, right next to you
+    if(bm&&(!best||dm<bd*.6))tbPeek(bm.game,bm.id);else if(best)tbPeek(best.game);return}
   if(!$('menu').hidden&&!$('pg-tables').hidden&&performance.now()-TB.lobbyT>5000)tbLobby()},1000);
 const tbSecs=v=>Math.ceil(v.left/1000);
 // one line that says what's going on, and what you should do
-function tbStatus(v,me){const P=v.players||[],cur=v.game==='bj'?(v.turn&&P[v.turn.p]):P.find(p=>p.turn),hum=v.seats.filter(s=>s&&!s.bot).length;
+function tbStatus(v,me){if(CG[v.game])return CG[v.game].status(v,me);const P=v.players||[],cur=v.game==='bj'?(v.turn&&P[v.turn.p]):P.find(p=>p.turn),hum=v.seats.filter(s=>s&&!s.bot).length;
   if(v.game==='rl'){const n=Object.keys(v.myBets||{}).length,tot=rlTotalC(TB.rl.bets);
     if(v.phase==='bet')return v.readyMe?['READY',`${v.readyN} ready · the ball goes in ${tbSecs(v)}s at most`,'wait']:n||tot?['PLACE YOUR BETS',`${tot}◆ on the board · tap SPIN when you're done · ${tbSecs(v)}s`,'you']:['PLACE YOUR BETS',`Pick a chip and tap the board · ${tbSecs(v)}s`,'you'];
     if(v.phase==='spin')return['NO MORE BETS','The ball is spinning…','wait'];
@@ -92,6 +136,9 @@ function tbStatus(v,me){const P=v.players||[],cur=v.game==='bj'?(v.turn&&P[v.tur
   if(v.game==='bj'){
     if(v.phase==='bet')return v.bets&&v.bets[v.me]!==undefined?['BET PLACED',`Waiting for the others · cards in ${tbSecs(v)}s at most`,'wait']:['PLACE YOUR BET',`Pick an amount and press BET · ${tbSecs(v)}s left`,'you'];
     if(v.phase==='ins')return v.insure?['DEALER SHOWS AN ACE','Insurance costs half your bet and pays 2:1 if the dealer has blackjack. Most players say no.','you']:['INSURANCE','Waiting for the others to decide.','wait'];
+    // v0.11.0 the review: the dealer's cards turn one by one, then the verdict and the reason stay up for 8 s
+    if(v.phase==='done'&&v.last&&v.last.result){if(cgLeft(v)>0)return['THE DEALER PLAYS','The hole card turns, then the dealer draws to 17','wait'];const p=mineOf(v.last.result),rl=Math.ceil(cgReviewLeft(v)/1000);
+      return[p?cgVerdict(p):'HAND OVER',(p?p.hands.map(h=>h.why).join(' · ')+' · ':'')+(rl>0?`next bets in ${rl}s`:'betting opens now'),'done']}
     if(v.phase==='play'){if(v.myTurn){const h=cur.hands[v.turn.h];return['YOUR TURN',`You have ${h.total}${h.soft&&h.total<21?' (soft)':''} · the dealer shows ${v.dealerTotal}`+(cur.hands.length>1?` · hand ${v.turn.h+1} of ${cur.hands.length}`:''),'you']}
       return['WAITING',`${cur?cur.name:'The dealer'} is playing`,'wait']}
     return['DEALING','','wait']}
@@ -99,21 +146,24 @@ function tbStatus(v,me){const P=v.players||[],cur=v.game==='bj'?(v.turn&&P[v.tur
   if(v.phase==='play'){if(v.myTurn){const c=v.can;return['YOUR TURN',(c.call?`${c.call} to call`:'Nobody has bet: check or bet')+` · pot ${v.pot}`,'you']}return['WAITING',`${cur?cur.name:'…'} is thinking${cur&&cur.bot?' (bot)':''}`,'wait']}
   if(v.phase==='done')return['HAND OVER',(v.last&&v.last.result?tbResult(v)+' · ':'')+(v.readyMe?`You're ready · next hand in ${tbSecs(v)}s (or when everyone's ready)`:`Next hand in ${tbSecs(v)}s · tap READY to deal sooner`),'done'];
   return['','','wait']}
-function tbShow(v){TB.v=v;
+function tbShow(v){TB.v=v;if(!v._t)v._t=performance.now();   // v0.11.0: when this view arrived (the reveal and the review count from it)
   if(v.me<0){tbGone();return}
   const me=v.seats[v.me];
   if(v.game==='rl')rlSync(v);
   if(!TB.sheet)return;   // seated with the sheet hidden: the felt in the world shows the table, the poll keeps the state
-  txt($('tbTitle'),TB_NAME[v.game]);txt($('tbInfo'),v.game==='rl'?'american wheel · no limit':(v.lim?'max bet '+v.lim:'no limit')+(v.side?' · side bet on':'')+' · '+v.hostName+' started it');
+  txt($('tbTitle'),TB_NAME[v.game]+(v.station&&v.game==='sl'?' · CABINET '+v.station.slice(1):''));txt($('tbInfo'),CG[v.game]?CG[v.game].info(v):v.game==='rl'?'american wheel · no limit':(v.lim?'max bet '+v.lim:'no limit')+(v.side?' · side bet on':'')+' · '+v.hostName+' started it');
   txt($('tbStack'),String(me.stack));txt($('tbBalT'),String(TB.balance));
   const [t,sub,kind]=tbStatus(v,me),stEl=$('tbStatus');stEl.className='tbStatus '+kind;txt(stEl.children[0],t);txt(stEl.children[1],sub);
-  const tm=v.left>0&&v.phase!=='spin';$('tbTimer').hidden=!tm;if(tm)$('tbTimer').firstChild.style.transform=`scaleX(${Math.min(1,v.left/60000)})`;
+  const tm=v.left>0&&v.phase!=='spin';$('tbTimer').hidden=!tm;if(tm)$('tbTimer').firstChild.style.transform=`scaleX(${Math.min(1,v.left/(v.game==='ba'?30000:v.game==='cr'?20000:60000))})`;
+  tbRevealClock(v);
   const seat=(s,inner,turn,tag)=>`<div class="tseat${s.me?' me':''}${turn?' turn':''}${s.bot?' bot':''}"><b>${tbEsc(s.name)}${s.me?' <i>YOU</i>':''}${tag||''}</b><span>${s.stack} ◆ at the table</span>${inner||''}</div>`;
   const lastBj=v.game==='bj'&&(v.phase==='bet'||!v.dealer)&&v.last&&v.last.result&&v.last.result.dealer?v.last.result:null;
-  let felt='';
-  if(v.game==='rl')felt=rlFelt(v);
+  let felt=tbReview(v);
+  if(CG[v.game])felt+=CG[v.game].felt(v,me);
+  else if(v.game==='rl')felt+=rlFelt(v);
   else if(v.game==='bj'){
-    const dealer=v.dealer||(lastBj&&lastBj.dealer),dt=v.dealer?v.dealerTotal:lastBj&&lastBj.total;
+    let dealer=v.dealer||(lastBj&&lastBj.dealer),dt=v.dealer?v.dealerTotal:lastBj&&lastBj.total;
+    if(v.phase==='done'&&v.dealer&&cgLeft(v)>0){const n=v.dealer.length,k=Math.max(1,n-Math.ceil(cgLeft(v)/700));dealer=v.dealer.map((c,i)=>i<k?c:null);dt=null;if(v===TB.v)cgSound(v,k,'cas_card')}   // the reveal, card by card
     felt+=`<div class="tdealer${lastBj?' old':''}"><b>DEALER${lastBj?' · LAST HAND':''}</b><div class="tcards">${dealer?dealer.map(tbCard).join(''):tbCard(null)+tbCard(null)}</div><em>${dt?dt+(dt>21?' · BUST':''):''}</em></div>`;
     felt+='<div class="tseats">'+v.seats.filter(Boolean).map(s=>{const p=v.players&&v.players.find(p=>p.seat===s.i),b=v.bets&&v.bets[s.i],lp=lastBj&&lastBj.players.find(x=>x.name===s.name);
       let inner='';
@@ -125,8 +175,8 @@ function tbShow(v){TB.v=v;
     felt+='<div class="tseats">'+v.seats.filter(Boolean).map(s=>{const p=v.players&&v.players.find(p=>p.seat===s.i);
       const inner=p?`<div class="tcards">${p.cards.map(tbCard).join('')}</div><em>${p.folded?'FOLDED':p.allin?'ALL IN':p.bet?'bet '+p.bet+'◆':'·'}${p.put?' · in pot '+p.put+'◆':''}</em>`:'<em>not in this hand</em>';
       return seat(s,inner,p&&p.turn,s.bot?' <i>BOT</i>':'')}).join('')+'</div>'}
-  if(v.phase==='done'&&v.last&&v.last.result&&v.game==='he')felt+=`<div class="tresult">${tbResult(v)}</div>`;
-  const fe=$('tbFelt');if(fe._h!==felt){fe._h=felt;fe.innerHTML=felt}tbActions(v,me);   // untouched when nothing changed (a rebuild mid-tap loses the tap)
+
+  const fe=$('tbFelt');if(fe._h!==felt){fe._h=felt;fe.innerHTML=felt;if(CG[v.game]&&CG[v.game].after)CG[v.game].after(v)}tbActions(v,me);   // untouched when nothing changed (a rebuild mid-tap loses the tap)
   $('tbLog').textContent=v.log.join(' · ');$('tbHelpTxt').innerHTML=TB_HELP[v.game];
   $('tbFairTxt').innerHTML=tbFairText(v);const si=$('tbSeedIn');if(document.activeElement!==si)si.value=v.seed||'';
   const pk=$('tbPick');pk.hidden=!(v.picks>0);if(v.picks>0){const hit=v.last&&v.last.sideHits&&v.last.sideHits.find(x=>x);txt($('tbPickWhy'),(hit?hit.why+'! ':'')+'Pick your prize.')}}
@@ -143,9 +193,10 @@ function tbResult(v){const r=v.last.result;
 const tbBtn=(id,label,{on=true,cl='',hint=''}={})=>`<button type="button" data-act="${id}" class="${cl}"${on?'':' disabled'}>${label}${hint?`<small>${hint}</small>`:''}</button>`;
 function tbActions(v,me){const box=$('tbActs'),c=v.can||{};
   // rebuilt only when something you can do changes, so the raise slider isn't reset while you drag it
-  const key=JSON.stringify([v.phase,v.started,v.host,v.myTurn,c,v.insure,v.readyMe,v.bets&&v.bets[v.me],TB.amt,me.side,me.stack,v.lim,v.side,v.game,v.seats.filter(s=>s&&!s.bot).length,v.game==='rl'?[TB.rl.chip,TB.rl.bets,TB.rl.last]:0]);
+  const key=JSON.stringify([v.phase,v.started,v.host,v.myTurn,c,v.insure,v.readyMe,v.bets&&v.bets[v.me],TB.amt,me.side,me.stack,v.lim,v.side,v.game,v.seats.filter(s=>s&&!s.bot).length,v.game==='rl'?[TB.rl.chip,TB.rl.bets,TB.rl.last]:0,CG[v.game]?CG[v.game].key(v,me):0]);
   if(key===TB.key)return;TB.key=key;let h='';
   if(v.game==='rl'){box.innerHTML=rlActions(v,me);return}
+  if(CG[v.game]){box.innerHTML=CG[v.game].acts(v,me);return}
   if(!v.started&&v.host){const n=v.seats.filter(s=>s&&!s.bot).length,can=v.game==='bj'?n>=1:n>=2;
     h+=`<div class="trow">${tbBtn('start','START THE TABLE',{on:can,cl:'go big',hint:can?n+' seated':'needs 2 players'})}</div>`;
     h+=`<p class="tbHint">Table rules (you can change these until you start):</p><div class="trow">${[100,250,0].map(l=>tbBtn('lim:'+l,l?'MAX BET '+l:'NO LIMIT',{cl:v.lim===l?'sel':''})).join('')}</div>`;
@@ -245,6 +296,7 @@ $('tbFelt').addEventListener('pointerup',e=>{const d=rlDown;rlDown=null;if(!d||p
   rlTapAt(d.x,d.y,document.elementFromPoint(d.x,d.y))});
 $('tbFelt').addEventListener('click',e=>{if(e.detail===0){const b=e.target.closest('[data-spot]');if(b&&!b.disabled)rlAdd(b.dataset.spot)}});
 $('tbActs').addEventListener('click',e=>{const b=e.target.closest('button[data-act]');if(!b||b.disabled)return;const a=b.dataset.act,v=TB.v;if(!v)return;const me=v.seats[v.me],R=TB.rl;
+  if(CG[v.game]){CG[v.game].act(a,v,me);return}
   if(a.startsWith('chip:')){R.chip=+a.slice(5);TB.key='';tbActions(v,me);return}
   if(a==='rlclear'){R.bets={};rlQueue();return}
   if(a==='rlrebet'){R.bets={...R.last};rlQueue();return}
@@ -276,16 +328,31 @@ async function tbVerify(h){const r=h.result||{};
   if(h.seed){if(await tbSha(h.seed)!==h.commit)return[false,'The seed does not match the fingerprint shown before the round.'];
     const rr=await tbFairRng(h.seed,r.seeds,r.nonce);
     if(h.game==='rl'){const n=await rr(38);return n===r.number?[true,`The seed matches its fingerprint and the spin reruns to ${rlName(n)}.`]:[false,'The spin does not rerun to the same number.']}
+    // v0.11.0: each roll, spin and drop reruns from its own seed
+    if(h.game==='cr'){const d=[1+await rr(6),1+await rr(6)];return d[0]===r.dice[0]&&d[1]===r.dice[1]?[true,`The seed matches its fingerprint and the roll reruns to ${d[0]} and ${d[1]}.`]:[false,'The roll does not rerun to the same dice.']}
+    if(h.game==='sl'){const st=[await rr(20),await rr(20),await rr(20)];return st.every((x,i)=>x===r.stops[i])?[true,'The seed matches its fingerprint and the reels rerun to the same stops.']:[false,'The reels do not rerun to the same stops.']}
+    if(h.game==='pk'){const p=[];for(let i=0;i<12;i++)p.push(await rr(2));return p.every((x,i)=>x===r.path[i])?[true,`The seed matches its fingerprint and the ball reruns to pocket ${r.pocket+1}.`]:[false,'The path does not rerun.']}
+    if(h.game==='ba'){const d=await tbShuffle(416,rr),same=d.every((c,i)=>c===h.deck[i]);if(!same)return[false,'The shoe does not rerun to the same cards.'];
+      const hs=[];for(let i=0;i<416;i++)hs.push(await tbSha((await tbSha(h.seed+':card:'+i)).slice(0,32)+':'+d[i]));
+      return await tbSha(hs.join(','))===r.root?[true,`The seed matches its fingerprint, the whole shoe reruns card for card (${r.dealt} dealt), and its card fingerprints build the root every hand was checked against.`]:[false,'The shoe does not build its root.']}
     const d=await tbShuffle(h.game==='bj'?208:52,rr),same=Array.isArray(h.deck)&&d.length===h.deck.length&&d.every((c,i)=>c===h.deck[i]);
     return same?[true,`The seed matches its fingerprint and the ${h.game==='bj'?'shoe':'deck'} reruns card for card.`]:[false,'The shuffle does not rerun to the same cards.']}
+  if(h.game==='ba'&&h.cards&&h.root){   // a hand from a shoe: its cards against the shoe's fingerprints (from the table while the shoe is in play, else the finished shoe)
+    const no=r.shoe&&r.shoe.no,end=(TB.hist||[]).find(x=>x.game==='ba'&&x.result&&x.result.shoeEnd===no&&x.tid===h.tid&&x.seed);let hashes=null;
+    if(end){hashes=[];for(let i=0;i<416;i++)hashes.push(await tbSha((await tbSha(end.seed+':card:'+i)).slice(0,32)+':'+end.deck[i]))}
+    else{const p=await tbCall({op:'shoe',id:h.tid,no});if(p&&p.hashes)hashes=p.hashes;else return[null,(p&&p.error)||'The shoe isn\'t reachable right now.']}
+    if(await tbSha(hashes.join(','))!==h.root)return[false,'The shoe\'s card fingerprints do not build its root.'];
+    for(const[i,c,s]of h.cards)if(await tbSha(s+':'+c)!==hashes[i])return[false,'A card does not match its fingerprint.'];
+    return[true,`The ${h.cards.length} cards of this hand each match the fingerprint fixed when the shoe started (cards ${h.cards[0][0]}-${h.cards.at(-1)[0]} of 416).${end?' The shoe is finished: its own row reruns the whole shuffle.':' The seed shows once the shoe is finished.'}`]}
   if(h.cards&&h.cardHashes){if(await tbSha(h.cardHashes.join(','))!==h.root)return[false,'The card fingerprints do not build the hand\'s root.'];
     for(const[i,c,s]of h.cards)if(await tbSha(s+':'+c)!==h.cardHashes[i])return[false,'A card does not match its fingerprint.'];
     return[true,`The ${h.cards.length} cards you saw each match their fingerprint, and all 52 build the root shown at the deal. The seed and the whole deck show in ${Math.ceil((h.seedIn||0)/36e5)} h.`]}
   return[null,'Nothing to check yet.']}
 const tbCards=a=>(a||[]).map(tbCard).join('');
 function tbHistRow(h,i){const r=h.result||{},me=(r.players||[]).find(p=>p.uid===myUid()),net=me?me.net!==undefined?me.net:(me.won||0)-(me.put||me.bet||0):null;
-  const what=h.game==='rl'?rlName(r.number):h.game==='bj'?'Dealer '+(r.total||'?'):(r.board?tbCards(r.board):'');
-  return `<li><div class="hrow"><b>${TB_NAME[h.game]} #${h.no}</b><span>${new Date(h.at).toLocaleString()}</span><em class="${net>0?'w':net<0?'l':''}">${net===null?'':(net>0?'+':'')+net+'◆'}</em></div>
+  const what=h.game==='rl'?rlName(r.number):h.game==='bj'?'Dealer '+(r.total||'?'):h.game==='ba'?(r.shoeEnd?`Shoe #${r.shoeEnd} finished (${r.dealt} cards dealt)`:`Player ${r.pt} · Banker ${r.bt}`):
+    h.game==='cr'?`${r.dice?r.dice.join(' + '):''} = ${r.total}`:h.game==='sl'?(r.line||[]).map(x=>CG_SYM[x]||'—').join(' '):h.game==='pk'?`pocket ${r.pocket+1} · ${r.mult}x`:(r.board?tbCards(r.board):'');
+  return `<li><div class="hrow"><b>${TB_NAME[h.game]} ${r.shoeEnd?'SHOE #'+r.shoeEnd:'#'+h.no}</b><span>${new Date(h.at).toLocaleString()}</span><em class="${net>0?'w':net<0?'l':''}">${net===null?'':(net>0?'+':'')+net+'◆'}</em></div>
 <div class="hwhat">${what}${h.mine?' · your cards '+tbCards(h.mine):''}</div><button type="button" data-check="${i}">CHECK</button><p class="hcheck" id="hc${i}"></p></li>`}
 async function tbHistory(){const box=$('tbHistList');hid($('tbHist'),false);box.innerHTML='<p class="tbHint">Loading…</p>';const r=await tbCall({op:'history'});
   if(r.error){box.innerHTML=`<p class="tbHint">${tbEsc(r.error)}</p>`;return}TB.hist=r.hands||[];

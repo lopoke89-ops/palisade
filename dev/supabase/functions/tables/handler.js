@@ -64,7 +64,7 @@ async function sweep(D){for(const t of await D.stale(STALE_MS))await run(D,t.id,
 // one row of your hand history, as you may see it (the same rules as the table: Hold'em hides what folded players held for
 // 24 hours, then shows the whole deck and the seed so the shuffle itself can be rerun). Baccarat: a hand shows its own cards
 // with each card's salt (checked against the shoe's fingerprint); the seed and the whole shoe come with the shoe's last row.
-export function histRow(r,uid,now){const res=r.result||{},o={no:r.hand_no,game:r.game,at:r.created_at,commit:res.commit||r.hash,result:res,code:r.code||'',id:r.id};
+export function histRow(r,uid,now){const res=r.result||{},o={no:r.hand_no,game:r.game,at:r.created_at,commit:res.commit||r.hash,result:res,code:r.code||'',id:r.id,tid:r.table_id};
   if(r.game==='ba'){if(res.shoeEnd){o.seed=r.salt;o.deck=r.deck;return o}const sh=res.shoe;if(sh&&Array.isArray(sh.pos)&&Array.isArray(r.deck)){o.root=sh.root;o.cards=sh.pos.map((p,i)=>[p,r.deck[i],E.cardSalt(r.salt,p)])}return o}
   const age=now-new Date(r.created_at).getTime(),full=r.game!=='he'||age>=DAY;
   if(full){o.seed=r.salt;o.deck=r.deck;return o}

@@ -140,6 +140,7 @@ casino_games_engine    node tables casino
 tables_server          node tables server
 casino_server          node tables server casino
 tables_ui              tables casino
+casino_games_ui        tables casino net
 casino_map             casino net
 
 # Windows-only extras from the old run_targeted.ps1 groups; not in the default run (they were never in run_all.sh).

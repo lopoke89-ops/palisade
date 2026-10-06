@@ -24,7 +24,7 @@ const D = {
   byRoom: async (room: string, game: string, station: string) => await one(sb.from('casino_tables').select('id,code').eq('room', room).eq('game', game).eq('station', station || '').eq('open', true).maybeSingle()),
   seatOf: async (uid: string) => (await one(sb.from('casino_tables').select('id,code,game,room,station').eq('open', true).contains('humans', [uid]).limit(1)))[0] || null,
   opGet: async (uid: string, op: string) => await one(sb.from('casino_ops').select('req,table_id,res').eq('user_id', uid).eq('op_id', op).maybeSingle()),
-  history: async (uid: string, n: number) => await one(sb.from('casino_hands').select('id,game,hand_no,hash,salt,deck,result,created_at')
+  history: async (uid: string, n: number) => await one(sb.from('casino_hands').select('id,table_id,game,hand_no,hash,salt,deck,result,created_at')
     .contains('result->players', JSON.stringify([{ uid }])).order('id', { ascending: false }).limit(n)),
   books: async () => { const { error } = await sb.rpc('casino_books_run'); if (error) console.error('books', error.message); },
   stale: async (ms: number) => await one(sb.from('casino_tables').select('id').eq('open', true).lt('updated_at', new Date(Date.now() - ms).toISOString()).limit(10)),

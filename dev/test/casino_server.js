@@ -28,7 +28,7 @@ const MIGS=['20261004200000_v098_tables.sql','20261005200000_v0100_casino.sql','
   byRoom:async(room,game,station)=>(await svc('select id,code from casino_tables where room=$1 and game=$2 and station=$3 and open',[room,game,station||'']))[0],
   seatOf:async u=>(await svc('select id,code,game,room,station from casino_tables where open and humans @> array[$1::uuid]',[u]))[0]||null,
   opGet:async(u,o)=>(await svc('select req,table_id,res from casino_ops where user_id=$1 and op_id=$2',[u,o]))[0]||null,
-  history:async(u,n)=>svc(`select id,game,hand_no,hash,salt,deck,result,created_at from casino_hands where result->'players' @> $1::jsonb order by id desc limit $2`,[JSON.stringify([{uid:u}]),n]),
+  history:async(u,n)=>svc(`select id,table_id,game,hand_no,hash,salt,deck,result,created_at from casino_hands where result->'players' @> $1::jsonb order by id desc limit $2`,[JSON.stringify([{uid:u}]),n]),
   books:async()=>svc('select public.casino_books_run()'),
   stale:async ms=>svc(`select id from casino_tables where open and updated_at < now()-($1||' milliseconds')::interval`,[String(ms)]),
   botLeft:async()=>(await svc('select public.casino_bot_left() v'))[0].v,

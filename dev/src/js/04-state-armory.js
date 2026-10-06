@@ -182,7 +182,7 @@ function newGame(roster,pvp='',opt={}){
     setTip(`You're ${me.name}. Truce for ${PVP.truce} seconds: gather and wall in your stake. Then knock down the ${them.name} stake. ${ctl('ARMORY','E',padKey('armory'))} at your stake spends salvage.`)}
   else if(pvp==='ffa'){game.tip=9;setTip(`Free-for-all. First to ${PVP.ffaGoal} drops wins. The cover can't be broken.`)}
   else if(campaign())setTip(`CHAPTER 1 · THE YARD. ${CAMPAIGN.story[0]} Three raids here, then your kit travels onward. Prepare at the core.`);
-  else if(mode==='casino')setTip(touchMode?'Walk up to a free seat at a table and tap SIT.':'Walk up to a free seat at a table and press E to sit.');
+  else if(mode==='casino')setTip(touchMode?'Walk up to a free seat or a machine and tap SIT or PLAY.':'Walk up to a free seat or a machine and press E.');
   else setTip(touchMode?'Stand next to a wood pile to gather. Delgado is gathering too.':'Walk next to a wood pile to gather. Delgado is gathering too.');
 }
 

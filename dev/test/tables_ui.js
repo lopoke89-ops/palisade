@@ -9,17 +9,20 @@ const {chromium}=require('playwright'),{ready,quiet}=require('./lib'),assert=req
 const Q='peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1&cloud=1';
 (async()=>{const H=await import('../supabase/functions/tables/handler.js');
  const users={A:{id:'a0000000-0000-4000-8000-00000000000a',anon:false,name:'BigU'},B:{id:'b0000000-0000-4000-8000-00000000000b',anon:false,name:'Rab'},G:{id:'d0000000-0000-4000-8000-00000000000d',anon:true,name:'Guest'}};
- const bal={[users.A.id]:600,[users.B.id]:400,[users.G.id]:50},tables=new Map(),hands=[],allOps=[];let nid=1;
+ const bal={[users.A.id]:600,[users.B.id]:400,[users.G.id]:50},tables=new Map(),hands=[],allOps=[],opsLog=new Map();let nid=1;
  const tok=u=>'x.'+Buffer.from(JSON.stringify({sub:u.id,exp:4e9})).toString('base64url')+'.y';
  const byTok=t=>Object.values(users).find(u=>tok(u)===t);
  const applyOps=ops=>{for(const o of ops)if(o.uid&&o.d&&bal[o.uid]+o.d<0)return false;for(const o of ops)if(o.uid&&o.d)bal[o.uid]+=o.d;allOps.push(...ops);return true};
  const D={now:()=>Date.now(),auth:async t=>{const u=byTok(t);return u&&{id:u.id,anon:u.anon}},name:async id=>Object.values(users).find(u=>u.id===id).name,balance:async id=>bal[id]||0,
-  load:async id=>{const t=tables.get(id);return t&&JSON.parse(JSON.stringify(t))},byRoom:async(room,game)=>[...tables.values()].find(t=>t.open&&t.room===room&&t.game===game)||null,
-  seatOf:async id=>{const t=[...tables.values()].find(t=>t.open&&t.humans.includes(id));return t?{id:t.id,code:t.code,game:t.game,room:t.room}:null},stale:async()=>[],botLeft:async()=>25,
+  load:async id=>{const t=tables.get(id);return t&&JSON.parse(JSON.stringify(t))},byRoom:async(room,game,station)=>[...tables.values()].find(t=>t.open&&t.room===room&&t.game===game&&(t.station||'')===(station||''))||null,
+  seatOf:async id=>{const t=[...tables.values()].find(t=>t.open&&t.humans.includes(id));return t?{id:t.id,code:t.code,game:t.game,room:t.room,station:t.station||''}:null},stale:async()=>[],botLeft:async()=>25,
+  opGet:async(u,o)=>opsLog.get(u+'|'+o)||null,
   history:async uid=>hands.filter(h=>(h.result.players||[]).some(p=>p.uid===uid)).slice(-50).reverse(),
-  commit:async a=>{const t=tables.get(a.id);if(t.ver!==a.ver)return{conflict:true};if(!applyOps(a.ops))return{error:'insufficient'};Object.assign(t,{st:a.st,ver:t.ver+1,humans:a.humans,open:a.open});
+  commit:async a=>{const t=tables.get(a.id);if(t.ver!==a.ver)return{conflict:true};if(a.op&&opsLog.has(a.op.uid+'|'+a.op.id))return{dup:true};if(!applyOps(a.ops))return{error:'insufficient'};Object.assign(t,{st:a.st,ver:t.ver+1,humans:a.humans,open:a.open});
+   if(a.op)opsLog.set(a.op.uid+'|'+a.op.id,{req:a.op.req,table_id:a.id,res:a.op.res});
    for(const h of a.hands)hands.push({game:t.game,hand_no:h.no,hash:h.hash,salt:h.salt,deck:h.deck,result:h.result,created_at:new Date().toISOString()});return{ok:true}},
-  create:async a=>{if([...tables.values()].some(t=>t.open&&t.room===a.room&&t.game===a.game))return{conflict:true};if(!applyOps(a.ops))return{error:'insufficient'};const id=nid++;tables.set(id,{id,code:a.code,game:a.game,room:a.room,st:a.st,ver:0,humans:a.humans,open:true});return{ok:true,id}}};
+  create:async a=>{if([...tables.values()].some(t=>t.open&&t.room===a.room&&t.game===a.game&&(t.station||'')===(a.station||'')))return{conflict:true};if(!applyOps(a.ops))return{error:'insufficient'};const id=nid++;tables.set(id,{id,code:a.code,game:a.game,room:a.room,station:a.station||'',st:a.st,ver:0,humans:a.humans,open:true});
+   if(a.op)opsLog.set(a.op.uid+'|'+a.op.id,{req:a.op.req,table_id:id,res:a.op.res});return{ok:true,id}}};
  const b=await chromium.launch({executablePath:process.env.CHROMIUM||undefined}),errors=[],out={};
  const open=async(u,vp,m)=>{const ctx=await b.newContext({viewport:vp,isMobile:m,hasTouch:m});
   await ctx.route('https://puvjfhwxigxjpsvdwrwf.supabase.co/**',async route=>{const r=route.request(),url=new URL(r.url());let body=null;try{body=r.postDataJSON()}catch(e){}
@@ -73,6 +76,11 @@ const Q='peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1&cloud=1';
   if(!moved){const v=await V(host);if(v.phase==='done'||(v.phase==='bet'&&v.last))break;await poke(host);await poke(guest);await host.waitForTimeout(100)}}
  let v=await until(host,v=>v.last&&v.last.no===1);out.bj=v.last.result;await host.waitForTimeout(400);
  await host.screenshot({path:__dirname+'/out/tables_bj_desktop.png'});await guest.screenshot({path:__dirname+'/out/tables_bj_portrait.png'});
+ // v0.11.0 the review: the receipt stays up 8 s from the dealer's last card, with the reason in words; repeated polls don't clear it
+ {await host.waitForSelector('#tbFelt .trcpt:not(.live)',{timeout:8000});const t=await host.textContent('#tbFelt .trcpt');out.bjReceipt=t.slice(0,240);
+  assert.match(t,/WIN|LOSS|PUSH|PARTIAL RESULT/);assert.match(t,/BET\s*\d+◆/);assert.match(t,/Your \d+ (beat|lost to|ties) the dealer|busted|Blackjack|dealer has blackjack|dealer busted/,'the plain reason');
+  for(let k=0;k<4;k++){await poke(host);await host.waitForTimeout(250)}const w=await V(host);assert.equal(w.phase,'done','still in review after repeated polls (no zero-time cleanup)');assert.ok(w.review>1500);
+  await host.screenshot({path:__dirname+'/out/tables_bj_review_desktop.png'});await guest.waitForSelector('#tbFelt .trcpt:not(.live)',{timeout:8000});await guest.screenshot({path:__dirname+'/out/tables_bj_review_portrait.png'})}
  // HIDE keeps you seated; E opens the table again
  await host.click('#tbHide');assert.ok(await host.evaluate(()=>__pal.player.seat===11&&__pal.TB.id>0),'HIDE keeps your seat');await host.keyboard.press('e');await host.waitForSelector('#casSheet:not([hidden])');
  // 4. roulette: the host stands up (shards home) and walks to the wheel
@@ -97,7 +105,8 @@ const Q='peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1&cloud=1';
   await host.waitForTimeout(1500);await host.screenshot({path:__dirname+'/out/tables_rl_spin_desktop.png'});
   v=await until(host,v=>v.phase==='done'||v.phase==='bet'&&v.last,15000);const L=v.last,n=L.result.number,E=await import('../supabase/functions/tables/engine.js');
   const back=E.rlPay({'n:17':5,'sp:17-20':5,'st:1':5,'n:37':5,red:2},n);out.rl={n,back};assert.equal(v.seats[2].stack,before+back,'paid exactly what the spots pay');
-  assert.ok((v.hist||[]).includes(n),'last spins shows it');await poke(host);await quiet(host);if((await V(host)).phase==='done')assert.equal(await host.$$eval('#rlNums .rn.hit',x=>x.length),1,'once it lands, the number lights up');await poke(host);await quiet(host);assert.match(await host.textContent('#tbFelt'),/LAST SPINS/);
+  assert.ok((v.hist||[]).includes(n),'last spins shows it');
+  if(v.phase==='done'){await host.waitForSelector('#tbFelt .trcpt:not(.live)',{timeout:4000});const t=await host.textContent('#tbFelt .trcpt');assert.match(t,/BET\s*22◆/);assert.match(t,/NUMBER 17|SPLIT 17-20|RED/);await host.screenshot({path:__dirname+'/out/tables_rl_review_desktop.png'})}await poke(host);await quiet(host);if((await V(host)).phase==='done')assert.equal(await host.$$eval('#rlNums .rn.hit',x=>x.length),1,'once it lands, the number lights up');await poke(host);await quiet(host);assert.match(await host.textContent('#tbFelt'),/LAST SPINS/);
   // REBET puts the same bets back
   await until(host,v=>v.phase==='bet'&&!v.number);await host.click('[data-act=rlrebet]');await host.waitForTimeout(700);v=await until(host,v=>Object.keys(v.myBets||{}).length===5);out.rebet=true}
  // the guest's phone shows roulette too: stand up at blackjack, sit at the wheel
@@ -118,6 +127,8 @@ const Q='peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1&cloud=1';
  await host.screenshot({path:__dirname+'/out/tables_he_desktop.png'});
  // play the hand out, then HAND HISTORY checks the Hold'em cards you saw against their fingerprints (no seed for 24 hours)
  for(let k=0;k<400;k++){let hv2=await V(host);if(hv2.phase==='done'||hv2.last&&hv2.last.no>=1)break;for(const p of[host,guest]){const w=await V(p);if(w&&w.myTurn)await p.click(w.can.check?'[data-act=check]':'[data-act=call]').catch(()=>{})}await poke(host);await host.waitForTimeout(120)}
+ {const hv3=await V(host);const r=hv3.last&&hv3.last.result;assert.ok(r&&r.players.every(p=>!p.folded||p.cards===null),'folded hands never in the result');assert.ok(r.uncontested?r.players.every(p=>p.cards===null):r.pots.length>=1,'pots and who won them, or uncontested');
+  if(hv3.phase==='done'){await host.waitForSelector('#tbFelt .trcpt:not(.live)',{timeout:6000});const t=await host.textContent('#tbFelt .trcpt');assert.match(t,r.uncontested?/uncontested/:/POT \d+◆/);await host.screenshot({path:__dirname+'/out/tables_he_review_desktop.png'})}}
  await host.click('.tbSheetBtns [data-hist]');await host.waitForSelector('#tbHistList button[data-check]');
  {const i=await host.$$eval('#tbHistList .hrow b',x=>x.findIndex(e=>/HOLD/.test(e.textContent)));assert.ok(i>=0,'the hold\'em hand is in the history');
   await host.click(`#tbHistList button[data-check="${i}"]`);await host.waitForFunction(i=>/FAIR|✗/.test(document.getElementById('hc'+i).textContent),i,{timeout:20000});

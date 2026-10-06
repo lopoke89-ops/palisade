@@ -37,16 +37,17 @@
   <div id="tbFelt"></div>
   <div id="tbActs"></div>
   <div class="tbFoot"><div><span>AT THE TABLE</span><b id="tbStack">0</b></div><div><span>BALANCE</span><b id="tbBalT">0</b></div>
-    <button type="button" data-top="5">+5</button><button type="button" data-top="25">+25</button></div>
+    <button type="button" data-top="5">+5</button><button type="button" data-top="25">+25</button><button type="button" data-top="100">+100</button></div>
   <p class="tbLog" id="tbLog"></p>
   <div id="tbPick" class="tbPick" hidden><b>SIDE BET HIT!</b><p id="tbPickWhy"></p><button type="button" class="go" data-pick="hybrid">10 HYBRID THEORY CASES</button><button type="button" class="go" data-pick="flags">15 FLAG CASES</button></div>
   <details id="tbHelp"><summary>HOW TO PLAY</summary><div id="tbHelpTxt"></div></details>
   <details id="tbFair"><summary>FAIR PLAY: YOUR SEED AND THE CHECK</summary><div id="tbFairTxt"></div>
     <div class="tbSeed"><input id="tbSeedIn" maxlength="64" autocomplete="off" placeholder="your seed" aria-label="Your seed"><button type="button" id="tbSeedBtn">SET SEED</button></div></details>
-  <div class="trow tbSheetBtns"><button type="button" data-hist>HAND HISTORY</button><button type="button" data-rules>HOUSE RULES</button></div>
+  <div class="trow tbSheetBtns"><button type="button" id="tbLastBtn" hidden>LAST RESULT</button><button type="button" data-hist>HAND HISTORY</button><button type="button" data-rules>HOUSE RULES</button></div>
   <p class="status" id="tbSheetMsg" role="status"></p>
 </div>
 <div id="tbHist" class="tbModal" hidden role="dialog" aria-label="Hand history"><div class="tbModalIn"><div class="tbModalHead"><b>HAND HISTORY</b><button type="button" data-close>CLOSE</button></div><div id="tbHistList"></div></div></div>
+<div id="tbRcptM" class="tbModal" hidden role="dialog" aria-label="Last result"><div class="tbModalIn"><div class="tbModalHead"><b>LAST RESULT</b><button type="button" data-close>CLOSE</button></div><div id="tbRcptTxt"></div></div></div>
 <div id="tbRules" class="tbModal" hidden role="dialog" aria-label="House rules"><div class="tbModalIn"><div class="tbModalHead"><b>HOUSE RULES</b><button type="button" data-close>CLOSE</button></div><div id="tbRulesTxt"></div></div></div>
 <button type="button" id="casSitBtn" class="casSitBtn" hidden>SIT</button>
 <div id="kit" hidden>
@@ -283,11 +284,11 @@
       <div id="tbDoor">
         <div class="tbBal"><span>YOUR SHARDS</span><b id="tbBal">0</b></div>
         <div class="casMarq"><b>THE PALISADE FALLS</b><span>★ CASINO ★</span></div>
-        <p class="lede sm">Blackjack, Texas Hold'em and American roulette for real shards. Walk in, walk up to a table and take a seat: you sit down with 5 shards (the buy-in), top up whenever you like, and whatever is in front of you goes back to your balance when you stand up. Up to 6 of your crew in one casino.</p>
+        <p class="lede sm">Blackjack, Texas Hold'em, American roulette, craps, baccarat, sixteen slot machines and a Plinko board, for real shards (never bought, never cashed out). Walk in, walk up to a table or a machine: you sit down with 5 shards (the buy-in), top up whenever you like, and whatever is in front of you goes back to your balance when you stand up. Up to 6 of your crew in one casino.</p>
         <button class="go" type="button" id="casEnterBtn">ENTER THE CASINO</button>
         <h3 class="tbStep">OR JOIN A FRIEND'S CASINO</h3>
         <div class="tbJoin"><input id="tbCode" maxlength="4" autocomplete="off" placeholder="ROOM CODE" aria-label="Room code"><button type="button" id="tbJoinBtn">JOIN</button></div>
-        <div class="trow tbDoorBtns"><button type="button" id="tbHistBtn">HAND HISTORY</button><button type="button" id="tbRulesBtn">HOUSE RULES</button></div>
+        <div class="trow tbDoorBtns"><button type="button" id="tbDoorLast" hidden>LAST RESULT</button><button type="button" id="tbHistBtn">HAND HISTORY</button><button type="button" id="tbRulesBtn">HOUSE RULES</button></div>
         <div id="tbMine" class="tbMine" hidden><p></p><button type="button" id="tbMineLeave">STAND UP</button></div>
       </div>
       <p class="status" id="tbMsg" role="status"></p>
