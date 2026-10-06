@@ -371,6 +371,7 @@ function render(dt){
   if(!caches||caches.key!==cacheKey())makeCaches();
   fadeT-=dt;if(fadeT<=0){fadeT=.1;updateFades()}
   let fx=p.x,fy=p.y,cxF=W<760?.4:.5,cyF=.52; // keep the east approach clear of the kit column on phones
+  if(casino()&&TB.sheet){cxF=W>700?(W-CAS_SHEET_SIZE.w-10)/W/2:.5;if(W<=700)cyF=(H-CAS_SHEET_SIZE.h)/H*.62}
   if(p.out&&!demo){const s=spectateTarget(p);fx=s.x;fy=s.y}   // v0.9.4.0: out of the Final Blitz, you watch your crew
   if(demo){const t=game.time*.07;fx=core.i+2.5+Math.cos(t)*2.5;fy=core.j-2+Math.sin(t)*2;cxF=.5;cyF=W>700?.5:.3}
   const tx=W*cxF-(fx-fy)*TW2,ty=H*cyF-(fx+fy)*TH2+heightAt(fx,fy)*heightPx();

@@ -202,7 +202,7 @@ function casBarDraw(){for(const [i,j]of CAS.bar.back)boxR(i+.05,j+.05,i+.95,j+.7
 function casCageDraw(){boxR(.05,13.05,2,16,0,WH*1.1,'#4a3a26','#3a2c1c','#2e2316');
   g.strokeStyle='rgba(214,170,70,.8)';g.lineWidth=1.1*u;g.beginPath();for(let q=0;q<9;q++){const a=iso(2,13.15+q*.32),h=WH*.75;g.moveTo(a[0],a[1]-WH*1.1);g.lineTo(a[0],a[1]-WH*1.1-h)}g.stroke();
   boxR(.05,13.05,2,16,WH*1.85,WH*.12,'#d6aa46','#a8832f','#8a6a26')}
-function casPillar(i,j){boxR(i+.25,j+.25,i+.75,j+.75,0,WH*3.2,'#d6aa46','#9c7a2a','#7e6222');boxR(i+.18,j+.18,i+.82,j+.82,0,WH*.25,'#b58a2e','#7e6222','#66501c')}
+function casPillar(i,j){boxR(i+.18,j+.18,i+.82,j+.82,0,WH*.25,'#b58a2e','#7e6222','#66501c');boxR(i+.25,j+.25,i+.75,j+.75,WH*.25,WH*2.95,'#d6aa46','#9c7a2a','#7e6222')}
 function casCouch(){boxR(12.1,14.15,13.9,14.85,0,WH*.35,'#6a1424','#4a0e19','#3c0b14');boxR(12.1,14.6,13.9,14.85,WH*.35,WH*.4,'#7a1828','#5a1220','#4a0e19')}
 function casRopes(){for(let q=0;q<5;q++)for(const y of[8.75,11.25]){const x=1.4+q*1.1,c=iso(x,y);g.fillStyle='#d6aa46';g.fillRect(c[0]-.8*u,c[1]-WH*.75,1.6*u,WH*.75);oval(c[0],c[1]-WH*.75,1.6*u,1*u,'#e8c86a');
     if(q<4){const d=iso(x+1.1,y);g.strokeStyle='#8a1020';g.lineWidth=1.8*u;g.beginPath();g.moveTo(c[0],c[1]-WH*.62);g.quadraticCurveTo((c[0]+d[0])/2,(c[1]+d[1])/2-WH*.4,d[0],d[1]-WH*.62);g.stroke()}}}
@@ -251,6 +251,10 @@ function casinoLights(hole,at){
 }
 
 // ---------- seats: sitting down by walking up ----------
+// Keep the player in the visible floor beside (or above) the open table sheet.
+// Cache its size on layout changes instead of measuring the DOM every frame.
+const CAS_SHEET_SIZE={w:0,h:0};
+new ResizeObserver(()=>{const r=$('casSheet').getBoundingClientRect();CAS_SHEET_SIZE.w=r.width;CAS_SHEET_SIZE.h=r.height}).observe($('casSheet'));
 // who is in which seat, from every player's seat code (the host relays it like a position)
 function casTaken(code){for(const o of players.values())if(o.seat===code)return o;const q=casSeatOf(code);return q&&q.t&&casBotAt(q.t,q.k)?{bot:true}:null}
 // the free seat or machine you're standing next to, if any ({t,k} at a table, {m} at a machine; code and pos either way)

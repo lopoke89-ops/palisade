@@ -7,6 +7,14 @@ Big U's latest completed local scope is recorded in the [presentation prompt](pl
 
 The Claude audit URL still requires sign-in in the available browser session. Big U supplied an exported copy at `D:\downloads\Untitled.md`, which was read on September 29. Its newest Progress entry is v0.9.3, so its release claims are superseded by the verified v0.9.3.3 release below. The external artifact itself was not edited here.
 
+## v0.10.4: casino layout fixes
+
+- Pillar shafts sit on top of their bases, with the base drawn first.
+- Roulette chip selectors are centered inside their buttons.
+- Active table sheets use 32% of desktop screen width (360 px minimum), with a larger roulette board. The casino camera keeps the player beside the desktop sheet or above the phone sheet, and returns when the sheet is hidden.
+- Built on the published v0.10.3 casino expansion and Plinko fix. No server, database, gameplay, or protocol changes.
+- Validation: casino map and table interaction checks, plus six viewport sizes from phone portrait and landscape through 2560 x 1440; no horizontal sheet overflow, centered chips, and the player visible.
+
 ## v0.10.3: craps, baccarat, slots, Plinko, and a result review for every game (deployed October 6)
 
 Built from [the casino expansion work order](plans/casino-expansion-and-result-review-work-order.md). Rules, paytables and exact math are in [casino-games-v0103-rules-and-math.md](plans/casino-games-v0103-rules-and-math.md); the order of the live steps, compatibility and rollback are in [v0.10.3-deploy-and-rollback.md](plans/v0.10.3-deploy-and-rollback.md).
