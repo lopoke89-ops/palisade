@@ -138,6 +138,7 @@ fair_play              node tables server
 tables_engine          node tables
 casino_games_engine    node tables casino
 tables_server          node tables server
+casino_server          node tables server casino
 tables_ui              tables casino
 casino_map             casino net
 
