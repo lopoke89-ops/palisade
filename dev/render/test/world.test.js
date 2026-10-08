@@ -6,6 +6,21 @@ import {WebSocket} from 'ws';
 import {createCasinoService} from '../server.js';
 const require=createRequire(new URL('../../test/managed_casino.js',import.meta.url)),{PGlite}=require('@electric-sql/pglite'),{citext}=require('@electric-sql/pglite/contrib/citext'),{setup}=require('./managed_casino.js');
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
+test('an older periodic seat read cannot undo an acknowledged buy-in',{timeout:30000},async()=>{
+ const db=new PGlite({extensions:{citext}}),{D,ids}=await setup(db),{handle}=await import('../../supabase/functions/tables/handler.js');
+ await db.exec('update casino_world_config set admissions=true,new_wagers=true');
+ const service=createCasinoService(D,{origins:['http://127.0.0.1:8080'],log:()=>{}});let c,release;
+ try{
+  const {port}=await service.start(0,'127.0.0.1');c=client(port,ids[0]);const welcome=await c.wait('welcome'),p=service.people.get(ids[0]);[p.x,p.y]=globalThis.CasinoFloor.CAS_SEAT.get(101).pos;
+  c.send({type:'reserve',seat:101});const reservation=(await c.wait('reserved')).reservation;
+  let captured;const gate=new Promise(r=>release=r),started=new Promise(r=>captured=r),world=D.world;let held=false;
+  D.world=async b=>{const h=await world(b);if(b.action==='heartbeat'&&!held){held=true;captured();await gate;}return h;};
+  const old=service.heartbeat();await started;
+  const sit=await handle({op:'sit',room:welcome.room,game:'sl',station:'s1',seat:0,reservation,controller:welcome.controller,opId:'sync_'+randomUUID()},ids[0],D);assert.equal(sit.status,200);assert.equal(sit.body.error,null);
+  c.send({type:'sync',seq:1});assert.equal((await c.wait('seat')).seat,101);release();await old;assert.equal(p.seat,101,'stale standing response cannot overwrite the committed seat');
+  D.world=world;const leave=await handle({op:'leave',id:sit.body.id,controller:welcome.controller,opId:'sync_'+randomUUID()},ids[0],D);assert.equal(leave.status,200);
+ }finally{release?.();c?.ws.terminate();await service.stop();await db.close();}
+});
 test('joining avatars are published only after their identity roster',{timeout:30000},async()=>{
  const db=new PGlite({extensions:{citext}}),{D,ids}=await setup(db);
  await db.exec('update casino_world_config set admissions=true,new_wagers=true');
@@ -48,6 +63,7 @@ test('authoritative floor, first/last departure, takeover, privacy and restart',
   await service.heartbeat();const before=[p.x,p.y];const same=client(address.port,ids[1],{code:welcome.code});clients.push(same);await same.wait('error');assert.ok(same.messages.some(x=>/another tab/.test(x.error)));
   const replacement=client(address.port,ids[1],{code:welcome.code,takeover:true});clients.push(replacement);await replacement.wait('welcome');await b.wait('revoked');assert.equal(service.people.size,1);
   const claimed=service.people.get(ids[1]);assert.ok(Math.hypot(claimed.x-before[0],claimed.y-before[1])<.01,'safe position checkpoint restored');
+  replacement.send({type:'sync',seq:1});const seatAck=await replacement.wait('seat');assert.equal(seatAck.seq,1);assert.equal(seatAck.seat,0,'sync acknowledges the authoritative SQL seat');
   replacement.send({type:'reserve',seat:101});assert.match((await replacement.wait('error')).error,/Walk up/,'remote reservation refused');
   replacement.send({type:'depart'});await new Promise(resolve=>replacement.ws.once('close',resolve));await pause(80);const ticks=service.stats.ticks;await pause(100);assert.equal(service.stats.ticks,ticks,'empty floor is not simulated');
   await service.stop();service=createCasinoService(D,{origins:['http://127.0.0.1:8080'],log:()=>{}});const restarted=await service.start(0,'127.0.0.1');

@@ -90,7 +90,7 @@ async function baseHandle(body,token,D){
   if(op==='lobby'){await sweep(D);if(D.books)await D.books();let mine=await D.seatOf(u.id);
     // you left a craps table with bets still working: the dealer rolls them out now (you're waiting on them)
     if(mine&&mine.game==='cr'&&!isManaged(mine.room)){await run(D,mine.id,null,(st,ctx)=>{const s=st.seats[E.seatIx(st,u.id)];if(s&&s.gone)fastForward(st,ctx,60)});mine=await D.seatOf(u.id)}
-    let pending=null;if(mine){const t=await D.load(mine.id);const s=t&&t.st.seats[E.seatIx(t.st,u.id)];if(s&&s.gone)pending={game:mine.game,bets:Object.keys((t.st.cr&&t.st.cr.bets[u.id])||{}).length}}
+    let pending=null;if(mine){const t=await D.load(mine.id);const s=t&&t.st.seats[E.seatIx(t.st,u.id)];if(s&&(s.gone||s.leaving))pending={game:mine.game,bets:Object.keys((t.st.cr&&t.st.cr.bets[u.id])||{}).length}}
     return R(200,{balance:await D.balance(u.id),mine:mine&&{id:mine.id,code:mine.code,game:mine.game,room:mine.room,station:mine.station||'',pending}})}
   if(op==='history'){const rows=D.history?await D.history(u.id,50):[],now=D.now();return R(200,{hands:rows.map(r=>histRow(r,u.id,now))})}
   // walk to a table or a machine. One table of each game per casino room, one session per machine; the first to sit opens it.

@@ -77,7 +77,7 @@ const tbMsg=t=>{txt($('tbMsg'),t||'');txt($('tbSheetMsg'),t||'')};
 function tbCanPlay(){if(!cloudOn)return 'The tables need the online version of the game.';if(!acct.s)return 'Sign in to play at the tables.';
   if(isGuest())return 'Make an account on the Account page to play at the tables. Guests can\'t.';return null}
 // ---------- the front door (the TABLES page) ----------
-const tbMineText=m=>m.pending?`BET STILL RESOLVING: you left the ${TB_NAME[m.game]} table with ${m.pending.bets||'a'} bet${m.pending.bets===1?'':'s'} still working. The dealer is rolling ${m.pending.bets===1?'it':'them'} out; your shards come home once ${m.pending.bets===1?'it is':'they are'} decided.`
+const tbMineText=m=>m.pending?`ROUND STILL RESOLVING: you left the ${TB_NAME[m.game]} table. The dealer will finish the round and return your remaining shards automatically.`
   :`You're still seated at the ${TB_NAME[m.game]||'casino'} ${m.station?'machine':'table'} from before. Stand up to take your shards home.`;
 function renderTables(){const no=tbCanPlay();$('casEnterBtn').disabled=$('tbJoinBtn').disabled=!!no;tbMsg(no||'');
   hid($('casRecovery'),!mcEnabled());
@@ -103,14 +103,15 @@ async function tbCallOp(body){const managed=mcActive()||String(body.room||'').st
   if(r&&(r.view||r.replay||!/connection|busy/i.test(r.error||'')))TB.pend=null;return r}
 async function tbSend(body,quiet){if(TB.busy&&!quiet)return;const owner=myUid();if(!quiet)TB.busy=true;try{const r=await tbCallOp(body);
   if(owner!==myUid())return{error:'Account changed'};
+  if(body.op==='state'&&body.id!==TB.id)return r; // A response already in flight cannot reopen a table after departure.
   if(r.error&&!r.view){tbMsg(r.error);if(/closed/.test(r.error))tbGone();return r}
   if(r.view){TB.id=r.id;TB.code=r.code;TB.balance=r.balance;tbShow(r.view);tbMsg(r.error||'')}
   if(r.rcpt&&typeof cgOnRcpt==='function')cgOnRcpt(r.rcpt);
-  if(mcActive()&&r.view&&['sit','leave'].includes(body.op))mcSend({type:'sync'});
+  if(mcActive()&&r.view&&['sit','leave'].includes(body.op)){const s=[...CAS_SEAT].find(([,q])=>q.game===r.view.game&&q.station===(r.view.station||'')&&q.k===r.view.me);mcSyncSeat(r.view.me<0||r.view.gone?.[r.view.me]||r.view.seats?.[r.view.me]?.leaving?0:s?.[0]||0);}
   if(body.op==='leave'&&r.view&&r.view.me<0){tbGone();toast('TABLES','RETURNED TO WALLET');if(typeof syncLocker==='function')syncLocker()}
   // v0.10.3 craps: you left with a Pass or Come bet on its number: it stays and the dealer rolls it out; shards home after
-  else if(body.op==='leave'&&r.view&&r.view.gone&&r.view.gone[r.view.me]){const n=(r.view.locked||[]).length;tbGone();TB.mine={id:r.id,game:r.view.game,pending:{bets:n}};
-    toast('CRAPS','BET STILL RESOLVING: '+n+' bet'+(n>1?'s':'')+' working; your shards come home once the dealer has rolled '+(n>1?'them':'it')+' out')}
+  else if(body.op==='leave'&&r.view&&(r.view.gone?.[r.view.me]||r.view.seats?.[r.view.me]?.leaving)){const n=(r.view.locked||[]).length;tbGone();TB.mine={id:r.id,game:r.view.game,pending:{bets:n}};
+    toast('TABLES',tbMineText(TB.mine))}
   return r}finally{if(!quiet)TB.busy=false}}
 // you're no longer at a table: off the seat in the casino, the sheet closed
 function tbGone(){TB.id=0;TB.v=null;TB.key='';TB.station='';TB.rl.bets={};TB.rl.sent='';if(typeof cgReset==='function')cgReset();if(casino()&&player&&player.seat)player.seat=0;tbSheet(false)}

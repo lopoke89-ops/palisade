@@ -35,7 +35,7 @@ export function createCasinoService(D,{origins=['https://lopoke89-ops.github.io'
  const row=p=>({id:p.id,slot:p.slot,name:p.name,cls:p.cls,cos:p.cos,x:p.x,y:p.y,fx:p.fx,fy:p.fy,seat:p.seat,seq:p.ack});
  const packed=p=>[p.slot,Math.round(p.x*1000),Math.round(p.y*1000),Math.round(p.fx*1000),Math.round(p.fy*1000),p.seat,p.ack];
  const scope=p=>({uid:p.id,session:p.session,generation:p.generation,owner,epoch});
- const seatFrom=r=>{if(!r)return 0;const k=r.seats?.findIndex(s=>s?.uid===r.uid);return k>=0?[...CAS_SEAT].find(([,q])=>q.game===r.game&&q.station===(r.station||'')&&q.k===k)?.[0]||0:0;};
+ const seatFrom=r=>{if(!r)return 0;const k=r.seats?.findIndex(s=>s?.uid===r.uid&&!s.gone&&!s.leaving);return k>=0?[...CAS_SEAT].find(([,q])=>q.game===r.game&&q.station===(r.station||'')&&q.k===k)?.[0]||0:0;};
  const syncSeat=(p,r)=>{const seat=seatFrom(r?{...r,uid:p.id}:null);p.seat=seat;if(seat){const q=CAS_SEAT.get(seat);[p.x,p.y]=q.pos;const to=q.t?q.t.c:q.m.at;const dx=to[0]-p.x,dy=to[1]-p.y,l=Math.hypot(dx,dy)||1;p.fx=dx/l;p.fy=dy/l;p.input=[0,0];}};
  wss.on('connection',ws=>{
   sockets.add(ws);stats.connections++;let person=null,pending=false,lastMsg=performance.now(),windowAt=lastMsg,count=0;const timeout=setTimeout(()=>{if(!person)ws.close(1008,'Authenticate first')},10000);
@@ -74,8 +74,9 @@ export function createCasinoService(D,{origins=['https://lopoke89-ops.github.io'
       const q=CAS_SEAT.get(b.seat);if(person.reserving||now-(person.reservedAt||0)<1000||person.seat||!q||Math.hypot(person.x-q.pos[0],person.y-q.pos[1])>.75)throw new Error('Walk up to a free seat');person.reserving=true;person.reservedAt=now;
       try{const r=await D.world({action:'reserve',...scope(person),game:q.game,station:q.station,seat:q.k});send(ws,{type:'reserved',seat:b.seat,reservation:r.reservation});}finally{person.reserving=false;}
      }else if(b.type==='sync'){
-      if(person.syncing||now-(person.synced||0)<1000)throw new Error('Seat sync rate exceeded');person.syncing=true;person.synced=now;
-      try{const h=await D.world({action:'heartbeat',...scope(person)});syncSeat(person,h.seat);}finally{person.syncing=false;}
+      if(b.seq!==undefined&&(!Number.isSafeInteger(b.seq)||b.seq<1))throw new Error('Invalid seat sync');
+      if(person.syncing||now-(person.synced||0)<1000)throw new Error('Seat sync rate exceeded');person.syncing=true;person.synced=now;person.seatSyncGeneration=(person.seatSyncGeneration||0)+1;
+      try{const h=await D.world({action:'heartbeat',...scope(person)});syncSeat(person,h.seat);send(ws,{type:'seat',seat:person.seat,...(b.seq===undefined?{}:{seq:b.seq})});}finally{person.syncing=false;}
      }else if(b.type==='token'){
       if(typeof b.token!=='string'||b.token.length>3500||now-(person.tokenAt||0)<9000)throw new Error('Token refresh rate exceeded');person.tokenAt=now;
       const u=await authenticate(b.token);if(!u||u.anon||u.id!==person.id)throw new Error('Sign in again');person.token=b.token;
@@ -92,7 +93,8 @@ export function createCasinoService(D,{origins=['https://lopoke89-ops.github.io'
   const pending=[...people.values()].filter(p=>p.published);let cursor=0;
   const lane=async()=>{while(cursor<pending.length){const p=pending[cursor++];if(people.get(p.id)!==p)continue;
   if(performance.now()-p.heard>25000){p.ws.close(4000,'Connection timed out');continue}if(p.checking)continue;p.checking=true;
-  try{const u=await authenticate(p.token);if(!u||u.anon||u.id!==p.id)throw new Error('Sign in again');const r=await D.world({action:'heartbeat',...scope(p),x:p.x,y:p.y});syncSeat(p,r.seat);}catch(e){stats.heartbeatFailures++;log(JSON.stringify({event:'controller_check_failed',error:e.message}));send(p.ws,{type:'revoked',error:e.message});p.ws.close(4001,'Controller revoked');}finally{p.checking=false;}
+  const seatGeneration=p.seatSyncGeneration||0;
+  try{const u=await authenticate(p.token);if(!u||u.anon||u.id!==p.id)throw new Error('Sign in again');const r=await D.world({action:'heartbeat',...scope(p),x:p.x,y:p.y});if(seatGeneration===(p.seatSyncGeneration||0))syncSeat(p,r.seat);}catch(e){stats.heartbeatFailures++;log(JSON.stringify({event:'controller_check_failed',error:e.message}));send(p.ws,{type:'revoked',error:e.message});p.ws.close(4001,'Controller revoked');}finally{p.checking=false;}
   }};try{await Promise.all(Array.from({length:Math.min(4,pending.length)},lane));}finally{heartbeating=false;}
  }
  function tick(){const now=performance.now();acc+=Math.min((now-last)/1000,.2);last=now;if(!ready()){for(const ws of sockets)ws.close(1012,'Casino reconnecting');acc=0;return}if(!people.size){acc=0;return}

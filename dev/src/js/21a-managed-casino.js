@@ -1,10 +1,13 @@
 // Persistent casino transport. Combat keeps its existing NET host/guest adapter.
-const MC={session:crypto.randomUUID(),ws:null,room:'',controller:null,seq:0,pending:[],input:[0,0],acc:0,connected:false,active:false,attempt:0,timer:0,code:'',seatPending:0,remote:new Map(),owner:''};
+const MC={session:crypto.randomUUID(),ws:null,room:'',controller:null,seq:0,pending:[],input:[0,0],acc:0,connected:false,active:false,attempt:0,timer:0,code:'',seatPending:0,seatSyncTimer:0,seatSyncAt:0,seatSyncBusy:0,seatSyncSeq:0,seatExpected:null,remote:new Map(),owner:''};
 const mcEnabled=()=>!!globalThis.PALISADE_CASINO?.enabled;
 const mcActive=()=>NET.mode==='casino';
 const mcSend=b=>{if(MC.ws?.readyState===WebSocket.OPEN&&MC.ws.bufferedAmount<16384)MC.ws.send(JSON.stringify(b));};
 function mcStatus(t){tbMsg(t);if(casino()&&player)toast('CASINO',t);}
-function mcDisconnect(intent=true){MC.active=false;MC.connected=false;clearTimeout(MC.timer);MC.timer=0;if(intent)mcSend({type:'depart'});const ws=MC.ws;MC.ws=null;ws?.close(1000,'Left casino');MC.pending=[];MC.remote.clear();MC.room='';MC.controller=null;}
+function mcDisconnect(intent=true){MC.active=false;MC.connected=false;clearTimeout(MC.timer);clearTimeout(MC.seatSyncTimer);MC.timer=0;MC.seatSyncTimer=0;MC.seatSyncBusy=0;MC.seatExpected=null;if(intent)mcSend({type:'depart'});const ws=MC.ws;MC.ws=null;ws?.close(1000,'Left casino');MC.pending=[];MC.remote.clear();MC.room='';MC.controller=null;}
+// Preserve the SQL-confirmed seat until the floor acknowledges the latest change.
+function mcSyncSeat(seat){MC.seatExpected=seat;MC.seatSyncSeq++;mcFlushSeat();}
+function mcFlushSeat(){if(MC.seatSyncBusy)return;clearTimeout(MC.seatSyncTimer);MC.seatSyncTimer=setTimeout(()=>{if(!MC.connected||!mcActive())return;MC.seatSyncAt=performance.now();MC.seatSyncBusy=MC.seatSyncSeq;mcSend({type:'sync',seq:MC.seatSyncBusy});MC.seatSyncTimer=setTimeout(()=>{if(MC.seatSyncBusy)MC.ws?.close(4002,'Confirming seat');},10000);},Math.max(0,MC.seatSyncAt+1100-performance.now()));}
 async function mcRevoke(){if(MC.controller&&acct.s)await sbFetch('/functions/v1/tables',{method:'POST',body:{op:'revoke',controller:MC.controller},timeout:5000});mcDisconnect();}
 async function mcEnter(code='',takeover=false){
  const no=tbCanPlay();if(no){tbMsg(no);return}const url=globalThis.PALISADE_CASINO?.url;
@@ -18,31 +21,32 @@ async function mcEnter(code='',takeover=false){
  ws.onopen=()=>{if(MC.ws!==ws)return;mcSend({type:'hello',protocol:'casino-1',token:acct.s.access_token,session:MC.session,code:MC.code,cls:pick.cls,takeover});};
  ws.onmessage=async e=>{if(MC.ws!==ws||MC.owner!==myUid())return;let b;try{b=JSON.parse(e.data)}catch{return}
   if(b.type==='welcome'){
-   clearTimeout(timeout);MC.connected=true;MC.attempt=0;MC.room=b.room;MC.code=b.code;MC.controller=b.controller;MC.seq=0;MC.pending=[];MC.remote.clear();
+   clearTimeout(timeout);clearTimeout(MC.seatSyncTimer);MC.seatSyncAt=0;MC.seatSyncBusy=0;MC.seatExpected=null;MC.connected=true;MC.attempt=0;MC.room=b.room;MC.code=b.code;MC.controller=b.controller;MC.seq=0;MC.pending=[];MC.remote.clear();
    NET.mode='casino';NET.inGame=true;NET.code=b.code;NET.casRoom=b.room;myId=b.id;NET.roster=b.players;pick.mode='casino';pick.pvp='coop';
    if(!casino()||!players.has(myId)){demo=false;pick.oct=isOctober();newGame(b.players,'',{gid:b.room});game.casRoom=b.room;enterGame();}mcSnapshot(b.players,true);tbMsg('');
    await mcResolveJournal();await tbLobby();if(TB.mine?.room===b.room&&!TB.mine.pending){TB.id=TB.mine.id;await tbSend({op:'state',id:TB.id},true);}
   }else if(b.type==='roster')mcSnapshot(b.players,true);
   else if(b.type==='snapshot')mcSnapshot(b.packed?b.players.map(r=>({id:MC.slots?.get(r[0]),x:r[1]/1000,y:r[2]/1000,fx:r[3]/1000,fy:r[4]/1000,seat:r[5],seq:r[6]})):b.players);
   else if(b.type==='chat')addChat(b.id,b.name,b.text,'');
+  else if(b.type==='seat'&&b.seq===MC.seatSyncBusy){clearTimeout(MC.seatSyncTimer);MC.seatSyncBusy=0;if(b.seq===MC.seatSyncSeq){MC.seatExpected=null;if(player)player.seat=b.seat||0;}else mcFlushSeat();}
   else if(b.type==='left'){players.delete(b.id);MC.remote.delete(b.id);NET.roster=NET.roster.filter(p=>p.id!==b.id);}
   else if(b.type==='reserved'){
    const q=casSeatOf(b.seat);if(q&&MC.seatPending===b.seat){MC.reservation=b.reservation;await tbSitAt(q.game,q.k,q.station);MC.reservation='';MC.seatPending=0;}
   }else if(b.type==='revoked'){
    MC.active=false;MC.connected=false;mcStatus(b.error||'Casino active in another tab. Use TAKE OVER to continue here.');
   }else if(b.type==='error'){
-   MC.seatPending=0;mcStatus(b.error||'Could not connect');if(/another tab|revoked|saved account|sign in|Update|staging is limited|room is full/.test(b.error||'')){MC.active=false;MC.connected=false;}
+   MC.seatPending=0;if(b.request==='sync'){clearTimeout(MC.seatSyncTimer);MC.seatSyncBusy=0;MC.seatExpected=null;}mcStatus(b.error||'Could not connect');if(/another tab|revoked|saved account|sign in|Update|staging is limited|room is full/.test(b.error||'')){MC.active=false;MC.connected=false;}
   }else if(b.type==='reconnect')mcStatus(b.error);
  };
  ws.onerror=()=>{};
- ws.onclose=()=>{clearTimeout(timeout);if(MC.ws!==ws)return;MC.connected=false;MC.seatPending=0;MC.pending=[];
+ ws.onclose=()=>{clearTimeout(timeout);if(MC.ws!==ws)return;clearTimeout(MC.seatSyncTimer);MC.seatSyncBusy=0;MC.seatExpected=null;MC.connected=false;MC.seatPending=0;MC.pending=[];
   if(MC.active&&MC.owner===myUid()){const wait=Math.min(15000,1000*2**Math.min(4,MC.attempt++))*(.8+Math.random()*.4);tbMsg('Casino connection interrupted. Reconnecting…');MC.timer=setTimeout(()=>mcEnter(MC.code),wait);}
  };
 }
 function mcSnapshot(rows,initial=false){
  if(initial){MC.slots=new Map((rows||[]).map(r=>[r.slot,r.id]));}
  const ids=new Set();for(const r of rows||[]){if(typeof r.id!=='string'||!r.id)continue;ids.add(r.id);let p=players.get(r.id);if(!p){if(!initial||typeof r.name!=='string')continue;p=makePlayer(r.id,r.name,r.cls,players.size,r.cos,'');players.set(r.id,p);}
-  if(r.id===myId){const oldX=p.x,oldY=p.y;MC.pending=MC.pending.filter(x=>x.seq>r.seq);p.x=r.x;p.y=r.y;p.seat=r.seat||0;if(p.seat)setTip('');
+  if(r.id===myId){const oldX=p.x,oldY=p.y;MC.pending=MC.pending.filter(x=>x.seq>r.seq);p.x=r.x;p.y=r.y;p.seat=MC.seatExpected??(r.seat||0);if(p.seat){const q=casSeatOf(p.seat);if(q)[p.x,p.y]=q.pos;setTip('');}
    if(!p.seat)for(const x of MC.pending)CasinoFloor.move(p,...x.move,1/30);
    if(!initial&&!p.seat&&Math.hypot(p.x-oldX,p.y-oldY)<.6){MC.correction={x:oldX-p.x,y:oldY-p.y};}
  }else{MC.remote.set(r.id,{from:[p.x,p.y],to:[r.x,r.y],at:performance.now()});p.seat=r.seat||0;p.face=p.aim={x:r.fx,y:r.fy};if(initial||p.seat){p.x=r.x;p.y=r.y;}}
@@ -60,7 +64,7 @@ function mcTick(dt){if(!mcActive())return;if(MC.connected&&player){MC.acc+=dt;le
 const mcJournalKey=()=> 'palisade.casino.ops.v1:'+SB_URL+':'+myUid();
 function mcJournal(){try{const x=JSON.parse(localStorage.getItem(mcJournalKey())||'null');return x&&x.owner===myUid()?x:null}catch{return null}}
 function mcPrepare(body){MC.journalError='';const old=mcJournal();if(old){MC.journalError='An earlier casino request is awaiting confirmation. Use RECOVER TABLE before playing again.';return body.opId===old.body.opId?old.body:null;}
- const b={...body,opId:body.opId||tbOpId(),...(body.op!=='sit'&&TB.v?.expected?{expected:{...TB.v.expected}}:{})};
+ const b={...body,opId:body.opId||tbOpId(),...(!['sit','topup','leave','pick'].includes(body.op)&&TB.v?.expected?{expected:{...TB.v.expected}}:{})};
  try{localStorage.setItem(mcJournalKey(),JSON.stringify({owner:myUid(),body:b}));}catch{MC.journalError='Your browser could not save this casino request. Enable local storage before playing.';return null}return b;
 }
 function mcClearJournal(id){try{if(mcJournal()?.body.opId===id)localStorage.removeItem(mcJournalKey())}catch{}}
