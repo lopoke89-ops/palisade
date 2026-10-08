@@ -2,7 +2,7 @@
   "date": "2026-10-08",
   "baseline": "76b5c90bb5402da1165f3f0c8b3175b7aafe454b",
   "candidateVersion": "0.10.5",
-  "siteBuild": "ed70e664bb",
+  "siteBuild": "4625cfa618",
   "node": "22.17.0",
   "denoCheck": "2.9.6",
   "supabaseSdk": "2.117.3",
@@ -22,7 +22,7 @@
   "stagingFixtureAccounts": 7,
   "plannedRenderRegion": "oregon",
   "renderBlueprintSchemaValid": true,
-  "renderService": "pending",
+  "renderService": "https://palisade-casino-staging.onrender.com",
   "tests": [
     "managed_casino",
     "managed_rest",
@@ -49,12 +49,15 @@
     "controller"
   ],
   "sourceHashes": {
-    "index.html": "5A2599DB181503E0851BF9B43D8BC8B3F752CE93448CA8B1CF39747FB459930C",
+    "index.html": "4CE0D28AFE789929B948BA1DF0EE6C3A167F48DD6ED6CE52FD86F2EE2F40F713",
     "dev/supabase/migrations/20261008133818_persistent_casino_world.sql": "345E7BBEDD0BAB4E1BD86133397D954B0BF68B8990264FE83212C75A25BF420B",
     "dev/supabase/functions/tables/handler.js": "7B3F1DA2708AABF6D850FC0E3D3F82133AEE9019A762E1D9EBE7170B693C5AB7",
     "dev/supabase/functions/tables/managed.js": "FC45238827264E903E90E893BEF8BC2810AAC5746D7958A92C13D51EA19F0C07",
-    "dev/render/server.js": "B16D899DE9D98DA2A55F8EDFD9D4A50835EA836ECA591FBD47F6D6CCC25BDF2B",
+    "dev/render/server.js": "927ECCCB6A8F9C3DB6D8BFCC68F79DF401FB007799EA9C9113AD2D42719D40D6",
     "dev/supabase/functions/tables/storage.js": "D755697BBA230BF0B2B7605C1D1E587631D25456AE0B5F3191C437290478AB4F",
     "dev/render/worker.js": "B9B0D0A28063FA799966AA5B952FB18D430CCFFE8A2A04EEA9D0DBFC1E7B7AC7"
-  }
+  },
+  "stagingSiteBuild": "95899cb134",
+  "renderServiceId": "srv-db3tn82j9qps73fe2t30",
+  "liveBrowserSmoke": "passed with candidate receiver; server redeploy follows"
 }

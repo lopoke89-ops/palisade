@@ -4,7 +4,7 @@ TAP version 13
 # Subtest: all seven managed games, complete request binding, offline settlement and revocation
 ok 1 - all seven managed games, complete request binding, offline settlement and revocation
   ---
-  duration_ms: 3593.585
+  duration_ms: 3452.4057
   type: 'test'
   ...
 1..1
@@ -15,5 +15,5 @@ ok 1 - all seven managed games, complete request binding, offline settlement and
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 4096.138
+# duration_ms 3633.1133
 errors: none

@@ -29,7 +29,7 @@ export function createCasinoService(D,{origins=['https://lopoke89-ops.github.io'
   wss.handleUpgrade(req,socket,head,ws=>wss.emit('connection',ws));
  });
  const send=(ws,msg)=>{if(ws.readyState!==WebSocket.OPEN)return;if(ws.bufferedAmount>MAX_QUEUE){ws.close(1013,'Connection too slow');return}const data=JSON.stringify(msg);stats.egressBytes+=Buffer.byteLength(data);ws.send(data);};
- const broadcast=(room,msg)=>{for(const p of people.values())if(p.room===room)send(p.ws,msg);};
+ const broadcast=(room,msg)=>{for(const p of people.values())if(p.published&&p.room===room)send(p.ws,msg);};
  const row=p=>({id:p.id,slot:p.slot,name:p.name,cls:p.cls,cos:p.cos,x:p.x,y:p.y,fx:p.fx,fy:p.fy,seat:p.seat,seq:p.ack});
  const packed=p=>[p.slot,Math.round(p.x*1000),Math.round(p.y*1000),Math.round(p.fx*1000),Math.round(p.fy*1000),p.seat,p.ack];
  const scope=p=>({uid:p.id,session:p.session,generation:p.generation,owner,epoch});
@@ -51,12 +51,15 @@ export function createCasinoService(D,{origins=['https://lopoke89-ops.github.io'
      const old=people.get(u.id);if(old){send(old.ws,{type:'revoked',error:'Casino opened in another connection'});old.ws.close(4001,'Controller replaced');}
      const name=clean(await D.name(u.id)).slice(0,12).toUpperCase(),profile=(await D.rows('profiles',{select:'cos',id:'eq.'+u.id,limit:1}))[0];
      const spawn=CAS.spawn[[...people.values()].filter(p=>p.room===a.room).length%6];
-     person={ws,id:u.id,name,cos:String(profile?.cos||'').slice(0,160),cls:['soldier','sniper','grenadier'].includes(b.cls)?b.cls:'soldier',room:a.room,code:a.code,session:b.session,generation:a.generation,x:spawn[0],y:spawn[1],fx:0,fy:1,input:[0,0],queue:[],seq:0,ack:0,seat:0,heard:now,chat:[],refresh:now,token:b.token};
+     person={ws,published:false,id:u.id,name,cos:String(profile?.cos||'').slice(0,160),cls:['soldier','sniper','grenadier'].includes(b.cls)?b.cls:'soldier',room:a.room,code:a.code,session:b.session,generation:a.generation,x:spawn[0],y:spawn[1],fx:0,fy:1,input:[0,0],queue:[],seq:0,ack:0,seat:0,heard:now,chat:[],refresh:now,token:b.token};
      const occupied=new Set([...people.values()].filter(p=>p.room===a.room&&p.id!==u.id).map(p=>p.slot));person.slot=[0,1,2,3,4,5].find(s=>!occupied.has(s));
      if(Array.isArray(a.position)&&!blocked(...a.position)){[person.x,person.y]=a.position;}
      people.set(u.id,person);clearTimeout(timeout);const h=await D.world({action:'heartbeat',...scope(person)});syncSeat(person,h.seat);
-     send(ws,{type:'welcome',protocol:PROTOCOL,room:a.room,code:a.code,id:u.id,controller:{session:b.session,generation:a.generation,owner,epoch},players:[...people.values()].filter(p=>p.room===a.room).map(row)});
-     broadcast(person.room,{type:'roster',players:[...people.values()].filter(p=>p.room===person.room).map(row)});
+     if(ws.readyState!==WebSocket.OPEN||!health().ready){ws.close(1012,'Casino reconnecting');return}
+     // Reserve the slot during SQL work, then publish identity before any packed movement.
+     person.published=true;
+     send(ws,{type:'welcome',protocol:PROTOCOL,room:a.room,code:a.code,id:u.id,controller:{session:b.session,generation:a.generation,owner,epoch},players:[...people.values()].filter(p=>p.published&&p.room===a.room).map(row)});
+     broadcast(person.room,{type:'roster',players:[...people.values()].filter(p=>p.published&&p.room===person.room).map(row)});
     }else{
      if(people.get(person.id)!==person||!health().ready)throw new Error('Casino connection changed');person.heard=now;
      if(b.type==='input'){
@@ -81,13 +84,13 @@ export function createCasinoService(D,{origins=['https://lopoke89-ops.github.io'
   ws.on('close',()=>{clearTimeout(timeout);sockets.delete(ws);if(person&&people.get(person.id)===person){people.delete(person.id);broadcast(person.room,{type:'left',id:person.id});}});
  });
  async function renew(){if(renewing||draining)return;renewing=true;try{config=await D.world({action:'config'});if(config.revision!==1)throw new Error('Unsupported storage revision');const l=await D.world({action:'lease',name:'world',owner});if(l.standby){epoch=0;until=0;return}epoch=l.epoch;until=performance.now()+Math.max(0,Date.parse(l.until)-Number(l.now)-1500);}catch(e){epoch=0;until=0;log(JSON.stringify({event:'world_unavailable',error:e.message}));}finally{renewing=false;}}
- async function heartbeat(){for(const p of people.values()){
+ async function heartbeat(){for(const p of people.values()){if(!p.published)continue;
   if(performance.now()-p.heard>25000){p.ws.close(4000,'Connection timed out');continue}if(p.checking)continue;p.checking=true;
   try{const u=await authenticate(p.token);if(!u||u.anon||u.id!==p.id)throw new Error('Sign in again');const r=await D.world({action:'heartbeat',...scope(p),x:p.x,y:p.y});syncSeat(p,r.seat);}catch(e){send(p.ws,{type:'revoked',error:e.message});p.ws.close(4001,'Controller revoked');}finally{p.checking=false;}
  }}
  function tick(){const now=performance.now();acc+=Math.min((now-last)/1000,.2);last=now;if(!health().ready){for(const ws of sockets)ws.close(1012,'Casino reconnecting');acc=0;return}if(!people.size){acc=0;return}
-  let n=0;while(acc>=1/30&&n++<6){acc-=1/30;step++;stats.ticks++;for(const p of people.values()){const b=p.queue.shift();if(b){p.ack=b.seq;const l=Math.hypot(...b.face);if(l>.01){p.fx=b.face[0]/l;p.fy=b.face[1]/l;}if(!p.seat)move(p,...b.move,1/30);}}
-   if(step%2===0){const rooms=new Set([...people.values()].map(p=>p.room));for(const room of rooms){broadcast(room,{type:'snapshot',tick:step,packed:true,players:[...people.values()].filter(p=>p.room===room).map(packed)});stats.snapshots++;}}
+  let n=0;while(acc>=1/30&&n++<6){acc-=1/30;step++;stats.ticks++;for(const p of people.values()){if(!p.published)continue;const b=p.queue.shift();if(b){p.ack=b.seq;const l=Math.hypot(...b.face);if(l>.01){p.fx=b.face[0]/l;p.fy=b.face[1]/l;}if(!p.seat)move(p,...b.move,1/30);}}
+   if(step%2===0){const rooms=new Set([...people.values()].filter(p=>p.published).map(p=>p.room));for(const room of rooms){broadcast(room,{type:'snapshot',tick:step,packed:true,players:[...people.values()].filter(p=>p.published&&p.room===room).map(packed)});stats.snapshots++;}}
   }
   stats.tickMaxMs=Math.max(stats.tickMaxMs,performance.now()-now);
  }

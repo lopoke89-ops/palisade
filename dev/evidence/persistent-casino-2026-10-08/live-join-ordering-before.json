@@ -1,0 +1,120 @@
+{
+  "time": "2026-10-08T18:18:20.413Z",
+  "message": "page.waitForFunction: Timeout 5000ms exceeded.",
+  "diagnostics": [
+    {
+      "state": "full",
+      "connected": true,
+      "active": true,
+      "input": [
+        0,
+        0
+      ],
+      "pending": 0,
+      "control": {
+        "keys": {
+          "d": true
+        },
+        "overlay": false,
+        "chat": false
+      },
+      "player": {
+        "x": 1.6,
+        "y": 10.6,
+        "seat": 0
+      },
+      "hidden": false
+    },
+    {
+      "state": "full",
+      "connected": true,
+      "active": true,
+      "input": [
+        0,
+        0
+      ],
+      "pending": 0,
+      "control": {
+        "keys": {},
+        "overlay": false,
+        "chat": false
+      },
+      "player": {
+        "x": 2.5,
+        "y": 9.5,
+        "seat": 0
+      },
+      "hidden": false
+    },
+    {
+      "state": "full",
+      "connected": true,
+      "active": true,
+      "input": [
+        0,
+        0
+      ],
+      "pending": 0,
+      "control": {
+        "keys": {},
+        "overlay": false,
+        "chat": false
+      },
+      "player": {
+        "x": 2.5,
+        "y": 10.5,
+        "seat": 0
+      },
+      "hidden": false
+    },
+    {
+      "state": "full",
+      "connected": true,
+      "active": true,
+      "input": [
+        0,
+        0
+      ],
+      "pending": 0,
+      "control": {
+        "keys": {},
+        "overlay": false,
+        "chat": false
+      },
+      "player": {
+        "x": 3.4,
+        "y": 9.4,
+        "seat": 0
+      },
+      "hidden": false
+    },
+    {
+      "state": "full",
+      "connected": true,
+      "active": true,
+      "input": [
+        0,
+        0
+      ],
+      "pending": 15,
+      "control": {
+        "keys": {},
+        "overlay": false,
+        "chat": false
+      },
+      "player": {
+        "x": 3.4,
+        "y": 10.6,
+        "seat": 0
+      },
+      "hidden": false
+    }
+  ],
+  "errors": [
+    "Cannot read properties of undefined (reading 'toUpperCase')",
+    "Cannot read properties of undefined (reading 'toUpperCase')",
+    "Cannot read properties of undefined (reading 'toUpperCase')",
+    "Cannot read properties of undefined (reading 'toUpperCase')",
+    "Cannot read properties of undefined (reading 'toUpperCase')"
+  ]
+}

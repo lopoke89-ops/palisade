@@ -31,7 +31,7 @@ async function mcEnter(code='',takeover=false){
   }else if(b.type==='revoked'){
    MC.active=false;MC.connected=false;mcStatus(b.error||'Casino active in another tab. Use TAKE OVER to continue here.');
   }else if(b.type==='error'){
-   MC.seatPending=0;mcStatus(b.error||'Could not connect');if(/another tab|revoked|saved account|sign in|Update/.test(b.error||'')){MC.active=false;MC.connected=false;}
+   MC.seatPending=0;mcStatus(b.error||'Could not connect');if(/another tab|revoked|saved account|sign in|Update|staging is limited|room is full/.test(b.error||'')){MC.active=false;MC.connected=false;}
   }else if(b.type==='reconnect')mcStatus(b.error);
  };
  ws.onerror=()=>{};
@@ -41,7 +41,7 @@ async function mcEnter(code='',takeover=false){
 }
 function mcSnapshot(rows,initial=false){
  if(initial){MC.slots=new Map((rows||[]).map(r=>[r.slot,r.id]));}
- const ids=new Set();for(const r of rows||[]){ids.add(r.id);let p=players.get(r.id);if(!p){p=makePlayer(r.id,r.name,r.cls,players.size,r.cos,'');players.set(r.id,p);}
+ const ids=new Set();for(const r of rows||[]){if(typeof r.id!=='string'||!r.id)continue;ids.add(r.id);let p=players.get(r.id);if(!p){if(!initial||typeof r.name!=='string')continue;p=makePlayer(r.id,r.name,r.cls,players.size,r.cos,'');players.set(r.id,p);}
   if(r.id===myId){const oldX=p.x,oldY=p.y;MC.pending=MC.pending.filter(x=>x.seq>r.seq);p.x=r.x;p.y=r.y;p.seat=r.seat||0;if(p.seat)setTip('');
    if(!p.seat)for(const x of MC.pending)CasinoFloor.move(p,...x.move,1/30);
    if(!initial&&!p.seat&&Math.hypot(p.x-oldX,p.y-oldY)<.6){MC.correction={x:oldX-p.x,y:oldY-p.y};}

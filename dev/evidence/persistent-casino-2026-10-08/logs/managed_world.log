@@ -1,18 +1,24 @@
 TAP version 13
-# WebSocket tests: hostless continuity, shared fixed movement, safe checkpoint, chat/privacy, explicit takeover, empty sleep and stable restart passed.
-# Subtest: authoritative floor, first/last departure, takeover, privacy and restart
-ok 1 - authoritative floor, first/last departure, takeover, privacy and restart
+# Subtest: joining avatars are published only after their identity roster
+ok 1 - joining avatars are published only after their identity roster
   ---
-  duration_ms: 4156.0962
+  duration_ms: 3442.1484
   type: 'test'
   ...
-1..1
-# tests 1
+# WebSocket tests: hostless continuity, shared fixed movement, safe checkpoint, chat/privacy, explicit takeover, empty sleep and stable restart passed.
+# Subtest: authoritative floor, first/last departure, takeover, privacy and restart
+ok 2 - authoritative floor, first/last departure, takeover, privacy and restart
+  ---
+  duration_ms: 2343.25
+  type: 'test'
+  ...
+1..2
+# tests 2
 # suites 0
-# pass 1
+# pass 2
 # fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 4729.7688
+# duration_ms 6019.1511
 errors: none

@@ -1,0 +1,88 @@
+{
+  "time": "2026-10-08T18:28:10.887Z",
+  "project": "nxsqerlpqdzrjwqxhsdz",
+  "service": "https://palisade-casino-staging.onrender.com",
+  "realAuth": true,
+  "mockedEconomicRequests": false,
+  "checks": {
+    "sixSavedAccounts": "same durable room",
+    "firstDeparture": "five continue",
+    "keyboardMovement": "live movement",
+    "reload": "explicit takeover returns to same durable room with five occupants",
+    "excludedAccount": "explicit staging restriction",
+    "productionRequests": 0,
+    "peerTransportRequests": 0
+  },
+  "room": "C:80b9d16f-70d6-4a0b-be2c-ef4ea51c2d8a",
+  "movement": {
+    "start": {
+      "x": 1.6,
+      "y": 10.6
+    },
+    "moved": {
+      "x": 1.756,
+      "y": 10.444
+    }
+  },
+  "denials": [
+    "Casino staging is limited to test accounts"
+  ],
+  "apiRequests": 26,
+  "initialHealth": {
+    "ok": true,
+    "protocol": "casino-1",
+    "layout": 1,
+    "revision": 1,
+    "build": "a42d17a91b287a62da143f12608111ed97b54712",
+    "ready": true,
+    "admissions": true,
+    "standby": false,
+    "occupants": 0,
+    "rooms": 0,
+    "worker": {
+      "steps": 0,
+      "errors": 0,
+      "lagMs": 0,
+      "repaired": 0
+    },
+    "stats": {
+      "connections": 22,
+      "snapshots": 1775,
+      "rejected": 0,
+      "ticks": 3550,
+      "egressBytes": 974733,
+      "tickMaxMs": 4.116158000018913
+    },
+    "rssBytes": 91639808,
+    "uptimeSeconds": 1003
+  },
+  "afterHealth": {
+    "ok": true,
+    "protocol": "casino-1",
+    "layout": 1,
+    "revision": 1,
+    "build": "a42d17a91b287a62da143f12608111ed97b54712",
+    "ready": true,
+    "admissions": true,
+    "standby": false,
+    "occupants": 5,
+    "rooms": 1,
+    "worker": {
+      "steps": 0,
+      "errors": 0,
+      "lagMs": 0,
+      "repaired": 0
+    },
+    "stats": {
+      "connections": 30,
+      "snapshots": 2240,
+      "rejected": 0,
+      "ticks": 4480,
+      "egressBytes": 1280522,
+      "tickMaxMs": 199.06469500006642
+    },
+    "rssBytes": 92221440,
+    "uptimeSeconds": 1038
+  },
+  "errors": []
+}

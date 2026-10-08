@@ -6,6 +6,23 @@ import {WebSocket} from 'ws';
 import {createCasinoService} from '../server.js';
 const require=createRequire(new URL('../../test/managed_casino.js',import.meta.url)),{PGlite}=require('@electric-sql/pglite'),{citext}=require('@electric-sql/pglite/contrib/citext'),{setup}=require('./managed_casino.js');
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
+test('joining avatars are published only after their identity roster',{timeout:30000},async()=>{
+ const db=new PGlite({extensions:{citext}}),{D,ids}=await setup(db);
+ await db.exec('update casino_world_config set admissions=true,new_wagers=true');
+ let releaseJoin,joinStarted;const gate=new Promise(r=>releaseJoin=r),started=new Promise(r=>joinStarted=r);
+ const world=D.world;let blockedOnce=false;D.world=async p=>{if(p.action==='heartbeat'&&p.uid===ids[1]&&!blockedOnce){blockedOnce=true;joinStarted();await gate}return world(p)};
+ const service=createCasinoService(D,{origins:['http://127.0.0.1:8080'],log:()=>{}}),clients=[];
+ try{
+  const {port}=await service.start(0,'127.0.0.1');const a=client(port,ids[0]);clients.push(a);const first=await a.wait('welcome');
+  const before=a.messages.length,b=client(port,ids[1],{code:first.code});clients.push(b);
+  await started;await pause(180);
+  const snapshots=a.messages.slice(before).filter(m=>m.type==='snapshot');assert.ok(snapshots.length,'ticks continue during the database delay');
+  assert.ok(snapshots.every(m=>m.players.every(row=>row[0]===first.players[0].slot)),'existing browser never sees an unannounced avatar slot');
+  assert.ok(!b.messages.some(m=>['snapshot','roster'].includes(m.type)),'joining browser receives no floor data before welcome');
+  releaseJoin();const second=await b.wait('welcome');assert.equal(second.players.length,2);
+  await pause(100);const announced=new Set();for(const m of a.messages){if(['welcome','roster'].includes(m.type))for(const p of m.players)announced.add(p.slot);if(m.type==='snapshot')assert.ok(m.players.every(p=>announced.has(p[0])),'roster precedes every new packed slot');}
+ }finally{releaseJoin();clients.forEach(c=>c.ws.terminate());await service.stop();await db.close();}
+});
 function client(port,token,{session=randomUUID(),code='',takeover=false,protocol='casino-1'}={}){
  const ws=new WebSocket(`ws://127.0.0.1:${port}/casino`,{origin:'http://127.0.0.1:8080'}),messages=[];
  ws.on('message',x=>messages.push(JSON.parse(x)));ws.on('error',()=>{});

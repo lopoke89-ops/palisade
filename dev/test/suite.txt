@@ -144,6 +144,7 @@ managed_world          node tables server casino net
 managed_rest           node tables server casino
 managed_postgres       node tables server casino extra
 managed_browser        tables casino net
+managed_live           tables casino net extra serial staging
 tables_ui              tables casino
 casino_games_ui        tables casino net
 casino_map             casino net
