@@ -1,5 +1,5 @@
 {
-  "time": "2026-10-08T18:45:00.909Z",
+  "time": "2026-10-08T19:11:07.546Z",
   "project": "nxsqerlpqdzrjwqxhsdz",
   "service": "https://palisade-casino-staging.onrender.com",
   "realAuth": true,
@@ -17,73 +17,73 @@
   "room": "C:80b9d16f-70d6-4a0b-be2c-ef4ea51c2d8a",
   "movement": {
     "start": {
-      "x": 1.6,
-      "y": 10.6
+      "x": 9.201,
+      "y": 5.457
     },
     "moved": {
-      "x": 1.756,
-      "y": 10.444
+      "x": 9.357,
+      "y": 5.301
     }
   },
   "denials": [
     "Casino staging is limited to test accounts"
   ],
-  "apiRequests": 26,
+  "apiRequests": 43,
   "initialHealth": {
     "ok": true,
     "protocol": "casino-1",
     "layout": 1,
     "revision": 1,
-    "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+    "build": "70556d61433227f0453e707850fabebb99b64a56",
     "ready": true,
     "admissions": true,
     "standby": false,
     "occupants": 0,
     "rooms": 0,
     "worker": {
-      "steps": 0,
-      "errors": 1,
-      "lagMs": 0,
+      "steps": 5,
+      "errors": 0,
+      "lagMs": 421.64599609375,
       "repaired": 0
     },
     "stats": {
-      "connections": 8,
-      "snapshots": 556,
+      "connections": 3,
+      "snapshots": 2744,
       "rejected": 0,
-      "ticks": 1114,
-      "egressBytes": 342562,
-      "tickMaxMs": 3.2507000000041444
+      "ticks": 5490,
+      "egressBytes": 266351,
+      "tickMaxMs": 82.93345199999749
     },
-    "rssBytes": 85413888,
-    "uptimeSeconds": 478
+    "rssBytes": 100429824,
+    "uptimeSeconds": 329
   },
   "afterHealth": {
     "ok": true,
     "protocol": "casino-1",
     "layout": 1,
     "revision": 1,
-    "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+    "build": "70556d61433227f0453e707850fabebb99b64a56",
     "ready": true,
     "admissions": true,
     "standby": false,
     "occupants": 5,
     "rooms": 1,
     "worker": {
-      "steps": 0,
-      "errors": 1,
-      "lagMs": 0,
+      "steps": 5,
+      "errors": 0,
+      "lagMs": 421.64599609375,
       "repaired": 0
     },
     "stats": {
-      "connections": 16,
-      "snapshots": 970,
+      "connections": 11,
+      "snapshots": 3136,
       "rejected": 0,
-      "ticks": 1942,
-      "egressBytes": 630779,
-      "tickMaxMs": 3.2507000000041444
+      "ticks": 6275,
+      "egressBytes": 546901,
+      "tickMaxMs": 82.93345199999749
     },
-    "rssBytes": 85860352,
-    "uptimeSeconds": 509
+    "rssBytes": 97468416,
+    "uptimeSeconds": 359
   },
   "errors": []
 }

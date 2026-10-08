@@ -1,0 +1,29 @@
+{
+  "time": "2026-10-08T19:12:51.766Z",
+  "ok": true,
+  "protocol": "casino-1",
+  "layout": 1,
+  "revision": 1,
+  "build": "70556d61433227f0453e707850fabebb99b64a56",
+  "ready": true,
+  "admissions": false,
+  "standby": false,
+  "occupants": 0,
+  "rooms": 0,
+  "worker": {
+    "steps": 5,
+    "errors": 0,
+    "lagMs": 421.64599609375,
+    "repaired": 0
+  },
+  "stats": {
+    "connections": 11,
+    "snapshots": 3162,
+    "rejected": 0,
+    "ticks": 6326,
+    "egressBytes": 573162,
+    "tickMaxMs": 82.93345199999749
+  },
+  "rssBytes": 91951104,
+  "uptimeSeconds": 463
+}

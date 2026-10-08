@@ -1,0 +1,234 @@
+{
+  "started": "2026-10-08T19:03:32.497Z",
+  "expectedCommit": "70556d61433227f0453e707850fabebb99b64a56",
+  "samples": [
+    {
+      "time": "2026-10-08T19:03:32.993Z",
+      "status": 200,
+      "latencyMs": 496,
+      "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+      "ready": true,
+      "standby": false,
+      "workerErrors": 13
+    },
+    {
+      "time": "2026-10-08T19:03:38.359Z",
+      "status": 200,
+      "latencyMs": 366,
+      "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+      "ready": true,
+      "standby": false,
+      "workerErrors": 13
+    },
+    {
+      "time": "2026-10-08T19:03:43.605Z",
+      "status": 200,
+      "latencyMs": 246,
+      "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+      "ready": true,
+      "standby": false,
+      "workerErrors": 13
+    },
+    {
+      "time": "2026-10-08T19:03:48.814Z",
+      "status": 200,
+      "latencyMs": 210,
+      "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+      "ready": true,
+      "standby": false,
+      "workerErrors": 13
+    },
+    {
+      "time": "2026-10-08T19:03:54.175Z",
+      "status": 200,
+      "latencyMs": 361,
+      "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+      "ready": true,
+      "standby": false,
+      "workerErrors": 13
+    },
+    {
+      "time": "2026-10-08T19:03:59.675Z",
+      "status": 200,
+      "latencyMs": 499,
+      "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+      "ready": true,
+      "standby": false,
+      "workerErrors": 13
+    },
+    {
+      "time": "2026-10-08T19:04:04.923Z",
+      "status": 200,
+      "latencyMs": 248,
+      "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+      "ready": true,
+      "standby": false,
+      "workerErrors": 13
+    },
+    {
+      "time": "2026-10-08T19:04:10.129Z",
+      "status": 200,
+      "latencyMs": 205,
+      "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+      "ready": true,
+      "standby": false,
+      "workerErrors": 13
+    },
+    {
+      "time": "2026-10-08T19:04:15.364Z",
+      "status": 200,
+      "latencyMs": 234,
+      "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+      "ready": true,
+      "standby": false,
+      "workerErrors": 13
+    },
+    {
+      "time": "2026-10-08T19:04:20.615Z",
+      "status": 200,
+      "latencyMs": 251,
+      "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+      "ready": true,
+      "standby": false,
+      "workerErrors": 13
+    },
+    {
+      "time": "2026-10-08T19:04:25.943Z",
+      "status": 200,
+      "latencyMs": 328,
+      "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+      "ready": true,
+      "standby": false,
+      "workerErrors": 13
+    },
+    {
+      "time": "2026-10-08T19:04:31.337Z",
+      "status": 200,
+      "latencyMs": 394,
+      "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+      "ready": true,
+      "standby": false,
+      "workerErrors": 13
+    },
+    {
+      "time": "2026-10-08T19:04:36.704Z",
+      "status": 200,
+      "latencyMs": 367,
+      "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+      "ready": true,
+      "standby": false,
+      "workerErrors": 13
+    },
+    {
+      "time": "2026-10-08T19:04:41.929Z",
+      "status": 200,
+      "latencyMs": 225,
+      "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+      "ready": true,
+      "standby": false,
+      "workerErrors": 13
+    },
+    {
+      "time": "2026-10-08T19:04:47.284Z",
+      "status": 200,
+      "latencyMs": 354,
+      "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+      "ready": true,
+      "standby": false,
+      "workerErrors": 13
+    },
+    {
+      "time": "2026-10-08T19:04:52.540Z",
+      "status": 200,
+      "latencyMs": 256,
+      "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+      "ready": true,
+      "standby": false,
+      "workerErrors": 13
+    },
+    {
+      "time": "2026-10-08T19:04:57.754Z",
+      "status": 200,
+      "latencyMs": 214,
+      "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+      "ready": true,
+      "standby": false,
+      "workerErrors": 13
+    },
+    {
+      "time": "2026-10-08T19:05:03.140Z",
+      "status": 200,
+      "latencyMs": 385,
+      "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+      "ready": true,
+      "standby": false,
+      "workerErrors": 13
+    },
+    {
+      "time": "2026-10-08T19:05:08.355Z",
+      "status": 200,
+      "latencyMs": 215,
+      "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+      "ready": true,
+      "standby": false,
+      "workerErrors": 13
+    },
+    {
+      "time": "2026-10-08T19:05:13.575Z",
+      "status": 200,
+      "latencyMs": 221,
+      "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+      "ready": true,
+      "standby": false,
+      "workerErrors": 13
+    },
+    {
+      "time": "2026-10-08T19:05:18.965Z",
+      "status": 200,
+      "latencyMs": 389,
+      "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+      "ready": true,
+      "standby": false,
+      "workerErrors": 13
+    },
+    {
+      "time": "2026-10-08T19:05:24.316Z",
+      "status": 503,
+      "latencyMs": 348,
+      "build": "70556d61433227f0453e707850fabebb99b64a56",
+      "ready": false,
+      "standby": true,
+      "workerErrors": 0
+    },
+    {
+      "time": "2026-10-08T19:05:29.545Z",
+      "status": 503,
+      "latencyMs": 230,
+      "build": "70556d61433227f0453e707850fabebb99b64a56",
+      "ready": false,
+      "standby": true,
+      "workerErrors": 0
+    },
+    {
+      "time": "2026-10-08T19:05:34.765Z",
+      "status": 503,
+      "latencyMs": 220,
+      "build": "70556d61433227f0453e707850fabebb99b64a56",
+      "ready": false,
+      "standby": true,
+      "workerErrors": 0
+    },
+    {
+      "time": "2026-10-08T19:05:39.970Z",
+      "status": 200,
+      "latencyMs": 206,
+      "build": "70556d61433227f0453e707850fabebb99b64a56",
+      "ready": true,
+      "standby": false,
+      "workerErrors": 0
+    }
+  ],
+  "limits": "No players during polling; five-second samples do not certify active cutover or cold starts",
+  "ready": true,
+  "finished": "2026-10-08T19:05:39.970Z"
+}

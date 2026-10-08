@@ -19,6 +19,25 @@
       "workerErrorDelta": 0,
       "evidence": "live-browser.json",
       "context": "Healthy world/worker leases were observed after the timeout. The six-browser run had no new worker errors."
+    },
+    {
+      "build": "b0476ce",
+      "event": "empty_void_response_parsing_failure",
+      "source": "Authenticated Render application logs and live-games-before.json",
+      "recoveryErrorEvents": 6,
+      "outerWorkerErrorEvents": 6,
+      "workerErrorDelta": 12,
+      "error": "Unexpected end of JSON input",
+      "cause": "Successful HTTP 204 recovery idle/backoff RPCs were parsed as JSON",
+      "financialImpact": "All seven tables closed and reconciled; every wallet matched its ledger",
+      "repair": "HTTP 204 returns null; malformed non-void JSON still refused"
+    },
+    {
+      "build": "70556d61433227f0453e707850fabebb99b64a56",
+      "event": "repaired_live_checks_passed",
+      "source": "live-games.json, live-browser.json and render-final-health.json",
+      "workerErrors": 0,
+      "browserErrors": 0
     }
   ],
   "lifetimeZeroErrors": false

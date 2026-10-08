@@ -1,0 +1,83 @@
+{
+  "date": "2026-10-08",
+  "scope": "Isolated staging deployment; production managed client remains disabled",
+  "render": {
+    "serviceId": "srv-db3tn82j9qps73fe2t30",
+    "name": "palisade-casino-staging",
+    "url": "https://palisade-casino-staging.onrender.com",
+    "region": "oregon",
+    "instance": "Free",
+    "monthlyComputeUSD": 0,
+    "branch": "casino-persistent-render",
+    "commit": "70556d61433227f0453e707850fabebb99b64a56",
+    "deployId": "dep-db3ugi4s728c73f9suqg",
+    "providerDuration": "2m19s",
+    "node": "22.17.0",
+    "nodeVerifiedInBuildLogs": true,
+    "autoDeploy": false,
+    "health": "/healthz",
+    "readiness": "/readyz",
+    "environmentNames": [
+      "NODE_VERSION",
+      "SUPABASE_URL",
+      "ALLOWED_ORIGINS",
+      "SUPABASE_SERVICE_ROLE_KEY"
+    ],
+    "serverSecret": "Entered by user directly into Render; absent from local artifacts"
+  },
+  "supabase": {
+    "project": "nxsqerlpqdzrjwqxhsdz",
+    "region": "us-west-2",
+    "migration": "20261008165641_initialize_palisade_casino_staging",
+    "edge": {
+      "id": "5eb4343b-6760-483d-a143-623b30dfb54f",
+      "slug": "tables",
+      "name": "tables",
+      "status": "ACTIVE",
+      "version": 3,
+      "created_at": 1791478667708,
+      "updated_at": 1791486005892,
+      "verify_jwt": false,
+      "import_map": false,
+      "entrypoint_path": "file:///tmp/user_fn_nxsqerlpqdzrjwqxhsdz_5eb4343b-6760-483d-a143-623b30dfb54f_3/source/index.ts",
+      "ezbr_sha256": "9f3d26f1925707e31d19fc897ec13f88608dc3c2f516a0e5d589a55109a7ba47"
+    }
+  },
+  "handoff": {
+    "admissions": false,
+    "newWagers": false,
+    "recovery": true,
+    "testAllowlist": 6,
+    "fixtureAccounts": 7,
+    "openTables": 0,
+    "occupiedSeats": 0
+  },
+  "validation": {
+    "realBrowserContexts": 6,
+    "liveGames": 7,
+    "currentLiveTableIds": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14
+    ],
+    "acceptedIdsStoredOnce": 34,
+    "cumulativeTablesReconciled": 14,
+    "fixtureWalletsReconciled": 7,
+    "workerErrorsOnRepairedInstance": 0,
+    "browserErrors": 0,
+    "publicAccessChecks": 34,
+    "initialAuthChecks": 42,
+    "productionChanged": false
+  },
+  "limits": [
+    "Free Render sleeps with inactivity; sleeping worker does not settle obligations",
+    "Two-hour 60-client live soak and network shaping remain pending",
+    "Cold starts, active-player replacement and failure/UI/input/audit-boundary matrix remain release gates",
+    "Readiness polling observed three healthy-standby 503 samples; not uninterrupted availability certification",
+    "Published managed client remains disabled; no main/site/production migration or API deployment"
+  ]
+}

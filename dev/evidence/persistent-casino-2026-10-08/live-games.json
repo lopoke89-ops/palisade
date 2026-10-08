@@ -1,0 +1,944 @@
+{
+  "started": "2026-10-08T19:06:35.971Z",
+  "project": "nxsqerlpqdzrjwqxhsdz",
+  "service": "https://palisade-casino-staging.onrender.com",
+  "scope": "real staging WSS/Edge/Auth; two scripted saved accounts, not browser UI or capacity certification",
+  "games": [
+    {
+      "game": "bj",
+      "started": "2026-10-08T19:06:37.285Z",
+      "id": 8,
+      "accepted": "2 shard bet",
+      "acceptedOperation": "live_ca73be4b-a136-45ab-89f9-2e005281c8d0",
+      "balance": 5003,
+      "finished": "2026-10-08T19:07:12.290Z",
+      "settled": true
+    },
+    {
+      "game": "he",
+      "started": "2026-10-08T19:07:12.290Z",
+      "id": 9,
+      "accepted": "two humans start with automatic blinds and a legal fold",
+      "balance": 5003,
+      "finished": "2026-10-08T19:07:42.550Z",
+      "settled": true
+    },
+    {
+      "game": "rl",
+      "started": "2026-10-08T19:07:42.550Z",
+      "id": 10,
+      "accepted": "1 shard red bet and ready",
+      "acceptedOperation": "live_3c2e5dc2-2ac3-47d1-b3c3-0816d11f95a6",
+      "balance": 5004,
+      "finished": "2026-10-08T19:08:09.951Z",
+      "settled": true
+    },
+    {
+      "game": "ba",
+      "started": "2026-10-08T19:08:09.951Z",
+      "id": 11,
+      "accepted": "1 shard Player bet and ready",
+      "acceptedOperation": "live_b429844e-869a-4b5e-b7a5-1b3b9ca61807",
+      "balance": 5003,
+      "finished": "2026-10-08T19:08:30.095Z",
+      "settled": true
+    },
+    {
+      "game": "cr",
+      "started": "2026-10-08T19:08:30.095Z",
+      "id": 12,
+      "lockedPoint": 9,
+      "rollsBeforeDeparture": 1,
+      "accepted": "1 shard locked Pass bet, flags and ready",
+      "acceptedOperation": "live_564daddc-5a62-47eb-ab76-4988f2389507",
+      "floorDisconnectedAt": "2026-10-08T19:08:53.607Z",
+      "replayAfterControllerDeparture": true,
+      "balance": 5004,
+      "finished": "2026-10-08T19:09:00.352Z",
+      "settled": true
+    },
+    {
+      "game": "sl",
+      "started": "2026-10-08T19:09:00.352Z",
+      "id": 13,
+      "accepted": "1 shard spin",
+      "acceptedOperation": "live_09958e6e-1e0e-4d87-abe8-2abea9850e2b",
+      "balance": 5003,
+      "finished": "2026-10-08T19:09:20.582Z",
+      "settled": true
+    },
+    {
+      "game": "pk",
+      "started": "2026-10-08T19:09:20.582Z",
+      "id": 14,
+      "accepted": "10 shard drop",
+      "acceptedOperation": "live_41d36000-23dc-448f-8328-7809f077d051",
+      "balance": 4999,
+      "finished": "2026-10-08T19:09:41.163Z",
+      "settled": true
+    }
+  ],
+  "requests": [
+    {
+      "op": "sit",
+      "opId": "live_07f48c06-a8ce-4dc8-a4cc-6a9f6c8ad803",
+      "id": 8,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 4155
+    },
+    {
+      "op": "sit",
+      "opId": "live_07f48c06-a8ce-4dc8-a4cc-6a9f6c8ad803",
+      "id": 8,
+      "status": 200,
+      "error": null,
+      "replay": true,
+      "ms": 1552
+    },
+    {
+      "op": "topup",
+      "opId": "live_3147e97c-981b-447a-924c-272eaf31f904",
+      "id": 8,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 2155
+    },
+    {
+      "op": "topup",
+      "opId": "live_3147e97c-981b-447a-924c-272eaf31f904",
+      "id": 8,
+      "status": 200,
+      "error": null,
+      "replay": true,
+      "ms": 2110
+    },
+    {
+      "op": "bet",
+      "opId": "live_ca73be4b-a136-45ab-89f9-2e005281c8d0",
+      "id": 8,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 2912
+    },
+    {
+      "op": "bet",
+      "opId": "live_ca73be4b-a136-45ab-89f9-2e005281c8d0",
+      "id": 8,
+      "status": 200,
+      "error": null,
+      "replay": true,
+      "ms": 1705
+    },
+    {
+      "op": "leave",
+      "opId": "live_20fdf2f4-ae09-4810-9d57-12daf96bd800",
+      "id": 8,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 2548
+    },
+    {
+      "op": "lobby",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1697
+    },
+    {
+      "op": "lobby",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1408
+    },
+    {
+      "op": "lobby",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1691
+    },
+    {
+      "op": "lobby",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1487
+    },
+    {
+      "op": "lobby",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1306
+    },
+    {
+      "op": "lobby",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1600
+    },
+    {
+      "op": "lobby",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1524
+    },
+    {
+      "op": "sit",
+      "opId": "live_691872f4-af53-417b-b90e-ef15db8046ba",
+      "id": 9,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 4375
+    },
+    {
+      "op": "sit",
+      "opId": "live_691872f4-af53-417b-b90e-ef15db8046ba",
+      "id": 9,
+      "status": 200,
+      "error": null,
+      "replay": true,
+      "ms": 1355
+    },
+    {
+      "op": "topup",
+      "opId": "live_2a2914b6-bc82-4730-be89-c40af43e90a2",
+      "id": 9,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1763
+    },
+    {
+      "op": "topup",
+      "opId": "live_2a2914b6-bc82-4730-be89-c40af43e90a2",
+      "id": 9,
+      "status": 200,
+      "error": null,
+      "replay": true,
+      "ms": 1531
+    },
+    {
+      "op": "sit",
+      "opId": "live_cef10a67-623a-48e0-801e-769a20614628",
+      "id": 9,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 2042
+    },
+    {
+      "op": "state",
+      "opId": null,
+      "id": 9,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1530
+    },
+    {
+      "op": "state",
+      "opId": null,
+      "id": 9,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1474
+    },
+    {
+      "op": "state",
+      "opId": null,
+      "id": 9,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1017
+    },
+    {
+      "op": "move",
+      "opId": "live_444d7722-6880-420e-98f4-2367c9e63d61",
+      "id": 9,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1333
+    },
+    {
+      "op": "leave",
+      "opId": "live_5be46b55-e4c2-4214-a37d-4afbb4f222f7",
+      "id": 9,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 2330
+    },
+    {
+      "op": "leave",
+      "opId": "live_c8be7f5a-bb7c-46eb-82e5-0c930cabe67b",
+      "id": 9,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 2160
+    },
+    {
+      "op": "lobby",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1896
+    },
+    {
+      "op": "lobby",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1906
+    },
+    {
+      "op": "sit",
+      "opId": "live_363faac2-4247-4e1a-a8c4-760de22be07e",
+      "id": 10,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 2067
+    },
+    {
+      "op": "sit",
+      "opId": "live_363faac2-4247-4e1a-a8c4-760de22be07e",
+      "id": 10,
+      "status": 200,
+      "error": null,
+      "replay": true,
+      "ms": 1174
+    },
+    {
+      "op": "topup",
+      "opId": "live_f0a59a48-f0e2-4c95-945b-956eb7f846a8",
+      "id": 10,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 2442
+    },
+    {
+      "op": "topup",
+      "opId": "live_f0a59a48-f0e2-4c95-945b-956eb7f846a8",
+      "id": 10,
+      "status": 200,
+      "error": null,
+      "replay": true,
+      "ms": 1449
+    },
+    {
+      "op": "rlbets",
+      "opId": "live_6d804b1c-79f4-4e7f-9e80-7782cc69a793",
+      "id": 10,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1974
+    },
+    {
+      "op": "rlready",
+      "opId": "live_3c2e5dc2-2ac3-47d1-b3c3-0816d11f95a6",
+      "id": 10,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1758
+    },
+    {
+      "op": "rlready",
+      "opId": "live_3c2e5dc2-2ac3-47d1-b3c3-0816d11f95a6",
+      "id": 10,
+      "status": 200,
+      "error": null,
+      "replay": true,
+      "ms": 860
+    },
+    {
+      "op": "leave",
+      "opId": "live_dde89faa-8b9e-479d-a6d5-18a3c5010ce9",
+      "id": 10,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 3778
+    },
+    {
+      "op": "lobby",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1595
+    },
+    {
+      "op": "lobby",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1354
+    },
+    {
+      "op": "lobby",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1238
+    },
+    {
+      "op": "lobby",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1189
+    },
+    {
+      "op": "lobby",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1799
+    },
+    {
+      "op": "lobby",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1196
+    },
+    {
+      "op": "lobby",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 905
+    },
+    {
+      "op": "sit",
+      "opId": "live_b84dd3e0-665b-4f68-b7b2-6ee8c353eeca",
+      "id": 11,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 3141
+    },
+    {
+      "op": "sit",
+      "opId": "live_b84dd3e0-665b-4f68-b7b2-6ee8c353eeca",
+      "id": 11,
+      "status": 200,
+      "error": null,
+      "replay": true,
+      "ms": 849
+    },
+    {
+      "op": "topup",
+      "opId": "live_cd60f5cf-906f-4941-9d87-2ffd626c3549",
+      "id": 11,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1720
+    },
+    {
+      "op": "topup",
+      "opId": "live_cd60f5cf-906f-4941-9d87-2ffd626c3549",
+      "id": 11,
+      "status": 200,
+      "error": null,
+      "replay": true,
+      "ms": 1286
+    },
+    {
+      "op": "babets",
+      "opId": "live_5023baeb-a801-49c1-8e21-b2a35c25fc35",
+      "id": 11,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1507
+    },
+    {
+      "op": "baready",
+      "opId": "live_b429844e-869a-4b5e-b7a5-1b3b9ca61807",
+      "id": 11,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1732
+    },
+    {
+      "op": "baready",
+      "opId": "live_b429844e-869a-4b5e-b7a5-1b3b9ca61807",
+      "id": 11,
+      "status": 200,
+      "error": null,
+      "replay": true,
+      "ms": 1690
+    },
+    {
+      "op": "leave",
+      "opId": "live_4651d1a7-d134-41ef-a26e-eb8700d2eb1f",
+      "id": 11,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 2091
+    },
+    {
+      "op": "lobby",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1232
+    },
+    {
+      "op": "lobby",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1359
+    },
+    {
+      "op": "sit",
+      "opId": "live_1288d8ad-e390-4917-9e13-c254ab5c518a",
+      "id": 12,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 2532
+    },
+    {
+      "op": "sit",
+      "opId": "live_1288d8ad-e390-4917-9e13-c254ab5c518a",
+      "id": 12,
+      "status": 200,
+      "error": null,
+      "replay": true,
+      "ms": 1291
+    },
+    {
+      "op": "topup",
+      "opId": "live_41887cd0-67bc-4afb-874c-fbd05f88decb",
+      "id": 12,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 2300
+    },
+    {
+      "op": "topup",
+      "opId": "live_41887cd0-67bc-4afb-874c-fbd05f88decb",
+      "id": 12,
+      "status": 200,
+      "error": null,
+      "replay": true,
+      "ms": 1299
+    },
+    {
+      "op": "state",
+      "opId": null,
+      "id": 12,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1766
+    },
+    {
+      "op": "crbet",
+      "opId": "live_6935bb77-607a-4ef8-9087-c6aafe888a04",
+      "id": 12,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 2722
+    },
+    {
+      "op": "crflags",
+      "opId": "live_2020604d-5ad8-4052-bbfd-6b72e46e7645",
+      "id": 12,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1822
+    },
+    {
+      "op": "crready",
+      "opId": "live_564daddc-5a62-47eb-ab76-4988f2389507",
+      "id": 12,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 2045
+    },
+    {
+      "op": "state",
+      "opId": null,
+      "id": 12,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1320
+    },
+    {
+      "op": "crready",
+      "opId": "live_564daddc-5a62-47eb-ab76-4988f2389507",
+      "id": 12,
+      "status": 200,
+      "error": null,
+      "replay": true,
+      "ms": 1580
+    },
+    {
+      "op": "leave",
+      "opId": "live_385bad1d-4b29-4beb-9a81-e3330e0a8d9e",
+      "id": 12,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 2210
+    },
+    {
+      "op": "lobby",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1088
+    },
+    {
+      "op": "crready",
+      "opId": "live_564daddc-5a62-47eb-ab76-4988f2389507",
+      "id": 12,
+      "status": 200,
+      "error": null,
+      "replay": true,
+      "ms": 1566
+    },
+    {
+      "op": "lobby",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1469
+    },
+    {
+      "op": "lobby",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1614
+    },
+    {
+      "op": "sit",
+      "opId": "live_ca6afa17-9555-47cb-a927-536d21e025fd",
+      "id": 13,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 3015
+    },
+    {
+      "op": "sit",
+      "opId": "live_ca6afa17-9555-47cb-a927-536d21e025fd",
+      "id": 13,
+      "status": 200,
+      "error": null,
+      "replay": true,
+      "ms": 1629
+    },
+    {
+      "op": "topup",
+      "opId": "live_8ef1491a-4aa0-4609-8b3d-ed1f8cce3e24",
+      "id": 13,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1885
+    },
+    {
+      "op": "topup",
+      "opId": "live_8ef1491a-4aa0-4609-8b3d-ed1f8cce3e24",
+      "id": 13,
+      "status": 200,
+      "error": null,
+      "replay": true,
+      "ms": 1337
+    },
+    {
+      "op": "spin",
+      "opId": "live_09958e6e-1e0e-4d87-abe8-2abea9850e2b",
+      "id": 13,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 2066
+    },
+    {
+      "op": "spin",
+      "opId": "live_09958e6e-1e0e-4d87-abe8-2abea9850e2b",
+      "id": 13,
+      "status": 200,
+      "error": null,
+      "replay": true,
+      "ms": 1838
+    },
+    {
+      "op": "leave",
+      "opId": "live_83ef3b66-03b6-4694-8b2d-67e88bcf5043",
+      "id": 13,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1379
+    },
+    {
+      "op": "lobby",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1009
+    },
+    {
+      "op": "lobby",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1326
+    },
+    {
+      "op": "sit",
+      "opId": "live_f6208a1c-ca6d-457a-bf83-00f40e910d77",
+      "id": 14,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 2273
+    },
+    {
+      "op": "sit",
+      "opId": "live_f6208a1c-ca6d-457a-bf83-00f40e910d77",
+      "id": 14,
+      "status": 200,
+      "error": null,
+      "replay": true,
+      "ms": 1170
+    },
+    {
+      "op": "topup",
+      "opId": "live_2eba7c55-e98b-46a4-b6cf-4ef79bb9056d",
+      "id": 14,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1476
+    },
+    {
+      "op": "topup",
+      "opId": "live_2eba7c55-e98b-46a4-b6cf-4ef79bb9056d",
+      "id": 14,
+      "status": 200,
+      "error": null,
+      "replay": true,
+      "ms": 1211
+    },
+    {
+      "op": "drop",
+      "opId": "live_41d36000-23dc-448f-8328-7809f077d051",
+      "id": 14,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1886
+    },
+    {
+      "op": "drop",
+      "opId": "live_41d36000-23dc-448f-8328-7809f077d051",
+      "id": 14,
+      "status": 200,
+      "error": null,
+      "replay": true,
+      "ms": 1013
+    },
+    {
+      "op": "leave",
+      "opId": "live_482d8c90-b023-49ba-b417-3e5355a62028",
+      "id": 14,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1966
+    },
+    {
+      "op": "lobby",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 874
+    },
+    {
+      "op": "lobby",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1153
+    },
+    {
+      "op": "history",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 569
+    },
+    {
+      "op": "lobby",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1313
+    },
+    {
+      "op": "lobby",
+      "opId": null,
+      "id": null,
+      "status": 200,
+      "error": null,
+      "replay": false,
+      "ms": 1075
+    }
+  ],
+  "errors": [],
+  "initialHealth": {
+    "ok": true,
+    "protocol": "casino-1",
+    "layout": 1,
+    "revision": 1,
+    "build": "70556d61433227f0453e707850fabebb99b64a56",
+    "ready": true,
+    "admissions": true,
+    "standby": false,
+    "occupants": 0,
+    "rooms": 0,
+    "worker": {
+      "steps": 0,
+      "errors": 0,
+      "lagMs": 0,
+      "repaired": 0
+    },
+    "stats": {
+      "connections": 0,
+      "snapshots": 0,
+      "rejected": 0,
+      "ticks": 0,
+      "egressBytes": 0,
+      "tickMaxMs": 0
+    },
+    "rssBytes": 96178176,
+    "uptimeSeconds": 87
+  },
+  "historyGames": [
+    "pk",
+    "sl",
+    "cr",
+    "ba",
+    "rl",
+    "he",
+    "bj"
+  ],
+  "afterHealth": {
+    "ok": true,
+    "protocol": "casino-1",
+    "layout": 1,
+    "revision": 1,
+    "build": "70556d61433227f0453e707850fabebb99b64a56",
+    "ready": true,
+    "admissions": true,
+    "standby": false,
+    "occupants": 1,
+    "rooms": 1,
+    "worker": {
+      "steps": 5,
+      "errors": 0,
+      "lagMs": 421.64599609375,
+      "repaired": 0
+    },
+    "stats": {
+      "connections": 3,
+      "snapshots": 2722,
+      "rejected": 0,
+      "ticks": 5446,
+      "egressBytes": 264437,
+      "tickMaxMs": 82.93345199999749
+    },
+    "rssBytes": 100298752,
+    "uptimeSeconds": 273
+  },
+  "workerErrorDelta": 0,
+  "finished": "2026-10-08T19:09:42.133Z",
+  "passed": true
+}

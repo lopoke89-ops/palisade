@@ -1,0 +1,43 @@
+{
+  "time": "2026-10-08T19:10:34.495Z",
+  "project": "nxsqerlpqdzrjwqxhsdz",
+  "scope": "Authenticated history for the exact seven new tables from the repaired live run",
+  "passed": true,
+  "tables": [
+    {
+      "id": 8,
+      "game": "bj",
+      "hands": 1
+    },
+    {
+      "id": 9,
+      "game": "he",
+      "hands": 1
+    },
+    {
+      "id": 10,
+      "game": "rl",
+      "hands": 1
+    },
+    {
+      "id": 11,
+      "game": "ba",
+      "hands": 2
+    },
+    {
+      "id": 12,
+      "game": "cr",
+      "hands": 3
+    },
+    {
+      "id": 13,
+      "game": "sl",
+      "hands": 1
+    },
+    {
+      "id": 14,
+      "game": "pk",
+      "hands": 1
+    }
+  ]
+}

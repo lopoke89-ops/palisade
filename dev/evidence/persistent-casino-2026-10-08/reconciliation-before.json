@@ -1,0 +1,185 @@
+{
+  "time": "2026-10-08T19:03:37.903324+00:00",
+  "scope": "Rolling staging reconciliation; scheduled daily books cover completed previous days",
+  "tables": [
+    {
+      "id": 1,
+      "ok": true,
+      "bot": 0,
+      "game": "bj",
+      "open": false,
+      "hands": 1,
+      "house": -2,
+      "buyins": 1,
+      "shards_in": 30,
+      "shards_out": 32,
+      "recovery_error": null,
+      "recovery_failures": 0
+    },
+    {
+      "id": 2,
+      "ok": true,
+      "bot": 1,
+      "game": "he",
+      "open": false,
+      "hands": 1,
+      "house": 0,
+      "buyins": 2,
+      "shards_in": 35,
+      "shards_out": 34,
+      "recovery_error": null,
+      "recovery_failures": 0
+    },
+    {
+      "id": 3,
+      "ok": true,
+      "bot": 0,
+      "game": "rl",
+      "open": false,
+      "hands": 1,
+      "house": 1,
+      "buyins": 1,
+      "shards_in": 30,
+      "shards_out": 29,
+      "recovery_error": null,
+      "recovery_failures": 0
+    },
+    {
+      "id": 4,
+      "ok": true,
+      "bot": 0,
+      "game": "ba",
+      "open": false,
+      "hands": 2,
+      "house": 1,
+      "buyins": 1,
+      "shards_in": 30,
+      "shards_out": 29,
+      "recovery_error": null,
+      "recovery_failures": 0
+    },
+    {
+      "id": 5,
+      "ok": true,
+      "bot": 0,
+      "game": "cr",
+      "open": false,
+      "hands": 4,
+      "house": 0,
+      "buyins": 1,
+      "shards_in": 30,
+      "shards_out": 30,
+      "recovery_error": null,
+      "recovery_failures": 0
+    },
+    {
+      "id": 6,
+      "ok": true,
+      "bot": 0,
+      "game": "sl",
+      "open": false,
+      "hands": 1,
+      "house": 1,
+      "buyins": 1,
+      "shards_in": 30,
+      "shards_out": 29,
+      "recovery_error": null,
+      "recovery_failures": 0
+    },
+    {
+      "id": 7,
+      "ok": true,
+      "bot": 0,
+      "game": "pk",
+      "open": false,
+      "hands": 1,
+      "house": -2,
+      "buyins": 1,
+      "shards_in": 30,
+      "shards_out": 32,
+      "recovery_error": null,
+      "recovery_failures": 0
+    }
+  ],
+  "all_closed": true,
+  "all_reconcile": true,
+  "seats": 0,
+  "wallets": [
+    {
+      "balance": 5001,
+      "username": "StageC01",
+      "ledger_net": 1,
+      "matches_initial": true
+    },
+    {
+      "balance": 4999,
+      "username": "StageC02",
+      "ledger_net": -1,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "StageC03",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "StageC04",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "StageC05",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "StageC06",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "StageC07",
+      "ledger_net": 0,
+      "matches_initial": true
+    }
+  ],
+  "wallets_match": true,
+  "operation_count": 37,
+  "ledger_count": 24,
+  "daily_books": [
+    {
+      "ok": true,
+      "bot": 0,
+      "day": "2026-10-07",
+      "house_ba": 0,
+      "house_bj": 0,
+      "house_cr": 0,
+      "house_he": 0,
+      "house_pk": 0,
+      "house_rl": 0,
+      "house_sl": 0,
+      "shards_in": 0,
+      "bad_tables": [],
+      "created_at": "2026-10-08T17:42:35.568779+00:00",
+      "shards_out": 0,
+      "tables_closed": 0
+    }
+  ],
+  "leases": [
+    {
+      "name": "world",
+      "epoch": 3,
+      "valid": true
+    },
+    {
+      "name": "worker",
+      "epoch": 3,
+      "valid": true
+    }
+  ]
+}

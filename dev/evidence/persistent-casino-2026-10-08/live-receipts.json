@@ -1,0 +1,8 @@
+{
+  "project": "nxsqerlpqdzrjwqxhsdz",
+  "scope": "Each accepted operation ID from the repaired live run is stored exactly once, including replay requests",
+  "time": "2026-10-08T19:09:27.111378+00:00",
+  "expected_count": 34,
+  "stored_once": true,
+  "mismatches": []
+}

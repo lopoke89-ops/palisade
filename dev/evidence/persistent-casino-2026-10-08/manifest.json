@@ -16,7 +16,7 @@
   "stagingProject": "nxsqerlpqdzrjwqxhsdz",
   "stagingRegion": "us-west-2",
   "stagingMigration": "20261008165641_initialize_palisade_casino_staging",
-  "stagingEdgeVersion": 2,
+  "stagingEdgeVersion": 3,
   "stagingAccessChecks": 34,
   "stagingAuthenticatedAccessChecks": 42,
   "stagingFixtureAccounts": 7,
@@ -54,10 +54,41 @@
     "dev/supabase/functions/tables/handler.js": "7B3F1DA2708AABF6D850FC0E3D3F82133AEE9019A762E1D9EBE7170B693C5AB7",
     "dev/supabase/functions/tables/managed.js": "FC45238827264E903E90E893BEF8BC2810AAC5746D7958A92C13D51EA19F0C07",
     "dev/render/server.js": "927ECCCB6A8F9C3DB6D8BFCC68F79DF401FB007799EA9C9113AD2D42719D40D6",
-    "dev/supabase/functions/tables/storage.js": "D755697BBA230BF0B2B7605C1D1E587631D25456AE0B5F3191C437290478AB4F",
+    "dev/supabase/functions/tables/storage.js": "8A81E4FBFB61B2129FA5387118B15260633F8E9785942930381EE57242CC2F9D",
     "dev/render/worker.js": "B9B0D0A28063FA799966AA5B952FB18D430CCFFE8A2A04EEA9D0DBFC1E7B7AC7"
   },
   "stagingSiteBuild": "95899cb134",
   "renderServiceId": "srv-db3tn82j9qps73fe2t30",
-  "liveBrowserSmoke": "passed with candidate receiver; server redeploy follows"
+  "liveBrowserSmoke": "passed against deployed 70556d6 with no browser errors or new worker errors",
+  "renderCommit": "70556d61433227f0453e707850fabebb99b64a56",
+  "renderDeployId": "dep-db3ugi4s728c73f9suqg",
+  "renderNodeVerified": true,
+  "liveGameSmoke": {
+    "passed": true,
+    "games": 7,
+    "tableIds": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14
+    ],
+    "workerErrorDelta": 0,
+    "acceptedIdsStoredOnce": 34
+  },
+  "rollingReconciliation": {
+    "tables": 14,
+    "allClosed": true,
+    "allBalanced": true,
+    "walletsMatch": true,
+    "occupiedSeats": 0,
+    "scheduledNextAuditBoundary": "pending"
+  },
+  "handoff": {
+    "admissions": false,
+    "newWagers": false,
+    "recovery": true
+  }
 }

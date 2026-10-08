@@ -102,11 +102,14 @@ class Actor{
    await p.sync(0);const lobby=await api(p.account,{op:'lobby'});record.balance=lobby.balance;record.finished=new Date().toISOString();record.settled=true;
    console.log(JSON.stringify({game:record.game,id:record.id,settled:record.settled,balance:record.balance,lockedPoint:record.lockedPoint}));
   }
-  const history=await api(actors[0].account,{op:'history'});report.historyGames=[...new Set(history.hands.map(h=>h.game))];for(const game of ['bj','he','rl','ba','cr','sl','pk'])assert.ok(report.historyGames.includes(game),'Real settled history for '+game);
+  const history=await api(actors[0].account,{op:'history'});report.historyGames=[...new Set(history.hands.map(h=>h.game))];
+  report.currentTableHistory=report.games.map(g=>({id:g.id,game:g.game,hands:history.hands.filter(h=>h.tid===g.id&&h.game===g.game).length}));
+  for(const row of report.currentTableHistory)assert.ok(row.hands>0,'Real settled history from this run for '+row.game);
   report.afterHealth=await fetch(service+'/healthz').then(r=>r.json());report.workerErrorDelta=report.afterHealth.worker.errors-report.initialHealth.worker.errors;assert.equal(report.workerErrorDelta,0,'No new worker errors during game check');report.finished=new Date().toISOString();report.passed=true;
  }catch(e){report.errors.push(e.message);throw e;}
  finally{
   for(const p of actors){if(p.table){try{const lobby=await api(p.account,{op:'lobby'});if(lobby.mine)await api(p.account,{op:'leave',id:lobby.mine.id,controller:p.controller,opId:'cleanup_'+randomUUID()});}catch(e){report.errors.push('Cleanup: '+e.message)}}p.close();}
+  if(report.errors.length){report.passed=false;process.exitCode=1;}
   fs.writeFileSync(out+'/games.json',JSON.stringify(report,null,2)+'\n');
  }
 })().catch(e=>{console.error(e);process.exitCode=1});
