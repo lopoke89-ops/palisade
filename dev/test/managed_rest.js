@@ -32,6 +32,8 @@ const http=require('node:http'),assert=require('node:assert/strict');
    assert.deepEqual(await D.auth(userToken),{id:uid,anon:false});
    assert.equal(await D.auth('forged-user'),null);
    const count=seen.length;assert.equal(await D.auth(),null);assert.equal(await D.auth(''),null);assert.equal(seen.length,count,'missing user token never falls back to server identity');
+   assert.equal(D.metrics.requests,6);assert.equal(D.metrics.errors,2);assert.equal(D.metrics.authRequests,2);assert.equal(D.metrics.rpcRequests,4);
+   assert.equal(JSON.stringify(D.metrics).includes(key),false,'measurement output contains no server key');assert.equal(JSON.stringify(D.metrics).includes(userToken),false);
   }
   assert.equal(seen.filter(r=>r.path==='/auth/v1/user'&&r.auth==='Bearer '+userToken).length,2);
   assert.equal(seen.some(r=>r.auth==='Bearer '+modern),false,'opaque server key never becomes a bearer JWT');

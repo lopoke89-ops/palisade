@@ -16,18 +16,23 @@ export async function commit(rpc,a,guard){try{return await rpc('casino_managed_s
 export async function create(rpc,a,guard){try{return await rpc('casino_managed_start',{p_code:a.code,p_game:a.game,p_st:a.st,p_humans:a.humans,p_ops:a.ops,p_room:a.room,p_station:a.station||'',p_op:a.op,p_guard:guard})}catch(e){return failed(e.message)}}
 export function restStorage(url,key){
  if(!url||!key)throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required');
+ const metrics={requests:0,errors:0,authRequests:0,rpcRequests:0,readRequests:0,requestBytes:0,latencyMs:0};
  const request=async(path,body,token=key,method=body?'POST':'GET')=>{
+  const at=Date.now(),payload=body?JSON.stringify(body):undefined;metrics.requests++;metrics.requestBytes+=payload?.length||0;
+  if(path.startsWith('/auth/'))metrics.authRequests++;else if(path.startsWith('/rest/v1/rpc/'))metrics.rpcRequests++;else metrics.readRequests++;
+  try{
   const headers={apikey:key,'Content-Type':'application/json'};
   // Modern server keys are opaque API keys, not user JWTs. Keep user tokens in Authorization.
   if(token&&!(token===key&&key.startsWith('sb_secret_')))headers.Authorization='Bearer '+token;
-  const r=await fetch(url+path,{method,headers,body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(10000)});
+  const r=await fetch(url+path,{method,headers,body:payload,signal:AbortSignal.timeout(10000)});
   // Successful PostgREST RETURNS void RPCs have no body (HTTP 204).
   const j=r.status===204?null:await r.json();if(!r.ok)throw new Error(j?.message||j?.msg||'Database request failed');return j;
+  }catch(e){metrics.errors++;throw e;}finally{metrics.latencyMs+=Date.now()-at;}
  };
  const rpc=(name,p={})=>request('/rest/v1/rpc/'+name,p);
  const rows=(table,q)=>request('/rest/v1/'+table+'?'+new URLSearchParams(q));
  const first=async(table,q)=>(await rows(table,q))[0]||null;
- const D={now:()=>Date.now(),rpc,rows,request,
+ const D={now:()=>Date.now(),rpc,rows,request,metrics,
   auth:async token=>{if(typeof token!=='string'||!token)return null;try{const u=await request('/auth/v1/user',null,token);return {id:u.id,anon:!!u.is_anonymous}}catch{return null}},
   name:async uid=>(await first('profiles',{select:'username',id:'eq.'+uid}))?.username||'PLAYER',
   balance:async uid=>(await first('lockers',{select:'shards',user_id:'eq.'+uid}))?.shards||0,
