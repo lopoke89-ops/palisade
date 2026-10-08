@@ -11,8 +11,8 @@ const {CAS,CAS_SEAT,move,blocked}=globalThis.CasinoFloor;
 const PROTOCOL='casino-1',MAX_PAYLOAD=4096,MAX_QUEUE=64*1024;
 const clean=s=>String(s||'').replace(/[\x00-\x1f\x7f]/g,'').replace(/\s+/g,' ').trim().slice(0,120);
 export function createCasinoService(D,{origins=['https://lopoke89-ops.github.io'],owner=randomUUID(),log=console.log}={}){
- const sockets=new Set(),people=new Map();let epoch=0,until=0,draining=false,renewing=false,config=null,last=performance.now(),acc=0,step=0;
- const stats={connections:0,snapshots:0,rejected:0,ticks:0,egressBytes:0,ingressBytes:0,tickMaxMs:0,bufferMaxBytes:0,inputQueueMax:0,coalescedSnapshots:0};let authBusy=0,authWindow=performance.now(),authCount=0;
+ const sockets=new Set(),people=new Map();let epoch=0,until=0,draining=false,renewing=false,heartbeating=false,config=null,last=performance.now(),acc=0,step=0;
+ const stats={connections:0,snapshots:0,rejected:0,ticks:0,egressBytes:0,ingressBytes:0,tickMaxMs:0,bufferMaxBytes:0,inputQueueMax:0,coalescedSnapshots:0,heartbeatFailures:0};let authBusy=0,authWindow=performance.now(),authCount=0;
  const metrics=serviceMetrics(),ready=()=>!draining&&epoch>0&&performance.now()<until&&config?.revision===1;
  const authenticate=async token=>{if(authBusy>=8)throw new Error('Authentication busy. Reconnect shortly');authBusy++;try{return await D.auth(token)}finally{authBusy--}};
  const worker=new RecoveryWorker(D,owner,{log});
@@ -58,13 +58,13 @@ export function createCasinoService(D,{origins=['https://lopoke89-ops.github.io'
      const occupied=new Set([...people.values()].filter(p=>p.room===a.room&&p.id!==u.id).map(p=>p.slot));person.slot=[0,1,2,3,4,5].find(s=>!occupied.has(s));
      if(Array.isArray(a.position)&&!blocked(...a.position)){[person.x,person.y]=a.position;}
      people.set(u.id,person);clearTimeout(timeout);const h=await D.world({action:'heartbeat',...scope(person)});syncSeat(person,h.seat);
-     if(ws.readyState!==WebSocket.OPEN||!health().ready){ws.close(1012,'Casino reconnecting');return}
+     if(ws.readyState!==WebSocket.OPEN||!ready()){ws.close(1012,'Casino reconnecting');return}
      // Reserve the slot during SQL work, then publish identity before any packed movement.
      person.published=true;
      send(ws,{type:'welcome',protocol:PROTOCOL,room:a.room,code:a.code,id:u.id,controller:{session:b.session,generation:a.generation,owner,epoch},players:[...people.values()].filter(p=>p.published&&p.room===a.room).map(row)});
      broadcast(person.room,{type:'roster',players:[...people.values()].filter(p=>p.published&&p.room===person.room).map(row)});
     }else{
-     if(people.get(person.id)!==person||!health().ready)throw new Error('Casino connection changed');person.heard=now;
+     if(people.get(person.id)!==person||!ready())throw new Error('Casino connection changed');person.heard=now;
      if(b.type==='input'){
       if(!Number.isSafeInteger(b.seq)||b.seq<=person.seq||!Array.isArray(b.move)||b.move.length!==2||!b.move.every(x=>Number.isFinite(x)&&Math.abs(x)<=1)||!Array.isArray(b.face)||b.face.length!==2||!b.face.every(x=>Number.isFinite(x)&&Math.abs(x)<=1))throw new Error('Invalid movement');
       if(person.queue.length>=12)throw new Error('Movement queue exceeded');person.queue.push(b);stats.inputQueueMax=Math.max(stats.inputQueueMax,person.queue.length);person.seq=b.seq;person.lastInput=now;
@@ -87,10 +87,14 @@ export function createCasinoService(D,{origins=['https://lopoke89-ops.github.io'
   ws.on('close',()=>{clearTimeout(timeout);sockets.delete(ws);if(person&&people.get(person.id)===person){people.delete(person.id);broadcast(person.room,{type:'left',id:person.id});}});
  });
  async function renew(){if(renewing||draining)return;renewing=true;try{config=await D.world({action:'config'});if(config.revision!==1)throw new Error('Unsupported storage revision');const l=await D.world({action:'lease',name:'world',owner});if(l.standby){epoch=0;until=0;return}epoch=l.epoch;until=performance.now()+Math.max(0,Date.parse(l.until)-Number(l.now)-1500);}catch(e){epoch=0;until=0;log(JSON.stringify({event:'world_unavailable',error:e.message}));}finally{renewing=false;}}
- async function heartbeat(){for(const p of people.values()){if(!p.published)continue;
+ async function heartbeat(){if(heartbeating||draining)return;heartbeating=true;
+  // Refresh a fixed roster in bounded parallel lanes so a 60-player pass fits its leases.
+  const pending=[...people.values()].filter(p=>p.published);let cursor=0;
+  const lane=async()=>{while(cursor<pending.length){const p=pending[cursor++];if(people.get(p.id)!==p)continue;
   if(performance.now()-p.heard>25000){p.ws.close(4000,'Connection timed out');continue}if(p.checking)continue;p.checking=true;
-  try{const u=await authenticate(p.token);if(!u||u.anon||u.id!==p.id)throw new Error('Sign in again');const r=await D.world({action:'heartbeat',...scope(p),x:p.x,y:p.y});syncSeat(p,r.seat);}catch(e){send(p.ws,{type:'revoked',error:e.message});p.ws.close(4001,'Controller revoked');}finally{p.checking=false;}
- }}
+  try{const u=await authenticate(p.token);if(!u||u.anon||u.id!==p.id)throw new Error('Sign in again');const r=await D.world({action:'heartbeat',...scope(p),x:p.x,y:p.y});syncSeat(p,r.seat);}catch(e){stats.heartbeatFailures++;log(JSON.stringify({event:'controller_check_failed',error:e.message}));send(p.ws,{type:'revoked',error:e.message});p.ws.close(4001,'Controller revoked');}finally{p.checking=false;}
+  }};try{await Promise.all(Array.from({length:Math.min(4,pending.length)},lane));}finally{heartbeating=false;}
+ }
  function tick(){const now=performance.now();acc+=Math.min((now-last)/1000,.2);last=now;if(!ready()){for(const ws of sockets)ws.close(1012,'Casino reconnecting');acc=0;return}if(!people.size){acc=0;return}
   let n=0;while(acc>=1/30&&n++<6){acc-=1/30;step++;stats.ticks++;for(const p of people.values()){if(!p.published)continue;const b=p.queue.shift();if(b){p.ack=b.seq;const l=Math.hypot(...b.face);if(l>.01){p.fx=b.face[0]/l;p.fy=b.face[1]/l;}if(!p.seat)move(p,...b.move,1/30);}}
    if(step%2===0){const rooms=new Set([...people.values()].filter(p=>p.published).map(p=>p.room));for(const room of rooms){broadcast(room,{type:'snapshot',tick:step,packed:true,players:[...people.values()].filter(p=>p.published&&p.room===room).map(packed)});stats.snapshots++;}}
