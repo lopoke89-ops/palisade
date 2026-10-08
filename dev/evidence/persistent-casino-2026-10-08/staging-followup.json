@@ -1,0 +1,48 @@
+{
+  "time": "2026-10-08T17:49:37.2886867Z",
+  "project": "nxsqerlpqdzrjwqxhsdz",
+  "productionChanged": false,
+  "edge": {
+    "name": "tables",
+    "version": 2,
+    "status": "ACTIVE",
+    "verify_jwt": false,
+    "bundleSha256": "e4167695ae714b3e865a67077eef3651baa14a64ad4df85a0988ddc321c8286a"
+  },
+  "fixture": {
+    "seed": "ce76ec4b-1f14-48b6-a844-01ee102f612f",
+    "accounts": 7,
+    "identities": 7,
+    "fundedLockers": 7,
+    "initialShardsEach": 5000,
+    "passwords": "random, bcrypt hashes seeded only in empty staging",
+    "sessions": "real Supabase Auth password flow",
+    "credentialsInGit": false
+  },
+  "snapshot": {
+    "rooms": 10,
+    "tables": 0,
+    "ledger": 0,
+    "ops": 0,
+    "admissions": false,
+    "new_wagers": false,
+    "recovery": true,
+    "allowlist": [],
+    "worldEpoch": 0,
+    "workerEpoch": 0
+  },
+  "checks": {
+    "publicAccess": 34,
+    "authenticatedAccess": 42
+  },
+  "render": {
+    "serviceCreated": false,
+    "preparedName": "palisade-casino-staging",
+    "region": "oregon",
+    "plan": "free",
+    "node": "22.17.0",
+    "branch": "casino-persistent-render",
+    "autoDeploy": "off",
+    "pending": "User secure staging-key entry and action-time approval"
+  }
+}

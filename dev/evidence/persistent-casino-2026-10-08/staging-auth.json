@@ -1,0 +1,80 @@
+{
+  "time": "2026-10-08T17:48:21.702Z",
+  "project": "nxsqerlpqdzrjwqxhsdz",
+  "fixtureSeed": "ce76ec4b-1f14-48b6-a844-01ee102f612f",
+  "accounts": 7,
+  "checksPerAccount": 6,
+  "credentialsInEvidence": false,
+  "checks": [
+    {
+      "uid": "1bca234e-7065-4009-91a3-e1f4dc8fea99",
+      "login": 200,
+      "verifiedUser": 200,
+      "wallet": 200,
+      "edgeLobby": 200,
+      "initialShards": 5000,
+      "privateRpc": 403,
+      "rawCasinoTable": 403
+    },
+    {
+      "uid": "67257136-6097-4577-8879-a9dd0f7d8372",
+      "login": 200,
+      "verifiedUser": 200,
+      "wallet": 200,
+      "edgeLobby": 200,
+      "initialShards": 5000,
+      "privateRpc": 403,
+      "rawCasinoTable": 403
+    },
+    {
+      "uid": "e3109b9c-7252-457e-b34a-49de0e20b5af",
+      "login": 200,
+      "verifiedUser": 200,
+      "wallet": 200,
+      "edgeLobby": 200,
+      "initialShards": 5000,
+      "privateRpc": 403,
+      "rawCasinoTable": 403
+    },
+    {
+      "uid": "8fd357a9-68bf-4624-bbdd-290e384ddf1b",
+      "login": 200,
+      "verifiedUser": 200,
+      "wallet": 200,
+      "edgeLobby": 200,
+      "initialShards": 5000,
+      "privateRpc": 403,
+      "rawCasinoTable": 403
+    },
+    {
+      "uid": "88e58ca3-4cfa-4417-862b-20eff42e7ecd",
+      "login": 200,
+      "verifiedUser": 200,
+      "wallet": 200,
+      "edgeLobby": 200,
+      "initialShards": 5000,
+      "privateRpc": 403,
+      "rawCasinoTable": 403
+    },
+    {
+      "uid": "4d0296cf-02b1-4098-811d-3eddcfffaa55",
+      "login": 200,
+      "verifiedUser": 200,
+      "wallet": 200,
+      "edgeLobby": 200,
+      "initialShards": 5000,
+      "privateRpc": 403,
+      "rawCasinoTable": 403
+    },
+    {
+      "uid": "dd645e7f-5936-40ef-a174-3b2db6a6b91a",
+      "login": 200,
+      "verifiedUser": 200,
+      "wallet": 200,
+      "edgeLobby": 200,
+      "initialShards": 5000,
+      "privateRpc": 403,
+      "rawCasinoTable": 403
+    }
+  ]
+}
