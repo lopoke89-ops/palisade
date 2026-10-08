@@ -3,7 +3,7 @@ TAP version 13
 # Subtest: authoritative floor, first/last departure, takeover, privacy and restart
 ok 1 - authoritative floor, first/last departure, takeover, privacy and restart
   ---
-  duration_ms: 4347.9822
+  duration_ms: 4156.0962
   type: 'test'
   ...
 1..1
@@ -14,5 +14,5 @@ ok 1 - authoritative floor, first/last departure, takeover, privacy and restart
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 4586.5706
+# duration_ms 4729.7688
 errors: none

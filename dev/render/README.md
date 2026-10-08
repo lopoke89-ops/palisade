@@ -12,7 +12,7 @@ The candidate is v0.10.5. The published client configuration in `client.json` is
 - Versions: wire `casino-1`, layout `1`, storage/managed adapter `1`, fair-play `2`, rules `bj-2`, `he-2`, `rl-2`, `ba-1`, `cr-1`, `sl-1`, `pk-1`. An incompatible managed write is refused.
 - Ten durable rooms, six humans each. UUID identity `C:<uuid>` and permanent six-character code survive process replacement. The primary code is `PALACE`. Admission fills the existing populated room before opening bounded overflow.
 
-The service role key is a server secret. Set it through Render's environment controls. `client.json` may contain only the public service URL, staging Supabase URL and publishable key. `.env.example` lists names; `.env` is ignored. No runtime source under `dev/` is fetched by the published browser: the shared layout is embedded during assembly.
+`SUPABASE_SERVICE_ROLE_KEY` holds a server secret. It accepts a modern `sb_secret_…` key (preferred for independent rotation) or the legacy `service_role` JWT. The REST adapter sends modern keys only in `apikey` and preserves user JWTs separately in `Authorization`. Set the secret through Render's environment controls; never use the publishable key for server authority. `client.json` may contain only the public service URL, staging Supabase URL and publishable key. `.env.example` lists names; `.env` is ignored. No runtime source under `dev/` is fetched by the published browser: the shared layout is embedded during assembly.
 
 ## Stage and verify
 

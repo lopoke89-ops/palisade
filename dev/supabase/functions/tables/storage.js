@@ -17,14 +17,17 @@ export async function create(rpc,a,guard){try{return await rpc('casino_managed_s
 export function restStorage(url,key){
  if(!url||!key)throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required');
  const request=async(path,body,token=key,method=body?'POST':'GET')=>{
-  const r=await fetch(url+path,{method,headers:{apikey:key,Authorization:'Bearer '+token,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(10000)});
+  const headers={apikey:key,'Content-Type':'application/json'};
+  // Modern server keys are opaque API keys, not user JWTs. Keep user tokens in Authorization.
+  if(token&&!(token===key&&key.startsWith('sb_secret_')))headers.Authorization='Bearer '+token;
+  const r=await fetch(url+path,{method,headers,body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(10000)});
   const j=await r.json();if(!r.ok)throw new Error(j.message||j.msg||'Database request failed');return j;
  };
  const rpc=(name,p={})=>request('/rest/v1/rpc/'+name,p);
  const rows=(table,q)=>request('/rest/v1/'+table+'?'+new URLSearchParams(q));
  const first=async(table,q)=>(await rows(table,q))[0]||null;
  const D={now:()=>Date.now(),rpc,rows,request,
-  auth:async token=>{try{const u=await request('/auth/v1/user',null,token);return {id:u.id,anon:!!u.is_anonymous}}catch{return null}},
+  auth:async token=>{if(typeof token!=='string'||!token)return null;try{const u=await request('/auth/v1/user',null,token);return {id:u.id,anon:!!u.is_anonymous}}catch{return null}},
   name:async uid=>(await first('profiles',{select:'username',id:'eq.'+uid}))?.username||'PLAYER',
   balance:async uid=>(await first('lockers',{select:'shards',user_id:'eq.'+uid}))?.shards||0,
   load:id=>first('casino_tables',{select:'id,code,game,st,ver,open,room,station',id:'eq.'+id}),

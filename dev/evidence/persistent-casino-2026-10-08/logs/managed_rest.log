@@ -1,0 +1,7 @@
+{
+  modernServerKey: 'RPC access with apikey only',
+  legacyServerKey: 'compatible',
+  userAuth: 'distinct JWT; forged and missing refused',
+  invalidServerKey: 'refused'
+}
+errors: none

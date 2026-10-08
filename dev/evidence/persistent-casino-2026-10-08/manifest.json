@@ -23,6 +23,7 @@
   "renderService": "pending",
   "tests": [
     "managed_casino",
+    "managed_rest",
     "managed_world",
     "managed_games",
     "managed_postgres",
@@ -51,7 +52,7 @@
     "dev/supabase/functions/tables/handler.js": "7B3F1DA2708AABF6D850FC0E3D3F82133AEE9019A762E1D9EBE7170B693C5AB7",
     "dev/supabase/functions/tables/managed.js": "FC45238827264E903E90E893BEF8BC2810AAC5746D7958A92C13D51EA19F0C07",
     "dev/render/server.js": "B16D899DE9D98DA2A55F8EDFD9D4A50835EA836ECA591FBD47F6D6CCC25BDF2B",
-    "dev/supabase/functions/tables/storage.js": "DA244AD1366FB3DD6273116BBCC6ED21A79058D86D2DC0799327CA3EBC90E774",
+    "dev/supabase/functions/tables/storage.js": "D755697BBA230BF0B2B7605C1D1E587631D25456AE0B5F3191C437290478AB4F",
     "dev/render/worker.js": "B9B0D0A28063FA799966AA5B952FB18D430CCFFE8A2A04EEA9D0DBFC1E7B7AC7"
   }
 }
