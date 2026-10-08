@@ -158,3 +158,4 @@ casino_relay_tables    serial tables casino relay
 casino_relay_games     serial tables casino relay
 casino_relay_rooms     serial casino relay
 casino_relay_migration node server casino relay
+casino_relay_release   extra node casino relay

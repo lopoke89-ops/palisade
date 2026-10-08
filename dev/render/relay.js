@@ -37,7 +37,7 @@ export function createRelay({identity,origins=[],maxRooms=10,graceMs=20000,log=(
  const server=http.createServer((req,res)=>{
   const path=new URL(req.url,'http://relay').pathname;
   if(path==='/healthz'||path==='/readyz')return json(res,closing?503:200,{ready:!closing,kind:'player-hosted-relay',wire:WIRE,build:process.env.RENDER_GIT_COMMIT||'local',epoch,rooms:rooms.size,players:people.size,joins,forwarded,coalesced},req.headers.origin);
-  if(path==='/rooms')return json(res,200,{rooms:[...rooms.values()].filter(r=>r.host.ws&&!r.locked).map(r=>({code:r.code,incarnation:r.incarnation,host_id:r.host.uid,name:r.host.name+"'s casino",players:r.members.size,mode:'coop',length:'casino',in_game:true,transport:'relay'}))},req.headers.origin);
+  // Open Games uses the existing Supabase directory, which honors each host's listing choice.
   json(res,404,{error:'Not found'},req.headers.origin);
  });
  const wss=new WebSocketServer({noServer:true,maxPayload:65536,perMessageDeflate:false});

@@ -1,0 +1,71 @@
+{
+  "initial": {
+    "ready": true,
+    "kind": "player-hosted-relay",
+    "wire": "casino-relay-1",
+    "build": "0f7a9a0dea1accc8b09c4f68e6b73b44ebe9a429",
+    "epoch": "c2ee723f-f0bc-48a8-9c47-2c924fe82c6f",
+    "rooms": 1,
+    "players": 1,
+    "joins": 1,
+    "forwarded": 0,
+    "coalesced": 0
+  },
+  "idleProof": {
+    "status": 200,
+    "disallowAll": true,
+    "checkedAt": "2026-10-08T22:32:20.304Z"
+  },
+  "receivedPayloadBytes": 2092353,
+  "sentPayloadBytes": 2105166,
+  "connectionStatus": "Connecting to the casino… First connection can take about a minute.",
+  "firstConnectionMilliseconds": 13432,
+  "afterIdle": true,
+  "sixBrowsers": true,
+  "joinMilliseconds": [
+    983,
+    1111,
+    925,
+    984,
+    1027
+  ],
+  "chatReachedEveryone": true,
+  "hostReconnectSamePeer": true,
+  "movementReachedHost": true,
+  "guestReconnectSamePeer": true,
+  "sessionHealth": {
+    "ready": true,
+    "kind": "player-hosted-relay",
+    "wire": "casino-relay-1",
+    "build": "0f7a9a0dea1accc8b09c4f68e6b73b44ebe9a429",
+    "epoch": "c2ee723f-f0bc-48a8-9c47-2c924fe82c6f",
+    "rooms": 1,
+    "players": 6,
+    "joins": 6,
+    "forwarded": 6917,
+    "coalesced": 0
+  },
+  "sixPlayerTraffic": {
+    "durationMilliseconds": 34105,
+    "receivedPayloadBytes": 1759993,
+    "sentPayloadBytes": 1754666
+  },
+  "guestDepartureContinued": true,
+  "hostDepartureClosesLobby": true,
+  "final": {
+    "ready": true,
+    "kind": "player-hosted-relay",
+    "wire": "casino-relay-1",
+    "build": "0f7a9a0dea1accc8b09c4f68e6b73b44ebe9a429",
+    "epoch": "c2ee723f-f0bc-48a8-9c47-2c924fe82c6f",
+    "rooms": 0,
+    "players": 0,
+    "joins": 6,
+    "forwarded": 6968,
+    "coalesced": 0
+  },
+  "completed": true,
+  "checkedAt": "2026-10-08T22:33:24.193Z",
+  "browserErrors": [],
+  "forbiddenRequests": []
+}

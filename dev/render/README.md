@@ -14,12 +14,12 @@ Run Node 22.17.0 and `npm ci --omit=dev` / `npm start` in this directory. Set:
 
 The relay requires no server/service-role key, persistent disk, paid plan or unattended worker. Do not expose player bearer tokens in URLs, logs, directory responses or snapshots. Browser Auth refresh stays in the browser. The relay verifies each initial/renewed token remotely, and its expiry ends access.
 
-`/healthz` and `/readyz` identify the deployed commit, wire, process epoch and aggregate traffic counts without player IDs. `/rooms` lists live unlocked player-owned casino rooms. `/relay` is the authenticated WSS endpoint.
+`/healthz` and `/readyz` identify the deployed commit, wire, process epoch and aggregate traffic counts without player IDs. `/relay` is the authenticated WSS endpoint. Open Games uses the existing Supabase directory and each host's listing preference; the relay exposes no alternate room directory.
 
 Casino codes are six characters starting with R. Code/incarnation/reconnect capabilities are independent: the code shares a lobby, the incarnation binds invitations, and an opaque account/session-bound resume value restores only the same peer within 20 seconds. A creator departure closes their room. A process restart ends its rooms and requires a new lobby; it must not confer old-code ownership on an arbitrary client. SQL table/wallet/history data survives separately.
 
 Free can sleep after 15 minutes without incoming traffic; joining after sleep takes about a minute. Ordinary active-session traffic/heartbeat detects connections; do not run an idle bot or artificial traffic to force 24/7 operation. Bandwidth/free-hour limits still apply.
 
-`client.json` is disabled during verification. The builder embeds it and exact WSS/HTTPS CSP origins. `PALISADE_RELAY_CONFIG` and `PALISADE_BUILD_OUTPUT` create an isolated preview. Only public configuration belongs here.
+`client.json` enables the public relay endpoint in the v0.10.5 candidate. The builder embeds it and exact WSS/HTTPS CSP origins. `PALISADE_RELAY_CONFIG` and `PALISADE_BUILD_OUTPUT` create an isolated preview with a separate staging account-storage scope. Only public configuration belongs here.
 
-The previous permanent-world service is preserved on `casino-persistent-render` and draft PR #28. Its paid upgrade proposal is superseded by the user's clarified scope. No production change has yet been made by this relay candidate.
+The previous permanent-world service is preserved on `casino-persistent-render` and closed, unmerged PR #28. Its paid upgrade proposal is superseded by the user's clarified scope. Deployment and validation are recorded in [the release evidence](../evidence/casino-relay-2026-10-08/README.md).

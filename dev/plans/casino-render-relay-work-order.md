@@ -1,6 +1,6 @@
 # Player-hosted casino lobbies through Render
 
-Scope corrected October 8, 2026 after the user's clarification. The creator is the casino lobby host. Render relays connections so browsers do not need a direct P2P route. Empty lobbies can close and the Free service can sleep. The earlier `casino-persistent-render` branch and draft PR #28 are preserved as a superseded candidate; their permanent public rooms, independent continuous worker, paid-hosting proposal and always-on acceptance gates do not commission this release.
+Scope corrected October 8, 2026 after the user's clarification. The creator is the casino lobby host. Render relays connections so browsers do not need a direct P2P route. Empty lobbies can close and the Free service can sleep. The earlier `casino-persistent-render` branch and closed, unmerged PR #28 are preserved as a superseded candidate; their permanent public rooms, independent continuous worker, paid-hosting proposal and always-on acceptance gates do not commission this release.
 
 ## Player experience and authority
 

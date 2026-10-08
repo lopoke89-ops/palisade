@@ -1,0 +1,52 @@
+TAP version 13
+# Subtest: real sockets: six players, authenticated routing, grace, lock, kick, and host-owned closure
+ok 1 - real sockets: six players, authenticated routing, grace, lock, kick, and host-owned closure
+  ---
+  duration_ms: 284.3544
+  type: 'test'
+  ...
+# Subtest: host expiry closes the lobby and an unauthenticated account cannot enter
+ok 2 - host expiry closes the lobby and an unauthenticated account cannot enter
+  ---
+  duration_ms: 122.4699
+  type: 'test'
+  ...
+# Subtest: rooms isolate routing, token changes are refused, and floods do not evict other players
+ok 3 - rooms isolate routing, token changes are refused, and floods do not evict other players
+  ---
+  duration_ms: 237.0055
+  type: 'test'
+  ...
+# Subtest: repeated hello messages cannot race a delayed identity lookup into duplicate rooms
+ok 4 - repeated hello messages cannot race a delayed identity lookup into duplicate rooms
+  ---
+  duration_ms: 86.3985
+  type: 'test'
+  ...
+# Subtest: untrusted origins and oversized messages cannot enter or disrupt another player
+ok 5 - untrusted origins and oversized messages cannot enter or disrupt another player
+  ---
+  duration_ms: 137.6805
+  type: 'test'
+  ...
+# Subtest: an expired host token closes its room and all guest access
+ok 6 - an expired host token closes its room and all guest access
+  ---
+  duration_ms: 10514.5266
+  type: 'test'
+  ...
+# Subtest: a stalled receiver expires without blocking another guest
+ok 7 - a stalled receiver expires without blocking another guest
+  ---
+  duration_ms: 21199.5146
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 32730.2131

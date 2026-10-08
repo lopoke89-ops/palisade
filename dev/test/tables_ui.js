@@ -32,7 +32,9 @@ const Q='peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1&cloud=1';
    return route.fulfill({status:200,contentType:'application/json',body:'null'})});
   const p=await ctx.newPage();p.on('pageerror',e=>errors.push(u.name+': '+e.message));p.on('console',m=>{if(m.type()==='error'&&!/Failed to load|net::|404/.test(m.text()))console.log('CONSOLE',u.name,m.text().slice(0,300))});
   await p.addInitScript(([s])=>{localStorage.setItem('palisade.auth.v1',s)},[JSON.stringify({access_token:tok(u),refresh_token:'r',expires_at:4e9,user:{id:u.id,is_anonymous:u.anon,email:u.anon?undefined:u.name+'@x.y',user_metadata:{pw:true}}})]);
-  await p.goto(`http://localhost:${process.env.PORT||8080}/debug.html?${Q}`);await ready(p);if(relay){p.on('request',r=>{if(/peerjs|palisade-turn/.test(r.url()))errors.push('Relay loaded P2P: '+r.url())});await p.evaluate(()=>{globalThis.PALISADE_RELAY={enabled:true,url:'http://127.0.0.1:10000'}})}return p};
+  await p.goto(`http://localhost:${process.env.PORT||8080}/debug.html?${Q}`);await ready(p);
+  await p.evaluate(on=>globalThis.PALISADE_RELAY=on?{enabled:true,url:'http://127.0.0.1:10000'}:{enabled:false,url:''},!!relay);
+  if(relay)p.on('request',r=>{if(/peerjs|palisade-turn/.test(r.url()))errors.push('Relay loaded P2P: '+r.url())});return p};
  const host=await open(users.A,{width:1366,height:820},false),guest=await open(users.B,{width:390,height:844},true);
  const V=p=>p.evaluate(()=>__pal.TB.v),poke=p=>p.evaluate(()=>{const T=__pal.TB;if(T.id)__pal.tbSend({op:'state',id:T.id},true)}).catch(()=>{}),
   until=async(p,f,ms=20000)=>{const t=Date.now();for(;;){const v=await V(p);if(v&&f(v))return v;if(Date.now()-t>ms)throw new Error('timed out waiting: '+JSON.stringify(v&&{phase:v.phase,myTurn:v.myTurn,game:v.game}));await poke(p);await p.waitForTimeout(80)}},

@@ -15,6 +15,7 @@ test('real sockets: six players, authenticated routing, grace, lock, kick, and h
  const relay=createRelay({origins:[origin],identity,graceMs:150}),port=await relay.start();const sockets=[];
  try{
   const h=connect(port,'host','user0');sockets.push(h);const hw=await h.wait('welcome');assert.match(hw.code,/^R[A-Z2-9]{5}$/);
+  assert.equal((await fetch(`http://127.0.0.1:${port}/rooms`)).status,404,'the relay must not expose an alternate directory of unlisted rooms');
   const gs=[];for(let i=1;i<6;i++){const g=connect(port,'guest','user'+i,{code:hw.code,incarnation:hw.incarnation});sockets.push(g);gs.push(g);await g.wait('welcome')}
   assert.equal(relay.people.size,6);
   const full=connect(port,'guest','user6',{code:hw.code});sockets.push(full);assert.match((await full.wait('error')).message,/full/);
@@ -64,4 +65,40 @@ test('repeated hello messages cannot race a delayed identity lookup into duplica
   release();await h.wait('welcome');await sleep(20);assert.equal(relay.rooms.size,1);assert.equal(relay.people.size,1);
   h.send({type:'depart'});await sleep(20);assert.equal(relay.rooms.size,0);assert.equal(relay.people.size,0);
  }finally{release();h.ws.terminate();await relay.stop()}
+});
+
+test('untrusted origins and oversized messages cannot enter or disrupt another player',async()=>{
+ const relay=createRelay({origins:[origin],identity,graceMs:40}),port=await relay.start(),sockets=[];
+ try{
+  const rejected=new WebSocket(`ws://127.0.0.1:${port}/relay`,{origin:'https://untrusted.example'});
+  const originError=await new Promise(resolve=>rejected.on('error',resolve));assert.match(originError.message,/403/);assert.equal(relay.people.size,0);
+  const h=connect(port,'host','user0');sockets.push(h);const w=await h.wait('welcome');
+  const g=connect(port,'guest','user1',{code:w.code,incarnation:w.incarnation});sockets.push(g);await g.wait('welcome');g.ws.send('x'.repeat(65537));
+  await sleep(100);assert.equal(g.ws.readyState,WebSocket.CLOSED);assert.equal(h.ws.readyState,WebSocket.OPEN);assert.equal(relay.rooms.size,1);assert.equal(relay.people.size,1);
+  h.send({type:'depart'});await sleep(20);assert.equal(relay.rooms.size,0);
+ }finally{for(const s of sockets)s.ws.terminate();await relay.stop()}
+});
+
+test('an expired host token closes its room and all guest access',async()=>{
+ const expiring={verify:async token=>({...await identity.verify(token),expires:Date.now()+(token==='user0'?100:60000)})};
+ const relay=createRelay({origins:[origin],identity:expiring}),port=await relay.start(),sockets=[];
+ try{
+  const h=connect(port,'host','user0');sockets.push(h);const w=await h.wait('welcome');const g=connect(port,'guest','user1',{code:w.code,incarnation:w.incarnation});sockets.push(g);await g.wait('welcome');
+  await sleep(10500);assert.equal(relay.rooms.size,0);assert.equal(relay.people.size,0);assert.ok(h.messages.some(m=>m.type==='error'&&/Sign in again/.test(m.message)));assert.ok(g.messages.some(m=>m.type==='closed'));
+ }finally{for(const s of sockets)s.ws.terminate();await relay.stop()}
+});
+
+test('a stalled receiver expires without blocking another guest',async()=>{
+ const relay=createRelay({origins:[origin],identity,graceMs:40}),port=await relay.start(),sockets=[];
+ try{
+  const h=connect(port,'host','user0');sockets.push(h);const w=await h.wait('welcome');
+  const slow=connect(port,'guest','user1',{code:w.code,incarnation:w.incarnation}),fast=connect(port,'guest','user2',{code:w.code,incarnation:w.incarnation});sockets.push(slow,fast);
+  const sw=await slow.wait('welcome'),fw=await fast.wait('welcome');slow.ws._socket.pause();
+  for(let i=0;i<200;i++){h.send({type:'packet',to:sw.id,data:{t:'s',pad:'x'.repeat(12000)}});await sleep(30)}
+  h.send({type:'packet',to:fw.id,data:{t:'c',m:'still connected'}});assert.equal((await fast.wait('packet')).data.m,'still connected');assert.equal(h.ws.readyState,WebSocket.OPEN);
+  // OS send buffers can absorb this local load; an unread socket must still lose access at the heartbeat deadline.
+  await sleep(15000);assert.equal(relay.people.has(sw.id),false);assert.equal(relay.people.has(fw.id),true);assert.equal(relay.people.has(w.id),true);
+  fast.messages.length=0;h.send({type:'packet',to:fw.id,data:{t:'c',m:'after stalled peer expired'}});assert.equal((await fast.wait('packet')).data.m,'after stalled peer expired');
+  slow.ws._socket.resume();h.send({type:'depart'});await sleep(40);assert.equal(relay.rooms.size,0);assert.equal(relay.people.size,0);
+ }finally{for(const s of sockets){s.ws._socket?.resume();s.ws.terminate()}await relay.stop()}
 });
