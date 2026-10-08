@@ -1,0 +1,22 @@
+# Staging: free services sleep after 15 minutes without inbound traffic.
+# Always-on availability requires a separately authorized paid instance.
+services:
+  - type: web
+    name: palisade-casino-staging
+    branch: casino-persistent-render
+    region: virginia
+    runtime: node
+    plan: free
+    buildCommand: cd dev/render && npm ci --omit=dev
+    startCommand: cd dev/render && npm start
+    healthCheckPath: /healthz
+    autoDeployTrigger: off
+    envVars:
+      - key: NODE_VERSION
+        value: 22.17.0
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: https://lopoke89-ops.github.io

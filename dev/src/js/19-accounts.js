@@ -4,11 +4,12 @@
 // Once an account exists the server owns the locker: cases are rolled there and rewards are checked there.
 // This browser keeps a copy so the menu opens instantly and solo still plays with no signal.
 // SB_KEY is Supabase's public "publishable" key. It can only do what the database's own rules allow.
-const SB_URL='https://puvjfhwxigxjpsvdwrwf.supabase.co',SB_KEY='sb_publishable_xe3uY3icYguSM5pqlD7a1Q_7OD3B4v6';
+const SB_URL=globalThis.PALISADE_CASINO?.supabaseUrl||'https://puvjfhwxigxjpsvdwrwf.supabase.co',SB_KEY=globalThis.PALISADE_CASINO?.publishableKey||'sb_publishable_xe3uY3icYguSM5pqlD7a1Q_7OD3B4v6';
 const TURNSTILE_KEY='';   // Cloudflare Turnstile site key (public) once the robot check is switched on
-const AUTH_KEY='palisade.auth.v1',GUEST_KEY='palisade.auth.guest',CLAIM_KEY='palisade.claims.v1';
+const AUTH_SCOPE=SB_URL==='https://puvjfhwxigxjpsvdwrwf.supabase.co'?'':':'+SB_URL;
+const AUTH_KEY='palisade.auth.v1'+AUTH_SCOPE,GUEST_KEY='palisade.auth.guest'+AUTH_SCOPE,CLAIM_KEY='palisade.claims.v1'+AUTH_SCOPE;
 const SITE_URL=location.origin+location.pathname;
-const cloudOn=location.hostname==='lopoke89-ops.github.io'||/[?&]cloud=1\b/.test(location.search);
+const cloudOn=location.hostname==='lopoke89-ops.github.io'||/[?&]cloud=1\b/.test(location.search)||!!(globalThis.PALISADE_CASINO?.enabled&&globalThis.PALISADE_CASINO?.supabaseUrl);
 const acct={s:null,name:null,state:cloudOn?'wait':'off',msg:'',recovery:false,busy:false,t:0};
 {const a=readJSON(AUTH_KEY);if(a.v&&a.v.access_token&&a.v.refresh_token)acct.s=a.v}
 const isGuest=()=>!!(acct.s&&acct.s.user&&acct.s.user.is_anonymous);
@@ -16,6 +17,9 @@ const myUid=()=>acct.s&&acct.s.user?acct.s.user.id:acct.s?jwtSub(acct.s.access_t
 function jwtSub(t){try{return JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))).sub||null}catch(e){return null}}
 const needPw=()=>!!(acct.s&&acct.s.user&&!acct.s.user.is_anonymous&&acct.s.user.email&&!(acct.s.user.user_metadata||{}).pw);
 function setSession(d){
+  if(typeof MC!=='undefined'&&MC.owner&&MC.owner!==(d?.user?.id||jwtSub(d?.access_token||''))&&mcActive()){
+    if(MC.controller&&acct.s)sbFetch('/functions/v1/tables',{method:'POST',body:{op:'revoke',controller:MC.controller},timeout:5000});mcDisconnect();netReset();
+  }
   if(!d||!d.access_token){acct.s=null;try{localStorage.removeItem(AUTH_KEY)}catch(e){}return}
   const keepUser=acct.s&&acct.s.user&&acct.s.user.id===jwtSub(d.access_token)?acct.s.user:null;
   acct.s={access_token:d.access_token,refresh_token:d.refresh_token,expires_at:d.expires_at||Math.floor(Date.now()/1000)+(d.expires_in||3600),user:d.user||keepUser};
@@ -186,6 +190,7 @@ function readAuthHash(){
 // switching from a guest to a full account keeps the guest's sign-in, so signing out returns to it
 function keepGuest(newUid){if(isGuest()&&acct.s.user.id!==newUid)try{localStorage.setItem(GUEST_KEY,JSON.stringify(acct.s))}catch(e){}}
 async function endSession(msg){
+    if(typeof MC!=='undefined'&&mcActive()){await mcRevoke();netReset();}
   setSession(null);acct.name=null;acct.recovery=false;acct.state='down';if(msg)acct.msg=msg;
   locker=normLocker(null);saveLocker();claims=[];saveClaims();
   if(!$('pg-locker').hidden&&$('caseOv').hidden)renderLocker();
@@ -259,6 +264,7 @@ $('aForgot').addEventListener('click',()=>{const m=$('aInMail').value.trim();
     const r=await sbFetch('/auth/v1/recover?redirect_to='+encodeURIComponent(SITE_URL),{method:'POST',body,auth:false});
     if(!r.ok)return sbErr(r);return`If ${m} has an account, a reset link is on its way. Open it, then choose a new password.`})});
 $('aOut').addEventListener('click',()=>acctDo(async()=>{
+    if(mcActive()){await mcRevoke();netReset();}
   if(await freshToken())await sbFetch('/auth/v1/logout?scope=local',{method:'POST'});
   await endSession('');acct.busy=false;await acctBoot();acct.busy=true;return'Signed out. Sign back in any time to get your locker.'}));
 addEventListener('online',()=>{acct.t=0;acctResume()});
@@ -294,7 +300,8 @@ async function refreshLobbies(){
   let r={ok:false,status:0};if(await freshToken())r=await sbFetch(`/rest/v1/lobbies?select=code,name,mode,length,diff,players,in_game&proto=eq.${PROTO}&order=updated_at.desc&limit=30`);
   lobBusy=false;
   if(!r.ok||!Array.isArray(r.j)){say('Couldn\'t load the list. Joining by code still works.');return}
-  const rows=r.j.filter(g=>g.code!==NET.code);
+  let managed=[];if(mcEnabled()&&!isGuest())try{const x=await fetch(globalThis.PALISADE_CASINO.url+'/rooms',{signal:AbortSignal.timeout(70000)});const j=await x.json();managed=(j.rooms||[]).map(x=>({...x,name:'PALISADE FALLS CASINO',mode:'coop',length:'casino',in_game:true}));}catch(e){}
+  const rows=[...managed,...r.j].filter(g=>g.code!==NET.code);
   if(!rows.length){say('No open games right now. Host one and it shows up here for everyone.');return}
   if(same(NET.mode+JSON.stringify(rows)))return;
   box.textContent='';

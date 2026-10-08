@@ -67,10 +67,12 @@ const TB_RULES=`<h4>THE HOUSE</h4><p>Every table is run by the server: it shuffl
 <li>Craps: if you leave with a Pass Line bet on a point or a Come bet on its number, those bets stay and the dealer rolls them out; you can't sit elsewhere until they're decided, then your shards go home.</li>
 <li>A bot sits in at Hold'em when there are only two of you; it never sees anyone's cards.</li></ul>`;
 async function tbCall(body){
+  const managed=mcActive()||String(body.room||'').startsWith('C:')||body.id&&body.id===TB.mine?.id&&String(TB.mine.room||'').startsWith('C:');
+  if(managed)body={...body,controller:MC.controller,...(body.op==='sit'?{reservation:MC.reservation}:{})};
   if(!await freshToken())return{error:'Sign in to play at the tables'};
   let r=await sbFetch('/functions/v1/tables',{method:'POST',body,timeout:12000});
   if(r.status===401&&acct.s){acct.s.expires_at=0;if(await freshToken())r=await sbFetch('/functions/v1/tables',{method:'POST',body,timeout:12000})}
-  if(!r.j)return{error:r.status?'The tables are busy. Try again.':'No connection'};return r.j}
+  if(!r.j)return{error:r.status?'The tables are busy. Try again.':'No connection',transient:true};return {...r.j,transient:r.status>=500}}
 const tbMsg=t=>{txt($('tbMsg'),t||'');txt($('tbSheetMsg'),t||'')};
 function tbCanPlay(){if(!cloudOn)return 'The tables need the online version of the game.';if(!acct.s)return 'Sign in to play at the tables.';
   if(isGuest())return 'Make an account on the Account page to play at the tables. Guests can\'t.';return null}
@@ -78,6 +80,7 @@ function tbCanPlay(){if(!cloudOn)return 'The tables need the online version of t
 const tbMineText=m=>m.pending?`BET STILL RESOLVING: you left the ${TB_NAME[m.game]} table with ${m.pending.bets||'a'} bet${m.pending.bets===1?'':'s'} still working. The dealer is rolling ${m.pending.bets===1?'it':'them'} out; your shards come home once ${m.pending.bets===1?'it is':'they are'} decided.`
   :`You're still seated at the ${TB_NAME[m.game]||'casino'} ${m.station?'machine':'table'} from before. Stand up to take your shards home.`;
 function renderTables(){const no=tbCanPlay();$('casEnterBtn').disabled=$('tbJoinBtn').disabled=!!no;tbMsg(no||'');
+  hid($('casRecovery'),!mcEnabled());
   const m=TB.mine;hid($('tbMine'),!m||casino());if(m){txt($('tbMine').firstChild,tbMineText(m));hid($('tbMineLeave'),!!m.pending)}
   if(!no)tbLobby()}
 async function tbLobby(){if(TB.busy||tbCanPlay())return;TB.lobbyT=performance.now();const r=await tbCall({op:'lobby'});if(r.error){tbMsg(r.error);return}
@@ -87,15 +90,23 @@ async function tbLobby(){if(TB.busy||tbCanPlay())return;TB.lobbyT=performance.no
 // timeout or a dropped connection resends the same id (the server answers it from its record instead of moving shards twice)
 const TB_MONEY=new Set(['sit','topup','leave','bet','insure','move','rlbets','babets','crbet','spin','drop','pick']);
 const tbOpId=()=>{const a=new Uint8Array(12);crypto.getRandomValues(a);return 'o'+[...a].map(x=>x.toString(36).padStart(2,'0')).join('').slice(0,22)};
-async function tbCallOp(body){if(!TB_MONEY.has(body.op))return tbCall(body);
+async function tbCallOp(body){const managed=mcActive()||String(body.room||'').startsWith('C:')||body.id&&body.id===TB.mine?.id&&String(TB.mine.room||'').startsWith('C:');
+  if(!TB_MONEY.has(body.op)&&(!managed||['state','peek','history','shoe','lobby','recover'].includes(body.op)))return tbCall(body);
+  if(managed){
+   const owner=myUid(),b=mcPrepare(body);if(!b)return{error:MC.journalError||'Could not save the casino request. Try again.'};
+   let r=await tbCall(b);for(let k=0;k<2&&r.transient;k++){await new Promise(f=>setTimeout(f,700*(k+1)));r=await tbCall(b)}
+   if(owner!==myUid())return{error:'Account changed'};if(!r.transient)mcClearJournal(b.opId);return r;
+  }
   const key=JSON.stringify({...body,opId:undefined});if(!TB.pend||TB.pend.key!==key||performance.now()-TB.pend.t>120000)TB.pend={key,id:tbOpId(),t:performance.now()};
   const b={...body,opId:TB.pend.id};let r=await tbCall(b);
   for(let k=0;k<2&&r&&!r.view&&/connection|busy/i.test(r.error||'');k++){await new Promise(f=>setTimeout(f,700*(k+1)));r=await tbCall(b)}   // same id: never a second debit
   if(r&&(r.view||r.replay||!/connection|busy/i.test(r.error||'')))TB.pend=null;return r}
-async function tbSend(body,quiet){if(TB.busy&&!quiet)return;if(!quiet)TB.busy=true;try{const r=await tbCallOp(body);
+async function tbSend(body,quiet){if(TB.busy&&!quiet)return;const owner=myUid();if(!quiet)TB.busy=true;try{const r=await tbCallOp(body);
+  if(owner!==myUid())return{error:'Account changed'};
   if(r.error&&!r.view){tbMsg(r.error);if(/closed/.test(r.error))tbGone();return r}
   if(r.view){TB.id=r.id;TB.code=r.code;TB.balance=r.balance;tbShow(r.view);tbMsg(r.error||'')}
   if(r.rcpt&&typeof cgOnRcpt==='function')cgOnRcpt(r.rcpt);
+  if(mcActive()&&r.view&&['sit','leave'].includes(body.op))mcSend({type:'sync'});
   if(body.op==='leave'&&r.view&&r.view.me<0){tbGone();toast('TABLES','RETURNED TO WALLET');if(typeof syncLocker==='function')syncLocker()}
   // v0.10.3 craps: you left with a Pass or Come bet on its number: it stays and the dealer rolls it out; shards home after
   else if(body.op==='leave'&&r.view&&r.view.gone&&r.view.gone[r.view.me]){const n=(r.view.locked||[]).length;tbGone();TB.mine={id:r.id,game:r.view.game,pending:{bets:n}};
@@ -107,9 +118,12 @@ function tbGone(){TB.id=0;TB.v=null;TB.key='';TB.station='';TB.rl.bets={};TB.rl.
 async function tbSitAt(gm,k,station=''){const p=player;tbMsg(station?'Starting the machine…':'Taking a seat…');TB.station=station;
   const r=await tbSend({op:'sit',room:casRoom(),game:gm,seat:k,station,seed:tbSeedPref()});
   if(!r||!r.view||r.view.me<0){if(p&&casino())p.seat=0;toast('TABLES',(r&&r.error)||'Could not sit down');return}
+  if(mcActive()){const s=[...CAS_SEAT].find(([,q])=>q.game===gm&&q.station===station&&q.k===r.view.me);if(s&&p){p.seat=s[0];[p.x,p.y]=s[1].pos;}}
   if(p&&casino()){const t=casTable(gm),me=r.view.me;if(me!==k&&t&&t.seats[me]){const [x,y]=t.seats[me];p.x=x;p.y=y;p.seat=seatCode(t.n,me)}}   // the server gave you the next free seat
   TB.key='';tbSheet(true)}
 const tbSeedPref=()=>{try{return localStorage.getItem('pal_seed')||''}catch(e){return ''}};
+$('casTakeover').addEventListener('click',()=>mcEnter(MC.code,true));
+$('casRecover').addEventListener('click',()=>mcRecover(true));
 // the sheet: your table over the casino floor (HIDE keeps you seated; STAND UP takes your shards home)
 function tbSheet(open){TB.sheet=!!open&&!!TB.id;hid($('casSheet'),!TB.sheet);if(TB.sheet&&TB.v){TB.key='';tbShow(TB.v)}}
 // what's on a table in the casino: your own from your seat, the one you're standing next to from a peek
@@ -130,6 +144,7 @@ function tbStatus(v,me){if(CG[v.game])return CG[v.game].status(v,me);const P=v.p
     if(v.phase==='spin')return['NO MORE BETS','The ball is spinning…','wait'];
     if(v.phase==='done'&&v.last&&v.last.result)return['IT\'S '+rlName(v.last.result.number),tbResult(v),'done'];
     return['WAITING','','wait']}
+  if(!v.started&&v.expected)return ['WAITING FOR PLAYERS','Hold\'em starts automatically when two players are seated.','wait'];
   if(!v.started)return v.host?['WAITING TO START',`${hum} seated. Press START when everyone's sat down.`+(v.game==='he'&&hum<2?' Hold\'em needs 2 players.':''),'wait']
     :['WAITING FOR '+(v.hostName||'THE HOST'),`${v.hostName} starts the table when everyone's sat down.`,'wait'];
   if(me.stack<(v.game==='bj'?1:2)&&v.phase!=='play')return['OUT OF SHARDS AT THE TABLE','Top up (+5 or +25 below) to keep playing, or stand up.','warn'];
@@ -197,7 +212,7 @@ function tbActions(v,me){const box=$('tbActs'),c=v.can||{};
   if(key===TB.key)return;TB.key=key;let h='';
   if(v.game==='rl'){box.innerHTML=rlActions(v,me);return}
   if(CG[v.game]){box.innerHTML=CG[v.game].acts(v,me);return}
-  if(!v.started&&v.host){const n=v.seats.filter(s=>s&&!s.bot).length,can=v.game==='bj'?n>=1:n>=2;
+  if(!v.started&&v.host&&!v.expected){const n=v.seats.filter(s=>s&&!s.bot).length,can=v.game==='bj'?n>=1:n>=2;
     h+=`<div class="trow">${tbBtn('start','START THE TABLE',{on:can,cl:'go big',hint:can?n+' seated':'needs 2 players'})}</div>`;
     h+=`<p class="tbHint">Table rules (you can change these until you start):</p><div class="trow">${[100,250,0].map(l=>tbBtn('lim:'+l,l?'MAX BET '+l:'NO LIMIT',{cl:v.lim===l?'sel':''})).join('')}</div>`;
     h+=`<div class="trow">${tbBtn('tside','SIDE BET '+(v.side?'ON':'OFF'),{cl:v.side?'sel':'',hint:'players opt in, 1◆ a hand'})}</div>`}
@@ -373,4 +388,4 @@ $('tbSeedBtn').addEventListener('click',async()=>{const s=$('tbSeedIn').value.re
   try{localStorage.setItem('pal_seed',s)}catch(e){}const r=await tbSend({op:'seed',id:TB.id,seed:s});if(r&&!r.error)tbMsg('Your seed is in from the next round.')});
 $('casEnterBtn').addEventListener('click',()=>casEnter());
 $('tbJoinBtn').addEventListener('click',()=>{const c=$('tbCode').value.trim().toUpperCase();if(!/^[A-Z0-9]{4}$/.test(c)){tbMsg('Type your friend\'s 4-letter room code');return}casJoin(c)});
-$('tbMineLeave').addEventListener('click',async()=>{const m=TB.mine;if(!m)return;await tbSend({op:'leave',id:m.id});TB.mine=null;tbGone();renderTables()});
+$('tbMineLeave').addEventListener('click',async()=>{const m=TB.mine;if(!m)return;if(String(m.room||'').startsWith('C:')&&!MC.controller)await mcRecover();const r=await tbSend({op:'leave',id:m.id});if(r&&!r.error){TB.mine=null;tbGone()}renderTables()});

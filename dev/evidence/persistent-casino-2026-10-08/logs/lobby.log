@@ -1,0 +1,65 @@
+{
+ "play": {
+  "map": "river",
+  "size": "xl",
+  "cards": 4,
+  "sel": "river",
+  "title": "SOLO · RIVERBEND XL",
+  "mapRow": "RIVERBEND"
+ },
+ "classesSel": "grenadier",
+ "run": {
+  "map": "river",
+  "size": "xl",
+  "N": 24,
+  "cls": "sniper",
+  "menu": true,
+  "bg": true,
+  "water": 42
+ },
+ "pauseSettings": {
+  "ig": true,
+  "menu": false,
+  "cards": 4,
+  "running": true
+ },
+ "back": {
+  "page": "solo",
+  "bg": false,
+  "demoMap": "yard",
+  "N": 16
+ },
+ "bgTab": {
+  "tiles": 77,
+  "owned": 2
+ },
+ "equipped": "nightwatch",
+ "party": {
+  "lit": 12701,
+  "slots": 6
+ },
+ "guestLobby": {
+  "map": "quarry",
+  "size": "std",
+  "note": "Tap READY when you are set · 0 / 1 READY · Co-op · ASHFALL QUARRY · 5 raids · threat: normal.",
+  "sub": "ROOM KR5X · 2 / 6 PLAYERS · ASHFALL QUARRY"
+ },
+ "roomJob": "grenadier",
+ "lockedStart": {
+  "inGame": false,
+  "note": "Everyone has to ready up first: 1 player not ready yet.",
+  "locked": true
+ },
+ "readyRow": {
+  "list": "BIG U · SOLDIER · HOST · YOUBIG U · GRENADIER · READY ✓REMOVEDELGADO · SUPPLY RUNNER · AI",
+  "note": "2 of 6 in the room · 1 / 1 READY · Co-op · ASHFALL QUARRY · 5 raids · threat: normal. Share the code, then start when everyone is in.",
+  "locked": false
+ },
+ "clearedOnChange": true,
+ "online": {
+  "map": "quarry",
+  "N": 16,
+  "sameGround": true
+ }
+}
+errors: none

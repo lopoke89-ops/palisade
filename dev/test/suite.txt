@@ -139,6 +139,10 @@ tables_engine          node tables
 casino_games_engine    node tables casino
 tables_server          node tables server
 casino_server          node tables server casino
+managed_casino         node tables server casino
+managed_world          node tables server casino net
+managed_postgres       node tables server casino extra
+managed_browser        tables casino net
 tables_ui              tables casino
 casino_games_ui        tables casino net
 casino_map             casino net
@@ -153,3 +157,5 @@ case_batch_migration   extra locker node
 restore_schema         extra server node
 music_network          extra music net
 music_assets           extra music
+managed_games          casino tables server node
+managed_load           casino net node extra serial

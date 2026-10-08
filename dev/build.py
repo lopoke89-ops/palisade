@@ -4,7 +4,7 @@ from PIL import Image,ImageDraw
 # (page.html + style.css + js/*.js, joined in file-name order by assemble.py).
 # Usage: python3 dev/build.py            (needs Python 3 + Pillow for the icons)
 DEV=os.path.dirname(os.path.abspath(__file__))
-SITE=os.path.dirname(DEV)
+SITE=os.environ.get('PALISADE_BUILD_OUTPUT') or os.path.dirname(DEV)
 os.makedirs(SITE,exist_ok=True)
 import sys;sys.path.insert(0,DEV)
 from assemble import assemble
@@ -80,7 +80,15 @@ def add_csp(page,debug=False):
     hashes=['\'sha256-'+base64.b64encode(hashlib.sha256(s.encode('utf-8')).digest()).decode('ascii')+'\'' for s in scripts]
     connect=["'self'",'https://puvjfhwxigxjpsvdwrwf.supabase.co',
              'https://palisade-turn.lopoke89.workers.dev','https://0.peerjs.com','wss://0.peerjs.com']
+    casino_config=json.load(open(os.environ.get('PALISADE_CASINO_CONFIG') or f'{DEV}/render/client.json',encoding='utf-8'))
+    if casino_config.get('supabaseUrl'):connect += [casino_config['supabaseUrl']]
+    if casino_config.get('url'):
+        from urllib.parse import urlparse
+        endpoint=casino_config['url'].rstrip('/')
+        assert urlparse(endpoint).scheme=='https' and urlparse(endpoint).hostname,'Casino URL must use HTTPS'
+        connect += [endpoint,endpoint.replace('https://','wss://',1)]
     if debug:connect+=['http://127.0.0.1:9000','ws://127.0.0.1:9000','http://localhost:9000','ws://localhost:9000']
+    if debug:connect+=['http://127.0.0.1:10000','ws://127.0.0.1:10000']
     policy='; '.join(["default-src 'self'","base-uri 'none'","object-src 'none'",
         'script-src '+' '.join(hashes+["'strict-dynamic'"]),"style-src 'self' 'unsafe-inline'",
         "img-src 'self' data: blob:","font-src 'self'","media-src 'self' blob:",

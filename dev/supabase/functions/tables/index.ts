@@ -2,8 +2,9 @@
 // Uses the service role for the database; players can't touch the casino tables or functions directly.
 // v0.10.0: tables are found by casino room; hand history; the daily books check.
 // v0.10.3: stations (one session per machine), operation ids, and casino_step / casino_start (seats enforced in the transaction).
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient } from 'jsr:@supabase/supabase-js@2.117.3';
 import { handle } from './handler.js';
+import { managedStorage } from './storage.js';
 const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
 const users = new Map<string, { u: { id: string; anon: boolean }; t: number }>();
 // what a refused step means: short shards, seated at another table, or this operation id already used (answer from casino_ops)
@@ -38,6 +39,9 @@ const D = {
     if (error) return failed(error.message); return data;
   },
 };
+managedStorage(D, async (name: string, args: any) => {
+ const { data, error } = await sb.rpc(name, args); if (error) throw new Error(error.message); return data;
+});
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info', 'Access-Control-Allow-Methods': 'POST, OPTIONS' };
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });

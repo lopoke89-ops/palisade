@@ -1,0 +1,3 @@
+Deno 2.9.6
+Command: deno check --node-modules-dir=none dev/supabase/functions/tables/index.ts
+Result: exit code 0; pinned JSR SDK 2.117.3 and relative modules checked.

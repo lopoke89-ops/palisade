@@ -29,6 +29,7 @@ function assist(d){
 }
 // this phone's thumbs/keys drive this phone's soldier (on every kind of phone)
 function controlLocal(dt){
+  if(mcActive())MC.input=[0,0];
   const p=player;if(!p||demo)return;p.fireIn=false;if(game.phase==='over')return;
   if(!p.alive||overlayOpen()||chatOpen())return;
   if(p.seat){p.fireIn=false;return}   // v0.10.0: seated at a casino table
@@ -38,7 +39,7 @@ function controlLocal(dt){
   const mag=Math.min(1,Math.hypot(mx,my));
   p.sprT=Math.max(0,(p.sprT||0)-dt);p.sprCd=Math.max(0,(p.sprCd||0)-dt);const spr=p.sprT>0;
   // 3.3 tiles a second is everyone's pace; the class sets a multiplier (sniper 1.1, grenadier 0.9)
-  if(mag>.12){const d=sdirToWorld(mx,my),sp=3.3*mag*(p.C.spd||1)*(spr?SPRINT.mult:1)*(p.stun>0?.45:1)*slowAt(p.x,p.y)*(p.perk||PERK0).speed*(hasMod('adrenaline')?1.2:1);moveEnt(p,d.x*sp*dt,d.y*sp*dt,pt(p));p.walk+=dt*mag*(spr?13:10);p.moveDir=d;
+  if(mag>.12){const d=sdirToWorld(mx,my),sp=3.3*mag*(p.C.spd||1)*(spr?SPRINT.mult:1)*(p.stun>0?.45:1)*slowAt(p.x,p.y)*(p.perk||PERK0).speed*(hasMod('adrenaline')?1.2:1);if(mcActive())MC.input=[d.x*mag,d.y*mag];else{moveEnt(p,d.x*sp*dt,d.y*sp*dt,pt(p));p.walk+=dt*mag*(spr?13:10)}p.moveDir=d;
     if(spr&&rnd()<dt*14)emit(p.x-d.x*.2,p.y-d.y*.2,3*u,'dust',0)}
   let firing=false;
   if(padMode){if(pad.amag>.2){const d=assist(sdirToWorld(pad.ax,pad.ay));p.aim=d;p.face=d}else if(mag>.12){p.face=p.moveDir;p.aim=p.moveDir}firing=pad.fire}   // v0.9.2.1: right stick aims, the trigger fires

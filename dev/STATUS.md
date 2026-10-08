@@ -1,11 +1,17 @@
 # PALISADE project status
 
-Updated October 6, 2026. This is the current status record for the clone. The older project handoff and v0.9.3 hardening prompt describe a superseded release order.
+Updated October 8, 2026. This is the current status record for the clone. The older project handoff and v0.9.3 hardening prompt describe a superseded release order.
 
 For a consolidated list of what remains from those documents, see the [current project blueprint](PROJECT_BLUEPRINT_2026-09-29.md).
 Big U's latest completed local scope is recorded in the [presentation prompt](plans/backgrounds-and-character-animation-prompt.md). The earlier [cosmetic and hardening prompt](plans/next-cosmetics-and-hardening-prompt.md) remains the record of v0.9.3.2 and its deferred work.
 
 The Claude audit URL still requires sign-in in the available browser session. Big U supplied an exported copy at `D:\downloads\Untitled.md`, which was read on September 29. Its newest Progress entry is v0.9.3, so its release claims are superseded by the verified v0.9.3.3 release below. The external artifact itself was not edited here.
+
+## v0.10.5 candidate: persistent casino on Render (not deployed)
+
+The audited persistent casino work order is being executed on branch `casino-persistent-render`. The local candidate adds a server-owned floor, durable room IDs/codes, exact SQL seat reservations, transactional controller fencing, a reload-safe operation journal, and an independent recovery worker using the existing seven game engines. Render's exact Node 22.17.0 runtime passes the managed database/server group, including real PostgreSQL concurrency. Six real browser contexts pass entry, first-player departure, movement, lost-response replay after reload, and service replacement. Existing casino/account/friend/controller/CSP and combat host/join regressions pass.
+
+The user chose Free-tier staging and Supabase organization `lopoke89-ops's Org`. The managed client is disabled in the checked-in configuration. Production database/functions and the published branch have not been changed. Staging creation is pending account access: Render is linked to GitHub but not connected to Codex; Supabase's project cost/creation connector workflow is unavailable. Public release, the live two-hour soak, network shaping and platform cold-start/cutover evidence remain open. See [the operator instructions](render/README.md) and [the execution evidence](evidence/persistent-casino-2026-10-08/README.md).
 
 ## v0.10.4: casino layout fixes
 

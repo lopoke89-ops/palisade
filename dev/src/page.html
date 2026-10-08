@@ -200,7 +200,7 @@
           <div><h3>CONTROLLER</h3><p>Left stick move · right stick aim · RT fire<br>LT grenade · A build (hold to keep building)<br>B ability, or sprint if your class has no ability · X armory at the stake<br>Y wall/door · d-pad left/right material · d-pad down build kit<br>View start raid · Menu pause. Change any button in Settings.</p></div>
         </div>
       </details>
-      <p class="foot">v0.10.4 · phone, desktop and controller · online co-op and PvP for up to six</p>
+      <p class="foot">v0.10.5 · phone, desktop and controller · online co-op and PvP for up to six</p>
     </section>
 
     <section class="page" id="pg-classes" hidden>
@@ -228,7 +228,7 @@
       <label class="set"><span>YOUR NAME</span><input type="text" id="mName" maxlength="12" placeholder="Big U" autocomplete="nickname" spellcheck="false"></label>
       <div class="mpCard">
         <h3>JOIN A CREW</h3>
-        <div class="join"><input type="text" id="mCode" maxlength="4" placeholder="CODE" autocapitalize="characters" autocomplete="off" spellcheck="false" aria-label="Room code"><button class="go" id="joinBtn" type="button">JOIN</button></div>
+        <div class="join"><input type="text" id="mCode" maxlength="6" placeholder="CODE" autocapitalize="characters" autocomplete="off" spellcheck="false" aria-label="Room code"><button class="go" id="joinBtn" type="button">JOIN</button></div>
         <p class="status" id="mStatus" role="status"></p>
       </div>
       <div class="mpCard">
@@ -287,9 +287,10 @@
         <p class="lede sm">Blackjack, Texas Hold'em, American roulette, craps, baccarat, sixteen slot machines and a Plinko board, for real shards (never bought, never cashed out). Walk in, walk up to a table or a machine: you sit down with 5 shards (the buy-in), top up whenever you like, and whatever is in front of you goes back to your balance when you stand up. Up to 6 of your crew in one casino.</p>
         <button class="go" type="button" id="casEnterBtn">ENTER THE CASINO</button>
         <h3 class="tbStep">OR JOIN A FRIEND'S CASINO</h3>
-        <div class="tbJoin"><input id="tbCode" maxlength="4" autocomplete="off" placeholder="ROOM CODE" aria-label="Room code"><button type="button" id="tbJoinBtn">JOIN</button></div>
+        <div class="tbJoin"><input id="tbCode" maxlength="6" autocomplete="off" placeholder="ROOM CODE" aria-label="Room code"><button type="button" id="tbJoinBtn">JOIN</button></div>
         <div class="trow tbDoorBtns"><button type="button" id="tbDoorLast" hidden>LAST RESULT</button><button type="button" id="tbHistBtn">HAND HISTORY</button><button type="button" id="tbRulesBtn">HOUSE RULES</button></div>
         <div id="tbMine" class="tbMine" hidden><p></p><button type="button" id="tbMineLeave">STAND UP</button></div>
+        <div id="casRecovery" hidden><button type="button" id="casTakeover">TAKE OVER CASINO</button> <button type="button" id="casRecover">RECOVER TABLE</button></div>
       </div>
       <p class="status" id="tbMsg" role="status"></p>
       <button class="ghost" type="button" data-go="main">BACK</button>

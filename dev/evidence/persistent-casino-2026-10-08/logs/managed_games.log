@@ -1,0 +1,19 @@
+TAP version 13
+# Managed books: {"ok":true,"tables_closed":7,"bad_tables":[]}
+# All seven managed games accepted legal wagers/actions and recovered without clients; request hashes and HTTP revocation passed.
+# Subtest: all seven managed games, complete request binding, offline settlement and revocation
+ok 1 - all seven managed games, complete request binding, offline settlement and revocation
+  ---
+  duration_ms: 3734.3363
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3915.6187
+errors: none

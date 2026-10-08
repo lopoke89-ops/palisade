@@ -67,6 +67,7 @@ function netFail(err){
   netReset();showPage('multi');mStatus(why);
 }
 function netReset(){
+  if(typeof MC!=='undefined'&&(MC.active||MC.ws))mcDisconnect();
   if(NET.mode==='host')lobbyUnpublish();
   clearChat();
   try{NET.peer&&NET.peer.destroy()}catch(e){}
@@ -371,6 +372,7 @@ function makeSnap(withWalls){
 
 // ---------- guest ----------
 async function netJoin(code,invitationSession=''){
+  const route=String(code||'').trim().toUpperCase();if(/^[A-Z2-9]{6}$/.test(route)||/^C:/i.test(route))return mcEnter(route);
   if(inRun()&&$('menu').hidden)return;   // v0.9.3.7: never host or join over a live run
   if(!onlineOK()){mStatus('Getting online play ready…');if(!await needPeer()){mStatus(PEER_FAIL);return}if(NET.mode!=='solo')return}
   code=String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');

@@ -9,7 +9,7 @@ const socialVisible=()=>!$('menu').hidden&&!$('friendsDrop').hidden;
 const STAGE_PAGES=['solo','classes','multi','lobby','locker'];
 const CARD_PAGES=['settings','account','skills'];   // the same shell, laid out as cards instead of a stage
 const stageVisible=()=>!$('menu').hidden&&STAGE_PAGES.includes($('menu').dataset.page);
-const inRoom=()=>NET.mode==='host'||NET.mode==='guest';
+const inRoom=()=>NET.mode==='host'||NET.mode==='guest'||NET.mode==='casino';
 function socialReset(){FR.accountEpoch=(FR.accountEpoch||0)+1;FR.busy=false;FR.msg='';FR.friends=[];FR.incoming=[];FR.outgoing=[];FR.notes=[];FR.invites=[];FR.invConfirm='';FR.unseen=0;FR.ok=false;FR.loaded=false;FR.rooms=[];FR.seq++;SOCIAL.owner=myUid();SOCIAL.ids=[];SOCIAL.profiles=[];SOCIAL.rooms=[];SOCIAL.result=null;SOCIAL.status='';SOCIAL.loading=false;SOCIAL.busy=false;SOCIAL.roomsOK=false;SOCIAL.seq++;SOCIAL.searchSeq++;}
 function renderIdentity(){
  const b=$('identityButton');if(!b)return;
@@ -50,7 +50,7 @@ function renderPartyState(){
   $('partyHint').textContent=pg==='solo'?M.blurb:'';return}
  $('partyMode').textContent=MODE_NAME[pick.pvp]||'CO-OP';$('partyTitle').textContent=room?'PARTY LOBBY':'YOUR CREW. YOUR CLAIM.';
  $('partySubtitle').textContent=room?`ROOM ${NET.code} · ${rows.length} / 6 PLAYERS${pick.pvp==='coop'?' · '+M.name+(pick.size==='xl'?' XL':''):''}`:'Choose your job. Bring your crew.';
- $('partyPlayerName').textContent=me?.name||myName();$('partyPlayerState').textContent=room?(NET.mode==='host'?'PARTY LEADER':'WAITING FOR HOST'):'CHOOSING A LOADOUT';
+ $('partyPlayerName').textContent=me?.name||myName();$('partyPlayerState').textContent=mcActive()?'IN THE CASINO':room?(NET.mode==='host'?'PARTY LEADER':'WAITING FOR HOST'):'CHOOSING A LOADOUT';
  const box=$('partySlots');box.textContent='';
  for(let i=0;i<6;i++){const r=rows[i],el=document.createElement(r?'div':'button');el.className='partySlot'+(r?' occupied':'');
   const b=document.createElement('b'),small=document.createElement('small');b.textContent=r?r.name:'+';small.textContent=r?`${r.id===myId?'YOU · ':''}${CLASSES[r.cls]?.name||'PLAYER'}`:'INVITE';el.append(b,small);
@@ -186,7 +186,7 @@ function renderSocial(){
  else if(!FR.ok)empty(fl,'Friends could not be loaded right now. Try Refresh.');
  else if(!FR.friends.length)empty(fl,'No friends yet. Find someone above and send a request.');
  else for(const f of FR.friends){const acts=[],j=joinAction(f.id,f.username);if(j)acts.push(j);
-  if(NET.mode==='host')acts.push(['INVITE',()=>inviteFriend(f),{main:true,off:!canInviteFriend(),title:NET.roomLocked?'Unlock the room first':NET.roster.length>=6?'Room is full':'Invite to this room'}]);
+  if(NET.mode==='host'||mcActive())acts.push(['INVITE',()=>inviteFriend(f),{main:true,off:!canInviteFriend(),title:NET.roomLocked?'Unlock the room first':NET.roster.length>=6?'Room is full':'Invite to this room'}]);
   acts.push([FR.confirm==='rm'+f.id?'SURE?':'REMOVE',()=>askSure('rm'+f.id,()=>friendRemove(f)),{aria:'Remove '+f.username+' from friends'}]);fl.append(personRow(f,roomText(f.id),acts,'isFriend'))}
  // recent (saved players)
  const list=$('savedPlayers');list.textContent='';

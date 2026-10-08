@@ -1,0 +1,55 @@
+TAP version 13
+# {
+#   "database": "PostgreSQL",
+#   "checks": 30,
+#   "passed": [
+#     "new migration starts with admissions and wagers disabled",
+#     "stable six character directory and managed namespace",
+#     "six admissions are bounded",
+#     "overflow does not evict a member",
+#     "reservation excludes another buyer of the same seat",
+#     "exact reserved seat and automatic blackjack start",
+#     "one atomic buyin",
+#     "accepted retry is pure after revocation",
+#     "changed request under same id refused",
+#     "missing controller cannot bypass null comparison",
+#     "stale unaccepted action never wagers",
+#     "old tab cannot refresh or wager after takeover",
+#     "new controller plays existing game",
+#     "legacy writer cannot mutate managed room",
+#     "canonical hash excludes transport credentials",
+#     "startup repair restores a missing deadline",
+#     "schedule repair does not refresh player activity",
+#     "empty room obligations recover with shared engine",
+#     "old owner fenced after lease takeover",
+#     "anon cannot call casino_world(jsonb)",
+#     "authenticated cannot call casino_world(jsonb)",
+#     "anon cannot call casino_managed_step(bigint,integer,jsonb,uuid[],boolean,jsonb,jsonb,jsonb,jsonb)",
+#     "authenticated cannot call casino_managed_step(bigint,integer,jsonb,uuid[],boolean,jsonb,jsonb,jsonb,jsonb)",
+#     "closed table has no due time",
+#     "financial recovery controller can be acquired",
+#     "recovery controller refuses unrelated new exposure",
+#     "accepted closed-table replay remains pure",
+#     "friend invitation survives sender departure",
+#     "only recipient can accept",
+#     "expired managed invite refused"
+#   ]
+# }
+# errors: none
+# Full PostgreSQL: concurrent capacity, reservation, duplicate buyin, and takeover ledger checks passed.
+# Subtest: PostgreSQL contracts and concurrent admissions, seating, replay and takeover
+ok 1 - PostgreSQL contracts and concurrent admissions, seating, replay and takeover
+  ---
+  duration_ms: 6322.6885
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6440.4284
+errors: none

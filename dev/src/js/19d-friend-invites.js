@@ -6,8 +6,9 @@ async function registerInviteRoom(){
  return rpc('room_register',{p:{incarnation:inc,code,proto:PROTO,mode:pick.pvp||'coop',length:pick.mode,map:NET.inGame&&!demo?game.map:pick.mode==='campaign'?'yard':pick.mode==='blackout'?'city':pick.map,
    chapter:NET.inGame&&!demo?game.chapter||0:0,players:NET.roster.length,locked:NET.roomLocked}});
 }
-const canInviteFriend=()=>socialAccount()&&NET.mode==='host'&&!!NET.code&&!NET.roomLocked&&NET.roster.length<6;
+const canInviteFriend=()=>socialAccount()&&((mcActive()&&MC.connected)||(NET.mode==='host'&&!!NET.code&&!NET.roomLocked&&NET.roster.length<6));
 async function inviteFriend(f){
+ if(mcActive()){if(!canInviteFriend()||FR.busy)return;FR.busy=true;try{const r=await rpc('casino_invite_send',{p_to:f.id,p_room:MC.room,p_session:MC.controller.session,p_generation:MC.controller.generation});FR.msg=r.ok?`Casino invitation sent to ${f.username}. Valid for five minutes.`:sbErr(r);}finally{FR.busy=false;await friendsPoll();renderSocial()}return}
  if(!canInviteFriend()||FR.busy)return;const owner=myUid(),epoch=FR.accountEpoch,inc=NET.incarnation,current=()=>owner===myUid()&&epoch===FR.accountEpoch;FR.busy=true;FR.msg='';renderSocial();
  try{const reg=await registerInviteRoom();if(!current()||inc!==NET.incarnation)return;if(!reg?.ok){FR.msg='Your room could not be registered. Try again.';return}
    const r=await rpc('lobby_invite_send',{p_to:f.id});if(!current()||inc!==NET.incarnation)return;FR.msg=r.ok?(r.j.duplicate?'An active invitation is already waiting.':`Invitation sent to ${f.username}. Valid for five minutes.`):sbErr(r);
@@ -18,7 +19,7 @@ async function answerInvite(i,yes){
  const leaving=inRoom()||!demo&&inRun();
  if(yes&&leaving&&FR.invConfirm!==i.id){FR.invConfirm=i.id;FR.msg='Accepting leaves your current room or run. Select LEAVE & JOIN to confirm.';renderSocial();return}
  const owner=myUid(),epoch=FR.accountEpoch,scope=[NET.mode,NET.code,game.gid,demo].join('|'),current=()=>owner===myUid()&&epoch===FR.accountEpoch;FR.busy=true;renderSocial();
- try{const r=await rpc('lobby_invite_answer',{p_id:i.id,p_accept:yes,p_proto:PROTO});if(!current())return;
+ try{const r=i.transport==='casino'?await rpc('casino_invite_answer',{p_id:i.id,p_accept:yes}):await rpc('lobby_invite_answer',{p_id:i.id,p_accept:yes,p_proto:PROTO});if(!current())return;
    if(!r.ok){FR.msg=sbErr(r);return}
    if(yes&&scope!==[NET.mode,NET.code,game.gid,demo].join('|')){FR.invConfirm='';FR.msg='Your room or run changed while accepting. Joining was canceled; ask your friend to resend.';return}
    FR.invConfirm='';FR.msg=yes?'Connecting to your friend…':'Invitation declined.';

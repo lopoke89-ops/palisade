@@ -1,0 +1,2 @@
+{ winterPool: 37, restore: 'fresh database', casino: 'v0.10.3' }
+errors: none

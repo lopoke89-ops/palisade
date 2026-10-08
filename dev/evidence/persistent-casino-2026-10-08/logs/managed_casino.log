@@ -1,0 +1,37 @@
+{
+  "database": "PGlite",
+  "checks": 30,
+  "passed": [
+    "new migration starts with admissions and wagers disabled",
+    "stable six character directory and managed namespace",
+    "six admissions are bounded",
+    "overflow does not evict a member",
+    "reservation excludes another buyer of the same seat",
+    "exact reserved seat and automatic blackjack start",
+    "one atomic buyin",
+    "accepted retry is pure after revocation",
+    "changed request under same id refused",
+    "missing controller cannot bypass null comparison",
+    "stale unaccepted action never wagers",
+    "old tab cannot refresh or wager after takeover",
+    "new controller plays existing game",
+    "legacy writer cannot mutate managed room",
+    "canonical hash excludes transport credentials",
+    "startup repair restores a missing deadline",
+    "schedule repair does not refresh player activity",
+    "empty room obligations recover with shared engine",
+    "old owner fenced after lease takeover",
+    "anon cannot call casino_world(jsonb)",
+    "authenticated cannot call casino_world(jsonb)",
+    "anon cannot call casino_managed_step(bigint,integer,jsonb,uuid[],boolean,jsonb,jsonb,jsonb,jsonb)",
+    "authenticated cannot call casino_managed_step(bigint,integer,jsonb,uuid[],boolean,jsonb,jsonb,jsonb,jsonb)",
+    "closed table has no due time",
+    "financial recovery controller can be acquired",
+    "recovery controller refuses unrelated new exposure",
+    "accepted closed-table replay remains pure",
+    "friend invitation survives sender departure",
+    "only recipient can accept",
+    "expired managed invite refused"
+  ]
+}
+errors: none

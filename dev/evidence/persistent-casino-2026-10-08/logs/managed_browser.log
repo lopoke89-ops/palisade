@@ -1,0 +1,8 @@
+{
+  sixBrowsers: 'same permanent room',
+  firstDeparture: 'continued',
+  lostSpin: 'original operation after reload',
+  restart: 'same room',
+  screens: 'C:\\Users\\lopok\\Documents\\Palisade\\repo\\dev\\test/out/managed'
+}
+errors: none

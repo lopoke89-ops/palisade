@@ -1,0 +1,70 @@
+{
+  "scope": "local PGlite and synthetic clients share the server process; not Render capacity evidence",
+  "node": "v22.17.0",
+  "durationSeconds": 60,
+  "elapsedSeconds": 60.6293163,
+  "clients": 60,
+  "rooms": 10,
+  "restart": true,
+  "received": 53009,
+  "ackSampleCount": 20000,
+  "p50Ms": 31.954200000000128,
+  "p95Ms": 49.01829999999609,
+  "cpuSeconds": 5.5,
+  "beforeRestart": {
+    "ok": true,
+    "protocol": "casino-1",
+    "layout": 1,
+    "revision": 1,
+    "build": "local",
+    "ready": true,
+    "admissions": true,
+    "standby": false,
+    "occupants": 60,
+    "rooms": 10,
+    "worker": {
+      "steps": 0,
+      "errors": 0,
+      "lagMs": 0,
+      "repaired": 0
+    },
+    "stats": {
+      "connections": 60,
+      "snapshots": 4543,
+      "rejected": 0,
+      "ticks": 913,
+      "egressBytes": 6202680,
+      "tickMaxMs": 1.8993000000000393
+    },
+    "rssBytes": 400609280,
+    "uptimeSeconds": 33
+  },
+  "afterRestart": {
+    "ok": true,
+    "protocol": "casino-1",
+    "layout": 1,
+    "revision": 1,
+    "build": "local",
+    "ready": true,
+    "admissions": true,
+    "standby": false,
+    "occupants": 60,
+    "rooms": 10,
+    "worker": {
+      "steps": 0,
+      "errors": 0,
+      "lagMs": 0,
+      "repaired": 0
+    },
+    "stats": {
+      "connections": 60,
+      "snapshots": 4346,
+      "rejected": 0,
+      "ticks": 873,
+      "egressBytes": 5854790,
+      "tickMaxMs": 1.6107000000047265
+    },
+    "rssBytes": 404758528,
+    "uptimeSeconds": 63
+  }
+}

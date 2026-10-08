@@ -78,6 +78,7 @@ function addChat(id,name,text,team){
 }
 function sendChat(raw){
   const text=cleanChat(raw);if(!text||NET.mode==='solo')return;
+  if(mcActive()){if(MC.connected)mcSend({type:'chat',text});return}
   if(NET.mode==='host')hostChat('host',text);else NET.toHost({t:'c',m:text});
 }
 const chatRate=new Map();
