@@ -23,6 +23,7 @@ const Q='peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1&cloud=1';
    for(const h of a.hands)hands.push({game:t.game,hand_no:h.no,hash:h.hash,salt:h.salt,deck:h.deck,result:h.result,created_at:new Date().toISOString()});return{ok:true}},
   create:async a=>{if([...tables.values()].some(t=>t.open&&t.room===a.room&&t.game===a.game&&(t.station||'')===(a.station||'')))return{conflict:true};if(!applyOps(a.ops))return{error:'insufficient'};const id=nid++;tables.set(id,{id,code:a.code,game:a.game,room:a.room,station:a.station||'',st:a.st,ver:0,humans:a.humans,open:true});
    if(a.op)opsLog.set(a.op.uid+'|'+a.op.id,{req:a.op.req,table_id:id,res:a.op.res});return{ok:true,id}}};
+ const relay=process.env.PALISADE_TEST_RELAY?await require('./relay-fixture').start(users,tok):null;
  const b=await chromium.launch({executablePath:process.env.CHROMIUM||undefined}),errors=[],out={};
  const open=async(u,vp,m)=>{const ctx=await b.newContext({viewport:vp,isMobile:m,hasTouch:m});
   await ctx.route('https://puvjfhwxigxjpsvdwrwf.supabase.co/**',async route=>{const r=route.request(),url=new URL(r.url());let body=null;try{body=r.postDataJSON()}catch(e){}
@@ -31,7 +32,7 @@ const Q='peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1&cloud=1';
    return route.fulfill({status:200,contentType:'application/json',body:'null'})});
   const p=await ctx.newPage();p.on('pageerror',e=>errors.push(u.name+': '+e.message));p.on('console',m=>{if(m.type()==='error'&&!/Failed to load|net::|404/.test(m.text()))console.log('CONSOLE',u.name,m.text().slice(0,300))});
   await p.addInitScript(([s])=>{localStorage.setItem('palisade.auth.v1',s)},[JSON.stringify({access_token:tok(u),refresh_token:'r',expires_at:4e9,user:{id:u.id,is_anonymous:u.anon,email:u.anon?undefined:u.name+'@x.y',user_metadata:{pw:true}}})]);
-  await p.goto(`http://localhost:${process.env.PORT||8080}/debug.html?${Q}`);await ready(p);return p};
+  await p.goto(`http://localhost:${process.env.PORT||8080}/debug.html?${Q}`);await ready(p);if(relay){p.on('request',r=>{if(/peerjs|palisade-turn/.test(r.url()))errors.push('Relay loaded P2P: '+r.url())});await p.evaluate(()=>{globalThis.PALISADE_RELAY={enabled:true,url:'http://127.0.0.1:10000'}})}return p};
  const host=await open(users.A,{width:1366,height:820},false),guest=await open(users.B,{width:390,height:844},true);
  const V=p=>p.evaluate(()=>__pal.TB.v),poke=p=>p.evaluate(()=>{const T=__pal.TB;if(T.id)__pal.tbSend({op:'state',id:T.id},true)}).catch(()=>{}),
   until=async(p,f,ms=20000)=>{const t=Date.now();for(;;){const v=await V(p);if(v&&f(v))return v;if(Date.now()-t>ms)throw new Error('timed out waiting: '+JSON.stringify(v&&{phase:v.phase,myTurn:v.myTurn,game:v.game}));await poke(p);await p.waitForTimeout(80)}},
@@ -50,7 +51,7 @@ const Q='peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1&cloud=1';
  assert.equal(await host.$('#tbList'),null,'no table list: you walk up to a table');assert.equal(await host.$('#tbOpenBtn'),null,'no OPEN A TABLE');
  await host.screenshot({path:__dirname+'/out/tables_door_desktop.png'});
  await host.click('#casEnterBtn');await wait(host,()=>__pal.game&&__pal.game.mode==='casino'&&__pal.NET.mode==='host'&&__pal.NET.inGame&&!__pal.NET.autoCasino);
- out.room=await host.evaluate(()=>__pal.NET.code);assert.ok(/^[A-Z0-9]{4}$/.test(out.room),'the casino is a room with a code');
+ out.room=await host.evaluate(()=>__pal.NET.code);assert.ok((relay?/^R[A-Z2-9]{5}$/:/^[A-Z0-9]{4}$/).test(out.room),'the casino is a room with a code');
  assert.equal(await host.evaluate(()=>__pal.game.map),'casino');assert.equal(await host.evaluate(()=>__pal.enemies.length),0,'no raiders');
  await tab(guest);await guest.screenshot({path:__dirname+'/out/tables_door_portrait.png'});await guest.fill('#tbCode',out.room);await guest.tap('#tbJoinBtn');
  await wait(guest,()=>__pal.game&&__pal.game.mode==='casino'&&__pal.NET.mode==='guest'&&__pal.NET.inGame,null,20000);
@@ -145,5 +146,5 @@ const Q='peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1&cloud=1';
  // 8. a guest account is refused at the door
  const gp=await open(users.G,{width:390,height:844},true);await tab(gp);out.guestMsg=await gp.textContent('#tbMsg');assert.match(out.guestMsg,/account/i);assert.ok(await gp.isDisabled('#casEnterBtn'),'ENTER is off for guests');
  assert.deepEqual(errors,[],'no page errors');
- fs.writeFileSync(__dirname+'/out/tables_ui.json',JSON.stringify(out,null,1));console.log(JSON.stringify(out));console.log('errors: none');await b.close();
+ fs.writeFileSync(__dirname+'/out/tables_ui.json',JSON.stringify(out,null,1));console.log(JSON.stringify(out));console.log('errors: none');await b.close();if(relay)await relay.stop();
 })().catch(e=>{console.error(e);process.exit(1)});

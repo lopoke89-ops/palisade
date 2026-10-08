@@ -372,5 +372,5 @@ $('tbPick').addEventListener('click',async e=>{const b=e.target.closest('button[
 $('tbSeedBtn').addEventListener('click',async()=>{const s=$('tbSeedIn').value.replace(/[^0-9A-Za-z_-]/g,'').slice(0,64);if(!s){tbMsg('Pick a seed (letters and numbers)');return}
   try{localStorage.setItem('pal_seed',s)}catch(e){}const r=await tbSend({op:'seed',id:TB.id,seed:s});if(r&&!r.error)tbMsg('Your seed is in from the next round.')});
 $('casEnterBtn').addEventListener('click',()=>casEnter());
-$('tbJoinBtn').addEventListener('click',()=>{const c=$('tbCode').value.trim().toUpperCase();if(!/^[A-Z0-9]{4}$/.test(c)){tbMsg('Type your friend\'s 4-letter room code');return}casJoin(c)});
+$('tbJoinBtn').addEventListener('click',()=>{const c=$('tbCode').value.trim().toUpperCase();if(!/^[A-Z0-9]{4}$/.test(c)&&!rlyCode(c)){tbMsg('Type your friend\'s casino room code');return}casJoin(c)});
 $('tbMineLeave').addEventListener('click',async()=>{const m=TB.mine;if(!m)return;await tbSend({op:'leave',id:m.id});TB.mine=null;tbGone();renderTables()});

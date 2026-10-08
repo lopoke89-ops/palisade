@@ -67,6 +67,7 @@ function netFail(err){
   netReset();showPage('multi');mStatus(why);
 }
 function netReset(){
+  if(typeof RLY!=='undefined'&&RLY.active)rlyDisconnect();
   if(NET.mode==='host')lobbyUnpublish();
   clearChat();
   try{NET.peer&&NET.peer.destroy()}catch(e){}
@@ -76,6 +77,7 @@ function netLeave(msg){netReset();toMenu();if(msg){showPage('multi');mStatus(msg
 
 // ---------- host ----------
 async function netHost(){
+  if(pick.mode==='casino'&&rlyEnabled())return rlyEnter('host');
   if(inRun()&&$('menu').hidden)return;   // v0.9.3.7: never host or join over a live run
   if(!onlineOK()){mStatus('Getting online play ready…');if(!await needPeer()){mStatus(PEER_FAIL);return}if(NET.mode!=='solo')return}
   if(NET.mode==='opening'||NET.mode==='joining')return;   // already on its way
@@ -215,6 +217,7 @@ function hostKick(pid){
   if(NET.mode!=='host'||pid==='host')return;
   for(const [peerId,c] of NET.conns)if(c.pid===pid&&!c.kicked){
     c.kicked=true;if(c.session)NET.banned.add(c.session);
+    if(rlyActive())rlySend({type:'remove',peer:peerId,ban:true});
     try{c.r&&c.r.open&&c.r.send({t:'kick',why:'The host removed you from the game.'})}catch(e){}
     setTimeout(()=>hostDrop(peerId),250);return;
   }
@@ -226,6 +229,7 @@ const lobbyGuests=()=>NET.roster.filter(r=>r.id!=='host'),lobbyAllReady=()=>lobb
 function broadcastLobby(){
   if(NET.mode==='host'&&!NET.inGame){const sig=lobbySig();if(NET.readySig!==undefined&&NET.readySig!==sig)for(const r of NET.roster)r.ready=false;NET.readySig=sig}
   const msg={t:'lobby',roster:NET.roster,code:NET.code,diff:pick.diff,mode:pick.mode,pvp:pick.pvp,map:pick.map,size:pick.size,playing:NET.inGame,mods:roomMods(),job:pick.job,locked:NET.roomLocked};
+  if(rlyActive())rlySend({type:'room',locked:NET.roomLocked});
   NET.sendAll(msg);if(!NET.inGame)renderLobby();
   if(NET.mode==='host'&&pubTimer)lobbyPublish();
 }
@@ -249,8 +253,8 @@ function startOnline(){
 let lobbyT=0;
 function lobbyNet(dt){
   lobbyT-=dt;if(lobbyT>0)return;lobbyT=2;const now=performance.now();
-  if(NET.mode==='host'){NET.sendAll({t:'ping'});for(const[id,c]of NET.conns)if(c.pid&&now-c.heard>25000)hostDrop(id)}
-  else if(NET.mode==='guest'){NET.toHost({t:'ping'});if(now-NET.lastHeard>25000)netLeave('Lost the host while waiting in the lobby.')}
+  if(NET.mode==='host'){NET.sendAll({t:'ping'});for(const[id,c]of NET.conns)if(!rlyActive()&&c.pid&&now-c.heard>25000)hostDrop(id)}
+  else if(NET.mode==='guest'){NET.toHost({t:'ping'});if(!rlyActive()&&now-NET.lastHeard>25000)netLeave('Lost the host while waiting in the lobby.')}
 }
 function hostNet(dt){
   if(!NET.inGame){lobbyNet(dt);return}
@@ -267,7 +271,7 @@ function hostNet(dt){
     const pi=changedInfo();
     if(NET.fxq.length||wl||wd||pi){sendEvents(NET.fxq,wl,wd,pi);NET.fxq=[]}}
   const now=performance.now();
-  for(const[id,c]of NET.conns)if(c.pid&&now-c.heard>12000)hostDrop(id);   // phone locked or walked out of signal
+  for(const[id,c]of NET.conns)if(!rlyActive()&&c.pid&&now-c.heard>12000)hostDrop(id);   // relay owns its bounded reconnect grace
 }
 // one-off events (sounds, particles, toasts, bullets, kill feed) and wall changes go on the reliable channel, so a
 // lost or late state packet never takes them with it; big batches are split to stay under PeerJS's 16 KB JSON limit
@@ -371,6 +375,7 @@ function makeSnap(withWalls){
 
 // ---------- guest ----------
 async function netJoin(code,invitationSession=''){
+  const relayRoute=String(code||'').trim().toUpperCase();if(rlyCode(relayRoute))return rlyEnter('guest',relayRoute,invitationSession);
   if(inRun()&&$('menu').hidden)return;   // v0.9.3.7: never host or join over a live run
   if(!onlineOK()){mStatus('Getting online play ready…');if(!await needPeer()){mStatus(PEER_FAIL);return}if(NET.mode!=='solo')return}
   code=String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
@@ -508,6 +513,6 @@ function guestUpdate(dt){
   if(player&&player.alive){NET.inT-=dt;if(NET.inT<=0){NET.inT=1/30;const p=player;
     NET.toHost({t:'i',x:r2(p.x),y:r2(p.y),ax:r2(p.aim.x),ay:r2(p.aim.y),f:p.fireIn?1:0,tp:p.tp,n:mouse.pulls,a:p.autoFire?1:0,st:p.seat|0},'u')}}
   else{NET.inT-=dt;if(NET.inT<=0){NET.inT=1;NET.toHost({t:'ping'},'u')}}
-  if(performance.now()-NET.lastHeard>12000)netLeave('Lost the host. Their phone may have locked or dropped signal.');
+  if(!rlyActive()&&performance.now()-NET.lastHeard>12000)netLeave('Lost the host. Their phone may have locked or dropped signal.');
 }
 

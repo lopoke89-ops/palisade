@@ -1,5 +1,9 @@
 # PALISADE project status
 
+## Current casino scope — October 8 clarification
+
+The user wants player-hosted casino lobbies with Render relaying reliable connections, rather than permanent server-owned casinos. The active candidate is `casino-render-relay`, based on the published v0.10.4 branch. The earlier `casino-persistent-render` candidate/draft PR #28 is preserved but superseded; its paid-hosting request and always-on release gates no longer apply. See [the corrected work order](plans/casino-render-relay-work-order.md). Production remains unchanged while relay verification is in progress. No paid plan is approved or being selected.
+
 Updated October 6, 2026. This is the current status record for the clone. The older project handoff and v0.9.3 hardening prompt describe a superseded release order.
 
 For a consolidated list of what remains from those documents, see the [current project blueprint](PROJECT_BLUEPRINT_2026-09-29.md).
