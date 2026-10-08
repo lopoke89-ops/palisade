@@ -1,0 +1,15 @@
+{
+  "observedDate": "2026-10-08",
+  "workspace": "Big U's workspace",
+  "source": "Authenticated Render billing dashboard",
+  "plan": "Hobby",
+  "paymentMethod": "No card on file",
+  "serviceInstance": "Free",
+  "freeInstanceHours": {"displayedUsed": 0.57, "included": 750},
+  "services": {"displayedUsed": 1, "included": 25},
+  "outboundBandwidth": {"displayedUsedMB": 0, "includedGB": 5},
+  "pipelineMinutes": {"displayedUsed": 1, "included": 500},
+  "monthToDateUSD": 0,
+  "projectedMonthUSD": 0,
+  "limits": "Provider usage can lag or round. Displayed zero MB is not a claim of zero actual egress. No paid compute, card, billing limit or plan was changed."
+}

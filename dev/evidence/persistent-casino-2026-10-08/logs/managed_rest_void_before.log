@@ -1,0 +1,9 @@
+Node 22.17.0; new HTTP 204 regression before storage repair.
+SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at parseJSONFromBytes (node:internal/deps/undici/undici:5738:19)
+    at successSteps (node:internal/deps/undici/undici:5719:27)
+    at consumeBody (node:internal/deps/undici/undici:5725:9)
+    at _Response.json (node:internal/deps/undici/undici:5665:18)
+    at request (dev/supabase/functions/tables/storage.js:24:19)
+    at async dev/test/managed_rest.js:29:17

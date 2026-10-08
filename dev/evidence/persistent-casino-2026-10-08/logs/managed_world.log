@@ -2,14 +2,14 @@ TAP version 13
 # Subtest: joining avatars are published only after their identity roster
 ok 1 - joining avatars are published only after their identity roster
   ---
-  duration_ms: 3442.1484
+  duration_ms: 3484.5611
   type: 'test'
   ...
 # WebSocket tests: hostless continuity, shared fixed movement, safe checkpoint, chat/privacy, explicit takeover, empty sleep and stable restart passed.
 # Subtest: authoritative floor, first/last departure, takeover, privacy and restart
 ok 2 - authoritative floor, first/last departure, takeover, privacy and restart
   ---
-  duration_ms: 2343.25
+  duration_ms: 2318.357
   type: 'test'
   ...
 1..2
@@ -20,5 +20,5 @@ ok 2 - authoritative floor, first/last departure, takeover, privacy and restart
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 6019.1511
+# duration_ms 6036.9057
 errors: none

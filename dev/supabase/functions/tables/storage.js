@@ -21,7 +21,8 @@ export function restStorage(url,key){
   // Modern server keys are opaque API keys, not user JWTs. Keep user tokens in Authorization.
   if(token&&!(token===key&&key.startsWith('sb_secret_')))headers.Authorization='Bearer '+token;
   const r=await fetch(url+path,{method,headers,body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(10000)});
-  const j=await r.json();if(!r.ok)throw new Error(j.message||j.msg||'Database request failed');return j;
+  // Successful PostgREST RETURNS void RPCs have no body (HTTP 204).
+  const j=r.status===204?null:await r.json();if(!r.ok)throw new Error(j?.message||j?.msg||'Database request failed');return j;
  };
  const rpc=(name,p={})=>request('/rest/v1/rpc/'+name,p);
  const rows=(table,q)=>request('/rest/v1/'+table+'?'+new URLSearchParams(q));

@@ -1,0 +1,25 @@
+{
+  "project": "nxsqerlpqdzrjwqxhsdz",
+  "serviceId": "srv-db3tn82j9qps73fe2t30",
+  "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+  "observations": [
+    {
+      "providerTime": "2026-10-08 13:34:41 America/Chicago",
+      "timeUtc": "2026-10-08T18:34:41Z",
+      "event": "worker_unavailable",
+      "error": "The operation was aborted due to timeout",
+      "context": "One HTTP timeout during startup/deployment; no casino tables, operations or ledger entries existed yet.",
+      "limits": "The log does not identify which database request timed out. Recovery on an exact subsequent cycle was not timed."
+    },
+    {
+      "timeUtc": "2026-10-08T18:45:00.909Z",
+      "event": "live_browser_smoke_passed",
+      "workerErrorsBefore": 1,
+      "workerErrorsAfter": 1,
+      "workerErrorDelta": 0,
+      "evidence": "live-browser.json",
+      "context": "Healthy world/worker leases were observed after the timeout. The six-browser run had no new worker errors."
+    }
+  ],
+  "lifetimeZeroErrors": false
+}

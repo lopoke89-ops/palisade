@@ -1,0 +1,170 @@
+{
+  "started": "2026-10-08T18:35:39.068Z",
+  "ended": "2026-10-08T18:36:58.402Z",
+  "service": "https://palisade-casino-staging.onrender.com",
+  "expectedCommit": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+  "ready": true,
+  "samples": [
+    {
+      "time": "2026-10-08T18:35:39.455Z",
+      "status": 200,
+      "latencyMs": 386,
+      "build": "a42d17a91b287a62da143f12608111ed97b54712",
+      "ready": true,
+      "standby": false,
+      "admissions": false,
+      "workerErrors": 0
+    },
+    {
+      "time": "2026-10-08T18:35:44.682Z",
+      "status": 200,
+      "latencyMs": 225,
+      "build": "a42d17a91b287a62da143f12608111ed97b54712",
+      "ready": true,
+      "standby": false,
+      "admissions": false,
+      "workerErrors": 0
+    },
+    {
+      "time": "2026-10-08T18:35:49.926Z",
+      "status": 200,
+      "latencyMs": 244,
+      "build": "a42d17a91b287a62da143f12608111ed97b54712",
+      "ready": true,
+      "standby": false,
+      "admissions": false,
+      "workerErrors": 0
+    },
+    {
+      "time": "2026-10-08T18:35:55.157Z",
+      "status": 200,
+      "latencyMs": 230,
+      "build": "a42d17a91b287a62da143f12608111ed97b54712",
+      "ready": true,
+      "standby": false,
+      "admissions": false,
+      "workerErrors": 0
+    },
+    {
+      "time": "2026-10-08T18:36:00.381Z",
+      "status": 200,
+      "latencyMs": 224,
+      "build": "a42d17a91b287a62da143f12608111ed97b54712",
+      "ready": true,
+      "standby": false,
+      "admissions": false,
+      "workerErrors": 0
+    },
+    {
+      "time": "2026-10-08T18:36:05.617Z",
+      "status": 200,
+      "latencyMs": 236,
+      "build": "a42d17a91b287a62da143f12608111ed97b54712",
+      "ready": true,
+      "standby": false,
+      "admissions": false,
+      "workerErrors": 0
+    },
+    {
+      "time": "2026-10-08T18:36:10.851Z",
+      "status": 200,
+      "latencyMs": 234,
+      "build": "a42d17a91b287a62da143f12608111ed97b54712",
+      "ready": true,
+      "standby": false,
+      "admissions": false,
+      "workerErrors": 0
+    },
+    {
+      "time": "2026-10-08T18:36:16.271Z",
+      "status": 200,
+      "latencyMs": 420,
+      "build": "a42d17a91b287a62da143f12608111ed97b54712",
+      "ready": true,
+      "standby": false,
+      "admissions": false,
+      "workerErrors": 0
+    },
+    {
+      "time": "2026-10-08T18:36:21.534Z",
+      "status": 200,
+      "latencyMs": 263,
+      "build": "a42d17a91b287a62da143f12608111ed97b54712",
+      "ready": true,
+      "standby": false,
+      "admissions": false,
+      "workerErrors": 0
+    },
+    {
+      "time": "2026-10-08T18:36:26.781Z",
+      "status": 200,
+      "latencyMs": 246,
+      "build": "a42d17a91b287a62da143f12608111ed97b54712",
+      "ready": true,
+      "standby": false,
+      "admissions": false,
+      "workerErrors": 0
+    },
+    {
+      "time": "2026-10-08T18:36:32.122Z",
+      "status": 200,
+      "latencyMs": 340,
+      "build": "a42d17a91b287a62da143f12608111ed97b54712",
+      "ready": true,
+      "standby": false,
+      "admissions": false,
+      "workerErrors": 0
+    },
+    {
+      "time": "2026-10-08T18:36:37.381Z",
+      "status": 503,
+      "latencyMs": 258,
+      "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+      "ready": false,
+      "standby": true,
+      "admissions": false,
+      "workerErrors": 0
+    },
+    {
+      "time": "2026-10-08T18:36:42.580Z",
+      "status": 503,
+      "latencyMs": 198,
+      "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+      "ready": false,
+      "standby": true,
+      "admissions": false,
+      "workerErrors": 0
+    },
+    {
+      "time": "2026-10-08T18:36:47.983Z",
+      "status": 503,
+      "latencyMs": 402,
+      "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+      "ready": false,
+      "standby": true,
+      "admissions": false,
+      "workerErrors": 0
+    },
+    {
+      "time": "2026-10-08T18:36:53.208Z",
+      "status": 503,
+      "latencyMs": 224,
+      "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+      "ready": false,
+      "standby": true,
+      "admissions": false,
+      "workerErrors": 0
+    },
+    {
+      "time": "2026-10-08T18:36:58.402Z",
+      "status": 200,
+      "latencyMs": 193,
+      "build": "b0476cefd56203b16f700f8ff18e93076ec54e8d",
+      "ready": true,
+      "standby": false,
+      "admissions": false,
+      "workerErrors": 0
+    }
+  ],
+  "limits": "Health polling with no players; not cold-start or active-player cutover certification"
+}
