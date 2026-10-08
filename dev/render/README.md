@@ -6,8 +6,8 @@ The candidate is v0.10.5. The published client configuration in `client.json` is
 
 ## Runtime and authority
 
-- Render: Node **22.17.0**, `ws` **8.22.0**, one Free web service in **Virginia**. Build/start/health are in the root `render.yaml`; automatic deployments are off.
-- Supabase staging: a separate Free project in **lopoke89-ops's Org**, **us-east-1**. Never point this staging service or its load tests at the production project.
+- Render: Node **22.17.0**, `ws` **8.22.0**, one Free web service planned in **Oregon**, near the staging database. Build/start/health are in the root `render.yaml`; automatic deployments are off.
+- Supabase staging: the separate Free project **palisade-casino-staging** (`nxsqerlpqdzrjwqxhsdz`) in **lopoke89-ops's Org**, **us-west-2**. The user created it in US West, so Render uses Oregon. Never point this staging service or its load tests at production.
 - API: the existing `tables` function and shared `handler.js`, `engine.js`, `games.js`, `managed.js`, `storage.js`; SDK **2.117.3**. Node and Deno use the same economic rules and transaction adapter.
 - Versions: wire `casino-1`, layout `1`, storage/managed adapter `1`, fair-play `2`, rules `bj-2`, `he-2`, `rl-2`, `ba-1`, `cr-1`, `sl-1`, `pk-1`. An incompatible managed write is refused.
 - Ten durable rooms, six humans each. UUID identity `C:<uuid>` and permanent six-character code survive process replacement. The primary code is `PALACE`. Admission fills the existing populated room before opening bounded overflow.
@@ -16,9 +16,9 @@ The service role key is a server secret. Set it through Render's environment con
 
 ## Stage and verify
 
-1. Create the isolated Free Supabase project. The organization was chosen by the user; the connector's `get_cost` workflow is unavailable, so project creation is pending. Do not upgrade plans to bypass this.
-2. Initialize that **empty staging project** with `dev/supabase/schema.sql`, which includes the new migration in the standalone restore. For an existing database with the previous migrations, apply only `20261008133818_persistent_casino_world.sql` through the migration workflow. Never apply both forms to the same database.
-3. Deploy the `tables` Edge function with its relative JS files. It verifies callers with `getUser`; if using modern publishable keys with custom function authentication, configure the gateway consistently with the existing deployment and verify both authenticated success and unauthenticated refusal. Check the migration record, RLS/grants and function diagnostics.
+1. The user created the isolated Free Supabase project; it is healthy on PostgreSQL 17.11. Do not upgrade plans to bypass limits.
+2. **Completed October 8:** the empty staging project was initialized with `dev/supabase/schema.sql`, including the new migration in the standalone restore. Recorded migration: `20261008165641_initialize_palisade_casino_staging`. Do not initialize it again. For an existing database with the previous migrations, apply only `20261008133818_persistent_casino_world.sql`; never apply both forms to one database.
+3. **Completed October 8:** staging `tables` version 1 is active with its five relative JS dependencies, SDK 2.117.3 and custom `getUser` authentication (`verify_jwt=false`). Twenty-one live requests with missing, forged or publishable credentials were refused. Authenticated game success is still pending. All 24 public tables have RLS; managed world/start/step/repair RPCs are service-only. See the saved staging evidence for advisor findings.
 4. Create `palisade-casino-staging` from GitHub branch `casino-persistent-render`, using `render.yaml`. Supply `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` and an exact `ALLOWED_ORIGINS` list. Render provides `PORT`; the process binds `0.0.0.0`.
 5. Confirm `/healthz` is 200 and reports the expected commit, protocol, layout and revision. `/readyz` must be 200 for the active lease owner. A healthy standby can pass `/healthz` without owning the world, preventing a deployment readiness deadlock.
 6. Create disposable saved test accounts **in staging**, supply an account UUID allowlist, and enable admissions/new wagers there. Verify every game and the daily books with disposable balances. No production users or wallets belong in this test.
@@ -26,6 +26,8 @@ The service role key is a server secret. Set it through Render's environment con
 8. Complete the outstanding staging gates listed in the execution report. Public production admission remains disabled until the evidence supports the release.
 
 Local development uses `npm ci` in `dev/render`, environment variables from the staging project, then `npm start`. Add `http://localhost:8080` to staging `ALLOWED_ORIGINS` for local browser verification. Keep each deployment's credentials and database separate.
+
+`node dev/render/probe-staging.mjs` repeats the read-only public-access checks. Set `SUPABASE_URL=https://nxsqerlpqdzrjwqxhsdz.supabase.co`, `SUPABASE_PUBLISHABLE_KEY` to that project's public key, and optionally `STAGING_PROBE_OUTPUT` to the report path. It refuses any other project and needs no server secret. These negative checks do not certify authenticated game behavior.
 
 ## Messages and lifecycle
 

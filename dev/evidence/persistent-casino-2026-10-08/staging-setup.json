@@ -1,0 +1,848 @@
+{
+  "time": "2026-10-08T16:58:06Z",
+  "project": "nxsqerlpqdzrjwqxhsdz",
+  "organization": "fybiqyiinbwplibsnaph",
+  "region": "us-west-2",
+  "productionChanged": false,
+  "schema": {
+    "migration": "20261008165641_initialize_palisade_casino_staging",
+    "source": "dev/supabase/schema.sql",
+    "sha256": "AC0F96D557AA4BA3BF4A7EC6A48534F0AA4E59271D538328DC863DFB40EED47D",
+    "rooms": 10,
+    "users": 0,
+    "tables": 0,
+    "ledger": 0,
+    "publicTablesWithRls": 24
+  },
+  "config": {
+    "revision": 1,
+    "admissions": false,
+    "new_wagers": false,
+    "recovery": true,
+    "allowlist": []
+  },
+  "edge": {
+    "name": "tables",
+    "version": 1,
+    "status": "ACTIVE",
+    "verify_jwt": false,
+    "customAuth": "Supabase Auth getUser; missing, forged and publishable credentials rejected in live probe",
+    "bundleSha256": "8dc1b2cc060b9c4d58bfd2f9703fcbf3e11acdd261c5ded82ec35d567ec56c25"
+  },
+  "privilegedFunctions": {
+    "names": [
+      "casino_world",
+      "casino_managed_start",
+      "casino_managed_step",
+      "casino_recovery_repair"
+    ],
+    "anon": false,
+    "authenticated": false,
+    "service_role": true
+  },
+  "security": {
+    "lints": [
+      {
+        "name": "rls_enabled_no_policy",
+        "title": "RLS Enabled No Policy",
+        "level": "INFO",
+        "facing": "EXTERNAL",
+        "categories": [
+          "SECURITY"
+        ],
+        "description": "Detects cases where row level security (RLS) has been enabled on a table but no RLS policies have been created.",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy",
+        "count": 18,
+        "findings": [
+          {
+            "detail": "Table \\`private.case_openings\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "case_openings",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Table \\`private.lobby_invites\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "lobby_invites",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Table \\`private.reward_receipts\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "reward_receipts",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Table \\`private.room_sessions\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "room_sessions",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Table \\`public.blocked_words\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "blocked_words",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Table \\`public.casino_books\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "casino_books",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Table \\`public.casino_controllers\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "casino_controllers",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Table \\`public.casino_hands\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "casino_hands",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Table \\`public.casino_leases\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "casino_leases",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Table \\`public.casino_ledger\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "casino_ledger",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Table \\`public.casino_members\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "casino_members",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Table \\`public.casino_ops\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "casino_ops",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Table \\`public.casino_positions\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "casino_positions",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Table \\`public.casino_reservations\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "casino_reservations",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Table \\`public.casino_rooms\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "casino_rooms",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Table \\`public.casino_seats\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "casino_seats",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Table \\`public.casino_tables\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "casino_tables",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Table \\`public.casino_world_config\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "casino_world_config",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          }
+        ]
+      },
+      {
+        "name": "extension_in_public",
+        "title": "Extension in Public",
+        "level": "WARN",
+        "facing": "EXTERNAL",
+        "categories": [
+          "SECURITY"
+        ],
+        "description": "Detects extensions installed in the \\`public\\` schema.",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0014_extension_in_public",
+        "count": 1,
+        "findings": [
+          {
+            "detail": "Extension \\`citext\\` is installed in the public schema. Move it to another schema.",
+            "metadata": {
+              "name": "citext",
+              "type": "extension",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          }
+        ]
+      },
+      {
+        "name": "anon_security_definer_function_executable",
+        "title": "Public Can Execute SECURITY DEFINER Function",
+        "level": "WARN",
+        "facing": "EXTERNAL",
+        "categories": [
+          "SECURITY"
+        ],
+        "description": "Detects `SECURITY DEFINER` functions that are callable without signing in. Revoke `EXECUTE`, switch the function to `SECURITY INVOKER`, or move it out of your exposed API schema if it is not meant to be public.",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable",
+        "count": 5,
+        "findings": [
+          {
+            "detail": "Function `public.buy_case(p_case text, p_rev integer)` can be executed by the `anon` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/buy_case`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "buy_case",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_case text, p_rev integer",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Function `public.equip(p_item text, p_rev integer)` can be executed by the `anon` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/equip`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "equip",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_item text, p_rev integer",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Function `public.get_my_locker()` can be executed by the `anon` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/get_my_locker`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "get_my_locker",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Function `public.import_local_save(p_save jsonb)` can be executed by the `anon` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/import_local_save`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "import_local_save",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_save jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Function `public.set_username(p_name text)` can be executed by the `anon` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/set_username`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "set_username",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_name text",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          }
+        ]
+      },
+      {
+        "name": "authenticated_security_definer_function_executable",
+        "title": "Signed-In Users Can Execute SECURITY DEFINER Function",
+        "level": "WARN",
+        "facing": "EXTERNAL",
+        "categories": [
+          "SECURITY"
+        ],
+        "description": "Detects `SECURITY DEFINER` functions that are callable by signed-in users. Revoke `EXECUTE`, switch the function to `SECURITY INVOKER`, or move it out of your exposed API schema if signed-in users should not call it.",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable",
+        "count": 21,
+        "findings": [
+          {
+            "detail": "Function `public.buy_case(p_case text, p_rev integer)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/buy_case`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "buy_case",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_case text, p_rev integer",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Function `public.buy_case_sp(p_rev integer)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/buy_case_sp`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "buy_case_sp",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_rev integer",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Function `public.casino_invite_answer(p_id uuid, p_accept boolean)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/casino_invite_answer`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "casino_invite_answer",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_id uuid, p_accept boolean",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Function `public.casino_invite_send(p_to uuid, p_room text, p_session uuid, p_generation bigint)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/casino_invite_send`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "casino_invite_send",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_to uuid, p_room text, p_session uuid, p_generation bigint",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Function `public.claim_match_reward(p jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/claim_match_reward`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "claim_match_reward",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Function `public.equip(p_item text, p_rev integer)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/equip`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "equip",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_item text, p_rev integer",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Function `public.friend_answer(p_id bigint, p_accept boolean)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/friend_answer`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "friend_answer",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_id bigint, p_accept boolean",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Function `public.friend_cancel(p_id bigint)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/friend_cancel`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "friend_cancel",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_id bigint",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Function `public.friend_remove(p_other uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/friend_remove`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "friend_remove",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_other uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Function `public.friend_send(p_to uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/friend_send`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "friend_send",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_to uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Function `public.get_my_locker()` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/get_my_locker`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "get_my_locker",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Function `public.import_local_save(p_save jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/import_local_save`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "import_local_save",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_save jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Function `public.lobby_invite_answer(p_id uuid, p_accept boolean, p_proto text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/lobby_invite_answer`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "lobby_invite_answer",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_id uuid, p_accept boolean, p_proto text",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Function `public.lobby_invite_send(p_to uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/lobby_invite_send`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "lobby_invite_send",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_to uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Function `public.notes_seen(p_upto bigint)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/notes_seen`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "notes_seen",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_upto bigint",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Function `public.room_register(p jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/room_register`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "room_register",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p jsonb",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Function `public.set_username(p_name text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/set_username`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "set_username",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_name text",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Function `public.skill_buy(p_node text, p_rev integer)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/skill_buy`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "skill_buy",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_node text, p_rev integer",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Function `public.skill_respec(p_rev integer)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/skill_respec`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "skill_respec",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_rev integer",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Function `public.skills_of(p_uid uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/skills_of`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "skills_of",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "p_uid uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          },
+          {
+            "detail": "Function `public.social_state()` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/social_state`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "social_state",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-08T16:58:06.602Z"
+          }
+        ]
+      }
+    ]
+  },
+  "performance": {
+    "lints": [
+      {
+        "name": "unindexed_foreign_keys",
+        "title": "Unindexed foreign keys",
+        "level": "INFO",
+        "facing": "EXTERNAL",
+        "categories": [
+          "PERFORMANCE"
+        ],
+        "description": "Identifies foreign key constraints without a covering index, which can impact database performance.",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys",
+        "count": 6,
+        "findings": [
+          {
+            "detail": "Table \\`private.case_openings\\` has a foreign key \\`case_openings_case_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+            "metadata": {
+              "name": "case_openings",
+              "type": "table",
+              "schema": "private",
+              "fkey_name": "case_openings_case_id_fkey",
+              "fkey_columns": [
+                3
+              ]
+            },
+            "observed_at": "2026-10-08T16:58:06.852Z"
+          },
+          {
+            "detail": "Table \\`private.lobby_invites\\` has a foreign key \\`lobby_invites_managed_room_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+            "metadata": {
+              "name": "lobby_invites",
+              "type": "table",
+              "schema": "private",
+              "fkey_name": "lobby_invites_managed_room_fkey",
+              "fkey_columns": [
+                9
+              ]
+            },
+            "observed_at": "2026-10-08T16:58:06.852Z"
+          },
+          {
+            "detail": "Table \\`public.casino_controllers\\` has a foreign key \\`casino_controllers_room_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+            "metadata": {
+              "name": "casino_controllers",
+              "type": "table",
+              "schema": "public",
+              "fkey_name": "casino_controllers_room_id_fkey",
+              "fkey_columns": [
+                4
+              ]
+            },
+            "observed_at": "2026-10-08T16:58:06.852Z"
+          },
+          {
+            "detail": "Table \\`public.casino_positions\\` has a foreign key \\`casino_positions_room_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+            "metadata": {
+              "name": "casino_positions",
+              "type": "table",
+              "schema": "public",
+              "fkey_name": "casino_positions_room_id_fkey",
+              "fkey_columns": [
+                2
+              ]
+            },
+            "observed_at": "2026-10-08T16:58:06.852Z"
+          },
+          {
+            "detail": "Table \\`public.cosmetics\\` has a foreign key \\`cosmetics_box_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+            "metadata": {
+              "name": "cosmetics",
+              "type": "table",
+              "schema": "public",
+              "fkey_name": "cosmetics_box_fkey",
+              "fkey_columns": [
+                8
+              ]
+            },
+            "observed_at": "2026-10-08T16:58:06.852Z"
+          },
+          {
+            "detail": "Table \\`public.notifications\\` has a foreign key \\`notifications_from_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+            "metadata": {
+              "name": "notifications",
+              "type": "table",
+              "schema": "public",
+              "fkey_name": "notifications_from_id_fkey",
+              "fkey_columns": [
+                4
+              ]
+            },
+            "observed_at": "2026-10-08T16:58:06.852Z"
+          }
+        ]
+      },
+      {
+        "name": "unused_index",
+        "title": "Unused Index",
+        "level": "INFO",
+        "facing": "EXTERNAL",
+        "categories": [
+          "PERFORMANCE"
+        ],
+        "description": "Detects if an index has never been used and may be a candidate for removal.",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+        "count": 19,
+        "findings": [
+          {
+            "detail": "Index \\`friend_requests_from_time\\` on table \\`public.friend_requests\\` has not been used",
+            "metadata": {
+              "name": "friend_requests",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.852Z"
+          },
+          {
+            "detail": "Index \\`match_results_user_time\\` on table \\`public.match_results\\` has not been used",
+            "metadata": {
+              "name": "match_results",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.852Z"
+          },
+          {
+            "detail": "Index \\`lobbies_fresh\\` on table \\`public.lobbies\\` has not been used",
+            "metadata": {
+              "name": "lobbies",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.852Z"
+          },
+          {
+            "detail": "Index \\`friend_requests_to\\` on table \\`public.friend_requests\\` has not been used",
+            "metadata": {
+              "name": "friend_requests",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.852Z"
+          },
+          {
+            "detail": "Index \\`friendships_b\\` on table \\`public.friendships\\` has not been used",
+            "metadata": {
+              "name": "friendships",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.852Z"
+          },
+          {
+            "detail": "Index \\`notifications_user\\` on table \\`public.notifications\\` has not been used",
+            "metadata": {
+              "name": "notifications",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.852Z"
+          },
+          {
+            "detail": "Index \\`match_results_game\\` on table \\`public.match_results\\` has not been used",
+            "metadata": {
+              "name": "match_results",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.852Z"
+          },
+          {
+            "detail": "Index \\`match_results_game_all\\` on table \\`public.match_results\\` has not been used",
+            "metadata": {
+              "name": "match_results",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.852Z"
+          },
+          {
+            "detail": "Index \\`lobby_invites_recipient\\` on table \\`private.lobby_invites\\` has not been used",
+            "metadata": {
+              "name": "lobby_invites",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-08T16:58:06.852Z"
+          },
+          {
+            "detail": "Index \\`lobby_invites_sender\\` on table \\`private.lobby_invites\\` has not been used",
+            "metadata": {
+              "name": "lobby_invites",
+              "type": "table",
+              "schema": "private"
+            },
+            "observed_at": "2026-10-08T16:58:06.852Z"
+          },
+          {
+            "detail": "Index \\`casino_tables_open\\` on table \\`public.casino_tables\\` has not been used",
+            "metadata": {
+              "name": "casino_tables",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.852Z"
+          },
+          {
+            "detail": "Index \\`casino_ledger_user\\` on table \\`public.casino_ledger\\` has not been used",
+            "metadata": {
+              "name": "casino_ledger",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.852Z"
+          },
+          {
+            "detail": "Index \\`casino_ledger_kind\\` on table \\`public.casino_ledger\\` has not been used",
+            "metadata": {
+              "name": "casino_ledger",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.852Z"
+          },
+          {
+            "detail": "Index \\`casino_hands_players\\` on table \\`public.casino_hands\\` has not been used",
+            "metadata": {
+              "name": "casino_hands",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.852Z"
+          },
+          {
+            "detail": "Index \\`casino_hands_table\\` on table \\`public.casino_hands\\` has not been used",
+            "metadata": {
+              "name": "casino_hands",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.852Z"
+          },
+          {
+            "detail": "Index \\`casino_due\\` on table \\`public.casino_tables\\` has not been used",
+            "metadata": {
+              "name": "casino_tables",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.852Z"
+          },
+          {
+            "detail": "Index \\`casino_ops_table\\` on table \\`public.casino_ops\\` has not been used",
+            "metadata": {
+              "name": "casino_ops",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.852Z"
+          },
+          {
+            "detail": "Index \\`casino_members_room\\` on table \\`public.casino_members\\` has not been used",
+            "metadata": {
+              "name": "casino_members",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.852Z"
+          },
+          {
+            "detail": "Index \\`casino_reservation_user\\` on table \\`public.casino_reservations\\` has not been used",
+            "metadata": {
+              "name": "casino_reservations",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-08T16:58:06.852Z"
+          }
+        ]
+      }
+    ]
+  },
+  "render": {
+    "installed": true,
+    "toolsAvailable": false,
+    "plannedRegion": "oregon",
+    "service": "pending"
+  },
+  "limits": "No authenticated game, Render runtime or capacity certification yet. Remaining advisor findings are documented in README.md."
+}
