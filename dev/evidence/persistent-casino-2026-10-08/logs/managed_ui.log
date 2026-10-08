@@ -1,0 +1,10 @@
+{
+  sheets: 35,
+  viewports: 5,
+  touch: 'portrait and landscape',
+  sixAvatars: true,
+  sharedHoldemPrivateCards: 'redacted',
+  hideStand: 'distinct',
+  screens: 'C:\\Users\\lopok\\Documents\\Palisade\\repo\\dev\\test/out/managed-ui'
+}
+errors: none

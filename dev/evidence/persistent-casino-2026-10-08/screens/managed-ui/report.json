@@ -1,0 +1,671 @@
+{
+  "scope": "local managed WSS and SQL; authoritative placement fixtures for UI inspection",
+  "sheets": [
+    {
+      "game": "bj",
+      "width": 390,
+      "height": 844,
+      "touch": true,
+      "bounds": {
+        "x": 192.39999999999998,
+        "y": 222.81,
+        "sheet": {
+          "left": 0,
+          "right": 390,
+          "top": 303.84375,
+          "bottom": 844
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "he",
+      "width": 390,
+      "height": 844,
+      "touch": true,
+      "bounds": {
+        "x": 197.09468221277712,
+        "y": 190.30101532672256,
+        "sheet": {
+          "left": 0,
+          "right": 390,
+          "top": 303.84375,
+          "bottom": 844
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "rl",
+      "width": 390,
+      "height": 844,
+      "touch": true,
+      "bounds": {
+        "x": 190.39999999999998,
+        "y": 204.31000000000003,
+        "sheet": {
+          "left": 0,
+          "right": 390,
+          "top": 303.84375,
+          "bottom": 844
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "ba",
+      "width": 390,
+      "height": 844,
+      "touch": true,
+      "bounds": {
+        "x": 185.84948714922393,
+        "y": 200.89341015320022,
+        "sheet": {
+          "left": 0,
+          "right": 390,
+          "top": 303.84375,
+          "bottom": 844
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "cr",
+      "width": 390,
+      "height": 844,
+      "touch": true,
+      "bounds": {
+        "x": 185.59999999999997,
+        "y": 203.61,
+        "sheet": {
+          "left": 0,
+          "right": 390,
+          "top": 303.84375,
+          "bottom": 844
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "sl",
+      "width": 390,
+      "height": 844,
+      "touch": true,
+      "bounds": {
+        "x": 199.8,
+        "y": 196.51,
+        "sheet": {
+          "left": 0,
+          "right": 390,
+          "top": 303.84375,
+          "bottom": 844
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "pk",
+      "width": 390,
+      "height": 844,
+      "touch": true,
+      "bounds": {
+        "x": 194.20000000000002,
+        "y": 213.50999999999996,
+        "sheet": {
+          "left": 0,
+          "right": 390,
+          "top": 303.84375,
+          "bottom": 844
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "bj",
+      "width": 844,
+      "height": 390,
+      "touch": true,
+      "bounds": {
+        "x": 256.6,
+        "y": 187.64000000000001,
+        "sheet": {
+          "left": 474,
+          "right": 834,
+          "top": 84,
+          "bottom": 380
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "he",
+      "width": 844,
+      "height": 390,
+      "touch": true,
+      "bounds": {
+        "x": 250.67963681460242,
+        "y": 189.34401751625435,
+        "sheet": {
+          "left": 474,
+          "right": 834,
+          "top": 84,
+          "bottom": 380
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "rl",
+      "width": 844,
+      "height": 390,
+      "touch": true,
+      "bounds": {
+        "x": 254.59999999999997,
+        "y": 189.64000000000001,
+        "sheet": {
+          "left": 474,
+          "right": 834,
+          "top": 84,
+          "bottom": 380
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "ba",
+      "width": 844,
+      "height": 390,
+      "touch": true,
+      "bounds": {
+        "x": 249.82798531339878,
+        "y": 186.30675446080025,
+        "sheet": {
+          "left": 474,
+          "right": 834,
+          "top": 84,
+          "bottom": 380
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "cr",
+      "width": 844,
+      "height": 390,
+      "touch": true,
+      "bounds": {
+        "x": 249.39999999999998,
+        "y": 188.84,
+        "sheet": {
+          "left": 474,
+          "right": 834,
+          "top": 84,
+          "bottom": 380
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "sl",
+      "width": 844,
+      "height": 390,
+      "touch": true,
+      "bounds": {
+        "x": 265.2,
+        "y": 180.44,
+        "sheet": {
+          "left": 474,
+          "right": 834,
+          "top": 84,
+          "bottom": 380
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "pk",
+      "width": 844,
+      "height": 390,
+      "touch": true,
+      "bounds": {
+        "x": 259.8,
+        "y": 200.43999999999997,
+        "sheet": {
+          "left": 474,
+          "right": 834,
+          "top": 84,
+          "bottom": 380
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "bj",
+      "width": 1280,
+      "height": 720,
+      "touch": false,
+      "bounds": {
+        "x": 457.7,
+        "y": 344.70500000000004,
+        "sheet": {
+          "left": 860.40625,
+          "right": 1270,
+          "top": 84,
+          "bottom": 710
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "he",
+      "width": 1280,
+      "height": 720,
+      "touch": false,
+      "bounds": {
+        "x": 454.3968871246416,
+        "y": 355.58052955867925,
+        "sheet": {
+          "left": 860.40625,
+          "right": 1270,
+          "top": 84,
+          "bottom": 710
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "rl",
+      "width": 1280,
+      "height": 720,
+      "touch": false,
+      "bounds": {
+        "x": 448.19999999999993,
+        "y": 353.95500000000004,
+        "sheet": {
+          "left": 860.40625,
+          "right": 1270,
+          "top": 84,
+          "bottom": 710
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "ba",
+      "width": 1280,
+      "height": 720,
+      "touch": false,
+      "bounds": {
+        "x": 430.7097252163604,
+        "y": 342.58014815260043,
+        "sheet": {
+          "left": 860.40625,
+          "right": 1270,
+          "top": 84,
+          "bottom": 710
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "cr",
+      "width": 1280,
+      "height": 720,
+      "touch": false,
+      "bounds": {
+        "x": 430.29999999999995,
+        "y": 352.105,
+        "sheet": {
+          "left": 860.40625,
+          "right": 1270,
+          "top": 84,
+          "bottom": 710
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "sl",
+      "width": 1280,
+      "height": 720,
+      "touch": false,
+      "bounds": {
+        "x": 481.4,
+        "y": 327.055,
+        "sheet": {
+          "left": 860.40625,
+          "right": 1270,
+          "top": 84,
+          "bottom": 710
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "pk",
+      "width": 1280,
+      "height": 720,
+      "touch": false,
+      "bounds": {
+        "x": 461.6,
+        "y": 387.05499999999995,
+        "sheet": {
+          "left": 860.40625,
+          "right": 1270,
+          "top": 84,
+          "bottom": 710
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "bj",
+      "width": 1440,
+      "height": 900,
+      "touch": false,
+      "bounds": {
+        "x": 518.7,
+        "y": 435.70500000000004,
+        "sheet": {
+          "left": 969.203125,
+          "right": 1430,
+          "top": 84,
+          "bottom": 890
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "he",
+      "width": 1440,
+      "height": 900,
+      "touch": false,
+      "bounds": {
+        "x": 504.3968871246416,
+        "y": 447.58052955867925,
+        "sheet": {
+          "left": 969.203125,
+          "right": 1430,
+          "top": 84,
+          "bottom": 890
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "rl",
+      "width": 1440,
+      "height": 900,
+      "touch": false,
+      "bounds": {
+        "x": 505.19999999999993,
+        "y": 447.95500000000004,
+        "sheet": {
+          "left": 969.203125,
+          "right": 1430,
+          "top": 84,
+          "bottom": 890
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "ba",
+      "width": 1440,
+      "height": 900,
+      "touch": false,
+      "bounds": {
+        "x": 490.7097252163604,
+        "y": 437.58014815260043,
+        "sheet": {
+          "left": 969.203125,
+          "right": 1430,
+          "top": 84,
+          "bottom": 890
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "cr",
+      "width": 1440,
+      "height": 900,
+      "touch": false,
+      "bounds": {
+        "x": 490.29999999999995,
+        "y": 446.105,
+        "sheet": {
+          "left": 969.203125,
+          "right": 1430,
+          "top": 84,
+          "bottom": 890
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "sl",
+      "width": 1440,
+      "height": 900,
+      "touch": false,
+      "bounds": {
+        "x": 524.4,
+        "y": 429.055,
+        "sheet": {
+          "left": 969.203125,
+          "right": 1430,
+          "top": 84,
+          "bottom": 890
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "pk",
+      "width": 1440,
+      "height": 900,
+      "touch": false,
+      "bounds": {
+        "x": 518.6,
+        "y": 480.05499999999995,
+        "sheet": {
+          "left": 969.203125,
+          "right": 1430,
+          "top": 84,
+          "bottom": 890
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "bj",
+      "width": 2560,
+      "height": 1440,
+      "touch": false,
+      "bounds": {
+        "x": 963.7,
+        "y": 708.705,
+        "sheet": {
+          "left": 1730.8125,
+          "right": 2550,
+          "top": 84,
+          "bottom": 1430
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "he",
+      "width": 2560,
+      "height": 1440,
+      "touch": false,
+      "bounds": {
+        "x": 897.3968871246416,
+        "y": 728.5805295586792,
+        "sheet": {
+          "left": 1730.8125,
+          "right": 2550,
+          "top": 84,
+          "bottom": 1430
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "rl",
+      "width": 2560,
+      "height": 1440,
+      "touch": false,
+      "bounds": {
+        "x": 928.1999999999999,
+        "y": 729.955,
+        "sheet": {
+          "left": 1730.8125,
+          "right": 2550,
+          "top": 84,
+          "bottom": 1430
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "ba",
+      "width": 2560,
+      "height": 1440,
+      "touch": false,
+      "bounds": {
+        "x": 911.7097252163604,
+        "y": 713.5801481526004,
+        "sheet": {
+          "left": 1730.8125,
+          "right": 2550,
+          "top": 84,
+          "bottom": 1430
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "cr",
+      "width": 2560,
+      "height": 1440,
+      "touch": false,
+      "bounds": {
+        "x": 902.3,
+        "y": 727.105,
+        "sheet": {
+          "left": 1730.8125,
+          "right": 2550,
+          "top": 84,
+          "bottom": 1430
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "sl",
+      "width": 2560,
+      "height": 1440,
+      "touch": false,
+      "bounds": {
+        "x": 979.4,
+        "y": 689.055,
+        "sheet": {
+          "left": 1730.8125,
+          "right": 2550,
+          "top": 84,
+          "bottom": 1430
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    },
+    {
+      "game": "pk",
+      "width": 2560,
+      "height": 1440,
+      "touch": false,
+      "bounds": {
+        "x": 946.6,
+        "y": 774.055,
+        "sheet": {
+          "left": 1730.8125,
+          "right": 2550,
+          "top": 84,
+          "bottom": 1430
+        },
+        "overflow": false,
+        "sheetOverflow": false,
+        "players": 6
+      }
+    }
+  ],
+  "errors": []
+}

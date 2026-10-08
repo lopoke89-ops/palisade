@@ -1,0 +1,691 @@
+{
+  "time": "2026-10-08T20:40:42.291001+00:00",
+  "scope": "Rolling staging reconciliation; scheduled daily books cover completed previous days",
+  "tables": [
+    {
+      "id": 1,
+      "ok": true,
+      "bot": 0,
+      "game": "bj",
+      "open": false,
+      "hands": 1,
+      "house": -2,
+      "buyins": 1,
+      "shards_in": 30,
+      "shards_out": 32,
+      "recovery_error": null,
+      "recovery_failures": 0
+    },
+    {
+      "id": 2,
+      "ok": true,
+      "bot": 1,
+      "game": "he",
+      "open": false,
+      "hands": 1,
+      "house": 0,
+      "buyins": 2,
+      "shards_in": 35,
+      "shards_out": 34,
+      "recovery_error": null,
+      "recovery_failures": 0
+    },
+    {
+      "id": 3,
+      "ok": true,
+      "bot": 0,
+      "game": "rl",
+      "open": false,
+      "hands": 1,
+      "house": 1,
+      "buyins": 1,
+      "shards_in": 30,
+      "shards_out": 29,
+      "recovery_error": null,
+      "recovery_failures": 0
+    },
+    {
+      "id": 4,
+      "ok": true,
+      "bot": 0,
+      "game": "ba",
+      "open": false,
+      "hands": 2,
+      "house": 1,
+      "buyins": 1,
+      "shards_in": 30,
+      "shards_out": 29,
+      "recovery_error": null,
+      "recovery_failures": 0
+    },
+    {
+      "id": 5,
+      "ok": true,
+      "bot": 0,
+      "game": "cr",
+      "open": false,
+      "hands": 4,
+      "house": 0,
+      "buyins": 1,
+      "shards_in": 30,
+      "shards_out": 30,
+      "recovery_error": null,
+      "recovery_failures": 0
+    },
+    {
+      "id": 6,
+      "ok": true,
+      "bot": 0,
+      "game": "sl",
+      "open": false,
+      "hands": 1,
+      "house": 1,
+      "buyins": 1,
+      "shards_in": 30,
+      "shards_out": 29,
+      "recovery_error": null,
+      "recovery_failures": 0
+    },
+    {
+      "id": 7,
+      "ok": true,
+      "bot": 0,
+      "game": "pk",
+      "open": false,
+      "hands": 1,
+      "house": -2,
+      "buyins": 1,
+      "shards_in": 30,
+      "shards_out": 32,
+      "recovery_error": null,
+      "recovery_failures": 0
+    },
+    {
+      "id": 8,
+      "ok": true,
+      "bot": 0,
+      "game": "bj",
+      "open": false,
+      "hands": 1,
+      "house": -2,
+      "buyins": 1,
+      "shards_in": 30,
+      "shards_out": 32,
+      "recovery_error": null,
+      "recovery_failures": 0
+    },
+    {
+      "id": 9,
+      "ok": true,
+      "bot": 1,
+      "game": "he",
+      "open": false,
+      "hands": 1,
+      "house": 0,
+      "buyins": 2,
+      "shards_in": 35,
+      "shards_out": 34,
+      "recovery_error": null,
+      "recovery_failures": 0
+    },
+    {
+      "id": 10,
+      "ok": true,
+      "bot": 0,
+      "game": "rl",
+      "open": false,
+      "hands": 1,
+      "house": -1,
+      "buyins": 1,
+      "shards_in": 30,
+      "shards_out": 31,
+      "recovery_error": null,
+      "recovery_failures": 0
+    },
+    {
+      "id": 11,
+      "ok": true,
+      "bot": 0,
+      "game": "ba",
+      "open": false,
+      "hands": 2,
+      "house": 1,
+      "buyins": 1,
+      "shards_in": 30,
+      "shards_out": 29,
+      "recovery_error": null,
+      "recovery_failures": 0
+    },
+    {
+      "id": 12,
+      "ok": true,
+      "bot": 0,
+      "game": "cr",
+      "open": false,
+      "hands": 3,
+      "house": -1,
+      "buyins": 1,
+      "shards_in": 30,
+      "shards_out": 31,
+      "recovery_error": null,
+      "recovery_failures": 0
+    },
+    {
+      "id": 13,
+      "ok": true,
+      "bot": 0,
+      "game": "sl",
+      "open": false,
+      "hands": 1,
+      "house": 1,
+      "buyins": 1,
+      "shards_in": 30,
+      "shards_out": 29,
+      "recovery_error": null,
+      "recovery_failures": 0
+    },
+    {
+      "id": 14,
+      "ok": true,
+      "bot": 0,
+      "game": "pk",
+      "open": false,
+      "hands": 1,
+      "house": 4,
+      "buyins": 1,
+      "shards_in": 30,
+      "shards_out": 26,
+      "recovery_error": null,
+      "recovery_failures": 0
+    },
+    {
+      "id": 15,
+      "ok": true,
+      "bot": 0,
+      "game": "bj",
+      "open": false,
+      "hands": 1,
+      "house": 2,
+      "buyins": 1,
+      "shards_in": 105,
+      "shards_out": 103,
+      "recovery_error": null,
+      "recovery_failures": 0
+    },
+    {
+      "id": 16,
+      "ok": true,
+      "bot": 0,
+      "game": "bj",
+      "open": false,
+      "hands": 1,
+      "house": 0,
+      "buyins": 1,
+      "shards_in": 105,
+      "shards_out": 105,
+      "recovery_error": null,
+      "recovery_failures": 0
+    },
+    {
+      "id": 17,
+      "ok": true,
+      "bot": 0,
+      "game": "rl",
+      "open": false,
+      "hands": 1,
+      "house": 1,
+      "buyins": 1,
+      "shards_in": 105,
+      "shards_out": 104,
+      "recovery_error": null,
+      "recovery_failures": 0
+    },
+    {
+      "id": 18,
+      "ok": true,
+      "bot": 0,
+      "game": "ba",
+      "open": false,
+      "hands": 2,
+      "house": -1,
+      "buyins": 1,
+      "shards_in": 105,
+      "shards_out": 106,
+      "recovery_error": null,
+      "recovery_failures": 0
+    },
+    {
+      "id": 19,
+      "ok": true,
+      "bot": 0,
+      "game": "cr",
+      "open": false,
+      "hands": 1,
+      "house": -1,
+      "buyins": 1,
+      "shards_in": 105,
+      "shards_out": 106,
+      "recovery_error": null,
+      "recovery_failures": 0
+    },
+    {
+      "id": 20,
+      "ok": true,
+      "bot": 0,
+      "game": "sl",
+      "open": false,
+      "hands": 1,
+      "house": 1,
+      "buyins": 1,
+      "shards_in": 105,
+      "shards_out": 104,
+      "recovery_error": null,
+      "recovery_failures": 0
+    }
+  ],
+  "all_closed": true,
+  "all_reconcile": true,
+  "seats": 0,
+  "wallets": [
+    {
+      "balance": 4999,
+      "username": "SoakC01",
+      "ledger_net": -1,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC02",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC03",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC04",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC05",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC06",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5001,
+      "username": "SoakC07",
+      "ledger_net": 1,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC08",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC09",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC10",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC11",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC12",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5001,
+      "username": "SoakC13",
+      "ledger_net": 1,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC14",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC15",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC16",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC17",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC18",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 4999,
+      "username": "SoakC19",
+      "ledger_net": -1,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC20",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC21",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC22",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC23",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC24",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC25",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC26",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC27",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC28",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC29",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC30",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC31",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC32",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC33",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC34",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC35",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC36",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC37",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC38",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC39",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC40",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC41",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC42",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC43",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC44",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC45",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC46",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC47",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC48",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC49",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC50",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC51",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC52",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC53",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "SoakC54",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 4997,
+      "username": "StageC01",
+      "ledger_net": -3,
+      "matches_initial": true
+    },
+    {
+      "balance": 4998,
+      "username": "StageC02",
+      "ledger_net": -2,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "StageC03",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "StageC04",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "StageC05",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "StageC06",
+      "ledger_net": 0,
+      "matches_initial": true
+    },
+    {
+      "balance": 5000,
+      "username": "StageC07",
+      "ledger_net": 0,
+      "matches_initial": true
+    }
+  ],
+  "wallets_match": true,
+  "operation_count": 100,
+  "ledger_count": 66,
+  "daily_books": [
+    {
+      "ok": true,
+      "bot": 0,
+      "day": "2026-10-07",
+      "house_ba": 0,
+      "house_bj": 0,
+      "house_cr": 0,
+      "house_he": 0,
+      "house_pk": 0,
+      "house_rl": 0,
+      "house_sl": 0,
+      "shards_in": 0,
+      "bad_tables": [],
+      "created_at": "2026-10-08T17:42:35.568779+00:00",
+      "shards_out": 0,
+      "tables_closed": 0
+    }
+  ],
+  "leases": [
+    {
+      "name": "world",
+      "epoch": 5,
+      "valid": true
+    },
+    {
+      "name": "worker",
+      "epoch": 5,
+      "valid": true
+    }
+  ]
+}

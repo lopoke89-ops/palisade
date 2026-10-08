@@ -1,0 +1,695 @@
+{
+  "started": "2026-10-08T20:30:39.149Z",
+  "project": "nxsqerlpqdzrjwqxhsdz",
+  "service": "https://palisade-casino-staging.onrender.com",
+  "scope": "60 real staging Auth/WSS clients; 49 walking/chatting and 11 table/cabinet users polling at browser cadence",
+  "requests": 68,
+  "accepted": [
+    {
+      "op": "sit",
+      "opId": "soak_9ed82fb9-cd8d-4d8f-8936-4c44a0d7e214",
+      "id": 16,
+      "index": 0
+    },
+    {
+      "op": "topup",
+      "opId": "soak_10f81aeb-4404-4e07-b2df-97067742eff5",
+      "id": 16,
+      "index": 0
+    },
+    {
+      "op": "bet",
+      "opId": "soak_4f15a057-25e6-4fd8-9475-d883416e9e50",
+      "id": 16,
+      "index": 0
+    },
+    {
+      "op": "sit",
+      "opId": "soak_521ba8b5-e06b-4fd3-b084-5ceda8519377",
+      "id": 17,
+      "index": 6
+    },
+    {
+      "op": "move",
+      "opId": "soak_9ec5d2b3-81cb-4013-9007-26cfbf538c2f",
+      "id": 16,
+      "index": 0
+    },
+    {
+      "op": "topup",
+      "opId": "soak_6e2be7a0-9082-46a0-bcec-6c312300b1de",
+      "id": 17,
+      "index": 6
+    },
+    {
+      "op": "rlbets",
+      "opId": "soak_2e5b3b04-bdfd-4c4b-8c7a-214a5c4ed898",
+      "id": 17,
+      "index": 6
+    },
+    {
+      "op": "rlready",
+      "opId": "soak_c0a64c2c-5084-4f77-befd-ee2f4736ca65",
+      "id": 17,
+      "index": 6
+    },
+    {
+      "op": "sit",
+      "opId": "soak_05829a8e-e3bb-4281-810b-a0341c6e0f2b",
+      "id": 18,
+      "index": 12
+    },
+    {
+      "op": "topup",
+      "opId": "soak_ed933230-169f-45e5-86b3-96b25e83ea7e",
+      "id": 18,
+      "index": 12
+    },
+    {
+      "op": "babets",
+      "opId": "soak_09fb5fe5-f56c-40a8-ad80-bdcde29abd67",
+      "id": 18,
+      "index": 12
+    },
+    {
+      "op": "baready",
+      "opId": "soak_84a49823-2e26-480e-b872-d41e43adc9f9",
+      "id": 18,
+      "index": 12
+    },
+    {
+      "op": "sit",
+      "opId": "soak_c441337b-b3c2-401d-a920-efc1de2ae8f4",
+      "id": 19,
+      "index": 18
+    },
+    {
+      "op": "topup",
+      "opId": "soak_5fbf5bf5-ff6a-4ff1-accf-6bcb5672a228",
+      "id": 19,
+      "index": 18
+    },
+    {
+      "op": "crbet",
+      "opId": "soak_a02345e1-77b5-40bd-9e87-243238ae2f55",
+      "id": 19,
+      "index": 18
+    },
+    {
+      "op": "crready",
+      "opId": "soak_009c9c14-7d83-4591-8fac-36ef9012bcd1",
+      "id": 19,
+      "index": 18
+    },
+    {
+      "op": "sit",
+      "opId": "soak_97361f18-4017-44f6-8200-f61577cebd08",
+      "id": 20,
+      "index": 24
+    },
+    {
+      "op": "topup",
+      "opId": "soak_ba87c7c9-fa24-49f4-ba0e-5a8733298d06",
+      "id": 20,
+      "index": 24
+    },
+    {
+      "op": "spin",
+      "opId": "soak_8b691847-5ec0-48c2-8c99-822225e43c59",
+      "id": 20,
+      "index": 24
+    },
+    {
+      "op": "leave",
+      "opId": "soak_0a1064f3-7df6-4a82-b715-9bd1be164bd0",
+      "id": 16,
+      "index": 0
+    },
+    {
+      "op": "leave",
+      "opId": "soak_87d48085-391e-4eaa-b117-afd8db0fac34",
+      "id": 17,
+      "index": 6
+    },
+    {
+      "op": "leave",
+      "opId": "soak_e048aa8a-e2e4-4f84-a33c-2ce74ef91c12",
+      "id": 18,
+      "index": 12
+    },
+    {
+      "op": "leave",
+      "opId": "soak_7cb1186e-ac09-4f59-9ceb-5df665e59100",
+      "id": 19,
+      "index": 18
+    },
+    {
+      "op": "leave",
+      "opId": "soak_b5d1af58-8408-45e3-a13d-1ea96524e12d",
+      "id": 20,
+      "index": 24
+    }
+  ],
+  "declined": [],
+  "errors": [
+    "Actor 30: Socket closed 1006"
+  ],
+  "joins": [
+    {
+      "index": 0,
+      "code": "PALACE",
+      "ms": 1380.0996
+    },
+    {
+      "index": 1,
+      "code": "PALACE",
+      "ms": 1067.0321000000001
+    },
+    {
+      "index": 2,
+      "code": "PALACE",
+      "ms": 1166.0742
+    },
+    {
+      "index": 3,
+      "code": "PALACE",
+      "ms": 863.2826
+    },
+    {
+      "index": 4,
+      "code": "PALACE",
+      "ms": 1269.7174000000005
+    },
+    {
+      "index": 5,
+      "code": "PALACE",
+      "ms": 861.6435999999994
+    },
+    {
+      "index": 6,
+      "code": "CASAAA",
+      "ms": 1171.0086999999994
+    },
+    {
+      "index": 7,
+      "code": "CASAAA",
+      "ms": 814.1131000000005
+    },
+    {
+      "index": 8,
+      "code": "CASAAA",
+      "ms": 811.7649000000001
+    },
+    {
+      "index": 9,
+      "code": "CASAAA",
+      "ms": 912.4103000000014
+    },
+    {
+      "index": 10,
+      "code": "CASAAA",
+      "ms": 808.8155999999999
+    },
+    {
+      "index": 11,
+      "code": "CASAAA",
+      "ms": 862.7464999999993
+    },
+    {
+      "index": 12,
+      "code": "CASAAB",
+      "ms": 859.6718000000001
+    },
+    {
+      "index": 13,
+      "code": "CASAAB",
+      "ms": 811.9164999999994
+    },
+    {
+      "index": 14,
+      "code": "CASAAB",
+      "ms": 807.781500000001
+    },
+    {
+      "index": 15,
+      "code": "CASAAB",
+      "ms": 1063.1802000000007
+    },
+    {
+      "index": 16,
+      "code": "CASAAB",
+      "ms": 1374.3302999999996
+    },
+    {
+      "index": 17,
+      "code": "CASAAB",
+      "ms": 961.5000999999975
+    },
+    {
+      "index": 18,
+      "code": "CASAAC",
+      "ms": 809.079700000002
+    },
+    {
+      "index": 19,
+      "code": "CASAAC",
+      "ms": 1109.9951
+    },
+    {
+      "index": 20,
+      "code": "CASAAC",
+      "ms": 812.7703999999976
+    },
+    {
+      "index": 21,
+      "code": "CASAAC",
+      "ms": 807.9907000000021
+    },
+    {
+      "index": 22,
+      "code": "CASAAC",
+      "ms": 861.8094999999994
+    },
+    {
+      "index": 23,
+      "code": "CASAAC",
+      "ms": 861.4451999999983
+    },
+    {
+      "index": 24,
+      "code": "CASAAD",
+      "ms": 856.8352999999988
+    },
+    {
+      "index": 25,
+      "code": "CASAAD",
+      "ms": 811.770800000002
+    },
+    {
+      "index": 26,
+      "code": "CASAAD",
+      "ms": 807.9123
+    },
+    {
+      "index": 27,
+      "code": "CASAAD",
+      "ms": 864.5905999999995
+    },
+    {
+      "index": 28,
+      "code": "CASAAD",
+      "ms": 1618.8146000000015
+    },
+    {
+      "index": 29,
+      "code": "CASAAD",
+      "ms": 758.7515999999996
+    },
+    {
+      "index": 30,
+      "code": "CASAAE",
+      "ms": 968.367000000002
+    },
+    {
+      "index": 31,
+      "code": "CASAAE",
+      "ms": 865.7671999999984
+    },
+    {
+      "index": 32,
+      "code": "CASAAE",
+      "ms": 912.422599999998
+    },
+    {
+      "index": 33,
+      "code": "CASAAE",
+      "ms": 809.8237999999983
+    },
+    {
+      "index": 34,
+      "code": "CASAAE",
+      "ms": 910.5757999999987
+    },
+    {
+      "index": 35,
+      "code": "CASAAE",
+      "ms": 809.7083999999959
+    },
+    {
+      "index": 36,
+      "code": "CASAAF",
+      "ms": 861.0864999999976
+    },
+    {
+      "index": 37,
+      "code": "CASAAF",
+      "ms": 859.9295999999958
+    },
+    {
+      "index": 38,
+      "code": "CASAAF",
+      "ms": 810.8680999999997
+    },
+    {
+      "index": 39,
+      "code": "CASAAF",
+      "ms": 1720.4464000000007
+    },
+    {
+      "index": 40,
+      "code": "CASAAF",
+      "ms": 1114.9403999999995
+    },
+    {
+      "index": 41,
+      "code": "CASAAF",
+      "ms": 810.4810999999972
+    },
+    {
+      "index": 42,
+      "code": "CASAAG",
+      "ms": 807.7388999999966
+    },
+    {
+      "index": 43,
+      "code": "CASAAG",
+      "ms": 963.5169000000024
+    },
+    {
+      "index": 44,
+      "code": "CASAAG",
+      "ms": 808.4182000000001
+    },
+    {
+      "index": 45,
+      "code": "CASAAG",
+      "ms": 911.8842999999979
+    },
+    {
+      "index": 46,
+      "code": "CASAAG",
+      "ms": 763.3071999999956
+    },
+    {
+      "index": 47,
+      "code": "CASAAG",
+      "ms": 1061.7266000000018
+    },
+    {
+      "index": 48,
+      "code": "CASAAH",
+      "ms": 812.4867000000013
+    },
+    {
+      "index": 49,
+      "code": "CASAAH",
+      "ms": 1877.8570000000036
+    },
+    {
+      "index": 50,
+      "code": "CASAAH",
+      "ms": 1620.9326999999976
+    },
+    {
+      "index": 51,
+      "code": "CASAAH",
+      "ms": 1165.8726000000024
+    },
+    {
+      "index": 52,
+      "code": "CASAAH",
+      "ms": 914.5509999999995
+    },
+    {
+      "index": 53,
+      "code": "CASAAH",
+      "ms": 1167.928200000002
+    },
+    {
+      "index": 54,
+      "code": "CASAAJ",
+      "ms": 1372.2688000000053
+    },
+    {
+      "index": 55,
+      "code": "CASAAJ",
+      "ms": 914.5820000000022
+    },
+    {
+      "index": 56,
+      "code": "CASAAJ",
+      "ms": 809.534599999999
+    },
+    {
+      "index": 57,
+      "code": "CASAAJ",
+      "ms": 1772.5391000000018
+    },
+    {
+      "index": 58,
+      "code": "CASAAJ",
+      "ms": 1821.8499999999985
+    },
+    {
+      "index": 59,
+      "code": "CASAAJ",
+      "ms": 1312.4821999999986
+    }
+  ],
+  "samples": [],
+  "refreshes": 0,
+  "bytesReceived": 14314172,
+  "durationSeconds": 120,
+  "twoHourGate": false,
+  "initialHealth": {
+    "ok": true,
+    "protocol": "casino-1",
+    "layout": 1,
+    "revision": 1,
+    "build": "897e1eb437b5e8fdb719d5f96c8e2c9c11e4db1a",
+    "ready": true,
+    "admissions": true,
+    "standby": false,
+    "occupants": 0,
+    "rooms": 0,
+    "worker": {
+      "steps": 0,
+      "errors": 0,
+      "lagMs": 0,
+      "repaired": 0
+    },
+    "stats": {
+      "connections": 0,
+      "snapshots": 0,
+      "rejected": 0,
+      "ticks": 0,
+      "egressBytes": 0,
+      "ingressBytes": 0,
+      "tickMaxMs": 0,
+      "bufferMaxBytes": 0,
+      "inputQueueMax": 0,
+      "coalescedSnapshots": 0,
+      "heartbeatFailures": 0
+    },
+    "metrics": {
+      "cpuCorePercent": 1.6836387789419678,
+      "cpuCoreMaxPercent": 10.30321215794319,
+      "cpuSeconds": 2.2318680000000004,
+      "tickP95Ms": 0,
+      "tickSamples": 0
+    },
+    "storage": {
+      "requests": 382,
+      "errors": 0,
+      "authRequests": 0,
+      "rpcRequests": 288,
+      "readRequests": 94,
+      "requestBytes": 16003,
+      "latencyMs": 24740,
+      "errorStatuses": {}
+    },
+    "rssBytes": 91009024,
+    "uptimeSeconds": 115
+  },
+  "fullHealth": {
+    "ok": true,
+    "protocol": "casino-1",
+    "layout": 1,
+    "revision": 1,
+    "build": "897e1eb437b5e8fdb719d5f96c8e2c9c11e4db1a",
+    "ready": true,
+    "admissions": true,
+    "standby": false,
+    "occupants": 60,
+    "rooms": 10,
+    "worker": {
+      "steps": 0,
+      "errors": 0,
+      "lagMs": 0,
+      "repaired": 0
+    },
+    "stats": {
+      "connections": 60,
+      "snapshots": 5151,
+      "rejected": 0,
+      "ticks": 1804,
+      "egressBytes": 6557430,
+      "ingressBytes": 5262125,
+      "tickMaxMs": 108.96012699999847,
+      "bufferMaxBytes": 0,
+      "inputQueueMax": 12,
+      "coalescedSnapshots": 0,
+      "heartbeatFailures": 0
+    },
+    "metrics": {
+      "cpuCorePercent": 15.038134243935314,
+      "cpuCoreMaxPercent": 15.751971602003843,
+      "cpuSeconds": 9.224214000000002,
+      "tickP95Ms": 1.6537160000007134,
+      "tickSamples": 2996
+    },
+    "storage": {
+      "requests": 1284,
+      "errors": 0,
+      "authRequests": 255,
+      "rpcRequests": 755,
+      "readRequests": 274,
+      "requestBytes": 93999,
+      "latencyMs": 120302,
+      "errorStatuses": {}
+    },
+    "rssBytes": 102227968,
+    "uptimeSeconds": 176
+  },
+  "actorFailures": [
+    {
+      "index": 26,
+      "error": "Movement queue exceeded"
+    },
+    {
+      "index": 27,
+      "error": "Socket closed 1006"
+    },
+    {
+      "index": 28,
+      "error": "Socket closed 1006"
+    },
+    {
+      "index": 29,
+      "error": "Socket closed 1006"
+    },
+    {
+      "index": 30,
+      "error": "Socket closed 1006"
+    },
+    {
+      "index": 31,
+      "error": "Socket closed 1006"
+    },
+    {
+      "index": 32,
+      "error": "Socket closed 1006"
+    },
+    {
+      "index": 33,
+      "error": "Socket closed 1006"
+    },
+    {
+      "index": 35,
+      "error": "Socket closed 1006"
+    },
+    {
+      "index": 36,
+      "error": "Socket closed 1006"
+    },
+    {
+      "index": 37,
+      "error": "Socket closed 1006"
+    },
+    {
+      "index": 38,
+      "error": "Socket closed 1006"
+    },
+    {
+      "index": 39,
+      "error": "Socket closed 1006"
+    },
+    {
+      "index": 40,
+      "error": "Socket closed 1006"
+    },
+    {
+      "index": 41,
+      "error": "Socket closed 1006"
+    },
+    {
+      "index": 42,
+      "error": "Socket closed 1006"
+    },
+    {
+      "index": 43,
+      "error": "Socket closed 1006"
+    },
+    {
+      "index": 44,
+      "error": "Socket closed 1006"
+    },
+    {
+      "index": 46,
+      "error": "Socket closed 1006"
+    },
+    {
+      "index": 47,
+      "error": "Socket closed 1006"
+    },
+    {
+      "index": 48,
+      "error": "Socket closed 1006"
+    },
+    {
+      "index": 49,
+      "error": "Socket closed 1006"
+    },
+    {
+      "index": 50,
+      "error": "Socket closed 1006"
+    },
+    {
+      "index": 51,
+      "error": "Socket closed 1006"
+    },
+    {
+      "index": 52,
+      "error": "Socket closed 1006"
+    },
+    {
+      "index": 53,
+      "error": "Socket closed 1006"
+    },
+    {
+      "index": 54,
+      "error": "Socket closed 1006"
+    },
+    {
+      "index": 56,
+      "error": "Socket closed 1006"
+    },
+    {
+      "index": 59,
+      "error": "Socket closed 1006"
+    }
+  ],
+  "completed": false,
+  "ackObservation": {
+    "count": 30000,
+    "p95Ms": 606.0413000000044,
+    "scope": "bounded final 30000 application acknowledgments from failed bootstrap"
+  },
+  "capacityGate": "FAILED: queue error during setup; two-hour gate unattempted",
+  "networkShaping": "not applied",
+  "primaryError": {
+    "index": 26,
+    "error": "Movement queue exceeded"
+  },
+  "secondaryClosureNote": "The first actor error stops the harness input batch; subsequent socket closures are not independent server fault counts."
+}

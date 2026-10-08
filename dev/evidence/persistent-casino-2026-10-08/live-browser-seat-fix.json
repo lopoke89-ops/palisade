@@ -1,0 +1,137 @@
+{
+  "time": "2026-10-08T21:08:47.272Z",
+  "project": "nxsqerlpqdzrjwqxhsdz",
+  "service": "https://palisade-casino-staging.onrender.com",
+  "realAuth": true,
+  "mockedEconomicRequests": false,
+  "checks": {
+    "sixSavedAccounts": "same durable room",
+    "firstDeparture": "five continue",
+    "keyboardMovement": "movement with acknowledged inputs",
+    "reload": "explicit takeover returns to same durable room with five occupants",
+    "excludedAccount": "explicit staging restriction",
+    "productionRequests": 0,
+    "peerTransportRequests": 0,
+    "workerErrorDelta": 0
+  },
+  "room": "C:80b9d16f-70d6-4a0b-be2c-ef4ea51c2d8a",
+  "movement": {
+    "start": {
+      "x": 1.6,
+      "y": 10.6
+    },
+    "moved": {
+      "x": 1.756,
+      "y": 10.444
+    }
+  },
+  "denials": [
+    "Casino staging is limited to test accounts"
+  ],
+  "apiRequests": 27,
+  "initialHealth": {
+    "ok": true,
+    "protocol": "casino-1",
+    "layout": 1,
+    "revision": 1,
+    "build": "731e6f7d03e48b22acad51534760076878e58d00",
+    "ready": true,
+    "admissions": true,
+    "standby": false,
+    "occupants": 0,
+    "rooms": 0,
+    "worker": {
+      "steps": 0,
+      "errors": 0,
+      "lagMs": 0,
+      "repaired": 0
+    },
+    "stats": {
+      "connections": 8,
+      "snapshots": 497,
+      "rejected": 0,
+      "ticks": 994,
+      "egressBytes": 361853,
+      "ingressBytes": 225662,
+      "tickMaxMs": 8.308086999983061,
+      "bufferMaxBytes": 0,
+      "inputQueueMax": 8,
+      "coalescedSnapshots": 0,
+      "heartbeatFailures": 0
+    },
+    "metrics": {
+      "cpuCorePercent": 1.9478584372407,
+      "cpuCoreMaxPercent": 9.493762379370652,
+      "cpuSeconds": 5.627865,
+      "tickP95Ms": 0.41641900001559407,
+      "tickSamples": 2005
+    },
+    "storage": {
+      "requests": 956,
+      "errors": 1,
+      "authRequests": 32,
+      "rpcRequests": 662,
+      "readRequests": 262,
+      "requestBytes": 41196,
+      "latencyMs": 65617,
+      "errorStatuses": {
+        "400": 1
+      }
+    },
+    "rssBytes": 91078656,
+    "uptimeSeconds": 250
+  },
+  "afterHealth": {
+    "ok": true,
+    "protocol": "casino-1",
+    "layout": 1,
+    "revision": 1,
+    "build": "731e6f7d03e48b22acad51534760076878e58d00",
+    "ready": true,
+    "admissions": true,
+    "standby": false,
+    "occupants": 5,
+    "rooms": 1,
+    "worker": {
+      "steps": 0,
+      "errors": 0,
+      "lagMs": 0,
+      "repaired": 0
+    },
+    "stats": {
+      "connections": 16,
+      "snapshots": 929,
+      "rejected": 0,
+      "ticks": 1859,
+      "egressBytes": 663322,
+      "ingressBytes": 413517,
+      "tickMaxMs": 62.789451999997254,
+      "bufferMaxBytes": 0,
+      "inputQueueMax": 8,
+      "coalescedSnapshots": 0,
+      "heartbeatFailures": 0
+    },
+    "metrics": {
+      "cpuCorePercent": 9.055253538334137,
+      "cpuCoreMaxPercent": 9.493762379370652,
+      "cpuSeconds": 6.99904,
+      "tickP95Ms": 0.392437999980757,
+      "tickSamples": 3750
+    },
+    "storage": {
+      "requests": 1142,
+      "errors": 2,
+      "authRequests": 61,
+      "rpcRequests": 772,
+      "readRequests": 309,
+      "requestBytes": 51484,
+      "latencyMs": 78260,
+      "errorStatuses": {
+        "400": 2
+      }
+    },
+    "rssBytes": 94748672,
+    "uptimeSeconds": 284
+  },
+  "errors": []
+}

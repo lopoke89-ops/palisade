@@ -1,0 +1,6 @@
+UI failure state {"browser":{"seat":0,"id":0,"busy":false,"seatExpected":null,"syncBusy":0,"message":"Walk up to a free seat"},"primarySeat":null,"partnerSeat":null,"floorSeats":[0,0,0,0,0,0],"errors":[]}
+page.waitForFunction: Timeout 30000ms exceeded.
+    at C:\Users\lopok\Documents\Palisade\repo\dev\test\managed_ui.js:26:13 {
+  log: [],
+  name: 'TimeoutError'
+}

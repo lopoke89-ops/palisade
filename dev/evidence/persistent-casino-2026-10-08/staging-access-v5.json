@@ -1,0 +1,279 @@
+{
+  "time": "2026-10-08T20:43:37.951Z",
+  "project": "nxsqerlpqdzrjwqxhsdz",
+  "mutations": false,
+  "checks": [
+    {
+      "name": "Edge preflight",
+      "status": 200,
+      "data": "ok"
+    },
+    {
+      "name": "Edge refuses missing user credentials: lobby",
+      "status": 401,
+      "data": {
+        "error": "Sign in to play at the tables"
+      }
+    },
+    {
+      "name": "Edge refuses missing user credentials: recover",
+      "status": 401,
+      "data": {
+        "error": "Sign in to play at the tables"
+      }
+    },
+    {
+      "name": "Edge refuses missing user credentials: revoke",
+      "status": 401,
+      "data": {
+        "error": "Sign in to play at the tables"
+      }
+    },
+    {
+      "name": "Edge refuses missing user credentials: sit",
+      "status": 401,
+      "data": {
+        "error": "Sign in to play at the tables"
+      }
+    },
+    {
+      "name": "Edge refuses missing user credentials: state",
+      "status": 401,
+      "data": {
+        "error": "Sign in to play at the tables"
+      }
+    },
+    {
+      "name": "Edge refuses missing user credentials: spin",
+      "status": 401,
+      "data": {
+        "error": "Sign in to play at the tables"
+      }
+    },
+    {
+      "name": "Edge refuses missing user credentials: history",
+      "status": 401,
+      "data": {
+        "error": "Sign in to play at the tables"
+      }
+    },
+    {
+      "name": "Edge refuses forged user credentials: lobby",
+      "status": 401,
+      "data": {
+        "error": "Sign in to play at the tables"
+      }
+    },
+    {
+      "name": "Edge refuses forged user credentials: recover",
+      "status": 401,
+      "data": {
+        "error": "Sign in to play at the tables"
+      }
+    },
+    {
+      "name": "Edge refuses forged user credentials: revoke",
+      "status": 401,
+      "data": {
+        "error": "Sign in to play at the tables"
+      }
+    },
+    {
+      "name": "Edge refuses forged user credentials: sit",
+      "status": 401,
+      "data": {
+        "error": "Sign in to play at the tables"
+      }
+    },
+    {
+      "name": "Edge refuses forged user credentials: state",
+      "status": 401,
+      "data": {
+        "error": "Sign in to play at the tables"
+      }
+    },
+    {
+      "name": "Edge refuses forged user credentials: spin",
+      "status": 401,
+      "data": {
+        "error": "Sign in to play at the tables"
+      }
+    },
+    {
+      "name": "Edge refuses forged user credentials: history",
+      "status": 401,
+      "data": {
+        "error": "Sign in to play at the tables"
+      }
+    },
+    {
+      "name": "Edge refuses publishable user credentials: lobby",
+      "status": 401,
+      "data": {
+        "error": "Sign in to play at the tables"
+      }
+    },
+    {
+      "name": "Edge refuses publishable user credentials: recover",
+      "status": 401,
+      "data": {
+        "error": "Sign in to play at the tables"
+      }
+    },
+    {
+      "name": "Edge refuses publishable user credentials: revoke",
+      "status": 401,
+      "data": {
+        "error": "Sign in to play at the tables"
+      }
+    },
+    {
+      "name": "Edge refuses publishable user credentials: sit",
+      "status": 401,
+      "data": {
+        "error": "Sign in to play at the tables"
+      }
+    },
+    {
+      "name": "Edge refuses publishable user credentials: state",
+      "status": 401,
+      "data": {
+        "error": "Sign in to play at the tables"
+      }
+    },
+    {
+      "name": "Edge refuses publishable user credentials: spin",
+      "status": 401,
+      "data": {
+        "error": "Sign in to play at the tables"
+      }
+    },
+    {
+      "name": "Edge refuses publishable user credentials: history",
+      "status": 401,
+      "data": {
+        "error": "Sign in to play at the tables"
+      }
+    },
+    {
+      "name": "Public key cannot call world RPC",
+      "status": 401,
+      "data": {
+        "code": "42501",
+        "details": null,
+        "hint": null,
+        "message": "permission denied for function casino_world"
+      }
+    },
+    {
+      "name": "Legacy account RPC requires a signed-in user: buy_case",
+      "status": 403,
+      "data": {
+        "code": "28000",
+        "details": null,
+        "hint": null,
+        "message": "Sign in first"
+      }
+    },
+    {
+      "name": "Legacy account RPC requires a signed-in user: equip",
+      "status": 403,
+      "data": {
+        "code": "28000",
+        "details": null,
+        "hint": null,
+        "message": "Sign in first"
+      }
+    },
+    {
+      "name": "Legacy account RPC requires a signed-in user: get_my_locker",
+      "status": 403,
+      "data": {
+        "code": "28000",
+        "details": null,
+        "hint": null,
+        "message": "Sign in first"
+      }
+    },
+    {
+      "name": "Legacy account RPC requires a signed-in user: import_local_save",
+      "status": 403,
+      "data": {
+        "code": "28000",
+        "details": null,
+        "hint": null,
+        "message": "Sign in first"
+      }
+    },
+    {
+      "name": "Legacy account RPC requires a signed-in user: set_username",
+      "status": 403,
+      "data": {
+        "code": "28000",
+        "details": null,
+        "hint": null,
+        "message": "Sign in first"
+      }
+    },
+    {
+      "name": "Public key cannot read casino_world_config",
+      "status": 401,
+      "data": {
+        "code": "42501",
+        "details": null,
+        "hint": "Grant the required privileges to the current role with: GRANT SELECT ON public.casino_world_config TO anon;",
+        "message": "permission denied for table casino_world_config"
+      }
+    },
+    {
+      "name": "Public key cannot read casino_rooms",
+      "status": 401,
+      "data": {
+        "code": "42501",
+        "details": null,
+        "hint": "Grant the required privileges to the current role with: GRANT SELECT ON public.casino_rooms TO anon;",
+        "message": "permission denied for table casino_rooms"
+      }
+    },
+    {
+      "name": "Public key cannot read casino_controllers",
+      "status": 401,
+      "data": {
+        "code": "42501",
+        "details": null,
+        "hint": "Grant the required privileges to the current role with: GRANT SELECT ON public.casino_controllers TO anon;",
+        "message": "permission denied for table casino_controllers"
+      }
+    },
+    {
+      "name": "Public key cannot read casino_ops",
+      "status": 401,
+      "data": {
+        "code": "42501",
+        "details": null,
+        "hint": "Grant the required privileges to the current role with: GRANT SELECT ON public.casino_ops TO anon;",
+        "message": "permission denied for table casino_ops"
+      }
+    },
+    {
+      "name": "Public key cannot read casino_ledger",
+      "status": 401,
+      "data": {
+        "code": "42501",
+        "details": null,
+        "hint": "Grant the required privileges to the current role with: GRANT SELECT ON public.casino_ledger TO anon;",
+        "message": "permission denied for table casino_ledger"
+      }
+    },
+    {
+      "name": "Public key cannot read casino_tables",
+      "status": 401,
+      "data": {
+        "code": "42501",
+        "details": null,
+        "hint": "Grant the required privileges to the current role with: GRANT SELECT ON public.casino_tables TO anon;",
+        "message": "permission denied for table casino_tables"
+      }
+    }
+  ]
+}

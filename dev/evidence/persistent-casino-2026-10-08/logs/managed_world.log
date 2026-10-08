@@ -1,24 +1,42 @@
 TAP version 13
-# Subtest: joining avatars are published only after their identity roster
-ok 1 - joining avatars are published only after their identity roster
+# Subtest: 60 delayed controller checks finish within the membership budget without overlapping passes
+ok 1 - 60 delayed controller checks finish within the membership budget without overlapping passes
   ---
-  duration_ms: 3484.5611
+  duration_ms: 1656.5281
+  type: 'test'
+  ...
+# Subtest: capacity measurements use process CPU time and a bounded recent tick window
+ok 2 - capacity measurements use process CPU time and a bounded recent tick window
+  ---
+  duration_ms: 3.9825
+  type: 'test'
+  ...
+# Subtest: an older periodic seat read cannot undo an acknowledged buy-in
+ok 3 - an older periodic seat read cannot undo an acknowledged buy-in
+  ---
+  duration_ms: 3230.8683
+  type: 'test'
+  ...
+# Subtest: joining avatars are published only after their identity roster
+ok 4 - joining avatars are published only after their identity roster
+  ---
+  duration_ms: 1803.4405
   type: 'test'
   ...
 # WebSocket tests: hostless continuity, shared fixed movement, safe checkpoint, chat/privacy, explicit takeover, empty sleep and stable restart passed.
 # Subtest: authoritative floor, first/last departure, takeover, privacy and restart
-ok 2 - authoritative floor, first/last departure, takeover, privacy and restart
+ok 5 - authoritative floor, first/last departure, takeover, privacy and restart
   ---
-  duration_ms: 2318.357
+  duration_ms: 2413.3587
   type: 'test'
   ...
-1..2
-# tests 2
+1..5
+# tests 5
 # suites 0
-# pass 2
+# pass 5
 # fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 6036.9057
+# duration_ms 7732.0122
 errors: none

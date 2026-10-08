@@ -1,0 +1,22 @@
+{
+  "scope": "Browser billing observation; values can lag recent capacity traffic",
+  "workspace": "Big U's workspace",
+  "plan": "Hobby",
+  "paymentMethod": "no card on file",
+  "freeHours": 2.15,
+  "freeHoursIncluded": 750,
+  "includedServicesUsed": 1,
+  "includedServicesLimit": 25,
+  "displayedBandwidthMB": 12,
+  "bandwidthIncludedGB": 5,
+  "breakdownMB": {
+    "serviceInitiated": 9,
+    "webSocketResponses": 3,
+    "httpResponses": 0
+  },
+  "pipelineMinutes": 4,
+  "pipelineIncludedMinutes": 500,
+  "accruedUSD": 0,
+  "projectedOctoberUSD": 0,
+  "source": "https://dashboard.render.com/billing"
+}

@@ -1,0 +1,56 @@
+{
+  "checked": "2026-10-08T21:14:17.096Z",
+  "status": 200,
+  "health": {
+    "ok": true,
+    "protocol": "casino-1",
+    "layout": 1,
+    "revision": 1,
+    "build": "731e6f7d03e48b22acad51534760076878e58d00",
+    "ready": true,
+    "admissions": false,
+    "standby": false,
+    "occupants": 0,
+    "rooms": 0,
+    "worker": {
+      "steps": 0,
+      "errors": 0,
+      "lagMs": 0,
+      "repaired": 0
+    },
+    "stats": {
+      "connections": 16,
+      "snapshots": 948,
+      "rejected": 0,
+      "ticks": 1896,
+      "egressBytes": 682269,
+      "ingressBytes": 424216,
+      "tickMaxMs": 62.789451999997254,
+      "bufferMaxBytes": 0,
+      "inputQueueMax": 8,
+      "coalescedSnapshots": 0,
+      "heartbeatFailures": 0
+    },
+    "metrics": {
+      "cpuCorePercent": 1.2442794877736183,
+      "cpuCoreMaxPercent": 9.493762379370652,
+      "cpuSeconds": 12.503710999999997,
+      "tickP95Ms": 0.3912980000022799,
+      "tickSamples": 3827
+    },
+    "storage": {
+      "requests": 2309,
+      "errors": 2,
+      "authRequests": 62,
+      "rpcRequests": 1608,
+      "readRequests": 639,
+      "requestBytes": 97930,
+      "latencyMs": 151518,
+      "errorStatuses": {
+        "400": 2
+      }
+    },
+    "rssBytes": 66252800,
+    "uptimeSeconds": 614
+  }
+}

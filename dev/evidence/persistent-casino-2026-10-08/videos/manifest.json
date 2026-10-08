@@ -1,0 +1,32 @@
+[
+  {
+    "viewport": "390x844",
+    "clip": "local-floor-390x844.webm",
+    "source": "page@6fdef05823b3baf9611c331ec0e6b704.webm",
+    "scope": "Local managed WSS and SQL fixtures: floor entry and rapid departures, authoritative placement. Table sheets are transient between sampled video frames; shared-table and live-restart recordings remain open."
+  },
+  {
+    "viewport": "844x390",
+    "clip": "local-floor-844x390.webm",
+    "source": "page@7ea6edafe45e9dbbaca4294866a15c9b.webm",
+    "scope": "Local managed WSS and SQL fixtures: floor entry and rapid departures, authoritative placement. Table sheets are transient between sampled video frames; shared-table and live-restart recordings remain open."
+  },
+  {
+    "viewport": "1280x720",
+    "clip": "local-floor-1280x720.webm",
+    "source": "page@2dd93e69926b14359aaa66b1113798a1.webm",
+    "scope": "Local managed WSS and SQL fixtures: floor entry and rapid departures, authoritative placement. Table sheets are transient between sampled video frames; shared-table and live-restart recordings remain open."
+  },
+  {
+    "viewport": "1440x900",
+    "clip": "local-floor-1440x900.webm",
+    "source": "page@9cf92cf15d6ea3bbddf4b82672072ab4.webm",
+    "scope": "Local managed WSS and SQL fixtures: floor entry and rapid departures, authoritative placement. Table sheets are transient between sampled video frames; shared-table and live-restart recordings remain open."
+  },
+  {
+    "viewport": "2560x1440",
+    "clip": "local-floor-2560x1440.webm",
+    "source": "page@e353c546dc10940840669586fc84b195.webm",
+    "scope": "Local managed WSS and SQL fixtures: floor entry and rapid departures, authoritative placement. Table sheets are transient between sampled video frames; shared-table and live-restart recordings remain open."
+  }
+]
