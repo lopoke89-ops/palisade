@@ -62,7 +62,7 @@ export function createRelay({identity,origins=[],maxRooms=10,graceMs=20000,log=(
  });
  wss.on('connection',ws=>{
   let p=null,busy=false,started=Date.now(),count=0,bytes=0;ws.alive=true;
-  const authDeadline=setTimeout(()=>ws.close(4001,'Sign in timed out'),12000);
+  const authDeadline=setTimeout(()=>ws.close(4001,'Sign in timed out'),20000);
   ws.on('pong',()=>ws.alive=true);
   ws.on('error',()=>{});
   ws.on('message',async(raw,binary)=>{
@@ -71,10 +71,11 @@ export function createRelay({identity,origins=[],maxRooms=10,graceMs=20000,log=(
    if(count>(p?.role==='host'?240:90)||bytes>(p?.role==='host'?524288:32768))return ws.close(4001,'Too many messages');
    let b;try{b=JSON.parse(raw)}catch{return ws.close(4001,'Bad message')}
    if(!b||typeof b!=='object'||Array.isArray(b))return;
+   let ownsVerification=false;
    try{
     if(!p){
      if(busy)return;if(b.type!=='hello'||b.wire!==WIRE||b.game!==GAME||!sessionPattern.test(b.session)||!['host','guest'].includes(b.role))fail('Reload before joining this casino.');
-     busy=true;const who=await identity.verify(b.token);
+     busy=true;ownsVerification=true;const who=await identity.verify(b.token);
      if(ws.readyState!==WebSocket.OPEN)return;
      const existing=b.resume&&[...people.values()].find(x=>x.resume===b.resume);
      if(existing){
@@ -107,7 +108,7 @@ export function createRelay({identity,origins=[],maxRooms=10,graceMs=20000,log=(
     if(p.ws!==ws)return;
     if(p.expires<=Date.now())fail('Sign in again.');
     if(b.type==='token'){
-     if(busy)return;busy=true;const who=await identity.verify(b.token);if(p.ws!==ws||ws.readyState!==WebSocket.OPEN)return;if(who.uid!==p.uid)fail('Account changed.');p.expires=who.expires;send(p,{type:'token'});return;
+     if(busy)return;busy=true;ownsVerification=true;const who=await identity.verify(b.token);if(p.ws!==ws||ws.readyState!==WebSocket.OPEN)return;if(who.uid!==p.uid)fail('Account changed.');p.expires=who.expires;send(p,{type:'token'});return;
     }
     if(b.type==='depart'){remove(p);return ws.close(1000,'Left casino')}
     if(b.type==='ping'){send(p,{type:'pong'});return}
@@ -127,7 +128,7 @@ export function createRelay({identity,origins=[],maxRooms=10,graceMs=20000,log=(
      send(p.room.host,{type:'packet',from:p.id,data:safe},d.t==='i');forwarded++;
     }
    }catch(e){send({ws},{type:'error',message:e.message});ws.close(4001,'Request refused')}
-   finally{busy=false}
+   finally{if(ownsVerification)busy=false}
   });
   ws.on('close',()=>{
    clearTimeout(authDeadline);if(!p||p.ws!==ws||!people.has(p.id))return;p.ws=null;

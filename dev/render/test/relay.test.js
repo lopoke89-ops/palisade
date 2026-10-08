@@ -51,3 +51,17 @@ test('rooms isolate routing, token changes are refused, and floods do not evict 
   h1.send({type:'depart'});h2.send({type:'depart'});await sleep(25);assert.equal(relay.rooms.size,0);
  }finally{for(const s of sockets)s.ws.terminate();await relay.stop()}
 });
+
+test('repeated hello messages cannot race a delayed identity lookup into duplicate rooms',async()=>{
+ let lookups=0,release;const pending=new Promise(resolve=>release=resolve);
+ const slowIdentity={verify:async token=>{lookups++;await pending;return identity.verify(token)}};
+ const relay=createRelay({origins:[origin],identity:slowIdentity}),port=await relay.start();
+ const h=connect(port,'host','user0');
+ try{
+  while(!lookups)await sleep(5);
+  const hello={type:'hello',wire:WIRE,game:GAME,role:'host',token:'user0',session:'a'.repeat(24),incarnation:randomUUID()};
+  h.send(hello);h.send(hello);await sleep(30);assert.equal(lookups,1,'only one lookup may own this connection');
+  release();await h.wait('welcome');await sleep(20);assert.equal(relay.rooms.size,1);assert.equal(relay.people.size,1);
+  h.send({type:'depart'});await sleep(20);assert.equal(relay.rooms.size,0);assert.equal(relay.people.size,0);
+ }finally{release();h.ws.terminate();await relay.stop()}
+});
