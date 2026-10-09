@@ -1,0 +1,14 @@
+{
+  "site": "https://lopoke89-ops.github.io/palisade/",
+  "version": "v0.10.5",
+  "relayEnabled": true,
+  "serviceWorkerControlsPage": true,
+  "cache": [
+    "palisade-420cf3dc34",
+    "palisade-media-2"
+  ],
+  "browserErrors": [],
+  "cspViolations": [],
+  "authenticatedPlayer": false,
+  "checkedAt": "2026-10-09T03:35:12.722Z"
+}

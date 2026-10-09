@@ -1,10 +1,16 @@
 # PALISADE project status
 
-## Current casino scope — October 8 clarification
+## v0.10.5: player-hosted casino relay (deployed October 8)
 
-The user wants player-hosted casino lobbies with Render relaying their connections. The v0.10.5 release is `casino-render-relay`, based on the published v0.10.4 branch. Final six-browser isolated verification, Free cold-start/restart, game/ledger suites and installed-app upgrade passed. The small production lobby-code migration is applied; public relay deployment/publication is in progress. The earlier `casino-persistent-render` candidate and closed, unmerged PR #28 are preserved but superseded; their paid-hosting request and always-on release gates no longer apply. See [the corrected work order](plans/casino-render-relay-work-order.md) and [execution evidence](evidence/casino-relay-2026-10-08/README.md). No paid plan is approved or being selected.
+Players create and host casino lobbies for up to six people; Render Free relays their WSS connections. The v0.10.5 client is live on GitHub Pages, build `420cf3dc34`, from merged [PR #29](https://github.com/lopoke89-ops/palisade/pull/29), main commit `55da1b3`. The served index/service worker match the release exactly. A public browser load passed with the new worker/cache and zero exceptions or CSP violations.
 
-Updated October 6, 2026. This is the current status record for the clone. The older project handoff and v0.9.3 hardening prompt describe a superseded release order.
+The small production lobby-code migration is applied. Existing Free Render service `srv-db3tn82j9qps73fe2t30` is Live at verified relay revision `08a20fd`, using production public Auth configuration and the exact Pages origin. It follows main with Auto-Deploy Off. The existing Supabase game/financial authority remains unchanged (`tables` version 12). Final six-browser isolated verification, actual Free cold-start/restart, game/ledger suites and installed-app upgrade passed. No authenticated production-player test wagers were performed.
+
+The creator keeps the game running; departure closes the lobby. Brief host/guest disconnects resume within 20 seconds, while a relay restart requires a new lobby. Free can sleep when empty and first entry can take about a minute. Refresh/reopen until the footer shows v0.10.5.
+
+The earlier `casino-persistent-render` candidate and closed, unmerged PR #28 are preserved but superseded; their paid-hosting request and always-on release gates no longer apply. See [the corrected work order](plans/casino-render-relay-work-order.md) and [execution evidence](evidence/casino-relay-2026-10-08/README.md). No paid plan or card was selected.
+
+Updated October 8, 2026 CDT. This is the current status record for the clone. The older project handoff and v0.9.3 hardening prompt describe a superseded release order.
 
 For a consolidated list of what remains from those documents, see the [current project blueprint](PROJECT_BLUEPRINT_2026-09-29.md).
 Big U's latest completed local scope is recorded in the [presentation prompt](plans/backgrounds-and-character-animation-prompt.md). The earlier [cosmetic and hardening prompt](plans/next-cosmetics-and-hardening-prompt.md) remains the record of v0.9.3.2 and its deferred work.

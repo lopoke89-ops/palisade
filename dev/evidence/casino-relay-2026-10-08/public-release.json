@@ -1,0 +1,15 @@
+{
+  "version": "v0.10.5",
+  "build": "420cf3dc34",
+  "relayEnabled": true,
+  "productionAuth": true,
+  "debugHooksAbsent": true,
+  "cspHashesMatch": true,
+  "canonicalSha256": {
+    "index.html": "867198c1bd1e9b5fcf964754c98b381d129cbe614df8a85e2fffd328e2c7193f",
+    "sw.js": "3f885678b02e52844bd7f4335ea60a23a14331eacc3e85ead12887d73da906d1"
+  },
+  "servedAssetsMatch": true,
+  "site": "https://lopoke89-ops.github.io/palisade/",
+  "checkedAt": "2026-10-09T03:34:17.572Z"
+}

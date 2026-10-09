@@ -45,3 +45,7 @@ After all relevant checks pass, apply only the lobby-code migration to productio
 Rollback disables new relay casino entry and preserves existing table cash-out/history and ledger data. An already published relay lobby must not silently become P2P under its old code. Inform players before ending active sessions for a deployment.
 
 Sources checked October 8: [Render WebSockets](https://render.com/docs/websocket), [Free idle behavior and limits](https://render.com/docs/free), [Supabase verified user lookup](https://supabase.com/docs/reference/javascript/auth-getuser).
+
+## Completed release — October 8 CDT
+
+Executed and published as v0.10.5, build `420cf3dc34`, through [PR #29](https://github.com/lopoke89-ops/palisade/pull/29), merged main commit `55da1b3`. The existing Free service runs the verified relay `08a20fd` with production public Auth and the exact Pages origin. Only `casino_relay_lobby_codes` was applied to production (remote history version `20261009032510`); the existing tables engine and financial schema remain unchanged. All relevant checks above passed within the limits recorded in [the execution evidence](../evidence/casino-relay-2026-10-08/README.md). The served public client and service worker match the tested release, and a fresh public browser loaded the updated worker/cache without exceptions or CSP violations. Six-user authenticated proof used isolated staging; production wagers were not used as tests. No paid hosting purchase or card was needed.

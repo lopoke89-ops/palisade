@@ -1,7 +1,9 @@
 PALISADE: phone version with online co-op
 =========================================
 
-PUBLISHED RELEASE: v0.9.6.2 / yard-22 adds the seven-track soundtrack and atomic five-case openings. Commit [358696b](https://github.com/lopoke89-ops/palisade/commit/358696b543f7aad4147f7f007e222423dfafe6d3) is pushed and verified live, including all 14 audio hashes, the five-case flow and offline cache. See [completion and release evidence](dev/evidence/2026-10-01-music-case-batches/README.md).
+PUBLISHED RELEASE: v0.10.5 / yard-29 adds player-hosted casino lobbies through a Render Free relay for up to six people. The creator hosts the floor; Supabase continues to run all seven games and own shards, private cards, receipts and history. [PR #29](https://github.com/lopoke89-ops/palisade/pull/29) is merged and the public page/service worker match build 420cf3dc34. [Play PALISADE](https://lopoke89-ops.github.io/palisade/) and see [release evidence](dev/evidence/casino-relay-2026-10-08/README.md). Refresh/reopen until the footer shows v0.10.5. The creator must keep the game running; first entry after Free hosting sleeps can take about a minute.
+
+EARLIER RELEASE: v0.9.6.2 / yard-22 adds the seven-track soundtrack and atomic five-case openings. Commit [358696b](https://github.com/lopoke89-ops/palisade/commit/358696b543f7aad4147f7f007e222423dfafe6d3) is pushed and verified live, including all 14 audio hashes, the five-case flow and offline cache. See [completion and release evidence](dev/evidence/2026-10-01-music-case-batches/README.md).
 
 PREVIOUS RELEASE: v0.9.6.1. Winter models, tracer refinements, Delgado Follow/Defend commands, Dead End, and 20-hit shields are live. Commit [526831b](https://github.com/lopoke89-ops/palisade/commit/526831bad0c4369a5058f9a5812e20413a1e9367) and the live HTML match. See [winter evidence](dev/evidence/2026-10-01-winter-upgrade/README.md) and the [311-entry four-angle catalog](dev/catalog/cosmetics/README.md).
 
