@@ -1,4 +1,6 @@
 dev/test/out/
+dev/render/node_modules/
+dev/render/.env
 dev/test/node_modules/
 __pycache__/
 dev/test/*.png

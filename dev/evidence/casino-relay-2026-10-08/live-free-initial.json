@@ -1,0 +1,62 @@
+{
+  "initial": {
+    "ready": true,
+    "kind": "player-hosted-relay",
+    "wire": "casino-relay-1",
+    "build": "10c629ef2562b7259ff858c49eaad1fc7805bc85",
+    "epoch": "69401bc0-d7b9-42a9-8acd-5dc7d452033e",
+    "rooms": 0,
+    "players": 0,
+    "joins": 0,
+    "forwarded": 0,
+    "coalesced": 0
+  },
+  "receivedPayloadBytes": 2337337,
+  "sentPayloadBytes": 2334197,
+  "sixBrowsers": true,
+  "joinMilliseconds": [
+    1100,
+    951,
+    1011,
+    1036,
+    988
+  ],
+  "movementReachedHost": true,
+  "guestReconnectSamePeer": true,
+  "sessionHealth": {
+    "ready": true,
+    "kind": "player-hosted-relay",
+    "wire": "casino-relay-1",
+    "build": "10c629ef2562b7259ff858c49eaad1fc7805bc85",
+    "epoch": "69401bc0-d7b9-42a9-8acd-5dc7d452033e",
+    "rooms": 1,
+    "players": 6,
+    "joins": 6,
+    "forwarded": 6638,
+    "coalesced": 0
+  },
+  "guestDepartureContinued": true,
+  "hostDepartureClosesLobby": true,
+  "platformRestart": {
+    "oldEpoch": "69401bc0-d7b9-42a9-8acd-5dc7d452033e",
+    "newEpoch": "161a1f3e-1f50-40d3-b875-b0adc02cb6e0",
+    "hostMessage": "The relay restarted. Open or join a new casino lobby.",
+    "guestMessage": "The relay restarted. Open or join a new casino lobby."
+  },
+  "final": {
+    "ready": true,
+    "kind": "player-hosted-relay",
+    "wire": "casino-relay-1",
+    "build": "10c629ef2562b7259ff858c49eaad1fc7805bc85",
+    "epoch": "161a1f3e-1f50-40d3-b875-b0adc02cb6e0",
+    "rooms": 0,
+    "players": 0,
+    "joins": 0,
+    "forwarded": 0,
+    "coalesced": 0
+  },
+  "completed": true,
+  "checkedAt": "2026-10-08T22:05:50.353Z",
+  "browserErrors": [],
+  "forbiddenRequests": []
+}

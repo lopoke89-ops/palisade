@@ -45,6 +45,7 @@
 20b-case-openings.js   Atomic single/batch rewards, durable receipts and shared reel sessions.
 20b-winter-effects.js   shared winter snowflake and six kill effect painters
 21-online.js   online co-op and PvP networking
+21a-casino-relay.js   player-hosted casino connections through Render
 16h-nameplates.js   v0.9.9 health above heads, teammate edge arrows, low-health edge
 21b-tables.js   v0.9.8 the Tables (blackjack and hold'em for shards; the server deals)
 21c-casino-games.js   v0.10.3 baccarat, craps, slots and Plinko sheets; the result review and receipt every game shares; LAST RESULT

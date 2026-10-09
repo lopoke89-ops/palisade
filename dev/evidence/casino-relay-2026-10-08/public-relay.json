@@ -1,0 +1,41 @@
+{
+  "endpoint": "https://palisade-casino-staging.onrender.com",
+  "service": "srv-db3tn82j9qps73fe2t30",
+  "deployment": "dep-db45tn7lk1mc73eupv60",
+  "plan": "Free",
+  "health": {
+    "ready": true,
+    "kind": "player-hosted-relay",
+    "wire": "casino-relay-1",
+    "build": "08a20fdca46f3c0b0194569d2e61299008dcaaf7",
+    "epoch": "144d61d9-c7f9-4d6b-a1cd-a804d1114325",
+    "rooms": 0,
+    "players": 0,
+    "joins": 0,
+    "forwarded": 0,
+    "coalesced": 0
+  },
+  "roomDirectoryStatus": 404,
+  "productionAuthHealthStatus": 200,
+  "configuredProject": "puvjfhwxigxjpsvdwrwf",
+  "allowedOrigin": "https://lopoke89-ops.github.io",
+  "nodeVersion": "22.17.0",
+  "configurationConfirmedInRenderUI": true,
+  "usesPublicKeyOnly": true,
+  "autoDeploy": "Off",
+  "migration": {
+    "project": "puvjfhwxigxjpsvdwrwf",
+    "name": "casino_relay_lobby_codes",
+    "remoteVersion": "20261009032510",
+    "legacyFourCharacterCodesPreserved": true,
+    "casinoSixCharacterCodesEnabled": true,
+    "grantsPreserved": true
+  },
+  "tablesEdgeFunction": {
+    "version": 12,
+    "bundleSha256": "785446d355a0757ed3121097ede08ff7915451b24819960f04253e50e45b4a57",
+    "unchanged": true
+  },
+  "authenticatedProductionPlayerSmoke": false,
+  "checkedAt": "2026-10-09T03:30:46.334Z"
+}

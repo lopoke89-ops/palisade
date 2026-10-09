@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: palisade-casino-relay
+    runtime: node
+    plan: free
+    region: virginia
+    buildCommand: cd dev/render && npm ci --omit=dev
+    startCommand: cd dev/render && npm start
+    healthCheckPath: /healthz
+    autoDeployTrigger: off
+    envVars:
+      - key: NODE_VERSION
+        value: 22.17.0
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_PUBLISHABLE_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: https://lopoke89-ops.github.io

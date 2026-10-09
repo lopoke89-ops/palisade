@@ -12,6 +12,8 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
   const H = await b.newPage({ viewport: { width: 1280, height: 800 } }); H.on('pageerror', e => errors.push('H ' + e.message));
   const G = await (await b.newContext({ viewport: { width: 900, height: 700 } })).newPage(); G.on('pageerror', e => errors.push('G ' + e.message));
   await H.goto(`http://localhost:${PORT}/debug.html?${Q}`); await G.goto(`http://localhost:${PORT}/debug.html?${Q}`); await ready(H); await ready(G);
+  // Retain legacy four-character/P2P room compatibility; dedicated relay suites check the public casino path.
+  for(const p of [H,G])await p.evaluate(()=>globalThis.PALISADE_RELAY={enabled:false,url:''});
   out.picked = await H.evaluate(() => __pal.pick.mode);
   await H.evaluate(() => { __pal.pick.mode = 'casino' }); await H.click('[data-nav=multi]'); await H.click('#hostBtn');
   await H.waitForFunction(() => /^[A-Z0-9]{4}$/.test(document.getElementById('lCode').textContent), null, { timeout: 15000 });

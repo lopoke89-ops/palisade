@@ -4,9 +4,10 @@
 // Once an account exists the server owns the locker: cases are rolled there and rewards are checked there.
 // This browser keeps a copy so the menu opens instantly and solo still plays with no signal.
 // SB_KEY is Supabase's public "publishable" key. It can only do what the database's own rules allow.
-const SB_URL='https://puvjfhwxigxjpsvdwrwf.supabase.co',SB_KEY='sb_publishable_xe3uY3icYguSM5pqlD7a1Q_7OD3B4v6';
+const SB_URL=globalThis.PALISADE_RELAY?.supabaseUrl||'https://puvjfhwxigxjpsvdwrwf.supabase.co',SB_KEY=globalThis.PALISADE_RELAY?.publishableKey||'sb_publishable_xe3uY3icYguSM5pqlD7a1Q_7OD3B4v6';
 const TURNSTILE_KEY='';   // Cloudflare Turnstile site key (public) once the robot check is switched on
-const AUTH_KEY='palisade.auth.v1',GUEST_KEY='palisade.auth.guest',CLAIM_KEY='palisade.claims.v1';
+const AUTH_SCOPE=SB_URL==='https://puvjfhwxigxjpsvdwrwf.supabase.co'?'':':'+new URL(SB_URL).hostname;
+const AUTH_KEY='palisade.auth.v1'+AUTH_SCOPE,GUEST_KEY='palisade.auth.guest'+AUTH_SCOPE,CLAIM_KEY='palisade.claims.v1'+AUTH_SCOPE;
 const SITE_URL=location.origin+location.pathname;
 const cloudOn=location.hostname==='lopoke89-ops.github.io'||/[?&]cloud=1\b/.test(location.search);
 const acct={s:null,name:null,state:cloudOn?'wait':'off',msg:'',recovery:false,busy:false,t:0};
@@ -16,6 +17,7 @@ const myUid=()=>acct.s&&acct.s.user?acct.s.user.id:acct.s?jwtSub(acct.s.access_t
 function jwtSub(t){try{return JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))).sub||null}catch(e){return null}}
 const needPw=()=>!!(acct.s&&acct.s.user&&!acct.s.user.is_anonymous&&acct.s.user.email&&!(acct.s.user.user_metadata||{}).pw);
 function setSession(d){
+  if(typeof RLY!=='undefined'&&RLY.active&&RLY.owner!==(d?.user?.id||jwtSub(d?.access_token||'')))netLeave('Account changed. Join the casino again.');
   if(!d||!d.access_token){acct.s=null;try{localStorage.removeItem(AUTH_KEY)}catch(e){}return}
   const keepUser=acct.s&&acct.s.user&&acct.s.user.id===jwtSub(d.access_token)?acct.s.user:null;
   acct.s={access_token:d.access_token,refresh_token:d.refresh_token,expires_at:d.expires_at||Math.floor(Date.now()/1000)+(d.expires_in||3600),user:d.user||keepUser};

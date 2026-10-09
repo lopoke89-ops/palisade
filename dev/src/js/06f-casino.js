@@ -290,9 +290,10 @@ function casRoom(){if(NET.mode==='host'&&NET.code&&NET.incarnation)return 'R:'+N
   return game.casRoom||(game.casRoom='SOLO:'+String(myUid()||'x').slice(0,8)+':'+Date.now().toString(36))}
 // ENTER THE CASINO: open a room (so the crew can drop in by code or invite) and walk straight in; offline, just you
 async function casEnter(){const no=tbCanPlay();if(no){tbMsg(no);return}if(inRun()&&$('menu').hidden)return;
+  if(rlyEnabled()&&NET.mode!=='solo'&&!rlyActive()){tbMsg('Leave your current crew before opening a casino lobby.');return}
   if(pick.mode!=='casino')CAS_PREV=pick.mode;pick.mode='casino';pick.pvp='coop';initAudio();tbMsg('Opening the doors…');
   if(NET.mode==='host'&&!NET.inGame){startOnline();return}   // already hosting a lobby: everyone in it comes too
-  NET.autoCasino=true;await netHost();if(NET.autoCasino&&NET.mode==='solo'){NET.autoCasino=false;casSolo()}}
+  NET.autoCasino=true;await netHost();if(!rlyEnabled()&&NET.autoCasino&&NET.mode==='solo'){NET.autoCasino=false;casSolo()}}
 function casSolo(){pick.mode='casino';tbMsg('');start()}
 // JOIN BY CODE from the TABLES page: the same join as MULTIPLAYER (the host's start message brings you into their casino)
 function casJoin(code){if(pick.mode!=='casino')CAS_PREV=pick.mode;showPage('multi');$('mCode').value=code;initAudio();netJoin(code)}

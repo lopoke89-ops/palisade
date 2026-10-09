@@ -22,6 +22,7 @@ const Q='peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1&cloud=1';
    for(const h of a.hands)hands.push({id:hands.length+1,game:t.game,hand_no:h.no,hash:h.hash,salt:h.salt,deck:h.deck,result:h.result,created_at:new Date().toISOString()});return{ok:true}},
   create:async a=>{if([...tables.values()].some(t=>t.open&&t.room===a.room&&t.game===a.game&&t.station===(a.station||'')))return{conflict:true};if(!applyOps(a.ops))return{error:'insufficient'};const id=nid++;
    tables.set(id,{id,code:a.code,game:a.game,room:a.room,station:a.station||'',st:a.st,ver:0,humans:a.humans,open:true});if(a.op)opsLog.set(a.op.uid+'|'+a.op.id,{req:a.op.req,table_id:id,res:a.op.res});return{ok:true,id}}};
+ const relay=process.env.PALISADE_TEST_RELAY?await require('./relay-fixture').start(users,tok):null;
  const b=await chromium.launch({executablePath:process.env.CHROMIUM||undefined}),errors=[];
  const open=async(u,vp,m,extra={})=>{const ctx=await b.newContext({viewport:vp,isMobile:m,hasTouch:m,...extra});
   await ctx.route('https://puvjfhwxigxjpsvdwrwf.supabase.co/**',async route=>{const r=route.request(),url=new URL(r.url());let body=null;try{body=r.postDataJSON()}catch(e){}
@@ -32,7 +33,9 @@ const Q='peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1&cloud=1';
    return route.fulfill({status:200,contentType:'application/json',body:'null'})});
   const p=await ctx.newPage();p.on('pageerror',e=>errors.push(u.name+': '+e.message));p.on('console',m=>{if(m.type()==='error'&&!/Failed to load|net::|404|ERR_CONNECTION/.test(m.text()))console.log('CONSOLE',u.name,m.text().slice(0,300))});
   await p.addInitScript(([s])=>{localStorage.setItem('palisade.auth.v1',s)},[JSON.stringify({access_token:tok(u),refresh_token:'r',expires_at:4e9,user:{id:u.id,is_anonymous:false,email:u.name+'@x.y',user_metadata:{pw:true}}})]);
-  await p.goto(`http://localhost:${process.env.PORT||8080}/debug.html?${Q}`);await ready(p);return p};
+  await p.goto(`http://localhost:${process.env.PORT||8080}/debug.html?${Q}`);await ready(p);
+  await p.evaluate(on=>globalThis.PALISADE_RELAY=on?{enabled:true,url:'http://127.0.0.1:10000'}:{enabled:false,url:''},!!relay);
+  if(relay)p.on('request',r=>{if(/peerjs|palisade-turn/.test(r.url()))errors.push('Relay loaded P2P: '+r.url())});return p};
  const host=await open(users.A,{width:1366,height:820},false);
  const V=p=>p.evaluate(()=>{const v=__pal.TB.v;return v&&JSON.parse(JSON.stringify(v))}),poke=p=>p.evaluate(()=>{const T=__pal.TB;if(T.id)return __pal.tbSend({op:'state',id:T.id},true)}).catch(()=>{});
  const until=async(p,f,ms=30000,why='')=>{const t=Date.now();for(;;){const v=await V(p);if(v&&f(v))return v;if(Date.now()-t>ms)throw new Error('timed out waiting '+why+': '+JSON.stringify(v&&{phase:v.phase,game:v.game,review:v.review}));await poke(p);await p.waitForTimeout(120)}};
@@ -139,5 +142,5 @@ const Q='peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1&cloud=1';
  await until(land,v=>v.game==='sl'&&v.phase==='idle',15000);await land.tap('#tbActs [data-act="spin"]');await land.waitForTimeout(400);
  assert.ok(await land.$('#tbFelt .trcpt:not(.live)'),'reduced motion: the result shows at once');assert.ok(!(await land.$('#tbFelt .slreel.spin')),'no spinning reels');
  {const s=await V(land);assert.ok(s.phase==='done'&&s.review>4000,'but the server still holds the review (reveal + 3 s)')}await land.screenshot({path:__dirname+'/out/casino_games_slots_landscape.png'});
- assert.deepEqual(errors,[],'no page errors');fs.mkdirSync(__dirname+'/out',{recursive:true});fs.writeFileSync(__dirname+'/out/casino_games_ui.json',JSON.stringify(out,null,1));console.log(JSON.stringify(out).slice(0,1500));console.log('errors: none');await b.close();
+ assert.deepEqual(errors,[],'no page errors');fs.mkdirSync(__dirname+'/out',{recursive:true});fs.writeFileSync(__dirname+'/out/casino_games_ui.json',JSON.stringify(out,null,1));console.log(JSON.stringify(out).slice(0,1500));console.log('errors: none');await b.close();if(relay)await relay.stop();
 })().catch(e=>{console.error(e);process.exit(1)});
