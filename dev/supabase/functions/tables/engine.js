@@ -11,7 +11,7 @@
 // measured from the moment the last card turns, the dice stop or the ball lands (revealAt), not from the deal. Baccarat,
 // craps, slots and Plinko (games.js) run through the same clock, ledger and receipts.
 export const BUYIN=5,BET_MS=60000,NEXT_MS=60000,PAUSE_MS=0,BOT_MS=1300,AWAY_MS=60000,
-  RAKE=.018,RAKE_CAP=6,SIDE_COST=1,BOT_DAILY=25,SB=1,BB=2,SEATS={bj:5,he:6,rl:6,ba:6,cr:6,sl:1,pk:1},LIMITS=[100,250,0],SPIN_MS=6000,RL_SHOW_MS=6000,FV=2,
+  RAKE=.018,RAKE_CAP=6,SIDE_COST=1,SB=1,BB=2,SEATS={bj:5,he:6,rl:6,ba:6,cr:6,sl:1,pk:1},LIMITS=[100,250,0],SPIN_MS=6000,RL_SHOW_MS=6000,FV=2,
   CARD_MS=700,REVIEW={bj:8000,he:8000,ba:8000,rl:6000,cr:6000,sl:3000,pk:3000},
   RV={bj:'bj-2',he:'he-2',rl:'rl-2',ba:'ba-1',cr:'cr-1',sl:'sl-1',pk:'pk-1'};
 export const PRIZES={hybrid:10,flags:15};   // the side bet: 10 Hybrid Theory Cases or 15 Flag Cases, the winner picks
@@ -107,7 +107,7 @@ export function topup(st,uid,amt,ctx){
 export function inHand(st,uid){const x=XG(st.game);if(x)return x.inHand(st,uid);const h=st.hand;if(!h||st.phase==='wait'||st.phase==='done'||st.phase==='bet')return false;if(st.game==='rl')return !!(h.bets[uid]);return h.players.some(p=>p.uid===uid)}
 export function standUp(st,i,ctx){const s=st.seats[i];if(!s)return;
   while(st.picks[s.uid]>0)pick(st,s.uid,'hybrid',ctx);   // an unpicked side-bet prize is never lost: Hybrid Theory by default
-  if(s.bot)ctx.ops.push({k:'bot',d:s.stack-s.brought});else{if(s.stack>0)ctx.ops.push({uid:s.uid,k:'cashout',d:s.stack});note(st,s.name+' stood up')}
+  if(s.bot){if(s.walletBot)ctx.ops.push({k:'bot_cashout',d:s.stack});ctx.ops.push({k:'bot',d:s.stack-s.brought})}else{if(s.stack>0)ctx.ops.push({uid:s.uid,k:'cashout',d:s.stack});note(st,s.name+' stood up')}
   st.seats[i]=null;if(st.host===s.uid){const h=humans(st)[0];st.host=h?h.uid:null}}
 // the last person has left: the bot stands up too, so its result reaches the ledger before the table closes (v0.10.0)
 export function closeOut(st,ctx){for(let i=0;i<st.seats.length;i++)if(st.seats[i]&&st.seats[i].bot)standUp(st,i,ctx)}
@@ -244,9 +244,11 @@ const drawB=h=>{if(h.posOf)h.posOf.board.push(h.pos);return draw(h)};   // a boa
 const heEligible=st=>st.seats.map((s,i)=>[s,i]).filter(([s])=>s&&!s.leaving&&s.stack>=BB);
 function heTryDeal(st,ctx){
   const hs=humans(st).filter(s=>!s.leaving&&s.stack>=BB);
-  // two people: a bot takes a third seat (while its daily budget lasts); three or more: people only; one: wait
-  if(hs.length===2&&!st.seats.some(s=>s&&s.bot)&&(ctx.botLeft||0)>=BUYIN){const i=st.seats.findIndex(s=>!s);
-    if(i>=0){st.seats[i]={uid:'bot:'+st.handNo,name:'SLIM (BOT)',bot:true,stack:BUYIN,brought:BUYIN,sitout:0,side:false,seen:ctx.now};ctx.botLeft-=BUYIN}}
+  // Two people: SLIM brings his entire available wallet. The database reserves it atomically for one table.
+  // An old, already-seated bot finishes normally; its old allowance is never deposited into the new wallet.
+  const balance=ctx.botLeft||0;
+  if(hs.length===2&&!st.seats.some(s=>s&&s.bot)&&Number.isSafeInteger(balance)&&balance>=BB){const i=st.seats.findIndex(s=>!s);
+    if(i>=0){st.seats[i]={uid:'bot:'+st.handNo,name:'SLIM (BOT)',bot:true,walletBot:true,stack:balance,brought:balance,sitout:0,side:false,seen:ctx.now};ctx.ops.push({k:'bot_buyin',d:-balance});ctx.botLeft=0}}
   if(hs.length!==2){const b=st.seats.findIndex(s=>s&&s.bot);if(b>=0)standUp(st,b,ctx)}
   const el=heEligible(st);if(hs.length<2||el.length<2){cleanupIdle(st,ctx);return}
   for(const s of st.seats)if(s&&!s.bot&&s.stack<BB)s.sitout++;   // counted once per hand dealt without them

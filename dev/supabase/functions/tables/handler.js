@@ -30,7 +30,8 @@ async function run(D,id,uid,fn,op){
   for(let tries=0;tries<5;tries++){
     const t=await D.load(id);if(!t||!t.open)return err(404,'That table has closed');
     const st=t.st,now=D.now(),before=JSON.stringify(st),me=E.seatIx(st,uid),oldSeen=me>=0?st.seats[me].seen:0;
-    const ctx={now,rng,salt,seed,ops:[],hands:[],botLeft:st.game==='he'&&st.phase==='wait'?await D.botLeft():0};
+    // A request can pass through review cleanup into wait before dealing; fetch for every Hold'em step.
+    const ctx={now,rng,salt,seed,ops:[],hands:[],botLeft:st.game==='he'?await D.botLeft():0};
     E.tick(st,ctx);const no0=st.handNo,e=fn?fn(st,ctx):null;E.tick(st,ctx);
     const dk=st.hand&&(st.hand.shoe||st.hand.deck);if(dk&&!st.hand.hash)st.hand.hash=await deckHash(st.hand.salt,dk);   // the deck's fingerprint, shown from the deal
     for(const h of ctx.hands)if(!h.hash)h.hash=await deckHash(h.salt,h.deck);if(st.last&&!st.last.hash&&ctx.hands.length)st.last.hash=ctx.hands.at(-1).hash;

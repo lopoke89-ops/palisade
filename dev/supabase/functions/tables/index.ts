@@ -7,7 +7,7 @@ import { handle } from './handler.js';
 const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
 const users = new Map<string, { u: { id: string; anon: boolean }; t: number }>();
 // what a refused step means: short shards, seated at another table, or this operation id already used (answer from casino_ops)
-const failed = (m: string) => /insufficient/.test(m) ? { error: 'insufficient' } : /seated elsewhere/.test(m) ? { error: 'seated' } : /duplicate op/.test(m) ? { dup: true } : { error: 'Server error' };
+const failed = (m: string) => /bot wallet changed/.test(m) ? { conflict: true } : /insufficient/.test(m) ? { error: 'insufficient' } : /seated elsewhere/.test(m) ? { error: 'seated' } : /duplicate op/.test(m) ? { dup: true } : { error: 'Server error' };
 const one = async (q: any) => { const { data, error } = await q; if (error) throw error; return data; };
 const D = {
   now: () => Date.now(),
@@ -28,7 +28,7 @@ const D = {
     .contains('result->players', JSON.stringify([{ uid }])).order('id', { ascending: false }).limit(n)),
   books: async () => { const { error } = await sb.rpc('casino_books_run'); if (error) console.error('books', error.message); },
   stale: async (ms: number) => await one(sb.from('casino_tables').select('id').eq('open', true).lt('updated_at', new Date(Date.now() - ms).toISOString()).limit(10)),
-  botLeft: async () => (await one(sb.rpc('casino_bot_left'))) ?? 0,
+  botLeft: async () => (await one(sb.rpc('casino_bot_balance'))) ?? 0,
   commit: async (a: any) => {
     const { data, error } = await sb.rpc('casino_step', { p_table: a.id, p_ver: a.ver, p_st: a.st, p_humans: a.humans, p_open: a.open, p_ops: a.ops, p_hands: a.hands, p_op: a.op });
     if (error) return failed(error.message); return data;

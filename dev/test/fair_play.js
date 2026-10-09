@@ -18,6 +18,8 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),crypto=require(
   assert.equal(E.setSeed(st,'b','changed-my-mind'),null,'a seed can change while betting');
   E.bjBet(st,'a',10,false,ctx);E.bjBet(st,'b',10,false,ctx);E.tick(st,ctx);const h=st.hand;assert.equal(h.hash,committed,'the deal used the seed committed before seeds locked');
   assert.deepEqual(h.fair.seeds,['mine1','changed-my-mind'],'both players\' seeds, as they were at the deal');
+  // Dealer aces can open insurance before the action phase; finish that choice too.
+  if(st.phase==='ins'){for(const p of h.players)E.bjInsure(st,p.uid,false,ctx);E.tick(st,ctx)}
   for(let k=0;k<20&&st.phase==='play';k++){const v=E.view(st,h.players[h.turn.p].uid,ctx.now);E.bjAct(st,h.players[h.turn.p].uid,'stand',ctx);E.tick(st,ctx)}
   const v=E.view(st,'a',ctx.now),L=v.last;assert.ok(L.seed&&E.sha256hex(L.seed)===committed,'the seed is revealed and matches');
   assert.deepEqual(E.shuffle(208,E.fairRng(L.seed,L.result.seeds,L.result.nonce)),L.deck,'the shoe reruns exactly');

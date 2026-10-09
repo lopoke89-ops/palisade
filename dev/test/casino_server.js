@@ -9,17 +9,17 @@
 // shoe's last row has the seed and reruns. The books balance for the new games; players can't reach the new tables or
 // functions. node casino_server.js
 const {PGlite}=require('@electric-sql/pglite'),{base}=require('./winter-db'),fs=require('node:fs'),assert=require('node:assert/strict');
-const MIGS=['20261004200000_v098_tables.sql','20261005200000_v0100_casino.sql','20261006200000_v0103_casino_games.sql'].map(f=>__dirname+'/../supabase/migrations/'+f);
+const MIGS=['20261004200000_v098_tables.sql','20261005200000_v0100_casino.sql','20261006200000_v0103_casino_games.sql','20261009041955_casino_slim_wallet.sql'].map(f=>__dirname+'/../supabase/migrations/'+f);
 (async()=>{const H=await import('../supabase/functions/tables/handler.js'),E=await import('../supabase/functions/tables/engine.js'),X=await import('../supabase/functions/tables/games.js');
  const db=new PGlite(),checks=[],ok=(n,b)=>{assert.ok(b,n);checks.push(n)};
  await db.exec(base);await db.exec(`do $$begin if not exists(select 1 from pg_roles where rolname='service_role') then create role service_role; end if; end$$;alter role service_role bypassrls;
    alter table profiles add column if not exists username text;alter table lockers add column if not exists rev integer default 0;alter table lockers add column if not exists updated_at timestamptz;
    alter table lockers add column if not exists bag jsonb default '{}'::jsonb;grant usage on schema public,private to service_role,authenticated;grant select on lockers,profiles to service_role;`);
- for(const f of MIGS)await db.exec(fs.readFileSync(f,'utf8'));await db.exec(fs.readFileSync(MIGS[2],'utf8'));ok('the casino migrations apply (v0.10.3 twice)',true);
+ for(const f of MIGS)await db.exec(fs.readFileSync(f,'utf8'));await db.exec(fs.readFileSync(MIGS[3],'utf8'));ok('the casino migrations apply (SLIM wallet twice)',true);
  const A='a0000000-0000-4000-8000-00000000000a',B='b0000000-0000-4000-8000-00000000000b',C='c0000000-0000-4000-8000-00000000000c';
  await db.exec(`insert into lockers(user_id,shards) values('${A}',5000),('${B}',5000),('${C}',4);insert into profiles(id,username) values('${A}','BigU'),('${B}','Rab'),('${C}','Broke');`);
  const svc=async(q,p)=>{await db.exec('set role service_role');try{return(await db.query(q,p)).rows}finally{await db.exec('reset role')}};
- const failed=m=>/insufficient/.test(m)?{error:'insufficient'}:/seated elsewhere/.test(m)?{error:'seated'}:/duplicate op/.test(m)?{dup:true}:{error:m};
+ const failed=m=>/bot wallet changed/.test(m)?{conflict:true}:/insufficient/.test(m)?{error:'insufficient'}:/seated elsewhere/.test(m)?{error:'seated'}:/duplicate op/.test(m)?{dup:true}:{error:m};
  let clock=1e12;const T={a:{id:A,anon:false},b:{id:B,anon:false},c:{id:C,anon:false}};
  // one connection, like the edge function's pooled calls: statements from racing requests interleave between awaits
  const D={now:()=>clock,auth:async t=>T[t]||null,name:async u=>(await svc('select username from profiles where id=$1',[u]))[0]?.username,
@@ -31,7 +31,7 @@ const MIGS=['20261004200000_v098_tables.sql','20261005200000_v0100_casino.sql','
   history:async(u,n)=>svc(`select id,table_id,game,hand_no,hash,salt,deck,result,created_at from casino_hands where result->'players' @> $1::jsonb order by id desc limit $2`,[JSON.stringify([{uid:u}]),n]),
   books:async()=>svc('select public.casino_books_run()'),
   stale:async ms=>svc(`select id from casino_tables where open and updated_at < now()-($1||' milliseconds')::interval`,[String(ms)]),
-  botLeft:async()=>(await svc('select public.casino_bot_left() v'))[0].v,
+  botLeft:async()=>(await svc('select public.casino_bot_balance() v'))[0].v,
   commit:async a=>{try{return(await svc('select public.casino_step($1,$2,$3,$4,$5,$6,$7,$8) r',[a.id,a.ver,JSON.stringify(a.st),a.humans,a.open,JSON.stringify(a.ops),JSON.stringify(a.hands),a.op?JSON.stringify(a.op):null]))[0].r}catch(e){return failed(e.message)}},
   create:async a=>{try{return(await svc('select public.casino_start($1,$2,$3,$4,$5,$6,$7,$8) r',[a.code,a.game,JSON.stringify(a.st),a.humans,JSON.stringify(a.ops),a.room,a.station||'',a.op?JSON.stringify(a.op):null]))[0].r}catch(e){return failed(e.message)}}};
  const call=(who,body)=>H.handle(body,who,D),bal=u=>D.balance(u),ROOM='WXYZ:a0000000:1791300000000';let n=0;const oid=()=>'op'+(++n).toString(36).padStart(8,'0');

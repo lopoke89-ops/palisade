@@ -1,0 +1,10 @@
+{
+  "table_id": 116,
+  "phase": "play",
+  "bot_name": "SLIM (BOT)",
+  "brought": 5475,
+  "current_stack": 5475,
+  "wallet_bot": "true",
+  "reserved_shards": -5475,
+  "unseated_wallet_balance": 0
+}

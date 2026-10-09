@@ -16,6 +16,8 @@ const MIG=__dirname+'/../supabase/migrations/20261004200000_v098_tables.sql',MIG
  await db.exec(sql);await db.exec(sql);ok('migration applies twice',true);
  const sql2=fs.readFileSync(MIG2,'utf8');ok('no delete in the v0.10.0 migration',!/delete/i.test(sql2));await db.exec(sql2);await db.exec(sql2);ok('the v0.10.0 migration applies twice',true);
  const sql3=fs.readFileSync(MIG3,'utf8');ok('v0.10.3: the only deletes are seat rows',(sql3.match(/delete from public\.(\w+)/g)||[]).every(x=>/casino_seats/.test(x)));await db.exec(sql3);await db.exec(sql3);ok('the v0.10.3 migration applies twice',true);
+ await db.exec(fs.readFileSync(__dirname+'/../supabase/migrations/20261009041955_casino_slim_wallet.sql','utf8'));
+ await db.exec(`insert into casino_hands(table_id,game,hand_no,result) values(0,'bj',0,'{"house":100}'::jsonb)`);
  // casino rooms (the second v0.10.0 file: Open Games and friend invites accept length and map 'casino')
  {await db.exec(`create table if not exists lobbies(host_id uuid primary key,code text,name text,mode text,length text check (length = any (array['5','10','endless','blitz','campaign','blackout'])),diff text,players int,in_game boolean,proto text,updated_at timestamptz default now());
    create table if not exists private.room_sessions(host_id uuid primary key,incarnation uuid,code text,proto text,mode text,length text,map text,chapter int default 0,players int,locked boolean,updated_at timestamptz default now());
@@ -28,7 +30,7 @@ const MIG=__dirname+'/../supabase/migrations/20261004200000_v098_tables.sql',MIG
  const A='a0000000-0000-4000-8000-00000000000a',B='b0000000-0000-4000-8000-00000000000b',C='c0000000-0000-4000-8000-00000000000c',G='d0000000-0000-4000-8000-00000000000d';
  await db.exec(`insert into lockers(user_id,shards) values('${A}',100),('${B}',40),('${C}',3),('${G}',50);insert into profiles(id,username) values('${A}','BigU'),('${B}','Rab'),('${C}','Broke');`);
  const svc=async(q,p)=>{await db.exec('set role service_role');try{return(await db.query(q,p)).rows}finally{await db.exec('reset role')}};
- const failed=m=>/insufficient/.test(m)?{error:'insufficient'}:/seated elsewhere/.test(m)?{error:'seated'}:/duplicate op/.test(m)?{dup:true}:{error:m};
+ const failed=m=>/bot wallet changed/.test(m)?{conflict:true}:/insufficient/.test(m)?{error:'insufficient'}:/seated elsewhere/.test(m)?{error:'seated'}:/duplicate op/.test(m)?{dup:true}:{error:m};
  let clock=1e12;const T={a:{id:A,anon:false},b:{id:B,anon:false},c:{id:C,anon:false},g:{id:G,anon:true}};
  const D={now:()=>clock,auth:async t=>T[t]||null,
   name:async u=>(await svc('select username from profiles where id=$1',[u]))[0]?.username,
@@ -40,7 +42,7 @@ const MIG=__dirname+'/../supabase/migrations/20261004200000_v098_tables.sql',MIG
   history:async(u,n)=>svc(`select id,game,hand_no,hash,salt,deck,result,created_at from casino_hands where result->'players' @> $1::jsonb order by id desc limit $2`,[JSON.stringify([{uid:u}]),n]),
   books:async()=>svc('select public.casino_books_run()'),
   stale:async ms=>svc(`select id from casino_tables where open and updated_at < now()-($1||' milliseconds')::interval`,[String(ms)]),
-  botLeft:async()=>(await svc('select public.casino_bot_left() v'))[0].v,
+  botLeft:async()=>(await svc('select public.casino_bot_balance() v'))[0].v,
   // the edge function's calls (index.ts): casino_step / casino_start, and what a refusal means
   commit:async a=>{try{return(await svc('select public.casino_step($1,$2,$3,$4,$5,$6,$7,$8) r',[a.id,a.ver,JSON.stringify(a.st),a.humans,a.open,JSON.stringify(a.ops),JSON.stringify(a.hands),a.op?JSON.stringify(a.op):null]))[0].r}catch(e){return failed(e.message)}},
   create:async a=>{try{return(await svc('select public.casino_start($1,$2,$3,$4,$5,$6,$7,$8) r',[a.code,a.game,JSON.stringify(a.st),a.humans,JSON.stringify(a.ops),a.room,a.station||'',a.op?JSON.stringify(a.op):null]))[0].r}catch(e){return failed(e.message)}}};
@@ -91,10 +93,10 @@ const MIG=__dirname+'/../supabase/migrations/20261004200000_v098_tables.sql',MIG
  ok('the table closes when everyone has left',!(await D.load(id)).open);
  const L=await svc(`select coalesce(sum(shards),0)::int s from casino_ledger where table_id=$1 and kind<>'case'`,[id]),rake=0;
  ok('shards conserved: (A + B now) - (A + B before) = ledger total, and the ledger total is never positive',(await bal(A))+(await bal(B))-140===L[0].s&&L[0].s<=0);
- // hold'em: two people, the bot joins; the bot's daily budget
+ // hold'em: two people, the bot joins with its funded wallet
  r=await call('a',{op:'sit',room:ROOM,game:'he',lim:250});const hid=r.body.id;await call('b',{op:'sit',room:ROOM,game:'he'});clock+=1000;r=await call('a',{op:'state',id:hid});ok('hold\'em waits for the host',r.body.view.phase==='wait'&&!r.body.view.started);await call('a',{op:'start',id:hid});r=await call('a',{op:'state',id:hid});
  ok('hold\'em: two people get a bot',r.body.view.seats.some(s=>s&&s.bot)&&r.body.view.players.length===3);
- await svc(`insert into casino_ledger(table_id,kind,shards) values(0,'bot',-30)`);ok('the bot\'s budget is spent after a 30-shard day',(await D.botLeft())===0);
+ ok('the wallet is reserved while SLIM is seated',(await D.botLeft())===0);
  for(let k=0;k<30;k++){clock+=E.NEXT_MS+1;await call('a',{op:'leave',id:hid});await call('b',{op:'leave',id:hid});if(!(await D.load(hid)).open)break}ok('the hold\'em table closes',!(await D.load(hid)).open);
  // roulette through the real database: both walk up, bet, spin, get paid
  r=await call('a',{op:'sit',room:ROOM,game:'rl',lim:250,side:true});const rid=r.body.id;ok('roulette: always no limit, no side bet',r.status===200&&r.body.view.lim===0&&!r.body.view.side&&r.body.view.phase==='bet');

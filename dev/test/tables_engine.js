@@ -50,12 +50,14 @@ const assert=require('node:assert/strict'),fs=require('node:fs');
  {const st=E.newTable({game:'he',lim:100,side:false,host:'a'}),ctx=mk();E.sit(st,{uid:'a',name:'A'},ctx);E.tick(st,ctx);assert.equal(st.phase,'wait','one player waits');
   E.sit(st,{uid:'b',name:'B'},ctx);E.tick(st,ctx);assert.equal(st.phase,'wait','nothing is dealt until the host starts');assert.match(E.start(st,'b'),/host/,'only the host starts');
   assert.equal(E.start(st,'a'),null);E.tick(st,ctx);assert.ok(st.seats.some(s=>s&&s.bot)&&st.hand.players.length===3,'two people: the bot takes a seat');
+  assert.equal(st.seats.find(s=>s&&s.bot).brought,25,'SLIM brings the entire wallet, not the human buy-in');assert.ok(ctx.ops.some(o=>o.k==='bot_buyin'&&o.d===-25),'the full wallet is reserved');assert.equal(ctx.botLeft,0);
   {const d=st.deadline;ctx.now+=10*60000;for(const x of st.seats)if(x)x.seen=ctx.now;E.tick(st,ctx);assert.ok(d===0&&st.phase==='play','no clock during a hand: nobody is folded after 10 minutes')}
   E.sit(st,{uid:'c',name:'C'},ctx);for(let i=0;i<80&&st.phase!=='done';i++){ctx.now+=E.BOT_MS+1;for(const x of st.seats)if(x)x.seen=ctx.now;E.tick(st,ctx);const p=st.phase==='play'&&st.hand.players[st.hand.cur];if(p&&!p.bot)E.heAct(st,p.uid,{a:'fold'},ctx)}
   ctx.now+=E.NEXT_MS+1;for(const x of st.seats)if(x)x.seen=ctx.now;E.tick(st,ctx);assert.ok(!st.seats.some(s=>s&&s.bot),'three people: the bot leaves');
-  assert.ok(ctx.ops.some(o=>o.k==='bot'),'the bot\'s result is recorded');
-  const st2=E.newTable({game:'he',lim:100,side:false,host:'a'}),c2={...mk(),botLeft:2};E.sit(st2,{uid:'a',name:'A'},c2);E.sit(st2,{uid:'b',name:'B'},c2);E.start(st2,'a');E.tick(st2,c2);
-  assert.ok(!st2.seats.some(s=>s&&s.bot)&&st2.hand.players.length===2,'out of daily budget: no bot, heads-up')}
+  assert.ok(ctx.ops.some(o=>o.k==='bot'),'the bot\'s result is recorded');assert.ok(ctx.ops.some(o=>o.k==='bot_cashout'),'remaining chips return to the wallet');
+  for(const balance of [0,1,2,5475]){const st2=E.newTable({game:'he',lim:100,side:false,host:'a'}),c2={...mk(),botLeft:balance};E.sit(st2,{uid:'a',name:'A'},c2);E.sit(st2,{uid:'b',name:'B'},c2);E.start(st2,'a');E.tick(st2,c2);
+    assert.equal(st2.seats.some(s=>s&&s.bot),balance>=E.BB,'the wallet needs at least a big blind');if(balance>=E.BB)assert.equal(st2.seats.find(s=>s&&s.bot).brought,balance)}
+  {const old=E.newTable({game:'he',host:'a'}),c=mk();old.seats[0]={bot:true,stack:8,brought:5};E.standUp(old,0,c);assert.deepEqual(c.ops,[{k:'bot',d:3}],'legacy bots never deposit old minted chips into the wallet')}}
  // 6. limits, the side bet prize, cashing out
  {const st=E.newTable({game:'bj',lim:100,side:true,host:'a'}),ctx=mk();E.sit(st,{uid:'a',name:'A'},ctx);assert.deepEqual(ctx.ops[0],{uid:'a',k:'buyin',d:-5});
   E.topup(st,'a',200,ctx);E.start(st,'a');E.tick(st,ctx);assert.match(E.bjBet(st,'a',101,false,ctx),/limit/);assert.equal(E.bjBet(st,'a',10,true,ctx),null);assert.equal(st.seats[0].stack,205-11,'bet + 1-shard side bet');
