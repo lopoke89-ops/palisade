@@ -1,0 +1,22 @@
+{
+  "relaySocketTests": {
+    "passed": 10,
+    "failed": 0,
+    "durationSeconds": 56.35
+  },
+  "clientHeartbeatChecks": 10,
+  "browserAndReleaseTests": {
+    "passed": 7,
+    "failed": 0,
+    "tests": [
+      "casino_relay_auth",
+      "casino_relay_rooms",
+      "casino_relay_tables",
+      "casino_relay_games",
+      "casino_relay_upgrade",
+      "casino_relay_release",
+      "csp"
+    ]
+  },
+  "build": "a1dcfbb517"
+}

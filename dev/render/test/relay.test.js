@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 import {WebSocket} from 'ws';
-import {createRelay,WIRE,GAME} from '../relay.js';
+import {createRelay,WIRE,GAME,RECONNECT_MS} from '../relay.js';
 const sleep=ms=>new Promise(r=>setTimeout(r,ms)),origin='http://test.example';
 const identity={verify:async token=>{if(!/^user[0-9]+$/.test(token))throw new Error('Saved account required');return {uid:token,name:token,expires:Date.now()+60000}},restore:async()=>false};
 function connect(port,role,token,extra={}){
@@ -85,6 +85,45 @@ test('an expired host token closes its room and all guest access',async()=>{
  try{
   const h=connect(port,'host','user0');sockets.push(h);const w=await h.wait('welcome');const g=connect(port,'guest','user1',{code:w.code,incarnation:w.incarnation});sockets.push(g);await g.wait('welcome');
   await sleep(10500);assert.equal(relay.rooms.size,0);assert.equal(relay.people.size,0);assert.ok(h.messages.some(m=>m.type==='error'&&/Sign in again/.test(m.message)));assert.ok(g.messages.some(m=>m.type==='closed'));
+ }finally{for(const s of sockets)s.ws.terminate();await relay.stop()}
+});
+
+test('refreshed token keeps the host and guests connected after the original expiry',async()=>{
+ const events=[],expires=Date.now()+1500;
+ const rotating={verify:async token=>({uid:token==='renewed-fixture'?'user0':token,name:'fixture',expires:token==='user0'?expires:Date.now()+60000})};
+ const relay=createRelay({origins:[origin],identity:rotating,log:e=>events.push(e)}),port=await relay.start(),sockets=[];
+ try{
+  const h=connect(port,'host','user0');sockets.push(h);const w=await h.wait('welcome');assert.equal(w.graceMs,RECONNECT_MS);assert.equal(RECONNECT_MS,120000);
+  const g=connect(port,'guest','user1',{code:w.code,incarnation:w.incarnation});sockets.push(g);await g.wait('welcome');
+  h.send({type:'token',token:'renewed-fixture'});const ack=await h.wait('token');assert.ok(ack.expires>expires);
+  await sleep(Math.max(0,expires-Date.now()+50));h.send({type:'packet',to:g.messages[0].id,data:{t:'c',m:'after original expiry'}});
+  assert.equal((await g.wait('packet')).data.m,'after original expiry');assert.equal(relay.rooms.size,1);assert.equal(relay.people.size,2);
+  assert.ok(events.some(e=>e.event==='token_updated'));assert.equal(JSON.stringify(events).includes('renewed-fixture'),false,'no credentials enter logs');
+  h.send({type:'depart'});await sleep(25);assert.ok(events.some(e=>e.event==='room_closed'&&e.reason==='departed'));
+ }finally{for(const s of sockets)s.ws.terminate();await relay.stop()}
+});
+
+test('host reconnects after more than the old 20-second window, even if its old token expired',async()=>{
+ const events=[],initialExpires=Date.now()+3000;
+ const rotating={verify:async token=>({uid:token==='renewed-host'?'user0':token,name:'fixture',expires:token==='user0'?initialExpires:Date.now()+60000})};
+ const relay=createRelay({origins:[origin],identity:rotating,log:e=>events.push(e)}),port=await relay.start(),sockets=[];
+ try{
+  const h=connect(port,'host','user0');sockets.push(h);const w=await h.wait('welcome');const g=connect(port,'guest','user1',{code:w.code,incarnation:w.incarnation});sockets.push(g);await g.wait('welcome');
+  h.ws.terminate();await g.wait('hostAway');await sleep(21000);
+  assert.equal(relay.rooms.size,1);assert.equal(g.ws.readyState,WebSocket.OPEN,'guest remains during host grace');
+  const resumed=connect(port,'host','renewed-host',{resume:w.resume,code:w.code});sockets.push(resumed);assert.equal((await resumed.wait('welcome')).id,w.id);
+  assert.equal(relay.people.size,2);assert.ok(events.some(e=>e.event==='connection_closed'&&e.graceMs===120000));assert.ok(events.some(e=>e.event==='connection_resumed'));
+  resumed.send({type:'depart'});await sleep(25);assert.equal(relay.rooms.size,0);
+ }finally{for(const s of sockets)s.ws.terminate();await relay.stop()}
+});
+
+test('grace expiry records and explains why the host lobby closed',async()=>{
+ const events=[],relay=createRelay({origins:[origin],identity,graceMs:80,log:e=>events.push(e)}),port=await relay.start(),sockets=[];
+ try{
+  const h=connect(port,'host','user0');sockets.push(h);const w=await h.wait('welcome');const g=connect(port,'guest','user1',{code:w.code,incarnation:w.incarnation});sockets.push(g);await g.wait('welcome');
+  h.ws.terminate();await g.wait('closed');assert.ok(events.some(e=>e.event==='room_closed'&&e.reason==='disconnect_timeout'));
+  assert.match(g.messages.find(e=>e.type==='closed').message,/reconnect/);
+  assert.equal(relay.rooms.size,0);assert.equal(relay.people.size,0);
  }finally{for(const s of sockets)s.ws.terminate();await relay.stop()}
 });
 

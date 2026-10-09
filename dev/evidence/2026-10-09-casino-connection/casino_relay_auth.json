@@ -1,0 +1,14 @@
+{
+  "checks": [
+    "a token already refreshed by table polling is sent despite its distant expiry",
+    "verification in flight is not flooded",
+    "a missing acknowledgement retries the token",
+    "an acknowledged token is not repeatedly sent",
+    "heartbeat-triggered refresh also updates the relay",
+    "temporary Auth failure does not close a working connection",
+    "concurrent heartbeat skips duplicate refresh work",
+    "a refresh completing on an old socket cannot send to the new connection",
+    "a disconnected socket is not reauthenticated by heartbeat",
+    "logout clears relay token tracking"
+  ]
+}

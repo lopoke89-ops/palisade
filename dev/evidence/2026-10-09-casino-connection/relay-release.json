@@ -1,0 +1,13 @@
+{
+  "version": "v0.10.6",
+  "build": "a1dcfbb517",
+  "relayEnabled": true,
+  "productionAuth": true,
+  "debugHooksAbsent": true,
+  "cspHashesMatch": true,
+  "canonicalSha256": {
+    "index.html": "4b422461389634482e075af633396ab6971d89fdf2044bc2108b057716390230",
+    "sw.js": "c8e6d0327d2d735fe5efaa8ee666b56491392b93cd33a868d4de2f6e6c8085a8"
+  },
+  "checkedAt": "2026-10-09T05:21:38.349Z"
+}

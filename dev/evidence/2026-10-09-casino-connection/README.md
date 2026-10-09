@@ -1,0 +1,11 @@
+# Casino connection fixes, v0.10.6
+
+The previous incident cannot be assigned a confirmed cause from the available logs. Two source defects were verified: table polling could rotate the account token before the relay heartbeat noticed it, leaving the relay with the old expiry; and the relay retained disconnected peers for 20 seconds while the browser retried for two minutes.
+
+The client now tracks the last acknowledged relay token, sends a new token regardless of current account expiry, retries an unacknowledged update after ten seconds, and immediately checks again when the page becomes visible or the connection returns. Guards prevent a refresh from sending through a replaced socket or for another account. The relay acknowledges the verified expiry. The server advertises and preserves a two-minute reconnect window; disconnected peers have no routing access and must verify a current token to resume. Connected expired sessions are still removed.
+
+Structured events identify disconnects, reconnects, heartbeat timeouts, token updates and room closure causes without logging credentials, account IDs, names, chat, cards or financial state. Player messages distinguish a host session expiry, a reconnect timeout and a server restart. A process restart still requires a new lobby; this change does not make the player-hosted relay persistent.
+
+Validation: all ten real-socket relay tests passed, including a refreshed host continuing after the original expiry, a host reconnecting after a 21-second outage with its original token expired, expired-session denial, bounded grace cleanup, routing isolation, flood/backpressure isolation and concurrent verification. The actual client heartbeat passed ten targeted checks. Browser checks cover six-player movement and guest/host reconnection, token rotation by an independent account request, all casino games through the real table handler, CSP, emitted release assets and an installed v0.10.5 to v0.10.6 upgrade preserving account, balance and offline use.
+
+Build cache: `palisade-a1dcfbb517`. Logs and release/upgrade reports are retained beside this document. The already deployed SLIM wallet migration and function source are committed with their separate deployment evidence; this connection release makes no additional database changes.
