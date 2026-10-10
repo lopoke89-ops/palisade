@@ -106,7 +106,7 @@ CG.ba={info:v=>'8 decks · Banker in 20s (pays 19:20) · Tie 8:1'+(v.shoe?` · s
 <p class="tbHint">Banker bets go in 20s: 20 on Banker pays 19 plus your 20 back. A tie returns Player and Banker bets.</p>`},
   acts(v,me){const S=CGS.ba,tot=tbSum(S.bets),lastT=tbSum(S.last);if(v.phase!=='bet')return `<p class="tbHint">${v.phase==='done'?'Next bets open after the result.':'Betting opens in a moment.'}</p>`;
     if(v.readyMe)return `<p class="tbHint">You're in with ${tbSum(v.myBets)}◆. Cards when everyone's ready, or in ${tbSecs(v)}s.</p>`;
-    return `<div class="trow chips">${[5,10,20,50,100,500].map(a=>tbBtn('chip:'+a,rlChipH(a),{cl:CGS.chip.ba===a?'sel':'',on:a<=me.stack+tot})).join('')}</div>
+    return `<div class="trow chips rchips2">${[5,10,20,50,100,500].map(a=>tbBtn('chip:'+a,rlChipH(a),{cl:CGS.chip.ba===a?'sel':'',on:a<=me.stack+tot})).join('')}</div>
 <div class="trow">${tbBtn('clear','CLEAR',{on:tot>0})}${tbBtn('rebet','REBET',{on:lastT>0&&lastT<=me.stack+tot,hint:lastT?lastT+'◆':''})}</div>
 <div class="trow">${tbBtn('ready','DEAL',{cl:'go big',on:tot>0,hint:tot?tot+'◆ down'+(v.minBetAt>0?' · cards no sooner than '+Math.ceil(v.minBetAt/1000)+'s':''):'place a bet first'})}</div>`},
   spot(k){const v=TB.v,S=CGS.ba;if(!v||v.phase!=='bet'||v.readyMe)return;const me=v.seats[v.me],free=me.stack+tbSum(v.myBets)-tbSum(S.bets);let add=CGS.chip.ba;
@@ -150,7 +150,7 @@ ${btn('any7','ANY 7','4:1')}${btn('anyc','ANY CRAPS','7:1')}${btn('n2','TWO','30
     const others=Object.entries(v.bets||{}).filter(([si])=>+si!==v.me).map(([si,b])=>`${cgEsc((v.seats[si]||{name:'?'}).name)}${v.gone&&v.gone[si]?' (left)':''} ${tbSum(b)}◆`).join(' · ');
     if(others)h+=`<p class="tbHint">On the layout: ${others}</p>`;return h},
   acts(v,me){const tot=tbSum(v.myBets);if(v.phase!=='bet')return `<p class="tbHint">${v.phase==='done'?'Betting opens after the result.':'Betting opens in a moment.'}</p>`;
-    return `<div class="trow chips">${[1,5,10,25,100].map(a=>tbBtn('chip:'+a,rlChipH(a),{cl:CGS.chip.cr===a?'sel':''})).join('')}</div>
+    return `<div class="trow chips rchips2">${[1,5,10,25,100].map(a=>tbBtn('chip:'+a,rlChipH(a),{cl:CGS.chip.cr===a?'sel':''})).join('')}</div>
 <div class="trow">${tbBtn('down',CGS.cr.down?'TAKING DOWN: ON':'TAKE DOWN',{cl:CGS.cr.down?'sel':'',hint:'tap a bet to take it off'})}${tbBtn('adv',CGS.cr.adv?'SIMPLE LAYOUT':'ALL BETS',{hint:CGS.cr.adv?'line, field, place 6/8':'place, hardways, props'})}</div>
 <div class="trow">${v.readyMe?`<p class="tbHint">Ready. The dice go when everyone is, or in ${tbSecs(v)}s.</p>`:tbBtn('ready',v.amShooter?'ROLL':'READY',{cl:'go big',on:tot>0||v.amShooter,hint:(v.amShooter?'you have the dice':'done betting')+(v.minBetAt>0?' · no sooner than '+Math.ceil(v.minBetAt/1000)+'s':'')})}</div>`},
   spot(k){const v=TB.v;if(!v||v.phase!=='bet')return;const B=v.myBets||{},cur=B[k]|0,dn=crDen(k,v.point);let amt;

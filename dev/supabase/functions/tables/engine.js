@@ -120,9 +120,9 @@ export function leave(st,uid,ctx){
     return null}
   if(st.phase==='bet'&&st.hand&&st.hand.bets[uid]){if(st.game==='rl')s.stack+=rlTotal(st.hand.bets[uid]);else s.stack+=st.hand.bets[uid].bet+st.hand.bets[uid].side;delete st.hand.bets[uid]}
   standUp(st,i,ctx);return null}
-// the host deals the first hand (Blackjack: anyone seated; Hold'em: at least two people). After that it runs by itself.
+// the host deals the first hand (anyone seated; Hold'em deals once SLIM or a second person sits in). After that it runs by itself.
 export function start(st,uid){if(st.host!==uid)return 'Only the host can start the table';if(st.started)return null;
-  const n=humans(st).length;if(st.game==='he'&&n<2)return 'Hold\'em needs at least 2 players';if(!n)return 'Nobody is seated';st.started=true;note(st,'The host started the table');return null}
+  const n=humans(st).length;if(!n)return 'Nobody is seated';st.started=true;note(st,'The host started the table');return null}
 export function ready(st,uid){if(seatIx(st,uid)<0)return 'You are not at this table';if(st.phase!=='done')return null;st.ready=st.ready||{};st.ready[uid]=true;return null}
 export function settings(st,uid,{lim,side}){if(st.host!==uid)return 'Only the host can change the table';if(st.started)return 'Settings lock once the host starts the table';
   if(lim!==undefined){if(!LIMITS.includes(lim))return 'Pick 100, 250 or No limit';st.lim=lim}if(side!==undefined)st.side=!!side;return null}
@@ -155,7 +155,7 @@ function step(st,ctx){
 export function cleanup(st,ctx){
   for(let i=0;i<st.seats.length;i++){const s=st.seats[i];if(!s)continue;
     if(s.leaving||!s.bot&&s.sitout>=3)standUp(st,i,ctx);
-    else if(s.bot&&(s.stack<BB||st.game==='he'&&humans(st).length!==2))standUp(st,i,ctx)}
+    else if(s.bot&&(s.stack<BB||st.game==='he'&&(humans(st).length<1||humans(st).length>2)))standUp(st,i,ctx)}
   st.phase='wait';st.hand=null;st.deadline=0;st.ready={}}
 
 // ---------- blackjack ----------
@@ -244,13 +244,13 @@ const drawB=h=>{if(h.posOf)h.posOf.board.push(h.pos);return draw(h)};   // a boa
 const heEligible=st=>st.seats.map((s,i)=>[s,i]).filter(([s])=>s&&!s.leaving&&s.stack>=BB);
 function heTryDeal(st,ctx){
   const hs=humans(st).filter(s=>!s.leaving&&s.stack>=BB);
-  // Two people: SLIM brings his entire available wallet. The database reserves it atomically for one table.
+  // One or two people: SLIM brings his entire available wallet (heads-up with one player, a third seat with two). The database reserves it atomically for one table.
   // An old, already-seated bot finishes normally; its old allowance is never deposited into the new wallet.
   const balance=ctx.botLeft||0;
-  if(hs.length===2&&!st.seats.some(s=>s&&s.bot)&&Number.isSafeInteger(balance)&&balance>=BB){const i=st.seats.findIndex(s=>!s);
+  if((hs.length===1||hs.length===2)&&!st.seats.some(s=>s&&s.bot)&&Number.isSafeInteger(balance)&&balance>=BB){const i=st.seats.findIndex(s=>!s);
     if(i>=0){st.seats[i]={uid:'bot:'+st.handNo,name:'SLIM (BOT)',bot:true,walletBot:true,stack:balance,brought:balance,sitout:0,side:false,seen:ctx.now};ctx.ops.push({k:'bot_buyin',d:-balance});ctx.botLeft=0}}
-  if(hs.length!==2){const b=st.seats.findIndex(s=>s&&s.bot);if(b>=0)standUp(st,b,ctx)}
-  const el=heEligible(st);if(hs.length<2||el.length<2){cleanupIdle(st,ctx);return}
+  if(hs.length<1||hs.length>2){const b=st.seats.findIndex(s=>s&&s.bot);if(b>=0)standUp(st,b,ctx)}
+  const el=heEligible(st);if(hs.length<1||el.length<2){cleanupIdle(st,ctx);return}
   for(const s of st.seats)if(s&&!s.bot&&s.stack<BB)s.sitout++;   // counted once per hand dealt without them
   st.handNo++;
   const seats=el.map(([,i])=>i);let b=seats.find(i=>i>st.button);if(b===undefined)b=seats[0];st.button=b;

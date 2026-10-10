@@ -1222,7 +1222,7 @@ body.desk #top .phase>#phaseNote{min-height:1.35em;line-height:1.35em}
 .crspot b{font-size:14px;letter-spacing:.06em}.crspot small{font-family:var(--mono);font-size:9px;opacity:.8}.crspot.has{border-color:#e2b436}.crspot:disabled{opacity:.45;cursor:default}.crspot.mini{min-height:26px;font-size:10px;margin-top:2px;width:100%}
 .crspot .lk{position:absolute;top:2px;right:3px;font-style:normal;font-family:var(--mono);font-size:8px;color:#ffd88a}
 .crtogs button.crtog{flex:1 1 30%;min-height:34px;font-size:10px;background:transparent;border:1px solid var(--line);color:var(--bone);font-family:var(--stencil);cursor:pointer}.crtog.on{background:rgba(143,224,160,.2);border-color:#8fe0a0}
-.rchip{position:absolute}.baspot .rchip,.crspot .rchip{position:absolute;right:4px;bottom:4px}
+.baspot .rchip,.crspot .rchip{position:absolute;right:4px;bottom:4px}
 /* slots */
 .slcab{background:linear-gradient(#2b2a30,#151418);border:2px solid #d6aa46;border-radius:10px;padding:10px}
 .slwin{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:#0a0a10;padding:6px;border-radius:6px}.slwin.won{box-shadow:0 0 0 2px #ffd24a,0 0 18px rgba(255,210,74,.5)}

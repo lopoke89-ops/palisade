@@ -130,7 +130,7 @@ function tbStatus(v,me){if(CG[v.game])return CG[v.game].status(v,me);const P=v.p
     if(v.phase==='spin')return['NO MORE BETS','The ball is spinning…','wait'];
     if(v.phase==='done'&&v.last&&v.last.result)return['IT\'S '+rlName(v.last.result.number),tbResult(v),'done'];
     return['WAITING','','wait']}
-  if(!v.started)return v.host?['WAITING TO START',`${hum} seated. Press START when everyone's sat down.`+(v.game==='he'&&hum<2?' Hold\'em needs 2 players.':''),'wait']
+  if(!v.started)return v.host?['WAITING TO START',`${hum} seated. Press START when everyone's sat down.`+(v.game==='he'&&hum<2?' With one player, SLIM (the bot) sits in when his wallet allows.':''),'wait']
     :['WAITING FOR '+(v.hostName||'THE HOST'),`${v.hostName} starts the table when everyone's sat down.`,'wait'];
   if(me.stack<(v.game==='bj'?1:2)&&v.phase!=='play')return['OUT OF SHARDS AT THE TABLE','Top up (+5 or +25 below) to keep playing, or stand up.','warn'];
   if(v.game==='bj'){
@@ -142,7 +142,7 @@ function tbStatus(v,me){if(CG[v.game])return CG[v.game].status(v,me);const P=v.p
     if(v.phase==='play'){if(v.myTurn){const h=cur.hands[v.turn.h];return['YOUR TURN',`You have ${h.total}${h.soft&&h.total<21?' (soft)':''} · the dealer shows ${v.dealerTotal}`+(cur.hands.length>1?` · hand ${v.turn.h+1} of ${cur.hands.length}`:''),'you']}
       return['WAITING',`${cur?cur.name:'The dealer'} is playing`,'wait']}
     return['DEALING','','wait']}
-  if(v.phase==='wait')return['WAITING FOR PLAYERS','Hold\'em needs 2 players with at least 2 shards at the table.','wait'];
+  if(v.phase==='wait')return['WAITING FOR PLAYERS','Hold\'em deals with 2 or more players with at least 2 shards (SLIM sits in with one or two people when his wallet allows).','wait'];
   if(v.phase==='play'){if(v.myTurn){const c=v.can;return['YOUR TURN',(c.call?`${c.call} to call`:'Nobody has bet: check or bet')+` · pot ${v.pot}`,'you']}return['WAITING',`${cur?cur.name:'…'} is thinking${cur&&cur.bot?' (bot)':''}`,'wait']}
   if(v.phase==='done')return['HAND OVER',(v.last&&v.last.result?tbResult(v)+' · ':'')+(v.readyMe?`You're ready · next hand in ${tbSecs(v)}s (or when everyone's ready)`:`Next hand in ${tbSecs(v)}s · tap READY to deal sooner`),'done'];
   return['','','wait']}
@@ -197,8 +197,8 @@ function tbActions(v,me){const box=$('tbActs'),c=v.can||{};
   if(key===TB.key)return;TB.key=key;let h='';
   if(v.game==='rl'){box.innerHTML=rlActions(v,me);return}
   if(CG[v.game]){box.innerHTML=CG[v.game].acts(v,me);return}
-  if(!v.started&&v.host){const n=v.seats.filter(s=>s&&!s.bot).length,can=v.game==='bj'?n>=1:n>=2;
-    h+=`<div class="trow">${tbBtn('start','START THE TABLE',{on:can,cl:'go big',hint:can?n+' seated':'needs 2 players'})}</div>`;
+  if(!v.started&&v.host){const n=v.seats.filter(s=>s&&!s.bot).length,can=n>=1;
+    h+=`<div class="trow">${tbBtn('start','START THE TABLE',{on:can,cl:'go big',hint:can?n+' seated':'nobody seated'})}</div>`;
     h+=`<p class="tbHint">Table rules (you can change these until you start):</p><div class="trow">${[100,250,0].map(l=>tbBtn('lim:'+l,l?'MAX BET '+l:'NO LIMIT',{cl:v.lim===l?'sel':''})).join('')}</div>`;
     h+=`<div class="trow">${tbBtn('tside','SIDE BET '+(v.side?'ON':'OFF'),{cl:v.side?'sel':'',hint:'players opt in, 1◆ a hand'})}</div>`}
   const between=v.game==='bj'?v.phase==='bet'&&!(v.bets&&v.bets[v.me]!==undefined):v.phase!=='play';

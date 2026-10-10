@@ -129,6 +129,6 @@ export async function handle(body,token,D){
     rlbets:st=>E.rlSetBets(st,u.id,body.bets),
     rlready:st=>E.rlReady(st,u.id)};
   for(const [k,f]of Object.entries(X.ACTIONS))M[k]=(st,ctx)=>f(st,u.id,body,ctx);
-  if(!(op in M))return err(400,'Unknown request');
+  if(typeof op!=='string'||!Object.hasOwn(M,op))return err(400,'Unknown request');   // own names only: never Object.prototype's (constructor would echo the table's hidden state)
   if(op==='topup'&&await D.balance(u.id)<(+body.amt||0))return err(400,'Not enough shards');
   return run(D,id,u.id,M[op],opx)}

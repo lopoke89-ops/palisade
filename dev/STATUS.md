@@ -1,5 +1,17 @@
 # PALISADE project status
 
+## v0.10.7: casino security fix, heads-up poker with SLIM, centred chips (October 10)
+
+- **Security (server, `tables` version 15):** the table server accepted request names inherited from JavaScript's base object. Op `constructor` sent the whole table state back as the "error": the next round's committed seed, the shoe or deck order, every player's seed and hole cards, and roulette numbers before betting closed. This affected any open table and any signed-in account. Requests are now dispatched only to names the server defines (`Object.hasOwn`), so every legitimate request is unchanged. Reproduced with the real handler before the fix, and refused after it.
+- **Heads-up Hold'em:** SLIM now sits in with one player as well as two, bringing his wallet as before. He still stands up when a third person joins, and the host can start a Hold'em table alone. If his wallet can't cover the big blind, the table waits for a second player.
+- **Chips:** a bare `.rchip{position:absolute}` rule pulled the baccarat and craps chip selectors off centre. Those rows now use the same centred layout as roulette's.
+- **Deployed:** the live function was version 14, the same code as `main` with Windows line endings. It is now version 15, byte-identical to the repo, with no errors since the deploy.
+- **Validation:**
+  - Server suites passed: `tables_engine`, `tables_server`, `casino_server`, `casino_bot_wallet`, `fair_play`, `casino_games_engine`.
+  - A one-player Hold'em hand dealt heads-up against SLIM.
+  - Browser checks passed: `tables_ui`, `casino_games_ui`, `casino_relay_tables`, `csp`.
+- **Audit:** the October 10 audit was stopped partway at Big U's request. Still open from it: `import_local_save` trusts the client's item list (any account can claim any cosmetics, 1000 shards and cases once); the side-bet case prizes are not in the books; and the stale-table sweep and books run only when a lobby request triggers them.
+
 ## v0.10.5: player-hosted casino relay (deployed October 8)
 
 Players create and host casino lobbies for up to six people; Render Free relays their WSS connections. The v0.10.5 client is live on GitHub Pages, build `420cf3dc34`, from merged [PR #29](https://github.com/lopoke89-ops/palisade/pull/29), main commit `55da1b3`. The served index/service worker match the release exactly. A public browser load passed with the new worker/cache and zero exceptions or CSP violations.
