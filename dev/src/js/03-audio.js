@@ -26,7 +26,7 @@ function casinoUp(){
     if(b.length>1&&b[b.length-1]===cas.last)[b[0],b[b.length-1]]=[b[b.length-1],b[0]];cas.bag=b}
   return cas.up=cas.bag.pop();
 }
-const mus={bufs:{},loading:{},failAt:{},src:null,g:null,bus:null,cur:null,token:'',resume:null,started:0,offset:0,starts:0,retiring:null};
+const mus={bufs:{},loading:{},failAt:{},src:null,g:null,bus:null,cur:null,token:'',resume:null,started:0,offset:0,starts:0,retiring:null,duck:-9,ducked:null};
 // A route identity changes only at a real screen/raid entry. Snapshots and settings cannot advance it.
 function musicRoute(){
   if(!demo&&!$('over').hidden)return {k:'results',token:'results:'+game.gid};
@@ -92,7 +92,10 @@ function musicCrossfade(k,token){
 function musicTick(){
   if(!AC)return;
   if(!mus.bus){mus.bus=AC.createGain();mus.bus.connect(master)}
-  mus.bus.gain.value=.5*cfg.music;
+  // v0.10.8: the music dips under a big win's fanfare (mus.duck: until when), then comes back over about a second
+  const now=AC.currentTime,bv=.5*cfg.music,G=mus.bus.gain,dk=now<mus.duck;
+  if(dk||now<mus.duck+1.5){if(dk!==mus.ducked){mus.ducked=dk;G.cancelScheduledValues(now);G.setValueAtTime(G.value,now);G.setTargetAtTime(dk?bv*.3:bv,now,dk?.08:.3)}}
+  else{if(mus.ducked!==null){G.cancelScheduledValues(now);mus.ducked=null}G.value=bv}
   const route=musicRoute();let want=musicWant();
   if(mus.src&&(mus.cur!==want||mus.token!==route?.token))musicStop(game.phase==='raid'?.9:1.2);
   if(mus.resume&&mus.resume.token!==route?.token){if(cas.up===mus.resume.k)cas.up=null;mus.resume=null}   // left the casino: the next visit moves on
@@ -114,6 +117,32 @@ function caseTick(r){
 function envG(t0,a,d,peak){const gg=AC.createGain();gg.gain.setValueAtTime(.0001,t0);gg.gain.exponentialRampToValueAtTime(Math.max(peak,.0002),t0+a);gg.gain.exponentialRampToValueAtTime(.0001,t0+a+d);return gg}
 function nz(dest,t0,dur,type,f,q,peak,fEnd){const s=AC.createBufferSource();s.buffer=NB;const fl=AC.createBiquadFilter();fl.type=type;fl.frequency.setValueAtTime(f,t0);if(fEnd)fl.frequency.exponentialRampToValueAtTime(fEnd,t0+dur);fl.Q.value=q;const gg=envG(t0,.003,dur,peak);s.connect(fl);fl.connect(gg);gg.connect(dest);s.start(t0,rnd()*1.5);s.stop(t0+dur+.05)}
 function osc(dest,t0,dur,type,f,peak,fEnd){const o=AC.createOscillator();o.type=type;o.frequency.setValueAtTime(f,t0);if(fEnd)o.frequency.exponentialRampToValueAtTime(fEnd,t0+dur);const gg=envG(t0,.004,dur,peak);o.connect(gg);gg.connect(dest);o.start(t0);o.stop(t0+dur+.05)}
+/* ---- v0.10.8 the casino's instruments: a brass section (o.wah: a plunger-muted trombone, o.vib: vibrato in Hz),
+   the slot machine's bell, a coin landing in the tray, a clay chip, and the jackpot bell that rings and rings ---- */
+function brass(dest,t0,dur,f,peak,o={}){
+  const g=AC.createGain(),lp=AC.createBiquadFilter(),e=t0+dur;lp.type='lowpass';lp.Q.value=o.wah?5:1;
+  if(o.wah){lp.frequency.setValueAtTime(f*1.2,t0);lp.frequency.exponentialRampToValueAtTime(f*4.5,t0+dur*.35);lp.frequency.exponentialRampToValueAtTime(f*1.3,e)}
+  else{lp.frequency.setValueAtTime(f*2,t0);lp.frequency.exponentialRampToValueAtTime(Math.min(9000,f*8),t0+.05);lp.frequency.exponentialRampToValueAtTime(f*4,e)}
+  g.gain.setValueAtTime(.0001,t0);g.gain.exponentialRampToValueAtTime(peak,t0+.03);g.gain.linearRampToValueAtTime(peak*.7,e);g.gain.exponentialRampToValueAtTime(.0001,e+.15);
+  lp.connect(g);g.connect(dest);
+  let lg=null;if(o.vib){const l=AC.createOscillator();l.frequency.value=o.vib;lg=AC.createGain();lg.gain.value=30;l.connect(lg);l.start(t0+dur*.25);l.stop(e+.2)}
+  for(const d of[-7,7]){const s=AC.createOscillator();s.type='sawtooth';s.frequency.value=f;s.detune.value=d;if(lg)lg.connect(s.detune);s.connect(lp);s.start(t0);s.stop(e+.2)}
+}
+const casBell=(dest,t0,f,peak,dur=.9)=>{osc(dest,t0,dur,'sine',f,peak);osc(dest,t0,dur*.55,'sine',f*2.76,peak*.45);osc(dest,t0,dur*.3,'sine',f*5.4,peak*.2)};
+const casCoin=(dest,t0,peak)=>{const f=2600+Math.random()*1800;osc(dest,t0,.08+Math.random()*.1,'sine',f,peak);osc(dest,t0,.06,'sine',f*1.47,peak*.55);osc(dest,t0,.012,'square',f*.5,peak*.25)};
+const casCoins=(dest,t0,span,n,peak)=>{for(let i=0;i<n;i++)casCoin(dest,t0+span*Math.pow(Math.random(),1.4),peak*(.6+Math.random()*.4))};
+const casChip=(dest,t0,peak)=>{nz(dest,t0,.025,'bandpass',2600+Math.random()*900,2.2,peak);osc(dest,t0,.03,'triangle',1500+Math.random()*400,peak*.2,900)};
+const casRinger=(dest,t0,dur,peak)=>{for(let s=0;s<dur;s+=.055){const p=peak*(1-.5*s/dur);osc(dest,t0+s,.1,'sine',2350,p);osc(dest,t0+s,.05,'sine',5640,p*.35)}};
+// the roulette ball: it whirs around the rim, slows, rattles over the frets and drops into its pocket (dur: the spin left, in seconds)
+function rlWheelSfx(dur){
+  if(!AC||dur<1)return;const t=AC.currentTime,end=t+dur,s=AC.createBufferSource(),bp=AC.createBiquadFilter(),g=AC.createGain();
+  s.buffer=NB;s.loop=true;bp.type='bandpass';bp.Q.value=3;bp.frequency.setValueAtTime(2600,t);bp.frequency.exponentialRampToValueAtTime(700,end-.5);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.06,t+.25);g.gain.linearRampToValueAtTime(.015,end-.6);g.gain.exponentialRampToValueAtTime(.0001,end-.4);
+  s.connect(bp);bp.connect(g);g.connect(master);s.start(t);s.stop(end);
+  for(let c=t+.35;c<end-.7;){const p=(c-t)/dur;nz(master,c,.012,'highpass',3800,.8,.05*(.4+p));c+=.045+.3*p*p}
+  [0,.11,.2,.27,.32].forEach((d,i)=>{nz(master,end-.6+d,.02,'bandpass',3000-i*250,2,.12-i*.015);osc(master,end-.6+d,.03,'triangle',1100-i*80,.03)});
+  nz(master,end-.25,.06,'lowpass',500,1,.15);
+}
 function wallsBetween(x0,y0,x1,y1){let n=0,last=-1;const d=Math.hypot(x1-x0,y1-y0),st=Math.max(1,Math.ceil(d/.3));for(let s=1;s<st;s++){const x=x0+(x1-x0)*s/st,y=y0+(y1-y0)*s/st,i=x|0,j=y|0;if(!inb(i,j))continue;const k=idx(i,j);if(k!==last&&walls[k]&&wallState(walls[k])<2){n++;last=k}}return n}
 function sfx(name,x,y,noRec,ui){
   if(!noRec)rec(['s',name,x===undefined?null:r2(x),y===undefined?null:r2(y)]);
@@ -239,8 +268,27 @@ function sfx(name,x,y,noRec,ui){
     case'cas_lever':nz(dest,t,.18,'bandpass',600,1.2,.15,300);osc(dest,t+.12,.08,'triangle',300,.06);break;
     case'cas_chip':nz(dest,t,.03,'highpass',4200,1,.2);osc(dest,t,.05,'sine',2400,.03,1800);break;
     case'cas_peg':osc(dest,t,.05,'sine',1500+rnd()*500,.035);break;
-    case'cas_dice':for(let k=0;k<4;k++)nz(dest,t+k*.07,.03,'bandpass',1800+k*200,2,.18);break;
-    case'cas_win':[523,659,784].forEach((f,i)=>osc(master,t+i*.09,.3,'triangle',f,.09));break;
+    // the dice: shaken in the hand, then thrown, tumbling down the felt into the back wall
+    case'cas_dice':for(let k=0;k<6;k++)nz(dest,t+k*.045,.02,'bandpass',2800+(k%2)*600,3,.1);
+      [.34,.46,.55,.62,.67].forEach((d,k)=>{nz(dest,t+d,.04,'lowpass',900,1,.22-k*.03);nz(dest,t+d,.015,'bandpass',2400+k*300,3,.1)});break;
+    /* v0.10.8 the result of every round, by what came back (cgResultSfx picks one): chips raked away; a push; a small win;
+       a win; a big win's fanfare; the jackpot. The big ones dip the music under them. */
+    case'cas_lose':nz(dest,t,.32,'bandpass',1400,1.1,.12,500);osc(dest,t+.12,.3,'triangle',294,.05,277);osc(dest,t+.36,.5,'triangle',262,.05,247);break;
+    case'cas_bust':nz(dest,t,.32,'bandpass',1400,1.1,.12,500);   // a big loss: the sad trombone, wah wah wah waaah
+      [233.08,220,207.65].forEach((f,i)=>brass(dest,t+.15+i*.42,.3,f,.07,{wah:1}));brass(dest,t+1.41,1.1,196,.07,{wah:1,vib:5.5});mus.duck=t+2.4;break;
+    case'cas_push':casChip(dest,t,.14);casChip(dest,t+.08,.1);osc(dest,t+.05,.3,'sine',587,.04);break;
+    case'cas_small':casChip(dest,t,.16);casChip(dest,t+.06,.12);casBell(dest,t+.08,1318.5,.06,.5);casBell(dest,t+.2,1568,.065,.7);break;
+    case'cas_win':for(let k=0;k<3;k++)casChip(dest,t+k*.05,.15);[1046.5,1318.5,1568,2093].forEach((f,i)=>casBell(dest,t+.1+i*.08,f,.06,.8));casCoins(dest,t+.35,.6,7,.045);break;
+    case'cas_big':mus.duck=t+2;   // the fanfare: ta-ta-ta-TAAA in brass, bells over the chord, a shower of coins
+      for(let k=0;k<3;k++)brass(dest,t+k*.12,.08,392,.085);
+      [261.63,523.25,659.25,783.99].forEach(f=>brass(dest,t+.36,.8,f,f<300?.1:.07));brass(dest,t+.36,.8,1046.5,.035);
+      [1046.5,1318.5,1568,2093].forEach((f,i)=>casBell(dest,t+.4+i*.06,f,.05,1.1));casCoins(dest,t+.45,1.1,16,.045);break;
+    case'cas_jackpot':mus.duck=t+3.4;   // JACKPOT: the bell rings, the band plays, the coins don't stop
+      casRinger(dest,t,2,.028);
+      [[392,0,.09],[392,.12,.09],[392,.24,.09],[523.25,.36,.3],[392,.72,.09]].forEach(([f,d,l])=>{brass(dest,t+d,l,f,.085);brass(dest,t+d,l,f/2,.055)});
+      [130.81,261.63,523.25,659.25,783.99,1046.5].forEach(f=>brass(dest,t+.86,1.5,f,f<300?.085:.065));
+      [1046.5,1318.5,1568,2093,2637,3136].forEach((f,i)=>casBell(dest,t+.9+i*.07,f,.05,1.3));
+      casCoins(dest,t+.3,2.4,30,.05);osc(dest,t+2.2,.7,'sine',1200,.03,4200);[2093,2637,3136].forEach((f,i)=>casBell(dest,t+2.6+i*.08,f,.04,1));break;
     case'lose':[220,196,165].forEach((f,i)=>osc(master,t+i*.2,.6,'sawtooth',f,.08));break;
   }
 }

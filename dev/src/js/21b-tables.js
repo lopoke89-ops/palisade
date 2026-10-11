@@ -149,7 +149,8 @@ function tbStatus(v,me){if(CG[v.game])return CG[v.game].status(v,me);const P=v.p
 function tbShow(v){TB.v=v;if(!v._t)v._t=performance.now();   // v0.10.3: when this view arrived (the reveal and the review count from it)
   if(v.me<0){tbGone();return}
   const me=v.seats[v.me];
-  if(v.game==='rl')rlSync(v);
+  if(v.game==='rl'){rlSync(v);if(v.phase==='spin'&&TB.rl.spun!==v.handNo){TB.rl.spun=v.handNo;rlWheelSfx(Math.min(6,(v.left||0)/1000))}}   // v0.10.8: the ball, heard
+  cgResultSfx(v);   // v0.10.8: every game's win or loss, heard (with the sheet hidden too)
   if(!TB.sheet)return;   // seated with the sheet hidden: the felt in the world shows the table, the poll keeps the state
   txt($('tbTitle'),TB_NAME[v.game]+(v.station&&v.game==='sl'?' · CABINET '+v.station.slice(1):''));txt($('tbInfo'),CG[v.game]?CG[v.game].info(v):v.game==='rl'?'american wheel · no limit':(v.lim?'max bet '+v.lim:'no limit')+(v.side?' · side bet on':'')+' · '+v.hostName+' started it');
   txt($('tbStack'),String(me.stack));txt($('tbBalT'),String(TB.balance));

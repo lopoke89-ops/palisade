@@ -1,5 +1,11 @@
 # PALISADE project status
 
+## v0.10.8: casino sounds for winning and losing (October 11)
+
+- **Every game's result is heard:** once per round, as the receipt appears, sized by your net against your bet. A loss rakes the chips away; losing 200◆ or more plays a sad trombone. A push is a chip clack. A small win dings, a win (1-4x net) rings a bell run with coins, a big win (4x+ net or 500◆+) plays a brass fanfare with a coin shower, and a jackpot (15x+ net or 2,500◆+) rings the slot bell under a longer fanfare and a 2.5 s coin cascade. Big wins dip the music under them and buzz phones and controllers. Before this, only slot wins had a sound (a quiet chime); no game had a loss sound.
+- **Table sounds:** craps now plays its dice throw (defined before but never played), and roulette has a ball that whirs, slows over the frets and drops into its pocket.
+- **Tests:** `casino_games_ui` checks that a real baccarat round plays the sound matching its receipt, and the mapping from net and bet to each sound. `casino_games_ui`, `tables_ui`, `casino_map`, `casino_music` and `reel_music` pass. Levels measured offline: the loudest (jackpot) peaks at 0.27 of full scale.
+
 ## v0.10.7: casino security fix, heads-up poker with SLIM, centred chips (October 10)
 
 - **Security (server, `tables` version 15):** the table server accepted request names inherited from JavaScript's base object. Op `constructor` sent the whole table state back as the "error": the next round's committed seed, the shoe or deck order, every player's seed and hole cards, and roulette numbers before betting closed. This affected any open table and any signed-in account. Requests are now dispatched only to names the server defines (`Object.hasOwn`), so every legitimate request is unchanged. Reproduced with the real handler before the fix, and refused after it.

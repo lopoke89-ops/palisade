@@ -13,6 +13,14 @@ const cgReviewLeft=v=>!v||v.phase!=='done'?0:Math.max(0,(v.review||0)-(performan
 const cgNet=n=>(n>0?'+':n<0?'−':'')+Math.abs(n)+'◆';
 function tbRevealClock(v){if(!v._t)v._t=performance.now();if(cgLeft(v)>0&&!TB.animT)TB.animT=setTimeout(()=>{TB.animT=0;if(TB.v&&TB.sheet){TB.key='';tbShow(TB.v)}},110)}
 function cgSound(v,stage,name){const k=v.game+':'+(v.station||'')+':'+(v.last&&v.last.no);if(CGS.snd.key!==k){CGS.snd.key=k;CGS.snd.n=0}if(stage>CGS.snd.n){CGS.snd.n=stage;if(typeof uiSfx==='function')uiSfx(name)}}
+// v0.10.8 the result, heard (every game): once per round, as the reveal ends, sized by your net against your bet.
+// Net over 4x the bet (or 500◆) gets the fanfare, over 15x (or 2,500◆) the jackpot; losing 200◆ or more, the sad trombone.
+function cgResultSfx(v){if(v.phase!=='done'||!v.last||!v.last.result||cgLeft(v)>0)return;
+  const k=v.game+':'+(v.station||'')+':'+v.last.no;if(CGS.res===k)return;CGS.res=k;
+  if(performance.now()-(v._t||0)-(v.revealIn||0)>1500||typeof uiSfx!=='function')return;   // the reveal ended a while ago (you came back to it): stay quiet
+  const s=cgResultKind(mineOf(v.last.result));CGS.lastSfx=s;if(s)uiSfx(s);if(s==='cas_jackpot')buzz([60,40,60,40,120]);else if(s==='cas_big')buzz([40,60,40])}
+function cgResultKind(p){if(!p)return '';const net=p.net||0,bet=p.bet||0,x=bet>0?net/bet:0;
+  return net<0?(net<=-200?'cas_bust':'cas_lose'):net===0?(bet>0||p.back>0?'cas_push':''):x>=15||net>=2500?'cas_jackpot':x>=4||net>=500?'cas_big':x>=1?'cas_win':'cas_small'}
 
 // ---------- the receipt (every game) ----------
 const CR_LABEL={pass:'PASS LINE',dp:'DON\'T PASS',po:'PASS ODDS',dpo:'DON\'T PASS ODDS',come:'COME',dc:'DON\'T COME',field:'FIELD',any7:'ANY SEVEN',anyc:'ANY CRAPS',n2:'TWO',n3:'THREE',n11:'ELEVEN',n12:'TWELVE'};
@@ -72,7 +80,7 @@ function tbLastResult(){let r=TB.rcpt;if(!r)try{r=JSON.parse(sessionStorage.getI
 // ---------- cards, dice, reels ----------
 const cgDiceHTML=d=>(d||[]).map(f=>`<i class="die">${'<s></s>'.repeat(f)}</i>`).join('');
 const CG_PIP_HTML=f=>`<i class="die d${f}">${'<s></s>'.repeat(f)}</i>`;
-function cgDiceNow(v){if(!v||!v.dice)return null;if(cgLeft(v)>0){const t=Math.floor(performance.now()/90);return[1+t%6,1+(t*7+3)%6]}return v.dice}
+function cgDiceNow(v){if(!v||!v.dice)return null;if(cgLeft(v)>0){if(v===TB.v)cgSound(v,1,'cas_dice');const t=Math.floor(performance.now()/90);return[1+t%6,1+(t*7+3)%6]}return v.dice}
 function cgBacShown(v){if(!v||!v.P||v.phase!=='done')return{P:[],B:[]};const n=v.order.length,left=cgLeft(v),k=left<=0?n:Math.max(0,Math.min(n,n-Math.ceil((left-300)/700)));
   const o={P:[],B:[]};v.order.slice(0,k).forEach(([s,i])=>o[s].push((s==='P'?v.P:v.B)[i]));if(v===TB.v)cgSound(v,k,'cas_card');return o}
 const CG_SYM={P:'PALI',C:'CORE',W:'WALL',H:'HELM',N:'NADE',S:'◆',X:''},CG_SYM_COL={P:'#ffd24a',C:'#3ae0ff',W:'#d0603a',H:'#9ab0c0',N:'#7ad04a',S:'#9fd8ff',X:'#2a2a33'};
@@ -167,7 +175,7 @@ ${btn('any7','ANY 7','4:1')}${btn('anyc','ANY CRAPS','7:1')}${btn('n2','TWO','30
 CG.sl={info:()=>'PALISADE RUN · 1-100 a spin · one line · returns 96.03%',key:(v,me)=>[CGS.sl.amt,v.phase,me.stack,cgLeft(v)>0],
   status(v,me){if(v.phase==='done'){if(cgLeft(v)>0)return['SPINNING','Reels stop left to right','wait'];const r=v.last.result;return[r.mult?'WIN':'LOSS',r.why,'done']}
     return me.stack<1?['TOP UP','Add shards to the machine (+5, +25 or +100 below)','warn']:['PLACE A BET AND SPIN',`${CGS.sl.amt}◆ a spin · the line pays the single highest award`,'you']},
-  felt(v){const w=cgSlotWindow(v),r=v.last&&v.last.result,done=w.stopped===3&&r&&v.phase==='done'&&cgLeft(v)<=0;if(done&&r.mult&&v===TB.v)cgSound(v,4,'cas_win');
+  felt(v){const w=cgSlotWindow(v),r=v.last&&v.last.result,done=w.stopped===3&&r&&v.phase==='done'&&cgLeft(v)<=0;
     return `<div class="slcab"><div class="slwin${done&&r.mult?' won':''}">${cgReels(w.win,w.stopped,w.stopped===3)}</div><div class="slpay">${done?(r.mult?`<b>${cgEsc(r.combo)} · ${r.mult}x · +${r.players[0].back}◆</b>`:'<b class="l">NO WIN</b>'):'<b>&nbsp;</b>'}</div></div>
 <details class="slpt"><summary>PAYTABLE (gross, your stake included)</summary><table>${[['PALI PALI PALI',250],['CORE CORE CORE',60],['WALL WALL WALL',25],['HELM HELM HELM',15],['NADE NADE NADE',10],['◆ ◆ ◆',6],['ANY THREE OF WALL / HELM / NADE',3],['◆ ◆ on reels 1-2',2],['◆ on reel 1 (your stake back)',1]].map(([a,b])=>`<tr><td>${a}</td><td>${b}x</td></tr>`).join('')}</table>
 <p class="tbHint">20 stops a reel, each one as likely as the next: 8,000 combinations. The line pays on 37.5% of them, more than your stake on 16.3% (the rest of the 37.5% give the stake back); return 96.03% (math sl-1). Every spin is on its own: past spins, your balance and your account change nothing. The reels stop where the server's numbers say; the symbols above and below are the real reel.</p></details>`},

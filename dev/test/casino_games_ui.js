@@ -61,7 +61,13 @@ const Q='peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1&cloud=1';
  await host.waitForSelector('#tbFelt .trcpt:not(.live)',{timeout:8000});const rb=await rcpt(host);out.baccarat=rb;
  assert.ok(['WIN','LOSS','PUSH','PARTIAL RESULT'].includes(rb.verdict),'a verdict in words: '+rb.verdict);assert.equal(rb.nums[0],'45◆','BET 45');assert.match(rb.text,/PLAYER \d/);assert.match(rb.text,/BANKER \d/);
  if(/Banker \d beats/.test(rb.text))assert.match(rb.text,/commission 2◆/,'commission itemized: 40 Banker -> 2');
- {const s=await V(host);assert.ok(s.review>3000,'the review is held after the last card (≈8 s)')}await host.screenshot({path:__dirname+'/out/casino_games_baccarat_review.png'});
+ {const s=await V(host);assert.ok(s.review>3000,'the review is held after the last card (≈8 s)')}
+ // v0.10.8 the result is heard once, as the receipt appears, and matches your net (rake, push, chime, fanfare, jackpot, trombone)
+ {const h=await host.evaluate(uid=>{const me=__pal.TB.v.last.result.players.find(p=>p.uid===uid);return{heard:__pal.CGS.lastSfx,want:__pal.cgResultKind(me)}},users.A.id);
+  assert.ok(h.heard&&h.heard===h.want,'the baccarat result sound: '+JSON.stringify(h));out.baSfx=h.heard;
+  const K=await host.evaluate(()=>[[100,-100],[300,-300],[50,0],[20,19],[100,150],[10,50],[100,2900],[1000,1000],[0,0]].map(([bet,net])=>__pal.cgResultKind({bet,net,back:bet+net})));
+  assert.deepEqual(K,['cas_lose','cas_bust','cas_push','cas_small','cas_win','cas_big','cas_jackpot','cas_big',''],'result sounds by net and bet')}
+ await host.screenshot({path:__dirname+'/out/casino_games_baccarat_review.png'});
  {const t0=Date.now();await until(host,v=>v.phase==='bet',20000,'next bets');out.baReviewMs=Date.now()-t0}
  await host.click('#tbLastBtn');await host.waitForSelector('#tbRcptM:not([hidden])');assert.match(await host.textContent('#tbRcptTxt'),/BACCARAT/,'LAST RESULT after betting reopened');await host.click('#tbRcptM [data-close]');
  await stand(host);
