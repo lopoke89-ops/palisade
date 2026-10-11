@@ -1,5 +1,9 @@
 # PALISADE project status
 
+## v0.10.9: a wider casino panel on desktop (October 11)
+
+- **Casino table panel:** 40% of the screen width on desktop (`max(360px,40vw)`, was 32vw), so the cards, chips and buttons have more room. The camera already centres the player in the space left beside the panel. Phones (700px and under) keep their bottom sheet. `casino_map`, `tables_ui` and `casino_games_ui` pass at desktop, landscape and portrait sizes.
+
 ## v0.10.8: casino sounds for winning and losing (October 11)
 
 - **Every game's result is heard:** once per round, as the receipt appears, sized by your net against your bet. A loss rakes the chips away; losing 200◆ or more plays a sad trombone. A push is a chip clack. A small win dings, a win (1-4x net) rings a bell run with coins, a big win (4x+ net or 500◆+) plays a brass fanfare with a coin shower, and a jackpot (15x+ net or 2,500◆+) rings the slot bell under a longer fanfare and a 2.5 s coin cascade. Big wins dip the music under them and buzz phones and controllers. Before this, only slot wins had a sound (a quiet chime); no game had a loss sound.
