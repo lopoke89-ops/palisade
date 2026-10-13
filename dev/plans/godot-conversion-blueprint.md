@@ -253,8 +253,8 @@ Preserve intended behaviour and harmless quirks. Confirmed security, corruption 
 | ID | Defect | Status (Oct 13) |
 |---|---|---|
 | DEF-01 | Casino state leak via inherited request names (`constructor`) | **Fixed** in `tables` v15/v16 (`Object.hasOwn` dispatch). **Still live in `tables-staging` v2**: delete it. Regression fixture for Godot and server. |
-| DEF-02 | `import_local_save` accepts any cosmetic ID (≤200), stats ≤100000 (milestone unlocks), 1000 shards and ~350 cases once per account, guests included | **Open.** 73 of 83 accounts have never imported. Fix by revoking the function, or restricting it to free items with near-zero shards and cases. |
-| DEF-03 | Hold'em side bet: a 1-shard stake pays 10 Hybrid or 15 Flag cases (~3% hit rate), with positive expected value; case issuance is not in `casino_books` | **Open.** Economy decision required. |
+| DEF-02 | `import_local_save` accepts any cosmetic ID (≤200), stats ≤100000 (milestone unlocks), 1000 shards and ~350 cases once per account, guests included | **Accepted by owner (Oct 13); not fixed.** Godot must not widen it: keep it one-time and server-gated. |
+| DEF-03 | Hold'em side bet: a 1-shard stake pays 10 Hybrid or 15 Flag cases (~3% hit rate), with positive expected value; case issuance is not in `casino_books` | **Accepted by owner (Oct 13).** Preserve as is in Godot (parity). |
 | DEF-04 | Stale-table sweep and daily books run only on `op:'lobby'`. Abandoned tables hold shards and seats, and can freeze SLIM's wallet | **Open.** Add a scheduled sweep. |
 | DEF-05 | Reward claims are bounded but client-asserted (duration, raids held, bosses, kills) | **Open, accepted risk.** Document it; no Godot change. |
 | DEF-06 | Casino pending op ID held in memory (lost on restart) | Open; proposed hardening (D09). |
@@ -640,17 +640,17 @@ Keep the browser available through beta and early desktop release, on the same b
 
 | ID | Recommendation | Alternative / open point |
 |---|---|---|
-| D01 Baseline (Δ) | **v0.10.9 `4c26769` + `tables` v16 + relay `casino-relay-1`** | Re-confirm at Phase 0; later releases go through the queue |
-| D02 Platforms | Windows first; browser stays | Which mobile/web/mac/Linux targets, and minimum devices |
+| D01 Baseline | **Decided Oct 13:** v0.10.9 `4c26769` + `tables` v16 + relay `casino-relay-1` | Later releases go through the change queue |
+| D02 Platforms | **Decided Oct 13:** Windows first, targeting **Steam and/or the Epic Games Store**; the browser stays | Minimum hardware still open. Store review covers simulated gambling, loot boxes, chat and age rating. Steamworks/EOS services (overlay, achievements, cloud saves) stay behind platform adapters (D13). |
 | D03 Toolchain | Current Godot 4.x stable, typed GDScript, Compatibility | Extension constraints |
 | D04 Simulation | Custom collision and source timing first | Fixed 60 Hz / native physics only with evidence |
 | D05 Art | Procedural port, selective caching | Baking only with pose/effect proof |
-| D06 Combat cross-play | Decide via an early probe | Separate rooms = explicit exception |
-| **D15 Casino transport (Δ)** | **Godot implements the existing WSS relay wire; one shared lobby population** | A separate native relay if the origin policy can't be resolved |
+| D06 Combat cross-play | **Decided Oct 13: browser ↔ standalone cross-play required.** Online model not yet chosen; the owner leans towards keeping the current browser-style player-hosted P2P (PeerJS/WebRTC). That is also the only model that gives cross-play without new servers, so it is the working assumption. | Godot needs webrtc-native plus a PeerJS-compatible signaling/framing layer and channel 1000, proven in Phase 1B. Steam/EOS networking can't reach browsers, so it isn't used for matches. The TURN Worker must accept native clients. |
+| **D15 Casino transport** | **Decided Oct 13:** Godot implements the existing WSS relay wire, with one shared browser/standalone casino population. **Casino only.** | Native origin/identity policy still to design |
 | D07 Backend | Keep Auth, economy, casino and relay | Additive endpoints only where needed |
 | D08 Identity | Keep UUIDs; designed anonymous handoff | Credential storage design |
 | D09 Integrity hardening | Durable outboxes and casino pending IDs | Approve the parity differences |
-| D10 Defects (Δ) | Separate register; **fix DEF-01 staging, DEF-02, DEF-03, DEF-04 in the browser era, before Phase 5** | Disposition of the non-integrity quirks |
+| D10 Defects | Separate register. Fix DEF-01 staging and DEF-04 before Phase 5. **DEF-02 and DEF-03 accepted by the owner (Oct 13).** | Disposition of the non-integrity quirks |
 | D11 Audio/assets | Keep content; validate rights and codecs | Rights gaps may force an exception |
 | D12 Acceptance | Exact outcomes; measured presentation tolerances | Calibrate on captures |
 | D13 Store integration | Behind adapters | Steam/etc. scope separately |
@@ -658,27 +658,34 @@ Keep the browser available through beta and early desktop release, on the same b
 
 ---
 
-## 15. Decisions needed before implementation
+## 15. Decisions
 
-1. **Now (independent of Godot):** delete `tables-staging`, and decide fixes for DEF-02 (import), DEF-03 (side-bet case minting) and DEF-04 (scheduled sweep).
-2. Confirm **v0.10.9 `4c26769`** as the initial target, with later browser changes going through the reviewed queue. The browser is changing fast (five releases since Oct 7), so consider a feature freeze for the Phase 1 duration.
-3. Choose the launch platforms and minimum hardware (Windows first?).
-4. Combat cross-play: required at launch, or separate rooms acceptable?
-5. **Casino: approve Godot joining the existing relay lobbies (D15)**, and decide the native-client origin/identity policy.
-6. Keep the backend and account UUIDs, with a designed anonymous handoff.
-7. Approve the integrity-hardening exceptions: durable pending ops, account-partitioned rewards, safe import.
-8. Establish asset and music redistribution rights and the store/rating review.
-9. Authorize the next verification phase: isolated runs, captures, local and staging tests. Production value-changing tests are scoped separately.
-10. Name the final parity approver. Agree that missing features, wrong outcomes and player-data or value failures block release.
+**Answered by the owner on October 13:**
+
+| # | Question | Answer |
+|---|---|---|
+| 1 | Import exploit (DEF-02) and side-bet minting (DEF-03) | Ignore both; accepted as is |
+| 2 | Target | v0.10.9 `4c26769` confirmed |
+| 3 | Platforms | Windows; aiming for Steam and/or the Epic Games Store |
+| 4 | Combat cross-play | Required, browser ↔ standalone |
+| 5 | Casino relay | Yes, for the casino only |
+
+**Still open:**
+1. Delete `tables-staging` (§0). This is independent of the import and side-bet decisions: it is the casino state leak, still reachable through a second endpoint.
+2. The combat online model. The working assumption is the current player-hosted P2P (PeerJS/WebRTC), which cross-play effectively requires. Confirm after the Phase 1B probe.
+3. Minimum Windows hardware, and Steam vs Epic vs both (each has its own review, SDK and identity integration).
+4. Keep the backend and account UUIDs, with a designed anonymous-account handoff (and how a Steam/Epic identity links to it).
+5. The integrity-hardening exceptions: durable pending ops, account-partitioned rewards, safe import.
+6. Asset and music redistribution rights, and the Steam/Epic content and age-rating questionnaires (simulated gambling, randomized items).
+7. Authorize the next verification phase: isolated runs, captures, local and staging tests.
+8. Name the final parity approver.
 
 The remaining uncertainty is concentrated in:
 - font and music served-hash certification;
 - live Auth configuration;
 - physical-device behaviour;
-- combat transport interoperability;
+- combat transport interoperability (the critical path, now that cross-play is required);
 - the native relay origin policy;
-- the anonymous handoff;
+- the anonymous and store-identity handoff;
 - licensing;
 - final tolerance calibration.
-
-These are explicit gates for the next authorized phase.
