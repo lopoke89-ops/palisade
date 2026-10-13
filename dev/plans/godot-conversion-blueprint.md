@@ -26,7 +26,7 @@ Throughout this blueprint:
 
 | Item | Finding | Recommended action |
 |---|---|---|
-| **`tables-staging` Edge Function** | Verified: version 2 is still deployed. It is gateway-JWT-off and has the service role on the production database, and it runs pre-v0.10.7 code. Its `handler.js` still dispatches with `op in M`, so the casino state leak fixed in `tables` v15 is **still reachable through this second endpoint**. That leak exposes the committed seed, deck and hole cards. | **Delete `tables-staging`** in the Supabase dashboard (Edge Functions). Until then, any signed-in account can read hidden table state through it. |
+| **`tables-staging` Edge Function** | Version 2 ran pre-v0.10.7 code (`op in M` dispatch) against the production database, so the casino state leak was still reachable through it. **Neutralised Oct 13:** version 3 is an inert stub (HTTP 410, no database access, no service key, gateway JWT on). | Delete it in the dashboard when convenient; no longer urgent. |
 | Deploys made outside the repo process | `tables` was redeployed from the owner's PC as v10 (Oct 6), v14 (Oct 9) and v16 (Oct 10), each time with CRLF line endings. v16's content equals the repo after line-ending normalization, so none of these redeploys changed code. | Record every function deploy in STATUS. During conversion, treat any undocumented version as a drift alarm. |
 | Migration history drift | The relay migration file is `20261008213153_casino_relay_lobby_codes.sql`, but the live history records `20261009032510 casino_relay_lobby_codes`. | Align the history version with the file, or record the mapping, before any CLI `db push`. |
 
@@ -252,7 +252,7 @@ Preserve intended behaviour and harmless quirks. Confirmed security, corruption 
 
 | ID | Defect | Status (Oct 13) |
 |---|---|---|
-| DEF-01 | Casino state leak via inherited request names (`constructor`) | **Fixed** in `tables` v15/v16 (`Object.hasOwn` dispatch). **Still live in `tables-staging` v2**: delete it. Regression fixture for Godot and server. |
+| DEF-01 | Casino state leak via inherited request names (`constructor`) | **Fixed** in `tables` v15/v16 (`Object.hasOwn` dispatch). `tables-staging` neutralised Oct 13 (v3 inert stub). Regression fixture for Godot and server. |
 | DEF-02 | `import_local_save` accepts any cosmetic ID (≤200), stats ≤100000 (milestone unlocks), 1000 shards and ~350 cases once per account, guests included | **Accepted by owner (Oct 13); not fixed.** Godot must not widen it: keep it one-time and server-gated. |
 | DEF-03 | Hold'em side bet: a 1-shard stake pays 10 Hybrid or 15 Flag cases (~3% hit rate), with positive expected value; case issuance is not in `casino_books` | **Accepted by owner (Oct 13).** Preserve as is in Godot (parity). |
 | DEF-04 | Stale-table sweep and daily books run only on `op:'lobby'`. Abandoned tables hold shards and seats, and can freeze SLIM's wallet | **Open.** Add a scheduled sweep. |
@@ -671,7 +671,7 @@ Keep the browser available through beta and early desktop release, on the same b
 | 5 | Casino relay | Yes, for the casino only |
 
 **Still open:**
-1. Delete `tables-staging` (§0). This is independent of the import and side-bet decisions: it is the casino state leak, still reachable through a second endpoint.
+1. ~~Delete `tables-staging`~~: neutralised Oct 13 (inert v3 stub); deleting it later is optional.
 2. The combat online model. The working assumption is the current player-hosted P2P (PeerJS/WebRTC), which cross-play effectively requires. Confirm after the Phase 1B probe.
 3. Minimum Windows hardware, and Steam vs Epic vs both (each has its own review, SDK and identity integration).
 4. Keep the backend and account UUIDs, with a designed anonymous-account handoff (and how a Steam/Epic identity links to it).
