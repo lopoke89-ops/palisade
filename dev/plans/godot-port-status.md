@@ -15,12 +15,11 @@ The Godot build plays every solo co-op game the browser has:
 - Delgado, every raider type and all 16 bosses;
 - the armory, the skill tree, sound and music.
 
-The rules are ported from the browser code and checked against it by 177 automated tests. Map layouts are compared with the browser's tile for tile.
+The rules are ported from the browser code and checked against it by 177 sim tests and 16 client tests. Map layouts are compared with the browser's tile for tile.
+
+It has menus, settings, remappable keys and controller buttons, touch controls, and the browser's lighting, scenery and character figures.
 
 Still to do:
-- menus and settings (the next game is set up with keys on the pause screen for now);
-- controller, touch and remapping;
-- lighting and night;
 - cosmetics;
 - accounts;
 - online play;
@@ -29,9 +28,9 @@ Still to do:
 
 | Status | Blueprint items |
 |---|---|
-| Done (for solo play) | 24 |
-| Partly done | 16 |
-| Not started | 37 |
+| Done (for solo play) | 34 |
+| Partly done | 13 |
+| Not started | 30 |
 | Measured, not finished | 1 (performance) |
 | Not a client job | 2 (PAL-064 trust rules and PAL-080 SLIM's wallet live on the server) |
 
@@ -44,13 +43,13 @@ The sounds have never been listened to, because the container has no speakers.
 
 ## Feature by feature
 
-**Done** means it matches the browser for solo play on the Yard. **Partly** says what is missing.
+**Done** means it matches the browser for solo play. **Partly** says what is missing.
 
 ### Core game
 
 | ID | Feature | Status | What's in, what's missing |
 |---|---|---|---|
-| PAL-001 | Startup and assembly | Partly | The project boots straight into a game. No boot sequence or catalog resources yet. |
+| PAL-001 | Startup and assembly | Partly | Boots to the main menu over the demo yard. No splash or catalog resources yet. |
 | PAL-002 | Classes and tuning | Done | All four classes, the three materials, the formulas, the difficulty table. Chosen with C on the pause screen until the menus. |
 | PAL-003 | Match state | Partly | Solo phases, timers and the raid loop. No roster or match id (needed online). |
 | PAL-004 | Co-op 5 / 10 / Endless | Done | Raid mix and scaling, Endless's climb and day/night cycle, golden hour and night raids (the night itself isn't drawn yet), bosses, build timers, salvage. |
@@ -63,7 +62,7 @@ The sounds have never been listened to, because the container has no speakers.
 | PAL-011 | Height levels, ramps and stairs | Done | Frostpeak's terraces in movement, pathing, bullets, blasts, aiming and drawing. |
 | PAL-012 | Terrain changes | Done | Fire spreading, frost fields, rock slabs, debris, water and wading, floods, bridges (rammed by the Ferryman), pits from cracked ground, burning drums. |
 | PAL-013 | Movement, collision, pathing | Done | Flow-field pathing, wall sliding, doors open for the crew. |
-| PAL-014 | Aim and targeting | Partly | Mouse aim. Missing: aim assist, aiming at a body rather than the ground, the touch lock-on. |
+| PAL-014 | Aim and targeting | Done | Mouse aim at a body or the ground, stick aim with the browser's aim assist, the touch lock-on for grenades and rockets. |
 | PAL-015 | Building and destruction | Done | Place, upgrade, repair, doors, costs, cooldowns, refusal messages, salvage from ruins. |
 | PAL-016 | Gathering | Done | Yields, caps, regrowth, kiln and scrap unlocks, dropped packs. |
 | PAL-017 | Soldier | Done | The burst carbine (3/5/7/9/9 rounds) and rockets. |
@@ -79,27 +78,27 @@ The sounds have never been listened to, because the container has no speakers.
 | PAL-027 | Bosses | Done | All 16, with every attack and warning, each in its mode. Missing: the October Pumpkin Butcher look. |
 | PAL-028 | Delgado | Done | Defend or follow; builds his ring of walls safely; gathers; repairs and puts out fires; revives you; hands over materials; restocks grenades; his shotgun and levels. |
 | PAL-029 | Damage, going down, revives | Done | Solo rules. PvP's spawn protection comes with PvP. |
-| PAL-030 | Dead End and results | Partly | The dead-end check is in. A simple win/lose screen with the end reason, stats and skill points. Missing: the browser's full results screen. |
+| PAL-030 | Dead End and results | Done | The dead-end check and the browser's after-action screen: title, eyebrow, lede for every ending (evac, left behind, failed evac, crew lost, Black Out), stats, skill points. Rewards (cases, shards) come with accounts. |
 
 ### Presentation
 
 | ID | Feature | Status | What's in, what's missing |
 |---|---|---|---|
-| PAL-031 | Camera and zoom | Partly | The browser's projection, follow and shake. Missing: the zoom setting, spectating, the casino offset. |
-| PAL-032 | Draw order and see-through walls | Partly | The browser's draw order. Missing: walls fading when you stand behind them. |
-| PAL-033 | Lighting and weather | Not started | No day, dusk or night (the browser's raid 5 is at night), no storm. |
-| PAL-034 | Characters | Partly | A cut-down figure with each raider's and boss's look and weapon. The full figure with wardrobe items is not ported. |
-| PAL-035 | Tracers, auras, kill effects | Not started | Plain tracers and particles only. |
+| PAL-031 | Camera and zoom | Partly | The projection, follow, shake (with the setting) and zoom (setting and mouse wheel). Missing: spectating (online). |
+| PAL-032 | Draw order and see-through walls | Done | The browser's draw order; walls and near trees go see-through in front of people; the city's buildings redraw over whoever is behind them. |
+| PAL-033 | Lighting and weather | Done | Overcast, golden hour and night eased the browser's way, with every light pool (soldier, stake, POIs, lamps, fires, kilns, drums, flashes); storms with rain, dust or ash; the vignette and low-health edge. |
+| PAL-034 | Characters | Partly | The browser's full flat figure (drawPerson, gunArms, drawDowned) for everyone, with every raider, boss, Delgado and class kit. Players use it too; the browser's shaded wardrobe figure for players comes with cosmetics. |
+| PAL-035 | Tracers, auras, kill effects | Partly | The standard tapered tracer, raiders' orange rounds, additive muzzle and blast glows. Cosmetic trails, auras and kill effects come with cosmetics. |
 | PAL-036 | Backgrounds | Not started | |
 | PAL-037 | Cosmetics catalog (374 items) | Not started | |
-| PAL-038 | Main menu, setup, lobby | Not started | The game starts straight into a match. |
-| PAL-039 | Index and help | Not started | |
-| PAL-040 | HUD and nameplates | Partly | Top bar, stake bar, boss bar, kit panel, Delgado status, build hints, the Final Blitz, map evac and Gauntlet clocks, the Black Out phase and mini-map. Missing: nameplates, off-screen arrows. |
-| PAL-041 | Settings | Not started | Volume and music levels are fixed at the browser's defaults. |
-| PAL-042 | Keyboard and mouse | Done | The browser's keys (WASD, Space, 1-3, F, G, Q, E, H, Enter, Esc/P, K). No remapping yet. |
-| PAL-043 | Touch | Not started | |
-| PAL-044 | Controller | Not started | |
-| PAL-045 | Overlays and focus | Partly | Pause, armory and skill tree screens. |
+| PAL-038 | Main menu, setup, lobby | Partly | Main menu over the demo yard and Match Setup with all solo choices. The lobby comes with online play. |
+| PAL-039 | Index and help | Done | Classes, raiders, bosses (every attack, health and weakness, the eight POIs) and how to play. Portraits are not drawn yet. |
+| PAL-040 | HUD and nameplates | Done | Top bar, stake bar, boss bars, kit panel, Delgado, build hints, mode clocks, the Black Out phase and mini-map, nameplates, key-cap prompts, crosshair, shell row, off-screen arrows, frame counter. Laid out for desktop; the browser's phone layouts are not ported. |
+| PAL-041 | Settings | Done | Volume, music, shake, zoom, message time, frame rate, fullscreen, vsync, frame counter, tips, rumble, saved in user://settings.json. The browser's backup export and import come with accounts. |
+| PAL-042 | Keyboard and mouse | Done | The browser's keys, every one remappable in Settings › Controls. |
+| PAL-043 | Touch | Done | Two thumb sticks with aim assist, on-screen buttons, the grenade and rocket lock-on. Not yet tried on a real touch screen. |
+| PAL-044 | Controller | Done | The browser's button table (Xbox and PlayStation names), remappable, aim assist, hold to build, rumble, menu navigation, the armory and skill tree. Not yet tried with a real pad. |
+| PAL-045 | Overlays and focus | Done | Pause, armory, skill tree, settings and the after-action screen; the controller and keys move between their buttons. |
 | PAL-046 | Chat and messages | Partly | Messages and floating text. No chat (that comes with online). |
 | PAL-049 | Music | Partly | 5 of 7 tracks routed (build, three raid tracks, results). Missing: the menu and finale tracks, and the casino's 11-track shuffle. |
 | PAL-050 | Sound effects | Partly | 49 of the browser's synth recipes, with distance, wall muffling and voice limits. Missing: tracer, kill-effect, UI and casino sounds. |
@@ -111,9 +110,9 @@ The sounds have never been listened to, because the container has no speakers.
 | PAL-047 | Locker | Not started | |
 | PAL-048 | Cases | Not started | |
 | PAL-051 | Startup and offline | Not started | |
-| PAL-052 | Pause and focus | Partly | Solo pause. Online play keeps running in the browser; not built yet. |
+| PAL-052 | Pause and focus | Partly | Solo pause and the pause menu. Online keeps running in the browser; that comes with online. |
 | PAL-053 | Errors and recovery | Not started | |
-| PAL-054 | Local saves | Partly | The skill-tree profile only. |
+| PAL-054 | Local saves | Partly | Settings and the next game's setup, and the skill-tree profile. The browser's best scores and backup are not ported. |
 | PAL-055 to 060 | Sign-in, cloud locker, reward claims, friends, invites, hosting and joining | Not started | Same Supabase project and accounts as the browser, so progress carries over. |
 | PAL-061 to 063 | Network protocol, host checks, rejoining | Not started | The plan is cross-play with the browser through PeerJS/WebRTC. |
 | PAL-065 to 075 | Casino floor and all seven games | Not started | The game servers already exist; only the Godot screens are missing. |
@@ -138,12 +137,10 @@ The sounds have never been listened to, because the container has no speakers.
 
 The order follows the blueprint's phases, aimed at a Windows release on Steam or Epic with browser cross-play:
 
-1. **Presentation:** night and lighting, storm, the fence and trees, see-through walls, the full character figure, tracers and nameplates.
-2. **Menus and settings:** main menu, game setup (mode, map, size, class, difficulty, modifiers), settings saved between runs, the results screen, help.
-3. **Input:** controller, touch, remapping.
-4. **The Windows .exe.**
-5. **Accounts:** sign-in, cloud locker, reward claims and the skill tree on the server.
-6. **Online:** the PeerJS cross-play probe first, then hosting, joining, the snapshot protocol, rejoining, PvP and chat.
-7. **The casino:** the relay client, the floor and the seven games. The servers already exist.
-8. **Cosmetics:** locker, cases and the full wardrobe.
-9. **Release:** accessibility, performance on real hardware, signing, and the Steam or Epic store build.
+1. **Hands-on pass:** play it on a Windows PC with a mouse, a controller and a touch screen; tune what the tests can't judge (feel, readability, sound).
+2. **The Windows .exe:** export templates, icon, version info.
+3. **Accounts:** sign-in, cloud locker, reward claims (cases, shards) and the skill tree on the server.
+4. **Online:** the PeerJS cross-play probe first, then hosting, joining, the lobby, the snapshot protocol, rejoining, spectating, PvP (Base Battle, Free-for-all) and chat.
+5. **The casino:** the relay client, the floor and the seven games. The servers already exist.
+6. **Cosmetics:** locker, cases, the shaded wardrobe figure, trails, auras, kill effects, backgrounds.
+7. **Release:** accessibility, phone-size HUD layouts if mobile is wanted, performance on real hardware, signing, and the Steam or Epic store build.
