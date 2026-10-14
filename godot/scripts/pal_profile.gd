@@ -32,6 +32,7 @@ var sp := 0          # points to spend
 var sp_total := 0    # lifetime points earned (the ammo tiers' gates)
 var sp_prog := 0     # raids held toward the next point (0-4)
 var skills := {}     # id -> level
+var mol_off := false   # Molotovs switched off (the browser's 'm' on the skill string)
 var persist := true  # tests switch this off so they never touch a real profile
 
 
@@ -100,7 +101,8 @@ func perk_mods() -> Dictionary:
 	return {"dmg": 1 + 0.04 * L.call("dmg"), "rate": 1 + 0.04 * L.call("rate"), "reload": 1 - 0.12 * L.call("reload"), "range": 1 + 0.06 * L.call("range"),
 		"hp": 1 + 0.06 * L.call("hp"), "regenAfter": 4 - 0.75 * L.call("regen"), "regen": 4 + 2 * L.call("regen"), "revive": 1 + 0.25 * L.call("revive"),
 		"speed": 1 + 0.03 * L.call("speed"), "vest": 1 - 0.04 * L.call("vest"), "gather": 1 - 0.1 * L.call("haul"), "carry": roundi(8 * L.call("haul")),
-		"rockets": L.call("rockets"), "ammo": {"ap": mini(4, L.call("ammo_ap")), "fire": mini(4, L.call("ammo_fire")), "blast": mini(4, L.call("ammo_blast")), "shock": mini(4, L.call("ammo_shock"))}}
+		"rockets": L.call("rockets"), "pouch": L.call("pouch"), "molotov": L.call("molotov") > 0 and L.call("pouch") >= 1 and not mol_off,
+		"ghillie": 3 * L.call("ghillie"), "stride": L.call("stride"), "ammo": {"ap": mini(4, L.call("ammo_ap")), "fire": mini(4, L.call("ammo_fire")), "blast": mini(4, L.call("ammo_blast")), "shock": mini(4, L.call("ammo_shock"))}}
 
 
 func load_file() -> void:
@@ -114,6 +116,7 @@ func load_file() -> void:
 		sp = int(d.get("sp", 0))
 		sp_total = int(d.get("sp_total", 0))
 		sp_prog = int(d.get("sp_prog", 0))
+		mol_off = bool(d.get("mol_off", false))
 		skills = {}
 		var sk = d.get("skills", {})
 		if sk is Dictionary:
@@ -128,4 +131,4 @@ func save() -> void:
 	var f := FileAccess.open(PATH, FileAccess.WRITE)
 	if f == null:
 		return
-	f.store_string(JSON.stringify({"sp": sp, "sp_total": sp_total, "sp_prog": sp_prog, "skills": skills}))
+	f.store_string(JSON.stringify({"sp": sp, "sp_total": sp_total, "sp_prog": sp_prog, "skills": skills, "mol_off": mol_off}))

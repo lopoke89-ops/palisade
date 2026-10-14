@@ -10,7 +10,10 @@ var profile := PalProfile.new()
 var skills_open := false
 var sk_buttons: Array = []
 var sk_reset := Rect2()
-var run_sp := -1   # skill points this run earned (shown on the end screen), -1 until the run ends
+var run_sp := -1
+var mouse_pulls := 0   # left-button presses so far (the bolt and pump guns buffer a click)
+var draw_alpha := 1.0   # people drawn faded (stealth) multiply their colours by this
+var next_cls := "soldier"   # the class for the next game (C on the pause or end screen, until the menus are ported)   # skill points this run earned (shown on the end screen), -1 until the run ends
 var audio := PalAudio.new()
 var v := IsoView.new()
 var parts: Array = []
@@ -31,7 +34,7 @@ var mouse_seen := false
 func _ready() -> void:
 	font = ThemeDB.fallback_font
 	profile.load_file()
-	sim.new_game(-1, "normal", profile.perk_mods())
+	sim.new_game(-1, "normal", profile.perk_mods(), {"cls": next_cls})
 	audio.sim = sim
 	add_child(audio)
 	_resize()
@@ -54,6 +57,9 @@ func _resize() -> void:
 func _unhandled_input(e: InputEvent) -> void:
 	if e is InputEventMouseMotion:
 		mouse_seen = true
+	if e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
+		mouse_seen = true
+		mouse_pulls = (mouse_pulls + 1) & 255
 	if armory_open:
 		_armory_input(e)
 		return
@@ -71,6 +77,8 @@ func _unhandled_input(e: InputEvent) -> void:
 				_restart()
 			elif k == KEY_K:
 				skills_open = true
+			elif k == KEY_C:
+				next_cls = Pal.CLASS_IDS[(Pal.CLASS_IDS.find(next_cls) + 1) % Pal.CLASS_IDS.size()]
 			return
 		if k == KEY_F8 and OS.is_debug_build():   # developer: bring in the next boss (any boss, any map), editor runs only
 			_dev_boss()
@@ -82,12 +90,16 @@ func _unhandled_input(e: InputEvent) -> void:
 				sim.game.sel = k - KEY_1
 			KEY_F:
 				sim.game.piece = "door" if sim.game.piece == "wall" else "wall"
-			KEY_G:
-				var w := _mouse_world()
-				sim.throw_nade(sim.player, w.x, w.y)
-			KEY_Q:
+			KEY_G, KEY_Q:
 				var w := _mouse_world() if mouse_seen else Vector2(sim.player.x + sim.player.aim.x * 6, sim.player.y + sim.player.aim.y * 6)
-				sim.use_rocket(sim.player, w.x, w.y)
+				if k == KEY_Q and sim.player.cls in ["soldier", "sniper"]:   # Q is the class ability where there is one, else a grenade
+					sim.use_ability(sim.player, w.x, w.y)
+				else:
+					sim.throw_nade(sim.player, w.x, w.y)
+			KEY_SHIFT:
+				sim.local_sprint()
+			KEY_R:
+				sim.local_reload()
 			KEY_E, KEY_U:
 				_try_armory()
 			KEY_H:
@@ -98,7 +110,7 @@ func _unhandled_input(e: InputEvent) -> void:
 
 
 func _restart() -> void:
-	sim.new_game(-1, "normal", profile.perk_mods())
+	sim.new_game(-1, "normal", profile.perk_mods(), {"cls": next_cls})
 	run_sp = -1
 	parts.clear()
 	flashes.clear()
@@ -127,7 +139,7 @@ func _controls() -> Dictionary:
 		var w := _mouse_world()
 		var d := Vector2(w.x - p.x, w.y - p.y)
 		aim = d.normalized() if d.length() > 0 else Vector2(1, 0)
-	return {"move": mv, "aim": aim, "fire": mouse_seen and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)}
+	return {"move": mv, "aim": aim, "fire": mouse_seen and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT), "pulls": mouse_pulls, "auto": not mouse_seen}
 
 
 # ---------------------------------------------------------------- frame
@@ -229,7 +241,9 @@ func _update_fx(dt: float) -> void:
 # ---------------------------------------------------------------- drawing helpers (15-render.js)
 
 func c(h: String) -> Color:
-	return Color.html(h)
+	var col := Color.html(h)
+	col.a *= draw_alpha
+	return col
 
 
 func quad(a: Vector2, b: Vector2, cc: Vector2, d: Vector2, fill: Color) -> void:
@@ -404,11 +418,15 @@ func _draw() -> void:
 			5:
 				var p: Dictionary = it[2]
 				if p.alive:
-					var o: Dictionary = SOLDIER_LOOK.duplicate()
+					var o: Dictionary = class_look(p.cls)
 					o.merge({"aim": p.aim, "walk": p.walk, "flash": p.flash > 0, "ring": "#e2b436"}, true)
 					if p.markT > 0:
 						o.ring = "#ff5a4a"   # spotted
+					if p.bolt > 0:
+						o.bolt = 1.0 - p.bolt / p.boltT
+					draw_alpha = 0.5 if p.stl > 0 else 1.0   # stealth: see-through
 					_draw_person(p.x, p.y, o)
+					draw_alpha = 1.0
 				elif p.downed:
 					_draw_downed(p.x, p.y, "DOWN · %ds" % ceili(p.rt), p.revive / 2.2)
 			6:
@@ -649,7 +667,26 @@ const LOOK := {
 	"fire": {"body": "#6a3a1e", "vest": "#2a1a10", "pants": "#231c19", "head": "#a07a5c", "wrap": "#d06a1e", "pack": "#3a2a1a", "weapon": "bottle", "nogun": true},
 }
 const QM_LOOK := {"body": "#9e9a78", "vest": "#3d4a52", "pants": "#3a3a33", "head": "#b58f6e", "cap": "#3d4a52", "pack": "#5a4a30", "weapon": "sg"}
-const SOLDIER_LOOK := {"body": "#4d5c40", "vest": "#38452e", "pants": "#3b372c", "head": "#d8a882", "helmet": "#3a4630"}
+## buildLook (16-characters.js) on the default "std" skin: each class's kit and headgear
+static func class_look(cls: String) -> Dictionary:
+	var o := {"body": "#b9aa82", "vest": "#4d6b47", "pants": "#4a4636", "head": "#c19a78"}
+	match cls:
+		"sniper":
+			o.boonie = "#5b5a3c"
+			o.weapon = "rifle"
+		"grenadier":
+			o.pack = "#4a3a26"
+			o.bandolier = true
+			o.weapon = "sg"
+			o.helmet = "#4a5238"
+		"quartermaster":
+			o.pack = "#5a4a30"
+			o.cross = true
+			o.cap = "#4a5238"
+			o.weapon = "smg"
+		_:
+			o.helmet = "#4a5238"
+	return o
 
 
 ## A cut-down drawPerson (16-characters.js): shadow, legs, body, vest, head and headgear, the weapon on the aim side,
@@ -706,6 +743,12 @@ func _draw_person(x: float, y: float, o: Dictionary) -> void:
 			var tip := hand + sd * 12.0
 			draw_colored_polygon(PackedVector2Array([hand + Vector2(sd.y, -sd.x) * 3, hand - Vector2(sd.y, -sd.x) * 3, tip]), c("#8a8f90"))
 			draw_line(hand - sd * 2, hand + sd * 3, c("#3a3326"), 4.0)
+		elif weapon == "rifle":
+			draw_line(hand - sd * 3.0, hand + sd * 16.0, dark, 2.2)
+			draw_line(hand + sd * 2.0 + Vector2(0, -2), hand + sd * 6.0 + Vector2(0, -2), dark, 2.6)   # scope
+		elif weapon == "smg":
+			draw_line(hand, hand + sd * 7.0, dark, 2.6)
+			draw_line(hand + sd * 2.0, hand + sd * 2.0 + Vector2(0, 3), dark, 1.6)
 		elif weapon == "sword":
 			draw_line(hand, hand + sd * 13.0 + Vector2(0, -3), c("#d8dcd8"), 1.8)
 			draw_line(hand - Vector2(sd.y, -sd.x) * 2.0, hand + Vector2(sd.y, -sd.x) * 2.0, c("#3a2a1a"), 1.6)
@@ -800,10 +843,20 @@ func _draw_hud() -> void:
 	# bottom-left: health, materials, grenades
 	var y0 := H - 74
 	draw_rect(Rect2(10, y0 - 8, 330, 72), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.72))
-	draw_string(font, Vector2(20, y0 + 10), "SOLDIER", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, dim)
+	draw_string(font, Vector2(20, y0 + 10), p.C.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, dim)
 	draw_rect(Rect2(86, y0, 150, 10), Color(0, 0, 0, 0.6))
 	draw_rect(Rect2(86, y0, 150 * maxf(0, p.hp / p.max), 10), c("#8fe0a0") if p.hp / p.max > 0.35 else c("#d65a3a"))
-	draw_string(font, Vector2(246, y0 + 10), "NADES %d · RKT %d" % [p.nades, p.rk], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, paper)
+	var kit := "NADES %d" % p.nades
+	match p.cls:
+		"soldier":
+			kit += " · RKT %d" % p.rk
+		"sniper":
+			kit += (" · HIDDEN %ds" % ceili(p.stl)) if p.stl > 0 else (" · STEALTH %ds" % ceili(p.stlCd) if p.stlCd > 0 else " · STEALTH (Q)")
+		"grenadier":
+			kit += " · SHELLS %d/%d" % [p.ammo, p.gun.mag]
+		"quartermaster":
+			kit += " · SPRINT %ds" % ceili(p.sprCd) if p.sprCd > 0 else " · SPRINT (SHIFT)"
+	draw_string(font, Vector2(246, y0 + 10), kit, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, paper)
 	if p.ammoEq[0] != "":
 		for A in Sim.AMMO:
 			if A.id == p.ammoEq[0]:
@@ -846,11 +899,12 @@ func _draw_hud() -> void:
 		if g.paused:
 			label("PAUSED", W / 2, H / 2 - 20, gold, 30)
 			label("ESC / P to resume · R to restart · K skill tree", W / 2, H / 2 + 14, paper, 14)
+			label("C · next game's class: %s" % Pal.CLASSES[next_cls].name, W / 2, H / 2 + 40, dim, 13)
 		else:
 			label("VICTORY" if g.won else "DEFEAT", W / 2, H / 2 - 30, gold if g.won else c("#d65a3a"), 34)
 			var st: Dictionary = g.stats
 			label("Raids survived %d · Raiders dropped %d · Walls raised %d · Walls lost %d" % [g.wave - (0 if g.won else 1), st.dropped, st.built, st.lost], W / 2, H / 2 + 6, paper, 14)
-			label("ENTER to play again · K skill tree", W / 2, H / 2 + 34, dim, 13)
+			label("ENTER to play again · K skill tree · C class: %s" % Pal.CLASSES[next_cls].name, W / 2, H / 2 + 34, dim, 13)
 			if run_sp >= 0:
 				label("+%d SKILL POINT%s · %d to spend · next in %d raids" % [run_sp, "" if run_sp == 1 else "S", profile.sp, 5 - profile.sp_prog], W / 2, H / 2 + 60, c("#8fe0a0"), 13)
 

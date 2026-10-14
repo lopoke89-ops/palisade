@@ -13,7 +13,21 @@ const MAT: Array = [
 
 # burst carbine: a burst always finishes once started; rounds per burst and the pause after it follow the DAMAGE level
 const SOLDIER: Dictionary = {"name": "SOLDIER", "hp": 115.0, "nades": 2, "build": 0.6, "cap": [64, 64, 64], "blast": 1.0, "nadeCd": 1.0, "spd": 1.0,
-	"gun": {"dmg": 12.0, "cd": 0.09, "spread": 0.12, "range": 11.0, "speed": 22.0, "burst": true}}
+	"gun": {"dmg": 12.0, "cd": 0.09, "spread": 0.12, "range": 11.0, "speed": 22.0, "burst": true, "snd": "ar"}}
+# CLASSES (01-setup.js). Bolt every 0.7 s in co-op; the pump shotgun throws 7 pellets, full damage to 2.5 tiles, 55% by 7,
+# from a 6-shell tube loaded one at a time; the quartermaster gathers faster, repairs at half price, revives on touch and sprints
+const CLASSES: Dictionary = {
+	"soldier": SOLDIER,
+	"sniper": {"name": "SNIPER", "hp": 90.0, "nades": 2, "build": 1.0, "cap": [64, 64, 64], "blast": 1.0, "nadeCd": 1.0, "spd": 1.1,
+		"gun": {"dmg": 47.0, "cd": 0.7, "spread": 0.02, "range": 16.0, "speed": 34.0, "pierce": 2, "snd": "sniper", "bolt": true}},
+	"grenadier": {"name": "GRENADIER", "hp": 105.0, "nades": 3, "build": 1.0, "cap": [64, 64, 64], "blast": 1.25, "nadeCd": 0.6, "spd": 0.9,
+		"gun": {"dmg": 12.0, "cd": 0.5, "clickCd": 0.12, "spread": 0.15, "range": 7.2, "speed": 24.0, "snd": "shotgun", "bolt": true, "pump": true, "pellets": 7, "fall": [2.5, 7.0, 0.55], "mag": 6, "reload": 0.42}},
+	"quartermaster": {"name": "QUARTERMASTER", "hp": 110.0, "nades": 2, "build": 0.85, "cap": [96, 96, 96], "blast": 1.0, "nadeCd": 1.0, "gather": 0.72, "repair": 0.5, "medic": true, "spd": 1.0, "sprint": true,
+		"gun": {"dmg": 7.0, "cd": 0.085, "spread": 0.15, "range": 8.5, "speed": 22.0, "snd": "smg"}},
+}
+const CLASS_IDS: Array = ["soldier", "sniper", "grenadier", "quartermaster"]
+const SPRINT: Dictionary = {"mult": 1.4, "dur": 2.5, "cd": 6.0}
+const STEALTH: Dictionary = {"dur": 12.0, "cd": 30.0}
 
 const DIFF: Dictionary = {
 	"easy": {"name": "EASY", "dmg": 0.55, "hp": 0.8, "extra": -1, "build": 10, "core": 600},

@@ -56,8 +56,8 @@ func _init() -> void:
 
 	print("building")
 	s.local_build()
-	var k := s.idx(6, 11)
-	check(s.walls[k] != null and s.walls[k].mat == 0 and s.walls[k].hp == 60.0, "wood wall raised at 6,11")
+	var k := s.idx(6, 10)   # a new soldier faces up and to the right (0.7, -0.7), so the faced tile is the diagonal
+	check(s.walls[k] != null and s.walls[k].mat == 0 and s.walls[k].hp == 60.0, "wood wall raised at 6,10")
 	check(s.player.mats[0] == 20, "cost 4 wood")
 	check(is_equal_approx(s.player.bcd, 0.22 * 0.6), "build cooldown .22 x .6")
 	s.local_build()
@@ -386,6 +386,84 @@ func _init() -> void:
 	pr.respec()
 	check(pr.skills.is_empty() and pr.sp == 30, "reset hands every point back (13 unspent + 17 spent)")
 
+	print("classes")
+	var cs := _mk()
+	cs.new_game(90, "normal", {}, {"cls": "sniper"})
+	var sn: Dictionary = cs.player
+	check(sn.max == 90.0 and is_equal_approx(sn.gun.dmg, 47.0) and sn.rk == 0, "Sniper: 90 health, 47-damage bolt, no rockets")
+	cs.game.phase = "raid"
+	sn.aim = Vector2(1, 0)
+	var shots := 0
+	for n in 60 * 3:
+		var before := cs.bullets.size()
+		cs.update(1.0 / 60.0, {"aim": Vector2(1, 0), "fire": true, "pulls": 0})
+		if cs.bullets.size() > before:
+			shots += 1
+	check(shots >= 4 and shots <= 5, "the bolt fires every 0.7 s while held (%d in 3 s)" % shots)
+	var pw := _mk()
+	pw.new_game(91, "normal", {}, {"cls": "sniper"})
+	pw.game.phase = "raid"
+	pw.walls[pw.idx(8, 11)] = Pal.make_wall(0, false)   # not the adjacent tile: shots go over a wall right next to you
+	var tgt := pw.spawn_enemy_at("rifle", 9.5, 11.5)
+	tgt.hp = 999.0
+	pw.player.aim = Vector2(1, 0)
+	pw.shoot(pw.player, {"spread": 0.0, "dmg": 47.0, "speed": 34.0, "range": 16.0, "pierce": 2}, 0.0)
+	for n in 30:
+		pw.update_bullets(1.0 / 60.0)
+	check(tgt.hp < 999.0 and absf((999.0 - tgt.hp) - 47.0 * 0.8) < 0.01, "a sniper round goes through a wood wall and hits for 80%% (%.1f)" % (999.0 - tgt.hp))
+	var gr := _mk()
+	gr.new_game(92, "normal", {}, {"cls": "grenadier"})
+	gr.game.phase = "raid"
+	check(gr.player.nades == 3 and gr.player.ammo == 6, "Grenadier: 3 grenades, 6 shells")
+	var before_b := gr.bullets.size()
+	gr.update(1.0 / 60.0, {"aim": Vector2(1, 0), "fire": true, "pulls": 0})
+	check(gr.bullets.size() - before_b == 7, "the pump throws 7 pellets")
+	for n in 60 * 4:
+		gr.update(1.0 / 60.0, {"aim": Vector2(1, 0), "fire": true, "pulls": 0})
+	check(gr.player.ammo <= 1, "holding the trigger empties the tube (%d left)" % gr.player.ammo)
+	for n in 60 * 4:
+		gr.update(1.0 / 60.0, {"aim": Vector2(1, 0), "fire": false, "pulls": 0})
+	check(gr.player.ammo == 6, "and it loads back one shell at a time, 0.42 s each (6 after 4 s)")
+	var qmc := _mk()
+	qmc.new_game(93, "normal", {}, {"cls": "quartermaster"})
+	check(qmc.player.cap[0] == 96 and qmc.core_fix_cost(qmc.player) == 13, "Quartermaster: packs of 96, stake repair for 13")
+	qmc.local_sprint()
+	var x0: float = qmc.player.x
+	qmc.player.y = 3.5
+	qmc.player.x = 2.5
+	x0 = qmc.player.x
+	for n in 60:
+		qmc.update(1.0 / 60.0, {"move": Vector2(1, 0), "fire": true})
+	check(absf((qmc.player.x - x0) - 3.3 * 1.4) < 0.15 and qmc.bullets.is_empty(), "sprint: 1.4x speed and no shooting (%.2f tiles in 1 s)" % (qmc.player.x - x0))
+	qmc.qm.alive = false
+	qmc.qm.x = qmc.player.x + 0.3
+	qmc.qm.y = qmc.player.y
+	qmc.update(1.0 / 60.0, {})
+	check(qmc.qm.alive, "touching Delgado gets him straight up")
+	var st := _mk()
+	st.new_game(94, "normal", {}, {"cls": "sniper"})
+	st.game.phase = "raid"
+	st.qm.alive = false
+	var ri := st.spawn_enemy_at("rifle", 10.5, 11.5)
+	for n in 30:
+		st.update_enemies(1.0 / 60.0)
+	check(ri.foe != null, "a rifleman sees the sniper")
+	st.use_ability(st.player, 0, 0)
+	for n in 30:
+		st.update_enemies(1.0 / 60.0)
+	check(ri.foe == null and st.player.stl > 11, "stealth (Q): raiders lose him for 12 s")
+	var mp := PalProfile.new()
+	mp.persist = false
+	mp.skills = {"pouch": 1, "molotov": 1}
+	var ml := _mk()
+	ml.new_game(95, "normal", mp.perk_mods(), {"cls": "grenadier"})
+	ml.game.phase = "raid"
+	check(ml.player.maxN == 4, "Extra Pouch: a 4th grenade")
+	ml.throw_nade(ml.player, 9.5, 11.5)
+	for n in 60:
+		ml.update_lobs(1.0 / 60.0)
+	check(ml.fires.any(func(f): return f.get("pl", false)), "Molotovs: the grenade leaves burning ground")
+
 	print("armory")
 	var ar := _mk()
 	ar.new_game(40)
@@ -417,6 +495,7 @@ func _init() -> void:
 	am.new_game(41)
 	am.game.phase = "raid"
 	am.player.ammoEq[0] = "shock"
+	am.player.aim = Vector2(1, 0)
 	var t1 := am.spawn_enemy_at("rifle", 8.5, 11.5)
 	var t2 := am.spawn_enemy_at("rifle", 9.0, 12.5)
 	am.shoot(am.player, {"spread": 0.0, "dmg": 1.0, "speed": 22.0, "range": 11.0}, 0.0)
@@ -451,6 +530,7 @@ func _init() -> void:
 	print("Delgado")
 	var dg := _mk()
 	dg.new_game(12)
+	dg.set_qm_mode("")   # defend: he builds the ring round the stake (he starts on follow, as in the browser)
 	for n in 60 * 30:
 		dg.update(1.0 / 60.0, {})
 	var ring := 0

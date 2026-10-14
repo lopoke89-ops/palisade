@@ -126,7 +126,7 @@ func toast(title: String, body: String) -> void:
 
 # ---------------------------------------------------------------- new game
 
-func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {}) -> void:
+func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {}, opt: Dictionary = {}) -> void:
 	dispose()
 	perk = perks if not perks.is_empty() else PalProfile.new().perk_mods()
 	if seed_v >= 0:
@@ -170,27 +170,37 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {})
 	game = {"phase": "build", "timer": 40.0 + Df.build, "wave": 0, "waves": Pal.WAVES, "queue": [], "spawnT": 0.0, "spawnGap": 1.1,
 		"time": 0.0, "sel": 0, "piece": "wall", "won": false, "paused": false,
 		"stats": {"built": 0, "lost": 0, "dropped": 0, "revives": 0, "repairs": 0}}
-	player = make_player(0)
+	player = make_player(0, opt.get("cls", "soldier"))
 	var sp := [[5.5, 11.5], [5.5, 12.5], [3.5, 12.5], [4.5, 12.5], [5.5, 10.5], [3.5, 10.5]]
 	player.x = sp[0][0] + core.i - 4
 	player.y = sp[0][1] + core.j - 11
 	# 04-state-armory.js newGame; mode '' is the browser default (defend the stake), H switches to follow
 	qm = {"id": "dell", "x": 3.5, "y": 11.5, "hp": 180.0, "max": 180.0, "alive": true, "revive": 0.0, "aim": Vector2(1, 0), "face": Vector2(1, 0),
 		"cd": 0.0, "sup": 8.0, "gt": 0.0, "work": 0.0, "job": "", "jobKey": "", "next": -1, "pathT": 0.0, "scanT": 0.0, "planT": 0.0, "bcd": 0.0,
-		"foe": null, "walk": 0.0, "flash": 0.0, "mats": [24, 0, 0], "hurt": 9.0, "mode": "", "status": "", "completedRaids": 0,
+		"foe": null, "walk": 0.0, "flash": 0.0, "mats": [24, 0, 0], "hurt": 9.0, "mode": "follow", "status": "", "completedRaids": 0,
 		"commandJob": null, "layout": null, "layoutSize": 4, "C": {"build": 1.0, "repair": 1.0}, "markT": 0.0}
 	compute_flow()
 
 
-func make_player(id: int) -> Dictionary:
-	var C: Dictionary = Pal.SOLDIER
-	var p := {"id": id, "name": "YOU", "cls": "soldier", "C": C, "gun": C.gun, "x": 0.0, "y": 0.0, "hp": C.hp, "max": C.hp,
+func make_player(id: int, cls: String = "soldier") -> Dictionary:
+	if not Pal.CLASSES.has(cls):
+		cls = "soldier"
+	var C: Dictionary = Pal.CLASSES[cls]
+	var p := {"id": id, "name": "YOU", "cls": cls, "C": C, "gun": C.gun, "x": 0.0, "y": 0.0, "hp": C.hp, "max": C.hp,
 		"alive": true, "downed": false, "revive": 0.0, "rt": 0.0, "mats": [24, 0, 0], "cap": C.cap.duplicate(),
 		"nades": C.nades, "maxN": C.nades, "ncd": 0.0, "blast": C.blast, "cd": 0.0, "bcd": 0.0, "gt": 0.0, "bLeft": 0,
-		"hurt": 9.0, "flash": 0.0, "walk": 0.0, "face": Vector2(1, 0), "aim": Vector2(1, 0), "fire_in": false,
-		"up": {"d": 0, "r": 0, "g": 0, "a": 0, "n": 0}, "sal": 0, "kills": 0, "move_dir": Vector2(1, 0), "markT": 0.0, "stun": 0.0,
-		"rk": ABIL_ROCKET.stock + perk.rockets, "rkCd": 0.0, "ammoEq": [""], "trT": 0.0}
+		"hurt": 9.0, "flash": 0.0, "walk": 0.0, "face": Vector2(0.7, -0.7).normalized(), "aim": Vector2(0.7, -0.7).normalized(), "fire_in": false,
+		"up": {"d": 0, "r": 0, "g": 0, "a": 0, "n": 0}, "sal": 0, "kills": 0, "move_dir": Vector2(0.7, -0.7).normalized(), "markT": 0.0, "stun": 0.0,
+		"rk": 0, "rkCd": 0.0, "stl": 0.0, "stlCd": 0.0, "sprT": 0.0, "sprCd": 0.0, "ammoEq": ["", ""], "trT": 0.0,
+		"ammo": -1, "rl": 0.0, "rlReq": false, "bolt": 0.0, "boltT": 0.0, "sinceShot": 9.0, "dryT": 0.0,
+		"pullIn": -1, "pullUsed": -1, "pullT": -9.0, "auto": false}
+	p.max = 0.0
 	refit(p)
+	p.hp = p.max
+	p.nades = p.maxN
+	p.rk = abil_rockets(p)
+	if C.gun.has("mag"):
+		p.ammo = C.gun.mag
 	return p
 
 
@@ -556,7 +566,7 @@ func build_eval(p: Dictionary, i: int, j: int, sel: int, door: bool) -> Dictiona
 		t.act = "REPAIR"
 		t.mat = w.mat
 		t.door = w.door
-		t.cost = maxi(1, roundi((Pal.DOOR_COST if w.door else Pal.WALL_COST) * (1.0 - w.hp / w.max)))
+		t.cost = maxi(1, roundi((Pal.DOOR_COST if w.door else Pal.WALL_COST) * (1.0 - w.hp / w.max) * p.get("C", {}).get("repair", 1.0)))
 	elif door != w.door:
 		t.act = "MAKE DOOR" if door else "SEAL DOOR"
 		t.mat = w.mat
@@ -652,12 +662,23 @@ func throw_nade(p: Dictionary, tx: float, ty: float) -> void:
 
 func shoot(p: Dictionary, G: Dictionary, late: float) -> void:
 	var a := atan2(p.aim.y, p.aim.x)
+	var P: int = G.get("pellets", 1)
 	shot_seq += 1
-	fire(p, a + (rnd() - 0.5) * G.spread, 0, G, late)
-	var b: Dictionary = bullets[bullets.size() - 1]
-	b.shot = shot_seq
+	var first := bullets.size()
+	if P > 1:
+		for i in P:
+			fire(p, a + (float(i) / (P - 1) - 0.5) * G.spread + (rnd() - 0.5) * G.spread * 0.3, 0, G, late, i > 0)
+	else:
+		fire(p, a + (rnd() - 0.5) * G.spread, 0, G, late)
+	var am = null
 	if p.has("ammoEq") and p.ammoEq[0] != "":
-		b.ammo = [[p.ammoEq[0], perk.ammo.get(p.ammoEq[0], 0)]]   # the skill tree's rank for that ammo
+		am = [[p.ammoEq[0], perk.ammo.get(p.ammoEq[0], 0)]]
+		if p.ammoEq[1] != "":
+			am.append([p.ammoEq[1], perk.ammo.get(p.ammoEq[1], 0)])
+	for i in range(first, bullets.size()):
+		bullets[i].shot = shot_seq
+		if am != null:
+			bullets[i].ammo = am
 
 
 func fire(from: Dictionary, ang: float, team: int, gun: Dictionary, late: float = 0.0, quiet: bool = false) -> void:
@@ -667,7 +688,7 @@ func fire(from: Dictionary, ang: float, team: int, gun: Dictionary, late: float 
 	bullets.append({"id": bullet_seq, "x": from.x + cos(ang) * ahead, "y": from.y + sin(ang) * ahead,
 		"vx": cos(ang) * gun.speed, "vy": sin(ang) * gun.speed, "team": team, "dmg": gun.dmg, "dist": ahead - 0.33,
 		"over": gun.get("over", true), "skipped": false, "last": -1, "range": gun.range, "own": own, "dead": false,
-		"fall": gun.get("fall"), "pel": gun.get("pellets", 1) > 1, "shield_contact": -1})
+		"fall": gun.get("fall"), "pel": gun.get("pellets", 1) > 1, "shield_contact": -1, "pierce": gun.get("pierce", 0), "heavy": gun.has("pierce")})
 	if not quiet:
 		ev({"k": "flash", "x": from.x + cos(ang) * 0.4, "y": from.y + sin(ang) * 0.4, "life": 0.06, "r": 1.3 if gun.get("pellets", 1) > 1 else 0.9, "muzzle": true})
 
@@ -730,12 +751,17 @@ func control_local(dt: float, ctl: Dictionary) -> void:
 		return
 	var mv: Vector2 = ctl.get("move", Vector2.ZERO)
 	var mag := minf(1.0, mv.length())
+	p.sprT = maxf(0.0, p.sprT - dt)
+	p.sprCd = maxf(0.0, p.sprCd - dt)
+	var spr: bool = p.sprT > 0
 	if mag > 0.12:
 		var d := mv.normalized()
-		var sp: float = 3.3 * mag * p.C.spd * (0.45 if p.stun > 0 else 1.0) * slow_at(p.x, p.y) * perk.speed
+		var sp: float = 3.3 * mag * p.C.spd * (Pal.SPRINT.mult if spr else 1.0) * (0.45 if p.stun > 0 else 1.0) * slow_at(p.x, p.y) * perk.speed
 		move_ent(p, d.x * sp * dt, d.y * sp * dt, true)
-		p.walk += dt * mag * 10.0
+		p.walk += dt * mag * (13.0 if spr else 10.0)
 		p.move_dir = d
+		if spr and rnd() < dt * 14:
+			emit(p.x - d.x * 0.2, p.y - d.y * 0.2, "dust")
 	var aim: Vector2 = ctl.get("aim", Vector2.ZERO)
 	if aim != Vector2.ZERO:
 		p.aim = aim.normalized()
@@ -743,16 +769,32 @@ func control_local(dt: float, ctl: Dictionary) -> void:
 	elif mag > 0.12:
 		p.face = p.move_dir
 		p.aim = p.move_dir
-	p.fire_in = ctl.get("fire", false)
+	p.fire_in = ctl.get("fire", false) and not spr
+	p.auto = ctl.get("auto", false)
+	var pulls: int = ctl.get("pulls", p.pullIn)
+	if p.pullIn != pulls:
+		if p.pullIn == -1:
+			p.pullUsed = pulls
+		p.pullIn = pulls
+		p.pullT = game.time
 
 
 func sim_player(p: Dictionary, dt: float) -> void:
 	p.hurt += dt
 	p.cd = maxf(p.cd - dt, -dt)
+	if p.bolt > 0:
+		var b0: float = p.bolt
+		p.bolt = maxf(0.0, p.bolt - dt)
+		var open: float = p.boltT * 0.72
+		if b0 > open and p.bolt <= open:
+			sfx("pump" if p.gun.get("pump", false) else "rack", p.x, p.y)
+	p.dryT = maxf(0.0, p.dryT - dt)
+	p.sinceShot += dt
 	p.bcd -= dt
 	p.gt = maxf(p.gt - dt, -dt)
 	p.ncd -= dt
 	p.flash = maxf(0.0, p.flash - dt)
+	sim_ability(p, dt)
 	if not p.alive:
 		p.bLeft = 0
 		if not p.downed:
@@ -765,7 +807,8 @@ func sim_player(p: Dictionary, dt: float) -> void:
 			var m: Array = []
 			for v in p.mats:
 				m.append(v / 2)
-			if m.any(func(v): return v > 0):
+			var any_m: bool = m.any(func(v): return v > 0)
+			if any_m:
 				sacks.append({"x": p.x, "y": p.y, "mats": m})
 			for i in 3:
 				p.mats[i] -= m[i]
@@ -777,13 +820,47 @@ func sim_player(p: Dictionary, dt: float) -> void:
 			p.hp = p.max
 			p.hurt = 9.0
 			p.revive = 0.0
-			toast("BACK AT THE STAKE", "Half your pack is in a sack where you fell." if m.any(func(v): return v > 0) else "")
+			p.stun = 0.0
+			if p.gun.has("mag"):
+				p.ammo = p.gun.mag
+				p.rl = 0.0
+			toast("BACK AT THE STAKE", "Half your pack is in a sack where you fell." if any_m else "")
 		return
 	var G: Dictionary = p.gun
-	var want: bool = p.fire_in
-	if want or p.bLeft > 0:
+	# cooldowns keep leftover time, so the fire rate is the same at any frame rate. Bolt-action: holding the trigger
+	# fires every bolt cycle and a click during the cycle is kept for 0.6 s. The pump: every click fires (0.12 s apart
+	# at most); holding the trigger fires on its own cadence.
+	var pump: bool = G.has("clickCd")
+	var semi: bool = G.get("bolt", false) and not pump and not p.auto
+	var fresh: bool = p.pullIn != p.pullUsed and game.time - p.pullT < 0.6
+	var click: bool = pump and not p.auto and fresh
+	if click and p.sinceShot >= G.clickCd:
+		p.cd = minf(p.cd, 0.0)
+	var want: bool
+	if semi:
+		want = p.fire_in or fresh
+	elif pump:
+		want = (click and p.sinceShot >= G.clickCd) or (p.fire_in and p.cd <= 0)
+	else:
+		want = p.fire_in
+	if semi and p.pullIn != p.pullUsed and not want:
+		p.pullUsed = p.pullIn
+	if pump and p.pullIn != p.pullUsed and not click:
+		p.pullUsed = p.pullIn
+	medic_touch(p)
+	var mag: int = G.get("mag", 0)
+	if mag > 0 and p.ammo < 0:
+		p.ammo = mag
+	if want and mag > 0 and p.ammo <= 0:
+		p.cd = maxf(p.cd, 0.0)
+		if semi or pump:
+			p.pullUsed = p.pullIn
+		if p.dryT <= 0:
+			p.dryT = 0.45
+			sfx("dry")
+	elif want or p.bLeft > 0:
 		var n := 0
-		while p.cd <= 0 and n < 6:
+		while p.cd <= 0 and n < (1 if G.get("bolt", false) else 6) and not (mag > 0 and p.ammo <= 0):
 			if G.get("burst", false):
 				if not (p.bLeft > 0):
 					if not want:
@@ -791,12 +868,37 @@ func sim_player(p: Dictionary, dt: float) -> void:
 					p.bLeft = Pal.burst_n(p.up_d)
 				p.bLeft -= 1
 			shoot(p, G, -p.cd)
-			p.cd += Pal.burst_gap(p.up_d) if G.get("burst", false) and p.bLeft == 0 else G.cd
+			p.cd += Pal.burst_gap(p.up_d) if G.get("burst", false) and p.bLeft == 0 else G.cd   # after a burst's last round: the pause
 			n += 1
+			if mag > 0:
+				p.ammo -= 1
 		if n > 0:
-			sfx("ar", p.x, p.y)
+			sfx(G.get("snd", "ar"), p.x, p.y)
+			p.sinceShot = 0.0
+			p.rl = 0.0
+			if G.get("bolt", false):
+				p.pullUsed = p.pullIn
+				p.boltT = (minf(G.cd, 0.36) if pump else G.cd) * 0.92
+				p.bolt = p.boltT
+				if p.cd < 0:
+					p.cd = 0.0
 	else:
 		p.cd = maxf(p.cd, 0.0)
+	# shells go in one at a time: when the tube is empty, after a second without firing, or on R. Firing stops it.
+	if mag > 0 and p.ammo < mag:
+		if (p.ammo <= 0 or p.sinceShot > 1.1 or p.rlReq) and not (want and p.ammo > 0):
+			if not (p.rl > 0):
+				p.rl = G.reload
+			p.rl -= dt
+			if p.rl <= 0:
+				p.ammo += 1
+				p.rl = G.reload + p.rl if p.ammo < mag else 0.0
+				sfx("shellin", p.x, p.y)
+				if p.ammo >= mag:
+					p.rlReq = false
+	else:
+		p.rl = 0.0
+		p.rlReq = false
 	for nd in nodes:
 		if nd.locked or (nd.type == 0 and nd.amt <= 0):
 			continue
@@ -1007,7 +1109,8 @@ func start_build(dur: float) -> void:
 	player.sal += pay
 	var p := player
 	p.nades = maxi(p.nades, p.maxN)
-	p.rk = mini(ABIL_ROCKET.stock + perk.rockets, p.rk + ABIL_ROCKET.refill)   # refillAbilities
+	if p.cls == "soldier":
+		p.rk = mini(abil_rockets(p), p.rk + ABIL_ROCKET.refill)   # refillAbilities
 	if p.downed:
 		p.alive = true
 		p.downed = false
@@ -1174,7 +1277,7 @@ func update_enemies(dt: float) -> void:
 			# spotted: riflemen go for the marked soldier first
 			if e.type == "rifle":
 				for a in allies():
-					if a.markT > 0:
+					if seen(a) and a.markT > 0:
 						var d := d2(a, e)
 						if d < bd + 3 and los_clear(e.x, e.y, a.x, a.y):
 							e.foe = a
@@ -1182,11 +1285,13 @@ func update_enemies(dt: float) -> void:
 							break
 			if bd >= 0:
 				for a in allies():
+					if not seen(a):
+						continue
 					var d := d2(a, e)
 					if d < bd and los_clear(e.x, e.y, a.x, a.y):
 						bd = d
 						e.foe = a
-		if e.foe != null and not e.foe.alive:
+		if e.foe != null and not seen(e.foe):
 			e.foe = null
 		var engaging := false
 		match e.type:
@@ -1435,12 +1540,16 @@ func update_bullets(dt: float) -> void:
 				else:
 					var st := Pal.wall_state(w)
 					if rnd() >= (0.0 if st == 0 else (0.35 if st == 1 else 0.65)):
-						var mult := 0.25 if b.team == 0 else 1.0
+						var mult := (0.6 if b.get("heavy", false) else 0.25) if b.team == 0 else 1.0
 						damage_wall(k, bdmg(b) * Pal.MAT[w.mat].bullet * mult, b.own)
 						emit(b.x, b.y, "splinter" if w.mat == 0 else ("dust" if w.mat == 1 else "spark"), 3, w.mat)
 						sfx("hit%d" % w.mat, b.x, b.y)
-						b.dead = true
-						break
+						if b.get("pierce", 0) > 0 and w.mat == 0:   # a sniper round goes through wood, losing a fifth
+							b.pierce -= 1
+							b.dmg *= 0.8
+						else:
+							b.dead = true
+							break
 			if b.team == 0:
 				for e in enemies:
 					if not e.dead and not e.get("burrow", false) and Vector2(e.x - b.x, e.y - b.y).length() < (0.55 if e.get("big", false) else 0.34):
@@ -1490,6 +1599,8 @@ func update_lobs(dt: float) -> void:
 					napalm_land(l)
 				_:
 					explode(l.x1, l.y1, l.R, l.power, l.own)
+					if l.own != null:
+						molotov_at(l)
 	lobs = lobs.filter(func(l): return not l.get("dead", false))
 
 
@@ -1647,6 +1758,11 @@ func update_fires(dt: float) -> void:
 				continue
 			if nap == 1:
 				napalm_tick(f)
+				continue
+			if f.get("pl", false):   # Molotov fire: raiders only, never your walls
+				for e in enemies:
+					if not e.dead and not e.get("burrow", false) and hdist(e.x, e.y, f.x, f.y) < f.r:
+						hurt_enemy(e, 5.0 if e.type == "boss" else 9.0, f.own)
 				continue
 			for a in allies():
 				if a.alive and hdist(a.x, a.y, f.x, f.y) < f.get("r", 0.9):
@@ -1853,12 +1969,14 @@ func qm_command_job() -> Dictionary:
 func refit(p: Dictionary) -> void:
 	var G: Dictionary = p.C.gun
 	var U: Dictionary = p.up
-	var gun := G.duplicate()
 	var K := perk
+	var gun := G.duplicate()
 	gun.dmg = G.dmg * (1.0 + arm_boost(U.d, 0.2, 0.05)) * K.dmg
 	gun.cd = G.cd * (1.0 - arm_boost(U.r, 0.1, 0.025)) / K.rate
 	gun.range = G.range * (1.0 + arm_boost(U.g, 0.12, 0.03)) * K.range
 	gun.speed = G.speed * (1.0 + arm_boost(U.g, 0.1, 0.025))
+	if G.has("reload"):
+		gun.reload = G.reload * K.reload
 	p.gun = gun
 	var mx := roundf(p.C.hp * (1.0 + arm_boost(U.a, 0.15, 0.0375)) * K.hp)
 	if mx > p.max:
@@ -1866,7 +1984,7 @@ func refit(p: Dictionary) -> void:
 	p.max = mx
 	if p.hp > p.max:
 		p.hp = p.max
-	p.maxN = p.C.nades + mini(U.n, 4) + (1 if U.n >= 8 else 0)
+	p.maxN = p.C.nades + mini(U.n, 4) + (1 if U.n >= 8 else 0) + (int(K.pouch) if p.cls == "grenadier" else 0)
 	p.blast = p.C.blast * (1.0 + arm_boost(U.n, 0.08, 0.02))
 	p.cap = p.C.cap.map(func(cv): return cv + K.carry)
 	p.up_d = U.d
@@ -2912,7 +3030,7 @@ func _nearest_ally(e: Dictionary):
 	var b = null
 	var bd := 1e9
 	for a in allies():
-		if a.alive:
+		if seen(a):
 			var d := d2(a, e)
 			if d < bd:
 				bd = d
@@ -3719,3 +3837,70 @@ func mines_tick(dt: float) -> void:
 					f.t = 0.0
 					explode(f.x, f.y, DEST.mines.R, DEST.mines.pw * Df.dmg, null, true)
 					break
+
+
+func abil_rockets(p: Dictionary) -> int:
+	return ABIL_ROCKET.stock + int(perk.rockets) if p.cls == "soldier" else 0
+
+
+func seen(a: Dictionary) -> bool:
+	return a.alive and not (a.get("stl", 0.0) > 0)
+
+
+func local_sprint() -> void:
+	var p := player
+	if not p.alive or not p.C.get("sprint", false) or p.sprCd > 0:
+		return
+	var L: int = perk.stride
+	p.sprT = Pal.SPRINT.dur + 0.6 * L
+	p.sprCd = p.sprT + Pal.SPRINT.cd - L
+
+
+func local_reload() -> void:
+	var p := player
+	if p.alive and p.gun.has("mag") and p.ammo < p.gun.mag:
+		p.rlReq = true
+
+
+func use_ability(p: Dictionary, tx: float, ty: float) -> void:
+	if p.cls == "soldier":
+		use_rocket(p, tx, ty)
+	elif p.cls == "sniper":
+		if not p.alive or p.stl > 0 or p.stlCd > 0 or game.phase == "over":
+			sfx("deny")
+			return
+		p.stl = Pal.STEALTH.dur + perk.ghillie
+		sfx("mark", p.x, p.y)
+		emit(p.x, p.y, "smoke", 8)
+		toast("STEALTH", "Raiders can't see you for %d seconds. Anything already thrown can still land." % roundi(p.stl))
+
+
+func sim_ability(p: Dictionary, dt: float) -> void:
+	if p.stl > 0:
+		p.stl -= dt
+		if p.stl <= 0 or not p.alive:
+			p.stl = 0.0
+			p.stlCd = Pal.STEALTH.cd
+			if p.alive:
+				toast("SEEN", "Stealth is over. It comes back in 30 seconds.")
+	elif p.stlCd > 0:
+		p.stlCd = maxf(0.0, p.stlCd - dt)
+
+
+func medic_touch(p: Dictionary) -> void:
+	if not p.C.get("medic", false) or not p.alive:
+		return
+	if not qm.alive and not qm.get("gone", false) and d2(qm, p) < 0.8:
+		qm.alive = true
+		qm.hp = qm.max * 0.6
+		qm.revive = 0.0
+		game.stats.revives += 1
+		flt(qm.x, qm.y, "DELGADO IS UP", "#8fe0a0")
+		sfx("medic", qm.x, qm.y)
+
+
+func molotov_at(l: Dictionary) -> void:
+	if not (l.own is int and l.own == player.id) or player.cls != "grenadier" or not perk.molotov:
+		return
+	fires.append({"x": l.x1, "y": l.y1, "t": 5.0, "max": 5.0, "tick": 0.3, "r": 1.2, "pl": true, "own": player.id})
+	emit(l.x1, l.y1, "fire", 8)
