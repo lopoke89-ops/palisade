@@ -8,7 +8,7 @@ The plan is in `dev/plans/godot-conversion-blueprint.md`. It plays every solo co
 - the three difficulties and all 20 modifiers;
 - Delgado, all seven raider types, all 16 bosses, the armory, the skill tree, sound and music.
 
-There are no menus yet. Until they are ported, the next game is set up on the pause or end screen (see the controls).
+It opens on the main menu over the demo yard: PLAY, MATCH SETUP (length, map, size, threat, class, modifiers), SKILL TREE, INDEX, SETTINGS. Settings and the next game's setup are kept in `user://settings.json`.
 
 ## Run it
 
@@ -16,28 +16,28 @@ There are no menus yet. Until they are ported, the next game is set up on the pa
 2. Open `godot/project.godot` in the editor.
 3. Press F5.
 
-Controls:
+Controls (the browser's; every key and controller button can be changed in Settings › Controls):
 
-| Action | Keys |
-|---|---|
-| Move | WASD / arrows |
-| Aim and fire | mouse, left button |
-| Build or repair the faced tile | Space |
-| Material | 1 / 2 / 3 |
-| Wall or door | F |
-| Grenade at the cursor | G |
-| Rocket at the cursor (5, +2 each build phase) | Q |
-| Armory, at the stake between raids | E / U |
-| Delgado: follow you / defend the stake | H |
-| Start the raid early | Enter |
-| Pause | Esc / P |
-| Skill tree (paused or at the end of a run) | K |
-| Class ability: Soldier rocket, Sniper stealth (others: grenade) | Q |
-| Sprint (Quartermaster) | Shift |
-| Reload (Grenadier) | R |
-| Black Out: ready up for the final push | Enter |
-| Next game, on the pause or end screen: class, map, size, mode, difficulty | C / M / X / V / D, then Esc to start |
-| Developer: bring in the next boss (editor runs only) | F8 |
+| Action | Keyboard and mouse | Controller |
+|---|---|---|
+| Move | WASD / arrows | left stick |
+| Aim and fire | mouse, left button | right stick (aim assist), RT |
+| Build or repair the faced tile | Space | A (hold to keep building) |
+| Material | 1 / 2 / 3 | ◀ / ▶ |
+| Wall or door | F | Y |
+| Grenade | G (at the cursor) | LT |
+| Class ability: Soldier rocket, Sniper stealth | Q | B (the Quartermaster sprints) |
+| Sprint (Quartermaster) | Shift | B |
+| Reload (Grenadier) | R | (unset) |
+| Armory, at the stake between raids | E / U | X |
+| Delgado: follow you / defend the stake | H | (unset) |
+| Start the raid early; ready up in Black Out | Enter | VIEW |
+| Pause | Esc / P | MENU |
+| Skill tree | K | (unset) |
+| Zoom | mouse wheel | |
+| Developer: bring in the next boss (editor runs only) | F8 | |
+
+In the menus the d-pad or left stick moves, A presses, B goes back. On a touch screen the left thumb moves, the right thumb aims (and fires when pushed past half), and on-screen buttons build, throw (locked onto the nearest raider in reach), use the ability, open the armory, pick materials, start the raid and pause.
 
 ## What is ported
 
@@ -53,6 +53,10 @@ Each part follows the browser code, with function names kept so the two read sid
 | Maps and the city | `06b-maps.js`, `06d-elevation.js`, `06e-city.js` | `scripts/pal_maps.gd` |
 | Modes and modifiers | `01b-mods-skills.js`, `10b-mods-play.js`, `10c-blitz.js`, `10d-winter-campaign.js`, `10f-blackout.js` | `scripts/sim.gd` |
 | The city's look and the Black Out HUD | `06e-city.js`, `16f-blackout-hud.js` | `scripts/city_view.gd`, `scripts/ground_chunk.gd` |
+| Characters | `16-characters.js` | `scripts/figure.gd` |
+| Forest, fence, lighting, storm, nameplates | `17-scenery.js`, `10b-mods-play.js`, `16h-nameplates.js` | `scripts/scenery.gd`, `shaders/`, `scripts/main.gd` |
+| Menus and settings | `page.html`, `19c-home.js`, `19e-index.js`, `22-loop-menus.js` | `scripts/menus.gd`, `scripts/pal_settings.gd` |
+| Controller and touch | `08-input.js`, `08b-pad.js` | `scripts/pal_input.gd` |
 | Sound and music | `03-audio.js` | `scripts/pal_audio.gd`, `tools/render_sfx.gd`, `tools/convert_music.sh` |
 
 What `sim.gd` covers:
@@ -116,14 +120,12 @@ What `sim.gd` covers:
 
 These are later phases:
 - **Accounts:** the skill tree saves locally until then.
-- **Menus:** main menu, game setup, settings and the full results screen.
-- **Input:** controller, touch and remapping.
 - **PvP:** Base Battle and Free-for-all come with online play.
-- **Presentation:** cosmetics, lighting and night, storm, trees and the fence.
+- **Cosmetics:** skins, headgear, tracers and kill effects, the locker and cases, and the shaded wardrobe figure the browser draws for players.
 - **Music:** the menu and finale tracks, and the casino playlist.
 - **Network:** online play (PeerJS cross-play probe, casino relay client).
 
-The character figure is a cut-down `drawPerson` without wardrobe items.
+Players are drawn with the browser's flat `drawPerson` figure (as raiders and Delgado are); the browser's shaded wardrobe figure for players comes with cosmetics.
 
 ## Sound
 
@@ -140,7 +142,9 @@ The character figure is a cut-down `drawPerson` without wardrobe items.
 
 ```sh
 godot --headless --path godot --script res://tests/sim_test.gd           # exit 0 = pass
+godot --headless --path godot --script res://tests/client_test.gd        # settings, bindings, menu flow, touch
 xvfb-run godot --path godot --script res://tests/shot.gd -- /tmp/shot.png # renders a raid frame
+xvfb-run godot --path godot --script res://tests/menu_shot.gd -- /tmp/m   # the main menu, setup, controls, results
 xvfb-run godot --path godot --script res://tests/shot.gd -- /tmp/city.png city            # a Black Out attack
 xvfb-run godot --path godot --script res://tests/shot.gd -- /tmp/frost.png map frost std  # any map, size and class
 ```

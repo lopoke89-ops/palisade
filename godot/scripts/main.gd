@@ -13,7 +13,7 @@ var sk_reset := Rect2()
 var run_sp := -1
 var mouse_pulls := 0   # left-button presses so far (the bolt and pump guns buffer a click)
 var draw_alpha := 1.0   # people drawn faded (stealth) multiply their colours by this
-var next_cls := "soldier"   # the next game's setup (C class, M map, X size, V mode, D difficulty on the pause or end screen, until the menus are ported)
+var next_cls := "soldier"   # the next game's setup (from Match Setup)
 var next_opt := {"map": "yard", "size": "std", "mode": "5", "diff": "normal", "mods": []}   # skill points this run earned (shown on the end screen), -1 until the run ends
 var audio := PalAudio.new()
 var v := IsoView.new()
@@ -50,6 +50,16 @@ var glow_layer: PaintLayer   # muzzle flashes and lamp glows, added on
 var ui_layer: PaintLayer   # nameplates, prompts, crosshair, floating text and the HUD
 var wx_a := 0.0   # the storm fading in and out
 var glow_tex: GradientTexture2D
+var settings := PalSettings.new()
+var inp: PalInput
+var menus: Menus
+var demo := true   # the main menu's yard: Delgado builds, the camera circles the stake, nobody plays
+var over_t := 0.0   # the after-action screen comes up a moment after the end
+var arm_sel := 0   # the armory and skill tree rows a key or controller has picked
+var sk_sel := 0
+var fps_label := ""
+var fps_n := 0
+var fps_t := 0.0
 
 
 func _ready() -> void:
@@ -93,13 +103,25 @@ func _ready() -> void:
 	glow_tex.width = 64
 	glow_tex.height = 64
 	profile.load_file()
-	sim.new_game(-1, next_opt.diff, profile.perk_mods(), _game_opt())
+	settings.load_file()
+	settings.apply_keys()
+	for a in ["ui_up", "ui_down", "ui_left", "ui_right", "ui_accept", "ui_cancel", "ui_select", "ui_focus_next", "ui_focus_prev"]:
+		for ev in InputMap.action_get_events(a):   # the controller drives the menus through PalInput (with hold-to-repeat)
+			if ev is InputEventJoypadButton or ev is InputEventJoypadMotion:
+				InputMap.action_erase_event(a, ev)
+	inp = PalInput.new()
+	inp.m = self
+	add_child(inp)
+	menus = Menus.new(self)
+	add_child(menus)
+	_demo_game()
 	audio.sim = sim
 	add_child(audio)
 	_resize()
 	v.cam_snap(sim.player.x, sim.player.y, sim.height_at(sim.player.x, sim.player.y))
 	get_viewport().size_changed.connect(_resize)
-	toasts.append({"title": "THE YARD", "body": "Gather wood (walk into a pile), SPACE to build, 1-3 material, F door, G grenade, Q rocket, E armory at the stake, H Delgado follow/defend, ENTER to start the raid early.", "t": 7.0})
+	apply_settings()
+	menus.show_main()
 
 
 func _exit_tree() -> void:
@@ -118,81 +140,232 @@ func _resize() -> void:
 # ---------------------------------------------------------------- input
 
 func _unhandled_input(e: InputEvent) -> void:
+	if e is InputEventKey and e.pressed and not e.echo and menus.bind_key(e):
+		return
+	if inp.handle(e):
+		return
 	if e is InputEventMouseMotion:
 		mouse_seen = true
 	if e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
 		mouse_seen = true
 		mouse_pulls = (mouse_pulls + 1) & 255
+	if e is InputEventMouseButton and e.pressed and not demo and DisplayServer.get_name() != "headless":
+		if e.button_index == MOUSE_BUTTON_WHEEL_UP or e.button_index == MOUSE_BUTTON_WHEEL_DOWN:   # the wheel zooms, as on desktop in the browser
+			settings.data.zoom = clampf(snappedf(settings.data.zoom + (0.05 if e.button_index == MOUSE_BUTTON_WHEEL_UP else -0.05), 0.05), 0.7, 1.4)
+			apply_settings()
+			settings.save()
 	if armory_open:
 		_armory_input(e)
 		return
 	if skills_open:
 		_skills_input(e)
 		return
-	if e is InputEventKey and e.pressed and not e.echo:
-		var k: int = e.keycode
-		if k == KEY_ESCAPE or k == KEY_P:
-			if sim.game.phase != "over":
-				sim.game.paused = not sim.game.paused
+	if menus.active():
+		if e.is_action_pressed("ui_cancel") or (e is InputEventKey and e.pressed and e.keycode == KEY_P and menus.screen == "pause"):
+			menus.back()
+			get_viewport().set_input_as_handled()
+		return
+	if not (e is InputEventKey and e.pressed and not e.echo):
+		return
+	if e.keycode == KEY_F8 and OS.is_debug_build():   # developer: bring in the next boss (any boss, any map), editor runs only
+		_dev_boss()
+		return
+	for a in PalSettings.ACTIONS:
+		if a[0] in ["up", "down", "left", "right"]:
+			continue
+		if e.is_action_pressed("pal_" + a[0]):
+			do_action(a[0])
 			return
-		if sim.game.phase == "over" or sim.game.paused:
-			if k == KEY_ENTER or k == KEY_R:
-				_restart()
-			elif k == KEY_K:
-				skills_open = true
-			elif k == KEY_C:
-				next_cls = Pal.CLASS_IDS[(Pal.CLASS_IDS.find(next_cls) + 1) % Pal.CLASS_IDS.size()]
-			elif k == KEY_M:
-				next_opt.map = PalMaps.MAP_IDS[(PalMaps.MAP_IDS.find(next_opt.map) + 1) % PalMaps.MAP_IDS.size()]
-			elif k == KEY_X:
-				next_opt.size = "xl" if next_opt.size == "std" else "std"
-			elif k == KEY_V:
-				var modes := ["5", "10", "endless", "blitz", "campaign", "blackout"]
-				next_opt.mode = modes[(modes.find(next_opt.mode) + 1) % modes.size()]
-			elif k == KEY_D:
-				var ds := ["easy", "normal", "hard"]
-				next_opt.diff = ds[(ds.find(next_opt.diff) + 1) % ds.size()]
+
+
+## every in-game action, from a key, a controller button or a touch button
+func do_action(id: String) -> void:
+	if id == "pause":
+		if armory_open:
+			_close_armory()
+		elif skills_open:
+			_close_skills()
+		elif demo or sim.game.phase == "over":
 			return
-		if k == KEY_F8 and OS.is_debug_build():   # developer: bring in the next boss (any boss, any map), editor runs only
-			_dev_boss()
-			return
-		match k:
-			KEY_SPACE:
-				sim.local_build()
-			KEY_1, KEY_2, KEY_3:
-				sim.game.sel = k - KEY_1
-			KEY_F:
-				sim.game.piece = "door" if sim.game.piece == "wall" else "wall"
-			KEY_G, KEY_Q:
-				var w := _mouse_world() if mouse_seen else Vector2(sim.player.x + sim.player.aim.x * 6, sim.player.y + sim.player.aim.y * 6)
-				if k == KEY_Q and sim.player.cls in ["soldier", "sniper"]:   # Q is the class ability where there is one, else a grenade
-					sim.use_ability(sim.player, w.x, w.y)
-				else:
-					sim.throw_nade(sim.player, w.x, w.y)
-			KEY_SHIFT:
+		elif menus.screen == "pause":
+			menus.close()
+			sim.game.paused = false
+		elif not menus.active():
+			sim.game.paused = true
+			menus.show_pause()
+		else:
+			menus.back()
+		return
+	if id == "skills" and (menus.screen in ["main", "pause", "results"]):
+		open_skills()
+		return
+	if demo or menus.active() or sim.game.phase == "over" or sim.game.paused:
+		if id == "armory" and armory_open:
+			_close_armory()
+		return
+	var p: Dictionary = sim.player
+	match id:
+		"build":
+			sim.local_build()
+		"mat1", "mat2", "mat3":
+			sim.game.sel = int(id.substr(3)) - 1
+		"matPrev":
+			sim.game.sel = (sim.game.sel + 2) % 3
+		"matNext":
+			sim.game.sel = (sim.game.sel + 1) % 3
+		"piece":
+			sim.game.piece = "door" if sim.game.piece == "wall" else "wall"
+		"nade", "special":
+			var w := _throw_target(id == "special" and p.cls == "soldier")
+			if id == "special" and p.cls in ["soldier", "sniper"]:   # the class ability where there is one
+				sim.use_ability(p, w.x, w.y)
+			elif id == "special" and p.cls == "quartermaster":
 				sim.local_sprint()
-			KEY_R:
-				sim.local_reload()
-			KEY_E, KEY_U:
-				_try_armory()
-			KEY_H:
-				sim.set_qm_mode("" if sim.qm.mode == "follow" else "follow")
-			KEY_ENTER, KEY_KP_ENTER:
-				if sim.game.phase == "build":
-					sim.start_raid()
-				elif sim.blackout():
-					sim.bo_ready()
+			else:
+				sim.throw_nade(p, w.x, w.y)
+		"sprint":
+			sim.local_sprint()
+		"reload":
+			sim.local_reload()
+		"armory":
+			_try_armory()
+		"delgado":
+			sim.set_qm_mode("" if sim.qm.mode == "follow" else "follow")
+		"start":
+			if sim.blackout() and sim.game.phase == "raid":
+				sim.bo_ready()
+			elif sim.game.phase == "build":
+				sim.start_raid()
+		"skills":
+			pass
+
+
+## where a grenade or rocket goes: the touch lock-on, the mouse, or 5 tiles ahead
+func _throw_target(rocket: bool) -> Vector2:
+	var p: Dictionary = sim.player
+	if inp.mode == "touch":
+		var L = _touch_lock(p, 12.0 if rocket else 8.0)
+		if L != null:
+			return Vector2(L.x, L.y)
+	if inp.mode == "mouse" and mouse_seen:
+		var m := get_viewport().get_mouse_position()
+		return _screen_to_world(m.x, m.y + v.WH * 0.55)
+	return Vector2(p.x + p.face.x * 5, p.y + p.face.y * 5)
+
+
+## touchLock (09-actions.js): the nearest raider 6 tiles out or more, up to the throw's reach, in clear sight
+func _touch_lock(p: Dictionary, mx: float):
+	var best = null
+	var bd := 1e9
+	for e in sim.enemies:
+		if e.dead or e.get("burrow", false):
+			continue
+		var d := sim.hdist(e.x, e.y, p.x, p.y)
+		if d < 6 or d > mx or d >= bd:
+			continue
+		if sim.los_clear(p.x, p.y, e.x, e.y):
+			best = e
+			bd = d
+	return best
+
+
+## a controller in the menus: Godot's focus moves; A presses; B backs out
+func menu_nav(dir: String) -> void:
+	if skills_open or armory_open:
+		_panel_nav(dir)
+		return
+	if not menus.active():
+		return
+	var act: String = {"up": "ui_up", "down": "ui_down", "left": "ui_left", "right": "ui_right", "accept": "ui_accept"}.get(dir, "")
+	if dir == "back":
+		menus.back()
+		return
+	if act == "":
+		return
+	var f := get_viewport().gui_get_focus_owner()
+	if f == null:
+		menus._focus_first()
+		return
+	if act == "ui_accept" and f is BaseButton:
+		if f.toggle_mode:
+			f.button_pressed = not f.button_pressed
+		f.emit_signal("pressed")
+		return
+	var ev := InputEventAction.new()
+	ev.action = act
+	ev.pressed = true
+	Input.parse_input_event(ev)
+	var up := InputEventAction.new()
+	up.action = act
+	up.pressed = false
+	Input.parse_input_event(up)
+
+
+func start_game() -> void:
+	var S: Dictionary = settings.data.setup
+	next_opt = {"map": S.map, "size": S.size, "mode": S.mode, "diff": S.diff, "mods": S.mods.duplicate()}
+	next_cls = S.cls
+	demo = false
+	menus.close()
+	skills_open = false
+	_restart()
+	over_t = 0.0
+	if settings.data.tips:
+		toasts = [{"title": "GOOD LUCK", "body": "Gather wood (walk into a pile), %s to build, %s grenade, %s armory at the stake, %s to start the raid early." % [settings.keys_label("build"), settings.keys_label("nade"), settings.keys_label("armory"), settings.keys_label("start")], "t": 7.0 * settings.data.msgTime}]
+
+
+func to_menu() -> void:
+	_demo_game()
+	menus.show_main()
+
+
+## the menu's yard: a fresh Yard where Delgado builds his ring and nobody fights
+func _demo_game() -> void:
+	demo = true
+	skills_open = false
+	armory_open = false
+	sim.new_game(-1, "normal", profile.perk_mods(), {"mode": "5", "map": "yard"})
+	sim.set_qm_mode("")
+	sim.player.x = -40.0
+	sim.player.y = -40.0
+	game_n += 1
+	parts.clear()
+	floats.clear()
+	toasts.clear()
+	city_map = null
+	v.cam_snap(sim.core.i + 2.5, sim.core.j - 2)
+
+
+func open_skills() -> void:
+	skills_open = true
+	sk_sel = 0
+	menus.root.visible = false
+
+
+func _close_skills() -> void:
+	skills_open = false
+	menus.root.visible = true
+
+
+func apply_settings() -> void:
+	var D: Dictionary = settings.data
+	audio.volume = D.volume
+	audio.music_vol = D.music
+	if absf(v.ZOOM - D.zoom) > 0.001:
+		v.ZOOM = D.zoom
+		_resize()
+	Engine.max_fps = 30 if D.fpsMode == "30" else (60 if D.fpsMode == "60" else 0)
+	if DisplayServer.get_name() != "headless":
+		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if D.vsync else DisplayServer.VSYNC_DISABLED)
+		var want := DisplayServer.WINDOW_MODE_FULLSCREEN if D.fullscreen else DisplayServer.WINDOW_MODE_WINDOWED
+		if DisplayServer.window_get_mode() != want and (D.fullscreen or DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN):
+			DisplayServer.window_set_mode(want)
 
 
 func _game_opt() -> Dictionary:
 	var o := next_opt.duplicate()
 	o.cls = next_cls
 	return o
-
-
-func _setup_line() -> String:
-	var mode_names := {"5": "5 RAIDS", "10": "10 RAIDS", "endless": "ENDLESS", "blitz": "BLITZKRIEG RUSH", "campaign": "OPERATION WHITEOUT", "blackout": "CITY BLACK OUT"}
-	return "NEXT GAME · C %s · M %s · X %s · V %s · D %s" % [Pal.CLASSES[next_cls].name, ("THE CITY" if next_opt.mode == "blackout" else ("CAMPAIGN" if next_opt.mode == "campaign" else PalMaps.MAPS[next_opt.map].name)), next_opt.size.to_upper(), mode_names[next_opt.mode], next_opt.diff.to_upper()]
 
 
 func _restart() -> void:
@@ -217,26 +390,84 @@ func _mouse_world() -> Vector2:
 	return body if body != null else _screen_to_world(m.x, m.y + v.WH * 0.55)
 
 
+## this frame's controls (controlLocal): keys and the left stick or left thumb move; the mouse, the right stick or the
+## right thumb aim (sticks get the browser's aim assist); the left button, right trigger or a hard right thumb fire
 func _controls() -> Dictionary:
-	var mx := (1.0 if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT) else 0.0) - (1.0 if Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT) else 0.0)
-	var my := (1.0 if Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN) else 0.0) - (1.0 if Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP) else 0.0)
+	if demo or menus.active() or armory_open or skills_open:
+		return {}
+	var mx := (1.0 if Input.is_action_pressed("pal_right") else 0.0) - (1.0 if Input.is_action_pressed("pal_left") else 0.0)
+	var my := (1.0 if Input.is_action_pressed("pal_down") else 0.0) - (1.0 if Input.is_action_pressed("pal_up") else 0.0)
+	var sm: Dictionary = inp.stick_move
+	if sm.id >= 0:
+		mx += sm.v.x
+		my += sm.v.y
+	if inp.mode == "pad":
+		mx += inp.mv.x
+		my += inp.mv.y
 	var mag := minf(1.0, Vector2(mx, my).length())
 	var mv := v.sdir_to_world(mx, my) * mag
 	var aim := Vector2.ZERO
+	var fire := false
 	var p: Dictionary = sim.player
-	if mouse_seen:
+	var sa: Dictionary = inp.stick_aim
+	if inp.mode == "pad":
+		if inp.amag > 0.2:
+			aim = _assist(v.sdir_to_world(inp.aim.x, inp.aim.y))
+		fire = inp.fire
+	elif inp.mode == "touch":
+		if sa.id >= 0 and sa.mag > 0.2:
+			aim = _assist(v.sdir_to_world(sa.v.x, sa.v.y))
+			fire = sa.mag > 0.5
+	elif mouse_seen:
 		var w := _mouse_world()
 		var d := Vector2(w.x - p.x, w.y - p.y)
 		aim = d.normalized() if d.length() > 0 else Vector2(1, 0)
-	return {"move": mv, "aim": aim, "fire": mouse_seen and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT), "pulls": mouse_pulls, "auto": not mouse_seen}
+		fire = Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+	return {"move": mv, "aim": aim, "fire": fire, "pulls": mouse_pulls, "auto": inp.mode == "touch" or (inp.mode == "mouse" and not mouse_seen)}
+
+
+## aim assist: a stick's aim snaps to the raider closest to it within about 18 degrees, in range and in sight
+func _assist(d: Vector2) -> Vector2:
+	var p: Dictionary = sim.player
+	var best := d
+	var ba := 0.32
+	var a0 := d.angle()
+	for e in sim.enemies:
+		if e.dead:
+			continue
+		var dv := Vector2(e.x - p.x, e.y - p.y)
+		if sim.hdist(p.x, p.y, e.x, e.y) > p.gun.range or not sim.height_ray_clear(p.x, p.y, e.x, e.y):
+			continue
+		var da := absf(angle_difference(a0, dv.angle()))
+		if da < ba:
+			ba = da
+			best = dv.normalized()
+	return best
 
 
 # ---------------------------------------------------------------- frame
 
 func _process(dt: float) -> void:
+	inp.tick(dt, demo or menus.active() or armory_open or skills_open or sim.game.phase == "over")
+	if demo:
+		sim.game.timer = maxf(sim.game.timer, 30.0)   # the menu's yard never raids
+		sim.player.hp = sim.player.max
 	sim.update(dt, _controls())
-	if sim.game.phase == "over" and run_sp < 0:
-		run_sp = profile.award_run(sim.qm.completedRaids, sim.game.get("bosses", 0))
+	if not demo and sim.game.phase == "over":
+		if run_sp < 0:
+			run_sp = profile.award_run(sim.qm.completedRaids, sim.game.get("bosses", 0))
+		if menus.screen == "pause":
+			menus.close()
+		over_t += dt
+		if over_t > (0.6 if sim.game.won else 0.9) and not menus.active() and not skills_open:
+			armory_open = false
+			menus.show_results()
+	fps_n += 1
+	fps_t += dt
+	if fps_t >= 1.0:
+		fps_label = "%d FPS" % roundi(fps_n / fps_t)
+		fps_n = 0
+		fps_t = 0.0
 	_drain_events()
 	_update_fx(minf(dt, 0.05))
 	var sh := Vector2.ZERO
@@ -244,7 +475,13 @@ func _process(dt: float) -> void:
 		shake_t += dt
 		sh = Vector2(sin(shake_t * 71.0), cos(shake_t * 57.0)) * shake * v.u
 		shake *= pow(0.02, dt)
-	v.cam_follow(sim.player.x, sim.player.y, sh, sim.height_at(sim.player.x, sim.player.y))
+	if demo:   # the menu: the camera drifts round the stake
+		var t: float = sim.game.time * 0.07
+		var fx: float = sim.core.i + 2.5 + cos(t) * 2.5
+		var fy: float = sim.core.j - 2 + sin(t) * 2
+		v.cam_follow(fx, fy, sh, 0.0)
+	else:
+		v.cam_follow(sim.player.x, sim.player.y, sh, sim.height_at(sim.player.x, sim.player.y))
 	_sync_ground()
 	_update_light(dt)
 	_update_post(dt)
@@ -256,7 +493,7 @@ func _process(dt: float) -> void:
 	fx_layer.queue_redraw()
 	glow_layer.queue_redraw()
 	ui_layer.queue_redraw()
-	var want := Input.MOUSE_MODE_HIDDEN if sim.game.phase != "over" and not sim.game.paused and not armory_open and not skills_open and sim.player.alive else Input.MOUSE_MODE_VISIBLE
+	var want := Input.MOUSE_MODE_HIDDEN if not demo and not menus.active() and inp.mode == "mouse" and sim.game.phase != "over" and not sim.game.paused and not armory_open and not skills_open and sim.player.alive else Input.MOUSE_MODE_VISIBLE
 	if Input.mouse_mode != want and DisplayServer.get_name() != "headless":
 		Input.mouse_mode = want
 
@@ -272,7 +509,8 @@ func _drain_events() -> void:
 			"flt":
 				floats.append({"x": e.x, "y": e.y, "text": e.text, "col": Color.html(e.col), "t": 1.4})
 			"toast":
-				toasts = [{"title": e.title, "body": e.body, "t": 4.5}]
+				if not demo:
+					toasts = [{"title": e.title, "body": e.body, "t": 4.5 * settings.data.msgTime}]
 			"flash":
 				flashes.append({"x": e.x, "y": e.y, "life": e.life, "max": e.life, "r": e.r, "muzzle": e.get("muzzle", false)})
 			"ring":
@@ -288,7 +526,9 @@ func _drain_events() -> void:
 				v.cam_snap(sim.player.x, sim.player.y, sim.height_at(sim.player.x, sim.player.y))
 			"shake":
 				var d := Vector2(e.x - sim.player.x, e.y - sim.player.y).length()
-				shake = maxf(shake, e.amt * clampf(1.0 - d / 14.0, 0.2, 1.0))
+				shake = maxf(shake, e.amt * clampf(1.0 - d / 14.0, 0.2, 1.0) * settings.data.shake)
+				if d < 8:
+					inp.rumble(e.amt * 6)
 	sim.events.clear()
 
 
@@ -691,6 +931,12 @@ func _paint_glow(layer: CanvasItem) -> void:
 func _paint_ui(layer: CanvasItem) -> void:
 	cv = layer
 	var u := v.u
+	inp.buttons.clear()
+	if demo:
+		if skills_open:
+			_draw_skills()
+		cv = self
+		return
 	_draw_storm()
 	_draw_nameplates()
 	for f in floats:
@@ -706,8 +952,46 @@ func _paint_ui(layer: CanvasItem) -> void:
 			_draw_crosshair(p)
 			_draw_shells(p)
 	_draw_edge_arrows()
+	if inp.mode == "touch" and playing:
+		_draw_touch()
 	_draw_hud()
 	cv = self
+
+
+## touch: the two thumb sticks while held, and the buttons (BUILD, GRENADE, the ability or SPRINT, ARMORY, the
+## materials, WALL/DOOR, START, PAUSE)
+func _draw_touch() -> void:
+	var W := v.W
+	var H := v.H
+	var p: Dictionary = sim.player
+	var g: Dictionary = sim.game
+	for s in [inp.stick_move, inp.stick_aim]:
+		if s.id >= 0:
+			cv.draw_arc(s.o, PalInput.SR, 0, TAU, 40, Color(220 / 255.0, 210 / 255.0, 186 / 255.0, 0.35), 2)
+			cv.draw_arc(s.o, PalInput.SR * 0.5, 0, TAU, 32, Color(226 / 255.0, 180 / 255.0, 54 / 255.0, 0.25), 2)
+			var hot: bool = s == inp.stick_aim and s.mag > 0.5
+			cv.draw_circle(s.o + s.v * PalInput.SR, 20, Color(226 / 255.0, 180 / 255.0, 54 / 255.0, 0.8) if hot else Color(220 / 255.0, 210 / 255.0, 186 / 255.0, 0.55))
+	var btn := func(r: Rect2, id: String, text: String, on: bool = false) -> void:
+		cv.draw_rect(r, Color(226 / 255.0, 180 / 255.0, 54 / 255.0, 0.85) if on else Color(14 / 255.0, 12 / 255.0, 10 / 255.0, 0.7))
+		cv.draw_rect(r, Color(226 / 255.0, 180 / 255.0, 54 / 255.0, 0.7), false, 1.5)
+		var fs := 12
+		var tw := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+		cv.draw_string(font, Vector2(r.position.x + r.size.x / 2 - tw / 2, r.position.y + r.size.y / 2 + 4), text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, c("#17140f") if on else c("#e8dcc0"))
+		inp.buttons.append([r, id])
+	var bx := W - 96
+	btn.call(Rect2(bx, H - 250, 84, 64), "build", "BUILD")
+	btn.call(Rect2(bx - 92, H - 210, 84, 48), "nade", "GRENADE %d" % p.nades)
+	var ab := "ROCKET %d" % p.rk if p.cls == "soldier" else ("STEALTH" if p.cls == "sniper" else ("SPRINT" if p.cls == "quartermaster" else ""))
+	if ab != "":
+		btn.call(Rect2(bx - 92, H - 270, 84, 48), "special", ab)
+	if sim.can_shop(p):
+		btn.call(Rect2(bx, H - 320, 84, 48), "armory", "ARMORY")
+	for k in 3:
+		btn.call(Rect2(W / 2 - 150 + k * 76, H - 56, 70, 44), "mat%d" % (k + 1), Pal.MAT[k].name, g.sel == k)
+	btn.call(Rect2(W / 2 + 84, H - 56, 70, 44), "piece", g.piece.to_upper())
+	btn.call(Rect2(W - 64, 42, 52, 40), "pause", "II")
+	if g.phase == "build" or (g.get("bo") != null and g.bo.stage == "ready"):
+		btn.call(Rect2(W / 2 - 70, 40, 140, 36), "start", "READY" if g.phase == "raid" else "START NOW")
 
 
 ## drawTracer: the standard tracer, a tapered streak with a hot core that fades toward its tail; raiders' rounds are a
@@ -868,15 +1152,36 @@ func _draw_prompts(p: Dictionary) -> void:
 
 
 func _draw_crosshair(p: Dictionary) -> void:
-	if not mouse_seen:
-		return
-	var m := get_viewport().get_mouse_position()
-	var w := _screen_to_world(m.x, m.y + v.WH * 0.55)
+	var m := Vector2.ZERO
 	var hot := false
-	for e in sim.enemies:
-		if not e.dead and Vector2(e.x - w.x, e.y - w.y).length() < 0.45:
-			hot = true
-			break
+	var faint := false
+	if inp.mode == "mouse":
+		if not mouse_seen:
+			return
+		m = get_viewport().get_mouse_position()
+		var w := _screen_to_world(m.x, m.y + v.WH * 0.55)
+		for e in sim.enemies:
+			if not e.dead and Vector2(e.x - w.x, e.y - w.y).length() < 0.45:
+				hot = true
+				break
+	else:   # a stick: a mark along the aim, on the raider it would hit
+		var active: bool = inp.amag > 0.2 if inp.mode == "pad" else (inp.stick_aim.id >= 0 and inp.stick_aim.mag > 0.2)
+		var a: Vector2 = p.aim
+		var d: float = minf(p.gun.range, 4.2) if active else 2.4
+		faint = not active
+		if active:
+			var best := 1e9
+			for e in sim.enemies:
+				var dv := Vector2(e.x - p.x, e.y - p.y)
+				var dd := dv.length()
+				if not e.dead and dd < p.gun.range and dd > 0.3 and dv.dot(a) / dd > 0.992 and dd < best:
+					best = dd
+					hot = true
+			if hot:
+				d = best
+		m = iso(p.x + a.x * d, p.y + a.y * d) - Vector2(0, v.WH * 0.55)
+	if faint:
+		draw_alpha = 0.4
 	var r := (6.0 if hot else 8.0) * maxf(1.0, v.u * 0.9)
 	var col := c("#ff6a4a") if hot else c("#f3e9d6")
 	for pz in [[3.4, Color(12 / 255.0, 10 / 255.0, 8 / 255.0, 0.75)], [1.6, col]]:
@@ -884,6 +1189,7 @@ func _draw_crosshair(p: Dictionary) -> void:
 		for d in [Vector2(1, 0), Vector2(-1, 0), Vector2(0, 1), Vector2(0, -1)]:
 			cv.draw_line(m + d * (r + 2), m + d * (r + 7), pz[1], pz[0])
 	cv.draw_rect(Rect2(m.x - 1, m.y - 1, 2, 2), col)
+	draw_alpha = 1.0
 
 
 ## the Grenadier's tube: a shell for each round, red for loaded
@@ -1200,7 +1506,7 @@ func _draw_hud() -> void:
 		if msg != "":
 			label(msg, tc.x, tc.y - v.WH * 1.4, c("#8fe0a0") if t.ok else c("#d65a3a"), 10)
 	# toast
-	for tt in toasts:
+	for tt in ([] if menus.active() else toasts):
 		var a: float = clampf(tt.t / 0.6, 0, 1)
 		label(tt.title, W / 2, 78, Color(gold, a), 22)
 		label(tt.body, W / 2, 102, Color(paper, a), 13)
@@ -1208,24 +1514,8 @@ func _draw_hud() -> void:
 		_draw_armory()
 	elif skills_open:
 		_draw_skills()
-	elif g.paused or g.phase == "over":
-		cv.draw_rect(Rect2(0, 0, W, H), Color(0, 0, 0, 0.55))
-		if g.paused:
-			label("PAUSED", W / 2, H / 2 - 20, gold, 30)
-			label("ESC / P to resume · R to restart · K skill tree", W / 2, H / 2 + 14, paper, 14)
-			label(_setup_line(), W / 2, H / 2 + 40, dim, 13)
-		else:
-			label("VICTORY" if g.won else "DEFEAT", W / 2, H / 2 - 30, gold if g.won else c("#d65a3a"), 34)
-			var why := {"evacfail": "Nobody made the convoy out of %s. The campaign ends here." % sim.map_def.name, "deadend": "The crew could not recover. No one left could get them back up.",
-				"left": "Left behind at the evac.", "evac": "Out on the last convoy."}
-			if why.has(g.end_reason):
-				label(why[g.end_reason], W / 2, H / 2 - 8, dim, 13)
-			var st: Dictionary = g.stats
-			label("Raids survived %d · Raiders dropped %d · Walls raised %d · Walls lost %d" % [g.wave - (0 if g.won else 1), st.dropped, st.built, st.lost], W / 2, H / 2 + 6, paper, 14)
-			label("ENTER to play again · K skill tree", W / 2, H / 2 + 34, dim, 13)
-			label(_setup_line(), W / 2, H / 2 + 84, dim, 12)
-			if run_sp >= 0:
-				label("+%d SKILL POINT%s · %d to spend · next in %d raids" % [run_sp, "" if run_sp == 1 else "S", profile.sp, 5 - profile.sp_prog], W / 2, H / 2 + 60, c("#8fe0a0"), 13)
+	if settings.data.fps:
+		cv.draw_string(font, Vector2(W - 70, H - 10), fps_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, dim)
 
 
 ## boss warnings (drawBossFx in 16-characters.js): the Demolisher's red line and landing ring, the Butcher's wedge and
@@ -1322,9 +1612,56 @@ func _close_armory() -> void:
 	sim.game.paused = false
 
 
+## keys and the controller in the armory and the skill tree: move between the rows (nearest one that way), buy
+func _panel_nav(dir: String) -> void:
+	var list: Array = arm_buttons if armory_open else sk_buttons
+	if dir == "back":
+		if armory_open:
+			_close_armory()
+		else:
+			_close_skills()
+		return
+	if list.is_empty():
+		return
+	var sel := clampi(arm_sel if armory_open else sk_sel, 0, list.size() - 1)
+	if dir == "accept":
+		if armory_open:
+			_arm_buy(list[sel][1])
+		else:
+			audio.play("restock" if profile.buy(list[sel][1]) else "deny")
+		return
+	var cur_r: Rect2 = list[sel][0]
+	var cc := cur_r.get_center()
+	var dv: Vector2 = {"up": Vector2(0, -1), "down": Vector2(0, 1), "left": Vector2(-1, 0), "right": Vector2(1, 0)}.get(dir, Vector2.ZERO)
+	var best := -1
+	var bs := 1e9
+	for i in list.size():
+		if i == sel:
+			continue
+		var q: Vector2 = list[i][0].get_center() - cc
+		var along := q.dot(dv)
+		if along <= 2:
+			continue
+		var off := absf(q.dot(dv.orthogonal()))
+		var sc := along + off * 2
+		if sc < bs:
+			bs = sc
+			best = i
+	if best >= 0:
+		if armory_open:
+			arm_sel = best
+		else:
+			sk_sel = best
+
+
 func _armory_input(e: InputEvent) -> void:
+	if e is InputEventKey and e.pressed:
+		if e.keycode in [KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT]:
+			_panel_nav({KEY_UP: "up", KEY_DOWN: "down", KEY_LEFT: "left", KEY_RIGHT: "right"}[e.keycode])
+		elif e.keycode in [KEY_ENTER, KEY_KP_ENTER, KEY_SPACE] and not e.echo:
+			_panel_nav("accept")
 	if e is InputEventKey and e.pressed and not e.echo:
-		if e.keycode in [KEY_ESCAPE, KEY_E, KEY_U, KEY_P]:
+		if e.keycode == KEY_ESCAPE or e.is_action_pressed("pal_armory") or e.is_action_pressed("pal_pause"):
 			_close_armory()
 		elif e.keycode >= KEY_1 and e.keycode <= KEY_9:
 			var n: int = e.keycode - KEY_1
@@ -1416,6 +1753,8 @@ func _draw_armory() -> void:
 		cv.draw_rect(br, Color(gold, 0.8) if not r.dis else Color(dim, 0.4), false, 1.2)
 		var lw := font.get_string_size(r.label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
 		cv.draw_string(font, Vector2(br.position.x + (br.size.x - lw) / 2, y + 22), r.label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, gold if not r.dis else dim)
+		if arm_buttons.size() == arm_sel and inp.mode != "mouse":
+			cv.draw_rect(br.grow(3), c("#f3e9d6"), false, 2.0)
 		arm_buttons.append([br, r.key])
 		y += rh
 	b_close = Rect2(x0 + w / 2 - 60, y + 4, 120, 26)
@@ -1600,9 +1939,14 @@ func _dev_boss() -> void:
 # ---------------------------------------------------------------- skill tree (19b-social-lobby.js)
 
 func _skills_input(e: InputEvent) -> void:
+	if e is InputEventKey and e.pressed:
+		if e.keycode in [KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT]:
+			_panel_nav({KEY_UP: "up", KEY_DOWN: "down", KEY_LEFT: "left", KEY_RIGHT: "right"}[e.keycode])
+		elif e.keycode in [KEY_ENTER, KEY_KP_ENTER, KEY_SPACE] and not e.echo:
+			_panel_nav("accept")
 	if e is InputEventKey and e.pressed and not e.echo:
-		if e.keycode in [KEY_ESCAPE, KEY_K, KEY_P]:
-			skills_open = false
+		if e.keycode == KEY_ESCAPE or e.is_action_pressed("pal_skills") or e.is_action_pressed("pal_pause"):
+			_close_skills()
 	elif e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
 		for b in sk_buttons:
 			if b[0].has_point(e.position):
@@ -1651,6 +1995,8 @@ func _draw_skills() -> void:
 		cv.draw_rect(b, Color(gold, 0.8) if reason == "" else Color(dim, 0.4), false, 1.0)
 		var lw := font.get_string_size(label_txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x
 		cv.draw_string(font, Vector2(b.position.x + (b.size.x - lw) / 2, y + 16), label_txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, gold if reason == "" else dim)
+		if sk_buttons.size() == sk_sel and inp.mode != "mouse":
+			cv.draw_rect(b.grow(3), c("#f3e9d6"), false, 2.0)
 		sk_buttons.append([b, S.id])
 		y += rh
 	sk_reset = Rect2(x0 + 16, y + 8, 150, 24)

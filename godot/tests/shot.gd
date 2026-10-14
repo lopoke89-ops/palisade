@@ -10,6 +10,8 @@ func _init() -> void:
 	var main: Node2D = load("res://main.tscn").instantiate()
 	root.add_child(main)
 	await process_frame
+	main.settings.data.setup = PalSettings.new().data.setup
+	main.start_game()   # out of the menu's demo yard and into a game
 	var s: Sim = main.sim
 	# a short wall line east of the stake, one brick, and a door
 	s.player.mats = [40, 8, 0]
@@ -66,6 +68,29 @@ func _init() -> void:
 			await process_frame
 			tot += main.draw_us
 		print("city _draw %.1f ms" % (tot / 30000.0))
+	elif mode == "touch":   # the touch layout, both sticks held
+		for n in 30 * 20:
+			s.update(1.0 / 30.0, {})
+		var t := InputEventScreenTouch.new()
+		t.index = 0
+		t.position = Vector2(200, 560)
+		t.pressed = true
+		main.inp.handle(t)
+		var d := InputEventScreenDrag.new()
+		d.index = 0
+		d.position = Vector2(230, 540)
+		main.inp.handle(d)
+		var t2 := InputEventScreenTouch.new()
+		t2.index = 1
+		t2.position = Vector2(900, 520)
+		t2.pressed = true
+		main.inp.handle(t2)
+		var d2 := InputEventScreenDrag.new()
+		d2.index = 1
+		d2.position = Vector2(950, 500)
+		main.inp.handle(d2)
+		for n in 20:
+			await process_frame
 	elif mode == "zoo":
 		s.game.wave = 4
 		s.start_raid()
