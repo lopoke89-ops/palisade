@@ -85,7 +85,7 @@ func _unhandled_input(e: InputEvent) -> void:
 			elif k == KEY_X:
 				next_opt.size = "xl" if next_opt.size == "std" else "std"
 			elif k == KEY_V:
-				var modes := ["5", "10", "endless", "blitz"]
+				var modes := ["5", "10", "endless", "blitz", "campaign"]
 				next_opt.mode = modes[(modes.find(next_opt.mode) + 1) % modes.size()]
 			elif k == KEY_D:
 				var ds := ["easy", "normal", "hard"]
@@ -127,7 +127,7 @@ func _game_opt() -> Dictionary:
 
 
 func _setup_line() -> String:
-	var mode_names := {"5": "5 RAIDS", "10": "10 RAIDS", "endless": "ENDLESS", "blitz": "BLITZKRIEG RUSH"}
+	var mode_names := {"5": "5 RAIDS", "10": "10 RAIDS", "endless": "ENDLESS", "blitz": "BLITZKRIEG RUSH", "campaign": "OPERATION WHITEOUT"}
 	return "NEXT GAME · C %s · M %s · X %s · V %s · D %s" % [Pal.CLASSES[next_cls].name, PalMaps.MAPS[next_opt.map].name, next_opt.size.to_upper(), mode_names[next_opt.mode], next_opt.diff.to_upper()]
 
 
@@ -202,6 +202,10 @@ func _drain_events() -> void:
 				zaps.append({"pts": e.pts, "life": 0.38, "max": 0.38})
 			"slash":
 				slashes.append({"x": e.x, "y": e.y, "ax": e.ax, "ay": e.ay, "life": 0.28, "max": 0.28})
+			"map":   # a campaign chapter moved everyone to the next map
+				parts.clear()
+				rings.clear()
+				v.cam_snap(sim.player.x, sim.player.y, sim.height_at(sim.player.x, sim.player.y))
 			"shake":
 				var d := Vector2(e.x - sim.player.x, e.y - sim.player.y).length()
 				shake = maxf(shake, e.amt * clampf(1.0 - d / 14.0, 0.2, 1.0))
@@ -872,13 +876,16 @@ func _draw_hud() -> void:
 	# top bar: phase, clock, stake
 	draw_rect(Rect2(0, 0, W, 34), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.72))
 	var phase_txt: String
-	if g.phase == "build":
+	if g.phase == "build" and sim.campaign():
+		phase_txt = "CH %d · BUILD · %s · %s IN %ds   (ENTER: start now)" % [g.chapter + 1, sim.map_def.name, "FINAL EVACUATION" if g.wave == 12 else "RAID %d/3" % (g.wave % 3 + 1), ceili(g.timer)]
+	elif g.phase == "build":
 		phase_txt = "BUILD · RAID %d IN %ds   (ENTER: start now)" % [g.wave + 1, ceili(g.timer)]
 	elif g.phase == "raid":
 		phase_txt = "%s · %d RAIDERS LEFT" % [sim.raid_name(g.wave), sim.enemies.size() + g.queue.size()]
 		if g.get("fb") != null:
 			var ft: float = g.fb.t
-			phase_txt = "FINAL BLITZ · %d:%02d · %s" % [floori(ft / 60), floori(fmod(ft, 60)), "GET TO THE EVAC" if g.fb.evac != null else "%d BOSSES UP" % sim.live_bosses()]
+			var fbn := "MAP EVAC" if g.fb.get("mapEvac", false) else ("GAUNTLET · WAVE %d/6" % g.fb.wave if g.fb.get("gauntlet", false) else "FINAL BLITZ")
+			phase_txt = "%s · %d:%02d · %s" % [fbn, floori(ft / 60), floori(fmod(ft, 60)), "GET TO THE EVAC" if g.fb.evac != null else "%d BOSSES UP" % sim.live_bosses()]
 	else:
 		phase_txt = "GAME OVER"
 	draw_string(font, Vector2(14, 22), phase_txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, paper)
@@ -949,6 +956,10 @@ func _draw_hud() -> void:
 			label(_setup_line(), W / 2, H / 2 + 40, dim, 13)
 		else:
 			label("VICTORY" if g.won else "DEFEAT", W / 2, H / 2 - 30, gold if g.won else c("#d65a3a"), 34)
+			var why := {"evacfail": "Nobody made the convoy out of %s. The campaign ends here." % sim.map_def.name, "deadend": "The crew could not recover. No one left could get them back up.",
+				"left": "Left behind at the evac.", "evac": "Out on the last convoy."}
+			if why.has(g.end_reason):
+				label(why[g.end_reason], W / 2, H / 2 - 8, dim, 13)
 			var st: Dictionary = g.stats
 			label("Raids survived %d · Raiders dropped %d · Walls raised %d · Walls lost %d" % [g.wave - (0 if g.won else 1), st.dropped, st.built, st.lost], W / 2, H / 2 + 6, paper, 14)
 			label("ENTER to play again · K skill tree", W / 2, H / 2 + 34, dim, 13)

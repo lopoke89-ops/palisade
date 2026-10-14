@@ -467,6 +467,7 @@ func _init() -> void:
 	check(ml.fires.any(func(f): return f.get("pl", false)), "Molotovs: the grenade leaves burning ground")
 
 	_maps_and_modes()
+	_campaign()
 
 	print("armory")
 	var ar := _mk()
@@ -735,6 +736,70 @@ func _maps_and_modes() -> void:
 		bz.player.hp = bz.player.max
 		bz.update(1.0 / 60.0, {})
 	check(bz.game.phase == "over" and bz.game.won and bz.game.end_reason == "evac", "3 s in the green ring gets you out: victory")
+
+
+func _campaign() -> void:
+	print("Operation Whiteout")
+	var cp := _mk()
+	cp.new_game(117, "normal", {}, {"mode": "campaign", "map": "frost", "mods": ["nightmare", "elite"]})
+	check(cp.map_id == "yard" and cp.game.waves == 13 and cp.mods == ["elite"], "starts in the Yard, 13 raids; boss rush style modifiers are dropped")
+	check(cp.boss_of(3) == "whitebutcher" and cp.boss_of(6) == "whiteferryman" and cp.boss_of(9) == "whiteforeman" and cp.boss_of(12) == "rime" and cp.boss_of(5) == "", "a winter boss ends each chapter: raids 3, 6, 9 and 12")
+	check(cp.raid_name(5) == "CHAPTER 2 · RAID 2/3" and cp.raid_name(13) == "THE WHITEOUT GAUNTLET", "raid names follow the chapters")
+	cp.qm.alive = false
+	cp.qm.gone = true
+	cp.game.wave = 2
+	cp.start_raid()
+	cp.game.queue = []
+	cp.enemies.clear()
+	cp.core.hp = 400.0
+	cp.update(1.0 / 60.0, {})
+	check(cp.game.fb != null and cp.game.fb.get("mapEvac", false) and cp.game.fb.evac != null, "after raid 3: a 15-second map evac, the ring open at once")
+	cp.player.x = cp.game.fb.evac.x
+	cp.player.y = cp.game.fb.evac.y
+	for n in 60 * 4:
+		cp.player.hp = cp.player.max
+		cp.update(1.0 / 60.0, {})
+	for n in 60 * 13:
+		cp.player.hp = cp.player.max
+		cp.update(1.0 / 60.0, {})
+	check(cp.game.chapter == 1 and cp.map_id == "river" and cp.game.phase == "build" and not cp.terr.is_empty() and cp.lay.raftAt.size() > 0, "made it out: chapter 2 on Riverbend")
+	check(is_equal_approx(cp.core.hp, 400.0) and cp.nodes.all(func(n): return not n.locked), "stake damage carries over and every resource is open")
+	var cf := _mk()
+	cf.new_game(118, "normal", {}, {"mode": "campaign"})
+	cf.qm.alive = false
+	cf.qm.gone = true
+	cf.game.wave = 2
+	cf.start_raid()
+	cf.game.queue = []
+	cf.enemies.clear()
+	cf.player.x = 1.5
+	cf.player.y = 1.5
+	for n in 60 * 17:
+		cf.player.hp = cf.player.max
+		cf.core.hp = cf.core.max
+		cf.player.x = 1.5
+		cf.player.y = 1.5
+		cf.update(1.0 / 60.0, {})
+	check(cf.game.phase == "over" and cf.game.end_reason == "evacfail", "nobody at the convoy: the campaign ends there")
+	var gt := _mk()
+	gt.new_game(119, "normal", {}, {"mode": "campaign"})
+	gt.change_chapter(3)
+	check(gt.map_id == "frost" and gt.heights.size() > 0, "chapter 4 is Frostpeak")
+	gt.qm.alive = false
+	gt.qm.gone = true
+	gt.game.wave = 12
+	gt.start_raid()
+	check(gt.game.fb != null and gt.game.fb.get("gauntlet", false) and is_equal_approx(gt.game.fb.t, 210.0), "raid 13 is the Whiteout Gauntlet: 3:30")
+	var most := 0
+	var rimes := 0
+	for n in 60 * 181:
+		gt.player.hp = gt.player.max
+		gt.core.hp = gt.core.max
+		gt.update(1.0 / 60.0, {})
+		most = maxi(most, gt.live_bosses())
+		rimes = maxi(rimes, gt.enemies.filter(func(e): return e.get("boss", "") == "rime").size())
+	check(gt.game.fb.wave == 6 and most <= 8 and most >= 6 and rimes >= 2, "six waves of two Rime Colossi and one more, never more than 8 up (most %d)" % most)
+	check(gt.game.fb.evac != null and gt.game.fb.pend.is_empty(), "the evac opens with 30 s left, and no more bosses land")
 
 
 func _games_on_every_map() -> void:

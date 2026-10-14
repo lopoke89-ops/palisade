@@ -51,6 +51,9 @@ var flood_on := false
 var terr_log: Array = []
 var chains: Array = []
 var mods: Array = []
+const GAUNTLET := {"t": 210.0, "evac": 30.0, "every": 30.0, "waves": 6, "rimes": 2, "cap": 8, "hp": 1.1, "warn": 1.0, "apart": 3.0, "pool": ["whitebutcher", "whiteforeman", "tempest", "bulldozer", "bluebutcher", "arsonist"]}
+const MAP_EVAC := {"t": 15.0, "want": 8, "wantXL": 9}
+const CAMPAIGN := {"waves": 13, "maps": ["yard", "river", "quarry", "frost"], "bosses": ["whitebutcher", "whiteferryman", "whiteforeman", "rime"], "story": ["Secure the Yard and recover the mountain evacuation route.", "Cross Riverbend and recover the stranded supply convoy.", "Secure quarry power for the summit beacon.", "Hold Frostpeak. Break the Rime Colossus and signal evacuation."]}
 const STORM := {"slow": 0.8, "every": 2.0, "look": {"yard": {"name": "DUST STORM", "col": [196, 160, 104]}, "river": {"name": "RAIN AND FOG", "col": [150, 172, 190]}, "quarry": {"name": "ASH FALL", "col": [120, 112, 104]}}}
 const BLITZ := {"waves": 15, "fb": 300.0, "evac": 60.0, "evacHot": 45.0, "every": 30.0, "everyDT": 20.0, "max": 10, "maxDT": 15, "cap": 4, "ring": 1.5, "ringHot": 1.0, "hold": 3.0, "fbHp": 0.85, "order": ["bluebutcher", "arsonist", "tempest", "harbinger", "bulldozer"]}
 const MODS := [{"id": "nopatch", "name": "NO PATCH-UPS", "what": "No core repair at the armory. Walls can still be fixed.", "modes": ["coop", "blitz"], "bonus": 10}, {"id": "alone", "name": "ON YOUR OWN", "what": "No Delgado. Nobody hands out materials, fixes walls or picks you up but your crew.", "modes": ["coop", "blitz"], "bonus": 20}, {"id": "firestorm", "name": "FIRESTORM", "what": "More firebrands from raid 1. Bigger, longer fires, and walls burn down faster.", "modes": ["coop", "blitz"], "bonus": 10}, {"id": "adrenaline", "name": "ADRENALINE", "what": "Everyone moves 20% faster. Lowers rewards a little.", "modes": ["coop", "blitz", "base", "ffa"], "bonus": -15}, {"id": "laststand", "name": "LAST STAND", "what": "Go down in a raid and you stay down until it ends, unless a teammate, Delgado or a quartermaster gets you up.", "modes": ["coop", "blitz"], "bonus": 10}, {"id": "elite", "name": "ELITE RAID", "what": "No riflemen: every raider is a special. Spotters mark you for the grenadiers and firebrands instead.", "modes": ["coop", "blitz"], "bonus": 15}, {"id": "bossrush", "name": "BOSS RUSH", "what": "A boss every other raid. The extra bosses pay 15-30 shards each; raids 5, 10, 15 keep their case.", "modes": ["coop"], "bonus": 10}, {"id": "weather", "name": "WEATHER", "what": "A storm every other raid. It slows everyone, raiders and Delgado too; players lose 1 health every 2 s in it.", "modes": ["coop", "blitz", "base", "ffa"], "bonus": 10}, {"id": "nightmare", "name": "NIGHTMARE", "what": "Always night. Raiders move, spot and fire faster, and any raid without a boss has a 1-in-12 surprise boss.", "modes": ["coop", "blitz", "base", "ffa"], "bonus": 15}, {"id": "berserk", "name": "BERSERK", "what": "Bosses attack about a third more often. Their warnings are just as long, and they move no faster.", "modes": ["coop", "blitz"], "bonus": 10}, {"id": "glass", "name": "GLASS CANNON", "what": "Everyone deals 50% more damage and has 30% less health.", "modes": ["base", "ffa"], "bonus": 0}, {"id": "onejob", "name": "ONE JOB", "what": "The host picks one job for everyone. No job changes.", "modes": ["base", "ffa"], "bonus": 0}, {"id": "scrap", "name": "SCRAP SHORTAGE", "what": "Kills pay half the salvage.", "modes": ["base"], "bonus": 0}, {"id": "frenzy", "name": "GRENADE FRENZY", "what": "A grenade comes back every 6 s, and blasts are a third bigger.", "modes": ["base", "ffa"], "bonus": 0}, {"id": "sudden", "name": "SUDDEN DEATH", "what": "The last minute: every drop counts double and nobody gets spawn protection.", "modes": ["ffa"], "bonus": 0}, {"id": "hotlz", "name": "HOT LZ", "what": "The evac site opens at 0:45 instead of 1:00, and the ring is a third smaller.", "modes": ["blitz"], "bonus": 15}, {"id": "blitzclock", "name": "DOUBLE TIME", "what": "Final Blitz bosses come every 20 s instead of 30 s: 15 of them, not 10. Still 4 at a time at most.", "modes": ["blitz"], "bonus": 15}, {"id": "barrage", "name": "ARTILLERY BARRAGE", "what": "Shells fall across the map during the evacuation. Each one shows where it lands first.", "modes": ["blitz"], "bonus": 10}, {"id": "lockdown", "name": "LOCKDOWN", "what": "The armory is shut for the last build before the Final Blitz (no upgrades, no core repair), and Delgado stops fixing walls once it starts.", "modes": ["blitz"], "bonus": 10}, {"id": "scorched", "name": "SCORCHED EARTH", "what": "Napalm burns 15 s instead of 10, the Blue Butcher's arc dust burns for its half second, and twin beams scorch the ground.", "modes": ["blitz"], "bonus": 10}]
@@ -155,10 +158,10 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 		rng.randomize()
 	Df = Pal.DIFF.get(diff, Pal.DIFF.normal)
 	var mode: String = opt.get("mode", "5")
-	if not ["5", "10", "endless", "blitz"].has(mode):
+	if not ["5", "10", "endless", "blitz", "campaign"].has(mode):
 		mode = "5"
 	mods = clean_mods(opt.get("mods", []), mode)
-	map_id = opt.get("map", "yard")
+	map_id = "yard" if mode == "campaign" else opt.get("map", "yard")
 	if not PalMaps.MAPS.has(map_id):
 		map_id = "yard"
 	lay = PalMaps.lay(map_id, opt.get("size", "std"))
@@ -197,10 +200,14 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 			var w := Pal.make_wall(r[1], false, r[2])
 			w.char = r[3]
 			walls[idx(t[0], t[1])] = w
-	var waves: float = INF if mode == "endless" else (float(BLITZ.waves) if mode == "blitz" else float(mode))
+	if mode == "campaign":   # the Yard's metal opens after raid 2 in the campaign
+		for n in nodes:
+			if n.locked and n.unlock > 3:
+				n.unlock = 3
+	var waves: float = INF if mode == "endless" else (float(BLITZ.waves) if mode == "blitz" else (float(CAMPAIGN.waves) if mode == "campaign" else float(mode)))
 	game = {"phase": "build", "timer": 40.0 + Df.build, "wave": 0, "waves": waves, "mode": mode, "queue": [], "spawnT": 0.0, "spawnGap": 1.1,
 		"time": 0.0, "sel": 0, "piece": "wall", "won": false, "paused": false, "bosses": 0, "fb": null, "wx": 0, "wxHit": 0.0,
-		"flood": {"t": 0.0, "warned": false}, "end_reason": "", "dellLv": 0, "diff": diff, "map": map_id, "size": opt.get("size", "std"),
+		"flood": {"t": 0.0, "warned": false}, "end_reason": "", "dellLv": 0, "chapter": 0, "diff": diff, "map": map_id, "size": opt.get("size", "std"),
 		"stats": {"built": 0, "lost": 0, "dropped": 0, "revives": 0, "repairs": 0}}
 	player = make_player(0, opt.get("cls", "soldier"))
 	var off: Array = [core.i - 4, core.j - 11]   # the spawn spots are laid out round a stake at (4,11)
@@ -795,7 +802,8 @@ func update(dt: float, ctl: Dictionary = {}) -> void:
 			if game.wave >= game.waves:
 				end_game(true)
 				return
-			start_build(24.0 + Df.build)
+			if not campaign_advance():
+				start_build(24.0 + Df.build)
 	if flow_dirty:
 		flow_t -= dt
 		if flow_t <= 0:
@@ -1222,14 +1230,23 @@ func start_build(dur: float) -> void:
 	toast("RAID %d BROKEN" % game.wave, "+%d salvage each. %s" % [pay, note])
 
 
+## Array.splice(i, 0, v): past the end appends
+static func _splice(q: Array, i: int, v) -> void:
+	q.insert(mini(i, q.size()), v)
+
+
 func start_raid() -> void:
 	game.wave += 1
 	game.phase = "raid"
-	if blitz() and game.wave >= BLITZ.waves:
+	if blitz() and game.wave >= final_wave():
+		game.bossShare = 1.0
 		storm_raid()
 		sfx("siren")
 		game.flood = {"t": 0.0, "warned": false}
-		start_final_blitz()
+		if campaign():
+			start_gauntlet()
+		else:
+			start_final_blitz()
 		return
 	var k := floori(wave_eff())
 	var boss := boss_of(game.wave)
@@ -1240,22 +1257,22 @@ func start_raid() -> void:
 	if N > 16:
 		for t in W:
 			W[t] = roundi(W[t] * 1.4)
-	game.bossShare = 0.9 if boss2 != "" else 1.0   # each of the two XL bosses has 90% of a normal boss's health
+	game.bossShare = 0.9 if boss2 != "" else 1.0
 	storm_raid()
 	var q: Array = []
 	for n in W.rifle:
 		q.append("rifle")
 	for t in ["gren", "fire", "shield", "medic", "spotter", "breach"]:
 		for n in W[t]:
-			q.insert(1 + floori(rnd() * q.size()), t)
+			_splice(q, 1 + floori(rnd() * q.size()), t)
 	if boss != "":
-		q.insert(maxi(2, floori(q.size() * 0.45)), "boss:" + boss)
+		_splice(q, maxi(2, floori(q.size() * 0.45)), "boss:" + boss)
 	if boss2 != "":
-		q.insert(maxi(4, floori(q.size() * 0.62)), "boss:" + boss2)
+		_splice(q, maxi(4, floori(q.size() * 0.62)), "boss:" + boss2)
 	if xb != "":
-		q.insert(maxi(2, floori(q.size() * 0.45)), "boss:" + xb + ":sb")   # an in-between boss (Boss Rush, Nightmare)
+		_splice(q, maxi(2, floori(q.size() * 0.45)), "boss:" + xb + ":sb")
 	if xb2 != "":
-		q.insert(maxi(4, floori(q.size() * 0.7)), "boss:" + xb2 + ":sb2")
+		_splice(q, maxi(4, floori(q.size() * 0.7)), "boss:" + xb2 + ":sb2")
 	game.queue = q
 	game.spawnT = 0.8
 	game.spawnGap = 1.1 * (0.85 if N > 16 else 1.0)
@@ -1265,7 +1282,7 @@ func start_raid() -> void:
 	for t in ["gren", "breach", "shield", "medic", "spotter", "fire"]:
 		if W[t] > 0:
 			bits.append("%d %s" % [W[t], ENAMES[t][1] if W[t] > 1 else ENAMES[t][0]])
-	var B = boss_def(boss) if boss != "" else (boss_def(xb) if xb != "" and has_mod("bossrush") else null)   # Nightmare's surprise boss stays a surprise
+	var B = boss_def(boss) if boss != "" else (boss_def(xb) if xb != "" and has_mod("bossrush") else null)
 	var B2 = boss_def(boss2) if boss2 != "" else null
 	var title := raid_name(game.wave)
 	var tail := ""
@@ -2362,6 +2379,8 @@ func update_rockets(dt: float) -> void:
 
 
 func boss_of(w: int) -> String:
+	if campaign():
+		return CAMPAIGN.bosses[w / 3 - 1] if w <= 12 and w % 3 == 0 else ""
 	if w % 5 != 0:
 		return ""
 	var L: Array = map_def.bosses
@@ -2427,6 +2446,12 @@ func boss_down(e: Dictionary, own) -> void:
 	var share := 15 if mine else 20
 	player.sal += B.bounty if mine else share
 	game.bosses = game.get("bosses", 0) + 1
+	if e.get("gw", 0) > 0:   # the Gauntlet counts each wave's kills
+		var gk: Array = game.get("gKill", [])
+		while gk.size() < e.gw:
+			gk.append(0)
+		gk[e.gw - 1] += 1
+		game.gKill = gk
 	flt(e.x, e.y - 0.4, ("+%d SALVAGE" % B.bounty) if mine else ("+%d SALVAGE EACH" % share), "#e2b436")
 	emit(e.x, e.y, "fire", 13)
 	emit(e.x, e.y, "spark", 13)
@@ -4669,6 +4694,8 @@ static func clean_mods(list: Array, mode: String) -> Array:
 	var out: Array = []
 	for M in MODS:
 		if list.has(M.id) and M.modes.has(m):
+			if mode == "campaign" and ["bossrush", "nightmare", "blitzclock", "hotlz", "lockdown", "scorched", "barrage", "onejob"].has(M.id):
+				continue
 			out.append(M.id)
 	return out
 
@@ -4678,7 +4705,7 @@ func has_mod(id: String) -> bool:
 
 
 func blitz() -> bool:
-	return game.mode == "blitz"
+	return game.get("mode", "") == "blitz" or game.get("mode", "") == "campaign"
 
 
 func wave_eff() -> float:
@@ -4700,6 +4727,8 @@ func tod_stage(stage: float) -> int:
 
 
 func raid_name(w: int) -> String:
+	if campaign():
+		return "THE WHITEOUT GAUNTLET" if w >= 13 else "CHAPTER %d · RAID %d/3" % [campaign_chapter(w) + 1, (w - 1) % 3 + 1]
 	return ("RAID %d OF %d" % [w, int(game.waves)]) if not is_inf(game.waves) else "RAID %d" % w
 
 
@@ -4708,6 +4737,8 @@ func storm_slow() -> float:
 
 
 func boss_partner(w: int) -> String:
+	if campaign():
+		return ""
 	var L: Array = map_def.bosses
 	var i: int = (w / 5 - 1) % L.size()
 	for j in range(1, L.size()):
@@ -4793,15 +4824,21 @@ func fb_tick(dt: float) -> void:
 	var F = game.fb
 	if F == null or F.done or game.phase != "raid":
 		return
+	if F.get("gauntlet", false):
+		gauntlet_tick(dt)
+		return
 	F.t = maxf(0.0, F.t - dt)
 	var el: float = BLITZ.fb - F.t
-	var order: Array = ["bluebutcher", "arsonist", "tempest", "rime", "bulldozer"] if map_id == "frost" else BLITZ.order
+	var order: Array = ["whitebutcher", "whiteforeman", "rime", "tempest", "bulldozer"] if campaign() else (["bluebutcher", "arsonist", "tempest", "rime", "bulldozer"] if map_id == "frost" else BLITZ.order)
 	while F.n < F.max and el >= F.n * F.every and live_bosses() < BLITZ.cap:
 		spawn_boss(order[F.n % order.size()], false, true)
 		F.n += 1
-	# raiders keep coming alongside: small groups whenever the field thins out
 	F.trickT -= dt
-	if F.trickT <= 0 and game.queue.is_empty() and enemies.size() - live_bosses() < 7:
+	if F.get("mapEvac", false):   # map evac: shieldbearers and grenadiers only
+		if F.trickT <= 0 and game.queue.is_empty() and enemies.size() < 6:
+			F.trickT = 2.5
+			game.queue.append_array(["shield", "gren"])
+	elif F.trickT <= 0 and game.queue.is_empty() and enemies.size() - live_bosses() < 7:
 		F.trickT = 2.5
 		var sp := ["gren", "breach", "shield", "fire", "medic", "spotter"]
 		game.queue.append_array(["rifle", "rifle", sp[floori(rnd() * sp.size())]])
@@ -4884,7 +4921,10 @@ func open_evac() -> void:
 	sfx("siren")
 	ev({"k": "ring", "x": s.x, "y": s.y, "r0": 0.2, "r1": F.evac.r + 0.6, "life": 1.2, "c1": "#8aff9a"})
 	flt(s.x, s.y - 0.5, "EVAC", "#8aff9a")
-	toast("EVACUATE", "The evac site is open. Stand in the green ring for 3 seconds, on your feet, to get out. Anyone still here at 0:00 is left behind.")
+	if F.get("mapEvac", false):
+		toast("EVACUATE", "Get to the green ring. The convoy leaves in 15 seconds. Stand in it for 3 seconds, on your feet. Miss it and you lose half this chapter's cases and shards.")
+	else:
+		toast("EVACUATE", "The evac site is open. Stand in the green ring for 3 seconds, on your feet, to get out. Anyone still here at 0:00 is left behind.")
 	player.ev = 0.0
 	if player.downed:
 		player.rt = maxf(player.rt, 1e6)
@@ -4935,6 +4975,9 @@ func extract(p: Dictionary) -> void:
 
 func finish_blitz() -> void:
 	var F = game.fb
+	if F != null and F.get("mapEvac", false):
+		finish_map_evac()
+		return
 	if F == null or F.done:
 		return
 	F.done = true
@@ -4958,7 +5001,228 @@ func check_dead_end() -> bool:
 		return false
 	if qm_can_revive(p):
 		return false
+	if game.fb != null and game.fb.get("mapEvac", false):
+		finish_map_evac()
+		return true
 	if game.fb != null:
 		game.fb.done = true
 	end_game(false, "deadend")
 	return true
+
+
+func campaign() -> bool:
+	return game.get("mode", "") == "campaign"
+
+
+func final_wave() -> int:
+	return CAMPAIGN.waves if campaign() else BLITZ.waves
+
+
+func campaign_chapter(w: int) -> int:
+	return mini(3, maxi(0, w - 1) / 3)
+
+
+func campaign_advance() -> bool:
+	if not campaign():
+		return false
+	if (game.wave == 3 or game.wave == 6 or game.wave == 9) and game.chapter < game.wave / 3:
+		start_map_evac()
+		return true
+	return false
+
+
+func start_map_evac() -> void:
+	game.fb = {"t": MAP_EVAC.t, "n": 0, "max": 0, "every": 1e9, "evac": null, "shellT": 1.0, "trickT": 0.0, "done": false, "mapEvac": true, "ch": game.chapter}
+	game.queue = []
+	game.spawnT = 1.0
+	game.spawnGap = 1.3
+	player.out = false
+	player.ev = 0.0
+	open_evac()
+
+
+func finish_map_evac() -> void:
+	var F = game.fb
+	if F == null or not F.get("mapEvac", false) or F.done:
+		return
+	F.done = true
+	var ch: int = F.ch
+	var made: bool = player.get("out", false)
+	player.chEvac = player.get("chEvac", [])
+	player.chEvac.append(1 if made else 0)
+	enemies.clear()
+	game.queue = []
+	lobs.clear()
+	arcs.clear()
+	charges.clear()
+	rockets.clear()
+	if not made:   # nobody made it: the campaign ends there
+		game.fb = null
+		player.out = false
+		end_game(false, "evacfail")
+		return
+	player.out = false
+	player.ev = 0.0
+	player.stun = 0.0
+	if not player.alive:
+		player.alive = true
+		player.downed = false
+		player.revive = 0.0
+	player.rt = 0.0
+	game.fb = null
+	change_chapter(ch + 1)
+	start_build(30.0 + Df.build)
+	toast("CHAPTER %d · %s" % [game.chapter + 1, map_def.name], CAMPAIGN.story[game.chapter] + " Everyone made it out. Prepare at the core.")
+
+
+func change_chapter(ch: int) -> void:
+	if ch == game.chapter and map_id == CAMPAIGN.maps[ch]:
+		return
+	var hp: float = core.hp
+	var mx: float = core.max
+	map_id = CAMPAIGN.maps[ch]
+	lay = PalMaps.lay(map_id, game.size)
+	map_def = lay.map
+	N = lay.N
+	terr = lay.terr
+	heights = lay.heights
+	connectors = lay.connectors
+	terr_log.clear()
+	flood_on = false
+	walls.clear()
+	walls.resize(N * N)
+	debris = PackedInt32Array()
+	debris.resize(N * N)
+	dist = PackedFloat64Array()
+	dist.resize(N * N)
+	nodes = lay.nodes
+	if ch >= 1:
+		for n in nodes:
+			n.locked = false
+	node_ix.clear()
+	for n in nodes:
+		node_ix[idx(n.i, n.j)] = n
+	for r in lay.ruins:
+		for t in r[0]:
+			var w := Pal.make_wall(r[1], false, r[2])
+			w.char = r[3]
+			walls[idx(t[0], t[1])] = w
+	core = {"i": lay.core[0], "j": lay.core[1], "hp": hp, "max": mx, "flash": 0.0}
+	core_k = idx(core.i, core.j)
+	game.chapter = ch
+	game.map = map_id
+	game.flood = {"t": 0.0, "warned": false}
+	enemies.clear()
+	bullets.clear()
+	lobs.clear()
+	charges.clear()
+	rockets.clear()
+	fires.clear()
+	arcs.clear()
+	sacks.clear()
+	frost_fields.clear()
+	var at := spawn_near_core()
+	player.x = at.x
+	player.y = at.y
+	var aq := spawn_near_core()
+	qm.x = aq.x
+	qm.y = aq.y
+	qm.next = -1
+	qm.pathT = 0.0
+	qm.job = ""
+	qm.foe = null
+	qm.layout = null
+	qm.commandJob = null
+	qm.planT = 0.0
+	compute_flow()
+	flow_dirty = false
+	ev({"k": "map"})
+
+
+func start_gauntlet() -> void:
+	game.fb = {"t": GAUNTLET.t, "n": 0, "max": GAUNTLET.waves * (GAUNTLET.rimes + 1), "every": GAUNTLET.every, "evac": null, "shellT": 1.0, "trickT": 0.0, "done": false, "gauntlet": true, "wave": 0, "pend": [], "last": ""}
+	game.queue = []
+	game.gKill = []
+	toast("THE WHITEOUT GAUNTLET", "Six waves of bosses, one every 30 seconds. Then 30 seconds to reach the evac.")
+
+
+func _gauntlet_pick(F: Dictionary) -> String:
+	var pool: Array = GAUNTLET.pool.filter(func(k): return k != F.last)
+	var k: String = pool[floori(rnd() * pool.size())]
+	F.last = k
+	return k
+
+
+func _gauntlet_spot(F: Dictionary) -> Vector2:
+	var taken: Array = []
+	for e in enemies:
+		if e.type == "boss" and not e.dead:
+			taken.append(Vector2(e.x, e.y))
+	for q in F.pend:
+		if q.has("pos"):
+			taken.append(q.pos)
+	var cand: Array = lay.bossAt.duplicate()
+	for s in lay.spawns:
+		cand.append_array(s.tiles)
+	var best = null
+	var bs := -1.0
+	for t in cand:
+		if not inb(t[0], t[1]) or solid_tile(t[0], t[1], false):
+			continue
+		var near := 99.0
+		for o in taken:
+			near = minf(near, Vector2(o.x - t[0] - 0.5, o.y - t[1] - 0.5).length())
+		var sc := minf(near, GAUNTLET.apart * 2) + rnd() * 0.5
+		if sc > bs:
+			bs = sc
+			best = t
+	if best == null:
+		var t := spawn_tile()
+		best = t if not t.is_empty() else [N - 1, 6]
+	return Vector2(best[0] + 0.5, best[1] + 0.5)
+
+
+func gauntlet_tick(dt: float) -> void:
+	var F: Dictionary = game.fb
+	F.t = maxf(0.0, F.t - dt)
+	var el: float = GAUNTLET.t - F.t
+	while F.evac == null and F.wave < GAUNTLET.waves and el >= F.wave * GAUNTLET.every:   # a wave every 30 s
+		F.wave += 1
+		var extra := _gauntlet_pick(F)
+		for i in GAUNTLET.rimes:
+			F.pend.append({"k": "rime", "w": F.wave, "ri": i})
+		F.pend.append({"k": extra, "w": F.wave, "ri": -1})
+		sfx("horn")
+		toast("WAVE %d/%d" % [F.wave, GAUNTLET.waves], "Two Rime Colossi and %s." % boss_def(extra).name)
+	# waiting bosses take a spot (and show their ring) while there's room under the cap, then land a second later
+	var up := live_bosses()
+	for q in F.pend:
+		if q.has("pos"):
+			up += 1
+	for q in F.pend:
+		if not q.has("pos") and up < GAUNTLET.cap:
+			q.pos = _gauntlet_spot(F)
+			q.at = game.time + GAUNTLET.warn
+			up += 1
+			ev({"k": "ring", "x": q.pos.x, "y": q.pos.y, "r0": 0.2, "r1": 1.6, "life": GAUNTLET.warn, "c1": "#d8fff3"})
+	for i in range(F.pend.size() - 1, -1, -1):
+		var q: Dictionary = F.pend[i]
+		if not q.has("pos") or game.time < q.at:
+			continue
+		F.pend.remove_at(i)
+		var e := spawn_boss(q.k, false, true)
+		e.x = q.pos.x
+		e.y = q.pos.y
+		e.gw = q.w
+		e.hp *= GAUNTLET.hp / BLITZ.fbHp   # gauntlet bosses have 110% of their normal health
+		e.max = e.hp
+		if q.ri >= 0:
+			e.ab = 3.0 + q.ri * 1.2
+		F.n += 1
+	if F.evac == null and F.t <= GAUNTLET.evac:   # no more bosses once the evac opens; the ones up keep fighting
+		F.pend = []
+		open_evac()
+	if F.evac != null:
+		evac_tick(dt)
+	if F.t <= 0:
+		finish_blitz()
