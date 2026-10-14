@@ -26,6 +26,7 @@ func _init() -> void:
 		main.next_opt.map = args[2]
 		main.next_opt.size = args[3] if args.size() > 3 else "std"
 		main.next_cls = args[4] if args.size() > 4 else "soldier"
+		main.next_opt.mods = Array(args[5].split(",")) if args.size() > 5 else []
 		main._restart()
 		s = main.sim
 		for n in 30 * 20:

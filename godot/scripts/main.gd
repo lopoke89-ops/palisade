@@ -37,6 +37,19 @@ var cv: CanvasItem = self   # what the drawing helpers draw on: this node, or a 
 var ground: Node2D   # the ground chunks' parent, drawn behind everything and moved with the camera
 var ground_key := ""
 var game_n := 0   # counts new games and chapter changes (the ground repaints)
+var trees_back: Array = []
+var trees_front: Array = []
+var front_root: Node2D   # the near side's fence and trees, over the action, moved with the camera
+var front_groups := {}   # front chunk key -> {node, edges, trees}
+var fade_t := 0.0
+var light := {"L": 0.12, "r": 28.0, "g": 34.0, "b": 44.0, "warm": 0.0}   # time of day, eased toward the raid's
+var light_rect: ColorRect   # night: a shade with holes round every light
+var post_rect: ColorRect   # storm tint, vignette, low-health edge
+var fx_layer: PaintLayer   # boss warnings and the evac ring, over the night
+var glow_layer: PaintLayer   # muzzle flashes and lamp glows, added on
+var ui_layer: PaintLayer   # nameplates, prompts, crosshair, floating text and the HUD
+var wx_a := 0.0   # the storm fading in and out
+var glow_tex: GradientTexture2D
 
 
 func _ready() -> void:
@@ -45,6 +58,40 @@ func _ready() -> void:
 	ground = Node2D.new()
 	ground.show_behind_parent = true
 	add_child(ground)
+	front_root = Node2D.new()
+	add_child(front_root)
+	light_rect = ColorRect.new()
+	light_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	light_rect.material = ShaderMaterial.new()
+	light_rect.material.shader = load("res://shaders/light.gdshader")
+	add_child(light_rect)
+	fx_layer = PaintLayer.new()
+	fx_layer.painter = _paint_fx
+	add_child(fx_layer)
+	glow_layer = PaintLayer.new()
+	glow_layer.painter = _paint_glow
+	var add := CanvasItemMaterial.new()
+	add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	glow_layer.material = add
+	add_child(glow_layer)
+	post_rect = ColorRect.new()
+	post_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	post_rect.material = ShaderMaterial.new()
+	post_rect.material.shader = load("res://shaders/post.gdshader")
+	add_child(post_rect)
+	ui_layer = PaintLayer.new()
+	ui_layer.painter = _paint_ui
+	add_child(ui_layer)
+	var gr := Gradient.new()
+	gr.set_color(0, Color(1, 210 / 255.0, 130 / 255.0, 0.55))
+	gr.set_color(1, Color(1, 150 / 255.0, 60 / 255.0, 0))
+	glow_tex = GradientTexture2D.new()
+	glow_tex.gradient = gr
+	glow_tex.fill = GradientTexture2D.FILL_RADIAL
+	glow_tex.fill_from = Vector2(0.5, 0.5)
+	glow_tex.fill_to = Vector2(1.0, 0.5)
+	glow_tex.width = 64
+	glow_tex.height = 64
 	profile.load_file()
 	sim.new_game(-1, next_opt.diff, profile.perk_mods(), _game_opt())
 	audio.sim = sim
@@ -62,6 +109,10 @@ func _exit_tree() -> void:
 func _resize() -> void:
 	var s := get_viewport_rect().size
 	v.resize(s.x, s.y)
+	for r in [light_rect, post_rect]:
+		if r != null:
+			r.position = Vector2.ZERO
+			r.size = s
 
 
 # ---------------------------------------------------------------- input
@@ -195,7 +246,19 @@ func _process(dt: float) -> void:
 		shake *= pow(0.02, dt)
 	v.cam_follow(sim.player.x, sim.player.y, sh, sim.height_at(sim.player.x, sim.player.y))
 	_sync_ground()
+	_update_light(dt)
+	_update_post(dt)
+	fade_t -= dt
+	if fade_t <= 0:
+		fade_t = 0.1
+		_update_fades()
 	queue_redraw()
+	fx_layer.queue_redraw()
+	glow_layer.queue_redraw()
+	ui_layer.queue_redraw()
+	var want := Input.MOUSE_MODE_HIDDEN if sim.game.phase != "over" and not sim.game.paused and not armory_open and not skills_open and sim.player.alive else Input.MOUSE_MODE_VISIBLE
+	if Input.mouse_mode != want and DisplayServer.get_name() != "headless":
+		Input.mouse_mode = want
 
 
 func _drain_events() -> void:
@@ -380,9 +443,9 @@ func _draw_scene() -> void:
 		var rc := iso(r.x, r.y)
 		var t: float = 1.0 - r.life / r.max
 		var rr: float = lerpf(r.r0, r.r1, t)
-		draw_set_transform(rc, 0, Vector2(1, v.TH2 / v.TW2))
-		draw_arc(Vector2.ZERO, rr * v.TW2, 0, TAU, 48, Color(c(r.c1), 1.0 - t), r.w * u)
-		draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
+		cv.draw_set_transform(rc, 0, Vector2(1, v.TH2 / v.TW2))
+		cv.draw_arc(Vector2.ZERO, rr * v.TW2, 0, TAU, 48, Color(c(r.c1), 1.0 - t), r.w * u)
+		cv.draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 	# the build ghost
 	_draw_ghost()
 	# depth-sorted items: walls/nodes/stake key i+j+1, people x+y
@@ -425,7 +488,14 @@ func _draw_scene() -> void:
 	for it in items:
 		match it[1]:
 			0:
-				_draw_wall(it[2] % N, it[2] / N, sim.walls[it[2]])
+				var wi: int = it[2] % N
+				var wj: int = it[2] / N
+				var dd: float = wi + wj + 1 - (sim.player.x + sim.player.y)
+				var lat: float = (wi - wj) - (sim.player.x - sim.player.y)
+				if dd > 0 and dd < 3.2 and absf(lat) < 1.7:   # a wall in front of you goes see-through
+					draw_alpha = 0.3
+				_draw_wall(wi, wj, sim.walls[it[2]])
+				draw_alpha = 1.0
 			1:
 				_draw_node(it[2])
 			2:
@@ -434,55 +504,55 @@ func _draw_scene() -> void:
 				var e: Dictionary = it[2]
 				var o: Dictionary = (Sim.boss_def(e.boss).look if e.type == "boss" else LOOK.get(e.type, LOOK.rifle)).duplicate()
 				o.merge({"aim": e.aim, "walk": e.walk, "flash": e.flash > 0, "hp": e.hp / e.max}, true)
-				if e.get("raft", false):
-					_draw_raft(e)
-				if e.type == "boss" and e.get("burrow", false):
-					_draw_mound(e)
-					continue
 				if e.type == "boss":
-					o.big = Sim.boss_def(e.boss).get("big", 1.45)
-					o.erase("hp")   # bosses have the bar at the top of the screen
-					o.tag = Sim.boss_def(e.boss).name
-					o.tag_col = Sim.boss_def(e.boss).col
+					var B: Dictionary = Sim.boss_def(e.boss)
+					if e.get("burrow", false) or (e.boss == "foreman" and (e.st == 2 or e.st == 4)):
+						_draw_mound(e)
+						continue
+					if e.get("raft", false):
+						_draw_raft(e)
+						o.walk = 0.0
+					o.big = B.get("big", 1.45)
+					o.tag = B.name
+					o.tag_col = B.col
+					var kb: String = B.get("base", e.boss)
+					o.swing = (e.st if e.st < 5 else 0) if kb == "butcher" else (1 if e.boss == "bluebutcher" and e.st == 5 else 0)
 				if e.type == "breach":
 					o.satchel = not e.planted
 				if e.type == "shield":
 					o.shield_wear = 1.0 - float(e.shieldHitsLeft) / e.shieldHitsMax
 					if e.shieldBroken:
 						o.weapon = "pistol"
-				if e.type == "medic" and sim.game.phase == "raid":
+				Figure.person(self, e.x, e.y, o)
+				_draw_ammo_status(e)
+				if e.type == "medic" and sim.game.phase == "raid":   # his healing reach
 					var mc := iso(e.x, e.y)
-					draw_set_transform(mc, 0, Vector2(1, v.TH2 / v.TW2))
-					draw_arc(Vector2.ZERO, v.TW2 * 2.6, 0, TAU, 48, Color(143 / 255.0, 224 / 255.0, 160 / 255.0, 0.35), 1.2 * v.u)
-					draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
-				_draw_person(e.x, e.y, o)
-				if e.type == "boss" and e.st == 6:   # dazed
+					cv.draw_set_transform(mc, 0, Vector2(1, v.TH2 / v.TW2))
+					cv.draw_arc(Vector2.ZERO, v.TW2 * 2.6, 0, TAU, 48, c("#8fe0a059"), 1.2 * v.u)
+					cv.draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
+				if e.type == "boss" and e.boss == "bulldozer" and e.st == 6:   # dazed
 					var sc := iso(e.x, e.y)
 					for n in 3:
 						var a: float = sim.game.time * 4.0 + n * TAU / 3
-						draw_circle(Vector2(sc.x + cos(a) * 10 * v.u, sc.y - v.WH * 2.3 + sin(a) * 4 * v.u), 2.2 * v.u, c("#ffd23a"))
+						cv.draw_circle(Vector2(sc.x + cos(a) * 10 * v.u, sc.y - v.WH * 2.3 + sin(a) * 4 * v.u), 2.2 * v.u, c("#ffd23a"))
 			4:
 				var q: Dictionary = it[2]
 				if q.alive:
 					var o: Dictionary = QM_LOOK.duplicate()
-					o.merge({"aim": q.aim, "walk": q.walk, "flash": q.flash > 0, "hp": q.hp / q.max, "tag": "DELGADO"}, true)
-					_draw_person(q.x, q.y, o)
-				else:
-					_draw_downed(q.x, q.y, "DELGADO · DOWN", q.revive / 2.2)
+					o.merge({"aim": q.aim, "walk": q.walk, "flash": q.flash > 0}, true)
+					Figure.person(self, q.x, q.y, o)
+				elif not q.get("gone", false):
+					Figure.downed(self, q.x, q.y, QM_LOOK, q.revive / 2.0, "DELGADO · DOWN")
 			5:
 				var p: Dictionary = it[2]
+				var o: Dictionary = class_look(p.cls)
 				if p.alive:
-					var o: Dictionary = class_look(p.cls)
-					o.merge({"aim": p.aim, "walk": p.walk, "flash": p.flash > 0, "ring": "#e2b436"}, true)
-					if p.markT > 0:
-						o.ring = "#ff5a4a"   # spotted
+					o.merge({"aim": p.aim, "walk": p.walk, "flash": p.flash > 0, "faded": p.stl > 0}, true)
 					if p.bolt > 0:
 						o.bolt = 1.0 - p.bolt / p.boltT
-					draw_alpha = 0.5 if p.stl > 0 else 1.0   # stealth: see-through
-					_draw_person(p.x, p.y, o)
-					draw_alpha = 1.0
+					Figure.person(self, p.x, p.y, o)
 				elif p.downed:
-					_draw_downed(p.x, p.y, "DOWN · %ds" % ceili(p.rt), p.revive / 2.2)
+					Figure.downed(self, p.x, p.y, o, p.revive / 2.2, "DOWN · UNTIL THE RAID IS BROKEN" if p.rt > 1e5 else "DOWN · %d" % ceili(p.rt))
 			6:
 				var s: Dictionary = it[2]
 				var sc := iso(s.x, s.y)
@@ -501,12 +571,71 @@ func _draw_scene() -> void:
 			7:
 				var ch: Dictionary = it[2]
 				var cs := iso(ch.x, ch.y)
-				draw_rect(Rect2(cs.x - 5 * u, cs.y - 5 * u, 10 * u, 6 * u), c("#1a1510"))
+				cv.draw_rect(Rect2(cs.x - 5 * u, cs.y - 5 * u, 10 * u, 6 * u), c("#1a1510"))
 				if sin(sim.game.time * (20.0 - ch.fuse * 5.0)) > 0:
-					draw_circle(Vector2(cs.x, cs.y - 6 * u), 2 * u, c("#ff5a3a"))
+					cv.draw_circle(Vector2(cs.x, cs.y - 6 * u), 2 * u, c("#ff5a3a"))
+	for r in sim.rockets:
+		var rp := iso(r.x, r.y)
+		var dir := v.world_dir_to_screen(Vector2(r.vx, r.vy))
+		var hpx := v.WH * 0.6
+		cv.draw_line(Vector2(rp.x, rp.y - hpx) - dir * 7 * v.u, Vector2(rp.x, rp.y - hpx) + dir * 4 * v.u, c("#4a4a3a"), 3.2 * v.u)
+		cv.draw_circle(Vector2(rp.x, rp.y - hpx) - dir * 8 * v.u, (2.2 + randf()) * v.u, c("#ffb04a"))
+		if randf() < 0.6:
+			_emit(r.x, r.y, "smoke", 0)
+	for r in sim.arcs:
+		var rp := iso(r.x, r.y)
+		var dir := v.world_dir_to_screen(Vector2(r.vx, r.vy))
+		var nrm := dir.orthogonal()
+		var cpt := Vector2(rp.x, rp.y - v.WH * 0.5)
+		cv.draw_polyline(PackedVector2Array([cpt - nrm * 12 * v.u - dir * 4 * v.u, cpt + dir * 3 * v.u, cpt + nrm * 12 * v.u - dir * 4 * v.u]), Color(c("#3ae0e0"), 0.5), 6 * v.u)
+		cv.draw_polyline(PackedVector2Array([cpt - nrm * 12 * v.u - dir * 4 * v.u, cpt + dir * 3 * v.u, cpt + nrm * 12 * v.u - dir * 4 * v.u]), c("#dffcff"), 2 * v.u)
+	# grenades in the air
+	for l in sim.lobs:
+		if l.get("k", 0) == 3:   # a boss missile shows a ring where it lands for its whole flight
+			var lr := iso(l.x1, l.y1)
+			cv.draw_set_transform(lr, 0, Vector2(1, 0.5))
+			cv.draw_arc(Vector2.ZERO, v.TW2 * l.R, 0, TAU, 40, Color(1, 70 / 255.0, 50 / 255.0, 0.55 + 0.35 * sin(sim.game.time * 22.0)), 2.0 * v.u)
+			cv.draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
+		var t: float = clampf(l.t / l.T, 0, 1)
+		var x: float = lerpf(l.x0, l.x1, t)
+		var y: float = lerpf(l.y0, l.y1, t)
+		var g := iso(x, y)
+		var arc := sin(t * PI) * WH * 2.2
+		oval(g.x, g.y, 3 * u, 1.5 * u, Color(0, 0, 0, 0.3))
+		cv.draw_circle(Vector2(g.x, g.y - WH * 0.5 - arc), 2.6 * u, c("#3d4a2a"))
+	# tracers
+	for b in sim.bullets:
+		_draw_tracer(b)
+	# particles
+	for q in parts:
+		var pp := iso(q.x, q.y)
+		var a: float = clampf(q.life / q.max, 0, 1)
+		var col: Color = q.col
+		col.a = a
+		cv.draw_rect(Rect2(pp.x - 1.2 * u * q.s, pp.y - q.z * u - 1.2 * u * q.s, 2.4 * u * q.s, 2.4 * u * q.s), col)
+
+
+# ---------------------------------------------------------------- layers over the world
+
+## boss warnings, the harpoon chain, the evac ring, lightning and blade arcs: over the night so they always read
+func _paint_fx(layer: CanvasItem) -> void:
+	cv = layer
+	var u := v.u
+	var WH := v.WH
+	var pulse_s := 0.55 + 0.45 * sin(sim.game.time * 22.0)
+	for e in sim.enemies:   # spotters: a red laser while they line up, solid with a mark over the soldier once they have them
+		if e.type != "spotter" or e.get("st", 0) == 0:
+			continue
+		var a := iso(e.x, e.y) - Vector2(0, v.WH * 0.55)
+		var b := iso(e.lx, e.ly)
+		cv.draw_line(a, b - Vector2(0, v.WH * 0.55), Color(1, 60 / 255.0, 50 / 255.0, 0.75 if e.st == 2 else 0.25 + 0.3 * pulse_s), (1.3 if e.st == 2 else 0.9) * u)
+		if e.st == 2:
+			var y := b.y - v.WH * 1.9
+			var sz := 5 * u
+			cv.draw_colored_polygon(PackedVector2Array([Vector2(b.x, y - sz), Vector2(b.x + sz * 0.7, y), Vector2(b.x, y + sz), Vector2(b.x - sz * 0.7, y)]), c("#ff4a3a"))
 	_draw_boss_fx()
 	for chn in sim.chains:   # the Ferryman's harpoon chain
-		draw_dashed_line(iso(chn.x0, chn.y0) - Vector2(0, v.WH * 0.55), iso(chn.x1, chn.y1) - Vector2(0, v.WH * 0.44), Color(200 / 255.0, 205 / 255.0, 200 / 255.0, chn.life / chn.max), 2.2 * v.u, 4 * v.u)
+		cv.draw_dashed_line(iso(chn.x0, chn.y0) - Vector2(0, v.WH * 0.55), iso(chn.x1, chn.y1) - Vector2(0, v.WH * 0.44), Color(200 / 255.0, 205 / 255.0, 200 / 255.0, chn.life / chn.max), 2.2 * v.u, 4 * v.u)
 	if sim.game.get("fb") != null and sim.game.fb.evac != null:   # the evac site
 		var E: Dictionary = sim.game.fb.evac
 		var pulse := 0.55 + 0.45 * sin(sim.game.time * 6.0)
@@ -515,14 +644,6 @@ func _draw_scene() -> void:
 		var ev_p: float = sim.player.get("ev", 0.0)
 		if ev_p > 0 and not sim.player.get("out", false):
 			_ring(E.x, E.y, E.r * clampf(ev_p / Sim.BLITZ.hold, 0, 1), c("#ffffff"), 3.0)
-	for r in sim.rockets:
-		var rp := iso(r.x, r.y)
-		var dir := v.world_dir_to_screen(Vector2(r.vx, r.vy))
-		var hpx := v.WH * 0.6
-		draw_line(Vector2(rp.x, rp.y - hpx) - dir * 7 * v.u, Vector2(rp.x, rp.y - hpx) + dir * 4 * v.u, c("#4a4a3a"), 3.2 * v.u)
-		draw_circle(Vector2(rp.x, rp.y - hpx) - dir * 8 * v.u, (2.2 + randf()) * v.u, c("#ffb04a"))
-		if randf() < 0.6:
-			_emit(r.x, r.y, "smoke", 0)
 	for z in zaps:
 		var a: float = z.life / z.max
 		var pts := PackedVector2Array()
@@ -536,59 +657,278 @@ func _draw_scene() -> void:
 				pts.append(p0.lerp(p1, t) + nrm * randf_range(-6, 6) * v.u)
 			pts.append(p1)
 		if pts.size() > 1:
-			draw_polyline(pts, Color(c("#7fe0ff"), 0.5 * a), 5 * v.u)
-			draw_polyline(pts, Color(1, 1, 1, a), 1.6 * v.u)
+			cv.draw_polyline(pts, Color(c("#7fe0ff"), 0.5 * a), 5 * v.u)
+			cv.draw_polyline(pts, Color(1, 1, 1, a), 1.6 * v.u)
 	for sl in slashes:
 		var sp := iso(sl.x, sl.y)
 		var a: float = sl.life / sl.max
 		var a0 := v.world_dir_to_screen(Vector2(sl.ax, sl.ay)).angle()
-		draw_set_transform(Vector2(sp.x, sp.y - v.WH * 0.6), 0, Vector2(1, 0.6))
-		draw_arc(Vector2.ZERO, v.TW2 * 1.2, a0 - 1.1, a0 + 1.1, 18, Color(1, 0.9, 0.85, 0.8 * a), 3 * v.u)
-		draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
-	for r in sim.arcs:
-		var rp := iso(r.x, r.y)
-		var dir := v.world_dir_to_screen(Vector2(r.vx, r.vy))
-		var nrm := dir.orthogonal()
-		var cpt := Vector2(rp.x, rp.y - v.WH * 0.5)
-		draw_polyline(PackedVector2Array([cpt - nrm * 12 * v.u - dir * 4 * v.u, cpt + dir * 3 * v.u, cpt + nrm * 12 * v.u - dir * 4 * v.u]), Color(c("#3ae0e0"), 0.5), 6 * v.u)
-		draw_polyline(PackedVector2Array([cpt - nrm * 12 * v.u - dir * 4 * v.u, cpt + dir * 3 * v.u, cpt + nrm * 12 * v.u - dir * 4 * v.u]), c("#dffcff"), 2 * v.u)
-	# grenades in the air
-	for l in sim.lobs:
-		if l.get("k", 0) == 3:   # a boss missile shows a ring where it lands for its whole flight
-			var lr := iso(l.x1, l.y1)
-			draw_set_transform(lr, 0, Vector2(1, 0.5))
-			draw_arc(Vector2.ZERO, v.TW2 * l.R, 0, TAU, 40, Color(1, 70 / 255.0, 50 / 255.0, 0.55 + 0.35 * sin(sim.game.time * 22.0)), 2.0 * v.u)
-			draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
-		var t: float = clampf(l.t / l.T, 0, 1)
-		var x: float = lerpf(l.x0, l.x1, t)
-		var y: float = lerpf(l.y0, l.y1, t)
-		var g := iso(x, y)
-		var arc := sin(t * PI) * WH * 2.2
-		oval(g.x, g.y, 3 * u, 1.5 * u, Color(0, 0, 0, 0.3))
-		draw_circle(Vector2(g.x, g.y - WH * 0.5 - arc), 2.6 * u, c("#3d4a2a"))
-	# tracers
-	for b in sim.bullets:
-		var p0 := iso(b.x, b.y)
-		var p1 := iso(b.x - b.vx * 0.02, b.y - b.vy * 0.02)
-		var col := c("#ffe9a8") if b.team == 0 else c("#ff8a5a")
-		draw_line(Vector2(p0.x, p0.y - WH * 0.62), Vector2(p1.x, p1.y - WH * 0.62), col, maxf(1.0, 1.6 * u))
-	# particles
-	for q in parts:
-		var pp := iso(q.x, q.y)
-		var a: float = clampf(q.life / q.max, 0, 1)
-		var col: Color = q.col
-		col.a = a
-		draw_rect(Rect2(pp.x - 1.2 * u * q.s, pp.y - q.z * u - 1.2 * u * q.s, 2.4 * u * q.s, 2.4 * u * q.s), col)
+		cv.draw_set_transform(Vector2(sp.x, sp.y - v.WH * 0.6), 0, Vector2(1, 0.6))
+		cv.draw_arc(Vector2.ZERO, v.TW2 * 1.2, a0 - 1.1, a0 + 1.1, 18, Color(1, 0.9, 0.85, 0.8 * a), 3 * v.u)
+		cv.draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
+	cv = self
+
+
+## muzzle and blast flashes, and the city's lamp glow, added onto the frame (the browser's 'lighter')
+func _paint_glow(layer: CanvasItem) -> void:
+	cv = layer
 	for f in flashes:
-		var fp := iso(f.x, f.y)
+		var fp := iso(f.x, f.y) - Vector2(0, v.WH * 0.5)
 		var a: float = f.life / f.max
-		draw_circle(Vector2(fp.x, fp.y - WH * 0.5), f.r * v.TW2 * (0.5 if f.muzzle else 0.9) * (0.6 + 0.4 * a), Color(1, 0.85, 0.5, 0.45 * a))
+		var r: float = v.TW2 * f.r * (1.0 if f.muzzle else 2.2) * (1.0 if f.muzzle else 1.4 - a * 0.4)
+		cv.draw_texture_rect(glow_tex, Rect2(fp.x - r, fp.y - r, r * 2, r * 2), false, Color(1, 1, 1, a))
+	if sim.map_id == "city" and not sim.game.get("dark", false) and light.L > 0.25:
+		var r := v.TW2 * 3.5 * 0.9
+		for l in sim.lay.lamps:
+			var cc := iso(l[0] + 0.5 + l[2] * 0.7, l[1] + 0.5 + l[3] * 0.7)
+			if cc.x < -r or cc.x > v.W + r or cc.y < -r or cc.y > v.H + r:
+				continue
+			cv.draw_texture_rect(glow_tex, Rect2(cc.x - r, cc.y - r, r * 2, r * 2), false, Color(1, 1, 1, 0.18))
+	cv = self
+
+
+## storm streaks, nameplates, floating text, prompts, the crosshair, edge arrows, then the HUD
+func _paint_ui(layer: CanvasItem) -> void:
+	cv = layer
+	var u := v.u
+	_draw_storm()
+	_draw_nameplates()
 	for f in floats:
 		var fp := iso(f.x, f.y)
 		var col: Color = f.col
 		col.a = clampf(f.t / 0.5, 0, 1)
-		label(f.text, fp.x, fp.y - WH * 1.6 - (1.4 - f.t) * 18 * u, col, 11)
+		label(f.text, fp.x, fp.y - v.WH * 1.6 - (1.4 - f.t) * 18 * u, col, 11)
+	var p: Dictionary = sim.player
+	var playing: bool = sim.game.phase != "over" and not sim.game.paused and not armory_open and not skills_open
+	if playing:
+		_draw_prompts(p)
+		if p.alive:
+			_draw_crosshair(p)
+			_draw_shells(p)
+	_draw_edge_arrows()
 	_draw_hud()
+	cv = self
+
+
+## drawTracer: the standard tracer, a tapered streak with a hot core that fades toward its tail; raiders' rounds are a
+## plain orange line. It sits at the bullet's height on the firing line.
+func _draw_tracer(b: Dictionary) -> void:
+	var u := v.u
+	var L := 0.018
+	var a := iso(b.x, b.y)
+	var hz: float = ((sim.bullet_z(b) - 0.7) if b.has("z0") else sim.height_at(b.x, b.y)) * v.height_px() - sim.height_at(b.x, b.y) * v.height_px()
+	a.y -= hz + v.WH * 0.62
+	var sp := Vector2(b.vx, b.vy).length()
+	var tail := Vector2(a.x - (b.vx - b.vy) * L * v.TW2, a.y - (b.vx + b.vy) * L * v.TH2 + b.get("zSlope", 0.0) * sp * L * v.height_px())
+	var pad := 24 * u
+	if maxf(a.x, tail.x) < -pad or minf(a.x, tail.x) > v.W + pad or maxf(a.y, tail.y) < -pad or minf(a.y, tail.y) > v.H + pad:
+		return
+	var w: float = (2.6 if b.get("heavy", false) else 1.8) * u
+	if b.team != 0:
+		cv.draw_line(a, tail, Color(1, 140 / 255.0, 90 / 255.0, 0.95), w)
+		cv.draw_circle(a, w / 2, Color(1, 140 / 255.0, 90 / 255.0, 0.95))
+		return
+	var ln := minf(a.distance_to(tail), w * 22)
+	if ln < 0.01:
+		return
+	var dir := (tail - a) / a.distance_to(tail)
+	var nrm := dir.orthogonal()
+	var hgt := w * 6.5
+	var P := func(px: float, py: float) -> Vector2: return a + dir * (px / 192.0 * ln) + nrm * ((py - 24.0) / 48.0 * hgt)
+	var fade := func(px: float) -> float: return 1.0 if px / 192.0 <= 0.64 else maxf(0.0, 1.0 - (px / 192.0 - 0.64) / 0.36)
+	var shape := [[0, 24], [7, 17], [35, 18], [190, 24], [35, 30], [7, 31]]
+	var glow := PackedVector2Array()
+	var pts := PackedVector2Array()
+	var cols := PackedColorArray()
+	var gcol := PackedColorArray()
+	var col := Color(1, 236 / 255.0, 170 / 255.0, 0.95)
+	for q in shape:
+		pts.append(P.call(q[0], q[1]))
+		cols.append(Color(col, col.a * fade.call(q[0])))
+		glow.append(P.call(q[0], 24 + (q[1] - 24) * 1.9))
+		gcol.append(Color(col, 0.22 * fade.call(q[0])))
+	cv.draw_polygon(glow, gcol)
+	cv.draw_polygon(pts, cols)
+	var core := [[0, 24], [10, 22.7], [145, 24], [10, 25.3]]
+	var cp := PackedVector2Array()
+	var cc := PackedColorArray()
+	for q in core:
+		cp.append(P.call(q[0], q[1]))
+		cc.append(Color(248 / 255.0, 1, 1, fade.call(q[0])))
+	cv.draw_polygon(cp, cc)
+
+
+## the storm over the yard: rain streaks, blowing dust or falling ash, in screen space
+func _draw_storm() -> void:
+	if wx_a < 0.01:
+		return
+	var L: Dictionary = Sim.STORM.look.get(sim.map_id, Sim.STORM.look.yard)
+	var kind: String = STORM_KIND.get(sim.map_id, "dust")
+	var t: float = sim.game.time
+	var W := v.W
+	var H := v.H
+	var n := 36 if W < 760 else 72
+	if kind == "rain":
+		var col := Color(200 / 255.0, 220 / 255.0, 235 / 255.0, 0.45 * wx_a)
+		for i in int(n * 1.5):
+			var h1 := Pal.hash2(i, 7)
+			var h2 := Pal.hash2(i, 13)
+			var sp := 0.8 + h2 * 0.6
+			var y := fposmod(h2 * H + t * 620 * sp, H + 60) - 30
+			var x := fposmod(h1 * W * 1.2 - t * 90 * sp, W * 1.2) - W * 0.1
+			cv.draw_line(Vector2(x, y), Vector2(x - 5, y + 16), col, 1.1)
+	elif kind == "dust":
+		var col := Color(226 / 255.0, 196 / 255.0, 140 / 255.0, 0.38 * wx_a)
+		for i in n:
+			var h1 := Pal.hash2(i, 7)
+			var h2 := Pal.hash2(i, 13)
+			var sp := 0.7 + h2 * 0.7
+			var x := fmod(h1 * W * 1.4 + t * 300 * sp, W * 1.4) - W * 0.2
+			var y := h2 * H + sin(t * 2 + i) * 6
+			cv.draw_line(Vector2(x, y), Vector2(x + 26 + h1 * 20, y + 3), col, 1.6)
+	else:
+		var col := Color(190 / 255.0, 180 / 255.0, 168 / 255.0, 0.55 * wx_a)
+		for i in n:
+			var h1 := Pal.hash2(i, 7)
+			var h2 := Pal.hash2(i, 13)
+			var sp := 0.5 + h2 * 0.6
+			var y := fposmod(h2 * H + t * 40 * sp, H + 20) - 10
+			var x := h1 * W + sin(t * 1.3 + i) * 14
+			cv.draw_rect(Rect2(x, y, 2.2, 2.2), col)
+
+
+func _plate_bar(x: float, y: float, w: float, h: float, frac: float, col: Color, pulse: bool) -> void:
+	cv.draw_rect(Rect2(x - w / 2 - 1, y - 1, w + 2, h + 2), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.82))
+	var cc := (c("#ff5a3a") if pulse else c("#d6402a")) if frac < 0.3 else col
+	cv.draw_rect(Rect2(x - w / 2, y, w * clampf(frac, 0, 1), h), cc)
+
+
+## nameplates: your health above your head, Delgado's name and bar above his (drawn after the lighting)
+func _draw_nameplates() -> void:
+	var u := v.u
+	var p: Dictionary = sim.player
+	var pulse := sin(sim.game.time * 9) > 0
+	var W1 := clampf(34 * u, 26, 44)
+	var W0 := clampf(40 * u, 30, 50)
+	var BH := clampf(4.4 * u, 3.5, 6)
+	if p.alive:
+		var cc := iso(p.x, p.y)
+		var top := cc.y - 46 * u
+		var tick := " ✓" if sim.game.get("bo") != null and sim.game.bo.stage == "ready" and p.get("boReady", false) else ""
+		_plate_bar(cc.x, top - 2 * u, W0, BH * 1.2, p.hp / p.max, c("#e8dcc0"), pulse)
+		label(str(ceili(p.hp)) + tick, cc.x, top - 7 * u, c("#ff8a6a") if p.hp / p.max < 0.3 else c("#f2ead6"), 10)
+	var q: Dictionary = sim.qm
+	if q.alive and not q.get("gone", false):
+		var cc := iso(q.x, q.y)
+		var top := cc.y - 46 * u
+		label("DELGADO", cc.x, top - 7 * u, c("#d6c47a"), 9)
+		_plate_bar(cc.x, top - 2 * u, W1, BH, q.hp / q.max, c("#d6c47a"), pulse)
+
+
+## keyCap: a key in a box and what it does
+func _key_cap(x: float, y: float, key: String, text: String, col: Color) -> void:
+	var u := v.u
+	var fs := int(round(12 * u))
+	var kw := maxf(18 * u, font.get_string_size(key, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x + 10 * u) if key != "" else 0.0
+	var tw := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+	var h := 20 * u
+	var w := kw + (6 * u if key != "" else 0.0) + tw + 16 * u
+	var x0: float = round(x - w / 2)
+	var y0: float = round(y - h / 2)
+	cv.draw_rect(Rect2(x0, y0, w, h), Color(14 / 255.0, 12 / 255.0, 10 / 255.0, 0.86))
+	cv.draw_rect(Rect2(x0 + 0.5, y0 + 0.5, w - 1, h - 1), col, false, 1.0)
+	var cx := x0 + 8 * u
+	var base := y0 + h / 2 + fs * 0.36
+	if key != "":
+		cv.draw_rect(Rect2(cx, y0 + 3 * u, kw, h - 6 * u), col)
+		var kws := font.get_string_size(key, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+		cv.draw_string(font, Vector2(cx + kw / 2 - kws / 2, base), key, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, c("#17140f"))
+		cx += kw + 6 * u
+	cv.draw_string(font, Vector2(cx, base), text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, c("#f3e9d6"))
+
+
+func _draw_prompts(p: Dictionary) -> void:
+	if not p.alive:
+		return
+	var u := v.u
+	if sim.can_shop(p):
+		var co: Dictionary = sim.core
+		if sim.blackout():   # the nearest held POI
+			for k in sim.cores:
+				if Vector2(p.x - k.i - 0.5, p.y - k.j - 0.5).length() < 2.7 and not k.get("lost", false):
+					co = k
+		var sc := iso(co.i + 0.5, co.j + 0.5)
+		_key_cap(sc.x, sc.y - v.WH * 1.15 - 52 * u, "E", "ARMORY", c("#e2b436"))
+	var q: Dictionary = sim.qm
+	if not q.get("gone", false) and not q.alive:
+		var d := Vector2(q.x - p.x, q.y - p.y).length()
+		if d < 2.2:
+			var sc := iso(q.x, q.y)
+			_key_cap(sc.x, sc.y - 34 * u, "", "REVIVING DELGADO" if d < 1 else "STAND CLOSE TO REVIVE DELGADO", c("#a9bccb"))
+
+
+func _draw_crosshair(p: Dictionary) -> void:
+	if not mouse_seen:
+		return
+	var m := get_viewport().get_mouse_position()
+	var w := _screen_to_world(m.x, m.y + v.WH * 0.55)
+	var hot := false
+	for e in sim.enemies:
+		if not e.dead and Vector2(e.x - w.x, e.y - w.y).length() < 0.45:
+			hot = true
+			break
+	var r := (6.0 if hot else 8.0) * maxf(1.0, v.u * 0.9)
+	var col := c("#ff6a4a") if hot else c("#f3e9d6")
+	for pz in [[3.4, Color(12 / 255.0, 10 / 255.0, 8 / 255.0, 0.75)], [1.6, col]]:
+		cv.draw_arc(m, r, 0, TAU, 32, pz[1], pz[0])
+		for d in [Vector2(1, 0), Vector2(-1, 0), Vector2(0, 1), Vector2(0, -1)]:
+			cv.draw_line(m + d * (r + 2), m + d * (r + 7), pz[1], pz[0])
+	cv.draw_rect(Rect2(m.x - 1, m.y - 1, 2, 2), col)
+
+
+## the Grenadier's tube: a shell for each round, red for loaded
+func _draw_shells(p: Dictionary) -> void:
+	var G: Dictionary = p.gun
+	if not G.has("mag") or not p.has("ammo"):
+		return
+	var u := v.u
+	var cc := iso(p.x, p.y)
+	var n: int = G.mag
+	var sw := 4 * u
+	var gap := 2 * u
+	var x0 := cc.x - (n * sw + (n - 1) * gap) / 2
+	var y0 := cc.y + 9 * u
+	for i in n:
+		var x := x0 + i * (sw + gap)
+		cv.draw_rect(Rect2(x - 1, y0 - 1, sw + 2, 8 * u + 2), Color(12 / 255.0, 10 / 255.0, 8 / 255.0, 0.75))
+		if i < p.ammo:
+			cv.draw_rect(Rect2(x, y0, sw, 5.4 * u), c("#c23a2e"))
+			cv.draw_rect(Rect2(x, y0 + 5.4 * u, sw, 2.6 * u), c("#d8b25a"))
+	if p.get("rl", 0.0) > 0 and p.ammo < n:
+		label("RELOADING" if p.ammo <= 0 else "LOADING", cc.x, y0 + 19 * u, c("#ff6a4a") if p.ammo <= 0 else c("#dcd2ba"), 9)
+
+
+const ECOL := {"rifle": "#d65a3a", "gren": "#e2b436", "breach": "#ff8a5a", "shield": "#9aa4ae", "medic": "#8fe0a0", "spotter": "#ff5a4a", "fire": "#ff9a2a"}
+
+
+## raiders off screen: an arrow on the edge pointing at each, bigger for a boss
+func _draw_edge_arrows() -> void:
+	var top := 110.0
+	for e in sim.enemies:
+		if e.dead:
+			continue
+		var cc := iso(e.x, e.y)
+		if cc.x > 14 and cc.x < v.W - 14 and cc.y > top and cc.y < v.H - 14:
+			continue
+		var ex := clampf(cc.x, 18, v.W - 18)
+		var ey := clampf(cc.y, top + 8, v.H - 18)
+		var a := atan2(cc.y - v.H / 2, cc.x - v.W / 2)
+		var k := 1.6 if e.type == "boss" else 1.0
+		var col: Color = c(Sim.boss_def(e.boss).col) if e.type == "boss" else c(ECOL.get(e.type, "#ff8a5a"))
+		var xf := Transform2D(a, Vector2(k, k), 0, Vector2(ex, ey))
+		cv.draw_set_transform_matrix(xf)
+		cv.draw_colored_polygon(PackedVector2Array([Vector2(8, 0), Vector2(-5, -6), Vector2(-5, 6)]), col)
+		cv.draw_set_transform_matrix(Transform2D.IDENTITY)
 
 
 func _draw_debris(i: int, j: int, mat: int) -> void:
@@ -631,16 +971,16 @@ func _draw_wall(i: int, j: int, w: Dictionary) -> void:
 		for t in [0.2, 0.4, 0.6, 0.8]:
 			for pq in [[D, C], [C, B]]:
 				var a: Vector2 = pq[0].lerp(pq[1], t)
-				draw_line(a, Vector2(a.x, a.y - h), line, lw)
+				cv.draw_line(a, Vector2(a.x, a.y - h), line, lw)
 	else:
 		for vv in [0.33, 0.66]:
 			for pq in [[D, C], [C, B]]:
-				draw_line(up(pq[0], h * vv), up(pq[1], h * vv), line, lw)
+				cv.draw_line(up(pq[0], h * vv), up(pq[1], h * vv), line, lw)
 		if w.mat == 1:
 			for pq in [[D, C], [C, B]]:
 				for tv in [[0.3, 0.0], [0.7, 0.0], [0.5, 0.33], [0.15, 0.66], [0.85, 0.66]]:
 					var a := up(pq[0].lerp(pq[1], tv[0]), h * tv[1])
-					draw_line(a, Vector2(a.x, a.y - h * 0.33), line, lw)
+					cv.draw_line(a, Vector2(a.x, a.y - h * 0.33), line, lw)
 	if w.door:
 		var dc := c("#3b4142") if w.mat == 2 else (c("#3a2418") if w.mat == 1 else c("#3d2a17"))
 		for pq in [[D, C], [C, B]]:
@@ -648,7 +988,7 @@ func _draw_wall(i: int, j: int, w: Dictionary) -> void:
 			var b: Vector2 = pq[0].lerp(pq[1], 0.7)
 			quad(a, b, up(b, h * 0.82), up(a, h * 0.82), dc)
 			var hd := up(pq[0].lerp(pq[1], 0.62), h * 0.42)
-			draw_rect(Rect2(hd.x - u, hd.y - u, 2 * u, 2 * u), c("#e2b436"))
+			cv.draw_rect(Rect2(hd.x - u, hd.y - u, 2 * u, 2 * u), c("#e2b436"))
 	if st > 0:
 		var n := 2 if st == 1 else 3
 		var col := Color(40 / 255.0, 44 / 255.0, 45 / 255.0, 0.75) if w.mat == 2 and st == 1 else c("#0e0b09")
@@ -661,8 +1001,8 @@ func _draw_wall(i: int, j: int, w: Dictionary) -> void:
 	if w.fire > 0:
 		var cc := iso(i + 0.5, j + 0.5)
 		var t := Time.get_ticks_msec() / 1000.0
-		draw_circle(Vector2(cc.x, cc.y - h), v.TW2 * (0.55 + 0.08 * sin(t * 13.0 + i)), Color(1, 0.55, 0.2, 0.35))
-		draw_circle(Vector2(cc.x, cc.y - h - 4 * u), v.TW2 * 0.25, Color(1, 0.8, 0.4, 0.5))
+		cv.draw_circle(Vector2(cc.x, cc.y - h), v.TW2 * (0.55 + 0.08 * sin(t * 13.0 + i)), Color(1, 0.55, 0.2, 0.35))
+		cv.draw_circle(Vector2(cc.x, cc.y - h - 4 * u), v.TW2 * 0.25, Color(1, 0.8, 0.4, 0.5))
 
 
 func _draw_node(n: Dictionary) -> void:
@@ -711,9 +1051,9 @@ func _draw_stake() -> void:
 	var top := iso(i + 0.5, j + 0.5)
 	var px := top.x
 	var py := top.y - WH * 1.15
-	draw_line(Vector2(px, py), Vector2(px, py - 28 * u), c("#1b1812"), 2 * u)
+	cv.draw_line(Vector2(px, py), Vector2(px, py - 28 * u), c("#1b1812"), 2 * u)
 	var fl := sin(sim.game.time * 5) * 2 * u
-	draw_colored_polygon(PackedVector2Array([Vector2(px, py - 28 * u), Vector2(px + 15 * u, py - 24 * u + fl), Vector2(px, py - 19 * u)]), band)
+	cv.draw_colored_polygon(PackedVector2Array([Vector2(px, py - 28 * u), Vector2(px + 15 * u, py - 24 * u + fl), Vector2(px, py - 19 * u)]), band)
 
 
 func _draw_ghost() -> void:
@@ -727,166 +1067,55 @@ func _draw_ghost() -> void:
 	quad(iso(t.i, t.j), iso(t.i + 1, t.j), iso(t.i + 1, t.j + 1), iso(t.i, t.j + 1), col)
 	var line := Color(col, 0.8)
 	var pts := PackedVector2Array([iso(t.i, t.j), iso(t.i + 1, t.j), iso(t.i + 1, t.j + 1), iso(t.i, t.j + 1), iso(t.i, t.j)])
-	draw_polyline(pts, line, maxf(1.0, v.u))
+	cv.draw_polyline(pts, line, maxf(1.0, v.u))
 
 
 ## The browser's LOOK table (16-characters.js) for raiders, and QM_LOOK for Delgado
 const LOOK := {
 	"rifle": {"body": "#7e3a2a", "vest": "#3f231a", "pants": "#2b2420", "head": "#b08868", "helmet": "#2f2820", "bandana": "#a8342a"},
-	"gren": {"body": "#6c5738", "vest": "#2f261b", "pants": "#2b2420", "head": "#a98262", "helmet": "#241f19", "pack": "#3a2e1f", "bandolier": true, "bandana": "#a8342a"},
+	"gren": {"body": "#6c5738", "vest": "#2f261b", "pants": "#2b2420", "head": "#a98262", "helmet": "#241f19", "pack": "#3a2e1f", "bandolier": true, "bandana": "#a8342a", "gl": 17},
 	"breach": {"body": "#5a2a22", "vest": "#1f1512", "pants": "#231c19", "head": "#a07a5c", "cap": "#1a1512", "bandana": "#a8342a", "nogun": true},
-	"shield": {"body": "#3f4048", "vest": "#23242a", "pants": "#26262b", "head": "#a98262", "helmet": "#2a2b30", "bandana": "#a8342a", "weapon": "shield", "big": 1.1},
-	"medic": {"body": "#6a5a48", "vest": "#e8e2d0", "pants": "#2b2420", "head": "#b08868", "helmet": "#e8e2d0", "pack": "#e8e2d0", "cross": true},
-	"spotter": {"body": "#4a4a36", "vest": "#2a2a1e", "pants": "#2b2420", "head": "#a98262", "boonie": "#8a2a22", "bandana": "#a8342a"},
-	"fire": {"body": "#6a3a1e", "vest": "#2a1a10", "pants": "#231c19", "head": "#a07a5c", "wrap": "#d06a1e", "pack": "#3a2a1a", "weapon": "bottle", "nogun": true},
+	"shield": {"body": "#3f4048", "vest": "#23242a", "pants": "#26262b", "head": "#a98262", "helmet": "#2a2b30", "bandana": "#a8342a", "weapon": "shield", "big": 1.1, "gl": 8},
+	"medic": {"body": "#6a5a48", "vest": "#e8e2d0", "pants": "#2b2420", "head": "#b08868", "helmet": "#e8e2d0", "pack": "#e8e2d0", "cross": true, "gl": 8},
+	"spotter": {"body": "#4a4a36", "vest": "#2a2a1e", "pants": "#2b2420", "head": "#a98262", "boonie": "#8a2a22", "bandana": "#a8342a", "gl": 8},
+	"fire": {"body": "#6a3a1e", "vest": "#2a1a10", "pants": "#231c19", "head": "#a07a5c", "wrap": "#d06a1e", "pack": "#3a2a1a", "weapon": "bottle"},
 }
-const QM_LOOK := {"body": "#9e9a78", "vest": "#3d4a52", "pants": "#3a3a33", "head": "#b58f6e", "cap": "#3d4a52", "pack": "#5a4a30", "weapon": "sg"}
+const QM_LOOK := {"body": "#9e9a78", "vest": "#3d4a52", "pants": "#3a3a33", "head": "#b58f6e", "cap": "#3d4a52", "pack": "#5a4a30", "gl": 14, "weapon": "sg"}
 ## buildLook (16-characters.js) on the default "std" skin: each class's kit and headgear
 static func class_look(cls: String) -> Dictionary:
-	var o := {"body": "#b9aa82", "vest": "#4d6b47", "pants": "#4a4636", "head": "#c19a78"}
+	var o := {"body": "#b9aa82", "vest": "#4d6b47", "pants": "#4a4636", "head": "#c19a78", "gl": 14}
 	match cls:
 		"sniper":
+			o.gl = 19
 			o.boonie = "#5b5a3c"
-			o.weapon = "rifle"
 		"grenadier":
 			o.pack = "#4a3a26"
 			o.bandolier = true
+			o.gl = 15
 			o.weapon = "sg"
 			o.helmet = "#4a5238"
 		"quartermaster":
 			o.pack = "#5a4a30"
 			o.cross = true
+			o.gl = 11
 			o.cap = "#4a5238"
-			o.weapon = "smg"
 		_:
 			o.helmet = "#4a5238"
 	return o
 
 
-## A cut-down drawPerson (16-characters.js): shadow, legs, body, vest, head and headgear, the weapon on the aim side,
-## and each raider's one tell (riot shield, satchel, medic kit, red boonie, lit bottle, grenade strap). No cosmetics yet.
-func _draw_person(x: float, y: float, o: Dictionary) -> void:
-	var s := iso(x, y)
-	var k: float = v.u * FIG * o.get("big", 1.0)
-	var walk: float = o.walk
-	var bob := -absf(sin(walk)) * 1.1
-	var sd := v.world_dir_to_screen(o.aim)
-	var side := 1.0 if sd.x >= 0 else -1.0
-	var front := sd.y >= -0.15
-	var lit: bool = o.flash
-	var body := Color.WHITE if lit else c(o.body)
-	var vest := c(o.vest)
-	var skin := Color.WHITE if lit else c(o.head)
-	var pants := c(o.get("pants", "#3b372c"))
-	var dark := c("#1d1a16")
-	oval(s.x, s.y, 10 * k, 4.8 * k, Color(0, 0, 0, 0.38))
-	draw_set_transform(s, 0, Vector2(k, k))
-	if o.has("ring"):
-		draw_arc(Vector2.ZERO, 10.5, 0, TAU, 24, c(o.ring), 1.2)
-	var sw := sin(walk) * 2.6
-	var hy := -12 + bob
-	draw_line(Vector2(-2.5, hy), Vector2(-2.8 + sw, -2), pants, 3.2)
-	draw_line(Vector2(2.5, hy), Vector2(2.8 - sw, -2), pants, 3.2)
-	draw_rect(Rect2(-2.8 + sw + side * 0.8 - 2.3, -2 + 0.6 - 1.3, 4.6, 2.6), c("#1a1612"))
-	draw_rect(Rect2(2.8 - sw + side * 0.8 - 2.3, -2 + 0.6 - 1.3, 4.6, 2.6), c("#1a1612"))
-	var hand := Vector2(sd.x * 6, -17 + bob + sd.y * 3)
-	var weapon: String = o.get("weapon", "")
-	var nogun: bool = o.get("nogun", false)
-	var held := func() -> void:
-		if weapon == "shield":
-			# a riot shield held out toward the aim, scuffed as it takes hits
-			var cc := Vector2(sd.x * 8, -16 + bob + sd.y * 3)
-			var wear: float = o.get("shield_wear", 0.0)
-			var sc := c("#9fb3b8").lerp(c("#5d6466"), wear)
-			draw_colored_polygon(PackedVector2Array([cc + Vector2(-4.5, -9), cc + Vector2(4.5, -9), cc + Vector2(4.5, 7), cc + Vector2(-4.5, 7)]), Color(sc, 0.9))
-			draw_polyline(PackedVector2Array([cc + Vector2(-4.5, -9), cc + Vector2(4.5, -9), cc + Vector2(4.5, 7), cc + Vector2(-4.5, 7), cc + Vector2(-4.5, -9)]), c("#2a2b30"), 0.9)
-			draw_rect(Rect2(cc.x - 3, cc.y - 6, 6, 1.6), c("#1c2a30"))
-		elif weapon == "bottle":
-			var bt := hand + Vector2(0, -3)
-			draw_rect(Rect2(bt.x - 1.3, bt.y - 2, 2.6, 5), c("#5a8a4a"))
-			var fl := sin(sim.game.time * 20.0) * 0.6
-			draw_circle(bt + Vector2(fl, -3.5), 1.6, c("#ffb04a"))
-		elif weapon == "rpg":
-			var tube := hand + sd * 4.0
-			draw_line(tube - sd * 8.0 + Vector2(0, -2), tube + sd * 8.0 + Vector2(0, -2), c("#3d4030"), 4.2)
-			draw_circle(tube + sd * 8.0 + Vector2(0, -2), 2.4, c("#6a6e52"))
-		elif weapon == "swordb":
-			draw_line(hand, hand + sd * 13.0 + Vector2(0, -3), c("#9ff4ff"), 2.0)
-			draw_line(hand, hand + sd * 13.0 + Vector2(0, -3), Color(c("#3ae0e0"), 0.4), 4.0)
-		elif weapon == "drill":
-			var tip := hand + sd * 12.0
-			draw_colored_polygon(PackedVector2Array([hand + Vector2(sd.y, -sd.x) * 3, hand - Vector2(sd.y, -sd.x) * 3, tip]), c("#8a8f90"))
-			draw_line(hand - sd * 2, hand + sd * 3, c("#3a3326"), 4.0)
-		elif weapon == "rifle":
-			draw_line(hand - sd * 3.0, hand + sd * 16.0, dark, 2.2)
-			draw_line(hand + sd * 2.0 + Vector2(0, -2), hand + sd * 6.0 + Vector2(0, -2), dark, 2.6)   # scope
-		elif weapon == "smg":
-			draw_line(hand, hand + sd * 7.0, dark, 2.6)
-			draw_line(hand + sd * 2.0, hand + sd * 2.0 + Vector2(0, 3), dark, 1.6)
-		elif weapon == "sword":
-			draw_line(hand, hand + sd * 13.0 + Vector2(0, -3), c("#d8dcd8"), 1.8)
-			draw_line(hand - Vector2(sd.y, -sd.x) * 2.0, hand + Vector2(sd.y, -sd.x) * 2.0, c("#3a2a1a"), 1.6)
-		elif weapon == "zap":
-			draw_line(hand, hand + sd * 11.0, dark, 2.8)
-			draw_circle(hand + sd * 11.0, 1.8, Color(c("#7fe0ff"), 0.6 + 0.4 * sin(sim.game.time * 14.0)))
-		elif not nogun:
-			var ln := 11.0 if weapon == "sg" else 9.0
-			draw_line(hand, hand + sd * ln, dark, 2.6 if weapon == "sg" else 2.4)
-	if o.has("pack") and front:
-		draw_rect(Rect2(-side * 1.2 - 6.5, -19.5 + bob - 5.5, 13, 11), c(o.pack))
-	if not front:
-		held.call()
-	draw_colored_polygon(PackedVector2Array([Vector2(-6.2, -24.5 + bob), Vector2(6.2, -24.5 + bob), Vector2(4.8, -11.5 + bob), Vector2(-4.8, -11.5 + bob)]), body)
-	draw_colored_polygon(PackedVector2Array([Vector2(-5, -23 + bob), Vector2(5, -23 + bob), Vector2(4.3, -14.5 + bob), Vector2(-4.3, -14.5 + bob)]), vest)
-	if o.get("cross", false):
-		draw_rect(Rect2(-0.8, -21 + bob, 1.6, 5), c("#c8322a"))
-		draw_rect(Rect2(-2.5, -19.3 + bob, 5, 1.6), c("#c8322a"))
-	if o.get("bandolier", false):
-		draw_line(Vector2(-5.2 * side, -23.5 + bob), Vector2(4.6 * side, -13 + bob), c("#8a6a36"), 1.8)
-		if front:
-			for n in 4:
-				var t := (n + 0.6) / 4.4
-				draw_circle(Vector2(-5.2 * side + 9.8 * side * t, -23.5 + 10.5 * t + bob), 1.05, c("#8aa83f"))
-	if o.has("wrap"):
-		draw_rect(Rect2(-6.2, -15 + bob, 12.4, 2), c(o.wrap))
-	if o.get("satchel", false):
-		draw_rect(Rect2(side * 3, -15 + bob, 5, 4.5), c("#5a4630"))
-		draw_rect(Rect2(side * 3 + 1, -14 + bob, 3, 1), c("#d65a3a"))
-	draw_circle(Vector2(side * 0.6, -29 + bob), 4.6, skin)
-	if o.has("bandana"):
-		draw_rect(Rect2(side * 0.6 - 4.4, -28 + bob, 8.8, 2.2), c(o.bandana))
-	if o.has("helmet"):
-		draw_circle(Vector2(side * 0.3, -31 + bob), 4.4, c(o.helmet))
-	elif o.has("cap"):
-		draw_circle(Vector2(side * 0.3, -31.5 + bob), 3.9, c(o.cap))
-		draw_rect(Rect2(side * 2.2 - 2.5 + side * 1.5, -30.5 + bob, 5, 1.4), c(o.cap))
-	elif o.has("boonie"):
-		draw_set_transform(s + Vector2(side * 0.3, -31.5 + bob) * k, 0, Vector2(k, k * 0.45))
-		draw_circle(Vector2.ZERO, 7.0, c(o.boonie))
-		draw_set_transform(s, 0, Vector2(k, k))
-		draw_circle(Vector2(side * 0.3, -32.5 + bob), 3.6, c(o.boonie))
-		if sin(sim.game.time * 3.0 + x) > 0.7:
-			draw_circle(Vector2(side * 4.5, -28 + bob), 1.1, c("#fff6c8"))   # scope glint
-	if front:
-		if not nogun or weapon == "bottle":
-			draw_line(Vector2(side * 5, -22.5 + bob), hand, body, 2.6)
-		held.call()
-	draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
-	if o.has("hp") and o.hp < 1:
-		draw_rect(Rect2(s.x - 8 * v.u, s.y - 43 * v.u, 16 * v.u, 2.6 * v.u), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.8))
-		draw_rect(Rect2(s.x - 8 * v.u, s.y - 43 * v.u, 16 * v.u * maxf(0, o.hp), 2.6 * v.u), c("#d65a3a"))
-	if o.has("tag"):
-		label(o.tag, s.x, s.y - 46 * v.u * o.get("big", 1.0), c(o.get("tag_col", "#a9bccb")), 11 if o.has("big") else 9)
-
-
-func _draw_downed(x: float, y: float, text: String, prog: float) -> void:
-	var s := iso(x, y)
-	var u := v.u
-	oval(s.x, s.y, 11 * u, 5 * u, Color(0, 0, 0, 0.38))
-	oval(s.x, s.y - 3 * u, 10 * u, 4 * u, c("#5a5240"))
-	label(text, s.x, s.y - 18 * u, c("#d65a3a"), 10)
-	if prog > 0:
-		draw_rect(Rect2(s.x - 10 * u, s.y - 14 * u, 20 * u * clampf(prog, 0, 1), 2.5 * u), c("#8fe0a0"))
+## enemies under an ammo effect: an orange ring while they burn, a blue one while they're slowed
+func _draw_ammo_status(e: Dictionary) -> void:
+	if not (e.get("burnT", 0.0) > 0 or e.get("slowT", 0.0) > 0):
+		return
+	var cc := iso(e.x, e.y)
+	if e.get("burnT", 0.0) > 0:
+		cv.draw_set_transform(Vector2(cc.x, cc.y - 2 * v.u), 0, Vector2(1, 0.4))
+		cv.draw_arc(Vector2.ZERO, 10 * v.u, 0, TAU, 32, c("#ff8244"), 1.8 * v.u)
+	if e.get("slowT", 0.0) > 0:
+		cv.draw_set_transform(Vector2(cc.x, cc.y + 2 * v.u), 0, Vector2(1, 5.0 / 13))
+		cv.draw_arc(Vector2.ZERO, 13 * v.u, 0, TAU, 32, c("#81dafa"), 1.8 * v.u)
+	cv.draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 
 
 # ---------------------------------------------------------------- HUD
@@ -900,7 +1129,7 @@ func _draw_hud() -> void:
 	var paper := c("#e8dcc0")
 	var dim := c("#9a8f7a")
 	# top bar: phase, clock, stake
-	draw_rect(Rect2(0, 0, W, 34), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.72))
+	cv.draw_rect(Rect2(0, 0, W, 34), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.72))
 	var phase_txt: String
 	if sim.blackout() and g.phase != "over":
 		phase_txt = CityView.phase_text(sim)
@@ -916,22 +1145,22 @@ func _draw_hud() -> void:
 			phase_txt = "%s · %d:%02d · %s" % [fbn, floori(ft / 60), floori(fmod(ft, 60)), "GET TO THE EVAC" if g.fb.evac != null else "%d BOSSES UP" % sim.live_bosses()]
 	else:
 		phase_txt = "GAME OVER"
-	draw_string(font, Vector2(14, 22), phase_txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, paper)
+	cv.draw_string(font, Vector2(14, 22), phase_txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, paper)
 	var bw := 220.0
 	var bx := W - bw - 16
-	draw_string(font, Vector2(bx - 80, 22), "COMMAND" if sim.map_id == "city" else "STAKE", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, dim)
+	cv.draw_string(font, Vector2(bx - 80, 22), "COMMAND" if sim.map_id == "city" else "STAKE", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, dim)
 	if sim.map_id == "city":
 		if city_map == null:
 			city_map = CityView.map_image(sim)
 		CityView.minimap(self, city_map, W - 186, 44, 170)
-	draw_rect(Rect2(bx, 11, bw, 12), Color(0, 0, 0, 0.6))
-	draw_rect(Rect2(bx, 11, bw * maxf(0, sim.core.hp / sim.core.max), 12), gold)
+	cv.draw_rect(Rect2(bx, 11, bw, 12), Color(0, 0, 0, 0.6))
+	cv.draw_rect(Rect2(bx, 11, bw * maxf(0, sim.core.hp / sim.core.max), 12), gold)
 	# bottom-left: health, materials, grenades
 	var y0 := H - 74
-	draw_rect(Rect2(10, y0 - 8, 330, 72), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.72))
-	draw_string(font, Vector2(20, y0 + 10), p.C.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, dim)
-	draw_rect(Rect2(86, y0, 150, 10), Color(0, 0, 0, 0.6))
-	draw_rect(Rect2(86, y0, 150 * maxf(0, p.hp / p.max), 10), c("#8fe0a0") if p.hp / p.max > 0.35 else c("#d65a3a"))
+	cv.draw_rect(Rect2(10, y0 - 8, 330, 72), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.72))
+	cv.draw_string(font, Vector2(20, y0 + 10), p.C.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, dim)
+	cv.draw_rect(Rect2(86, y0, 150, 10), Color(0, 0, 0, 0.6))
+	cv.draw_rect(Rect2(86, y0, 150 * maxf(0, p.hp / p.max), 10), c("#8fe0a0") if p.hp / p.max > 0.35 else c("#d65a3a"))
 	var kit := "NADES %d" % p.nades
 	match p.cls:
 		"soldier":
@@ -942,29 +1171,27 @@ func _draw_hud() -> void:
 			kit += " · SHELLS %d/%d" % [p.ammo, p.gun.mag]
 		"quartermaster":
 			kit += " · SPRINT %ds" % ceili(p.sprCd) if p.sprCd > 0 else " · SPRINT (SHIFT)"
-	draw_string(font, Vector2(246, y0 + 10), kit, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, paper)
+	cv.draw_string(font, Vector2(246, y0 + 10), kit, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, paper)
 	if p.ammoEq[0] != "":
 		for A in Sim.AMMO:
 			if A.id == p.ammoEq[0]:
-				draw_string(font, Vector2(20, y0 - 44), "AMMO · " + A.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, c(A.col))
-	if sim.can_shop(p) and not armory_open:
-		label("E · ARMORY  (%d salvage)" % p.sal, v.W / 2, H - 24, gold, 14)
+				cv.draw_string(font, Vector2(20, y0 - 44), "AMMO · " + A.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, c(A.col))
 	_draw_boss_bar()
 	for m in 3:
 		var x := 20 + m * 100
 		var sel: bool = g.sel == m
 		var col := c(Pal.MAT[m].top)
 		if sel:
-			draw_rect(Rect2(x - 4, y0 + 18, 94, 26), Color(col, 0.25))
-			draw_rect(Rect2(x - 4, y0 + 18, 94, 26), col, false, 1.5)
-		draw_rect(Rect2(x, y0 + 24, 12, 12), col)
-		draw_string(font, Vector2(x + 18, y0 + 36), "%d %s %d" % [m + 1, Pal.MAT[m].name, p.mats[m]], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, paper if sel else dim)
-	draw_string(font, Vector2(20, y0 + 58), "PIECE: %s (F)   SALVAGE %d   DROPS %d" % [g.piece.to_upper(), p.sal, p.kills], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, dim)
+			cv.draw_rect(Rect2(x - 4, y0 + 18, 94, 26), Color(col, 0.25))
+			cv.draw_rect(Rect2(x - 4, y0 + 18, 94, 26), col, false, 1.5)
+		cv.draw_rect(Rect2(x, y0 + 24, 12, 12), col)
+		cv.draw_string(font, Vector2(x + 18, y0 + 36), "%d %s %d" % [m + 1, Pal.MAT[m].name, p.mats[m]], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, paper if sel else dim)
+	cv.draw_string(font, Vector2(20, y0 + 58), "PIECE: %s (F)   SALVAGE %d   DROPS %d" % [g.piece.to_upper(), p.sal, p.kills], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, dim)
 	var q: Dictionary = sim.qm
 	if not q.get("gone", false):   # On Your Own: no Delgado line
 		var qtxt: String = ("DELGADO · %s · %s   (H)" % ["FOLLOW" if q.mode == "follow" else "DEFEND", q.status]) if q.alive else "DELGADO IS DOWN · stand over him"
-		draw_rect(Rect2(10, y0 - 34, 330, 22), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.72))
-		draw_string(font, Vector2(20, y0 - 18), qtxt, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, c("#a9bccb") if q.alive else c("#d65a3a"))
+		cv.draw_rect(Rect2(10, y0 - 34, 330, 22), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.72))
+		cv.draw_string(font, Vector2(20, y0 - 18), qtxt, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, c("#a9bccb") if q.alive else c("#d65a3a"))
 	# what SPACE would do
 	if p.alive and g.phase != "over":
 		var t := sim.build_target(p, g.sel, g.piece == "door")
@@ -982,7 +1209,7 @@ func _draw_hud() -> void:
 	elif skills_open:
 		_draw_skills()
 	elif g.paused or g.phase == "over":
-		draw_rect(Rect2(0, 0, W, H), Color(0, 0, 0, 0.55))
+		cv.draw_rect(Rect2(0, 0, W, H), Color(0, 0, 0, 0.55))
 		if g.paused:
 			label("PAUSED", W / 2, H / 2 - 20, gold, 30)
 			label("ESC / P to resume · R to restart · K skill tree", W / 2, H / 2 + 14, paper, 14)
@@ -1021,17 +1248,17 @@ func _draw_boss_fx() -> void:
 			var col := Color(1, 60 / 255.0, 40 / 255.0, 0.5 + 0.45 * pulse)
 			for o in ([-0.3, 0.0, 0.3] if e.st == 2 else [0.0]):
 				var q := iso(e.x + cos(a + o) * L, e.y + sin(a + o) * L)
-				draw_dashed_line(b0 - Vector2(0, ch * 1.2), q - Vector2(0, ch * 1.2), col, 2.2 * u, 7 * u)
-				draw_set_transform(q, 0, Vector2(1, 0.5))
-				draw_arc(Vector2.ZERO, v.TW2 * 1.5 * (1.15 - f * 0.15), 0, TAU, 40, col, 2.2 * u)
-				draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
+				cv.draw_dashed_line(b0 - Vector2(0, ch * 1.2), q - Vector2(0, ch * 1.2), col, 2.2 * u, 7 * u)
+				cv.draw_set_transform(q, 0, Vector2(1, 0.5))
+				cv.draw_arc(Vector2.ZERO, v.TW2 * 1.5 * (1.15 - f * 0.15), 0, TAU, 40, col, 2.2 * u)
+				cv.draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 		elif kb == "butcher" and e.st == 1:
 			var a0 := atan2(e.aim.y, e.aim.x)
 			var pts := PackedVector2Array([b0])
 			for k in 11:
 				var a := a0 + (k / 10.0 - 0.5) * 2.4
 				pts.append(iso(e.x + cos(a) * 1.5, e.y + sin(a) * 1.5))
-			draw_colored_polygon(pts, Color(1, 50 / 255.0, 40 / 255.0, 0.18 + 0.2 * pulse))
+			cv.draw_colored_polygon(pts, Color(1, 50 / 255.0, 40 / 255.0, 0.18 + 0.2 * pulse))
 		elif kb == "butcher" and e.st == 2:
 			var dx: float = e.lx - e.x
 			var dy: float = e.ly - e.y
@@ -1039,9 +1266,9 @@ func _draw_boss_fx() -> void:
 			var nx := -dy / l * 0.45
 			var ny := dx / l * 0.45
 			var P := PackedVector2Array([iso(e.x + nx, e.y + ny), iso(e.lx + nx, e.ly + ny), iso(e.lx - nx, e.ly - ny), iso(e.x - nx, e.y - ny)])
-			draw_colored_polygon(P, Color(1, 50 / 255.0, 40 / 255.0, 0.16 + 0.22 * pulse))
+			cv.draw_colored_polygon(P, Color(1, 50 / 255.0, 40 / 255.0, 0.16 + 0.22 * pulse))
 			P.append(P[0])
-			draw_polyline(P, Color(1, 80 / 255.0, 60 / 255.0, 0.6 + 0.3 * pulse), 1.6 * u)
+			cv.draw_polyline(P, Color(1, 80 / 255.0, 60 / 255.0, 0.6 + 0.3 * pulse), 1.6 * u)
 		elif kb == "storm" and e.boss == "tempest" and e.st == 1:
 			var a := atan2(e.ly - e.y, e.lx - e.x)
 			for sgn in [-1.0, 1.0]:
@@ -1050,7 +1277,7 @@ func _draw_boss_fx() -> void:
 				var q := iso(clampf(e.x + ox + cos(a) * 12, 0, sim.N), clampf(e.y + oy + sin(a) * 12, 0, sim.N))
 				var p0 := iso(e.x + ox, e.y + oy)
 				var col := Color(191 / 255.0, 244 / 255.0, 1, (0.75 + 0.25 * pulse) if f < 0.36 else (0.35 + 0.3 * pulse))
-				draw_dashed_line(p0 - Vector2(0, ch), q - Vector2(0, ch), col, 1.6 * u, 6 * u)
+				cv.draw_dashed_line(p0 - Vector2(0, ch), q - Vector2(0, ch), col, 1.6 * u, 6 * u)
 		elif kb == "storm":
 			var dx: float = e.lx - e.x
 			var dy: float = e.ly - e.y
@@ -1059,9 +1286,9 @@ func _draw_boss_fx() -> void:
 			var locked := f < 0.36
 			var col := Color(127 / 255.0, 224 / 255.0, 1, (0.75 + 0.25 * pulse) if locked else (0.35 + 0.3 * pulse))
 			if locked:
-				draw_line(b0 - Vector2(0, ch), q - Vector2(0, ch), col, 2.4 * u)
+				cv.draw_line(b0 - Vector2(0, ch), q - Vector2(0, ch), col, 2.4 * u)
 			else:
-				draw_dashed_line(b0 - Vector2(0, ch), q - Vector2(0, ch), col, 1.4 * u, 6 * u)
+				cv.draw_dashed_line(b0 - Vector2(0, ch), q - Vector2(0, ch), col, 1.4 * u, 6 * u)
 
 
 func _draw_boss_bar() -> void:
@@ -1071,8 +1298,8 @@ func _draw_boss_bar() -> void:
 		var B: Dictionary = Sim.boss_def(e.boss)
 		var w := minf(420.0, v.W - 40)
 		var x := (v.W - w) / 2
-		draw_rect(Rect2(x - 2, 114, w + 4, 26), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.8))
-		draw_rect(Rect2(x, 128, w * maxf(0, e.hp / e.max), 9), c(B.col))
+		cv.draw_rect(Rect2(x - 2, 114, w + 4, 26), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.8))
+		cv.draw_rect(Rect2(x, 128, w * maxf(0, e.hp / e.max), 9), c(B.col))
 		label(B.name + (" · ENRAGED" if e.get("rage", false) else ""), v.W / 2, 125, c(B.col), 12)
 		return
 
@@ -1149,7 +1376,7 @@ func _draw_armory() -> void:
 	var gold := c("#e2b436")
 	var paper := c("#e8dcc0")
 	var dim := c("#9a8f7a")
-	draw_rect(Rect2(0, 0, v.W, v.H), Color(0, 0, 0, 0.55))
+	cv.draw_rect(Rect2(0, 0, v.W, v.H), Color(0, 0, 0, 0.55))
 	var w := minf(640.0, v.W - 32)
 	var rows: Array = []
 	for U in Sim.UPG:
@@ -1168,40 +1395,40 @@ func _draw_armory() -> void:
 	var h := 74.0 + rows.size() * rh + 36
 	var x0 := (v.W - w) / 2
 	var y0 := maxf(10.0, (v.H - h) / 2)
-	draw_rect(Rect2(x0, y0, w, h), c("#16130f"))
-	draw_rect(Rect2(x0, y0, w, h), Color(gold, 0.5), false, 1.5)
-	draw_string(font, Vector2(x0 + 18, y0 + 26), "ARMORY · BETWEEN RAIDS", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, dim)
-	draw_string(font, Vector2(x0 + 18, y0 + 52), "SALVAGE %d" % p.sal, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, gold)
-	draw_string(font, Vector2(x0 + w - 230, y0 + 26), "click or 1-9 · E / Esc closes", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, dim)
+	cv.draw_rect(Rect2(x0, y0, w, h), c("#16130f"))
+	cv.draw_rect(Rect2(x0, y0, w, h), Color(gold, 0.5), false, 1.5)
+	cv.draw_string(font, Vector2(x0 + 18, y0 + 26), "ARMORY · BETWEEN RAIDS", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, dim)
+	cv.draw_string(font, Vector2(x0 + 18, y0 + 52), "SALVAGE %d" % p.sal, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, gold)
+	cv.draw_string(font, Vector2(x0 + w - 230, y0 + 26), "click or 1-9 · E / Esc closes", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, dim)
 	var y := y0 + 70
 	for n in rows.size():
 		var r: Dictionary = rows[n]
 		if n == 5 or n == 7:
-			draw_line(Vector2(x0 + 12, y + 1), Vector2(x0 + w - 12, y + 1), Color(dim, 0.3), 1.0)
+			cv.draw_line(Vector2(x0 + 12, y + 1), Vector2(x0 + w - 12, y + 1), Color(dim, 0.3), 1.0)
 		var namecol: Color = c(r.col) if r.has("col") else paper
-		draw_string(font, Vector2(x0 + 18, y + 22), ("%d " % (n + 1) if n < 9 else "") + r.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, namecol)
+		cv.draw_string(font, Vector2(x0 + 18, y + 22), ("%d " % (n + 1) if n < 9 else "") + r.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, namecol)
 		if r.lvl >= 0:
 			for k in Sim.ARM_MAX:
-				draw_rect(Rect2(x0 + 190 + k * 11, y + 13, 8, 8), gold if k < r.lvl else Color(dim, 0.35))
-		draw_string(font, Vector2(x0 + (290 if r.lvl >= 0 else 190), y + 22), r.what, HORIZONTAL_ALIGNMENT_LEFT, w - 420 if r.lvl >= 0 else w - 320, 11, dim)
+				cv.draw_rect(Rect2(x0 + 190 + k * 11, y + 13, 8, 8), gold if k < r.lvl else Color(dim, 0.35))
+		cv.draw_string(font, Vector2(x0 + (290 if r.lvl >= 0 else 190), y + 22), r.what, HORIZONTAL_ALIGNMENT_LEFT, w - 420 if r.lvl >= 0 else w - 320, 11, dim)
 		var br := Rect2(x0 + w - 116, y + 5, 100, 24)
-		draw_rect(br, Color(gold, 0.12) if not r.dis else Color(0.2, 0.2, 0.2, 0.4))
-		draw_rect(br, Color(gold, 0.8) if not r.dis else Color(dim, 0.4), false, 1.2)
+		cv.draw_rect(br, Color(gold, 0.12) if not r.dis else Color(0.2, 0.2, 0.2, 0.4))
+		cv.draw_rect(br, Color(gold, 0.8) if not r.dis else Color(dim, 0.4), false, 1.2)
 		var lw := font.get_string_size(r.label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
-		draw_string(font, Vector2(br.position.x + (br.size.x - lw) / 2, y + 22), r.label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, gold if not r.dis else dim)
+		cv.draw_string(font, Vector2(br.position.x + (br.size.x - lw) / 2, y + 22), r.label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, gold if not r.dis else dim)
 		arm_buttons.append([br, r.key])
 		y += rh
 	b_close = Rect2(x0 + w / 2 - 60, y + 4, 120, 26)
-	draw_rect(b_close, Color(paper, 0.1))
-	draw_rect(b_close, Color(paper, 0.6), false, 1.2)
+	cv.draw_rect(b_close, Color(paper, 0.1))
+	cv.draw_rect(b_close, Color(paper, 0.6), false, 1.2)
 	label("CLOSE", v.W / 2, y + 22, paper, 12)
 
 
 func _ring(x: float, y: float, r: float, col: Color, w: float = 2.0) -> void:
 	var q := iso(x, y)
-	draw_set_transform(q, 0, Vector2(1, 0.5))
-	draw_arc(Vector2.ZERO, v.TW2 * r, 0, TAU, 44, col, w * v.u)
-	draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
+	cv.draw_set_transform(q, 0, Vector2(1, 0.5))
+	cv.draw_arc(Vector2.ZERO, v.TW2 * r, 0, TAU, 44, col, w * v.u)
+	cv.draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 
 
 func _disc(x: float, y: float, r: float, col: Color) -> void:
@@ -1216,9 +1443,9 @@ func _lane(x0: float, y0: float, x1: float, y1: float, w: float, fill: Color, li
 	var nx := -dy / l * w
 	var ny := dx / l * w
 	var P := PackedVector2Array([iso(x0 + nx, y0 + ny), iso(x1 + nx, y1 + ny), iso(x1 - nx, y1 - ny), iso(x0 - nx, y0 - ny)])
-	draw_colored_polygon(P, fill)
+	cv.draw_colored_polygon(P, fill)
 	P.append(P[0])
-	draw_polyline(P, line, 1.6 * v.u)
+	cv.draw_polyline(P, line, 1.6 * v.u)
 
 
 func _wedge(e: Dictionary, range_: float, half: float, fill: Color) -> void:
@@ -1227,7 +1454,7 @@ func _wedge(e: Dictionary, range_: float, half: float, fill: Color) -> void:
 	for n in 11:
 		var a := a0 + (n / 10.0 - 0.5) * half * 2
 		pts.append(iso(e.x + cos(a) * range_, e.y + sin(a) * range_))
-	draw_colored_polygon(pts, fill)
+	cv.draw_colored_polygon(pts, fill)
 
 
 ## the warnings for the moves (drawBossMove), the Blitz variants, the Foreman, winter and the Destroyer
@@ -1251,9 +1478,9 @@ func _draw_new_fx(e: Dictionary, f: float, pulse: float, ch: float) -> bool:
 			for n in 4:
 				var r: float = (0.35 + n * 0.18) * M.cyclone.r
 				var a: float = sim.game.time * 8 + n
-				draw_set_transform(Vector2(q.x, q.y - n * 6 * v.u), 0, Vector2(1, 0.5))
-				draw_arc(Vector2.ZERO, v.TW2 * r, a, a + 4.2, 20, Color(220 / 255.0, 248 / 255.0, 1, 0.75), 1.6 * v.u)
-				draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
+				cv.draw_set_transform(Vector2(q.x, q.y - n * 6 * v.u), 0, Vector2(1, 0.5))
+				cv.draw_arc(Vector2.ZERO, v.TW2 * r, a, a + 4.2, 20, Color(220 / 255.0, 248 / 255.0, 1, 0.75), 1.6 * v.u)
+				cv.draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 		24:
 			_disc(e.lx, e.ly, M.cage.r, Color(191 / 255.0, 244 / 255.0, 1, 0.08 + 0.14 * (1 - f)))
 			var gap := atan2(e.ly - e.y, e.lx - e.x)
@@ -1265,7 +1492,7 @@ func _draw_new_fx(e: Dictionary, f: float, pulse: float, ch: float) -> bool:
 				if da < 0.4:
 					continue
 				var bar := iso(e.lx + cos(a) * M.cage.r, e.ly + sin(a) * M.cage.r)
-				draw_line(bar, bar - Vector2(0, ch * (1.2 - f * 0.6)), Color(230 / 255.0, 250 / 255.0, 1, 0.6 + 0.35 * pulse), 2 * v.u)
+				cv.draw_line(bar, bar - Vector2(0, ch * (1.2 - f * 0.6)), Color(230 / 255.0, 250 / 255.0, 1, 0.6 + 0.35 * pulse), 2 * v.u)
 		25:
 			_wedge(e, M.flame.range, M.flame.half, Color(1, 140 / 255.0, 40 / 255.0, 0.16 + 0.2 * pulse))
 		26:
@@ -1298,7 +1525,7 @@ func _draw_new_fx(e: Dictionary, f: float, pulse: float, ch: float) -> bool:
 			var lq := iso(e.lx, e.ly)
 			label("ICE RUPTURE", lq.x, lq.y - v.WH, c("#d8fff3"), 12)
 		102:
-			draw_dashed_line(iso(e.x, e.y), iso(e.lx, e.ly), c("#d5fff0"), 5 * v.u, 6 * v.u)
+			cv.draw_dashed_line(iso(e.x, e.y), iso(e.lx, e.ly), c("#d5fff0"), 5 * v.u, 6 * v.u)
 		40:
 			for p in sim.rocket_pts(e.x, e.y, e.lx, e.ly):
 				_disc(p.x, p.y, D.rockets.R * 0.8, Color(1, 60 / 255.0, 40 / 255.0, 0.1 + 0.15 * pulse))
@@ -1311,7 +1538,7 @@ func _draw_new_fx(e: Dictionary, f: float, pulse: float, ch: float) -> bool:
 			var dy: float = e.ly - e.y
 			var l := maxf(0.001, Vector2(dx, dy).length())
 			var q := iso(clampf(e.x + dx / l * 12, 0, sim.N), clampf(e.y + dy / l * 12, 0, sim.N))
-			draw_line(iso(e.x, e.y) - Vector2(0, ch), q - Vector2(0, ch), Color(127 / 255.0, 224 / 255.0, 1, (0.8 if f < 0.32 else 0.4 + 0.3 * pulse)), (2.6 if f < 0.32 else 1.4) * v.u)
+			cv.draw_line(iso(e.x, e.y) - Vector2(0, ch), q - Vector2(0, ch), Color(127 / 255.0, 224 / 255.0, 1, (0.8 if f < 0.32 else 0.4 + 0.3 * pulse)), (2.6 if f < 0.32 else 1.4) * v.u)
 		44:
 			_disc(e.x, e.y, D.gas.r * (1 - f), Color(120 / 255.0, 200 / 255.0, 70 / 255.0, 0.14 + 0.1 * pulse))
 			_ring(e.x, e.y, D.gas.r, Color(160 / 255.0, 240 / 255.0, 90 / 255.0, 0.55 + 0.35 * pulse), 2.2)
@@ -1325,7 +1552,7 @@ func _draw_new_fx(e: Dictionary, f: float, pulse: float, ch: float) -> bool:
 		_:
 			var kb: String = Sim.boss_def(e.boss).get("base", e.boss)
 			if e.boss == "arsonist" and st == 1:
-				draw_dashed_line(iso(e.x, e.y) - Vector2(0, ch), iso(e.lx, e.ly) - Vector2(0, ch), Color(1, 90 / 255.0, 26 / 255.0, 0.5 + 0.45 * pulse), 2 * v.u, 7 * v.u)
+				cv.draw_dashed_line(iso(e.x, e.y) - Vector2(0, ch), iso(e.lx, e.ly) - Vector2(0, ch), Color(1, 90 / 255.0, 26 / 255.0, 0.5 + 0.45 * pulse), 2 * v.u, 7 * v.u)
 				for n in 4:
 					var t := 0.5 + n * 0.18
 					_ring(e.x + (e.lx - e.x) * t, e.y + (e.ly - e.y) * t, 1.0, Color(1, 90 / 255.0, 26 / 255.0, 0.55 + 0.35 * pulse), 1.6)
@@ -1391,46 +1618,46 @@ func _draw_skills() -> void:
 	var gold := c("#e2b436")
 	var paper := c("#e8dcc0")
 	var dim := c("#9a8f7a")
-	draw_rect(Rect2(0, 0, v.W, v.H), Color(0, 0, 0, 0.6))
+	cv.draw_rect(Rect2(0, 0, v.W, v.H), Color(0, 0, 0, 0.6))
 	var w := minf(760.0, v.W - 24)
 	var rh := 25.0
 	var rows: Array = PalProfile.SKILLS
 	var h := 84.0 + rows.size() * rh + 40
 	var x0 := (v.W - w) / 2
 	var y0 := maxf(6.0, (v.H - h) / 2)
-	draw_rect(Rect2(x0, y0, w, h), c("#16130f"))
-	draw_rect(Rect2(x0, y0, w, h), Color(gold, 0.5), false, 1.5)
-	draw_string(font, Vector2(x0 + 16, y0 + 24), "SKILL TREE · CHANGES APPLY FROM YOUR NEXT GAME", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, dim)
-	draw_string(font, Vector2(x0 + 16, y0 + 50), "%d SP TO SPEND · %d EARNED IN ALL · NEXT POINT IN %d RAIDS HELD (OR A BOSS)" % [profile.sp, profile.sp_total, 5 - profile.sp_prog], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, gold)
+	cv.draw_rect(Rect2(x0, y0, w, h), c("#16130f"))
+	cv.draw_rect(Rect2(x0, y0, w, h), Color(gold, 0.5), false, 1.5)
+	cv.draw_string(font, Vector2(x0 + 16, y0 + 24), "SKILL TREE · CHANGES APPLY FROM YOUR NEXT GAME", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, dim)
+	cv.draw_string(font, Vector2(x0 + 16, y0 + 50), "%d SP TO SPEND · %d EARNED IN ALL · NEXT POINT IN %d RAIDS HELD (OR A BOSS)" % [profile.sp, profile.sp_total, 5 - profile.sp_prog], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, gold)
 	var y := y0 + 66
 	var br_last := ""
 	for S in rows:
 		if S.br != br_last:
 			br_last = S.br
-			draw_line(Vector2(x0 + 10, y + 1), Vector2(x0 + w - 10, y + 1), Color(dim, 0.25), 1.0)
+			cv.draw_line(Vector2(x0 + 10, y + 1), Vector2(x0 + w - 10, y + 1), Color(dim, 0.25), 1.0)
 		var lv := profile.level(S.id)
 		var off: bool = S.has("cls") and S.cls != "soldier"
 		var col := Color(paper, 0.45) if off else paper
-		draw_string(font, Vector2(x0 + 16, y + 17), S.br, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, dim)
-		draw_string(font, Vector2(x0 + 112, y + 17), S.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, col)
+		cv.draw_string(font, Vector2(x0 + 16, y + 17), S.br, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, dim)
+		cv.draw_string(font, Vector2(x0 + 112, y + 17), S.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, col)
 		for k in S.max:
-			draw_rect(Rect2(x0 + 268 + k * 10, y + 9, 7, 7), gold if k < lv else Color(dim, 0.35))
+			cv.draw_rect(Rect2(x0 + 268 + k * 10, y + 9, 7, 7), gold if k < lv else Color(dim, 0.35))
 		var what: String = S.what + ("  (other class)" if off else "")
-		draw_string(font, Vector2(x0 + 312, y + 17), what, HORIZONTAL_ALIGNMENT_LEFT, w - 430, 10, dim)
+		cv.draw_string(font, Vector2(x0 + 312, y + 17), what, HORIZONTAL_ALIGNMENT_LEFT, w - 430, 10, dim)
 		var reason := profile.block_reason(S.id)
 		var label_txt: String = ("%d SP" % S.cost[lv]) if reason == "" else ("LOCKED" if reason.begins_with("Needs") else reason)
 		var b := Rect2(x0 + w - 106, y + 2, 92, 20)
-		draw_rect(b, Color(gold, 0.12) if reason == "" else Color(0.2, 0.2, 0.2, 0.4))
-		draw_rect(b, Color(gold, 0.8) if reason == "" else Color(dim, 0.4), false, 1.0)
+		cv.draw_rect(b, Color(gold, 0.12) if reason == "" else Color(0.2, 0.2, 0.2, 0.4))
+		cv.draw_rect(b, Color(gold, 0.8) if reason == "" else Color(dim, 0.4), false, 1.0)
 		var lw := font.get_string_size(label_txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x
-		draw_string(font, Vector2(b.position.x + (b.size.x - lw) / 2, y + 16), label_txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, gold if reason == "" else dim)
+		cv.draw_string(font, Vector2(b.position.x + (b.size.x - lw) / 2, y + 16), label_txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, gold if reason == "" else dim)
 		sk_buttons.append([b, S.id])
 		y += rh
 	sk_reset = Rect2(x0 + 16, y + 8, 150, 24)
-	draw_rect(sk_reset, Color(paper, 0.08))
-	draw_rect(sk_reset, Color(paper, 0.5), false, 1.0)
-	draw_string(font, Vector2(sk_reset.position.x + 14, y + 25), "RESET ALL POINTS", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, paper)
-	draw_string(font, Vector2(x0 + w - 220, y + 25), "K / Esc closes", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, dim)
+	cv.draw_rect(sk_reset, Color(paper, 0.08))
+	cv.draw_rect(sk_reset, Color(paper, 0.5), false, 1.0)
+	cv.draw_string(font, Vector2(sk_reset.position.x + 14, y + 25), "RESET ALL POINTS", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, paper)
+	cv.draw_string(font, Vector2(x0 + w - 220, y + 25), "K / Esc closes", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, dim)
 
 
 # ---------------------------------------------------------------- terrain (06b-maps.js, 06d-elevation.js)
@@ -1452,25 +1679,6 @@ func _ground_col(i: int, j: int, h: float) -> Color:
 
 ## which tiles are on screen this frame: the bounds of the screen's corners on the ground, with room for tall things
 ## standing below the bottom edge (buildings, the radio mast)
-## the land outside the fence (paintBack)
-func _paint_back() -> void:
-	var N: int = sim.N
-	for i in range(-6, N + 6):
-		for j in range(-6, N + 6):
-			if i >= 0 and j >= 0 and i < N and j < N:
-				continue
-			var dx := -i if i < 0 else (i - N + 1 if i >= N else 0)
-			var dy := -j if j < 0 else (j - N + 1 if j >= N else 0)
-			var d := maxi(dx, dy)
-			var h := Pal.hash2(i + 400, j + 77)
-			var col: Color
-			if d == 1:
-				col = c("#342d21") if h < 0.5 else c("#2f2a1e")
-			else:
-				col = mixc("#1f2518", "#262c1b", h).lerp(c("#171c13"), clampf((d - 2) / 6.0, 0, 1))
-			quad(v.iso(i, j), v.iso(i + 1, j), v.iso(i + 1, j + 1), v.iso(i, j + 1), col)
-
-
 ## a ground chunk paints at camera (0, 0); its parent follows the camera
 func paint_chunk(ch: GroundChunk) -> void:
 	var cx := v.cam_x
@@ -1479,9 +1687,21 @@ func paint_chunk(ch: GroundChunk) -> void:
 	v.cam_y = 0.0
 	cv = ch
 	if ch.back:
-		_paint_back()
+		Scenery.paint_outside(self)
+		for t in trees_back:
+			Scenery.tree(self, t)
+		if sim.map_id == "city":   # flat: its fence can go in behind the ground
+			for q in sim.N:
+				Scenery.edge(self, "n", q)
+				Scenery.edge(self, "w", q)
 	else:
 		_paint_ground(ch.i0, mini(sim.N, ch.i0 + ch.n), ch.j0, mini(sim.N, ch.j0 + ch.n))
+		if ch.n >= sim.N:   # the whole yard in one piece: the far fence and Frostpeak's props go over its ground
+			for q in sim.N:
+				Scenery.edge(self, "n", q)
+				Scenery.edge(self, "w", q)
+			if sim.is_frost():
+				Scenery.frost_props(self)
 	cv = self
 	v.cam_x = cx
 	v.cam_y = cy
@@ -1509,7 +1729,180 @@ func _sync_ground() -> void:
 			ch.j0 = q[1]
 			ch.n = n
 			ground.add_child(ch)
+		_build_front()
 	ground.position = Vector2(v.cam_x, v.cam_y)
+	front_root.position = ground.position
+
+
+## the near side: the south and east edges and the trees past them, in pieces along the edge so a fading tree only
+## repaints its own piece
+func _build_front() -> void:
+	var forest := Scenery.gen_forest(sim)
+	trees_back = forest[0]
+	trees_front = forest[1]
+	for ch in front_root.get_children():
+		ch.queue_free()
+		front_root.remove_child(ch)
+	front_groups.clear()
+	var N: int = sim.N
+	var group := func(lat: float) -> Dictionary:
+		var key := floori(lat / 6.0)
+		if not front_groups.has(key):
+			front_groups[key] = {"edges": [], "trees": [], "key": key}
+		return front_groups[key]
+	for q in N:
+		group.call(q - N).edges.append(["s", q])
+		group.call(N - q).edges.append(["e", q])
+	for t in trees_front:
+		group.call(t.x - t.y).trees.append(t)
+	var keys := front_groups.keys()
+	keys.sort()
+	for key in keys:
+		var G: Dictionary = front_groups[key]
+		var node := PaintLayer.new()
+		node.painter = _paint_front.bind(G)
+		G.node = node
+		front_root.add_child(node)
+
+
+func _paint_front(layer: CanvasItem, G: Dictionary) -> void:
+	var cx := v.cam_x
+	var cy := v.cam_y
+	v.cam_x = 0.0
+	v.cam_y = 0.0
+	cv = layer
+	for e in G.edges:
+		Scenery.edge(self, e[0], e[1])
+	for t in G.trees:
+		Scenery.tree(self, t)
+	cv = self
+	v.cam_x = cx
+	v.cam_y = cy
+
+
+## updateFades: a near tree goes see-through while anyone stands behind it
+func _update_fades() -> void:
+	var who: Array = sim.enemies.filter(func(e): return not e.dead)
+	if sim.player.alive or sim.player.downed:
+		who.append(sim.player)
+	if sim.qm.alive:
+		who.append(sim.qm)
+	for key in front_groups:
+		var G: Dictionary = front_groups[key]
+		var changed := false
+		for t in G.trees:
+			if t.kind >= 2:
+				continue
+			var td: float = t.x + t.y
+			var tl: float = t.x - t.y
+			var f := false
+			for p in who:
+				var dd: float = td - (p.x + p.y)
+				if dd > 0 and dd < 5.5 and absf((p.x - p.y) - tl) < 1.6:
+					f = true
+					break
+			var a := 0.32 if f else 1.0
+			if t.a != a:
+				t.a = a
+				changed = true
+		if changed and G.has("node"):
+			G.node.queue_redraw()
+
+
+## the time of day eases toward the raid's (overcast, golden hour, night); at night every light punches a hole
+func _update_light(dt: float) -> void:
+	var g: Dictionary = sim.game
+	var tod := sim.tod_stage(g.wave if g.phase == "raid" else g.wave + 0.5)
+	var T: Dictionary
+	if tod == 2:
+		T = {"L": 0.8 if sim.map_id == "city" and g.get("dark", false) else 0.7, "r": 5.0, "g": 8.0, "b": 22.0, "warm": 0.0}
+	elif tod == 1:
+		T = {"L": 0.2, "r": 60.0, "g": 30.0, "b": 10.0, "warm": 0.07}
+	else:
+		T = {"L": 0.12, "r": 28.0, "g": 34.0, "b": 44.0, "warm": 0.0}
+	var k := minf(1.0, dt * 0.8)
+	for key in T:
+		light[key] += (T[key] - light[key]) * k
+	var warm: float = light.warm
+	var shade := Color((light.r + warm * 428) / 255.0, (light.g + warm * 214) / 255.0, light.b / 255.0, light.L + warm * 0.57)
+	var holes := PackedVector4Array()
+	if light.L > 0.25:
+		var TW2 := v.TW2
+		var WH := v.WH
+		var hole := func(x: float, y: float, z: float, r: float, st: float) -> void:
+			var cc := iso(x, y) - Vector2(0, z)
+			if cc.x < -r or cc.x > v.W + r or cc.y < -r or cc.y > v.H + r or holes.size() >= 96:
+				return
+			holes.append(Vector4(cc.x, cc.y, r, minf(1.0, st)))
+		var p: Dictionary = sim.player
+		hole.call(p.x, p.y, WH * 0.5, TW2 * 3.4, 0.95)
+		if sim.qm.alive:
+			hole.call(sim.qm.x, sim.qm.y, WH * 0.5, TW2 * 1.8, 0.7)
+		if sim.map_id == "city":
+			for co in sim.cores:
+				if not co.has("poi"):
+					hole.call(co.i + 0.5, co.j + 0.5, WH, TW2 * 4.4, 0.95)
+					continue
+				var st := 0.9 if co.poi.major else 0.8
+				if co.lost:
+					var d: float = g.time - co.get("lostAt", -9.0)
+					if d > 1.6:
+						continue
+					st *= (1 - d / 1.6) * (1.0 if sin(d * 40) > 0 else 0.15)
+				hole.call(co.i + 0.5, co.j + 0.5, WH, TW2 * (3.8 if co.poi.major else 3.0), st)
+			if not g.get("dark", false):
+				for l in sim.lay.lamps:
+					hole.call(l[0] + 0.5 + l[2] * 0.7, l[1] + 0.5 + l[3] * 0.7, 0, TW2 * 3.5, 0.85)
+		else:
+			for co in sim.cores:
+				hole.call(co.i + 0.5, co.j + 0.5, WH, TW2 * 3, 0.85)
+		for e in sim.enemies:
+			hole.call(e.x, e.y, WH * 0.5, TW2 * 0.9, 0.45)
+		for j in range(vb[2], vb[3] + 1):
+			for i in range(vb[0], vb[1] + 1):
+				var w = sim.walls[j * sim.N + i]
+				if w != null and w.get("fire", 0.0) > 0:
+					hole.call(i + 0.5, j + 0.5, WH, TW2 * 2, 0.8)
+				if sim.map_id == "quarry" and sim.terr[j * sim.N + i] == PalMaps.T_DRUM:
+					hole.call(i + 0.5, j + 0.5, WH, TW2 * (2.6 + 0.12 * sin(g.time * 7 + j * sim.N + i)), 0.9)
+		for n in sim.nodes:
+			if n.type == 1 and not n.locked:
+				hole.call(n.i + 0.5, n.j + 0.5, WH * 0.3, TW2 * 1.6, 0.6)
+		for ch in sim.charges:
+			hole.call(ch.x, ch.y, 0, TW2 * 0.7, 0.7)
+		for f in flashes:
+			hole.call(f.x, f.y, WH * 0.5, TW2 * (2.0 if f.muzzle else 4.5) * f.r * 0.6, f.life / f.max)
+	var mat: ShaderMaterial = light_rect.material
+	mat.set_shader_parameter("size", Vector2(v.W, v.H))
+	mat.set_shader_parameter("shade", Vector4(shade.r, shade.g, shade.b, shade.a))
+	mat.set_shader_parameter("count", holes.size())
+	var arr: Array = []
+	for h in holes:
+		arr.append(h)
+	while arr.size() < 96:
+		arr.append(Vector4.ZERO)
+	mat.set_shader_parameter("holes", arr)
+
+
+const STORM_KIND := {"yard": "dust", "river": "rain", "quarry": "ash"}
+
+
+func _update_post(dt: float) -> void:
+	var g: Dictionary = sim.game
+	wx_a += ((1.0 if g.get("wx", 0) and g.phase == "raid" else 0.0) - wx_a) * minf(1.0, dt * 1.5)
+	var L: Dictionary = Sim.STORM.look.get(sim.map_id, Sim.STORM.look.yard)
+	var kind: String = STORM_KIND.get(sim.map_id, "dust")
+	var mat: ShaderMaterial = post_rect.material
+	mat.set_shader_parameter("size", Vector2(v.W, v.H))
+	mat.set_shader_parameter("storm", Vector4(L.col[0] / 255.0, L.col[1] / 255.0, L.col[2] / 255.0, (0.2 if kind == "rain" else 0.16) * wx_a) if wx_a > 0.01 else Vector4.ZERO)
+	mat.set_shader_parameter("vig_c", Vector2(v.W * (0.4 if v.W < 760 else 0.5), v.H * 0.52))
+	mat.set_shader_parameter("vig_r", Vector2(minf(v.W, v.H) * 0.25, maxf(v.W, v.H) * 0.8))
+	var p: Dictionary = sim.player
+	var low := 0.0
+	if p.alive and p.hp / p.max < 0.3 and g.phase != "over":
+		var kk: float = (0.3 - p.hp / p.max) / 0.3
+		low = (0.18 + 0.12 * sin(g.time * 6)) * minf(1.0, kk * 1.6 + 0.3)
+	mat.set_shader_parameter("low", low)
 
 
 func _vis_bounds() -> void:
@@ -1653,11 +2046,11 @@ func _draw_frost_cliff(k: int) -> void:
 	var e: int = sim.heights[k + 1] if i + 1 < N else 0
 	if z > s:
 		quad(v.iso(i, j + 1, z), v.iso(i + 1, j + 1, z), v.iso(i + 1, j + 1, s), v.iso(i, j + 1, s), c("#435b6a"))
-		draw_line(v.iso(i + 0.2, j + 1, z), v.iso(i + 0.35, j + 1, s), c("#719aaa"), u)
-		draw_line(v.iso(i, j + 1, z) + Vector2(0, u), v.iso(i + 1, j + 1, z) + Vector2(0, u), c("#dcebf1"), 2 * u)
+		cv.draw_line(v.iso(i + 0.2, j + 1, z), v.iso(i + 0.35, j + 1, s), c("#719aaa"), u)
+		cv.draw_line(v.iso(i, j + 1, z) + Vector2(0, u), v.iso(i + 1, j + 1, z) + Vector2(0, u), c("#dcebf1"), 2 * u)
 	if z > e:
 		quad(v.iso(i + 1, j, z), v.iso(i + 1, j + 1, z), v.iso(i + 1, j + 1, e), v.iso(i + 1, j, e), c("#304858"))
-		draw_line(v.iso(i + 1, j, z) + Vector2(0, u), v.iso(i + 1, j + 1, z) + Vector2(0, u), c("#b9d0da"), 2 * u)
+		cv.draw_line(v.iso(i + 1, j, z) + Vector2(0, u), v.iso(i + 1, j + 1, z) + Vector2(0, u), c("#b9d0da"), 2 * u)
 
 
 ## drawTerrainLive: water glints drifting downstream, flooded banks, bridges, pits, ripples round anyone wading
@@ -1673,7 +2066,7 @@ func _draw_terrain_live() -> void:
 			var j := k / N
 			var h := Pal.hash2(i + 31, j + 7)
 			var y := j + fmod(t0 * 0.35 + h, 1.0)
-			draw_line(v.iso(i + 0.25 + h * 0.4, y), v.iso(i + 0.45 + h * 0.4, y), Color(150 / 255.0, 200 / 255.0, 220 / 255.0, 0.28), 1.2 * u)
+			cv.draw_line(v.iso(i + 0.25 + h * 0.4, y), v.iso(i + 0.45 + h * 0.4, y), Color(150 / 255.0, 200 / 255.0, 220 / 255.0, 0.28), 1.2 * u)
 		flood_lv += ((1.0 if sim.flood_on else 0.0) - flood_lv) * minf(1.0, get_process_delta_time() * 1.2)
 		if flood_lv > 0.02:
 			for k in N * N:
@@ -1687,9 +2080,9 @@ func _draw_terrain_live() -> void:
 				var j := k / N
 				quad(v.iso(i, j + 0.08), v.iso(i + 1, j + 0.08), v.iso(i + 1, j + 0.92), v.iso(i, j + 0.92), c("#5a4330"))
 				for s in range(1, 6):
-					draw_line(v.iso(i + s / 6.0, j + 0.08), v.iso(i + s / 6.0, j + 0.92), Color(20 / 255.0, 14 / 255.0, 8 / 255.0, 0.6), u)
+					cv.draw_line(v.iso(i + s / 6.0, j + 0.08), v.iso(i + s / 6.0, j + 0.92), Color(20 / 255.0, 14 / 255.0, 8 / 255.0, 0.6), u)
 				for yy in [j + 0.08, j + 0.92]:
-					draw_line(v.iso(i, yy) - Vector2(0, 3 * u), v.iso(i + 1, yy) - Vector2(0, 3 * u), c("#2c2016"), 2 * u)
+					cv.draw_line(v.iso(i, yy) - Vector2(0, 3 * u), v.iso(i + 1, yy) - Vector2(0, 3 * u), c("#2c2016"), 2 * u)
 	for k in sim.terr_log:
 		if sim.terr[k] == PalMaps.T_PIT:
 			var i: int = k % N
@@ -1711,9 +2104,9 @@ func _draw_terrain_live() -> void:
 			if tt == PalMaps.T_WATER or (tt == PalMaps.T_LOW and sim.flood_on):
 				var cc := iso(e.x, e.y)
 				var r := (7 + sin(t0 * 6 + e.x * 3) * 1.5) * u
-				draw_set_transform(cc, 0, Vector2(1, 0.5))
-				draw_arc(Vector2.ZERO, r, 0, TAU, 24, Color(170 / 255.0, 210 / 255.0, 230 / 255.0, 0.45), u)
-				draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
+				cv.draw_set_transform(cc, 0, Vector2(1, 0.5))
+				cv.draw_arc(Vector2.ZERO, r, 0, TAU, 24, Color(170 / 255.0, 210 / 255.0, 230 / 255.0, 0.45), u)
+				cv.draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 
 
 ## rock outcrops and oil drums (terrShape): rock stands, a drum burns
@@ -1729,16 +2122,16 @@ func _draw_terr_item(i: int, j: int, t: int) -> void:
 	var w := v.TW2 * 0.34
 	var hh := WH * 0.9
 	oval(cc.x, cc.y, w * 1.2, w * 0.6, Color(0, 0, 0, 0.35))
-	draw_rect(Rect2(cc.x - w, cc.y - hh, w * 2, hh), c("#3b2f24"))
-	draw_rect(Rect2(cc.x - w * 0.35, cc.y - hh, w * 0.7, hh), c("#4d3d2e"))
-	draw_rect(Rect2(cc.x - w, cc.y - hh * 0.66, w * 2, 2 * u), c("#2a211a"))
-	draw_rect(Rect2(cc.x - w, cc.y - hh * 0.33, w * 2, 2 * u), c("#2a211a"))
+	cv.draw_rect(Rect2(cc.x - w, cc.y - hh, w * 2, hh), c("#3b2f24"))
+	cv.draw_rect(Rect2(cc.x - w * 0.35, cc.y - hh, w * 0.7, hh), c("#4d3d2e"))
+	cv.draw_rect(Rect2(cc.x - w, cc.y - hh * 0.66, w * 2, 2 * u), c("#2a211a"))
+	cv.draw_rect(Rect2(cc.x - w, cc.y - hh * 0.33, w * 2, 2 * u), c("#2a211a"))
 	oval(cc.x, cc.y - hh, w, w * 0.45, c("#1a1411"))
 	var t0: float = sim.game.time * 9 + h * 20
 	for q in 3:   # the flame on top: three flickering tongues
 		var fx := cc.x + (q - 1) * w * 0.45
 		var fh := (9 + sin(t0 + q * 2.1) * 3 + (q % 2) * 2) * u
-		draw_colored_polygon(PackedVector2Array([Vector2(fx - w * 0.28, cc.y - hh), Vector2(fx + sin(t0 * 1.3 + q) * 2 * u, cc.y - hh - fh * 1.2), Vector2(fx + w * 0.28, cc.y - hh)]), c("#ffd070") if q == 1 else c("#ff8a2a"))
+		cv.draw_colored_polygon(PackedVector2Array([Vector2(fx - w * 0.28, cc.y - hh), Vector2(fx + sin(t0 * 1.3 + q) * 2 * u, cc.y - hh - fh * 1.2), Vector2(fx + w * 0.28, cc.y - hh)]), c("#ffd070") if q == 1 else c("#ff8a2a"))
 
 
 ## the Ferryman's raft under him
@@ -1746,12 +2139,12 @@ func _draw_raft(e: Dictionary) -> void:
 	var u := v.u
 	var cc := iso(e.x, e.y)
 	var bob := sin(sim.game.time * 2.2 + e.id) * 1.5 * u
-	draw_set_transform(Vector2(cc.x, cc.y + bob), 0, Vector2(1, 0.5))
-	draw_circle(Vector2.ZERO, 20 * u, Color(0, 0, 0, 0.3))
-	draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
+	cv.draw_set_transform(Vector2(cc.x, cc.y + bob), 0, Vector2(1, 0.5))
+	cv.draw_circle(Vector2.ZERO, 20 * u, Color(0, 0, 0, 0.3))
+	cv.draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 	box_r(e.x - 0.55, e.y - 0.45, e.x + 0.55, e.y + 0.45, -2 * u + bob, 4 * u, c("#6a4c30"), c("#4f3822"), c("#3e2c1a"))
 	for s in range(1, 4):
-		draw_line(iso(e.x - 0.55 + s * 0.275, e.y - 0.45) - Vector2(0, 2 * u - bob), iso(e.x - 0.55 + s * 0.275, e.y + 0.45) - Vector2(0, 2 * u - bob), c("#2c2016"), u)
+		cv.draw_line(iso(e.x - 0.55 + s * 0.275, e.y - 0.45) - Vector2(0, 2 * u - bob), iso(e.x - 0.55 + s * 0.275, e.y + 0.45) - Vector2(0, 2 * u - bob), c("#2c2016"), u)
 
 
 var flood_lv := 0.0
