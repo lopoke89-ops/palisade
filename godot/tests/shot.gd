@@ -40,6 +40,31 @@ func _init() -> void:
 			s.update(1.0 / 30.0, {})
 		for n in 20:
 			await process_frame
+	elif mode == "city":   # City Black Out: an attack on a POI near the player (args: [x y] to stand at)
+		main.next_opt.mode = "blackout"
+		main._restart()
+		s = main.sim
+		s.qm.alive = false
+		s.qm.gone = true
+		for n in 30 * 46:
+			s.player.hp = s.player.max
+			s.update(1.0 / 30.0, {})
+		var ci: int = s.game.bo.cur.ci
+		var c: Dictionary = s.cores[ci]
+		for n in 30 * 14:
+			s.player.hp = s.player.max
+			s.player.x = c.i + 0.5 + (3.5 if args.size() < 3 else float(args[2]))
+			s.player.y = c.j + 3.5
+			s.update(1.0 / 30.0, {})
+		s.cores[1].hp = s.cores[1].max * 0.6
+		for n in 20:
+			await process_frame
+		var tot := 0
+		for n in 30:
+			main.queue_redraw()
+			await process_frame
+			tot += main.draw_us
+		print("city _draw %.1f ms" % (tot / 30000.0))
 	elif mode == "zoo":
 		s.game.wave = 4
 		s.start_raid()

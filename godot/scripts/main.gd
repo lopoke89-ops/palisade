@@ -30,10 +30,21 @@ var shake := 0.0
 var shake_t := 0.0
 var font: Font
 var mouse_seen := false
+var vb := [0, 0, 0, 0]   # this frame's visible tiles (i0, i1, j0, j1), so the 64x64 city only draws what's on screen
+var city_map: ImageTexture = null   # Black Out's mini-map, drawn once a game
+var draw_us := 0   # how long the last _draw took (the screenshot test reports it)
+var cv: CanvasItem = self   # what the drawing helpers draw on: this node, or a ground chunk while it paints
+var ground: Node2D   # the ground chunks' parent, drawn behind everything and moved with the camera
+var ground_key := ""
+var game_n := 0   # counts new games and chapter changes (the ground repaints)
 
 
 func _ready() -> void:
 	font = ThemeDB.fallback_font
+	RenderingServer.set_default_clear_color(Color.html("#151a12"))
+	ground = Node2D.new()
+	ground.show_behind_parent = true
+	add_child(ground)
 	profile.load_file()
 	sim.new_game(-1, next_opt.diff, profile.perk_mods(), _game_opt())
 	audio.sim = sim
@@ -85,7 +96,7 @@ func _unhandled_input(e: InputEvent) -> void:
 			elif k == KEY_X:
 				next_opt.size = "xl" if next_opt.size == "std" else "std"
 			elif k == KEY_V:
-				var modes := ["5", "10", "endless", "blitz", "campaign"]
+				var modes := ["5", "10", "endless", "blitz", "campaign", "blackout"]
 				next_opt.mode = modes[(modes.find(next_opt.mode) + 1) % modes.size()]
 			elif k == KEY_D:
 				var ds := ["easy", "normal", "hard"]
@@ -118,6 +129,8 @@ func _unhandled_input(e: InputEvent) -> void:
 			KEY_ENTER, KEY_KP_ENTER:
 				if sim.game.phase == "build":
 					sim.start_raid()
+				elif sim.blackout():
+					sim.bo_ready()
 
 
 func _game_opt() -> Dictionary:
@@ -127,11 +140,13 @@ func _game_opt() -> Dictionary:
 
 
 func _setup_line() -> String:
-	var mode_names := {"5": "5 RAIDS", "10": "10 RAIDS", "endless": "ENDLESS", "blitz": "BLITZKRIEG RUSH", "campaign": "OPERATION WHITEOUT"}
-	return "NEXT GAME · C %s · M %s · X %s · V %s · D %s" % [Pal.CLASSES[next_cls].name, PalMaps.MAPS[next_opt.map].name, next_opt.size.to_upper(), mode_names[next_opt.mode], next_opt.diff.to_upper()]
+	var mode_names := {"5": "5 RAIDS", "10": "10 RAIDS", "endless": "ENDLESS", "blitz": "BLITZKRIEG RUSH", "campaign": "OPERATION WHITEOUT", "blackout": "CITY BLACK OUT"}
+	return "NEXT GAME · C %s · M %s · X %s · V %s · D %s" % [Pal.CLASSES[next_cls].name, ("THE CITY" if next_opt.mode == "blackout" else ("CAMPAIGN" if next_opt.mode == "campaign" else PalMaps.MAPS[next_opt.map].name)), next_opt.size.to_upper(), mode_names[next_opt.mode], next_opt.diff.to_upper()]
 
 
 func _restart() -> void:
+	city_map = null
+	game_n += 1
 	sim.new_game(-1, next_opt.diff, profile.perk_mods(), _game_opt())
 	run_sp = -1
 	parts.clear()
@@ -179,6 +194,7 @@ func _process(dt: float) -> void:
 		sh = Vector2(sin(shake_t * 71.0), cos(shake_t * 57.0)) * shake * v.u
 		shake *= pow(0.02, dt)
 	v.cam_follow(sim.player.x, sim.player.y, sh, sim.height_at(sim.player.x, sim.player.y))
+	_sync_ground()
 	queue_redraw()
 
 
@@ -203,6 +219,7 @@ func _drain_events() -> void:
 			"slash":
 				slashes.append({"x": e.x, "y": e.y, "ax": e.ax, "ay": e.ay, "life": 0.28, "max": 0.28})
 			"map":   # a campaign chapter moved everyone to the next map
+				game_n += 1
 				parts.clear()
 				rings.clear()
 				v.cam_snap(sim.player.x, sim.player.y, sim.height_at(sim.player.x, sim.player.y))
@@ -279,7 +296,7 @@ func c(h: String) -> Color:
 
 
 func quad(a: Vector2, b: Vector2, cc: Vector2, d: Vector2, fill: Color) -> void:
-	draw_colored_polygon(PackedVector2Array([a, b, cc, d]), fill)
+	cv.draw_colored_polygon(PackedVector2Array([a, b, cc, d]), fill)
 
 
 func up(p: Vector2, h: float) -> Vector2:
@@ -300,15 +317,15 @@ func box_r(x0: float, y0: float, x1: float, y1: float, z: float, h: float, top: 
 
 
 func oval(cx: float, cy: float, rx: float, ry: float, col: Color) -> void:
-	draw_set_transform(Vector2(cx, cy), 0, Vector2(1, ry / rx))
-	draw_circle(Vector2.ZERO, rx, col)
-	draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
+	cv.draw_set_transform(Vector2(cx, cy), 0, Vector2(1, ry / rx))
+	cv.draw_circle(Vector2.ZERO, rx, col)
+	cv.draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 
 
 func label(text: String, x: float, y: float, col: Color, size: int = 11) -> void:
 	var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
-	draw_string(font, Vector2(x - w / 2 + 1, y + 1), text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, Color(0, 0, 0, 0.7))
-	draw_string(font, Vector2(x - w / 2, y), text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, col)
+	cv.draw_string(font, Vector2(x - w / 2 + 1, y + 1), text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, Color(0, 0, 0, 0.7))
+	cv.draw_string(font, Vector2(x - w / 2, y), text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, col)
 
 
 func mixc(a: String, b: String, t: float) -> Color:
@@ -318,31 +335,23 @@ func mixc(a: String, b: String, t: float) -> Color:
 # ---------------------------------------------------------------- the scene
 
 func _draw() -> void:
+	var t_draw := Time.get_ticks_usec()
+	_draw_scene()
+	draw_us = Time.get_ticks_usec() - t_draw
+
+
+func _draw_scene() -> void:
 	var N: int = sim.N
 	var u := v.u
 	var WH := v.WH
-	draw_rect(Rect2(Vector2.ZERO, Vector2(v.W, v.H)), c("#151a12"))
-	# the land outside the fence (paintBack)
-	for i in range(-6, N + 6):
-		for j in range(-6, N + 6):
-			if i >= 0 and j >= 0 and i < N and j < N:
-				continue
-			var dx := -i if i < 0 else (i - N + 1 if i >= N else 0)
-			var dy := -j if j < 0 else (j - N + 1 if j >= N else 0)
-			var d := maxi(dx, dy)
-			var h := Pal.hash2(i + 400, j + 77)
-			var col: Color
-			if d == 1:
-				col = c("#342d21") if h < 0.5 else c("#2f2a1e")
-			else:
-				col = mixc("#1f2518", "#262c1b", h).lerp(c("#171c13"), clampf((d - 2) / 6.0, 0, 1))
-			quad(iso(i, j), iso(i + 1, j), iso(i + 1, j + 1), iso(i, j + 1), col)
-	_paint_ground()
+	_vis_bounds()
 	_draw_terrain_live()
 	# debris lies flat under everything
-	for k in N * N:
-		if sim.debris[k] != 0 and sim.walls[k] == null:
-			_draw_debris(k % N, k / N, sim.debris[k] - 1)
+	for j in range(vb[2], vb[3] + 1):
+		for i in range(vb[0], vb[1] + 1):
+			var k := j * N + i
+			if sim.debris[k] != 0 and sim.walls[k] == null:
+				_draw_debris(i, j, sim.debris[k] - 1)
 	for fr in sim.frost_fields:
 		var qc := iso(fr.x, fr.y)
 		oval(qc.x, qc.y, fr.r * v.TW2, fr.r * v.TH2, Color(0.7, 0.95, 1.0, 0.3 * clampf(fr.t / 2.0, 0, 1)))
@@ -378,21 +387,32 @@ func _draw() -> void:
 	_draw_ghost()
 	# depth-sorted items: walls/nodes/stake key i+j+1, people x+y
 	var items: Array = []
-	for k in N * N:
-		if sim.walls[k] != null:
-			items.append([k % N + k / N + 1.0, 0, k])
+	var city: bool = sim.map_id == "city"
+	for j in range(vb[2], vb[3] + 1):
+		for i in range(vb[0], vb[1] + 1):
+			var k := j * N + i
+			if sim.walls[k] != null:
+				items.append([i + j + 1.0, 0, k])
+			var t: int = sim.terr[k]
+			if t == PalMaps.T_ROCK or t == PalMaps.T_DRUM:
+				items.append([i + j + 1.0, 8, k])
+
+			if sim.is_frost() and sim.heights[k] > 0 and sim.connectors[k] == 0:
+				if (j + 1 < N and sim.heights[k] > sim.heights[k + N] + (1 if sim.connectors[k + N] != 0 else 0)) or (i + 1 < N and sim.heights[k] > sim.heights[k + 1]):
+					items.append([i + j + 2.0, 9, k])
 	for n in sim.nodes:
-		items.append([n.i + n.j + 1.0, 1, n])
-	for k in N * N:
-		var t: int = sim.terr[k]
-		if t == PalMaps.T_ROCK or t == PalMaps.T_DRUM:
-			items.append([k % N + k / N + 1.0, 8, k])
-		if sim.is_frost() and sim.heights[k] > 0 and sim.connectors[k] == 0:
-			var i := k % N
-			var j := k / N
-			if (j + 1 < N and sim.heights[k] > sim.heights[k + N] + (1 if sim.connectors[k + N] != 0 else 0)) or (i + 1 < N and sim.heights[k] > sim.heights[k + 1]):
-				items.append([i + j + 2.0, 9, k])
+		if _tile_on(n.i, n.j):
+			items.append([n.i + n.j + 1.0, 1, n])
 	items.append([sim.core.i + sim.core.j + 1.0, 2, null])
+	if city:
+		for k in _city_occluders():
+			items.append([k % N + k / N + 1.0, 10, k])
+		for co in sim.cores:
+			if co.has("poi") and _tile_on(co.i, co.j, 3):
+				items.append([co.i + co.j + 1.0, 11, co])
+		for l in sim.lay.lamps:
+			if _tile_on(l[0], l[1]):
+				items.append([l[0] + l[1] + 1.0, 12, l])
 	for e in sim.enemies:
 		items.append([e.x + e.y, 3, e])
 	items.append([sim.qm.x + sim.qm.y, 4, sim.qm])
@@ -472,6 +492,12 @@ func _draw() -> void:
 				_draw_terr_item(it[2] % N, it[2] / N, sim.terr[it[2]])
 			9:
 				_draw_frost_cliff(it[2])
+			10:
+				CityView.building(self, it[2] % N, it[2] / N, false)
+			11:
+				CityView.poi(self, it[2])
+			12:
+				CityView.lamp(self, it[2])
 			7:
 				var ch: Dictionary = it[2]
 				var cs := iso(ch.x, ch.y)
@@ -876,7 +902,9 @@ func _draw_hud() -> void:
 	# top bar: phase, clock, stake
 	draw_rect(Rect2(0, 0, W, 34), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.72))
 	var phase_txt: String
-	if g.phase == "build" and sim.campaign():
+	if sim.blackout() and g.phase != "over":
+		phase_txt = CityView.phase_text(sim)
+	elif g.phase == "build" and sim.campaign():
 		phase_txt = "CH %d · BUILD · %s · %s IN %ds   (ENTER: start now)" % [g.chapter + 1, sim.map_def.name, "FINAL EVACUATION" if g.wave == 12 else "RAID %d/3" % (g.wave % 3 + 1), ceili(g.timer)]
 	elif g.phase == "build":
 		phase_txt = "BUILD · RAID %d IN %ds   (ENTER: start now)" % [g.wave + 1, ceili(g.timer)]
@@ -891,7 +919,11 @@ func _draw_hud() -> void:
 	draw_string(font, Vector2(14, 22), phase_txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, paper)
 	var bw := 220.0
 	var bx := W - bw - 16
-	draw_string(font, Vector2(bx - 54, 22), "STAKE", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, dim)
+	draw_string(font, Vector2(bx - 80, 22), "COMMAND" if sim.map_id == "city" else "STAKE", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, dim)
+	if sim.map_id == "city":
+		if city_map == null:
+			city_map = CityView.map_image(sim)
+		CityView.minimap(self, city_map, W - 186, 44, 170)
 	draw_rect(Rect2(bx, 11, bw, 12), Color(0, 0, 0, 0.6))
 	draw_rect(Rect2(bx, 11, bw * maxf(0, sim.core.hp / sim.core.max), 12), gold)
 	# bottom-left: health, materials, grenades
@@ -929,9 +961,10 @@ func _draw_hud() -> void:
 		draw_string(font, Vector2(x + 18, y0 + 36), "%d %s %d" % [m + 1, Pal.MAT[m].name, p.mats[m]], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, paper if sel else dim)
 	draw_string(font, Vector2(20, y0 + 58), "PIECE: %s (F)   SALVAGE %d   DROPS %d" % [g.piece.to_upper(), p.sal, p.kills], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, dim)
 	var q: Dictionary = sim.qm
-	var qtxt: String = ("DELGADO · %s · %s   (H)" % ["FOLLOW" if q.mode == "follow" else "DEFEND", q.status]) if q.alive else "DELGADO IS DOWN · stand over him"
-	draw_rect(Rect2(10, y0 - 34, 330, 22), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.72))
-	draw_string(font, Vector2(20, y0 - 18), qtxt, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, c("#a9bccb") if q.alive else c("#d65a3a"))
+	if not q.get("gone", false):   # On Your Own: no Delgado line
+		var qtxt: String = ("DELGADO · %s · %s   (H)" % ["FOLLOW" if q.mode == "follow" else "DEFEND", q.status]) if q.alive else "DELGADO IS DOWN · stand over him"
+		draw_rect(Rect2(10, y0 - 34, 330, 22), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.72))
+		draw_string(font, Vector2(20, y0 - 18), qtxt, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, c("#a9bccb") if q.alive else c("#d65a3a"))
 	# what SPACE would do
 	if p.alive and g.phase != "over":
 		var t := sim.build_target(p, g.sel, g.piece == "door")
@@ -1417,16 +1450,136 @@ func _ground_col(i: int, j: int, h: float) -> Color:
 	return c("#3d3528") if h < 0.2 else (c("#352e23") if h < 0.75 else c("#2f291f"))
 
 
-func _paint_ground() -> void:
+## which tiles are on screen this frame: the bounds of the screen's corners on the ground, with room for tall things
+## standing below the bottom edge (buildings, the radio mast)
+## the land outside the fence (paintBack)
+func _paint_back() -> void:
+	var N: int = sim.N
+	for i in range(-6, N + 6):
+		for j in range(-6, N + 6):
+			if i >= 0 and j >= 0 and i < N and j < N:
+				continue
+			var dx := -i if i < 0 else (i - N + 1 if i >= N else 0)
+			var dy := -j if j < 0 else (j - N + 1 if j >= N else 0)
+			var d := maxi(dx, dy)
+			var h := Pal.hash2(i + 400, j + 77)
+			var col: Color
+			if d == 1:
+				col = c("#342d21") if h < 0.5 else c("#2f2a1e")
+			else:
+				col = mixc("#1f2518", "#262c1b", h).lerp(c("#171c13"), clampf((d - 2) / 6.0, 0, 1))
+			quad(v.iso(i, j), v.iso(i + 1, j), v.iso(i + 1, j + 1), v.iso(i, j + 1), col)
+
+
+## a ground chunk paints at camera (0, 0); its parent follows the camera
+func paint_chunk(ch: GroundChunk) -> void:
+	var cx := v.cam_x
+	var cy := v.cam_y
+	v.cam_x = 0.0
+	v.cam_y = 0.0
+	cv = ch
+	if ch.back:
+		_paint_back()
+	else:
+		_paint_ground(ch.i0, mini(sim.N, ch.i0 + ch.n), ch.j0, mini(sim.N, ch.j0 + ch.n))
+	cv = self
+	v.cam_x = cx
+	v.cam_y = cy
+
+
+## rebuild the ground chunks when the map, the zoom or the terrain changes; every frame they follow the camera
+func _sync_ground() -> void:
+	var key := "%s|%d|%.3f|%d|%d" % [sim.map_id, sim.N, v.S, sim.terr_log.size(), game_n]
+	if key != ground_key:
+		ground_key = key
+		for ch in ground.get_children():
+			ch.queue_free()
+			ground.remove_child(ch)
+		var n: int = 8 if sim.map_id == "city" else sim.N
+		var list: Array = [[-1, -1]]
+		for a in range(0, sim.N, n):
+			for b in range(0, sim.N, n):
+				list.append([a, b])
+		list.sort_custom(func(x, y): return x[0] + x[1] < y[0] + y[1])   # back to front: a chunk's buildings only overhang the ones behind it
+		for q in list:
+			var ch := GroundChunk.new()
+			ch.m = self
+			ch.back = q[0] < 0
+			ch.i0 = q[0]
+			ch.j0 = q[1]
+			ch.n = n
+			ground.add_child(ch)
+	ground.position = Vector2(v.cam_x, v.cam_y)
+
+
+func _vis_bounds() -> void:
+	var N: int = sim.N
+	var lo := Vector2(1e9, 1e9)
+	var hi := Vector2(-1e9, -1e9)
+	for q in [Vector2(0, 0), Vector2(v.W, 0), Vector2(0, v.H + v.WH * 4), Vector2(v.W, v.H + v.WH * 4)]:
+		var w := v.screen_to_world(q.x, q.y)
+		lo = Vector2(minf(lo.x, w.x), minf(lo.y, w.y))
+		hi = Vector2(maxf(hi.x, w.x), maxf(hi.y, w.y))
+	vb = [clampi(floori(lo.x) - 2, 0, N - 1), clampi(ceili(hi.x) + 2, 0, N - 1), clampi(floori(lo.y) - 2, 0, N - 1), clampi(ceili(hi.y) + 2, 0, N - 1)]
+
+
+## the building tiles standing in front of anyone on screen: drawn again over them, at the right depth
+func _city_occluders() -> Dictionary:
+	var occ := {}
+	var who: Array = sim.enemies.filter(func(e): return not e.dead)
+	if sim.player.alive or sim.player.downed:
+		who.append(sim.player)
+	if sim.qm.alive:
+		who.append(sim.qm)
+	who.append_array(sim.sacks)
+	for e in who:
+		var p := iso(e.x, e.y)
+		if p.x < -60 or p.x > v.W + 60 or p.y < -80 or p.y > v.H + 80:
+			continue
+		var ci := floori(e.x)
+		var cj := floori(e.y)
+		for a in 4:
+			for b in 4:
+				var i := ci + a
+				var j := cj + b
+				if not sim.inb(i, j):
+					continue
+				var k := sim.idx(i, j)
+				if sim.terr[k] != PalMaps.T_BLDG or occ.has(k):
+					continue
+				var dd: float = i + j + 1 - (e.x + e.y)
+				var lat: float = (i - j) - (e.x - e.y)
+				if dd > 0 and dd < 3.8 and absf(lat) < 1.8:
+					occ[k] = true
+	return occ
+
+
+func _tile_on(i: int, j: int, m: float = 1.5) -> bool:
+	var p := v.iso(i + 0.5, j + 0.5)
+	return p.x > -v.TW2 * m and p.x < v.W + v.TW2 * m and p.y > -v.TH2 * m and p.y < v.H + v.WH * 4 + v.TH2 * m
+
+
+## the ground of tiles [i0, i1) x [j0, j1); the whole map paints in one piece except the city
+func _paint_ground(i0: int, i1: int, j0: int, j1: int) -> void:
 	var N: int = sim.N
 	var u := v.u
+	if sim.map_id == "city":
+		for j in range(j0, j1):
+			for i in range(i0, i1):
+				quad(v.iso(i, j), v.iso(i + 1, j), v.iso(i + 1, j + 1), v.iso(i, j + 1), CityView.ground_col(self, i, j, Pal.hash2(i, j)))
+				CityView.ground_detail(self, i, j)
+		for d in range(i0 + j0, i1 + j1 - 1):   # its buildings, back to front (the ones in front of someone are drawn again over them)
+			for i in range(maxi(i0, d - j1 + 1), mini(i1, d - j0 + 1)):
+				if sim.terr[sim.idx(i, d - i)] == PalMaps.T_BLDG:
+					CityView.building(self, i, d - i, true)
+		return
 	if sim.is_frost():
-		for j in N:
-			for i in N:
+		for j in range(j0, j1):
+			for i in range(i0, i1):
 				_paint_frost_tile(i, j)
 		return
-	for i in N:
-		for j in N:
+	for i in range(i0, i1):
+		for j in range(j0, j1):
 			var h := Pal.hash2(i, j)
 			quad(v.iso(i, j), v.iso(i + 1, j), v.iso(i + 1, j + 1), v.iso(i, j + 1), _ground_col(i, j, h))
 			var t: int = sim.terr[sim.idx(i, j)]
@@ -1434,7 +1587,7 @@ func _paint_ground() -> void:
 				for e in [[1, 0, [i + 1, j], [i + 1, j + 1]], [-1, 0, [i, j], [i, j + 1]], [0, 1, [i, j + 1], [i + 1, j + 1]], [0, -1, [i, j], [i + 1, j]]]:
 					var nt := sim.t_at(i + e[0], j + e[1])
 					if sim.inb(i + e[0], j + e[1]) and nt != PalMaps.T_WATER and nt != PalMaps.T_BRIDGE:
-						draw_line(v.iso(e[2][0], e[2][1]), v.iso(e[3][0], e[3][1]), Color(120 / 255.0, 150 / 255.0, 120 / 255.0, 0.25), 1.2 * u)
+						cv.draw_line(v.iso(e[2][0], e[2][1]), v.iso(e[3][0], e[3][1]), Color(120 / 255.0, 150 / 255.0, 120 / 255.0, 0.25), 1.2 * u)
 				continue
 			if t == PalMaps.T_CRACK:
 				var pts := PackedVector2Array()
@@ -1443,9 +1596,9 @@ func _paint_ground() -> void:
 				for s in 4:
 					p += Vector2(0.14 + Pal.hash2(i + s, j * 3) * 0.1, 0.1 + Pal.hash2(i * 7, j + s) * 0.12)
 					pts.append(v.iso(p.x, p.y))
-				draw_polyline(pts, Color(14 / 255.0, 11 / 255.0, 9 / 255.0, 0.7), 1.1 * u)
-				draw_line(v.iso(i + 0.5, j + 0.5), v.iso(i + 0.3, j + 0.8), Color(14 / 255.0, 11 / 255.0, 9 / 255.0, 0.7), 1.1 * u)
-				draw_polyline(pts, Color(1, 140 / 255.0, 60 / 255.0, 0.12), 0.8 * u)
+				cv.draw_polyline(pts, Color(14 / 255.0, 11 / 255.0, 9 / 255.0, 0.7), 1.1 * u)
+				cv.draw_line(v.iso(i + 0.5, j + 0.5), v.iso(i + 0.3, j + 0.8), Color(14 / 255.0, 11 / 255.0, 9 / 255.0, 0.7), 1.1 * u)
+				cv.draw_polyline(pts, Color(1, 140 / 255.0, 60 / 255.0, 0.12), 0.8 * u)
 				continue
 			if sim.map_id == "quarry":
 				if h > 0.8:
@@ -1454,9 +1607,9 @@ func _paint_ground() -> void:
 			elif h > 0.86:
 				var cc := v.iso(i + 0.5, j + 0.5)
 				oval(cc.x + (h - 0.9) * 40 * u, cc.y, 6 * u, 2.5 * u, Color(84 / 255.0, 104 / 255.0, 64 / 255.0, 0.35))
-	for s in N + 1:
-		draw_line(v.iso(s, 0), v.iso(s, N), Color(0, 0, 0, 0.22), 1.0)
-		draw_line(v.iso(0, s), v.iso(N, s), Color(0, 0, 0, 0.22), 1.0)
+	for s in N + 1:   # (the city has no grid: its roads and sidewalks are the grid)
+		cv.draw_line(v.iso(s, 0), v.iso(s, N), Color(0, 0, 0, 0.22), 1.0)
+		cv.draw_line(v.iso(0, s), v.iso(N, s), Color(0, 0, 0, 0.22), 1.0)
 
 
 ## paintFrostTile: a terrace top (snow), its south and east faces where it drops, and the treads of stairs and ramps
@@ -1478,15 +1631,15 @@ func _paint_frost_tile(i: int, j: int) -> void:
 	if z > lowE:
 		quad(B, C, v.iso(i + 1, j + 1, lowE), v.iso(i + 1, j, lowE), c("#304858"))
 	quad(A, B, C, D, c("#acc9d8") if r else (c("#dceaf0") if h > 0.55 else c("#c8dee8")))
-	draw_line(D, C, Color(68 / 255.0, 109 / 255.0, 134 / 255.0, 0.2), u)
+	cv.draw_line(D, C, Color(68 / 255.0, 109 / 255.0, 134 / 255.0, 0.2), u)
 	if r:
 		var n := 5 if r == 2 else 2
 		for q in range(1, n + 1):
 			var t := float(q) / (n + 1)
-			draw_line(v.iso(i, j + t, z + 1 - t), v.iso(i + 1, j + t, z + 1 - t), c("#547b90") if r == 2 else c("#e7f5fa"), (2.0 if r == 2 else 1.0) * u)
+			cv.draw_line(v.iso(i, j + t, z + 1 - t), v.iso(i + 1, j + t, z + 1 - t), c("#547b90") if r == 2 else c("#e7f5fa"), (2.0 if r == 2 else 1.0) * u)
 	elif h > 0.83:
 		var p := v.iso(i + 0.5, j + 0.5, z)
-		draw_rect(Rect2(p.x - 2 * u, p.y, 4 * u, u), Color(1, 1, 1, 0.55))
+		cv.draw_rect(Rect2(p.x - 2 * u, p.y, 4 * u, u), Color(1, 1, 1, 0.55))
 
 
 ## a terrace's cliff face, depth-sorted so people behind the lip are hidden by it

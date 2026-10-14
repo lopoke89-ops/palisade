@@ -5,7 +5,7 @@ extends Node
 
 const NAMES := ["ar", "rifle", "smg", "shotgun", "hit0", "hit1", "hit2", "boom", "bigboom", "bottle", "shieldhit", "medpulse", "mark",
 	"collapse", "place0", "place1", "place2", "gather", "siren", "core", "hurt", "drop", "lob", "plant", "beep", "revive", "restock",
-	"deny", "medic", "win", "lose", "horn", "rocket", "lock", "slash", "charge", "zap", "rumble", "drill", "rockfall", "winterwarn", "splash", "sniper", "rack", "pump", "shellin", "dry"]
+	"deny", "medic", "win", "lose", "horn", "rocket", "lock", "slash", "charge", "zap", "rumble", "drill", "rockfall", "winterwarn", "splash", "sniper", "rack", "pump", "shellin", "dry", "harpoon", "chain", "flood"]
 const HEADROOM := 0.5   # matches tools/render_sfx.gd
 const MASTER := 0.55
 const MUSIC := {"between": "between_raids", "attitude": "raid_attitude", "cool": "raid_cool", "express": "raid_express", "results": "results"}

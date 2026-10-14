@@ -468,6 +468,7 @@ func _init() -> void:
 
 	_maps_and_modes()
 	_campaign()
+	_blackout()
 
 	print("armory")
 	var ar := _mk()
@@ -611,6 +612,8 @@ func _maps_and_modes() -> void:
 	print("maps: every map and size laid out tile for tile as the browser does (tests/maps_ref.json, from tools/maps_ref.js)")
 	var mref = JSON.parse_string(FileAccess.get_file_as_string("res://tests/maps_ref.json"))
 	for key in mref:
+		if key == "city":   # checked with Black Out
+			continue
 		var r: Dictionary = mref[key]
 		var parts: PackedStringArray = key.split("_")
 		var L := PalMaps.lay(parts[0], parts[1])
@@ -635,6 +638,8 @@ func _maps_and_modes() -> void:
 		check(ts == r.terr and hs == r.heights and cs == r.conn and L.core[0] == int(r.core[0]) and L.core[1] == int(r.core[1]) and nodes_ok and spawns_ok and L.bossAt.size() == int(r.bossAt) and L.raftAt.size() == int(r.raftAt),
 			"%s: terrain, heights, stake, piles, spawns and boss spots match" % key)
 	for key in mref:
+		if key == "city":
+			continue
 		var parts: PackedStringArray = key.split("_")
 		var ms := _mk()
 		ms.new_game(100, "normal", {}, {"map": parts[0], "size": parts[1]})
@@ -800,6 +805,107 @@ func _campaign() -> void:
 		rimes = maxi(rimes, gt.enemies.filter(func(e): return e.get("boss", "") == "rime").size())
 	check(gt.game.fb.wave == 6 and most <= 8 and most >= 6 and rimes >= 2, "six waves of two Rime Colossi and one more, never more than 8 up (most %d)" % most)
 	check(gt.game.fb.evac != null and gt.game.fb.pend.is_empty(), "the evac opens with 30 s left, and no more bosses land")
+
+
+func _blackout() -> void:
+	print("City Black Out")
+	var ref: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://tests/maps_ref.json")).city
+	var L := PalMaps.lay("city")
+	var ts := ""
+	for t in L.terr:
+		ts += String.num_int64(t, 36)
+	var pois: Array = L.pois.map(func(p): return [p.id, p.i, p.j, 1 if p.major else 0])
+	var nodes: Array = L.nodes.map(func(n): return [n.i, n.j, n.type])
+	var ruins: Array = L.ruins.map(func(r): return [r[0], r[1]])
+	var near: Array = [[5, 30], [60, 31], [31, 2], [32, 61], [10, 10]].map(func(q): return PalMaps.city_edge_for(q[0], q[1], 64))
+	ref = _ints(ref)
+	check(ts == ref.terr and str(L.core) == str(ref.core) and str(pois) == str(ref.pois) and str(nodes) == str(ref.nodes), "the 64x64 city: roads, sidewalks, blocks, rubble, plazas and piles match the browser tile for tile")
+	check(str(ruins) == str(ref.ruins) and str(L.lamps) == str(ref.lamps) and str(near) == str(ref.near), "sandbag rings, %d streetlamps and attack edges match" % L.lamps.size())
+	var bo := _mk()
+	var t0 := Time.get_ticks_msec()
+	bo.new_game(120, "normal", {}, {"mode": "blackout", "map": "river"})
+	check(bo.map_id == "city" and bo.N == 64 and bo.cores.size() == 9 and is_equal_approx(bo.game.timer, 45.0), "64x64, Main Command plus eight POIs, 45 s to gather (set up in %d ms)" % (Time.get_ticks_msec() - t0))
+	check(bo.cores[1].max == 350.0 and bo.cores[5].max == 250.0, "majors 70% of a stake, minors 50%")
+	var reach := true
+	for side in ["n", "e", "s", "w"]:
+		for t in bo.lay.edges[side]:
+			if bo.dist[bo.idx(t[0], t[1])] >= 1e8:
+				reach = false
+		for ci in range(1, 9):
+			var f: PackedFloat64Array = bo.poi_flow(ci)
+			var t: Array = bo.lay.edges[side][20]
+			if f[bo.idx(t[0], t[1])] >= 1e8:
+				reach = false
+	check(reach, "every edge has a way to Main Command and to every POI")
+	check(is_equal_approx(bo.slow_at(32.5, 20.5), 1.35) and is_equal_approx(bo.slow_at(31.5, 31.5), 1.0), "roads are quick going (1.35x)")
+	bo.qm.alive = false
+	bo.qm.gone = true
+	for n in 60 * 46:
+		bo.player.hp = bo.player.max
+		bo.update(1.0 / 60.0, {})
+	var B: Dictionary = bo.game.bo
+	check(bo.player.sal >= 40 and B.stage == "attack" and not bo.cores[B.cur.ci].poi.major, "after the gathering: a starting purse and the first attack, on a minor POI")
+	var ci: int = B.cur.ci
+	var hit := false
+	t0 = Time.get_ticks_msec()
+	for n in 60 * 61:
+		bo.player.hp = bo.player.max
+		bo.player.x = 32.5
+		bo.player.y = 33.5
+		bo.update(1.0 / 60.0, {})
+		if bo.cores[ci].hp < bo.cores[ci].max:
+			hit = true
+		if B.stage != "attack":
+			break
+	check(hit and B.stage == "gap" and B.log.size() == 1, "his troops go for the POI; the attack ends %s (%s; 60 s took %d ms)" % [B.log[0][1] if B.log.size() else "?", "%d/%d" % [bo.cores[ci].hp, bo.cores[ci].max], Time.get_ticks_msec() - t0])
+	check(bo.enemies.filter(func(e): return not e.dead).is_empty(), "and whoever is left pulls back")
+	B.t = 0.01
+	bo.update(1.0 / 60.0, {})
+	var c2: Dictionary = bo.cores[B.cur.ci]
+	c2.hp = 0.0
+	bo.update(1.0 / 60.0, {})
+	var lost0: int = B.log.filter(func(l): return l[1] == "lost").size()
+	check(c2.lost and B.lost == lost0 and bo.core_ks.has(bo.idx(c2.i, c2.j)), "a POI at 0 is lost (%s)" % c2.poi.name)
+	var pw: Dictionary = bo.cores.filter(func(c): return c.has("poi") and c.poi.perk == "lights")[0]
+	bo.bo_lose_perk(pw)
+	check(bo.game.dark, "losing the Power Station puts the lights out")
+	bo.enemies.clear()
+	B.n = 8
+	B.cur = null
+	B.stage = "gap"
+	B.t = 0.0
+	bo.update(1.0 / 60.0, {})
+	check(B.stage == "ready", "after the eighth: READY UP")
+	bo.bo_ready()
+	bo.update(1.0 / 60.0, {})
+	check(B.stage == "push" and is_equal_approx(B.push.hp, 1.0 + 0.05 * B.lost), "ready: the final push, bosses +5%% for each lost minor (%d)" % B.lost)
+	var most := 0
+	t0 = Time.get_ticks_msec()
+	for n in 60 * 185:
+		bo.player.hp = bo.player.max
+		bo.core.hp = bo.core.max
+		bo.update(1.0 / 60.0, {})
+		most = maxi(most, bo.live_bosses())
+	check(most >= 3 and most <= 4 and B.push.dest and bo.enemies.any(func(e): return e.get("dest", false)), "a boss every 30 s, at most 4 up; at 3:00 the Supreme Destroyer (%d ms)" % (Time.get_ticks_msec() - t0))
+	for e in bo.enemies:
+		if e.get("dest", false):
+			bo.hurt_enemy(e, 1e6, 0)
+	bo.update(1.0 / 60.0, {})
+	check(bo.game.phase == "over" and bo.game.won and B.destroyer and bo.bo_stages() == B.held + B.lost + 1, "the Destroyer down: the city held")
+
+
+## JSON numbers come back as floats: whole ones back to ints, to compare with str()
+func _ints(v):
+	if v is float and v == floorf(v):
+		return int(v)
+	if v is Array:
+		return v.map(_ints)
+	if v is Dictionary:
+		var o := {}
+		for k in v:
+			o[k] = _ints(v[k])
+		return o
+	return v
 
 
 func _games_on_every_map() -> void:

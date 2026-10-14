@@ -20,6 +20,10 @@ var dist := PackedFloat64Array()
 var nodes: Array = []
 var node_ix := {}
 var core := {}
+var cores: Array = []   # every stake: core is cores[0] (Main Command in Black Out); the POIs follow
+var core_ks := {}   # tile index -> stake
+var poi_flows := {}   # Black Out: each POI's own flow field, built when a raider first needs it
+var _aim_save: Array = []
 var core_k := 0
 var player := {}
 var qm := {}
@@ -51,6 +55,9 @@ var flood_on := false
 var terr_log: Array = []
 var chains: Array = []
 var mods: Array = []
+const SIDE_NAMES := {"n": "north", "e": "east", "s": "south", "w": "west"}
+const BO_SIDES := ["n", "e", "s", "w"]
+const BO := {"pay": 20, "payStep": 5, "purse": 40, "pushPay": 60, "bounty": 1.25, "ready": 90.0, "gather": 45.0, "gap": 35.0, "cap": 60.0, "warn": 15.0, "warnNo": 3.0, "push": 300.0, "dest": 120.0, "every": 30.0, "squad": 20.0, "bossCap": 4, "minorHp": 0.05, "repair": 2.0, "heal": 3.0, "healR": 5.0, "refill": 30.0, "highR": 2.5}
 const GAUNTLET := {"t": 210.0, "evac": 30.0, "every": 30.0, "waves": 6, "rimes": 2, "cap": 8, "hp": 1.1, "warn": 1.0, "apart": 3.0, "pool": ["whitebutcher", "whiteforeman", "tempest", "bulldozer", "bluebutcher", "arsonist"]}
 const MAP_EVAC := {"t": 15.0, "want": 8, "wantXL": 9}
 const CAMPAIGN := {"waves": 13, "maps": ["yard", "river", "quarry", "frost"], "bosses": ["whitebutcher", "whiteferryman", "whiteforeman", "rime"], "story": ["Secure the Yard and recover the mountain evacuation route.", "Cross Riverbend and recover the stranded supply convoy.", "Secure quarry power for the summit beacon.", "Hold Frostpeak. Break the Rime Colossus and signal evacuation."]}
@@ -158,11 +165,11 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 		rng.randomize()
 	Df = Pal.DIFF.get(diff, Pal.DIFF.normal)
 	var mode: String = opt.get("mode", "5")
-	if not ["5", "10", "endless", "blitz", "campaign"].has(mode):
+	if not ["5", "10", "endless", "blitz", "campaign", "blackout"].has(mode):
 		mode = "5"
 	mods = clean_mods(opt.get("mods", []), mode)
-	map_id = "yard" if mode == "campaign" else opt.get("map", "yard")
-	if not PalMaps.MAPS.has(map_id):
+	map_id = "yard" if mode == "campaign" else ("city" if mode == "blackout" else opt.get("map", "yard"))
+	if not PalMaps.MAPS.has(map_id) and map_id != "city":
 		map_id = "yard"
 	lay = PalMaps.lay(map_id, opt.get("size", "std"))
 	map_def = lay.map
@@ -191,6 +198,14 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 	events.clear()
 	core = {"i": lay.core[0], "j": lay.core[1], "hp": float(Df.core), "max": float(Df.core), "flash": 0.0}
 	core_k = idx(core.i, core.j)
+	cores = [core]
+	for p in lay.get("pois", []):   # City Black Out: the eight POIs are stakes too; only Main Command ends the run
+		var php := float(roundi(Df.core * (0.7 if p.major else 0.5)))
+		cores.append({"i": p.i, "j": p.j, "hp": php, "max": php, "flash": 0.0, "poi": p, "lost": false, "attack": false, "next": false})
+	core_ks.clear()
+	for c in cores:
+		core_ks[idx(c.i, c.j)] = c
+	poi_flows.clear()
 	nodes = lay.nodes
 	node_ix.clear()
 	for n in nodes:
@@ -204,8 +219,8 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 		for n in nodes:
 			if n.locked and n.unlock > 3:
 				n.unlock = 3
-	var waves: float = INF if mode == "endless" else (float(BLITZ.waves) if mode == "blitz" else (float(CAMPAIGN.waves) if mode == "campaign" else float(mode)))
-	game = {"phase": "build", "timer": 40.0 + Df.build, "wave": 0, "waves": waves, "mode": mode, "queue": [], "spawnT": 0.0, "spawnGap": 1.1,
+	var waves: float = INF if mode == "endless" else (float(BLITZ.waves) if mode == "blitz" else (float(CAMPAIGN.waves) if mode == "campaign" else (8.0 if mode == "blackout" else float(mode))))
+	game = {"phase": "build", "timer": BO.gather if mode == "blackout" else 40.0 + Df.build, "bo": null, "dark": false, "wave": 0, "waves": waves, "mode": mode, "queue": [], "spawnT": 0.0, "spawnGap": 1.1,
 		"time": 0.0, "sel": 0, "piece": "wall", "won": false, "paused": false, "bosses": 0, "fb": null, "wx": 0, "wxHit": 0.0,
 		"flood": {"t": 0.0, "warned": false}, "end_reason": "", "dellLv": 0, "chapter": 0, "diff": diff, "map": map_id, "size": opt.get("size", "std"),
 		"stats": {"built": 0, "lost": 0, "dropped": 0, "revives": 0, "repairs": 0}}
@@ -266,6 +281,8 @@ func node_at(i: int, j: int):
 func enter_cost(k: int) -> float:
 	if k == core_k:
 		return 0.0
+	if core_ks.has(k):   # the other stakes (Black Out's POIs) are solid
+		return 1e6
 	var t: int = terr[k]
 	if PalMaps.terr_solid(t):
 		return 1e6
@@ -280,35 +297,10 @@ func enter_cost(k: int) -> float:
 	return base + (2.4 if t == PalMaps.T_WATER else (1.1 if t == PalMaps.T_LOW and flood_on else 0.0))
 
 
-## Dijkstra toward the stake over D4 neighbours: each step costs what it takes to enter the tile being left
-## (the browser adds enterCost(u) on relaxing from u; bestStep then adds the neighbour's own cost).
+## the stake's flow field (Black Out's POI fields are rebuilt on demand after)
 func compute_flow() -> void:
-	var n := N * N
-	dist.fill(1e9)
-	var done := PackedByteArray()
-	done.resize(n)
-	dist[core_k] = 0.0
-	var heap: Array = [[0.0, core_k]]
-	while not heap.is_empty():
-		var top: Array = _heap_pop(heap)
-		var bv: float = top[0]
-		var uk: int = top[1]
-		if done[uk] or bv > dist[uk]:
-			continue
-		done[uk] = 1
-		var ui := uk % N
-		var uj := uk / N
-		var c := enter_cost(uk)
-		for d in Pal.D4:
-			var i: int = ui + d[0]
-			var j: int = uj + d[1]
-			if not height_link(ui, uj, i, j):
-				continue
-			var k := idx(i, j)
-			var nv := bv + c
-			if nv < dist[k]:
-				dist[k] = nv
-				_heap_push(heap, [nv, k])
+	flow_to(core_k, dist)
+	poi_flows.clear()
 
 
 func _heap_push(h: Array, item: Array) -> void:
@@ -373,7 +365,7 @@ func solid_tile(i: int, j: int, team: bool) -> bool:
 	if not inb(i, j):
 		return true
 	var k := idx(i, j)
-	if k == core_k or PalMaps.terr_solid(terr[k]):
+	if core_ks.has(k) or PalMaps.terr_solid(terr[k]):
 		return true
 	var w = walls[k]
 	if w != null:
@@ -425,7 +417,7 @@ func los_clear(x0: float, y0: float, x1: float, y1: float) -> bool:
 		if not inb(i, j):
 			return false
 		var k := idx(i, j)
-		if k == core_k or PalMaps.terr_shot(terr[k]):
+		if core_ks.has(k) or PalMaps.terr_shot(terr[k]):
 			return false
 		var n = node_at(i, j)
 		if n != null and n.solid:
@@ -531,11 +523,16 @@ func hurt_enemy(e: Dictionary, d: float, own = null, quiet: bool = false) -> voi
 			award(own, e)
 
 
-func hurt_stake(d: float) -> void:
-	core.hp -= d
-	core.flash = 0.12
-	sfx("core", core.i + 0.5, core.j + 0.5)
-	emit(core.i + 0.5, core.j + 0.5, "spark")
+## c: which stake (Black Out's POIs are stakes too); the one a raider is after while he thinks by default
+func hurt_stake(d: float, c = null) -> void:
+	if c == null:
+		c = core
+	if c.get("lost", false):
+		return
+	c.hp -= d
+	c.flash = 0.12
+	sfx("core", c.i + 0.5, c.j + 0.5)
+	emit(c.i + 0.5, c.j + 0.5, "spark")
 
 
 func explode(x: float, y: float, R: float = 1.65, power: float = 1.0, own = null, raid: bool = false) -> void:
@@ -564,9 +561,10 @@ func explode(x: float, y: float, R: float = 1.65, power: float = 1.0, own = null
 					w.fire_by = own
 				damage_wall(k, 80.0 * f * power * Pal.MAT[w.mat].blast, own)
 	crack_blast(x, y, R, power)
-	var fc: float = fall.call(hdist(x, y, core.i + 0.5, core.j + 0.5))
-	if fc > 0:
-		hurt_stake(48.0 * fc * power)
+	for c in cores:
+		var fc: float = fall.call(hdist(x, y, c.i + 0.5, c.j + 0.5))
+		if fc > 0:
+			hurt_stake(48.0 * fc * power, c)
 	if not raid:   # a raider's rocket or charge doesn't hurt raiders
 		for e in enemies:
 			if e.get("burrow", false):
@@ -611,7 +609,7 @@ func build_eval(p: Dictionary, i: int, j: int, sel: int, door: bool) -> Dictiona
 		t.reason = "That is the fence line"
 		return t
 	var k := idx(i, j)
-	if k == core_k:
+	if core_ks.has(k):
 		t.reason = "That is the stake"
 		return t
 	if node_at(i, j) != null:
@@ -779,12 +777,15 @@ func update(dt: float, ctl: Dictionary = {}) -> void:
 	if game.phase == "over" or game.paused:
 		return
 	game.time += dt
-	core.flash = maxf(0.0, core.flash - dt)
+	for c in cores:
+		c.flash = maxf(0.0, c.flash - dt)
 	update_flood(dt)
 	if game.phase == "raid":
 		storm_tick(dt)
 	if game.phase == "build":
 		game.timer -= dt
+		if blackout():
+			bo_gather()
 		if game.timer <= 0:
 			start_raid()
 	else:
@@ -793,7 +794,11 @@ func update(dt: float, ctl: Dictionary = {}) -> void:
 			if game.spawnT <= 0:
 				spawn_enemy(game.queue.pop_front())
 				game.spawnT = game.spawnGap
-		if game.fb != null:
+		if game.bo != null:   # City Black Out runs on its own clock
+			bo_tick(dt)
+			if game.phase == "over":
+				return
+		elif game.fb != null:
 			fb_tick(dt)
 			if game.phase == "over":
 				return
@@ -1236,6 +1241,14 @@ static func _splice(q: Array, i: int, v) -> void:
 
 
 func start_raid() -> void:
+	if blackout():
+		game.phase = "raid"
+		if game.bo == null:
+			bo_start()
+		for c in cores:
+			c.next = false
+		bo_next()
+		return
 	game.wave += 1
 	game.phase = "raid"
 	if blitz() and game.wave >= final_wave():
@@ -1386,264 +1399,10 @@ func update_enemies(dt: float) -> void:
 	for e in enemies:
 		if e.dead:
 			continue
-		if e.get("burnT", 0.0) > 0:
-			var tick := minf(dt, e.burnT)
-			e.burnT = maxf(0.0, e.burnT - dt)
-			hurt_enemy(e, 10.0 * tick, e.burnOwn, true)
-			if e.dead:
-				continue
-		if e.get("slowT", 0.0) > 0:
-			e.slowT = maxf(0.0, e.slowT - dt)
-			if e.slowT == 0:
-				e.slowPct = 0.0
-		var boss_t: bool = e.type == "boss"
-		var NM := has_mod("nightmare")
-		var hurry := 1.18 if NM and not boss_t else 1.0
-		e.cd = maxf(e.cd - dt * hurry, -dt)
-		e.flash = maxf(0.0, e.flash - dt)
-		e.scanT -= dt
-		if has_mod("berserk") and boss_t and e.get("st", 0) == 0:   # Berserk: bosses wind up a third sooner
-			e.cd -= dt * 0.33
-			if e.has("ab"):
-				e.ab -= dt * 0.33
-		var ti := int(e.x)
-		var tj := int(e.y)
-		var tgt = null
-		var move_to = null
-		if absi(ti - core.i) <= 1 and absi(tj - core.j) <= 1:
-			tgt = Vector2(core.i + 0.5, core.j + 0.5)
-		else:
-			var k := best_step(ti, tj)
-			if k >= 0:
-				var c := Vector2(k % N + 0.5, k / N + 0.5)
-				if walls[k] != null:
-					tgt = c
-				else:
-					move_to = c
-		if e.scanT <= 0:
-			e.scanT = 0.2
-			e.foe = null
-			var bd: float = (boss_def(e.boss).scan if e.type == "boss" else {"gren": 6.5, "spotter": 10.0, "medic": 5.0, "fire": 6.5}.get(e.type, 7.0)) * (1.3 if has_mod("nightmare") and e.type != "boss" else 1.0)
-			# spotted: riflemen go for the marked soldier first
-			if e.type == "rifle" or (has_mod("elite") and (e.type == "gren" or e.type == "fire")):
-				for a in allies():
-					if seen(a) and a.markT > 0:
-						var d := d2(a, e)
-						if d < bd + 3 and los_clear(e.x, e.y, a.x, a.y):
-							e.foe = a
-							bd = -1.0
-							break
-			if bd >= 0:
-				for a in allies():
-					if not seen(a):
-						continue
-					var d := d2(a, e)
-					if d < bd and los_clear(e.x, e.y, a.x, a.y):
-						bd = d
-						e.foe = a
-		if e.foe != null and not seen(e.foe):
-			e.foe = null
-		var engaging := false
-		match e.type:
-			"boss":
-				var px: float = e.x
-				var py: float = e.y
-				var r := think_boss(e, dt, tgt, move_to)
-				engaging = r[0]
-				move_to = r[1]
-				if e.boss != "rime" and not frost_fields.is_empty():   # frost slows a boss's own moves too
-					var sl := slow_at(px, py)
-					e.x = px + (e.x - px) * sl
-					e.y = py + (e.y - py) * sl
-				if not height_travel_clear(px, py, e.x, e.y):   # never across a cliff or a connector's side
-					e.x = px
-					e.y = py
-					e.st = 0
-					e.ab = 2.0
-					e.cd = 1.0
-				if move_to != null and not travel_clear(e.x, e.y, move_to.x, move_to.y, false):
-					if not (tgt != null and move_to == tgt):
-						var k2 := best_step(int(e.x), int(e.y))
-						move_to = Vector2(k2 % N + 0.5, k2 / N + 0.5) if k2 >= 0 else null
-			"rifle":
-				# a spotter's mark tightens their aim a lot (0.2 rad spread down to 0.06) and adds a little range
-				if e.foe != null:
-					engaging = true
-					var mk: bool = e.foe.markT > 0
-					var a := _aim_at(e, e.foe.x, e.foe.y)
-					if e.cd <= 0:
-						while e.cd <= 0:
-							fire(e, a + (rnd() - 0.5) * (0.06 if mk else 0.2), 1, {"dmg": 8.0 * Df.dmg, "speed": 22.0, "range": 13.0 if mk else 11.0}, -e.cd)
-							e.cd += 0.65 + rnd() * 0.45
-						sfx("rifle", e.x, e.y)
-				elif tgt != null:
-					var a := _aim_at(e, tgt.x, tgt.y)
-					if e.cd <= 0:
-						while e.cd <= 0:
-							fire(e, a + (rnd() - 0.5) * 0.1, 1, {"dmg": 7.0 * Df.dmg, "speed": 22.0, "range": 11.0, "over": false}, -e.cd)
-							e.cd += 0.6 + rnd() * 0.3
-						sfx("rifle", e.x, e.y)
-			"gren":
-				var lt = Vector2(e.foe.x, e.foe.y) if e.foe != null and d2(e.foe, e) < (8.5 if has_mod("elite") and e.foe.markT > 0 else 7.0) else look_ahead(e)
-				if lt != null:
-					_aim_at(e, lt.x, lt.y)
-				if e.cd <= 0 and lt != null:
-					var tx := clampf(lt.x + (rnd() - 0.5) * 0.8, 0.3, N - 0.3)
-					var ty := clampf(lt.y + (rnd() - 0.5) * 0.8, 0.3, N - 0.3)
-					var d := hdist(e.x, e.y, tx, ty)
-					lobs.append({"x0": e.x, "y0": e.y, "x1": tx, "y1": ty, "t": 0.0, "T": 0.55 + d * 0.08, "R": 1.65, "power": Df.dmg, "own": null})
-					e.cd += 3.1 + rnd() * 1.2
-					sfx("lob", e.x, e.y)
-				if e.foe != null and d2(e.foe, e) < 3.5:
-					engaging = true
-			"shield":
-				# keeps walking the path with the shield turned to whoever is shooting at him, pistol over the top; at a wall he bashes it
-				if e.foe != null:
-					var a := _aim_at(e, e.foe.x, e.foe.y)
-					if e.cd <= 0 and d2(e.foe, e) < 6.5:
-						fire(e, a + (rnd() - 0.5) * 0.22, 1, {"dmg": 6.0 * Df.dmg, "speed": 20.0, "range": 7.0}, 0.0)
-						e.cd = 1.1 + rnd() * 0.5
-						sfx("rifle", e.x, e.y)
-				if tgt != null and hdist(tgt.x, tgt.y, e.x, e.y) < 1.3:
-					if e.foe == null:
-						_aim_at(e, tgt.x, tgt.y)
-					engaging = true
-					if e.cd <= 0:
-						e.cd = 1.2
-						var k := idx(floori(tgt.x), floori(tgt.y))
-						if e.shieldBroken:
-							var a := _aim_at(e, tgt.x, tgt.y)
-							fire(e, a, 1, {"dmg": 6.0 * Df.dmg, "speed": 20.0, "range": 7.0}, 0.0)
-							sfx("rifle", e.x, e.y)
-						else:
-							if walls[k] != null:
-								damage_wall(k, 16.0 * Pal.MAT[walls[k].mat].bullet)
-							elif k == core_k:
-								hurt_stake(6.0 * Df.dmg)
-							sfx("hit1", tgt.x, tgt.y)
-			"medic":
-				# hangs back behind the nearest raider and patches up everyone near him every 1.6 s
-				e.ab -= dt
-				var buddy = null
-				var bb := 1e9
-				for o in enemies:
-					if not is_same(o, e) and not o.dead and o.type != "medic":
-						var d := d2(o, e)
-						if d < bb:
-							bb = d
-							buddy = o
-				if e.ab <= 0:
-					e.ab = 1.6
-					var healed := 0
-					for o in enemies:
-						if not o.dead and o.hp < o.max and d2(o, e) < 2.6:
-							o.hp = minf(o.max, o.hp + o.max * 0.14)
-							healed += 1
-					if healed > 0:
-						ev({"k": "ring", "x": e.x, "y": e.y, "r0": 0.2, "r1": 2.6, "life": 0.5, "c1": "#8fe0a0", "c2": "#2e7a48"})
-						sfx("medpulse", e.x, e.y)
-				if e.foe != null and d2(e.foe, e) < 5:
-					var a := _aim_at(e, e.foe.x, e.foe.y)
-					if e.cd <= 0:
-						fire(e, a + (rnd() - 0.5) * 0.25, 1, {"dmg": 5.0 * Df.dmg, "speed": 20.0, "range": 6.0}, 0.0)
-						e.cd = 1.3 + rnd() * 0.4
-						sfx("rifle", e.x, e.y)
-				if buddy != null and bb > 1.6 and bb < 8:
-					move_to = Vector2(buddy.x, buddy.y)
-				elif buddy != null and bb <= 1.6:
-					move_to = null
-					engaging = true
-			"spotter":
-				# sits back at 6-9 tiles; after 0.8 s with someone in sight he marks them for as long as he can see them
-				var f = e.foe
-				if f != null:
-					var d := d2(f, e)
-					_aim_at(e, f.x, f.y)
-					e.lx = f.x
-					e.ly = f.y
-					if e.st == 0:
-						e.st = 1
-						e.stT = 0.8
-						e.stM = 0.8
-						sfx("mark", e.x, e.y)
-					elif e.st == 1:
-						e.stT -= dt
-						if e.stT <= 0:
-							e.st = 2
-							e.stT = 0.0
-							flt(f.x, f.y, "SPOTTED", "#ff5a4a")
-					if e.st == 2:
-						f.markT = 0.35
-					if d < 5.5:
-						var l := d if d > 0 else 1.0
-						move_to = Vector2(clampf(e.x + (e.x - f.x) / l, 0.5, N - 0.5), clampf(e.y + (e.y - f.y) / l, 0.5, N - 0.5))
-					elif d < 9.5:
-						move_to = null
-						engaging = true
-				elif e.st != 0:
-					e.st = 0
-					e.stT = 0.0
-			"fire":
-				# lobs fire bottles at the wooden wall in his way (or at people close by)
-				var lt = null
-				if e.foe != null and d2(e.foe, e) < (8.5 if has_mod("elite") and e.foe.markT > 0 else 6.5):
-					lt = Vector2(e.foe.x, e.foe.y)
-				else:
-					var la = look_ahead(e)
-					if la != null:
-						var w = walls[idx(floori(la.x), floori(la.y))]
-						if w != null and w.mat == 0 and not (w.fire > 0):
-							lt = la
-				if lt != null:
-					_aim_at(e, lt.x, lt.y)
-				if e.cd <= 0 and lt != null:
-					var tx := clampf(lt.x + (rnd() - 0.5) * 0.6, 0.3, N - 0.3)
-					var ty := clampf(lt.y + (rnd() - 0.5) * 0.6, 0.3, N - 0.3)
-					var d := hdist(e.x, e.y, tx, ty)
-					lobs.append({"x0": e.x, "y0": e.y, "x1": tx, "y1": ty, "t": 0.0, "T": 0.5 + d * 0.08, "R": 1.0, "power": Df.dmg, "k": 1, "own": null})
-					e.cd += 3.6 + rnd() * 1.2
-					sfx("lob", e.x, e.y)
-				if lt != null and hdist(lt.x, lt.y, e.x, e.y) < 5:
-					engaging = true
-			_:
-				# breacher: run the satchel to the wall, then run
-				if not e.planted and tgt != null:
-					if hdist(tgt.x, tgt.y, e.x, e.y) < 1.35:
-						charges.append({"x": e.x + (tgt.x - e.x) * 0.45, "y": e.y + (tgt.y - e.y) * 0.45, "fuse": 2.4, "beep": 0.0})
-						e.planted = true
-						e.fleeT = 5.0
-						sfx("plant", e.x, e.y)
-						flt(e.x, e.y, "SATCHEL", "#d65a3a")
-					else:
-						move_to = tgt
-				if e.planted:
-					e.fleeT -= dt
-					if e.fleeT <= 0:
-						e.planted = false
-						flt(e.x, e.y, "RE-ARMED", "#d65a3a")
-				if e.planted:
-					var bk := -1
-					var bv := -1.0
-					for dd in Pal.D4:
-						var i: int = ti + dd[0]
-						var j: int = tj + dd[1]
-						if not inb(i, j) or solid_tile(i, j, false):
-							continue
-						var k := idx(i, j)
-						if dist[k] > bv:
-							bv = dist[k]
-							bk = k
-					move_to = Vector2(bk % N + 0.5, bk / N + 0.5) if bk >= 0 else null
-		if not engaging and move_to != null:
-			var dx: float = move_to.x - e.x
-			var dy: float = move_to.y - e.y
-			var l := Vector2(dx, dy).length()
-			if l > 0.02:
-				var s := minf(l, e.speed * dt * maxf(0.5, slow_at(e.x, e.y) * (1.0 - (e.get("slowPct", 0.0) if e.get("slowT", 0.0) > 0 else 0.0))) * (1.12 if has_mod("nightmare") and e.type != "boss" else 1.0))
-				move_ent(e, dx / l * s, dy / l * s, false)
-				e.walk += dt * 9.0
-				if tgt == null and e.foe == null:
-					e.aim = Vector2(dx / l, dy / l)
+		var aimed := city_aim(e)   # a POI attacker treats his POI as the stake
+		_enemy_tick(e, dt)
+		if aimed:
+			city_aim_end()
 	for a in enemies.size():
 		for b in range(a + 1, enemies.size()):
 			var A: Dictionary = enemies[a]
@@ -1658,6 +1417,269 @@ func update_enemies(dt: float) -> void:
 				move_ent(A, -dx / d * push, -dy / d * push, false)
 				move_ent(B, dx / d * push, dy / d * push, false)
 	enemies = enemies.filter(func(e): return not e.dead)
+
+
+func _enemy_tick(e: Dictionary, dt: float) -> void:
+	if e.dead:
+		return
+	if e.get("burnT", 0.0) > 0:
+		var tick := minf(dt, e.burnT)
+		e.burnT = maxf(0.0, e.burnT - dt)
+		hurt_enemy(e, 10.0 * tick, e.burnOwn, true)
+		if e.dead:
+			return
+	if e.get("slowT", 0.0) > 0:
+		e.slowT = maxf(0.0, e.slowT - dt)
+		if e.slowT == 0:
+			e.slowPct = 0.0
+	var boss_t: bool = e.type == "boss"
+	var NM := has_mod("nightmare")
+	var hurry := 1.18 if NM and not boss_t else 1.0
+	e.cd = maxf(e.cd - dt * hurry, -dt)
+	e.flash = maxf(0.0, e.flash - dt)
+	e.scanT -= dt
+	if has_mod("berserk") and boss_t and e.get("st", 0) == 0:   # Berserk: bosses wind up a third sooner
+		e.cd -= dt * 0.33
+		if e.has("ab"):
+			e.ab -= dt * 0.33
+	var ti := int(e.x)
+	var tj := int(e.y)
+	var tgt = null
+	var move_to = null
+	if absi(ti - core.i) <= 1 and absi(tj - core.j) <= 1:
+		tgt = Vector2(core.i + 0.5, core.j + 0.5)
+	else:
+		var k := best_step(ti, tj)
+		if k >= 0:
+			var c := Vector2(k % N + 0.5, k / N + 0.5)
+			if walls[k] != null:
+				tgt = c
+			else:
+				move_to = c
+	if e.scanT <= 0:
+		e.scanT = 0.2
+		e.foe = null
+		var bd: float = (boss_def(e.boss).scan if e.type == "boss" else {"gren": 6.5, "spotter": 10.0, "medic": 5.0, "fire": 6.5}.get(e.type, 7.0)) * (1.3 if has_mod("nightmare") and e.type != "boss" else 1.0)
+		# spotted: riflemen go for the marked soldier first
+		if e.type == "rifle" or (has_mod("elite") and (e.type == "gren" or e.type == "fire")):
+			for a in allies():
+				if seen(a) and a.markT > 0:
+					var d := d2(a, e)
+					if d < bd + 3 and los_clear(e.x, e.y, a.x, a.y):
+						e.foe = a
+						bd = -1.0
+						break
+		if bd >= 0:
+			for a in allies():
+				if not seen(a):
+					continue
+				var d := d2(a, e)
+				if d < bd and los_clear(e.x, e.y, a.x, a.y):
+					bd = d
+					e.foe = a
+	if e.foe != null and not seen(e.foe):
+		e.foe = null
+	var engaging := false
+	match e.type:
+		"boss":
+			var px: float = e.x
+			var py: float = e.y
+			var r := think_boss(e, dt, tgt, move_to)
+			engaging = r[0]
+			move_to = r[1]
+			if e.boss != "rime" and not frost_fields.is_empty():   # frost slows a boss's own moves too
+				var sl := slow_at(px, py)
+				e.x = px + (e.x - px) * sl
+				e.y = py + (e.y - py) * sl
+			if not height_travel_clear(px, py, e.x, e.y):   # never across a cliff or a connector's side
+				e.x = px
+				e.y = py
+				e.st = 0
+				e.ab = 2.0
+				e.cd = 1.0
+			if move_to != null and not travel_clear(e.x, e.y, move_to.x, move_to.y, false):
+				if not (tgt != null and move_to == tgt):
+					var k2 := best_step(int(e.x), int(e.y))
+					move_to = Vector2(k2 % N + 0.5, k2 / N + 0.5) if k2 >= 0 else null
+		"rifle":
+			# a spotter's mark tightens their aim a lot (0.2 rad spread down to 0.06) and adds a little range
+			if e.foe != null:
+				engaging = true
+				var mk: bool = e.foe.markT > 0
+				var a := _aim_at(e, e.foe.x, e.foe.y)
+				if e.cd <= 0:
+					while e.cd <= 0:
+						fire(e, a + (rnd() - 0.5) * (0.06 if mk else 0.2), 1, {"dmg": 8.0 * Df.dmg, "speed": 22.0, "range": 13.0 if mk else 11.0}, -e.cd)
+						e.cd += 0.65 + rnd() * 0.45
+					sfx("rifle", e.x, e.y)
+			elif tgt != null:
+				var a := _aim_at(e, tgt.x, tgt.y)
+				if e.cd <= 0:
+					while e.cd <= 0:
+						fire(e, a + (rnd() - 0.5) * 0.1, 1, {"dmg": 7.0 * Df.dmg, "speed": 22.0, "range": 11.0, "over": false}, -e.cd)
+						e.cd += 0.6 + rnd() * 0.3
+					sfx("rifle", e.x, e.y)
+		"gren":
+			var lt = Vector2(e.foe.x, e.foe.y) if e.foe != null and d2(e.foe, e) < (8.5 if has_mod("elite") and e.foe.markT > 0 else 7.0) else look_ahead(e)
+			if lt != null:
+				_aim_at(e, lt.x, lt.y)
+			if e.cd <= 0 and lt != null:
+				var tx := clampf(lt.x + (rnd() - 0.5) * 0.8, 0.3, N - 0.3)
+				var ty := clampf(lt.y + (rnd() - 0.5) * 0.8, 0.3, N - 0.3)
+				var d := hdist(e.x, e.y, tx, ty)
+				lobs.append({"x0": e.x, "y0": e.y, "x1": tx, "y1": ty, "t": 0.0, "T": 0.55 + d * 0.08, "R": 1.65, "power": Df.dmg, "own": null})
+				e.cd += 3.1 + rnd() * 1.2
+				sfx("lob", e.x, e.y)
+			if e.foe != null and d2(e.foe, e) < 3.5:
+				engaging = true
+		"shield":
+			# keeps walking the path with the shield turned to whoever is shooting at him, pistol over the top; at a wall he bashes it
+			if e.foe != null:
+				var a := _aim_at(e, e.foe.x, e.foe.y)
+				if e.cd <= 0 and d2(e.foe, e) < 6.5:
+					fire(e, a + (rnd() - 0.5) * 0.22, 1, {"dmg": 6.0 * Df.dmg, "speed": 20.0, "range": 7.0}, 0.0)
+					e.cd = 1.1 + rnd() * 0.5
+					sfx("rifle", e.x, e.y)
+			if tgt != null and hdist(tgt.x, tgt.y, e.x, e.y) < 1.3:
+				if e.foe == null:
+					_aim_at(e, tgt.x, tgt.y)
+				engaging = true
+				if e.cd <= 0:
+					e.cd = 1.2
+					var k := idx(floori(tgt.x), floori(tgt.y))
+					if e.shieldBroken:
+						var a := _aim_at(e, tgt.x, tgt.y)
+						fire(e, a, 1, {"dmg": 6.0 * Df.dmg, "speed": 20.0, "range": 7.0}, 0.0)
+						sfx("rifle", e.x, e.y)
+					else:
+						if walls[k] != null:
+							damage_wall(k, 16.0 * Pal.MAT[walls[k].mat].bullet)
+						elif core_ks.has(k):
+							hurt_stake(6.0 * Df.dmg, core_ks[k])
+						sfx("hit1", tgt.x, tgt.y)
+		"medic":
+			# hangs back behind the nearest raider and patches up everyone near him every 1.6 s
+			e.ab -= dt
+			var buddy = null
+			var bb := 1e9
+			for o in enemies:
+				if not is_same(o, e) and not o.dead and o.type != "medic":
+					var d := d2(o, e)
+					if d < bb:
+						bb = d
+						buddy = o
+			if e.ab <= 0:
+				e.ab = 1.6
+				var healed := 0
+				for o in enemies:
+					if not o.dead and o.hp < o.max and d2(o, e) < 2.6:
+						o.hp = minf(o.max, o.hp + o.max * 0.14)
+						healed += 1
+				if healed > 0:
+					ev({"k": "ring", "x": e.x, "y": e.y, "r0": 0.2, "r1": 2.6, "life": 0.5, "c1": "#8fe0a0", "c2": "#2e7a48"})
+					sfx("medpulse", e.x, e.y)
+			if e.foe != null and d2(e.foe, e) < 5:
+				var a := _aim_at(e, e.foe.x, e.foe.y)
+				if e.cd <= 0:
+					fire(e, a + (rnd() - 0.5) * 0.25, 1, {"dmg": 5.0 * Df.dmg, "speed": 20.0, "range": 6.0}, 0.0)
+					e.cd = 1.3 + rnd() * 0.4
+					sfx("rifle", e.x, e.y)
+			if buddy != null and bb > 1.6 and bb < 8:
+				move_to = Vector2(buddy.x, buddy.y)
+			elif buddy != null and bb <= 1.6:
+				move_to = null
+				engaging = true
+		"spotter":
+			# sits back at 6-9 tiles; after 0.8 s with someone in sight he marks them for as long as he can see them
+			var f = e.foe
+			if f != null:
+				var d := d2(f, e)
+				_aim_at(e, f.x, f.y)
+				e.lx = f.x
+				e.ly = f.y
+				if e.st == 0:
+					e.st = 1
+					e.stT = 0.8
+					e.stM = 0.8
+					sfx("mark", e.x, e.y)
+				elif e.st == 1:
+					e.stT -= dt
+					if e.stT <= 0:
+						e.st = 2
+						e.stT = 0.0
+						flt(f.x, f.y, "SPOTTED", "#ff5a4a")
+				if e.st == 2:
+					f.markT = 0.35
+				if d < 5.5:
+					var l := d if d > 0 else 1.0
+					move_to = Vector2(clampf(e.x + (e.x - f.x) / l, 0.5, N - 0.5), clampf(e.y + (e.y - f.y) / l, 0.5, N - 0.5))
+				elif d < 9.5:
+					move_to = null
+					engaging = true
+			elif e.st != 0:
+				e.st = 0
+				e.stT = 0.0
+		"fire":
+			# lobs fire bottles at the wooden wall in his way (or at people close by)
+			var lt = null
+			if e.foe != null and d2(e.foe, e) < (8.5 if has_mod("elite") and e.foe.markT > 0 else 6.5):
+				lt = Vector2(e.foe.x, e.foe.y)
+			else:
+				var la = look_ahead(e)
+				if la != null:
+					var w = walls[idx(floori(la.x), floori(la.y))]
+					if w != null and w.mat == 0 and not (w.fire > 0):
+						lt = la
+			if lt != null:
+				_aim_at(e, lt.x, lt.y)
+			if e.cd <= 0 and lt != null:
+				var tx := clampf(lt.x + (rnd() - 0.5) * 0.6, 0.3, N - 0.3)
+				var ty := clampf(lt.y + (rnd() - 0.5) * 0.6, 0.3, N - 0.3)
+				var d := hdist(e.x, e.y, tx, ty)
+				lobs.append({"x0": e.x, "y0": e.y, "x1": tx, "y1": ty, "t": 0.0, "T": 0.5 + d * 0.08, "R": 1.0, "power": Df.dmg, "k": 1, "own": null})
+				e.cd += 3.6 + rnd() * 1.2
+				sfx("lob", e.x, e.y)
+			if lt != null and hdist(lt.x, lt.y, e.x, e.y) < 5:
+				engaging = true
+		_:
+			# breacher: run the satchel to the wall, then run
+			if not e.planted and tgt != null:
+				if hdist(tgt.x, tgt.y, e.x, e.y) < 1.35:
+					charges.append({"x": e.x + (tgt.x - e.x) * 0.45, "y": e.y + (tgt.y - e.y) * 0.45, "fuse": 2.4, "beep": 0.0})
+					e.planted = true
+					e.fleeT = 5.0
+					sfx("plant", e.x, e.y)
+					flt(e.x, e.y, "SATCHEL", "#d65a3a")
+				else:
+					move_to = tgt
+			if e.planted:
+				e.fleeT -= dt
+				if e.fleeT <= 0:
+					e.planted = false
+					flt(e.x, e.y, "RE-ARMED", "#d65a3a")
+			if e.planted:
+				var bk := -1
+				var bv := -1.0
+				for dd in Pal.D4:
+					var i: int = ti + dd[0]
+					var j: int = tj + dd[1]
+					if not inb(i, j) or solid_tile(i, j, false):
+						continue
+					var k := idx(i, j)
+					if dist[k] > bv:
+						bv = dist[k]
+						bk = k
+				move_to = Vector2(bk % N + 0.5, bk / N + 0.5) if bk >= 0 else null
+	if not engaging and move_to != null:
+		var dx: float = move_to.x - e.x
+		var dy: float = move_to.y - e.y
+		var l := Vector2(dx, dy).length()
+		if l > 0.02:
+			var s := minf(l, e.speed * dt * maxf(0.5, slow_at(e.x, e.y) * (1.0 - (e.get("slowPct", 0.0) if e.get("slowT", 0.0) > 0 else 0.0))) * (1.12 if has_mod("nightmare") and e.type != "boss" else 1.0))
+			move_ent(e, dx / l * s, dy / l * s, false)
+			e.walk += dt * 9.0
+			if tgt == null and e.foe == null:
+				e.aim = Vector2(dx / l, dy / l)
 
 
 func _aim_at(e: Dictionary, x: float, y: float) -> float:
@@ -1692,9 +1714,9 @@ func update_bullets(dt: float) -> void:
 				emit(b.x, b.y, "dust", 2, 1)
 				b.dead = true
 				break
-			if k == core_k and bullet_z(b) < gz + 1.35:
+			if core_ks.has(k) and bullet_z(b) < gz + 1.35:
 				if b.team == 1:
-					hurt_stake(6.0 * Df.dmg)
+					hurt_stake(6.0 * Df.dmg, core_ks[k])
 				else:
 					emit(b.x, b.y, "spark")
 				b.dead = true
@@ -2048,7 +2070,7 @@ func qm_layout() -> Array:
 					var j: int = core.j - 1 + y
 					a.append({"i": i, "j": j, "k": idx(i, j), "door": x == 1 or y == 1})
 		return a
-	var legal := func(t) -> bool: return inb(t.i, t.j) and t.k != core_k and node_at(t.i, t.j) == null
+	var legal := func(t) -> bool: return inb(t.i, t.j) and not core_ks.has(t.k) and node_at(t.i, t.j) == null
 	var four: Array = make.call(4)
 	var three: Array = make.call(3)
 	qm.layoutSize = 4 if four.all(legal) else 3
@@ -2174,11 +2196,11 @@ func near_stake(p: Dictionary) -> bool:
 
 
 func shop_open(p: Dictionary) -> bool:
-	return p.alive and game.phase == "build" and not lockdown()
+	return p.alive and (game.phase == "build" or bo_quiet()) and not lockdown()
 
 
 func can_shop(p: Dictionary) -> bool:
-	return shop_open(p) and near_stake(p)
+	return shop_open(p) and (near_stake(p) or (blackout() and bo_near_held(p)))
 
 
 func buy_upgrade(p: Dictionary, k: String) -> bool:
@@ -2259,7 +2281,7 @@ func award(own, e: Dictionary) -> void:
 		return
 	if not (own is int and own == player.id):
 		return
-	var v: int = BOUNTY.get(e.type, 4)
+	var v: int = roundi(BOUNTY.get(e.type, 4) * bo_salvage(e))
 	player.sal += v
 	player.kills += 1
 	flt(e.x, e.y - 0.2, "+%d" % v, "#e2b436")
@@ -2355,7 +2377,7 @@ func update_rockets(dt: float) -> void:
 			if not hit:
 				var k := idx(i, j)
 				var n = node_at(i, j)
-				hit = walls[k] != null or k == core_k or (n != null and n.solid)
+				hit = walls[k] != null or core_ks.has(k) or (n != null and n.solid)
 			if not hit and r.get("pl", false):
 				for e in enemies:
 					if not e.dead and not e.get("burrow", false) and Vector2(e.x - r.x, e.y - r.y).length() < (0.6 if e.get("big", false) else 0.4):
@@ -2559,8 +2581,8 @@ func _think_butcher(e: Dictionary, dt: float, tgt, mv) -> Array:
 				stop = true
 				break
 			var k := idx(i, j)
-			if k == core_k:
-				hurt_stake(40.0 * Df.dmg)
+			if core_ks.has(k):
+				hurt_stake(40.0 * Df.dmg, core_ks[k])
 				ev({"k": "shake", "x": nx, "y": ny, "amt": 8.0})
 				stop = true
 				break
@@ -2616,8 +2638,8 @@ func _think_butcher(e: Dictionary, dt: float, tgt, mv) -> Array:
 			var k := idx(floori(tgt.x), floori(tgt.y))
 			if walls[k] != null:
 				damage_wall(k, 70.0 * Pal.MAT[walls[k].mat].blast)
-			elif k == core_k:
-				hurt_stake(20.0 * Df.dmg)
+			elif core_ks.has(k):
+				hurt_stake(20.0 * Df.dmg, core_ks[k])
 			sfx("slash", e.x, e.y)
 			ev({"k": "slash", "x": e.x, "y": e.y, "ax": e.aim.x, "ay": e.aim.y})
 		return [true, null]
@@ -2715,8 +2737,8 @@ func _lightning(e: Dictionary, mult: float = 1.0) -> Vector2:
 		if not inb(i, j):
 			break
 		var k := idx(i, j)
-		if k == core_k:
-			hurt_stake(30.0 * Df.dmg * mult)
+		if core_ks.has(k):
+			hurt_stake(30.0 * Df.dmg * mult, core_ks[k])
 			break
 		var n = node_at(i, j)
 		if n != null and n.solid:
@@ -3030,8 +3052,8 @@ func _run_move(e: Dictionary, dt: float) -> Array:
 							var k := idx(i, j)
 							if walls[k] != null:
 								damage_wall(k, M.wall * Pal.MAT[walls[k].mat].blast)
-							elif k == core_k:
-								hurt_stake(20.0 * Df.dmg)
+							elif core_ks.has(k):
+								hurt_stake(20.0 * Df.dmg, core_ks[k])
 				ev({"k": "ring", "x": e.x, "y": e.y, "r0": 0.3, "r1": M.r, "life": 0.55, "c1": "#ffe9a0"})
 				sfx("bigboom", e.x, e.y)
 				ev({"k": "shake", "x": e.x, "y": e.y, "amt": 9.0})
@@ -3073,8 +3095,8 @@ func _overdrive_run(e: Dictionary, dt: float) -> Array:
 		var stop: bool = not inb(i, j) or (n != null and n.solid)
 		if not stop:
 			var k := idx(i, j)
-			if k == core_k:
-				hurt_stake(30.0 * Df.dmg)
+			if core_ks.has(k):
+				hurt_stake(30.0 * Df.dmg, core_ks[k])
 				stop = true
 			elif walls[k] != null:
 				damage_wall(k, 200.0 * Pal.MAT[walls[k].mat].blast)
@@ -3205,8 +3227,8 @@ func _think_foreman(e: Dictionary, dt: float, tgt, mv) -> Array:
 			var k := idx(floori(tgt.x), floori(tgt.y))
 			if walls[k] != null:
 				damage_wall(k, 60.0 * Pal.MAT[walls[k].mat].blast)
-			elif k == core_k:
-				hurt_stake(20.0 * Df.dmg)
+			elif core_ks.has(k):
+				hurt_stake(20.0 * Df.dmg, core_ks[k])
 			sfx("drill", e.x, e.y)
 		return [true, null]
 	if f != null:
@@ -3261,8 +3283,9 @@ func _burst_up(e: Dictionary) -> void:
 			var w = walls[k]
 			if w != null:
 				damage_wall(k, (70.0 if (a != 0 or b != 0) else 240.0) * Pal.MAT[w.mat].blast)
-	if hdist(core.i + 0.5, core.j + 0.5, e.x, e.y) < 1.6:
-		hurt_stake(40.0 * Df.dmg)
+	for c in cores:
+		if hdist(c.i + 0.5, c.j + 0.5, e.x, e.y) < 1.6:
+			hurt_stake(40.0 * Df.dmg, c)
 	for al in allies():
 		if al.alive:
 			var d := hdist(al.x, al.y, e.x, e.y)
@@ -3297,7 +3320,7 @@ func slab_land(l: Dictionary) -> void:
 	if walls[k] != null:
 		damage_wall(k, 90.0 * Pal.MAT[walls[k].mat].blast)
 		return
-	if k == core_k or node_at(i, j) != null:
+	if core_ks.has(k) or node_at(i, j) != null:
 		return
 	var w := Pal.make_wall(1, false, 0.8)
 	w.slab = true
@@ -3403,8 +3426,8 @@ func update_arcs(dt: float) -> void:
 			if nd != null and nd.solid:
 				r.dead = true
 				break
-			if k == core_k:
-				hurt_stake(35.0 * r.pw)
+			if core_ks.has(k):
+				hurt_stake(35.0 * r.pw, core_ks[k])
 				r.dead = true
 				break
 			var w = walls[k]
@@ -3570,8 +3593,8 @@ func _think_bulldozer(e: Dictionary, dt: float, tgt, mv) -> Array:
 				daze = true
 				break
 			var k := idx(i, j)
-			if k == core_k:
-				hurt_stake(45.0 * Df.dmg)
+			if core_ks.has(k):
+				hurt_stake(45.0 * Df.dmg, core_ks[k])
 				stop = true
 				daze = true
 				break
@@ -3622,8 +3645,8 @@ func _think_bulldozer(e: Dictionary, dt: float, tgt, mv) -> Array:
 			var k := idx(floori(tgt.x), floori(tgt.y))
 			if walls[k] != null:
 				damage_wall(k, 60.0 * Pal.MAT[walls[k].mat].blast)
-			elif k == core_k:
-				hurt_stake(20.0 * Df.dmg)
+			elif core_ks.has(k):
+				hurt_stake(20.0 * Df.dmg, core_ks[k])
 			sfx("drill", e.x, e.y)
 		return [true, null]
 	if f != null:
@@ -3680,8 +3703,9 @@ func _winter_rupture(e: Dictionary, r: float = 3.4) -> void:
 	for a in allies():
 		if a.alive and hdist(e.lx, e.ly, a.x, a.y) < r:
 			hurt_ally(a, 30.0 * Df.dmg)
-	if hdist(e.lx, e.ly, core.i + 0.5, core.j + 0.5) < r:
-		hurt_stake(18.0 * Df.dmg)
+	for c in cores:
+		if hdist(e.lx, e.ly, c.i + 0.5, c.j + 0.5) < r:
+			hurt_stake(18.0 * Df.dmg, c)
 	for i in range(floori(e.lx - r), floori(e.lx + r) + 1):
 		for j in range(floori(e.ly - r), floori(e.ly + r) + 1):
 			if inb(i, j) and hdist(e.lx, e.ly, i + 0.5, j + 0.5) < r and walls[idx(i, j)] != null:
@@ -3796,8 +3820,8 @@ func _think_rime(e: Dictionary, dt: float, tgt, mv) -> Array:
 		var k := idx(floori(tgt.x), floori(tgt.y))
 		if walls[k] != null:
 			damage_wall(k, 22.0 * Pal.MAT[walls[k].mat].bullet)
-		elif k == core_k:
-			hurt_stake(8.0 * Df.dmg)
+		elif core_ks.has(k):
+			hurt_stake(8.0 * Df.dmg, core_ks[k])
 		e.cd = 1.1
 	return [false, mv]
 
@@ -3817,7 +3841,7 @@ func add_frost(x: float, y: float) -> void:
 
 func slow_at(x: float, y: float) -> float:
 	var t := t_at(floori(x), floori(y))
-	var s := 0.5 if t == PalMaps.T_WATER else (0.62 if t == PalMaps.T_LOW and flood_on else 1.0)
+	var s := 0.5 if t == PalMaps.T_WATER else (0.62 if t == PalMaps.T_LOW and flood_on else (PalMaps.CITY.roadSpeed if t == PalMaps.T_ROAD else (PalMaps.CITY.rubbleSpeed if t == PalMaps.T_RUBBLE else 1.0)))
 	s *= storm_slow()
 	var f := 1.0
 	for fr in frost_fields:
@@ -4016,8 +4040,8 @@ func _run_destroyer(e: Dictionary, dt: float) -> Array:
 						var k := idx(i, j)
 						if walls[k] != null:
 							damage_wall(k, M.wall)
-						elif k == core_k:
-							hurt_stake(60.0 * Df.dmg)
+						elif core_ks.has(k):
+							hurt_stake(60.0 * Df.dmg, core_ks[k])
 				ev({"k": "ring", "x": e.lx, "y": e.ly, "r0": 0.2, "r1": M.r * 1.3, "life": 0.6, "c1": "#ffffff"})
 				ev({"k": "flash", "x": e.lx, "y": e.ly, "life": 0.35, "r": 3.0})
 				ev({"k": "shake", "x": e.lx, "y": e.ly, "amt": 14.0})
@@ -4280,7 +4304,7 @@ func make_pit(k: int) -> void:
 		return
 	var i := k % N
 	var j := k / N
-	if k == core_k or node_at(i, j) != null:
+	if core_ks.has(k) or node_at(i, j) != null:
 		return
 	set_terr(k, PalMaps.T_PIT)
 	if walls[k] != null:
@@ -4558,7 +4582,7 @@ func _harpoon(e: Dictionary) -> void:
 			break
 		var k := idx(i, j)
 		var n = node_at(i, j)
-		if k == core_k or (n != null and n.solid) or PalMaps.terr_shot(terr[k]):
+		if core_ks.has(k) or (n != null and n.solid) or PalMaps.terr_shot(terr[k]):
 			end = d
 			break
 		if walls[k] != null and walls[k].mat != 3:
@@ -4642,7 +4666,7 @@ func _drag_wall(k: int, tx: float, ty: float) -> void:
 		emit(best[0] + 0.5, best[1] + 0.5, "splinter", 10, w.mat)
 		flt(i + 0.5, j + 0.3, "INTO THE RIVER", "#5fd6c4")
 		return
-	if walls[nk] != null or nk == core_k or node_at(best[0], best[1]) != null or PalMaps.terr_solid(terr[nk]) or busy:
+	if walls[nk] != null or core_ks.has(nk) or node_at(best[0], best[1]) != null or PalMaps.terr_solid(terr[nk]) or busy:
 		damage_wall(k, 90.0 * Pal.MAT[w.mat].blast)
 		return
 	walls[nk] = w
@@ -4895,7 +4919,7 @@ func evac_spot() -> Vector2:
 					continue
 				var nk := idx(ni, nj)
 				var t: int = terr[nk]
-				if connectors[nk] != 0 or heights[nk] != heights[k] or PalMaps.terr_solid(t) or t == PalMaps.T_WATER or t == PalMaps.T_BRIDGE or node_at(ni, nj) != null or nk == core_k:
+				if connectors[nk] != 0 or heights[nk] != heights[k] or PalMaps.terr_solid(t) or t == PalMaps.T_WATER or t == PalMaps.T_BRIDGE or node_at(ni, nj) != null or core_ks.has(nk):
 					clear = false
 		if not clear:
 			continue
@@ -5109,6 +5133,9 @@ func change_chapter(ch: int) -> void:
 			walls[idx(t[0], t[1])] = w
 	core = {"i": lay.core[0], "j": lay.core[1], "hp": hp, "max": mx, "flash": 0.0}
 	core_k = idx(core.i, core.j)
+	cores = [core]
+	core_ks = {core_k: core}
+	poi_flows.clear()
 	game.chapter = ch
 	game.map = map_id
 	game.flood = {"t": 0.0, "warned": false}
@@ -5226,3 +5253,437 @@ func gauntlet_tick(dt: float) -> void:
 		evac_tick(dt)
 	if F.t <= 0:
 		finish_blitz()
+
+
+func blackout() -> bool:
+	return game.get("mode", "") == "blackout"
+
+
+func bo_pool() -> Array:
+	return BOSS_LIST.filter(func(k): return k != "destroyer" and k != "ferryman" and k != "whiteferryman")
+
+
+func bo_pois() -> Array:
+	return cores.filter(func(c): return c.has("poi"))
+
+
+func bo_held(perk: String) -> bool:
+	for c in cores:
+		if c.has("poi") and c.poi.perk == perk:
+			return not c.lost
+	return false
+
+
+func _shuffle(a: Array) -> Array:
+	for i in range(a.size() - 1, 0, -1):
+		var j := floori(rnd() * (i + 1))
+		var t = a[i]
+		a[i] = a[j]
+		a[j] = t
+	return a
+
+
+func bo_start() -> void:
+	var minors: Array = []
+	var majors: Array = []
+	for i in cores.size():
+		if cores[i].has("poi"):
+			(majors if cores[i].poi.major else minors).append(i)
+	var order: Array = _shuffle(minors)
+	order.append_array(_shuffle(majors))
+	game.bo = {"stage": "gather", "t": 0.0, "order": order, "n": 0, "cur": null, "q": [], "qT": 0.0, "warned": -1, "last": "", "held": 0, "lost": 0,
+		"refT": BO.refill, "push": null, "destroyer": false, "destId": -1, "log": []}
+	bo_pay(BO.purse, "STARTING PURSE")
+
+
+func bo_pay(n: int, why: String, dy: float = 0.0) -> void:
+	player.sal += n
+	flt(player.x, player.y - 0.6 - dy, "+%d SALVAGE · %s" % [n, why], "#e2b436")
+
+
+func bo_gather() -> void:
+	if game.bo == null:
+		bo_start()
+	var B: Dictionary = game.bo
+	var warn: float = BO.warn if bo_held("warn") else BO.warnNo
+	if B.warned != 0 and game.timer <= warn:
+		B.warned = 0
+		var c: Dictionary = cores[B.order[0]]
+		c.next = true
+		toast("FIRST TARGET · %s" % c.poi.name, ("The Radio Tower picked it up: %d seconds." % ceili(game.timer)) if bo_held("warn") else "It's coming now.")
+
+
+func _bo_pick() -> String:
+	var B: Dictionary = game.bo
+	var pool := bo_pool()
+	var k: String = ""
+	for a in 8:
+		k = pool[floori(rnd() * pool.size())]
+		if k != B.last:
+			break
+	B.last = k
+	return k
+
+
+func bo_next() -> void:
+	var B: Dictionary = game.bo
+	if B.n >= B.order.size():
+		bo_ready_stage()
+		return
+	var ci: int = B.order[B.n]
+	var c: Dictionary = cores[ci]
+	B.stage = "attack"
+	B.t = 0.0
+	B.n += 1
+	game.wave = B.n
+	var k := _bo_pick()
+	var side := PalMaps.city_edge_for(c.i, c.j, N)
+	var edge: Array = lay.edges[side]
+	var near := edge.filter(func(t): return absi((t[0] - c.i) if side == "n" or side == "s" else (t[1] - c.j)) < 9)
+	B.cur = {"ci": ci, "side": side, "tiles": near if not near.is_empty() else edge, "boss": -1, "key": k}
+	game.bossShare = 1.0
+	var e := _bo_boss(k, B.cur.tiles)
+	e.poi = ci
+	B.cur.boss = e.id
+	# his troops: a raid's mix, stronger for the majors and later attacks
+	var W := wave_mix(roundi(2 + B.n * 0.6 + (1 if c.poi.major else 0)), 1, Df.extra, true)
+	var q: Array = []
+	for t in W:
+		for n in W[t]:
+			q.append(t)
+	B.q = _shuffle(q)
+	B.qT = 1.0
+	c.attack = true
+	sfx("siren")
+	toast("POI UNDER ATTACK · %s" % c.poi.name, "%s and %d raiders are coming from the %s. Kill him to hold it." % [boss_def(k).name, q.size(), SIDE_NAMES[side]])
+
+
+func _bo_boss(k: String, tiles: Array) -> Dictionary:
+	var e := spawn_boss(k)
+	var s := bo_edge_spot(tiles)
+	e.x = s.x
+	e.y = s.y
+	e.lx = s.x
+	e.ly = s.y
+	return e
+
+
+func bo_edge_spot(tiles: Array) -> Vector2:
+	for a in 30:
+		var t: Array = tiles[floori(rnd() * tiles.size())]
+		if not solid_tile(t[0], t[1], false):
+			return Vector2(t[0] + 0.5, t[1] + 0.5)
+	var t := spawn_tile()
+	return Vector2(t[0] + 0.5, t[1] + 0.5) if not t.is_empty() else Vector2(N / 2.0, 0.5)
+
+
+func bo_retreat(ci: int = -1) -> void:
+	for e in enemies:
+		if not e.dead and (ci < 0 or e.get("poi", -1) == ci):
+			e.dead = true
+			emit(e.x, e.y, "smoke", 6)
+			if e.type == "boss":
+				flt(e.x, e.y - 0.4, "%s PULLS BACK" % boss_def(e.boss).name, "#d8cfb8")
+
+
+func bo_end(how: String) -> void:
+	var B: Dictionary = game.bo
+	var cu: Dictionary = B.cur
+	var c: Dictionary = cores[cu.ci]
+	c.attack = false
+	B.cur = null
+	if how == "lost":
+		c.lost = true
+		c.hp = 0.0
+		c.lostAt = game.time
+		B.lost += 1
+		bo_lose_perk(c)
+		explode(c.i + 0.5, c.j + 0.5, 1.4, 1.0)
+		toast("%s IS LOST" % c.poi.name, "Its perk is gone, and every final-push wave brings an extra squad." if c.poi.major else "Its perk is gone, and final-push bosses get +5% health.")
+	else:
+		B.held += 1
+		toast("%s HELD" % c.poi.name, "He pulled back before you finished him. It keeps its damage; the quiet repairs it slowly." if how == "retreat" else "The boss is down. Patch it up before the next one.")
+	B.log.append([c.poi.id, how])
+	bo_retreat(cu.ci)
+	B.q = []
+	var pay: int = BO.pay + BO.payStep * B.n
+	bo_pay(ceili(pay / 2.0) if how == "lost" else pay, "POI LOST" if how == "lost" else "POI HELD")
+	if B.n >= B.order.size():
+		bo_ready_stage()
+		return
+	B.stage = "gap"
+	B.t = BO.gap
+
+
+func bo_ready_stage() -> void:
+	var B: Dictionary = game.bo
+	B.stage = "ready"
+	B.t = BO.ready
+	player.boReady = false
+	bo_pay(BO.pushPay, "FINAL PUSH", 0.9)
+	toast("READY UP", "The final push starts in %d seconds, or as soon as everyone is ready. Spend your salvage at any point you hold." % int(BO.ready))
+
+
+func bo_ready(on: bool = true) -> void:
+	if game.bo == null or game.bo.stage != "ready":
+		return
+	player.boReady = on
+
+
+func bo_lose_perk(c: Dictionary) -> void:
+	var id: String = c.poi.perk
+	if id == "lights":
+		game.dark = true
+		toast("THE POWER IS OUT", "The streetlights are dead. The city is darker for the rest of the run.")
+	if id == "wood" or id == "brick":
+		for n in nodes:
+			if n.get("poi", "") == c.poi.id:
+				n.locked = true
+
+
+func bo_push() -> void:
+	var B: Dictionary = game.bo
+	B.stage = "push"
+	var lm := 0
+	var ln := 0
+	for c in bo_pois():
+		if c.lost:
+			if c.poi.major:
+				lm += 1
+			else:
+				ln += 1
+	B.push = {"t": BO.push, "n": 0, "squadT": 0.0, "xs": lm, "hp": 1.0 + BO.minorHp * ln, "side": 0, "dest": false}
+	game.wave = 9
+	sfx("siren")
+	toast("THE FINAL PUSH", "Five minutes at Main Command. A boss every 30 seconds%s%s. Hold it." % [(", %d extra squad%s each wave" % [lm, "s" if lm > 1 else ""]) if lm > 0 else "", (", bosses +%d%% health" % roundi(ln * BO.minorHp * 100)) if ln > 0 else ""])
+
+
+func bo_squad(types: Array) -> void:
+	var B: Dictionary = game.bo
+	var side: String = BO_SIDES[B.push.side % 4]
+	B.push.side += 1
+	var tiles: Array = lay.edges[side]
+	for t in types:
+		B.q.append([t, bo_edge_spot(tiles)])
+
+
+func bo_push_tick(dt: float) -> void:
+	var B: Dictionary = game.bo
+	var F: Dictionary = B.push
+	F.t = maxf(0.0, F.t - dt)
+	var el: float = BO.push - F.t
+	if el < BO.push - BO.dest:   # 0:00-3:00: a boss and his troops every 30 s, at most 4 bosses up
+		while F.n * BO.every <= el and F.n < 6 and live_bosses() < BO.bossCap:
+			var k := _bo_pick()
+			game.bossShare = F.hp
+			_bo_boss(k, lay.edges[BO_SIDES[F.side % 4]])
+			game.bossShare = 1.0
+			F.n += 1
+			var W := wave_mix(5 + F.n, 1, Df.extra, true)
+			var q: Array = []
+			for t in W:
+				for n in ceili(W[t] * 0.6):
+					q.append(t)
+			bo_squad(_shuffle(q))
+			for x in F.xs:
+				bo_squad(["rifle", "rifle", "gren", "shield"])
+	else:
+		if not F.dest:   # the last 2 minutes: only his own squads come
+			F.dest = true
+			F.squadT = 0.0
+			B.q = []
+			spawn_destroyer()
+		F.squadT -= dt
+		if F.squadT <= 0:
+			F.squadT = BO.squad
+			var q: Array = []
+			for n in 3:
+				q.append("gren" if n % 2 else "shield")
+			bo_squad(q)
+			for x in F.xs:
+				bo_squad(["shield", "gren", "shield"])
+	if F.dest and B.destId >= 0 and not enemies.any(func(e): return e.id == B.destId and not e.dead):
+		B.destroyer = true   # he's down: the run ends at once
+		bo_win()
+		return
+	if F.t <= 0:
+		bo_win()
+
+
+func spawn_destroyer() -> void:
+	game.bossShare = 1.0
+	var e := _bo_boss("destroyer", lay.edges[BO_SIDES[game.bo.push.side % 4]])
+	e.dest = true
+	game.bo.destId = e.id
+
+
+func bo_win() -> void:
+	var B: Dictionary = game.bo
+	if B.stage == "done":
+		return
+	B.stage = "done"
+	bo_retreat()
+	end_game(true, "destroyer" if B.destroyer else "held")
+
+
+func bo_tick(dt: float) -> void:
+	var B = game.bo
+	if B == null or B.stage == "done" or game.phase != "raid":
+		return
+	if not B.q.is_empty():   # queued troops come in a little apart, at their own spot
+		B.qT -= dt
+		if B.qT <= 0:
+			B.qT = 0.82
+			var x = B.q.pop_front()
+			if x is Array:
+				var e := spawn_enemy_at(x[0], x[1].x, x[1].y)
+				e.push = true
+			elif B.cur != null:
+				var s := bo_edge_spot(B.cur.tiles)
+				var e := spawn_enemy_at(x, s.x, s.y)
+				e.poi = B.cur.ci
+	bo_perks(dt)
+	if B.stage == "push":
+		bo_push_tick(dt)
+		return
+	if B.stage == "ready":
+		B.t -= dt
+		for c in bo_pois():
+			if not c.lost and c.hp < c.max:
+				c.hp = minf(c.max, c.hp + 2 * BO.repair * dt)
+		if B.t <= 0 or player.get("boReady", false):
+			player.boReady = false
+			bo_push()
+		return
+	if B.stage == "attack":
+		B.t += dt
+		var c: Dictionary = cores[B.cur.ci]
+		var boss_up := enemies.any(func(e): return e.id == B.cur.boss and not e.dead)
+		if c.hp <= 0:
+			bo_end("lost")
+		elif not boss_up:
+			bo_end("held")
+		elif B.t >= BO.cap:
+			bo_end("retreat")
+		return
+	# the quiet: POIs mend slowly, and the next one is called out (15 s ahead with the Radio Tower, else 3 s)
+	B.t -= dt
+	for c in bo_pois():
+		if not c.lost and c.hp < c.max:
+			c.hp = minf(c.max, c.hp + BO.repair * dt)
+	var warn: float = BO.warn if bo_held("warn") else BO.warnNo
+	if B.n < B.order.size() and B.t <= warn and B.warned != B.n:
+		B.warned = B.n
+		var c: Dictionary = cores[B.order[B.n]]
+		c.next = true
+		toast("NEXT · %s" % c.poi.name, ("The Radio Tower picked it up: %d seconds." % ceili(B.t)) if bo_held("warn") else "No radio. It's coming now.")
+	if B.t <= 0:
+		for c in cores:
+			c.next = false
+		bo_next()
+
+
+func bo_perks(dt: float) -> void:
+	var B: Dictionary = game.bo
+	for c in cores:
+		if c.has("poi") and c.poi.perk == "heal" and not c.lost:
+			var p := player
+			if p.alive and p.hp < p.max and Vector2(p.x - c.i - 0.5, p.y - c.j - 0.5).length() < BO.healR:
+				p.hp = minf(p.max, p.hp + BO.heal * dt)
+	B.refT -= dt
+	if B.refT <= 0:
+		B.refT = BO.refill
+		if bo_held("refill"):
+			var p := player
+			if p.nades < p.maxN:
+				p.nades += 1
+			if p.cls == "soldier":
+				p.rk = mini(abil_rockets(p), p.rk + 1)
+			flt(p.x, p.y - 0.5, "+1 GRENADE · ARMORY DEPOT", "#e2b436")
+
+
+func bo_salvage(e: Dictionary) -> float:
+	if not blackout():
+		return 1.0
+	for c in cores:
+		if c.has("poi") and c.poi.perk == "salvage":
+			return BO.bounty * (1.25 if not c.lost and Vector2(e.x - c.i - 0.5, e.y - c.j - 0.5).length() < 8 else 1.0)
+	return BO.bounty
+
+
+func bo_quiet() -> bool:
+	return game.get("bo") != null and (game.bo.stage == "gap" or game.bo.stage == "ready")
+
+
+func bo_near_held(p: Dictionary) -> bool:
+	for c in cores:
+		if c.has("poi") and not c.lost and Vector2(p.x - c.i - 0.5, p.y - c.j - 0.5).length() < 2.7:
+			return true
+	return false
+
+
+func bo_stages() -> int:
+	var B = game.get("bo")
+	if B == null:
+		return 0
+	return mini(9, B.held + B.lost + (1 if game.won and game.phase == "over" else 0))
+
+
+func poi_flow(ci: int) -> PackedFloat64Array:
+	if poi_flows.has(ci):
+		return poi_flows[ci]
+	var f := PackedFloat64Array()
+	f.resize(N * N)
+	var c: Dictionary = cores[ci]
+	var kk := core_k
+	core_k = idx(c.i, c.j)
+	flow_to(core_k, f)
+	core_k = kk
+	poi_flows[ci] = f
+	return f
+
+
+func city_aim(e: Dictionary) -> bool:
+	var ci: int = e.get("poi", -1)
+	if ci < 0 or ci >= cores.size() or cores[ci].get("lost", false):
+		return false
+	_aim_save = [core, dist, core_k]
+	dist = poi_flow(ci)
+	core = cores[ci]
+	core_k = idx(core.i, core.j)
+	return true
+
+
+func city_aim_end() -> void:
+	core = _aim_save[0]
+	dist = _aim_save[1]
+	core_k = _aim_save[2]
+
+
+func flow_to(goal: int, out: PackedFloat64Array) -> void:
+	var n := N * N
+	out.fill(1e9)
+	var done := PackedByteArray()
+	done.resize(n)
+	out[goal] = 0.0
+	var heap: Array = [[0.0, goal]]
+	while not heap.is_empty():
+		var top: Array = _heap_pop(heap)
+		var bv: float = top[0]
+		var uk: int = top[1]
+		if done[uk] or bv > out[uk]:
+			continue
+		done[uk] = 1
+		var ui := uk % N
+		var uj := uk / N
+		var c := enter_cost(uk)
+		for d in Pal.D4:
+			var i: int = ui + d[0]
+			var j: int = uj + d[1]
+			if not height_link(ui, uj, i, j):
+				continue
+			var k := idx(i, j)
+			var nv := bv + c
+			if nv < out[k]:
+				out[k] = nv
+				_heap_push(heap, [nv, k])

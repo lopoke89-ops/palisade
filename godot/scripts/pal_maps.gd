@@ -13,8 +13,9 @@ const T_PIT := 5
 const T_ROCK := 6
 const T_DRUM := 7
 const T_ROAD := 8
-const T_RUBBLE := 9
-const T_BLDG := 10
+const T_WALK := 9
+const T_RUBBLE := 10
+const T_BLDG := 11
 const SIZES := {"std": 16, "xl": 24}
 
 const MAPS := {
@@ -28,6 +29,22 @@ const MAPS := {
 		"from": "up the mountain", "bosses": ["rime", "storm", "rime"], "col": "#a8dfef", "hp": 1.08},
 }
 const MAP_IDS := ["yard", "river", "quarry", "frost"]
+## City Black Out's own map (06e-city.js): not on the co-op map list, the mode picks it
+const CITY_MAP := {"name": "THE CITY", "short": "City", "city": true, "night": true, "hp": 1.0, "col": "#8f9aa8", "from": "from every edge",
+	"bosses": ["butcher", "demolisher", "storm", "ferryman", "foreman"], "blurb": "A ruined city in a blackout. Eight points to hold, then Main Command."}
+const CITY := {"size": 64, "fallback": 48, "roadSpeed": 1.35, "rubbleSpeed": 0.8}
+## [id, name, major, perk, what the perk does]
+const CITY_POIS := [
+	["radio", "RADIO TOWER", true, "warn", "Warns which point is hit next, 15 s ahead (3 s without it)."],
+	["power", "POWER STATION", true, "lights", "Lights the roads. If it falls the whole city goes darker."],
+	["hospital", "HOSPITAL", true, "heal", "Heals 3 HP a second within 5 tiles; teammates get up 50% faster there."],
+	["armory", "ARMORY DEPOT", true, "refill", "A grenade and a rocket back every 30 s for everyone."],
+	["gas", "GAS STATION", false, "salvage", "+25% salvage from kills nearby."],
+	["hardware", "HARDWARE STORE", false, "wood", "Extra wood and metal piles that refill."],
+	["brick", "BRICK WORKS", false, "brick", "Extra brick piles that refill."],
+	["garage", "PARKING GARAGE", false, "range", "High ground: +2 tiles of range for anyone on it."]]
+const LAMP_GAP := 4
+const D4 := [[1, 0], [-1, 0], [0, 1], [0, -1]]
 
 
 static func terr_solid(t: int) -> bool:
@@ -65,6 +82,8 @@ static func _edge(N: int, side: String, a: int, b: int) -> Array:
 
 ## The layout for a map: {N, terr, heights, connectors, core, nodes, ruins, spawns, bossAt, raftAt, ramps, evacAt, map}
 static func lay(id: String, size: String = "std") -> Dictionary:
+	if id == "city":
+		return lay_city(CITY.size)
 	if not MAPS.has(id):
 		id = "yard"
 	var N: int = SIZES.get(size, 16)
@@ -235,3 +254,164 @@ static func lay(id: String, size: String = "std") -> Dictionary:
 	L.heights = heights
 	L.connectors = conn
 	return L
+
+
+static func city_geo(n: int) -> Dictionary:
+	var C := n >> 1
+	var ri := roundi(n * 0.1)
+	var ro := roundi(n * 0.25)
+	var rm := roundi(n * 0.34)
+	return {"C": C, "ri": ri, "ro": ro, "rm": rm, "maj": [[C, C - rm], [C + rm, C], [C, C + rm], [C - rm, C]], "min": [[C - ro, C - ro], [C + ro, C - ro], [C + ro, C + ro], [C - ro, C + ro]]}
+
+
+## on a road tile? (two tiles wide: the inner ring, the outer ring, and the four avenues from the inner ring to the edge)
+static func city_road(i: int, j: int, G: Dictionary) -> bool:
+	var dx := absf(i + 0.5 - G.C)
+	var dy := absf(j + 0.5 - G.C)
+	var m := maxf(dx, dy)
+	if m >= G.ri - 1 and m <= G.ri + 1 and m > G.ri - 1:
+		return true
+	if m > G.ro - 1 and m <= G.ro + 1:
+		return true
+	return m > G.ri and (dx <= 1 or dy <= 1)
+
+
+static func city_plaza(i: int, j: int, G: Dictionary, pois: Array) -> bool:
+	if maxf(absf(i + 0.5 - G.C), absf(j + 0.5 - G.C)) < G.ri - 1:
+		return true
+	for p in pois:
+		var r := 3.5 if p.major else 2.5
+		if absf(i - p.i) < r and absf(j - p.j) < r:
+			return true
+	return false
+
+
+static func lay_city(n: int) -> Dictionary:
+	var G := city_geo(n)
+	var terr := PackedByteArray()
+	terr.resize(n * n)
+	var heights := PackedByteArray()
+	heights.resize(n * n)
+	var conn := PackedByteArray()
+	conn.resize(n * n)
+	var L := {"N": n, "id": "city", "map": CITY_MAP, "core": [G.C, G.C], "nodes": [], "ruins": [], "pois": [], "city": G, "raftAt": [], "ramps": [], "o": {"ox": 0, "oy": 0, "xl": true}}
+	var t_at := func(i: int, j: int) -> int: return terr[j * n + i] if i >= 0 and j >= 0 and i < n and j < n else T_GROUND
+	var mi := 0
+	var ni := 0
+	for P in CITY_POIS:   # majors on the avenues, minors on the outer ring's corners
+		var at: Array = G.maj[mi] if P[2] else G["min"][ni]
+		if P[2]:
+			mi += 1
+		else:
+			ni += 1
+		L.pois.append({"id": P[0], "name": P[1], "major": P[2], "perk": P[3], "what": P[4], "i": at[0], "j": at[1]})
+	var node_k := {}
+	var node := func(x: Dictionary) -> void:
+		if x.i < 0 or x.j < 0 or x.i >= n or x.j >= n:
+			return
+		var k: int = x.j * n + x.i
+		if node_k.has(k):
+			return
+		node_k[k] = true
+		L.nodes.append(x)
+	for j in n:
+		for i in n:
+			var k := j * n + i
+			if city_road(i, j, G):
+				terr[k] = T_ROAD
+				continue
+			if city_plaza(i, j, G, L.pois) or i < 2 or j < 2 or i >= n - 2 or j >= n - 2:
+				continue
+			# the blocks: 4x4 cells, a 3x3 building in most, one-tile alleys between; ruined corners become rubble
+			var h := Pal.hash2((i / 4) * 7 + 3, (j / 4) * 13 + 5)
+			if h > 0.32 and i % 4 < 3 and j % 4 < 3:
+				terr[k] = T_RUBBLE if Pal.hash2(i * 3 + 1, j * 5 + 2) > 0.87 else T_BLDG
+				continue
+			if Pal.hash2(i + 51, j + 17) > 0.9:
+				terr[k] = T_RUBBLE
+	for j in n:   # sidewalks along every road, where the ground is open
+		for i in n:
+			var k := j * n + i
+			if terr[k] != T_GROUND:
+				continue
+			for d in D4:
+				if t_at.call(i + d[0], j + d[1]) == T_ROAD:
+					terr[k] = T_WALK
+					break
+	for cy in range(1, n / 4 - 1):   # parks: open lots off the roads get a wood pile
+		for cx in range(1, n / 4 - 1):
+			if Pal.hash2(cx * 7 + 3, cy * 13 + 5) > 0.32:
+				continue
+			var i := cx * 4 + 1
+			var j := cy * 4 + 1
+			if terr[j * n + i] == T_GROUND and not city_plaza(i, j, G, L.pois):
+				node.call({"i": i, "j": j, "type": 0, "amt": 48, "max": 48, "rt": 0.0, "locked": false, "solid": false})
+	# Main Command's supply: a kiln and a scrap pile off the plaza; the Brick Works and the Hardware Store add more
+	node.call({"i": G.C - 2, "j": G.C + 2, "type": 1, "locked": false, "unlock": 0, "solid": true})
+	node.call({"i": G.C + 2, "j": G.C - 2, "type": 2, "locked": false, "unlock": 0, "solid": true})
+	for p in L.pois:
+		if p.perk == "brick":
+			node.call({"i": p.i - 1, "j": p.j + 1, "type": 1, "locked": false, "unlock": 0, "solid": true, "poi": p.id})
+			node.call({"i": p.i + 1, "j": p.j + 1, "type": 1, "locked": false, "unlock": 0, "solid": true, "poi": p.id})
+		if p.perk == "wood":
+			node.call({"i": p.i - 1, "j": p.j + 1, "type": 2, "locked": false, "unlock": 0, "solid": true, "poi": p.id})
+			node.call({"i": p.i + 1, "j": p.j - 1, "type": 0, "amt": 48, "max": 48, "rt": 0.0, "locked": false, "solid": false, "poi": p.id})
+	# sandbag walls: a broken ring round Main Command's plaza, and round each major POI
+	var used := node_k.duplicate()
+	used[G.C * n + G.C] = true
+	for p in L.pois:
+		used[p.j * n + p.i] = true
+	var ring := func(ci: int, cj: int, r: int) -> Array:
+		var out: Array = []
+		for a in range(-r, r + 1):
+			for t in [[ci + a, cj - r], [ci + a, cj + r], [ci - r, cj + a], [ci + r, cj + a]]:
+				var k: int = t[1] * n + t[0]
+				if used.has(k) or Pal.hash2(t[0] * 9 + 1, t[1] * 3 + 7) <= 0.45 or terr[k] != T_GROUND:
+					continue
+				used[k] = true
+				out.append(t)
+		return out
+	L.ruins.append([ring.call(G.C, G.C, 2), 1, 0.8, 0.0])
+	for p in L.pois:
+		if p.major:
+			L.ruins.append([ring.call(p.i, p.j, 2), 1, 0.6, 0.0])
+	L.lamps = []   # streetlamps: every fourth sidewalk tile along a road, leaning out over it
+	for j in n:
+		for i in n:
+			if terr[j * n + i] != T_WALK or node_k.has(j * n + i):
+				continue
+			for d in D4:
+				if t_at.call(i + d[0], j + d[1]) == T_ROAD and ((j % LAMP_GAP == 0) if d[0] != 0 else (i % LAMP_GAP == 0)):
+					L.lamps.append([i, j, d[0], d[1]])
+					break
+	var edge := func(side: String) -> Array:
+		var out: Array = []
+		for s in range(3, n - 3):
+			out.append([s, 0] if side == "n" else ([s, n - 1] if side == "s" else ([0, s] if side == "w" else [n - 1, s])))
+		return out
+	L.edges = {"n": edge.call("n"), "e": edge.call("e"), "s": edge.call("s"), "w": edge.call("w")}
+	L.spawns = [{"w": 0.25, "tiles": L.edges.n}, {"w": 0.25, "tiles": L.edges.e}, {"w": 0.25, "tiles": L.edges.s}, {"w": 0.25, "tiles": L.edges.w}]
+	L.bossAt = L.edges.e
+	var keep: Array = [L.core]
+	for p in L.pois:
+		keep.append([p.i, p.j])
+	for x in L.nodes:
+		keep.append([x.i, x.j])
+	for r in L.ruins:
+		keep.append_array(r[0])
+	for q in keep:
+		terr[q[1] * n + q[0]] = T_GROUND
+	L.terr = terr
+	L.heights = heights
+	L.connectors = conn
+	return L
+
+
+## the nearest edge to a point (attack spawns)
+static func city_edge_for(i: int, j: int, n: int) -> String:
+	var d := {"n": j, "s": n - 1 - j, "w": i, "e": n - 1 - i}
+	var best := "n"
+	for k in ["n", "s", "w", "e"]:   # Object.keys order, stable sort: ties go to the earlier key
+		if d[k] < d[best]:
+			best = k
+	return best

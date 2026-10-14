@@ -1,7 +1,14 @@
 # Palisade: Godot client
 
 The Godot 4.7 port of the browser game, built against v0.10.9 (`4c26769`, protocol `yard-29`).
-The plan is in `dev/plans/godot-conversion-blueprint.md`. This is **Phase 1, the fidelity slice**: the Yard on Normal, the Soldier, Delgado, all seven raider types, 13 of the browser's 16 bosses, the armory, the skill tree, sound and music.
+The plan is in `dev/plans/godot-conversion-blueprint.md`. It plays every solo co-op game the browser has:
+- all four classes;
+- 5 raids, 10 raids, Endless, Blitzkrieg Rush, Operation Whiteout and City Black Out;
+- all four co-op maps at both sizes, and the 64x64 city;
+- the three difficulties and all 20 modifiers;
+- Delgado, all seven raider types, all 16 bosses, the armory, the skill tree, sound and music.
+
+There are no menus yet. Until they are ported, the next game is set up on the pause or end screen (see the controls).
 
 ## Run it
 
@@ -25,6 +32,11 @@ Controls:
 | Start the raid early | Enter |
 | Pause | Esc / P |
 | Skill tree (paused or at the end of a run) | K |
+| Class ability: Soldier rocket, Sniper stealth (others: grenade) | Q |
+| Sprint (Quartermaster) | Shift |
+| Reload (Grenadier) | R |
+| Black Out: ready up for the final push | Enter |
+| Next game, on the pause or end screen: class, map, size, mode, difficulty | C / M / X / V / D, then Esc to start |
 | Developer: bring in the next boss (editor runs only) | F8 |
 
 ## What is ported
@@ -38,6 +50,9 @@ Each part follows the browser code, with function names kept so the two read sid
 | Sim | `06-world.js`, `09-actions.js`, `10-phases-bosses.js`, `12-players.js`, `14-raiders.js` | `scripts/sim.gd` |
 | Delgado | `13-dell.js`, `13b-commands-recovery.js` | `scripts/sim.gd` |
 | Drawing and HUD | `15-render.js`, `16-characters.js`, `17-scenery.js` | `scripts/main.gd` |
+| Maps and the city | `06b-maps.js`, `06d-elevation.js`, `06e-city.js` | `scripts/pal_maps.gd` |
+| Modes and modifiers | `01b-mods-skills.js`, `10b-mods-play.js`, `10c-blitz.js`, `10d-winter-campaign.js`, `10f-blackout.js` | `scripts/sim.gd` |
+| The city's look and the Black Out HUD | `06e-city.js`, `16f-blackout-hud.js` | `scripts/city_view.gd`, `scripts/ground_chunk.gd` |
 | Sound and music | `03-audio.js` | `scripts/pal_audio.gd`, `tools/render_sfx.gd`, `tools/convert_music.sh` |
 
 What `sim.gd` covers:
@@ -77,6 +92,21 @@ What `sim.gd` covers:
   - The ammo ranks power armor-piercing, incendiary, explosive and lightning rounds.
   - Points come by the server's rule: 1 per 5 raids held, carried between runs, plus 1 per boss.
   - Points are kept locally in `user://profile.json` until accounts are ported. Reset is free for now; the browser charges 40 shards.
+- **Classes:** the Sniper (a piercing bolt rifle, two ammo slots, stealth), the Grenadier (a pump shotgun loaded a shell at a time, extra grenades, Molotovs) and the Quartermaster (bigger packs, cheap stake repairs, sprint, patching up Delgado by touch).
+- **Maps:**
+  - Riverbend: wading, bridges, floods from raid 3, and the Ferryman on his raft with harpoons and boarding crews.
+  - Ashfall Quarry: rock outcrops, burning drums, cracked ground that heavy blasts break into pits.
+  - Frostpeak: three terraces with cliffs, stairs and ramps, with height in movement, bullets, blasts and aiming.
+  - XL: every map at 24x24, laid out tile for tile as the browser does.
+- **Modes:**
+  - 5 and 10 raids and Endless, with golden hour and night raids, and Hard and Easy.
+  - All 20 modifiers.
+  - Blitzkrieg Rush: 15 raids of Blitz bosses and the five-minute Final Blitz to the evac ring.
+  - Operation Whiteout: four chapters across the four maps, 15-second map evacs between them, and the Whiteout Gauntlet.
+  - City Black Out:
+    - eight POIs attacked one by one, each with its perk (radio warning, power, hospital, armory refills, salvage, extra piles, high ground);
+    - READY UP, then the five-minute final push and the Supreme Destroyer;
+    - the mini-map.
 - **Armory:** spend salvage at the stake between raids. Kills pay the browser's bounties.
   - The five upgrades go to 8 levels at the browser's costs and steps.
   - Delgado's level, the stake repair (+50 for 25), and the four ammo types, at skill rank 0 until the account skill tree is ported.
@@ -86,10 +116,10 @@ What `sim.gd` covers:
 
 These are later phases:
 - **Accounts:** the skill tree saves locally until then.
-- **Ferryman bosses:** they need the river map.
-- **Progression:** armory, perks and mods.
-- **Other content:** maps, elevation, other classes, difficulties.
-- **Presentation:** cosmetics, lighting, trees and the fence.
+- **Menus:** main menu, game setup, settings and the full results screen.
+- **Input:** controller, touch and remapping.
+- **PvP:** Base Battle and Free-for-all come with online play.
+- **Presentation:** cosmetics, lighting and night, storm, trees and the fence.
 - **Music:** the menu and finale tracks, and the casino playlist.
 - **Network:** online play (PeerJS cross-play probe, casino relay client).
 
@@ -111,6 +141,8 @@ The character figure is a cut-down `drawPerson` without wardrobe items.
 ```sh
 godot --headless --path godot --script res://tests/sim_test.gd           # exit 0 = pass
 xvfb-run godot --path godot --script res://tests/shot.gd -- /tmp/shot.png # renders a raid frame
+xvfb-run godot --path godot --script res://tests/shot.gd -- /tmp/city.png city            # a Black Out attack
+xvfb-run godot --path godot --script res://tests/shot.gd -- /tmp/frost.png map frost std  # any map, size and class
 ```
 
 `sim_test.gd` checks the following:
@@ -120,7 +152,14 @@ xvfb-run godot --path godot --script res://tests/shot.gd -- /tmp/shot.png # rend
 - what each raider type does: the shield stopping frontal fire, satchels breaching, bottles lighting wood, medics healing, spotters marking;
 - Delgado building the perimeter and reviving you;
 - the boss raid mix and order, each boss's attack, boss bounty;
-- all 13 bosses fight a moving soldier, and each uses its own warnings and moves;
+- all 16 bosses fight a moving soldier, and each uses its own warnings and moves;
+- the three other classes: health, guns, ammo, reloads, sprint, stealth, Molotovs;
+- every map and size, and the city, laid out tile for tile as the browser does (`tests/maps_ref.json`, made by `node tools/maps_ref.js dev/src/js`), with a path from every spawn;
+- river wading and floods, the Ferryman, quarry pits, Frostpeak's terraces;
+- each mode and modifier: Endless and night raids, Hard, Elite, On Your Own, No Patch-Ups, Last Stand, Blitzkrieg Rush to the evac;
+- Operation Whiteout: the chapter boss order, the map evac to Riverbend, a failed evac, the Gauntlet's waves and cap;
+- City Black Out: POI health, paths to every POI, an attack on a POI, losing one and its perk, READY UP, the final push, the Destroyer;
+- bot games on every map;
 - frost slow, and the Foreman out of reach underground;
 - skill points, costs, gates, perks, armor-piercing rank 4 and reset;
 - every armory purchase against the browser's numbers, the shop rules, ammo effects, bounties and rockets;
