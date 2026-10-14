@@ -22,7 +22,25 @@ func _init() -> void:
 	for n in 30 * 25:
 		s.update(1.0 / 30.0, {})
 	s.events.clear()
-	if mode == "zoo":
+	if mode == "map":
+		main.next_opt.map = args[2]
+		main.next_opt.size = args[3] if args.size() > 3 else "std"
+		main.next_cls = args[4] if args.size() > 4 else "soldier"
+		main._restart()
+		s = main.sim
+		for n in 30 * 20:
+			s.update(1.0 / 30.0, {})
+		s.events.clear()
+		s.game.wave = 2
+		s.start_raid()
+		if args[2] == "river":
+			var fe := s.spawn_boss("ferryman")
+		for n in 30 * 8:
+			s.player.hp = s.player.max
+			s.update(1.0 / 30.0, {})
+		for n in 20:
+			await process_frame
+	elif mode == "zoo":
 		s.game.wave = 4
 		s.start_raid()
 		s.game.queue = []

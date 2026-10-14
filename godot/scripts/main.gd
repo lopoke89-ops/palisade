@@ -13,7 +13,8 @@ var sk_reset := Rect2()
 var run_sp := -1
 var mouse_pulls := 0   # left-button presses so far (the bolt and pump guns buffer a click)
 var draw_alpha := 1.0   # people drawn faded (stealth) multiply their colours by this
-var next_cls := "soldier"   # the class for the next game (C on the pause or end screen, until the menus are ported)   # skill points this run earned (shown on the end screen), -1 until the run ends
+var next_cls := "soldier"   # the next game's setup (C class, M map, X size, V mode, D difficulty on the pause or end screen, until the menus are ported)
+var next_opt := {"map": "yard", "size": "std", "mode": "5", "diff": "normal", "mods": []}   # skill points this run earned (shown on the end screen), -1 until the run ends
 var audio := PalAudio.new()
 var v := IsoView.new()
 var parts: Array = []
@@ -34,11 +35,11 @@ var mouse_seen := false
 func _ready() -> void:
 	font = ThemeDB.fallback_font
 	profile.load_file()
-	sim.new_game(-1, "normal", profile.perk_mods(), {"cls": next_cls})
+	sim.new_game(-1, next_opt.diff, profile.perk_mods(), _game_opt())
 	audio.sim = sim
 	add_child(audio)
 	_resize()
-	v.cam_snap(sim.player.x, sim.player.y)
+	v.cam_snap(sim.player.x, sim.player.y, sim.height_at(sim.player.x, sim.player.y))
 	get_viewport().size_changed.connect(_resize)
 	toasts.append({"title": "THE YARD", "body": "Gather wood (walk into a pile), SPACE to build, 1-3 material, F door, G grenade, Q rocket, E armory at the stake, H Delgado follow/defend, ENTER to start the raid early.", "t": 7.0})
 
@@ -79,6 +80,16 @@ func _unhandled_input(e: InputEvent) -> void:
 				skills_open = true
 			elif k == KEY_C:
 				next_cls = Pal.CLASS_IDS[(Pal.CLASS_IDS.find(next_cls) + 1) % Pal.CLASS_IDS.size()]
+			elif k == KEY_M:
+				next_opt.map = PalMaps.MAP_IDS[(PalMaps.MAP_IDS.find(next_opt.map) + 1) % PalMaps.MAP_IDS.size()]
+			elif k == KEY_X:
+				next_opt.size = "xl" if next_opt.size == "std" else "std"
+			elif k == KEY_V:
+				var modes := ["5", "10", "endless", "blitz"]
+				next_opt.mode = modes[(modes.find(next_opt.mode) + 1) % modes.size()]
+			elif k == KEY_D:
+				var ds := ["easy", "normal", "hard"]
+				next_opt.diff = ds[(ds.find(next_opt.diff) + 1) % ds.size()]
 			return
 		if k == KEY_F8 and OS.is_debug_build():   # developer: bring in the next boss (any boss, any map), editor runs only
 			_dev_boss()
@@ -109,8 +120,19 @@ func _unhandled_input(e: InputEvent) -> void:
 					sim.start_raid()
 
 
+func _game_opt() -> Dictionary:
+	var o := next_opt.duplicate()
+	o.cls = next_cls
+	return o
+
+
+func _setup_line() -> String:
+	var mode_names := {"5": "5 RAIDS", "10": "10 RAIDS", "endless": "ENDLESS", "blitz": "BLITZKRIEG RUSH"}
+	return "NEXT GAME · C %s · M %s · X %s · V %s · D %s" % [Pal.CLASSES[next_cls].name, PalMaps.MAPS[next_opt.map].name, next_opt.size.to_upper(), mode_names[next_opt.mode], next_opt.diff.to_upper()]
+
+
 func _restart() -> void:
-	sim.new_game(-1, "normal", profile.perk_mods(), {"cls": next_cls})
+	sim.new_game(-1, next_opt.diff, profile.perk_mods(), _game_opt())
 	run_sp = -1
 	parts.clear()
 	flashes.clear()
@@ -125,7 +147,8 @@ func _restart() -> void:
 
 func _mouse_world() -> Vector2:
 	var m := get_viewport().get_mouse_position()
-	return v.screen_to_world(m.x, m.y + v.WH * 0.55)
+	var body = _body_under(m.x, m.y)
+	return body if body != null else _screen_to_world(m.x, m.y + v.WH * 0.55)
 
 
 func _controls() -> Dictionary:
@@ -155,7 +178,7 @@ func _process(dt: float) -> void:
 		shake_t += dt
 		sh = Vector2(sin(shake_t * 71.0), cos(shake_t * 57.0)) * shake * v.u
 		shake *= pow(0.02, dt)
-	v.cam_follow(sim.player.x, sim.player.y, sh)
+	v.cam_follow(sim.player.x, sim.player.y, sh, sim.height_at(sim.player.x, sim.player.y))
 	queue_redraw()
 
 
@@ -240,6 +263,11 @@ func _update_fx(dt: float) -> void:
 
 # ---------------------------------------------------------------- drawing helpers (15-render.js)
 
+## a world point on screen, at the ground's height there (Frostpeak's terraces; flat elsewhere)
+func iso(x: float, y: float) -> Vector2:
+	return v.iso(x, y, sim.height_at(x, y))
+
+
 func c(h: String) -> Color:
 	var col := Color.html(h)
 	col.a *= draw_alpha
@@ -256,10 +284,11 @@ func up(p: Vector2, h: float) -> Vector2:
 
 ## boxR: an iso box from (x0,y0) to (x1,y1) on the ground, z pixels up, h pixels tall. Returns its base corners.
 func box_r(x0: float, y0: float, x1: float, y1: float, z: float, h: float, top: Color, l: Color, r: Color) -> Dictionary:
-	var A := v.iso(x0, y0)
-	var B := v.iso(x1, y0)
-	var C := v.iso(x1, y1)
-	var D := v.iso(x0, y1)
+	var hz := sim.height_at((x0 + x1) / 2, (y0 + y1) / 2)   # boxR: the whole box stands at its centre's height
+	var A := v.iso(x0, y0, hz)
+	var B := v.iso(x1, y0, hz)
+	var C := v.iso(x1, y1, hz)
+	var D := v.iso(x0, y1, hz)
 	quad(up(D, z), up(C, z), up(C, z + h), up(D, z + h), l)
 	quad(up(C, z), up(B, z), up(B, z + h), up(C, z + h), r)
 	quad(up(A, z + h), up(B, z + h), up(C, z + h), up(D, z + h), top)
@@ -303,29 +332,19 @@ func _draw() -> void:
 				col = c("#342d21") if h < 0.5 else c("#2f2a1e")
 			else:
 				col = mixc("#1f2518", "#262c1b", h).lerp(c("#171c13"), clampf((d - 2) / 6.0, 0, 1))
-			quad(v.iso(i, j), v.iso(i + 1, j), v.iso(i + 1, j + 1), v.iso(i, j + 1), col)
-	# the yard's ground (groundCol for the Yard)
-	for i in N:
-		for j in N:
-			var h := Pal.hash2(i, j)
-			var col := c("#3d3528") if h < 0.2 else (c("#352e23") if h < 0.75 else c("#2f291f"))
-			quad(v.iso(i, j), v.iso(i + 1, j), v.iso(i + 1, j + 1), v.iso(i, j + 1), col)
-			if h > 0.86:
-				var cc := v.iso(i + 0.5, j + 0.5)
-				oval(cc.x + (h - 0.9) * 40 * u, cc.y, 6 * u, 2.5 * u, Color(84 / 255.0, 104 / 255.0, 64 / 255.0, 0.35))
-	for s in N + 1:
-		draw_line(v.iso(s, 0), v.iso(s, N), Color(0, 0, 0, 0.22), 1.0)
-		draw_line(v.iso(0, s), v.iso(N, s), Color(0, 0, 0, 0.22), 1.0)
+			quad(iso(i, j), iso(i + 1, j), iso(i + 1, j + 1), iso(i, j + 1), col)
+	_paint_ground()
+	_draw_terrain_live()
 	# debris lies flat under everything
 	for k in N * N:
 		if sim.debris[k] != 0 and sim.walls[k] == null:
 			_draw_debris(k % N, k / N, sim.debris[k] - 1)
 	for fr in sim.frost_fields:
-		var qc := v.iso(fr.x, fr.y)
+		var qc := iso(fr.x, fr.y)
 		oval(qc.x, qc.y, fr.r * v.TW2, fr.r * v.TH2, Color(0.7, 0.95, 1.0, 0.3 * clampf(fr.t / 2.0, 0, 1)))
 	# burning ground from a firebrand's bottle (napalm, gas and mines live here too)
 	for f in sim.fires:
-		var fc := v.iso(f.x, f.y)
+		var fc := iso(f.x, f.y)
 		if f.get("nap", 0) == 2:
 			var ga := minf(1.0, f.t) * 0.32
 			for n in 5:
@@ -345,7 +364,7 @@ func _draw() -> void:
 		oval(fc.x, fc.y, f.r * v.TW2 * flick, f.r * v.TH2 * flick, Color(1, 0.45, 0.12, 0.35 * a))
 		oval(fc.x, fc.y, f.r * v.TW2 * 0.55, f.r * v.TH2 * 0.55, Color(1, 0.75, 0.3, 0.45 * a))
 	for r in rings:
-		var rc := v.iso(r.x, r.y)
+		var rc := iso(r.x, r.y)
 		var t: float = 1.0 - r.life / r.max
 		var rr: float = lerpf(r.r0, r.r1, t)
 		draw_set_transform(rc, 0, Vector2(1, v.TH2 / v.TW2))
@@ -360,6 +379,15 @@ func _draw() -> void:
 			items.append([k % N + k / N + 1.0, 0, k])
 	for n in sim.nodes:
 		items.append([n.i + n.j + 1.0, 1, n])
+	for k in N * N:
+		var t: int = sim.terr[k]
+		if t == PalMaps.T_ROCK or t == PalMaps.T_DRUM:
+			items.append([k % N + k / N + 1.0, 8, k])
+		if sim.is_frost() and sim.heights[k] > 0 and sim.connectors[k] == 0:
+			var i := k % N
+			var j := k / N
+			if (j + 1 < N and sim.heights[k] > sim.heights[k + N] + (1 if sim.connectors[k + N] != 0 else 0)) or (i + 1 < N and sim.heights[k] > sim.heights[k + 1]):
+				items.append([i + j + 2.0, 9, k])
 	items.append([sim.core.i + sim.core.j + 1.0, 2, null])
 	for e in sim.enemies:
 		items.append([e.x + e.y, 3, e])
@@ -382,6 +410,8 @@ func _draw() -> void:
 				var e: Dictionary = it[2]
 				var o: Dictionary = (Sim.boss_def(e.boss).look if e.type == "boss" else LOOK.get(e.type, LOOK.rifle)).duplicate()
 				o.merge({"aim": e.aim, "walk": e.walk, "flash": e.flash > 0, "hp": e.hp / e.max}, true)
+				if e.get("raft", false):
+					_draw_raft(e)
 				if e.type == "boss" and e.get("burrow", false):
 					_draw_mound(e)
 					continue
@@ -397,13 +427,13 @@ func _draw() -> void:
 					if e.shieldBroken:
 						o.weapon = "pistol"
 				if e.type == "medic" and sim.game.phase == "raid":
-					var mc := v.iso(e.x, e.y)
+					var mc := iso(e.x, e.y)
 					draw_set_transform(mc, 0, Vector2(1, v.TH2 / v.TW2))
 					draw_arc(Vector2.ZERO, v.TW2 * 2.6, 0, TAU, 48, Color(143 / 255.0, 224 / 255.0, 160 / 255.0, 0.35), 1.2 * v.u)
 					draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 				_draw_person(e.x, e.y, o)
 				if e.type == "boss" and e.st == 6:   # dazed
-					var sc := v.iso(e.x, e.y)
+					var sc := iso(e.x, e.y)
 					for n in 3:
 						var a: float = sim.game.time * 4.0 + n * TAU / 3
 						draw_circle(Vector2(sc.x + cos(a) * 10 * v.u, sc.y - v.WH * 2.3 + sin(a) * 4 * v.u), 2.2 * v.u, c("#ffd23a"))
@@ -431,18 +461,32 @@ func _draw() -> void:
 					_draw_downed(p.x, p.y, "DOWN · %ds" % ceili(p.rt), p.revive / 2.2)
 			6:
 				var s: Dictionary = it[2]
-				var sc := v.iso(s.x, s.y)
+				var sc := iso(s.x, s.y)
 				oval(sc.x, sc.y, 6 * u, 3 * u, Color(0, 0, 0, 0.35))
 				oval(sc.x, sc.y - 4 * u, 5 * u, 5 * u, c("#cbbf9f"))
+			8:
+				_draw_terr_item(it[2] % N, it[2] / N, sim.terr[it[2]])
+			9:
+				_draw_frost_cliff(it[2])
 			7:
 				var ch: Dictionary = it[2]
-				var cs := v.iso(ch.x, ch.y)
+				var cs := iso(ch.x, ch.y)
 				draw_rect(Rect2(cs.x - 5 * u, cs.y - 5 * u, 10 * u, 6 * u), c("#1a1510"))
 				if sin(sim.game.time * (20.0 - ch.fuse * 5.0)) > 0:
 					draw_circle(Vector2(cs.x, cs.y - 6 * u), 2 * u, c("#ff5a3a"))
 	_draw_boss_fx()
+	for chn in sim.chains:   # the Ferryman's harpoon chain
+		draw_dashed_line(iso(chn.x0, chn.y0) - Vector2(0, v.WH * 0.55), iso(chn.x1, chn.y1) - Vector2(0, v.WH * 0.44), Color(200 / 255.0, 205 / 255.0, 200 / 255.0, chn.life / chn.max), 2.2 * v.u, 4 * v.u)
+	if sim.game.get("fb") != null and sim.game.fb.evac != null:   # the evac site
+		var E: Dictionary = sim.game.fb.evac
+		var pulse := 0.55 + 0.45 * sin(sim.game.time * 6.0)
+		_disc(E.x, E.y, E.r, Color(138 / 255.0, 1, 154 / 255.0, 0.12 + 0.08 * pulse))
+		_ring(E.x, E.y, E.r, Color(138 / 255.0, 1, 154 / 255.0, 0.7 + 0.3 * pulse), 2.4)
+		var ev_p: float = sim.player.get("ev", 0.0)
+		if ev_p > 0 and not sim.player.get("out", false):
+			_ring(E.x, E.y, E.r * clampf(ev_p / Sim.BLITZ.hold, 0, 1), c("#ffffff"), 3.0)
 	for r in sim.rockets:
-		var rp := v.iso(r.x, r.y)
+		var rp := iso(r.x, r.y)
 		var dir := v.world_dir_to_screen(Vector2(r.vx, r.vy))
 		var hpx := v.WH * 0.6
 		draw_line(Vector2(rp.x, rp.y - hpx) - dir * 7 * v.u, Vector2(rp.x, rp.y - hpx) + dir * 4 * v.u, c("#4a4a3a"), 3.2 * v.u)
@@ -453,8 +497,8 @@ func _draw() -> void:
 		var a: float = z.life / z.max
 		var pts := PackedVector2Array()
 		for n in z.pts.size() - 1:
-			var p0 := v.iso(z.pts[n].x, z.pts[n].y) - Vector2(0, v.WH * 0.6)
-			var p1 := v.iso(z.pts[n + 1].x, z.pts[n + 1].y) - Vector2(0, v.WH * 0.6)
+			var p0 := iso(z.pts[n].x, z.pts[n].y) - Vector2(0, v.WH * 0.6)
+			var p1 := iso(z.pts[n + 1].x, z.pts[n + 1].y) - Vector2(0, v.WH * 0.6)
 			pts.append(p0)
 			for q in 6:
 				var t := (q + 1) / 7.0
@@ -465,14 +509,14 @@ func _draw() -> void:
 			draw_polyline(pts, Color(c("#7fe0ff"), 0.5 * a), 5 * v.u)
 			draw_polyline(pts, Color(1, 1, 1, a), 1.6 * v.u)
 	for sl in slashes:
-		var sp := v.iso(sl.x, sl.y)
+		var sp := iso(sl.x, sl.y)
 		var a: float = sl.life / sl.max
 		var a0 := v.world_dir_to_screen(Vector2(sl.ax, sl.ay)).angle()
 		draw_set_transform(Vector2(sp.x, sp.y - v.WH * 0.6), 0, Vector2(1, 0.6))
 		draw_arc(Vector2.ZERO, v.TW2 * 1.2, a0 - 1.1, a0 + 1.1, 18, Color(1, 0.9, 0.85, 0.8 * a), 3 * v.u)
 		draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 	for r in sim.arcs:
-		var rp := v.iso(r.x, r.y)
+		var rp := iso(r.x, r.y)
 		var dir := v.world_dir_to_screen(Vector2(r.vx, r.vy))
 		var nrm := dir.orthogonal()
 		var cpt := Vector2(rp.x, rp.y - v.WH * 0.5)
@@ -481,36 +525,36 @@ func _draw() -> void:
 	# grenades in the air
 	for l in sim.lobs:
 		if l.get("k", 0) == 3:   # a boss missile shows a ring where it lands for its whole flight
-			var lr := v.iso(l.x1, l.y1)
+			var lr := iso(l.x1, l.y1)
 			draw_set_transform(lr, 0, Vector2(1, 0.5))
 			draw_arc(Vector2.ZERO, v.TW2 * l.R, 0, TAU, 40, Color(1, 70 / 255.0, 50 / 255.0, 0.55 + 0.35 * sin(sim.game.time * 22.0)), 2.0 * v.u)
 			draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 		var t: float = clampf(l.t / l.T, 0, 1)
 		var x: float = lerpf(l.x0, l.x1, t)
 		var y: float = lerpf(l.y0, l.y1, t)
-		var g := v.iso(x, y)
+		var g := iso(x, y)
 		var arc := sin(t * PI) * WH * 2.2
 		oval(g.x, g.y, 3 * u, 1.5 * u, Color(0, 0, 0, 0.3))
 		draw_circle(Vector2(g.x, g.y - WH * 0.5 - arc), 2.6 * u, c("#3d4a2a"))
 	# tracers
 	for b in sim.bullets:
-		var p0 := v.iso(b.x, b.y)
-		var p1 := v.iso(b.x - b.vx * 0.02, b.y - b.vy * 0.02)
+		var p0 := iso(b.x, b.y)
+		var p1 := iso(b.x - b.vx * 0.02, b.y - b.vy * 0.02)
 		var col := c("#ffe9a8") if b.team == 0 else c("#ff8a5a")
 		draw_line(Vector2(p0.x, p0.y - WH * 0.62), Vector2(p1.x, p1.y - WH * 0.62), col, maxf(1.0, 1.6 * u))
 	# particles
 	for q in parts:
-		var pp := v.iso(q.x, q.y)
+		var pp := iso(q.x, q.y)
 		var a: float = clampf(q.life / q.max, 0, 1)
 		var col: Color = q.col
 		col.a = a
 		draw_rect(Rect2(pp.x - 1.2 * u * q.s, pp.y - q.z * u - 1.2 * u * q.s, 2.4 * u * q.s, 2.4 * u * q.s), col)
 	for f in flashes:
-		var fp := v.iso(f.x, f.y)
+		var fp := iso(f.x, f.y)
 		var a: float = f.life / f.max
 		draw_circle(Vector2(fp.x, fp.y - WH * 0.5), f.r * v.TW2 * (0.5 if f.muzzle else 0.9) * (0.6 + 0.4 * a), Color(1, 0.85, 0.5, 0.45 * a))
 	for f in floats:
-		var fp := v.iso(f.x, f.y)
+		var fp := iso(f.x, f.y)
 		var col: Color = f.col
 		col.a = clampf(f.t / 0.5, 0, 1)
 		label(f.text, fp.x, fp.y - WH * 1.6 - (1.4 - f.t) * 18 * u, col, 11)
@@ -585,7 +629,7 @@ func _draw_wall(i: int, j: int, w: Dictionary) -> void:
 				var pt := up(pqs[0].lerp(pqs[1], hu), h * hv)
 				oval(pt.x, pt.y, (2.2 + st) * u, (2.8 + st) * u, col)
 	if w.fire > 0:
-		var cc := v.iso(i + 0.5, j + 0.5)
+		var cc := iso(i + 0.5, j + 0.5)
 		var t := Time.get_ticks_msec() / 1000.0
 		draw_circle(Vector2(cc.x, cc.y - h), v.TW2 * (0.55 + 0.08 * sin(t * 13.0 + i)), Color(1, 0.55, 0.2, 0.35))
 		draw_circle(Vector2(cc.x, cc.y - h - 4 * u), v.TW2 * 0.25, Color(1, 0.8, 0.4, 0.5))
@@ -619,7 +663,7 @@ func _draw_node(n: Dictionary) -> void:
 		box_r(i + 0.45, j + 0.1, i + 0.9, j + 0.55, 0, WH * 0.8, cs[0], cs[1], cs[2])
 		box_r(i + 0.3, j + 0.55, i + 0.85, j + 0.9, 0, WH * 0.3, cs[0], cs[1], cs[2])
 	if n.locked:
-		var cc := v.iso(i + 0.5, j + 0.5)
+		var cc := iso(i + 0.5, j + 0.5)
 		label("%s · OPENS RAID %d" % ["KILN" if n.type == 1 else "SCRAP", n.unlock], cc.x, cc.y - WH * 2.1, c("#9a8f7a"), 10)
 
 
@@ -634,7 +678,7 @@ func _draw_stake() -> void:
 	var bx := box_r(i + 0.14, j + 0.14, i + 0.86, j + 0.86, 0, WH * 1.15, c("#8a4a34") if f else c("#4d5c40"), c("#6a3424") if f else c("#38452e"), c("#50281c") if f else c("#2a3421"))
 	for pq in [[bx.D, bx.C], [bx.C, bx.B]]:
 		quad(up(pq[0], WH * 0.62), up(pq[1], WH * 0.62), up(pq[1], WH * 0.8), up(pq[0], WH * 0.8), band)
-	var top := v.iso(i + 0.5, j + 0.5)
+	var top := iso(i + 0.5, j + 0.5)
 	var px := top.x
 	var py := top.y - WH * 1.15
 	draw_line(Vector2(px, py), Vector2(px, py - 28 * u), c("#1b1812"), 2 * u)
@@ -650,9 +694,9 @@ func _draw_ghost() -> void:
 	if not sim.inb(t.i, t.j):
 		return
 	var col := Color(0.56, 0.88, 0.63, 0.28) if t.ok else Color(0.84, 0.35, 0.23, 0.25)
-	quad(v.iso(t.i, t.j), v.iso(t.i + 1, t.j), v.iso(t.i + 1, t.j + 1), v.iso(t.i, t.j + 1), col)
+	quad(iso(t.i, t.j), iso(t.i + 1, t.j), iso(t.i + 1, t.j + 1), iso(t.i, t.j + 1), col)
 	var line := Color(col, 0.8)
-	var pts := PackedVector2Array([v.iso(t.i, t.j), v.iso(t.i + 1, t.j), v.iso(t.i + 1, t.j + 1), v.iso(t.i, t.j + 1), v.iso(t.i, t.j)])
+	var pts := PackedVector2Array([iso(t.i, t.j), iso(t.i + 1, t.j), iso(t.i + 1, t.j + 1), iso(t.i, t.j + 1), iso(t.i, t.j)])
 	draw_polyline(pts, line, maxf(1.0, v.u))
 
 
@@ -692,7 +736,7 @@ static func class_look(cls: String) -> Dictionary:
 ## A cut-down drawPerson (16-characters.js): shadow, legs, body, vest, head and headgear, the weapon on the aim side,
 ## and each raider's one tell (riot shield, satchel, medic kit, red boonie, lit bottle, grenade strap). No cosmetics yet.
 func _draw_person(x: float, y: float, o: Dictionary) -> void:
-	var s := v.iso(x, y)
+	var s := iso(x, y)
 	var k: float = v.u * FIG * o.get("big", 1.0)
 	var walk: float = o.walk
 	var bob := -absf(sin(walk)) * 1.1
@@ -806,7 +850,7 @@ func _draw_person(x: float, y: float, o: Dictionary) -> void:
 
 
 func _draw_downed(x: float, y: float, text: String, prog: float) -> void:
-	var s := v.iso(x, y)
+	var s := iso(x, y)
 	var u := v.u
 	oval(s.x, s.y, 11 * u, 5 * u, Color(0, 0, 0, 0.38))
 	oval(s.x, s.y - 3 * u, 10 * u, 4 * u, c("#5a5240"))
@@ -831,7 +875,10 @@ func _draw_hud() -> void:
 	if g.phase == "build":
 		phase_txt = "BUILD · RAID %d IN %ds   (ENTER: start now)" % [g.wave + 1, ceili(g.timer)]
 	elif g.phase == "raid":
-		phase_txt = "RAID %d/%d · %d RAIDERS LEFT" % [g.wave, g.waves, sim.enemies.size() + g.queue.size()]
+		phase_txt = "%s · %d RAIDERS LEFT" % [sim.raid_name(g.wave), sim.enemies.size() + g.queue.size()]
+		if g.get("fb") != null:
+			var ft: float = g.fb.t
+			phase_txt = "FINAL BLITZ · %d:%02d · %s" % [floori(ft / 60), floori(fmod(ft, 60)), "GET TO THE EVAC" if g.fb.evac != null else "%d BOSSES UP" % sim.live_bosses()]
 	else:
 		phase_txt = "GAME OVER"
 	draw_string(font, Vector2(14, 22), phase_txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, paper)
@@ -881,7 +928,7 @@ func _draw_hud() -> void:
 	# what SPACE would do
 	if p.alive and g.phase != "over":
 		var t := sim.build_target(p, g.sel, g.piece == "door")
-		var tc := v.iso(t.i + 0.5, t.j + 0.5)
+		var tc := iso(t.i + 0.5, t.j + 0.5)
 		var msg: String = ("%s · %d %s" % [t.act, t.cost, Pal.MAT[t.mat].name]) if t.ok else t.reason
 		if msg != "":
 			label(msg, tc.x, tc.y - v.WH * 1.4, c("#8fe0a0") if t.ok else c("#d65a3a"), 10)
@@ -899,12 +946,13 @@ func _draw_hud() -> void:
 		if g.paused:
 			label("PAUSED", W / 2, H / 2 - 20, gold, 30)
 			label("ESC / P to resume · R to restart · K skill tree", W / 2, H / 2 + 14, paper, 14)
-			label("C · next game's class: %s" % Pal.CLASSES[next_cls].name, W / 2, H / 2 + 40, dim, 13)
+			label(_setup_line(), W / 2, H / 2 + 40, dim, 13)
 		else:
 			label("VICTORY" if g.won else "DEFEAT", W / 2, H / 2 - 30, gold if g.won else c("#d65a3a"), 34)
 			var st: Dictionary = g.stats
 			label("Raids survived %d · Raiders dropped %d · Walls raised %d · Walls lost %d" % [g.wave - (0 if g.won else 1), st.dropped, st.built, st.lost], W / 2, H / 2 + 6, paper, 14)
-			label("ENTER to play again · K skill tree · C class: %s" % Pal.CLASSES[next_cls].name, W / 2, H / 2 + 34, dim, 13)
+			label("ENTER to play again · K skill tree", W / 2, H / 2 + 34, dim, 13)
+			label(_setup_line(), W / 2, H / 2 + 84, dim, 12)
 			if run_sp >= 0:
 				label("+%d SKILL POINT%s · %d to spend · next in %d raids" % [run_sp, "" if run_sp == 1 else "S", profile.sp, 5 - profile.sp_prog], W / 2, H / 2 + 60, c("#8fe0a0"), 13)
 
@@ -919,7 +967,7 @@ func _draw_boss_fx() -> void:
 		if e.type != "boss" or e.st == 0:
 			continue
 		var f: float = maxf(0.0, e.stT / e.stM)
-		var b0 := v.iso(e.x, e.y)
+		var b0 := iso(e.x, e.y)
 		if _draw_new_fx(e, f, pulse, ch):
 			continue
 		var kb: String = Sim.boss_def(e.boss).get("base", e.boss)
@@ -928,7 +976,7 @@ func _draw_boss_fx() -> void:
 			var L := Vector2(e.lx - e.x, e.ly - e.y).length()
 			var col := Color(1, 60 / 255.0, 40 / 255.0, 0.5 + 0.45 * pulse)
 			for o in ([-0.3, 0.0, 0.3] if e.st == 2 else [0.0]):
-				var q := v.iso(e.x + cos(a + o) * L, e.y + sin(a + o) * L)
+				var q := iso(e.x + cos(a + o) * L, e.y + sin(a + o) * L)
 				draw_dashed_line(b0 - Vector2(0, ch * 1.2), q - Vector2(0, ch * 1.2), col, 2.2 * u, 7 * u)
 				draw_set_transform(q, 0, Vector2(1, 0.5))
 				draw_arc(Vector2.ZERO, v.TW2 * 1.5 * (1.15 - f * 0.15), 0, TAU, 40, col, 2.2 * u)
@@ -938,7 +986,7 @@ func _draw_boss_fx() -> void:
 			var pts := PackedVector2Array([b0])
 			for k in 11:
 				var a := a0 + (k / 10.0 - 0.5) * 2.4
-				pts.append(v.iso(e.x + cos(a) * 1.5, e.y + sin(a) * 1.5))
+				pts.append(iso(e.x + cos(a) * 1.5, e.y + sin(a) * 1.5))
 			draw_colored_polygon(pts, Color(1, 50 / 255.0, 40 / 255.0, 0.18 + 0.2 * pulse))
 		elif kb == "butcher" and e.st == 2:
 			var dx: float = e.lx - e.x
@@ -946,7 +994,7 @@ func _draw_boss_fx() -> void:
 			var l := maxf(0.001, Vector2(dx, dy).length())
 			var nx := -dy / l * 0.45
 			var ny := dx / l * 0.45
-			var P := PackedVector2Array([v.iso(e.x + nx, e.y + ny), v.iso(e.lx + nx, e.ly + ny), v.iso(e.lx - nx, e.ly - ny), v.iso(e.x - nx, e.y - ny)])
+			var P := PackedVector2Array([iso(e.x + nx, e.y + ny), iso(e.lx + nx, e.ly + ny), iso(e.lx - nx, e.ly - ny), iso(e.x - nx, e.y - ny)])
 			draw_colored_polygon(P, Color(1, 50 / 255.0, 40 / 255.0, 0.16 + 0.22 * pulse))
 			P.append(P[0])
 			draw_polyline(P, Color(1, 80 / 255.0, 60 / 255.0, 0.6 + 0.3 * pulse), 1.6 * u)
@@ -955,15 +1003,15 @@ func _draw_boss_fx() -> void:
 			for sgn in [-1.0, 1.0]:
 				var ox: float = -sin(a) * Sim.TWIN_GAP * sgn
 				var oy: float = cos(a) * Sim.TWIN_GAP * sgn
-				var q := v.iso(clampf(e.x + ox + cos(a) * 12, 0, sim.N), clampf(e.y + oy + sin(a) * 12, 0, sim.N))
-				var p0 := v.iso(e.x + ox, e.y + oy)
+				var q := iso(clampf(e.x + ox + cos(a) * 12, 0, sim.N), clampf(e.y + oy + sin(a) * 12, 0, sim.N))
+				var p0 := iso(e.x + ox, e.y + oy)
 				var col := Color(191 / 255.0, 244 / 255.0, 1, (0.75 + 0.25 * pulse) if f < 0.36 else (0.35 + 0.3 * pulse))
 				draw_dashed_line(p0 - Vector2(0, ch), q - Vector2(0, ch), col, 1.6 * u, 6 * u)
 		elif kb == "storm":
 			var dx: float = e.lx - e.x
 			var dy: float = e.ly - e.y
 			var l := maxf(0.001, Vector2(dx, dy).length())
-			var q := v.iso(clampf(e.x + dx / l * 12, 0, sim.N), clampf(e.y + dy / l * 12, 0, sim.N))
+			var q := iso(clampf(e.x + dx / l * 12, 0, sim.N), clampf(e.y + dy / l * 12, 0, sim.N))
 			var locked := f < 0.36
 			var col := Color(127 / 255.0, 224 / 255.0, 1, (0.75 + 0.25 * pulse) if locked else (0.35 + 0.3 * pulse))
 			if locked:
@@ -1106,14 +1154,14 @@ func _draw_armory() -> void:
 
 
 func _ring(x: float, y: float, r: float, col: Color, w: float = 2.0) -> void:
-	var q := v.iso(x, y)
+	var q := iso(x, y)
 	draw_set_transform(q, 0, Vector2(1, 0.5))
 	draw_arc(Vector2.ZERO, v.TW2 * r, 0, TAU, 44, col, w * v.u)
 	draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 
 
 func _disc(x: float, y: float, r: float, col: Color) -> void:
-	var q := v.iso(x, y)
+	var q := iso(x, y)
 	oval(q.x, q.y, v.TW2 * r, v.TH2 * r, col)
 
 
@@ -1123,7 +1171,7 @@ func _lane(x0: float, y0: float, x1: float, y1: float, w: float, fill: Color, li
 	var l := maxf(0.001, Vector2(dx, dy).length())
 	var nx := -dy / l * w
 	var ny := dx / l * w
-	var P := PackedVector2Array([v.iso(x0 + nx, y0 + ny), v.iso(x1 + nx, y1 + ny), v.iso(x1 - nx, y1 - ny), v.iso(x0 - nx, y0 - ny)])
+	var P := PackedVector2Array([iso(x0 + nx, y0 + ny), iso(x1 + nx, y1 + ny), iso(x1 - nx, y1 - ny), iso(x0 - nx, y0 - ny)])
 	draw_colored_polygon(P, fill)
 	P.append(P[0])
 	draw_polyline(P, line, 1.6 * v.u)
@@ -1131,10 +1179,10 @@ func _lane(x0: float, y0: float, x1: float, y1: float, w: float, fill: Color, li
 
 func _wedge(e: Dictionary, range_: float, half: float, fill: Color) -> void:
 	var a0 := atan2(e.ly - e.y, e.lx - e.x)
-	var pts := PackedVector2Array([v.iso(e.x, e.y)])
+	var pts := PackedVector2Array([iso(e.x, e.y)])
 	for n in 11:
 		var a := a0 + (n / 10.0 - 0.5) * half * 2
-		pts.append(v.iso(e.x + cos(a) * range_, e.y + sin(a) * range_))
+		pts.append(iso(e.x + cos(a) * range_, e.y + sin(a) * range_))
 	draw_colored_polygon(pts, fill)
 
 
@@ -1155,7 +1203,7 @@ func _draw_new_fx(e: Dictionary, f: float, pulse: float, ch: float) -> bool:
 			_lane(e.x, e.y, e.lx, e.ly, M.cyclone.r, Color(191 / 255.0, 244 / 255.0, 1, 0.12 + 0.16 * pulse), Color(191 / 255.0, 244 / 255.0, 1, 0.55 + 0.35 * pulse))
 		23:
 			var cp := Sim.cyclone_pos(e, f)
-			var q := v.iso(cp.x, cp.y)
+			var q := iso(cp.x, cp.y)
 			for n in 4:
 				var r: float = (0.35 + n * 0.18) * M.cyclone.r
 				var a: float = sim.game.time * 8 + n
@@ -1172,7 +1220,7 @@ func _draw_new_fx(e: Dictionary, f: float, pulse: float, ch: float) -> bool:
 					da = TAU - da
 				if da < 0.4:
 					continue
-				var bar := v.iso(e.lx + cos(a) * M.cage.r, e.ly + sin(a) * M.cage.r)
+				var bar := iso(e.lx + cos(a) * M.cage.r, e.ly + sin(a) * M.cage.r)
 				draw_line(bar, bar - Vector2(0, ch * (1.2 - f * 0.6)), Color(230 / 255.0, 250 / 255.0, 1, 0.6 + 0.35 * pulse), 2 * v.u)
 		25:
 			_wedge(e, M.flame.range, M.flame.half, Color(1, 140 / 255.0, 40 / 255.0, 0.16 + 0.2 * pulse))
@@ -1203,10 +1251,10 @@ func _draw_new_fx(e: Dictionary, f: float, pulse: float, ch: float) -> bool:
 			var r := 3.4 if e.boss == "rime" else 2.3
 			_disc(e.lx, e.ly, r, Color(120 / 255.0, 1, 220 / 255.0, 0.2 + 0.1 * pulse))
 			_ring(e.lx, e.ly, r, c("#d2fff0"), 1.4)
-			var lq := v.iso(e.lx, e.ly)
+			var lq := iso(e.lx, e.ly)
 			label("ICE RUPTURE", lq.x, lq.y - v.WH, c("#d8fff3"), 12)
 		102:
-			draw_dashed_line(v.iso(e.x, e.y), v.iso(e.lx, e.ly), c("#d5fff0"), 5 * v.u, 6 * v.u)
+			draw_dashed_line(iso(e.x, e.y), iso(e.lx, e.ly), c("#d5fff0"), 5 * v.u, 6 * v.u)
 		40:
 			for p in sim.rocket_pts(e.x, e.y, e.lx, e.ly):
 				_disc(p.x, p.y, D.rockets.R * 0.8, Color(1, 60 / 255.0, 40 / 255.0, 0.1 + 0.15 * pulse))
@@ -1218,8 +1266,8 @@ func _draw_new_fx(e: Dictionary, f: float, pulse: float, ch: float) -> bool:
 			var dx: float = e.lx - e.x
 			var dy: float = e.ly - e.y
 			var l := maxf(0.001, Vector2(dx, dy).length())
-			var q := v.iso(clampf(e.x + dx / l * 12, 0, sim.N), clampf(e.y + dy / l * 12, 0, sim.N))
-			draw_line(v.iso(e.x, e.y) - Vector2(0, ch), q - Vector2(0, ch), Color(127 / 255.0, 224 / 255.0, 1, (0.8 if f < 0.32 else 0.4 + 0.3 * pulse)), (2.6 if f < 0.32 else 1.4) * v.u)
+			var q := iso(clampf(e.x + dx / l * 12, 0, sim.N), clampf(e.y + dy / l * 12, 0, sim.N))
+			draw_line(iso(e.x, e.y) - Vector2(0, ch), q - Vector2(0, ch), Color(127 / 255.0, 224 / 255.0, 1, (0.8 if f < 0.32 else 0.4 + 0.3 * pulse)), (2.6 if f < 0.32 else 1.4) * v.u)
 		44:
 			_disc(e.x, e.y, D.gas.r * (1 - f), Color(120 / 255.0, 200 / 255.0, 70 / 255.0, 0.14 + 0.1 * pulse))
 			_ring(e.x, e.y, D.gas.r, Color(160 / 255.0, 240 / 255.0, 90 / 255.0, 0.55 + 0.35 * pulse), 2.2)
@@ -1233,7 +1281,7 @@ func _draw_new_fx(e: Dictionary, f: float, pulse: float, ch: float) -> bool:
 		_:
 			var kb: String = Sim.boss_def(e.boss).get("base", e.boss)
 			if e.boss == "arsonist" and st == 1:
-				draw_dashed_line(v.iso(e.x, e.y) - Vector2(0, ch), v.iso(e.lx, e.ly) - Vector2(0, ch), Color(1, 90 / 255.0, 26 / 255.0, 0.5 + 0.45 * pulse), 2 * v.u, 7 * v.u)
+				draw_dashed_line(iso(e.x, e.y) - Vector2(0, ch), iso(e.lx, e.ly) - Vector2(0, ch), Color(1, 90 / 255.0, 26 / 255.0, 0.5 + 0.45 * pulse), 2 * v.u, 7 * v.u)
 				for n in 4:
 					var t := 0.5 + n * 0.18
 					_ring(e.x + (e.lx - e.x) * t, e.y + (e.ly - e.y) * t, 1.0, Color(1, 90 / 255.0, 26 / 255.0, 0.55 + 0.35 * pulse), 1.6)
@@ -1258,7 +1306,7 @@ func _draw_new_fx(e: Dictionary, f: float, pulse: float, ch: float) -> bool:
 
 ## the Foreman underground: a moving dust mound
 func _draw_mound(e: Dictionary) -> void:
-	var q := v.iso(e.x, e.y)
+	var q := iso(e.x, e.y)
 	var sw := (1.35 + sin(sim.game.time * 40) * 0.08) if e.st == 4 else 1.0
 	oval(q.x, q.y, 14 * v.u * sw, 6 * v.u * sw, c("#4a4030"))
 	oval(q.x, q.y - 3 * v.u, 10 * v.u * sw, 4.5 * v.u * sw, c("#6a5a44"))
@@ -1339,3 +1387,247 @@ func _draw_skills() -> void:
 	draw_rect(sk_reset, Color(paper, 0.5), false, 1.0)
 	draw_string(font, Vector2(sk_reset.position.x + 14, y + 25), "RESET ALL POINTS", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, paper)
 	draw_string(font, Vector2(x0 + w - 220, y + 25), "K / Esc closes", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, dim)
+
+
+# ---------------------------------------------------------------- terrain (06b-maps.js, 06d-elevation.js)
+
+## groundCol: each map's ground, water and banks
+func _ground_col(i: int, j: int, h: float) -> Color:
+	var t: int = sim.terr[sim.idx(i, j)]
+	if t == PalMaps.T_WATER or t == PalMaps.T_BRIDGE:
+		return c("#1d3848") if h < 0.33 else (c("#1f3b4c") if h < 0.66 else c("#1b3544"))
+	match sim.map_id:
+		"river":
+			if t == PalMaps.T_LOW:
+				return c("#343423") if h < 0.5 else c("#2f3021")
+			return c("#35402a") if h < 0.2 else (c("#303a26") if h < 0.75 else c("#2b3322"))
+		"quarry":
+			return c("#3b3731") if h < 0.2 else (c("#35312c") if h < 0.75 else c("#2f2b27"))
+	return c("#3d3528") if h < 0.2 else (c("#352e23") if h < 0.75 else c("#2f291f"))
+
+
+func _paint_ground() -> void:
+	var N: int = sim.N
+	var u := v.u
+	if sim.is_frost():
+		for j in N:
+			for i in N:
+				_paint_frost_tile(i, j)
+		return
+	for i in N:
+		for j in N:
+			var h := Pal.hash2(i, j)
+			quad(v.iso(i, j), v.iso(i + 1, j), v.iso(i + 1, j + 1), v.iso(i, j + 1), _ground_col(i, j, h))
+			var t: int = sim.terr[sim.idx(i, j)]
+			if t == PalMaps.T_WATER or t == PalMaps.T_BRIDGE:   # a soft bank line where water meets land
+				for e in [[1, 0, [i + 1, j], [i + 1, j + 1]], [-1, 0, [i, j], [i, j + 1]], [0, 1, [i, j + 1], [i + 1, j + 1]], [0, -1, [i, j], [i + 1, j]]]:
+					var nt := sim.t_at(i + e[0], j + e[1])
+					if sim.inb(i + e[0], j + e[1]) and nt != PalMaps.T_WATER and nt != PalMaps.T_BRIDGE:
+						draw_line(v.iso(e[2][0], e[2][1]), v.iso(e[3][0], e[3][1]), Color(120 / 255.0, 150 / 255.0, 120 / 255.0, 0.25), 1.2 * u)
+				continue
+			if t == PalMaps.T_CRACK:
+				var pts := PackedVector2Array()
+				var p := Vector2(i + 0.2 + Pal.hash2(i, j + 3) * 0.2, j + 0.25 + Pal.hash2(i + 9, j) * 0.2)
+				pts.append(v.iso(p.x, p.y))
+				for s in 4:
+					p += Vector2(0.14 + Pal.hash2(i + s, j * 3) * 0.1, 0.1 + Pal.hash2(i * 7, j + s) * 0.12)
+					pts.append(v.iso(p.x, p.y))
+				draw_polyline(pts, Color(14 / 255.0, 11 / 255.0, 9 / 255.0, 0.7), 1.1 * u)
+				draw_line(v.iso(i + 0.5, j + 0.5), v.iso(i + 0.3, j + 0.8), Color(14 / 255.0, 11 / 255.0, 9 / 255.0, 0.7), 1.1 * u)
+				draw_polyline(pts, Color(1, 140 / 255.0, 60 / 255.0, 0.12), 0.8 * u)
+				continue
+			if sim.map_id == "quarry":
+				if h > 0.8:
+					var g := v.iso(i + 0.3 + h * 0.4, j + 0.5)
+					oval(g.x, g.y, 2.4 * u, 1.2 * u, Color(150 / 255.0, 140 / 255.0, 120 / 255.0, 0.3))
+			elif h > 0.86:
+				var cc := v.iso(i + 0.5, j + 0.5)
+				oval(cc.x + (h - 0.9) * 40 * u, cc.y, 6 * u, 2.5 * u, Color(84 / 255.0, 104 / 255.0, 64 / 255.0, 0.35))
+	for s in N + 1:
+		draw_line(v.iso(s, 0), v.iso(s, N), Color(0, 0, 0, 0.22), 1.0)
+		draw_line(v.iso(0, s), v.iso(N, s), Color(0, 0, 0, 0.22), 1.0)
+
+
+## paintFrostTile: a terrace top (snow), its south and east faces where it drops, and the treads of stairs and ramps
+func _paint_frost_tile(i: int, j: int) -> void:
+	var N: int = sim.N
+	var u := v.u
+	var k := sim.idx(i, j)
+	var z: int = sim.heights[k]
+	var r: int = sim.connectors[k]
+	var h := Pal.hash2(i + 6, j + 31)
+	var A := v.iso(i, j, z + (1 if r else 0))
+	var B := v.iso(i + 1, j, z + (1 if r else 0))
+	var C := v.iso(i + 1, j + 1, z)
+	var D := v.iso(i, j + 1, z)
+	var lowS: int = (sim.heights[k + N] + (1 if sim.connectors[k + N] != 0 else 0)) if j + 1 < N else 0
+	var lowE: int = sim.heights[k + 1] if i + 1 < N else 0
+	if z > lowS:
+		quad(D, C, v.iso(i + 1, j + 1, lowS), v.iso(i, j + 1, lowS), c("#435b6a"))
+	if z > lowE:
+		quad(B, C, v.iso(i + 1, j + 1, lowE), v.iso(i + 1, j, lowE), c("#304858"))
+	quad(A, B, C, D, c("#acc9d8") if r else (c("#dceaf0") if h > 0.55 else c("#c8dee8")))
+	draw_line(D, C, Color(68 / 255.0, 109 / 255.0, 134 / 255.0, 0.2), u)
+	if r:
+		var n := 5 if r == 2 else 2
+		for q in range(1, n + 1):
+			var t := float(q) / (n + 1)
+			draw_line(v.iso(i, j + t, z + 1 - t), v.iso(i + 1, j + t, z + 1 - t), c("#547b90") if r == 2 else c("#e7f5fa"), (2.0 if r == 2 else 1.0) * u)
+	elif h > 0.83:
+		var p := v.iso(i + 0.5, j + 0.5, z)
+		draw_rect(Rect2(p.x - 2 * u, p.y, 4 * u, u), Color(1, 1, 1, 0.55))
+
+
+## a terrace's cliff face, depth-sorted so people behind the lip are hidden by it
+func _draw_frost_cliff(k: int) -> void:
+	var N: int = sim.N
+	var u := v.u
+	var i := k % N
+	var j := k / N
+	var z: int = sim.heights[k]
+	var s: int = (sim.heights[k + N] + (1 if sim.connectors[k + N] != 0 else 0)) if j + 1 < N else 0
+	var e: int = sim.heights[k + 1] if i + 1 < N else 0
+	if z > s:
+		quad(v.iso(i, j + 1, z), v.iso(i + 1, j + 1, z), v.iso(i + 1, j + 1, s), v.iso(i, j + 1, s), c("#435b6a"))
+		draw_line(v.iso(i + 0.2, j + 1, z), v.iso(i + 0.35, j + 1, s), c("#719aaa"), u)
+		draw_line(v.iso(i, j + 1, z) + Vector2(0, u), v.iso(i + 1, j + 1, z) + Vector2(0, u), c("#dcebf1"), 2 * u)
+	if z > e:
+		quad(v.iso(i + 1, j, z), v.iso(i + 1, j + 1, z), v.iso(i + 1, j + 1, e), v.iso(i + 1, j, e), c("#304858"))
+		draw_line(v.iso(i + 1, j, z) + Vector2(0, u), v.iso(i + 1, j + 1, z) + Vector2(0, u), c("#b9d0da"), 2 * u)
+
+
+## drawTerrainLive: water glints drifting downstream, flooded banks, bridges, pits, ripples round anyone wading
+func _draw_terrain_live() -> void:
+	var N: int = sim.N
+	var u := v.u
+	var t0: float = sim.game.time
+	if sim.map_id == "river":
+		for k in N * N:
+			if sim.terr[k] != PalMaps.T_WATER:
+				continue
+			var i := k % N
+			var j := k / N
+			var h := Pal.hash2(i + 31, j + 7)
+			var y := j + fmod(t0 * 0.35 + h, 1.0)
+			draw_line(v.iso(i + 0.25 + h * 0.4, y), v.iso(i + 0.45 + h * 0.4, y), Color(150 / 255.0, 200 / 255.0, 220 / 255.0, 0.28), 1.2 * u)
+		flood_lv += ((1.0 if sim.flood_on else 0.0) - flood_lv) * minf(1.0, get_process_delta_time() * 1.2)
+		if flood_lv > 0.02:
+			for k in N * N:
+				if sim.terr[k] == PalMaps.T_LOW:
+					var i := k % N
+					var j := k / N
+					quad(v.iso(i, j), v.iso(i + 1, j), v.iso(i + 1, j + 1), v.iso(i, j + 1), Color(c("#23475a"), flood_lv * 0.7))
+		for k in N * N:
+			if sim.terr[k] == PalMaps.T_BRIDGE:
+				var i := k % N
+				var j := k / N
+				quad(v.iso(i, j + 0.08), v.iso(i + 1, j + 0.08), v.iso(i + 1, j + 0.92), v.iso(i, j + 0.92), c("#5a4330"))
+				for s in range(1, 6):
+					draw_line(v.iso(i + s / 6.0, j + 0.08), v.iso(i + s / 6.0, j + 0.92), Color(20 / 255.0, 14 / 255.0, 8 / 255.0, 0.6), u)
+				for yy in [j + 0.08, j + 0.92]:
+					draw_line(v.iso(i, yy) - Vector2(0, 3 * u), v.iso(i + 1, yy) - Vector2(0, 3 * u), c("#2c2016"), 2 * u)
+	for k in sim.terr_log:
+		if sim.terr[k] == PalMaps.T_PIT:
+			var i: int = k % N
+			var j: int = k / N
+			var a := v.iso(i + 0.04, j + 0.04)
+			var b := v.iso(i + 0.96, j + 0.04)
+			var d := v.iso(i + 0.04, j + 0.96)
+			quad(a, b, v.iso(i + 0.96, j + 0.96), d, c("#0b0908"))
+			quad(a, b, b + Vector2(0, v.WH * 0.35), a + Vector2(0, v.WH * 0.35), c("#1c1713"))
+			quad(a, d, d + Vector2(0, v.WH * 0.35), a + Vector2(0, v.WH * 0.35), c("#241d18"))
+	if sim.map_id == "river":
+		var wading: Array = sim.enemies.filter(func(e): return not e.get("burrow", false))
+		if sim.player.alive:
+			wading.append(sim.player)
+		if sim.qm.alive:
+			wading.append(sim.qm)
+		for e in wading:
+			var tt := sim.t_at(floori(e.x), floori(e.y))
+			if tt == PalMaps.T_WATER or (tt == PalMaps.T_LOW and sim.flood_on):
+				var cc := iso(e.x, e.y)
+				var r := (7 + sin(t0 * 6 + e.x * 3) * 1.5) * u
+				draw_set_transform(cc, 0, Vector2(1, 0.5))
+				draw_arc(Vector2.ZERO, r, 0, TAU, 24, Color(170 / 255.0, 210 / 255.0, 230 / 255.0, 0.45), u)
+				draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
+
+
+## rock outcrops and oil drums (terrShape): rock stands, a drum burns
+func _draw_terr_item(i: int, j: int, t: int) -> void:
+	var u := v.u
+	var WH := v.WH
+	var h := Pal.hash2(i + 3, j + 17)
+	if t == PalMaps.T_ROCK:
+		box_r(i + 0.08, j + 0.12, i + 0.9, j + 0.88, 0, WH * (0.75 + h * 0.3), c("#6b655b"), c("#4e4a43"), c("#3c3934"))
+		box_r(i + 0.2 + h * 0.2, j + 0.2, i + 0.7 + h * 0.2, j + 0.62, WH * (0.75 + h * 0.3), WH * (0.25 + h * 0.2), c("#787166"), c("#58534b"), c("#45413b"))
+		return
+	var cc := iso(i + 0.5, j + 0.5)
+	var w := v.TW2 * 0.34
+	var hh := WH * 0.9
+	oval(cc.x, cc.y, w * 1.2, w * 0.6, Color(0, 0, 0, 0.35))
+	draw_rect(Rect2(cc.x - w, cc.y - hh, w * 2, hh), c("#3b2f24"))
+	draw_rect(Rect2(cc.x - w * 0.35, cc.y - hh, w * 0.7, hh), c("#4d3d2e"))
+	draw_rect(Rect2(cc.x - w, cc.y - hh * 0.66, w * 2, 2 * u), c("#2a211a"))
+	draw_rect(Rect2(cc.x - w, cc.y - hh * 0.33, w * 2, 2 * u), c("#2a211a"))
+	oval(cc.x, cc.y - hh, w, w * 0.45, c("#1a1411"))
+	var t0: float = sim.game.time * 9 + h * 20
+	for q in 3:   # the flame on top: three flickering tongues
+		var fx := cc.x + (q - 1) * w * 0.45
+		var fh := (9 + sin(t0 + q * 2.1) * 3 + (q % 2) * 2) * u
+		draw_colored_polygon(PackedVector2Array([Vector2(fx - w * 0.28, cc.y - hh), Vector2(fx + sin(t0 * 1.3 + q) * 2 * u, cc.y - hh - fh * 1.2), Vector2(fx + w * 0.28, cc.y - hh)]), c("#ffd070") if q == 1 else c("#ff8a2a"))
+
+
+## the Ferryman's raft under him
+func _draw_raft(e: Dictionary) -> void:
+	var u := v.u
+	var cc := iso(e.x, e.y)
+	var bob := sin(sim.game.time * 2.2 + e.id) * 1.5 * u
+	draw_set_transform(Vector2(cc.x, cc.y + bob), 0, Vector2(1, 0.5))
+	draw_circle(Vector2.ZERO, 20 * u, Color(0, 0, 0, 0.3))
+	draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
+	box_r(e.x - 0.55, e.y - 0.45, e.x + 0.55, e.y + 0.45, -2 * u + bob, 4 * u, c("#6a4c30"), c("#4f3822"), c("#3e2c1a"))
+	for s in range(1, 4):
+		draw_line(iso(e.x - 0.55 + s * 0.275, e.y - 0.45) - Vector2(0, 2 * u - bob), iso(e.x - 0.55 + s * 0.275, e.y + 0.45) - Vector2(0, 2 * u - bob), c("#2c2016"), u)
+
+
+var flood_lv := 0.0
+
+
+## screenToWorld: the viewing ray against each terrace's plane and the connector slopes; the front-most ground wins
+func _screen_to_world(sx: float, sy: float) -> Vector2:
+	var a := (sx - v.cam_x) / v.TW2
+	var best = null
+	var hp := v.height_px()
+	for z in 3:
+		var b := (sy - v.cam_y + z * hp) / v.TH2
+		var x := (a + b) / 2
+		var y := (b - a) / 2
+		if absf(sim.height_at(x, y) - z) < 0.00001 and sim.inb(floori(x), floori(y)) and (best == null or x + y > best.x + best.y):
+			best = Vector2(x, y)
+	if sim.is_frost():
+		var N: int = sim.N
+		for k in N * N:
+			if sim.connectors[k] != 0:
+				var j := k / N
+				var y := (sy - v.cam_y - a * v.TH2 + hp * (sim.heights[k] + 1 + j)) / (2 * v.TH2 + hp)
+				var x := y + a
+				if floori(x) == k % N and floori(y) == j and (best == null or x + y > best.x + best.y):
+					best = Vector2(x, y)
+	if best != null:
+		return best
+	return v.screen_to_world(sx, sy)
+
+
+## bodyUnder: a cursor on a drawn raider (feet to helmet) aims at that raider's feet
+func _body_under(sx: float, sy: float):
+	var best = null
+	var by := -1e9
+	for e in sim.enemies:
+		if e.dead or e.get("burrow", false):
+			continue
+		var p := iso(e.x, e.y)
+		var k := v.u * FIG * (1.45 if e.get("big", false) else 1.0)
+		if absf(sx - p.x) <= 9 * k and sy <= p.y + 4 * k and sy >= p.y - 37 * k and p.y > by:
+			by = p.y
+			best = Vector2(e.x, e.y)
+	return best

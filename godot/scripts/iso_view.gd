@@ -26,8 +26,13 @@ func resize(w: float, h: float) -> void:
 	u = TW2 / 32.0
 
 
-func iso(x: float, y: float) -> Vector2:
-	return Vector2((x - y) * TW2 + cam_x, (x + y) * TH2 + cam_y)
+## z: ground height in terraces (Frostpeak), each heightPx (24u) above the last
+func iso(x: float, y: float, z: float = 0.0) -> Vector2:
+	return Vector2((x - y) * TW2 + cam_x, (x + y) * TH2 + cam_y - z * height_px())
+
+
+func height_px() -> float:
+	return 24.0 * u
 
 
 ## Screen point back to the ground plane (z = 0).
@@ -52,13 +57,13 @@ func world_dir_to_screen(d: Vector2) -> Vector2:
 	return v / l if l > 0.0 else Vector2(1, 0)
 
 
-func cam_target(fx: float, fy: float) -> Vector2:
+func cam_target(fx: float, fy: float, fz: float = 0.0) -> Vector2:
 	var cx := 0.4 if W < 760.0 else 0.5
-	return Vector2(W * cx - (fx - fy) * TW2, H * 0.52 - (fx + fy) * TH2)
+	return Vector2(W * cx - (fx - fy) * TW2, H * 0.52 - (fx + fy) * TH2 + fz * height_px())
 
 
-func cam_snap(fx: float, fy: float) -> void:
-	var t := cam_target(fx, fy)
+func cam_snap(fx: float, fy: float, fz: float = 0.0) -> void:
+	var t := cam_target(fx, fy, fz)
 	cam_sx = t.x
 	cam_sy = t.y
 	cam_x = cam_sx
@@ -66,8 +71,8 @@ func cam_snap(fx: float, fy: float) -> void:
 
 
 ## The browser eases 14% of the way each rendered frame (render() in 17-scenery.js).
-func cam_follow(fx: float, fy: float, shake: Vector2) -> void:
-	var t := cam_target(fx, fy)
+func cam_follow(fx: float, fy: float, shake: Vector2, fz: float = 0.0) -> void:
+	var t := cam_target(fx, fy, fz)
 	cam_sx += (t.x - cam_sx) * 0.14
 	cam_sy += (t.y - cam_sy) * 0.14
 	cam_x = round(cam_sx + shake.x)

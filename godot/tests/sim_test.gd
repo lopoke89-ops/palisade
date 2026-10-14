@@ -277,6 +277,8 @@ func _init() -> void:
 
 	print("every other boss: each one fights, using its own moves")
 	for key in Sim.BOSS_LIST:
+		if key.ends_with("ferryman"):   # river bosses: tested on Riverbend below
+			continue
 		var bs := _mk()
 		bs.new_game(60 + Sim.BOSS_LIST.find(key))
 		bs.game.phase = "raid"
@@ -464,6 +466,8 @@ func _init() -> void:
 		ml.update_lobs(1.0 / 60.0)
 	check(ml.fires.any(func(f): return f.get("pl", false)), "Molotovs: the grenade leaves burning ground")
 
+	_maps_and_modes()
+
 	print("armory")
 	var ar := _mk()
 	ar.new_game(40)
@@ -551,6 +555,8 @@ func _init() -> void:
 			break
 	check(up and dv.game.stats.revives == 1, "walks over and revives the downed soldier")
 
+	_games_on_every_map()
+
 	print("a whole game, played by the bot with Delgado")
 	var full := _mk()
 	full.new_game(21)
@@ -598,3 +604,163 @@ func _init() -> void:
 		x.dispose()
 	sims.clear()
 	quit(1 if fails else 0)
+
+
+func _maps_and_modes() -> void:
+	print("maps: every map and size laid out tile for tile as the browser does (tests/maps_ref.json, from tools/maps_ref.js)")
+	var mref = JSON.parse_string(FileAccess.get_file_as_string("res://tests/maps_ref.json"))
+	for key in mref:
+		var r: Dictionary = mref[key]
+		var parts: PackedStringArray = key.split("_")
+		var L := PalMaps.lay(parts[0], parts[1])
+		var ts := ""
+		var hs := ""
+		var cs := ""
+		for k in L.N * L.N:
+			ts += str(L.terr[k])
+			hs += str(L.heights[k])
+			cs += str(L.connectors[k])
+		var nodes_ok: bool = L.nodes.size() == r.nodes.size()
+		if nodes_ok:
+			for n in L.nodes.size():
+				var a: Dictionary = L.nodes[n]
+				var b: Array = r.nodes[n]
+				if a.i != int(b[0]) or a.j != int(b[1]) or a.type != int(b[2]) or (a.unlock if a.locked else 0) != int(b[3]):
+					nodes_ok = false
+		var spawns_ok: bool = L.spawns.size() == r.spawns.size()
+		for n in mini(L.spawns.size(), r.spawns.size()):
+			if L.spawns[n].tiles.size() != int(r.spawns[n][1]) or absf(L.spawns[n].w - r.spawns[n][0]) > 1e-9:
+				spawns_ok = false
+		check(ts == r.terr and hs == r.heights and cs == r.conn and L.core[0] == int(r.core[0]) and L.core[1] == int(r.core[1]) and nodes_ok and spawns_ok and L.bossAt.size() == int(r.bossAt) and L.raftAt.size() == int(r.raftAt),
+			"%s: terrain, heights, stake, piles, spawns and boss spots match" % key)
+	for key in mref:
+		var parts: PackedStringArray = key.split("_")
+		var ms := _mk()
+		ms.new_game(100, "normal", {}, {"map": parts[0], "size": parts[1]})
+		var reach := true
+		for g in ms.lay.spawns:
+			for t in g.tiles:
+				if not ms.solid_tile(t[0], t[1], false) and ms.dist[ms.idx(t[0], t[1])] >= 1e6:
+					reach = false
+		check(reach and not ms.collides(ms.player.x, ms.player.y, 0.27, true), "%s: every spawn tile has a path to the stake; the soldier starts on open ground" % key)
+	var fp := _mk()
+	fp.new_game(101, "normal", {}, {"map": "frost"})
+	check(fp.height_at(3.5, 2.5) == 2.0 and fp.height_at(3.5, 12.5) == 0.0 and not fp.height_link(1, 4, 1, 5) and fp.height_link(4, 4, 4, 5), "Frostpeak: three terraces, cliffs between them, a lane of stairs or ramp joins them")
+	var rv := _mk()
+	rv.new_game(102, "normal", {}, {"map": "river"})
+	var wk := -1
+	for k in rv.N * rv.N:
+		if rv.terr[k] == PalMaps.T_WATER:
+			wk = k
+			break
+	check(is_equal_approx(rv.slow_at(wk % 16 + 0.5, wk / 16 + 0.5), 0.5) and rv.build_eval(rv.player, wk % 16, wk / 16, 0, false).reason == "Can't build on water", "Riverbend: wading is half speed, and you can't build on water")
+	rv.game.wave = 3
+	rv.game.phase = "raid"
+	for n in 60 * 15:
+		rv.update_flood(1.0 / 60.0)
+	check(rv.flood_on, "from raid 3 the low banks flood after 14 s")
+	var fy := _mk()
+	fy.new_game(103, "normal", {}, {"map": "river"})
+	fy.game.phase = "raid"
+	var fe := fy.spawn_boss("ferryman")
+	check(fe.boss == "ferryman" and fe.get("raft", false) and fy.terr[fy.idx(int(fe.x), int(fe.y))] == PalMaps.T_WATER, "the Ferryman comes down the river on his raft")
+	var seen_h := false
+	var crews := 0
+	for n in 60 * 25:
+		fy.player.hp = fy.player.max
+		fy.update(1.0 / 60.0, {})
+		if fe.st == 1:
+			seen_h = true
+		crews = maxi(crews, fe.get("crews", 0))
+		if fe.dead:
+			break
+	check(seen_h and crews >= 1, "he harpoons and puts a boarding crew ashore")
+	var qp := _mk()
+	qp.new_game(104, "normal", {}, {"map": "quarry"})
+	var ck := -1
+	for k in qp.N * qp.N:
+		if qp.terr[k] == PalMaps.T_CRACK:
+			ck = k
+			break
+	qp.explode(ck % 16 + 0.5, ck / 16 + 0.5, 1.7, 1.3)
+	check(qp.terr[ck] == PalMaps.T_PIT, "Quarry: a heavy blast breaks cracked ground into a pit")
+	var xl := _mk()
+	xl.new_game(105, "normal", {}, {"size": "xl"})
+	check(xl.N == 24 and xl.core.i == 6 and xl.core.j == 17, "XL: 24x24, the yard two tiles in from the south-west corner")
+
+	print("modes and modifiers")
+	var md5 := _mk()
+	md5.new_game(110)
+	check(md5.tod_stage(3) == 1 and md5.tod_stage(5) == 2 and md5.tod_stage(2) == 0, "5 raids: raids 3-4 at golden hour, raid 5 at night")
+	var en := _mk()
+	en.new_game(111, "normal", {}, {"mode": "endless"})
+	en.game.wave = 3
+	check(is_inf(en.game.waves) and is_equal_approx(en.wave_eff(), 2.1) and en.tod_stage(6) == 2, "Endless: no last raid, raids climb 0.55 a time, day and night cycle")
+	var hd := _mk()
+	hd.new_game(112, "hard")
+	check(hd.core.max == 420.0 and is_equal_approx(hd.game.timer, 34.0), "Hard: a 420-health stake and 34 s to build")
+	var el := _mk()
+	el.new_game(113, "normal", {}, {"mods": ["elite"]})
+	var W := el.mod_wave_mix(el.wave_mix(1, 1, 0), 1)
+	check(W.rifle == 0 and W.shield + W.gren + W.fire >= 3, "Elite Raid: no riflemen")
+	var al := _mk()
+	al.new_game(114, "normal", {}, {"mods": ["alone"]})
+	check(not al.qm.alive and al.allies().size() == 1, "On Your Own: no Delgado")
+	var np := _mk()
+	np.new_game(115, "normal", {}, {"mods": ["nopatch", "laststand"]})
+	np.player.sal = 100
+	np.core.hp = 300.0
+	check(not np.repair_core(np.player), "No Patch-Ups: no stake repair")
+	np.game.phase = "raid"
+	np.hurt_player(np.player, 999)
+	check(np.player.rt >= 1e6, "Last Stand: down until the raid is broken")
+	var bz := _mk()
+	bz.new_game(116, "normal", {}, {"mode": "blitz"})
+	check(bz.game.waves == 15 and bz.boss_of(5) == "bluebutcher" and bz.boss_of(10) == "arsonist" and bz.boss_of(15) == "", "Blitzkrieg Rush: 15 raids, the Blue Butcher on 5, the Arsonist on 10")
+	bz.game.wave = 14
+	bz.start_raid()
+	check(bz.game.fb != null and is_equal_approx(bz.game.fb.t, 300.0), "raid 15 is the Final Blitz: five minutes")
+	bz.qm.alive = false
+	bz.qm.gone = true
+	for n in 60 * 241:
+		bz.player.hp = bz.player.max
+		bz.core.hp = bz.core.max   # nobody's defending in this test: keep the stake up so the clock runs out
+		bz.update(1.0 / 60.0, {})
+	check(bz.game.fb.evac != null and bz.live_bosses() >= 1, "bosses keep coming, and with a minute left the evac opens")
+	if bz.game.fb.evac == null:
+		return
+	bz.player.x = bz.game.fb.evac.x
+	bz.player.y = bz.game.fb.evac.y
+	for n in 60 * 4:
+		bz.player.hp = bz.player.max
+		bz.update(1.0 / 60.0, {})
+	check(bz.game.phase == "over" and bz.game.won and bz.game.end_reason == "evac", "3 s in the green ring gets you out: victory")
+
+
+func _games_on_every_map() -> void:
+	print("whole games on every map, played by the bot")
+	for mp in [["river", "std"], ["quarry", "std"], ["frost", "std"], ["yard", "xl"]]:
+		var gm := _mk()
+		gm.new_game(130, "normal", {}, {"map": mp[0], "size": mp[1]})
+		var tt2 := 0.0
+		while tt2 < 900.0 and gm.game.phase != "over":
+			var ctl2 := {}
+			var p2: Dictionary = gm.player
+			var best2 = null
+			var bd2 := 1e9
+			for en2 in gm.enemies:
+				var d := Vector2(en2.x - p2.x, en2.y - p2.y).length()
+				if d < bd2 and not en2.get("burrow", false):
+					bd2 = d
+					best2 = en2
+			if best2 != null and bd2 < 9:
+				ctl2 = {"aim": Vector2(best2.x - p2.x, best2.y - p2.y), "fire": true}
+				if best2.type == "boss" and p2.rk > 0 and p2.rkCd <= 0:
+					gm.use_rocket(p2, best2.x, best2.y)
+			if gm.game.phase == "build":
+				for uk2 in ["d", "a", "r", "core", "dell", "g", "n"]:
+					gm.buy_upgrade(p2, uk2)
+			gm.update(1.0 / 20.0, ctl2)
+			tt2 += 1.0 / 20.0
+		print("    %s %s: %s after raid %d at %.0f s, stake %.0f, dropped %d" % [mp[0], mp[1], "WON" if gm.game.won else ("LOST" if gm.game.phase == "over" else "STILL GOING"), gm.game.wave, tt2, gm.core.hp, gm.game.stats.dropped])
+		check(gm.game.phase == "over" and gm.game.stats.dropped >= 10, "%s %s: the game runs to an end" % [mp[0], mp[1]])
