@@ -275,6 +275,117 @@ func _init() -> void:
 	bds.hurt_enemy(bb, 9999.0, bds.player.id)
 	check(bds.player.sal == 40, "landing the kill on a boss pays 40 salvage")
 
+	print("every other boss: each one fights, using its own moves")
+	for key in Sim.BOSS_LIST:
+		var bs := _mk()
+		bs.new_game(60 + Sim.BOSS_LIST.find(key))
+		bs.game.phase = "raid"
+		bs.game.wave = 5
+		bs.player.x = 6.5
+		bs.player.y = 13.5
+		var bo := bs.spawn_boss(key)
+		bo.x = 12.5
+		bo.y = 12.5
+		var seen := {}
+		var hurt0: float = bs.player.hp + bs.qm.hp + bs.core.hp
+		var extra := {"arcs": false, "napalm": false, "missile": false, "frost": false, "gas": false, "mines": false, "slab": false, "burrow": false}
+		var t_end := 0.0
+		for n in 60 * 30:
+			bs.player.hp = bs.player.max   # keep the soldier up so the boss keeps working
+			bs.player.alive = true
+			bs.player.downed = false
+			# the soldier keeps moving in and out (2 to 7 tiles), so melee and ranged moves both come up
+			var want_d := 4.5 + 2.5 * sin(t_end * 0.8)
+			var nx := clampf(bo.x - 0.96 * want_d, 0.5, 15.5)
+			var ny := clampf(bo.y + 0.28 * want_d, 0.5, 15.5)
+			if not bs.collides(nx, ny, 0.27, true):
+				bs.player.x = nx
+				bs.player.y = ny
+			bs.update(1.0 / 60.0, {})
+			t_end += 1.0 / 60.0
+			seen[bo.st] = true
+			if not bs.arcs.is_empty(): extra.arcs = true
+			if bo.get("burrow", false): extra.burrow = true
+			if not bs.frost_fields.is_empty(): extra.frost = true
+			for l in bs.lobs:
+				if l.get("k", 0) == 3: extra.missile = true
+			for f in bs.fires:
+				match f.get("nap", 0):
+					1: extra.napalm = true
+					2: extra.gas = true
+					3: extra.mines = true
+			for w in bs.walls:
+				if w != null and w.get("slab", false): extra.slab = true
+			if bo.dead or bs.game.phase == "over":
+				break
+		var states: Array = seen.keys()
+		states.sort()
+		var want: Array = {"butcher": [1, 2], "demolisher": [1], "storm": [1, 20, 21], "foreman": [1, 2, 4], "bluebutcher": [5], "arsonist": [1], "tempest": [1], "bulldozer": [1, 2], "harbinger": [1], "rime": [101], "whitebutcher": [101], "whiteforeman": [101], "destroyer": [40, 41, 44, 45]}[key]
+		var missing: Array = want.filter(func(st): return not seen.has(st))
+		var sign_ok := true
+		match key:
+			"foreman": sign_ok = extra.burrow and extra.slab
+			"bluebutcher", "whitebutcher": sign_ok = extra.arcs
+			"arsonist": sign_ok = extra.napalm
+			"harbinger": sign_ok = extra.missile
+			"destroyer": sign_ok = extra.gas and extra.mines
+		check(missing.is_empty() and sign_ok, "%s: warnings/attacks seen %s%s" % [key, str(states), "" if missing.is_empty() else " · MISSING " + str(missing)])
+	var rf := _mk()
+	rf.new_game(80)
+	rf.game.phase = "raid"
+	rf.add_frost(8.5, 11.5)
+	check(is_equal_approx(rf.slow_at(8.5, 11.5), 0.7) and rf.slow_at(2.5, 2.5) == 1.0, "the Rime Colossus's frost slows movement to 70%")
+	var fb2 := _mk()
+	fb2.new_game(81)
+	fb2.game.phase = "raid"
+	var fo := fb2.spawn_boss("foreman")
+	fo.burrow = true
+	fo.x = 8.5
+	fo.y = 11.5
+	var fhp: float = fo.hp
+	fb2.fire(fb2.player, 0.0, 0, {"dmg": 20.0, "speed": 22.0, "range": 11.0})
+	for n in 20:
+		fb2.update_bullets(1.0 / 60.0)
+	check(fo.hp == fhp, "the Foreman underground can't be shot")
+
+	print("skill tree")
+	var pr := PalProfile.new()
+	pr.persist = false
+	check(pr.award_run(7, 1) == 2 and pr.sp_prog == 2 and pr.sp == 2, "7 raids held and a boss: 2 points, 2 raids carried toward the next")
+	check(pr.award_run(3, 0) == 1 and pr.sp_prog == 0, "3 more raids complete the next point")
+	check(pr.block_reason("ammo_ap") == "5 lifetime SP", "ammo tiers are gated by lifetime points (5, 10, 15, 20)")
+	pr.sp_total = 5
+	check(pr.buy("ammo_ap") and pr.level("ammo_ap") == 1, "rank 1 armor piercing once 5 points have been earned")
+	check(pr.block_reason("molotov") == "Needs EXTRA POUCH", "Molotovs need Extra Pouch first")
+	pr.sp = 20
+	pr.buy("dmg")
+	pr.buy("dmg")
+	pr.buy("hp")
+	pr.buy("rockets")
+	pr.buy("vest")
+	check(pr.level("dmg") == 2 and pr.sp == 20 - 3 - 1 - 1 - 2, "point costs follow the tree (Hot Loads 1 then 2)")
+	var sk := _mk()
+	sk.new_game(82, "normal", pr.perk_mods())
+	check(is_equal_approx(sk.player.gun.dmg, 12.0 * 1.08) and sk.player.max == roundf(115 * 1.06) and sk.player.rk == 6, "perks: +8% damage, +6% health, +1 rocket")
+	var hp_before: float = sk.player.hp
+	sk.hurt_player(sk.player, 10.0)
+	check(is_equal_approx(hp_before - sk.player.hp, 9.6), "Kevlar 1: 4% less damage taken")
+	pr.skills["ammo_ap"] = 4
+	var ap := _mk()
+	ap.new_game(83, "normal", pr.perk_mods())
+	ap.game.phase = "raid"
+	ap.player.ammoEq[0] = "ap"
+	var sb := ap.spawn_enemy_at("shield", 9.5, 11.5)
+	sb.aim = Vector2(-1, 0)
+	var shp: float = sb.hp
+	ap.player.aim = Vector2(1, 0)
+	ap.shoot(ap.player, {"spread": 0.0, "dmg": 10.0, "speed": 22.0, "range": 11.0}, 0.0)
+	for n in 20:
+		ap.update_bullets(1.0 / 60.0)
+	check(is_equal_approx(shp - sb.hp, 10.0), "armor piercing rank 4: full damage through a riot shield")
+	pr.respec()
+	check(pr.skills.is_empty() and pr.sp == 30, "reset hands every point back (13 unspent + 17 spent)")
+
 	print("armory")
 	var ar := _mk()
 	ar.new_game(40)

@@ -38,6 +38,28 @@ var charges: Array = []
 var fires: Array = []
 var rockets: Array = []
 var shot_seq := 0
+var arcs: Array = []
+var perk: Dictionary = {}   # perkMods from the skill tree, fixed for the match (kitUp)
+var frost_fields: Array = []
+const BOSS_WEAK2 := {"bulldozer": "ap", "destroyer": "ap", "rime": "fire", "whitebutcher": "fire", "whiteforeman": "fire", "foreman": "blast", "tempest": "blast", "bluebutcher": "shock", "arsonist": "shock", "harbinger": "shock"}
+const BOSSES2 := {
+	"foreman": {"name": "THE FOREMAN", "hp": 760.0, "speed": 1.3, "scan": 9.0, "bounty": 40, "col": "#ffb13a", "look": {"body": "#5a4a2a", "vest": "#e0a030", "pants": "#3a3326", "head": "#a98262", "helmet": "#f0b830", "pack": "#4a3a22", "weapon": "drill"}, "intro": "He drills under the ground where bullets can't reach. A dust trail and a rumble show where he's going: when it stops, he bursts up through whatever is on top."},
+	"bluebutcher": {"base": "butcher", "name": "THE BLUE BUTCHER", "hp": 780.0, "speed": 2.05, "scan": 10.0, "bounty": 50, "col": "#3ae0e0", "look": {"body": "#16465a", "vest": "#0a2230", "pants": "#10212a", "head": "#9c7456", "helmet": "#0c3440", "bandana": "#3ae0e0", "weapon": "swordb"}, "intro": "His sword throws a glowing blue arc that goes straight through brick walls and breaks them. A teal lane shows where it goes: get out of it."},
+	"arsonist": {"base": "demolisher", "name": "THE ARSONIST", "hp": 640.0, "speed": 1.05, "scan": 10.0, "bounty": 50, "col": "#ff5a1a", "look": {"body": "#3a2a20", "vest": "#16100c", "pants": "#22180f", "head": "#a98262", "helmet": "#15110d", "pack": "#6a2a12", "bandana": "#ff6a1a", "weapon": "rpg"}, "intro": "He aims, then lobs a chain of napalm down the line. It burns for 10 seconds and eats through metal faster than normal fire."},
+	"tempest": {"base": "storm", "name": "THE TEMPEST", "hp": 560.0, "speed": 1.2, "scan": 12.5, "bounty": 50, "col": "#bff4ff", "look": {"body": "#16222e", "vest": "#080e16", "pants": "#101820", "head": "#b0896a", "boonie": "#0c1620", "glow": "#dff8ff", "weapon": "zap"}, "intro": "Two lightning shots at once, side by side. Two blue lines show them coming. Get caught by both and it hurts twice as much."},
+	"bulldozer": {"base": "foreman", "name": "THE BULLDOZER", "hp": 800.0, "speed": 1.35, "scan": 9.0, "bounty": 50, "col": "#ffd23a", "look": {"body": "#4a3a22", "vest": "#f0c020", "pants": "#2a2620", "head": "#a98262", "helmet": "#f0d030", "pack": "#2a2a2a", "weapon": "drill"}, "intro": "No more digging. He charges at you fast down a marked lane. When he hits a wall he breaks it, and he's dazed for a few seconds."},
+	"harbinger": {"base": "ferryman", "name": "THE HARBINGER", "hp": 720.0, "speed": 1.45, "scan": 12.0, "bounty": 50, "col": "#ff7a3a", "look": {"body": "#3a2e2a", "vest": "#1c1512", "pants": "#2a221e", "head": "#a58566", "boonie": "#231a16", "bandana": "#ff6a2a", "pack": "#4a3a2a", "weapon": "rpg"}, "intro": "He fires missiles from his boat in a high arc. Each one shows a red ring where it lands: keep moving and it misses."},
+	"rime": {"name": "THE RIME COLOSSUS", "hp": 860.0, "speed": 1.2, "scan": 11.0, "bounty": 50, "col": "#9cebdc", "look": {"body": "#678c9a", "vest": "#243f50", "pants": "#344e60", "head": "#bedce5", "helmet": "#84cad8", "pack": "#375d66", "bandana": "#95f0bc", "weapon": "drill", "nogun": true}, "intro": "Cracking ice marks a huge rupture. Step clear. His marked dash leaves poisoned frost that slows everyone crossing it."},
+	"whitebutcher": {"base": "butcher", "name": "THE FROSTBOUND BUTCHER", "hp": 880.0, "speed": 2.05, "scan": 10.0, "bounty": 50, "col": "#9be5ff", "look": {"body": "#54788a", "vest": "#1f394b", "pants": "#221412", "head": "#9c7456", "helmet": "#b9d8e2", "bandana": "#98e3ed", "weapon": "swordb"}, "intro": "A lunging ice arc and a marked frost rupture. Step sideways after his charge."},
+	"whiteforeman": {"base": "foreman", "name": "THE PERMAFROST FOREMAN", "hp": 900.0, "speed": 1.35, "scan": 10.0, "bounty": 50, "col": "#e6eeb6", "look": {"body": "#536d7c", "vest": "#b9c999", "pants": "#3a3326", "head": "#a98262", "helmet": "#dbe9ad", "pack": "#4a3a22", "weapon": "drill"}, "intro": "A fast marked charge and frost ruptures. Bait him into a wall to leave him dazed."},
+	"destroyer": {"name": "THE SUPREME DESTROYER", "hp": 4900.0, "speed": 0.85, "scan": 13.0, "bounty": 120, "col": "#ff6a2a", "big": 2.4, "look": {"body": "#2a2c30", "vest": "#14161a", "pants": "#1c1e22", "head": "#8c7058", "helmet": "#202226", "pack": "#32353a", "bandana": "#ff6a2a", "glow": "#ff6a2a", "weapon": "rpg"}, "intro": "Back rockets, a fire-and-lightning gun, poison gas and mines. Below 40% he calls an orbital cannon. Every attack is marked first: read it and move."},
+}
+const BLITZ_OF := {"butcher": "bluebutcher", "demolisher": "arsonist", "storm": "tempest", "ferryman": "harbinger", "foreman": "bulldozer"}
+const BOSS_LIST := ["butcher", "demolisher", "storm", "foreman", "bluebutcher", "arsonist", "tempest", "bulldozer", "harbinger", "rime", "whitebutcher", "whiteforeman", "destroyer"]
+const DEST := {"hp": 4900.0, "big": 2.4, "rockets": {"tell": 1.4, "n": 6, "r": 1.7, "R": 1.5, "pw": 1.35}, "fire": {"tell": 0.9, "go": 1.6, "len": 7.0, "w": 0.6, "tick": 0.25, "dmg": 9.0}, "bolt": {"tell": 1.1, "dmg": 1.6}, "gas": {"tell": 2.0, "r": 3.2, "t": 8.0, "dmg": 4.0}, "mines": {"tell": 1.0, "n": 10, "r": 2.6, "arm": 1.0, "life": 40.0, "trip": 0.7, "R": 1.3, "pw": 1.15}, "orb": {"follow": 3.0, "lock": 1.0, "speed": 2.6, "r": 1.8, "dmg": 70.0, "wall": 400.0, "every": 20.0, "below": 0.4}}
+const TWIN_GAP := 0.34
+const BULL := {"speed": 10.5, "lane": 10.0, "daze": 3.0}
+const MOVE := {"strike": {"tell": 1.1, "r": 1.05, "dmg": 30.0, "stun": 0.5, "gap": 1.6, "cd": 11.0}, "pulse": {"tell": 0.8, "r": 4.0, "dmg": 22.0, "push": 2.0, "cd": 9.0}, "cyclone": {"tell": 0.8, "go": 3.0, "len": 9.0, "r": 0.95, "dps": 8.0, "cd": 12.0}, "cage": {"tell": 2.5, "r": 2.0, "dmg": 35.0, "stun": 0.8, "cd": 10.0}, "flame": {"tell": 0.7, "go": 1.5, "tick": 0.3, "range": 3.6, "half": 0.45, "dmg": 12.0, "cd": 7.0}, "firering": {"tell": 1.2, "r": 2.2, "n": 8, "burn": 6.0, "cd": 11.0}, "slam": {"tell": 0.9, "r": 3.5, "dmg": 28.0, "push": 1.5, "wall": 90.0, "cd": 8.0}, "overdrive": {"tell": 1.5, "off": 1.4, "dmg": 24.0, "cd": 12.0}}
 const BOSSES := {"demolisher": {"name": "THE DEMOLISHER", "hp": 620.0, "speed": 1.05, "scan": 9.0, "bounty": 40, "col": "#ff8a3a", "look": {"body": "#4b4a38", "vest": "#23241c", "pants": "#26241e", "head": "#a98262", "helmet": "#1f201a", "pack": "#3a3a28", "bandana": "#c8551e", "weapon": "rpg"}, "intro": "He fires slow rockets. A red line shows where the next one goes: step out of it."}, "butcher": {"name": "THE BUTCHER", "hp": 760.0, "speed": 2.05, "scan": 8.0, "bounty": 40, "col": "#ff4a3a", "look": {"body": "#5c1d18", "vest": "#2a0c09", "pants": "#221412", "head": "#9c7456", "helmet": "#3a0f0c", "bandana": "#1a0a08", "weapon": "sword"}, "intro": "A blade and a temper. A red lane means he is about to charge down it: get out of the lane."}, "storm": {"name": "THE STORMCALLER", "hp": 540.0, "speed": 1.2, "scan": 12.5, "bounty": 40, "col": "#7fe0ff", "look": {"body": "#26323f", "vest": "#10171e", "pants": "#1a2028", "head": "#b0896a", "boonie": "#1b2530", "glow": "#7fe0ff", "weapon": "zap"}, "intro": "A lightning rifle that jumps between people. A blue line means a shot is coming: break line of sight, and spread out."}}
 const BOSS_WEAK := {"demolisher": "ap", "storm": "blast", "butcher": "shock"}
 const BOSS_ORDER := ["butcher", "demolisher", "storm"]
@@ -104,8 +126,9 @@ func toast(title: String, body: String) -> void:
 
 # ---------------------------------------------------------------- new game
 
-func new_game(seed_v: int = -1, diff: String = "normal") -> void:
+func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {}) -> void:
 	dispose()
+	perk = perks if not perks.is_empty() else PalProfile.new().perk_mods()
 	if seed_v >= 0:
 		rng.seed = seed_v
 	else:
@@ -125,6 +148,8 @@ func new_game(seed_v: int = -1, diff: String = "normal") -> void:
 	charges.clear()
 	fires.clear()
 	rockets.clear()
+	arcs.clear()
+	frost_fields.clear()
 	events.clear()
 	# THE YARD (06b-maps.js MAPS.yard.lay, offset 0,0)
 	core = {"i": 4, "j": 11, "hp": float(Df.core), "max": float(Df.core), "flash": 0.0}
@@ -164,7 +189,7 @@ func make_player(id: int) -> Dictionary:
 		"nades": C.nades, "maxN": C.nades, "ncd": 0.0, "blast": C.blast, "cd": 0.0, "bcd": 0.0, "gt": 0.0, "bLeft": 0,
 		"hurt": 9.0, "flash": 0.0, "walk": 0.0, "face": Vector2(1, 0), "aim": Vector2(1, 0), "fire_in": false,
 		"up": {"d": 0, "r": 0, "g": 0, "a": 0, "n": 0}, "sal": 0, "kills": 0, "move_dir": Vector2(1, 0), "markT": 0.0, "stun": 0.0,
-		"rk": ABIL_ROCKET.stock, "rkCd": 0.0, "ammoEq": [""], "trT": 0.0}
+		"rk": ABIL_ROCKET.stock + perk.rockets, "rkCd": 0.0, "ammoEq": [""], "trT": 0.0}
 	refit(p)
 	return p
 
@@ -370,6 +395,7 @@ func any_up(p: Dictionary) -> bool:
 func hurt_player(p: Dictionary, d: float) -> void:
 	if not p.alive:
 		return
+	d *= perk.vest   # Kevlar
 	p.hp -= d
 	p.hurt = 0.0
 	p.flash = 0.1
@@ -457,7 +483,12 @@ func explode(x: float, y: float, R: float = 1.65, power: float = 1.0, own = null
 	if fc > 0:
 		hurt_stake(48.0 * fc * power)
 	if not raid:   # a raider's rocket or charge doesn't hurt raiders
+		for m in fires:   # minesNear: a friendly blast near a mine sets it off
+			if m.get("nap", 0) == 3 and m.t > 0 and hdist(m.x, m.y, x, y) < R + 0.3:
+				m.blow = true
 		for e in enemies:
+			if e.get("burrow", false):
+				continue
 			var f: float = fall.call(hdist(x, y, e.x, e.y))
 			if f > 0:
 				hurt_enemy(e, 62.0 * f * power, own)
@@ -613,7 +644,7 @@ func throw_nade(p: Dictionary, tx: float, ty: float) -> void:
 	var R := 1.65 * (1.15 if p.C.blast > 1 else 1.0)
 	lobs.append({"x0": p.x, "y0": p.y, "x1": tx, "y1": ty, "t": 0.0, "T": 0.5 + d * 0.08, "R": R, "power": p.blast, "own": p.id})
 	p.nades -= 1
-	p.ncd = p.C.nadeCd
+	p.ncd = p.C.nadeCd * perk.reload
 	sfx("lob", p.x, p.y)
 
 
@@ -626,7 +657,7 @@ func shoot(p: Dictionary, G: Dictionary, late: float) -> void:
 	var b: Dictionary = bullets[bullets.size() - 1]
 	b.shot = shot_seq
 	if p.has("ammoEq") and p.ammoEq[0] != "":
-		b.ammo = [[p.ammoEq[0], 0]]   # skill rank 0: the account skill tree is a later phase
+		b.ammo = [[p.ammoEq[0], perk.ammo.get(p.ammoEq[0], 0)]]   # the skill tree's rank for that ammo
 
 
 func fire(from: Dictionary, ang: float, team: int, gun: Dictionary, late: float = 0.0, quiet: bool = false) -> void:
@@ -660,7 +691,7 @@ func update(dt: float, ctl: Dictionary = {}) -> void:
 			if game.spawnT <= 0:
 				spawn_enemy(game.queue.pop_front())
 				game.spawnT = game.spawnGap
-		elif enemies.is_empty() and charges.is_empty() and rockets.is_empty():
+		elif enemies.is_empty() and charges.is_empty() and rockets.is_empty() and arcs.is_empty():
 			qm.completedRaids = maxi(qm.completedRaids, game.wave)
 			if game.wave >= game.waves:
 				end_game(true)
@@ -679,6 +710,8 @@ func update(dt: float, ctl: Dictionary = {}) -> void:
 	update_lobs(dt)
 	update_charges(dt)
 	update_rockets(dt)
+	update_arcs(dt)
+	mines_tick(dt)
 	update_fires(dt)
 	update_walls(dt)
 	update_nodes(dt)
@@ -699,7 +732,7 @@ func control_local(dt: float, ctl: Dictionary) -> void:
 	var mag := minf(1.0, mv.length())
 	if mag > 0.12:
 		var d := mv.normalized()
-		var sp: float = 3.3 * mag * p.C.spd * (0.45 if p.stun > 0 else 1.0)
+		var sp: float = 3.3 * mag * p.C.spd * (0.45 if p.stun > 0 else 1.0) * slow_at(p.x, p.y) * perk.speed
 		move_ent(p, d.x * sp * dt, d.y * sp * dt, true)
 		p.walk += dt * mag * 10.0
 		p.move_dir = d
@@ -775,7 +808,7 @@ func sim_player(p: Dictionary, dt: float) -> void:
 			p.mats[nd.type] += y
 			if nd.type == 0:
 				nd.amt -= y
-			p.gt += Pal.RATE[nd.type] * p.C.get("gather", 1.0)
+			p.gt += Pal.RATE[nd.type] * p.C.get("gather", 1.0) * perk.gather
 			emit(nd.i + 0.5, nd.j + 0.5, "splinter" if nd.type == 0 else ("dust" if nd.type == 1 else "spark"), 1, nd.type)
 	for s in range(sacks.size() - 1, -1, -1):
 		var sk: Dictionary = sacks[s]
@@ -784,8 +817,8 @@ func sim_player(p: Dictionary, dt: float) -> void:
 				p.mats[m] = mini(p.cap[m], p.mats[m] + sk.mats[m])
 			sacks.remove_at(s)
 			flt(p.x, p.y, "PACK RECOVERED")
-	if p.hurt > Pal.REGEN_AFTER:
-		p.hp = minf(p.max, p.hp + Pal.REGEN * dt)
+	if p.hurt > perk.regenAfter:   # Second Wind
+		p.hp = minf(p.max, p.hp + perk.regen * dt)
 
 
 func revive_player(p: Dictionary) -> void:
@@ -843,6 +876,8 @@ func update_qm(dt: float) -> void:
 		q.foe = null
 		var bd := maxf(5.2, DG.range * 0.9)
 		for e in enemies:
+			if e.get("burrow", false):
+				continue
 			var d := d2(e, q)
 			if d < bd and los_clear(q.x, q.y, e.x, e.y):
 				bd = d
@@ -867,7 +902,7 @@ func update_qm(dt: float) -> void:
 			"revive":
 				busy = true
 				if job.who.downed:
-					job.who.revive += dt
+					job.who.revive += dt * perk.revive
 			"construct":
 				busy = true
 				q.face = q.aim
@@ -927,7 +962,7 @@ func update_qm(dt: float) -> void:
 			var dy: float = tgt.y - q.y
 			var l := Vector2(dx, dy).length()
 			if l > 0.03:
-				var s := minf(l, 2.9 * dt)
+				var s := minf(l, 2.9 * dt * slow_at(q.x, q.y))
 				move_ent(q, dx / l * s, dy / l * s, true)
 				q.walk += dt * 9.0
 				if q.foe == null:
@@ -972,7 +1007,7 @@ func start_build(dur: float) -> void:
 	player.sal += pay
 	var p := player
 	p.nades = maxi(p.nades, p.maxN)
-	p.rk = mini(ABIL_ROCKET.stock, p.rk + ABIL_ROCKET.refill)   # refillAbilities
+	p.rk = mini(ABIL_ROCKET.stock + perk.rockets, p.rk + ABIL_ROCKET.refill)   # refillAbilities
 	if p.downed:
 		p.alive = true
 		p.downed = false
@@ -1092,6 +1127,7 @@ func end_game(win: bool) -> void:
 	charges.clear()
 	fires.clear()
 	rockets.clear()
+	arcs.clear()
 	toast("VICTORY" if win else "THE STAKE FELL", "Every raid broken." if win else "They got through.")
 
 
@@ -1134,7 +1170,7 @@ func update_enemies(dt: float) -> void:
 		if e.scanT <= 0:
 			e.scanT = 0.2
 			e.foe = null
-			var bd: float = BOSSES[e.boss].scan if e.type == "boss" else {"gren": 6.5, "spotter": 10.0, "medic": 5.0, "fire": 6.5}.get(e.type, 7.0)
+			var bd: float = boss_def(e.boss).scan if e.type == "boss" else {"gren": 6.5, "spotter": 10.0, "medic": 5.0, "fire": 6.5}.get(e.type, 7.0)
 			# spotted: riflemen go for the marked soldier first
 			if e.type == "rifle":
 				for a in allies():
@@ -1332,7 +1368,7 @@ func update_enemies(dt: float) -> void:
 			var dy: float = move_to.y - e.y
 			var l := Vector2(dx, dy).length()
 			if l > 0.02:
-				var s := minf(l, e.speed * dt * maxf(0.5, 1.0 - (e.get("slowPct", 0.0) if e.get("slowT", 0.0) > 0 else 0.0)))
+				var s := minf(l, e.speed * dt * maxf(0.5, slow_at(e.x, e.y) * (1.0 - (e.get("slowPct", 0.0) if e.get("slowT", 0.0) > 0 else 0.0))))
 				move_ent(e, dx / l * s, dy / l * s, false)
 				e.walk += dt * 9.0
 				if tgt == null and e.foe == null:
@@ -1341,6 +1377,8 @@ func update_enemies(dt: float) -> void:
 		for b in range(a + 1, enemies.size()):
 			var A: Dictionary = enemies[a]
 			var B: Dictionary = enemies[b]
+			if A.get("burrow", false) or B.get("burrow", false):
+				continue
 			var dx: float = B.x - A.x
 			var dy: float = B.y - A.y
 			var d := Vector2(dx, dy).length()
@@ -1405,20 +1443,24 @@ func update_bullets(dt: float) -> void:
 						break
 			if b.team == 0:
 				for e in enemies:
-					if not e.dead and Vector2(e.x - b.x, e.y - b.y).length() < (0.55 if e.get("big", false) else 0.34):
+					if not e.dead and not e.get("burrow", false) and Vector2(e.x - b.x, e.y - b.y).length() < (0.55 if e.get("big", false) else 0.34):
 						# a shieldbearer's shield covers his front (about 130°): the round sparks off it
 						var shield := 1.0
 						if e.type == "shield" and not e.shieldBroken:
 							var l := sp if sp > 0 else 1.0
 							if -(b.vx * e.aim.x + b.vy * e.aim.y) / l > 0.42:
 								shield_bullet_hit(e, b)
-								var ap: bool = b.has("ammo") and b.ammo.any(func(am): return am[0] == "ap")
-								if not ap:
+								var ap_rank := -1
+								if b.has("ammo"):
+									for am in b.ammo:
+										if am[0] == "ap":
+											ap_rank = am[1]
+								if ap_rank < 0:
 									emit(b.x, b.y, "spark", 2, 2)
 									sfx("shieldhit", b.x, b.y)
 									b.dead = true
 									break
-								shield = [0.5, 0.6, 0.7, 0.85, 1.0][0]   # armor piercing: half damage through the shield at skill rank 0
+								shield = [0.5, 0.6, 0.7, 0.85, 1.0][ap_rank]   # armor piercing: 50% through the shield, up to 100% at rank 4
 						hurt_enemy(e, bdmg(b) * shield * boss_weak(e, b), b.own)
 						ammo_hit(e, b)
 						b.dead = true
@@ -1437,10 +1479,17 @@ func update_lobs(dt: float) -> void:
 		l.t += dt
 		if l.t >= l.T:
 			l.dead = true
-			if l.get("k", 0) == 1:
-				bottle_land(l)
-			else:
-				explode(l.x1, l.y1, l.R, l.power, l.own)
+			match l.get("k", 0):
+				1:
+					bottle_land(l)
+				2:
+					slab_land(l)
+				3:
+					explode(l.x1, l.y1, l.R, l.power, null, true)   # a boss missile doesn't hurt raiders
+				4:
+					napalm_land(l)
+				_:
+					explode(l.x1, l.y1, l.R, l.power, l.own)
 	lobs = lobs.filter(func(l): return not l.get("dead", false))
 
 
@@ -1588,13 +1637,28 @@ func update_fires(dt: float) -> void:
 		f.tick -= dt
 		if f.tick <= 0:
 			f.tick = 0.45
+			var nap: int = f.get("nap", 0)
+			if nap == 2:   # poison gas
+				for a in allies():
+					if a.alive and hdist(a.x, a.y, f.x, f.y) < f.r:
+						hurt_ally(a, DEST.gas.dmg * Df.dmg)
+				continue
+			if nap == 3:   # mines run in mines_tick
+				continue
+			if nap == 1:
+				napalm_tick(f)
+				continue
 			for a in allies():
-				if a.alive and hdist(a.x, a.y, f.x, f.y) < f.r:
+				if a.alive and hdist(a.x, a.y, f.x, f.y) < f.get("r", 0.9):
 					hurt_ally(a, 6.0 * Df.dmg)
-			var w = walls[idx(floori(f.x), floori(f.y))]
+			var w = walls[idx(clampi(floori(f.x), 0, N - 1), clampi(floori(f.y), 0, N - 1))]
 			if w != null and w.mat == 0 and not (w.fire > 0):
 				w.fire = 5.0
 	fires = fires.filter(func(f): return f.t > 0)
+	for i in range(frost_fields.size() - 1, -1, -1):
+		frost_fields[i].t -= dt
+		if frost_fields[i].t <= 0:
+			frost_fields.remove_at(i)
 
 
 func tile_of(e: Dictionary) -> int:
@@ -1790,12 +1854,13 @@ func refit(p: Dictionary) -> void:
 	var G: Dictionary = p.C.gun
 	var U: Dictionary = p.up
 	var gun := G.duplicate()
-	gun.dmg = G.dmg * (1.0 + arm_boost(U.d, 0.2, 0.05))
-	gun.cd = G.cd * (1.0 - arm_boost(U.r, 0.1, 0.025))
-	gun.range = G.range * (1.0 + arm_boost(U.g, 0.12, 0.03))
+	var K := perk
+	gun.dmg = G.dmg * (1.0 + arm_boost(U.d, 0.2, 0.05)) * K.dmg
+	gun.cd = G.cd * (1.0 - arm_boost(U.r, 0.1, 0.025)) / K.rate
+	gun.range = G.range * (1.0 + arm_boost(U.g, 0.12, 0.03)) * K.range
 	gun.speed = G.speed * (1.0 + arm_boost(U.g, 0.1, 0.025))
 	p.gun = gun
-	var mx := roundf(p.C.hp * (1.0 + arm_boost(U.a, 0.15, 0.0375)))
+	var mx := roundf(p.C.hp * (1.0 + arm_boost(U.a, 0.15, 0.0375)) * K.hp)
 	if mx > p.max:
 		p.hp += mx - p.max
 	p.max = mx
@@ -1803,6 +1868,7 @@ func refit(p: Dictionary) -> void:
 		p.hp = p.max
 	p.maxN = p.C.nades + mini(U.n, 4) + (1 if U.n >= 8 else 0)
 	p.blast = p.C.blast * (1.0 + arm_boost(U.n, 0.08, 0.02))
+	p.cap = p.C.cap.map(func(cv): return cv + K.carry)
 	p.up_d = U.d
 
 
@@ -1946,7 +2012,7 @@ func ammo_hit(e: Dictionary, b: Dictionary) -> void:
 func boss_weak(e: Dictionary, b: Dictionary) -> float:
 	if e.type != "boss" or not b.has("ammo"):
 		return 1.0
-	var w: String = BOSS_WEAK.get(e.boss, "")
+	var w: String = BOSS_WEAK.get(e.boss, BOSS_WEAK2.get(e.boss, ""))
 	for am in b.ammo:
 		if am[0] == w:
 			if not e.get("weakSeen", false):
@@ -1995,7 +2061,7 @@ func update_rockets(dt: float) -> void:
 				hit = walls[k] != null or k == core_k or (n != null and n.solid)
 			if not hit and r.get("pl", false):
 				for e in enemies:
-					if not e.dead and Vector2(e.x - r.x, e.y - r.y).length() < (0.6 if e.get("big", false) else 0.4):
+					if not e.dead and not e.get("burrow", false) and Vector2(e.x - r.x, e.y - r.y).length() < (0.6 if e.get("big", false) else 0.4):
 						hit = true
 						break
 			elif not hit:
@@ -2022,7 +2088,7 @@ func boss_of(w: int) -> String:
 
 
 func spawn_boss(key: String) -> Dictionary:
-	var B: Dictionary = BOSSES[key]
+	var B: Dictionary = boss_def(key)
 	var x := 0.0
 	var y := 0.0
 	var at: Array = []
@@ -2041,8 +2107,15 @@ func spawn_boss(key: String) -> Dictionary:
 	var hp: float = B.hp * BOSS_HP * Df.hp * (1.0 + 0.25 * floori(maxi(0, game.wave - 5) / 15.0))
 	var e := {"id": next_id, "type": "boss", "boss": key, "big": true, "x": x, "y": y, "hp": hp, "max": hp, "cd": 2.2, "walk": 0.0,
 		"aim": Vector2(-1, 0), "flash": 0.0, "speed": B.speed, "scanT": 0.0, "foe": null, "dead": false, "planted": false,
-		"st": 0, "stT": 0.0, "stM": 1.0, "lx": x, "ly": y, "shots": 0, "ab": 3.0, "rage": false, "dbl": false}
+		"st": 0, "stT": 0.0, "stM": 1.0, "lx": x, "ly": y, "shots": 0, "ab": 3.0, "rage": false, "dbl": false, "burrow": false}
 	next_id += 1
+	if key == "foreman":
+		e.ab = 5.0
+		e.cd = 2.5
+	if key == "harbinger":   # blitzSpawnFix: no river here, so no raft and no boarding crews; he fires from the edge
+		e.raft = false
+		e.ab = 1e9
+		e.crews = 0
 	enemies.append(e)
 	sfx("horn")
 	ev({"k": "shake", "x": x, "y": y, "amt": 8.0})
@@ -2051,10 +2124,11 @@ func spawn_boss(key: String) -> Dictionary:
 
 
 func boss_down(e: Dictionary, own) -> void:
-	var B: Dictionary = BOSSES[e.boss]
+	var B: Dictionary = boss_def(e.boss)
 	var mine: bool = own is int and own == player.id
 	var share := 15 if mine else 20
 	player.sal += B.bounty if mine else share
+	game.bosses = game.get("bosses", 0) + 1
 	flt(e.x, e.y - 0.4, ("+%d SALVAGE" % B.bounty) if mine else ("+%d SALVAGE EACH" % share), "#e2b436")
 	emit(e.x, e.y, "fire", 13)
 	emit(e.x, e.y, "spark", 13)
@@ -2067,8 +2141,22 @@ func think_boss(e: Dictionary, dt: float, tgt, mv) -> Array:
 	match e.boss:
 		"demolisher":
 			return _think_demolisher(e, dt, tgt, mv)
-		"storm":
-			return _think_storm(e, dt, tgt, mv)
+		"storm", "tempest", "arsonist", "bulldozer":
+			return _with_moves(e, dt, tgt, mv)
+		"foreman":
+			return _think_foreman(e, dt, tgt, mv)
+		"bluebutcher":
+			return _think_blue_butcher(e, dt, tgt, mv)
+		"harbinger":
+			return _think_harbinger(e, dt, tgt, mv)
+		"rime":
+			return _think_rime(e, dt, tgt, mv)
+		"whitebutcher":
+			return _winter_variant(e, dt, tgt, mv, _think_blue_butcher)
+		"whiteforeman":
+			return _winter_variant(e, dt, tgt, mv, _think_bulldozer)
+		"destroyer":
+			return _think_destroyer(e, dt, tgt, mv)
 	return _think_butcher(e, dt, tgt, mv)
 
 
@@ -2283,7 +2371,7 @@ func _think_storm(e: Dictionary, dt: float, tgt, mv) -> Array:
 	return [false, mv]
 
 
-func _lightning(e: Dictionary) -> void:
+func _lightning(e: Dictionary, mult: float = 1.0) -> void:
 	var a := atan2(e.ly - e.y, e.lx - e.x)
 	var cx := cos(a)
 	var cy := sin(a)
@@ -2301,7 +2389,7 @@ func _lightning(e: Dictionary) -> void:
 			break
 		var k := idx(i, j)
 		if k == core_k:
-			hurt_stake(30.0 * Df.dmg)
+			hurt_stake(30.0 * Df.dmg * mult)
 			break
 		var n = node_at(i, j)
 		if n != null and n.solid:
@@ -2322,7 +2410,7 @@ func _lightning(e: Dictionary) -> void:
 		d += 0.1
 	var pts: Array = [Vector2(e.x + cx * 0.5, e.y + cy * 0.5), Vector2(hit_a.x, hit_a.y) if hit_a != null else Vector2(x, y)]
 	if hit_a != null:
-		hurt_ally(hit_a, 40.0 * Df.dmg)
+		hurt_ally(hit_a, 40.0 * Df.dmg * mult)
 		_stun(hit_a, 0.9)
 		var done: Array = [hit_a]
 		var from: Dictionary = hit_a
@@ -2338,7 +2426,7 @@ func _lightning(e: Dictionary) -> void:
 			if nb == null:
 				break
 			done.append(nb)
-			hurt_ally(nb, 18.0 * Df.dmg)
+			hurt_ally(nb, 18.0 * Df.dmg * mult)
 			_stun(nb, 0.5)
 			pts.append(Vector2(nb.x, nb.y))
 			from = nb
@@ -2356,3 +2444,1278 @@ func _stun(a: Dictionary, t: float) -> void:
 ## armBoost: the first four levels add oldStep each, the next four newStep each
 static func arm_boost(lv: int, old_step: float, new_step: float) -> float:
 	return old_step * mini(4, lv) + new_step * maxi(0, lv - 4)
+
+
+
+static func boss_def(k: String) -> Dictionary:
+	if BOSSES.has(k):
+		return BOSSES[k]
+	return BOSSES2[k]
+
+
+func _base_think(e: Dictionary, dt: float, tgt, mv) -> Array:
+	match e.boss:
+		"storm":
+			return _think_storm(e, dt, tgt, mv)
+		"tempest":
+			return _think_tempest(e, dt, tgt, mv)
+		"arsonist":
+			return _think_arsonist(e, dt, tgt, mv)
+	return _think_bulldozer(e, dt, tgt, mv)
+
+
+func _with_moves(e: Dictionary, dt: float, tgt, mv) -> Array:
+	e.mvA = e.get("mvA", 4.0) - dt
+	e.mvB = e.get("mvB", 7.0) - dt
+	if e.st >= 20 and e.st <= 30:
+		return _run_move(e, dt)
+	if e.st == 0 and _start_move(e.boss, e):
+		return [true, null]
+	var r := _base_think(e, dt, tgt, mv)
+	if e.st != 0 and e.st < 20:
+		e.lastNew = false   # his own attack has started: a new move may follow it
+	return r
+
+
+func _set_move(e: Dictionary, st: int, T: float, lx: float, ly: float) -> void:
+	e.st = st
+	e.stT = T
+	e.stM = T
+	e.lx = clampf(lx, 0.3, N - 0.3)
+	e.ly = clampf(ly, 0.3, N - 0.3)
+	e.lastNew = true
+
+
+func _start_move(k: String, e: Dictionary) -> bool:
+	var f = e.foe
+	if f == null or not f.alive or e.cd > 0 or e.get("lastNew", false):
+		return false
+	var d := hdist(f.x, f.y, e.x, e.y)
+	match k:
+		"storm":
+			if d < MOVE.pulse.r and e.mvA <= 0:
+				_set_move(e, 21, MOVE.pulse.tell, e.x, e.y)
+				e.mvA = MOVE.pulse.cd
+				sfx("charge", e.x, e.y)
+				return true
+			if d < 12 and e.mvB <= 0:
+				_set_move(e, 20, MOVE.strike.tell, f.x, f.y)
+				e.mvB = MOVE.strike.cd
+				sfx("charge", e.x, e.y)
+				return true
+		"tempest":
+			if d > 2.5 and d < 10 and e.mvA <= 0:
+				var a := atan2(f.y - e.y, f.x - e.x)
+				_set_move(e, 22, MOVE.cyclone.tell, e.x + cos(a) * MOVE.cyclone.len, e.y + sin(a) * MOVE.cyclone.len)
+				e.mvA = MOVE.cyclone.cd
+				sfx("charge", e.x, e.y)
+				return true
+			if d < 11 and e.mvB <= 0:
+				_set_move(e, 24, MOVE.cage.tell, f.x, f.y)
+				e.mvB = MOVE.cage.cd
+				sfx("charge", e.x, e.y)
+				return true
+		"arsonist":
+			if d < MOVE.flame.range and e.mvA <= 0:
+				_set_move(e, 25, MOVE.flame.tell, f.x, f.y)
+				e.mvA = MOVE.flame.cd
+				sfx("lock", e.x, e.y)
+				return true
+			if d < 9.5 and e.mvB <= 0:
+				_set_move(e, 27, MOVE.firering.tell, f.x, f.y)
+				e.mvB = MOVE.firering.cd
+				sfx("lock", e.x, e.y)
+				return true
+		"bulldozer":
+			if d < 3 and e.mvA <= 0:
+				_set_move(e, 28, MOVE.slam.tell, e.x, e.y)
+				e.mvA = MOVE.slam.cd
+				sfx("drill", e.x, e.y)
+				return true
+			if d > 3.5 and d < 10 and e.mvB <= 0:
+				_set_move(e, 29, MOVE.overdrive.tell, f.x, f.y)
+				e.mvB = MOVE.overdrive.cd
+				sfx("drill", e.x, e.y)
+				return true
+	return false
+
+
+static func strike_pts(x: float, y: float, lx: float, ly: float) -> Array:
+	var a := atan2(ly - y, lx - x)
+	var px := -sin(a) * MOVE.strike.gap
+	var py := cos(a) * MOVE.strike.gap
+	return [Vector2(lx, ly), Vector2(lx + px, ly + py), Vector2(lx - px, ly - py)]
+
+
+func overdrive_pts(x: float, y: float, lx: float, ly: float) -> Array:
+	var dx := lx - x
+	var dy := ly - y
+	var l := maxf(0.001, Vector2(dx, dy).length())
+	var px: float = -dy / l * MOVE.overdrive.off
+	var py: float = dx / l * MOVE.overdrive.off
+	return [Vector2(clampf(x + dx / 3 + px, 0.3, N - 0.3), clampf(y + dy / 3 + py, 0.3, N - 0.3)), Vector2(clampf(x + dx * 2 / 3 - px, 0.3, N - 0.3), clampf(y + dy * 2 / 3 - py, 0.3, N - 0.3)), Vector2(lx, ly)]
+
+
+static func cyclone_pos(e: Dictionary, f: float) -> Vector2:
+	return Vector2(e.x + (e.lx - e.x) * (1 - f), e.y + (e.ly - e.y) * (1 - f))
+
+
+func _knock(a: Dictionary, fx: float, fy: float, dist_: float) -> void:
+	var dx: float = a.x - fx
+	var dy: float = a.y - fy
+	var l := maxf(0.001, Vector2(dx, dy).length())
+	var n := ceili(dist_ / 0.4)
+	for s in n:
+		move_ent(a, dx / l * dist_ / n, dy / l * dist_ / n, true)
+
+
+func _in_wedge(e: Dictionary, x: float, y: float, range_: float, half: float) -> bool:
+	if hdist(x, y, e.x, e.y) > range_:
+		return false
+	var da := absf(atan2(y - e.y, x - e.x) - atan2(e.ly - e.y, e.lx - e.x))
+	if da > PI:
+		da = TAU - da
+	return da < half
+
+
+func _end_move(e: Dictionary, cd: float = 1.2) -> void:
+	e.st = 0
+	e.cd = cd
+
+
+func _run_move(e: Dictionary, dt: float) -> Array:
+	e.stT -= dt
+	_aim_at(e, e.lx, e.ly)
+	var done: bool = e.stT <= 0
+	match e.st:
+		20:
+			if done:
+				var M: Dictionary = MOVE.strike
+				for p in strike_pts(e.x, e.y, e.lx, e.ly):
+					for a in allies():
+						if a.alive and hdist(a.x, a.y, p.x, p.y) < M.r:
+							hurt_ally(a, M.dmg * Df.dmg)
+							_stun(a, M.stun)
+					ev({"k": "ring", "x": p.x, "y": p.y, "r0": 0.1, "r1": M.r, "life": 0.45, "c1": "#ffffff"})
+					ev({"k": "flash", "x": p.x, "y": p.y, "life": 0.2, "r": 1.6})
+					emit(p.x, p.y, "spark", 6)
+				sfx("zap", e.lx, e.ly)
+				ev({"k": "shake", "x": e.lx, "y": e.ly, "amt": 6.0})
+				_end_move(e)
+		21:
+			if done:
+				var M: Dictionary = MOVE.pulse
+				for a in allies():
+					if a.alive and hdist(a.x, a.y, e.x, e.y) < M.r:
+						hurt_ally(a, M.dmg * Df.dmg)
+						_knock(a, e.x, e.y, M.push)
+				ev({"k": "ring", "x": e.x, "y": e.y, "r0": 0.3, "r1": M.r, "life": 0.5, "c1": "#7fe0ff"})
+				sfx("zap", e.x, e.y)
+				_end_move(e)
+		22:
+			if done:
+				e.st = 23
+				e.stT = MOVE.cyclone.go
+				e.stM = MOVE.cyclone.go
+				e.cyT = 0.0
+				sfx("rumble", e.x, e.y)
+		23:
+			var M: Dictionary = MOVE.cyclone
+			var c := cyclone_pos(e, maxf(0.0, e.stT / e.stM))
+			e.cyT -= dt
+			if rnd() < dt * 25:
+				emit(c.x + (rnd() - 0.5) * 0.8, c.y + (rnd() - 0.5) * 0.8, "dust")
+			for a in allies():
+				if a.alive and hdist(a.x, a.y, c.x, c.y) < M.r:
+					if e.cyT <= 0:
+						hurt_ally(a, M.dps * 0.5 * Df.dmg)
+					var ux: float = e.lx - e.x
+					var uy: float = e.ly - e.y
+					var l := maxf(0.001, Vector2(ux, uy).length())
+					move_ent(a, ux / l * dt * 2.4, uy / l * dt * 2.4, true)
+			var k := idx(clampi(floori(c.x), 0, N - 1), clampi(floori(c.y), 0, N - 1))
+			if walls[k] != null and walls[k].mat == 0:
+				damage_wall(k, walls[k].max * 4)
+			if e.cyT <= 0:
+				e.cyT = 0.5
+			if done:
+				_end_move(e, 1.4)
+		24:
+			if done:
+				var M: Dictionary = MOVE.cage
+				for a in allies():
+					if a.alive and hdist(a.x, a.y, e.lx, e.ly) < M.r:
+						hurt_ally(a, M.dmg * Df.dmg)
+						_stun(a, M.stun)
+				ev({"k": "ring", "x": e.lx, "y": e.ly, "r0": M.r, "r1": 0.2, "life": 0.4, "c1": "#bff4ff"})
+				ev({"k": "zap", "pts": [Vector2(e.lx - M.r, e.ly), Vector2(e.lx, e.ly), Vector2(e.lx + M.r, e.ly)]})
+				sfx("zap", e.lx, e.ly)
+				_end_move(e)
+		25:
+			if done:
+				e.st = 26
+				e.stT = MOVE.flame.go
+				e.stM = MOVE.flame.go
+				e.flT = 0.0
+				sfx("bottle", e.x, e.y)
+		26:
+			var M: Dictionary = MOVE.flame
+			e.flT -= dt
+			if rnd() < dt * 30:
+				var a: float = atan2(e.ly - e.y, e.lx - e.x) + (rnd() - 0.5) * M.half * 2
+				var r: float = rnd() * M.range
+				emit(e.x + cos(a) * r, e.y + sin(a) * r, "fire")
+			if e.flT <= 0:
+				e.flT = M.tick
+				for a in allies():
+					if a.alive and _in_wedge(e, a.x, a.y, M.range, M.half):
+						hurt_ally(a, M.dmg * Df.dmg)
+				for i in range(floori(e.x - M.range), floori(e.x + M.range) + 1):
+					for j in range(floori(e.y - M.range), floori(e.y + M.range) + 1):
+						if inb(i, j) and _in_wedge(e, i + 0.5, j + 0.5, M.range, M.half):
+							var w = walls[idx(i, j)]
+							if w != null and w.mat == 0 and not (w.fire > 0):
+								w.fire = 6.0
+			if done:
+				_end_move(e)
+		27:
+			if done:
+				var M: Dictionary = MOVE.firering
+				for n in M.n:
+					var a: float = n * TAU / M.n
+					var x := clampf(e.lx + cos(a) * M.r, 0.3, N - 0.3)
+					var y := clampf(e.ly + sin(a) * M.r, 0.3, N - 0.3)
+					fires.append({"x": x, "y": y, "t": M.burn, "max": M.burn, "tick": 0.3, "r": 0.8, "nap": 1})
+					emit(x, y, "fire", 4)
+				sfx("bottle", e.lx, e.ly)
+				_end_move(e, 1.4)
+		28:
+			if done:
+				var M: Dictionary = MOVE.slam
+				for a in allies():
+					if a.alive and hdist(a.x, a.y, e.x, e.y) < M.r:
+						hurt_ally(a, M.dmg * Df.dmg)
+						_knock(a, e.x, e.y, M.push)
+				for i in range(floori(e.x - M.r), floori(e.x + M.r) + 1):
+					for j in range(floori(e.y - M.r), floori(e.y + M.r) + 1):
+						if inb(i, j) and hdist(e.x, e.y, i + 0.5, j + 0.5) < M.r:
+							var k := idx(i, j)
+							if walls[k] != null:
+								damage_wall(k, M.wall * Pal.MAT[walls[k].mat].blast)
+							elif k == core_k:
+								hurt_stake(20.0 * Df.dmg)
+				ev({"k": "ring", "x": e.x, "y": e.y, "r0": 0.3, "r1": M.r, "life": 0.55, "c1": "#ffe9a0"})
+				sfx("bigboom", e.x, e.y)
+				ev({"k": "shake", "x": e.x, "y": e.y, "amt": 9.0})
+				_end_move(e, 1.0)
+		29:
+			if done:
+				e.odPts = overdrive_pts(e.x, e.y, e.lx, e.ly)
+				e.odLeg = 0
+				e.st = 30
+				e.stT = 3.0
+				e.stM = 3.0
+				e.hit = []
+				sfx("charge", e.x, e.y)
+		30:
+			return _overdrive_run(e, dt)
+	return [true, null]
+
+
+func _overdrive_run(e: Dictionary, dt: float) -> Array:
+	var move_dt: float = dt * (1.0 - (e.get("slowPct", 0.0) if e.get("slowT", 0.0) > 0 else 0.0))
+	var blocked := false
+	for s in 4:
+		var P: Vector2 = e.odPts[e.odLeg]
+		var dx: float = P.x - e.x
+		var dy: float = P.y - e.y
+		var l := Vector2(dx, dy).length()
+		if l < 0.15:
+			e.odLeg += 1
+			e.hit = []
+			if e.odLeg >= 3:
+				break
+			continue
+		var step := minf(l, BULL.speed * move_dt / 4)
+		var nx: float = e.x + dx / l * step
+		var ny: float = e.y + dy / l * step
+		var i := floori(nx)
+		var j := floori(ny)
+		var n = node_at(i, j)
+		var stop: bool = not inb(i, j) or (n != null and n.solid)
+		if not stop:
+			var k := idx(i, j)
+			if k == core_k:
+				hurt_stake(30.0 * Df.dmg)
+				stop = true
+			elif walls[k] != null:
+				damage_wall(k, 200.0 * Pal.MAT[walls[k].mat].blast)
+				sfx("collapse", nx, ny)
+				if walls[k] != null:
+					stop = true
+		if stop:
+			blocked = true
+			e.odLeg += 1
+			e.hit = []
+			if e.odLeg >= 3:
+				break
+			continue
+		e.x = nx
+		e.y = ny
+		for a in allies():
+			if a.alive and not e.hit.any(func(h): return is_same(h, a)) and Vector2(a.x - e.x, a.y - e.y).length() < 0.65:
+				e.hit.append(a)
+				hurt_ally(a, MOVE.overdrive.dmg * Df.dmg)
+				var sd := 1.0 if ((a.x - e.x) * -dy + (a.y - e.y) * dx) >= 0 else -1.0
+				move_ent(a, -dy / l * 0.6 * sd, dx / l * 0.6 * sd, true)
+	e.walk += dt * 20
+	if rnd() < 0.6:
+		emit(e.x, e.y, "dust")
+	if e.odLeg >= 3 or e.stT <= 0:
+		if blocked and e.odLeg >= 3:
+			e.st = 6
+			e.stT = BULL.daze
+			e.stM = BULL.daze
+			flt(e.x, e.y - 0.5, "DAZED", "#ffd23a")
+		else:
+			e.st = 0
+			e.cd = 0.8
+	return [true, null]
+
+
+func _think_foreman(e: Dictionary, dt: float, tgt, mv) -> Array:
+	e.ab -= dt
+	var half: bool = e.hp < e.max * 0.5
+	if e.st == 1:
+		e.stT -= dt
+		_aim_at(e, e.lx, e.ly)
+		if e.stT <= 0:
+			e.st = 0
+			var d := hdist(e.x, e.y, e.lx, e.ly)
+			lobs.append({"x0": e.x, "y0": e.y, "x1": e.lx, "y1": e.ly, "t": 0.0, "T": 0.5 + d * 0.07, "R": 0.8, "power": Df.dmg, "k": 2, "own": null})
+			sfx("lob", e.x, e.y)
+			e.cd = 2.4 if half else 3.2
+		return [true, null]
+	if e.st == 2:   # underground
+		e.stT -= dt
+		var dx: float = e.lx - e.x
+		var dy: float = e.ly - e.y
+		var l := Vector2(dx, dy).length()
+		if l > 0.12:
+			var s := minf(l, 2.6 * dt)
+			e.x = clampf(e.x + dx / l * s, 0.3, N - 0.3)
+			e.y = clampf(e.y + dy / l * s, 0.3, N - 0.3)
+			e.aim = Vector2(dx / l, dy / l)
+		e.rum = e.get("rum", 0.0) - dt
+		if e.rum <= 0:
+			e.rum = 0.8
+			sfx("rumble", e.x, e.y)
+		if rnd() < dt * 18:
+			emit(e.x + (rnd() - 0.5) * 0.4, e.y + (rnd() - 0.5) * 0.4, "dust", 1, 1)
+		if l <= 0.12 or e.stT <= 0:
+			e.st = 4
+			e.stT = 0.9
+			e.stM = 0.9
+			sfx("rumble", e.x, e.y)
+		return [true, null]
+	if e.st == 4:
+		e.stT -= dt
+		if rnd() < dt * 30:
+			emit(e.x + (rnd() - 0.5) * 1.2, e.y + (rnd() - 0.5) * 1.2, "dust", 1, 1)
+		if e.stT <= 0:
+			_burst_up(e)
+			e.st = 0
+			e.burrow = false
+			e.ab = 7.0 if half else 9.5
+			e.cd = 1.0
+		return [true, null]
+	if e.st == 3:
+		e.stT -= dt
+		_aim_at(e, e.lx, e.ly)
+		if e.stT <= 0:
+			_rockfall(e)
+			e.st = 0
+			e.cd = 1.8
+			e.rf = 6.5
+		return [true, null]
+	if e.ab <= 0:
+		var t := _burrow_target(e)
+		e.st = 2
+		e.burrow = true
+		e.stT = 6.5
+		e.stM = 6.5
+		e.lx = t.x
+		e.ly = t.y
+		e.rum = 0.0
+		sfx("drill", e.x, e.y)
+		emit(e.x, e.y, "dust", 10, 1)
+		return [true, null]
+	var f = e.foe
+	if half:
+		e.rf = e.get("rf", 1.0) - dt
+		if e.rf <= 0 and f != null and e.cd <= 0:
+			var a := _aim_at(e, f.x, f.y)
+			e.st = 3
+			e.stT = 1.4
+			e.stM = 1.4
+			e.lx = clampf(e.x + cos(a) * 9, 0.2, N - 0.2)
+			e.ly = clampf(e.y + sin(a) * 9, 0.2, N - 0.2)
+			sfx("charge", e.x, e.y)
+			return [true, null]
+	if f != null and e.cd <= 0 and d2(f, e) < 8:
+		e.st = 1
+		e.stT = 0.85
+		e.stM = 0.85
+		e.lx = clampf(f.x, 0.3, N - 0.3)
+		e.ly = clampf(f.y, 0.3, N - 0.3)
+		sfx("lob", e.x, e.y)
+		return [true, null]
+	if tgt != null and hdist(tgt.x, tgt.y, e.x, e.y) < 1.35:
+		_aim_at(e, tgt.x, tgt.y)
+		if e.cd <= 0:
+			e.cd = 1.0
+			var k := idx(floori(tgt.x), floori(tgt.y))
+			if walls[k] != null:
+				damage_wall(k, 60.0 * Pal.MAT[walls[k].mat].blast)
+			elif k == core_k:
+				hurt_stake(20.0 * Df.dmg)
+			sfx("drill", e.x, e.y)
+		return [true, null]
+	if f != null:
+		_aim_at(e, f.x, f.y)
+	return [f != null and d2(f, e) < 2.5, mv]
+
+
+func _burrow_target(e: Dictionary) -> Vector2:
+	var best = null
+	var bs := 1e9
+	for k in N * N:
+		var w = walls[k]
+		if w == null or w.mat == 3:
+			continue
+		var i := k % N
+		var j := k / N
+		var dc := Vector2(i - core.i, j - core.j).length()
+		if dc > 7:
+			continue
+		var s := hdist(i + 0.5, j + 0.5, e.x, e.y) + dc * 0.6
+		if s < bs:
+			bs = s
+			best = Vector2(i + 0.5, j + 0.5)
+	if best != null:
+		return best
+	var a = _nearest_ally(e)
+	return Vector2(a.x, a.y) if a != null else Vector2(core.i + 1.5, core.j + 0.5)
+
+
+func _nearest_ally(e: Dictionary):
+	var b = null
+	var bd := 1e9
+	for a in allies():
+		if a.alive:
+			var d := d2(a, e)
+			if d < bd:
+				bd = d
+				b = a
+	return b
+
+
+func _burst_up(e: Dictionary) -> void:
+	var i := floori(e.x)
+	var j := floori(e.y)
+	for a in range(-1, 2):
+		for b in range(-1, 2):
+			var ni := i + a
+			var nj := j + b
+			if not inb(ni, nj):
+				continue
+			var k := idx(ni, nj)
+			var w = walls[k]
+			if w != null:
+				damage_wall(k, (70.0 if (a != 0 or b != 0) else 240.0) * Pal.MAT[w.mat].blast)
+	if hdist(core.i + 0.5, core.j + 0.5, e.x, e.y) < 1.6:
+		hurt_stake(40.0 * Df.dmg)
+	for al in allies():
+		if al.alive:
+			var d := hdist(al.x, al.y, e.x, e.y)
+			if d < 1.4:
+				hurt_ally(al, 30.0 * Df.dmg)
+				var l := d if d > 0 else 1.0
+				move_ent(al, (al.x - e.x) / l * 0.7, (al.y - e.y) / l * 0.7, true)
+	emit(e.x, e.y, "chunk", 18, 1)
+	emit(e.x, e.y, "dust", 12, 1)
+	sfx("bigboom", e.x, e.y)
+	ev({"k": "shake", "x": e.x, "y": e.y, "amt": 10.0})
+	if solid_tile(i, j, false):
+		for d in [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]]:
+			if not solid_tile(i + d[0], j + d[1], false):
+				e.x = i + d[0] + 0.5
+				e.y = j + d[1] + 0.5
+				break
+
+
+func slab_land(l: Dictionary) -> void:
+	var i := floori(l.x1)
+	var j := floori(l.y1)
+	for al in allies():
+		if al.alive and hdist(al.x, al.y, l.x1, l.y1) < 0.8:
+			hurt_ally(al, 26.0 * l.power)
+	emit(l.x1, l.y1, "chunk", 10, 1)
+	sfx("collapse", l.x1, l.y1)
+	ev({"k": "shake", "x": l.x1, "y": l.y1, "amt": 5.0})
+	if not inb(i, j):
+		return
+	var k := idx(i, j)
+	if walls[k] != null:
+		damage_wall(k, 90.0 * Pal.MAT[walls[k].mat].blast)
+		return
+	if k == core_k or node_at(i, j) != null:
+		return
+	var w := Pal.make_wall(1, false, 0.8)
+	w.slab = true
+	w.crew = true
+	walls[k] = w
+	mark_flow()
+	var others: Array = [player, qm]
+	others.append_array(enemies)
+	for o in others:   # nobody ends up inside it
+		if floori(o.x) == i and floori(o.y) == j:
+			for d in [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]]:
+				if not solid_tile(i + d[0], j + d[1], false):
+					o.x = i + d[0] + 0.5
+					o.y = j + d[1] + 0.5
+					break
+
+
+func _rockfall(e: Dictionary) -> void:
+	var dx: float = e.lx - e.x
+	var dy: float = e.ly - e.y
+	var L := maxf(0.001, Vector2(dx, dy).length())
+	var hit_a: Array = []
+	var hit_k := {}
+	var d := 0.8
+	while d <= L:
+		var x: float = e.x + dx / L * d
+		var y: float = e.y + dy / L * d
+		var i := floori(x)
+		var j := floori(y)
+		if not inb(i, j):
+			break
+		var k := idx(i, j)
+		if walls[k] != null and not hit_k.has(k):
+			hit_k[k] = true
+			damage_wall(k, 70.0 * Pal.MAT[walls[k].mat].blast)
+		for al in allies():
+			if al.alive and not hit_a.any(func(h): return is_same(h, al)) and hdist(al.x, al.y, x, y) < 0.6:
+				hit_a.append(al)
+				hurt_ally(al, 34.0 * Df.dmg)
+		emit(x, y, "chunk", 1, 1)
+		emit(x, y, "dust", 1, 1)
+		d += 0.45
+	sfx("rockfall", e.x, e.y)
+	ev({"k": "shake", "x": e.x, "y": e.y, "amt": 8.0})
+
+
+func _think_blue_butcher(e: Dictionary, dt: float, tgt, mv) -> Array:
+	e.arcT = e.get("arcT", 2.4) - dt
+	if e.st == 5:
+		e.stT -= dt
+		_aim_at(e, e.lx, e.ly)
+		if e.stT <= 0:
+			e.st = 0
+			_launch_arc(e)
+			e.arcT = 3.1 if e.rage else 4.3
+			e.cd = 0.55
+		return [true, null]
+	var f = e.foe
+	if e.st == 0 and f != null and e.arcT <= 0:
+		var d := d2(f, e)
+		if d > 1.6 and d < 10.5:
+			var a := _aim_at(e, f.x, f.y)
+			e.st = 5
+			e.stT = 0.65
+			e.stM = 0.65
+			e.lx = clampf(e.x + cos(a) * 10, 0.2, N - 0.2)
+			e.ly = clampf(e.y + sin(a) * 10, 0.2, N - 0.2)
+			sfx("charge", e.x, e.y)
+			return [true, null]
+	if e.st == 0:
+		e.ab += dt * 0.5   # his charge comes round at half the Butcher's rate
+	return _think_butcher(e, dt, tgt, mv)
+
+
+func _launch_arc(e: Dictionary) -> void:
+	var a := atan2(e.ly - e.y, e.lx - e.x)
+	arcs.append({"x": e.x + cos(a) * 0.6, "y": e.y + sin(a) * 0.6, "vx": cos(a) * 8.5, "vy": sin(a) * 8.5, "d": 0.0, "max": 11.0, "hit": [], "wk": {}, "pw": Df.dmg, "dust": 0.0})
+	sfx("slash", e.x, e.y)
+	ev({"k": "slash", "x": e.x, "y": e.y, "ax": cos(a), "ay": sin(a)})
+
+
+func update_arcs(dt: float) -> void:
+	for r in arcs:
+		var sp := Vector2(r.vx, r.vy).length()
+		var steps := ceili(sp * dt / 0.1)
+		for n in steps:
+			if r.get("dead", false):
+				break
+			r.x += r.vx * dt / steps
+			r.y += r.vy * dt / steps
+			r.d += sp * dt / steps
+			r.dust += sp * dt / steps
+			if r.dust >= 0.22:
+				r.dust = 0.0
+				emit(r.x, r.y, "tealdust")
+			var i := floori(r.x)
+			var j := floori(r.y)
+			if not inb(i, j) or r.d > r.max:
+				r.dead = true
+				break
+			var k := idx(i, j)
+			var nd = node_at(i, j)
+			if nd != null and nd.solid:
+				r.dead = true
+				break
+			if k == core_k:
+				hurt_stake(35.0 * r.pw)
+				r.dead = true
+				break
+			var w = walls[k]
+			if w != null and not r.wk.has(k):
+				r.wk[k] = true
+				if w.mat <= 1:
+					damage_wall(k, w.max * 4)   # wood and brick: gone
+				else:
+					damage_wall(k, 140.0 if w.mat == 2 else 0.0)   # metal takes a heavy hit and stops it
+					r.dead = true
+					break
+			for al in allies():
+				if al.alive and not r.hit.any(func(h): return is_same(h, al)) and hdist(al.x, al.y, r.x, r.y) < 0.62:
+					r.hit.append(al)
+					hurt_ally(al, 30.0 * r.pw)
+					_stun(al, 0.3)
+		if r.get("dead", false):
+			emit(r.x, r.y, "tealdust", 8)
+	arcs = arcs.filter(func(r): return not r.get("dead", false))
+
+
+func _think_arsonist(e: Dictionary, dt: float, tgt, mv) -> Array:
+	if e.st != 0:
+		e.stT -= dt
+		_aim_at(e, e.lx, e.ly)
+		if e.stT <= 0:
+			e.st = 0
+			e.shots += 1
+			var d := hdist(e.x, e.y, e.lx, e.ly)
+			for n in 4:
+				var f := 0.5 + n * 0.18
+				var x1 := clampf(e.x + (e.lx - e.x) * f, 0.3, N - 0.3)
+				var y1 := clampf(e.y + (e.ly - e.y) * f, 0.3, N - 0.3)
+				lobs.append({"x0": e.x, "y0": e.y, "x1": x1, "y1": y1, "t": -n * 0.14, "T": 0.6 + d * f * 0.07, "R": 1.0, "power": Df.dmg, "k": 4, "own": null})
+			sfx("lob", e.x, e.y)
+			e.cd = 3.0 + rnd() * 0.9
+		return [true, null]
+	var t = Vector2(e.foe.x, e.foe.y) if e.foe != null else (tgt if tgt != null else look_ahead(e))
+	if t != null and e.cd <= 0 and hdist(t.x, t.y, e.x, e.y) < 9.5:
+		var a := atan2(t.y - e.y, t.x - e.x)
+		var L := minf(8.0, hdist(t.x, t.y, e.x, e.y) + 1.2)
+		e.st = 1
+		e.stT = 1.0
+		e.stM = 1.0
+		e.lx = clampf(e.x + cos(a) * L, 0.3, N - 0.3)
+		e.ly = clampf(e.y + sin(a) * L, 0.3, N - 0.3)
+		sfx("lock", e.x, e.y)
+		return [true, null]
+	return [e.foe != null and d2(e.foe, e) < 7.5, mv]
+
+
+func napalm_land(l: Dictionary) -> void:
+	fires.append({"x": l.x1, "y": l.y1, "t": 10.0, "max": 10.0, "tick": 0.3, "r": 1.0, "nap": 1})
+	sfx("bottle", l.x1, l.y1)
+	ev({"k": "flash", "x": l.x1, "y": l.y1, "life": 0.3, "r": 1.2})
+	emit(l.x1, l.y1, "fire", 10)
+	emit(l.x1, l.y1, "smoke", 4)
+
+
+func napalm_tick(f: Dictionary) -> void:
+	for a in allies():
+		if a.alive and hdist(a.x, a.y, f.x, f.y) < f.r:
+			hurt_ally(a, 7.0 * Df.dmg)
+	for i in range(floori(f.x - f.r), floori(f.x + f.r) + 1):
+		for j in range(floori(f.y - f.r), floori(f.y + f.r) + 1):
+			if not inb(i, j) or hdist(i + 0.5, j + 0.5, f.x, f.y) >= f.r + 0.35:
+				continue
+			var k := idx(i, j)
+			var w = walls[k]
+			if w == null:
+				continue
+			if w.mat == 0:
+				if not (w.fire > 0):
+					w.fire = 6.0
+			elif w.mat < 3:
+				damage_wall(k, 9.0 * 0.45 * (2.0 if w.mat == 2 else 1.0))
+
+
+func _think_tempest(e: Dictionary, dt: float, tgt, mv) -> Array:
+	if e.st != 0:
+		e.stT -= dt
+		if e.stT > 0.4 and e.foe != null and e.foe.alive:
+			e.lx = e.foe.x
+			e.ly = e.foe.y
+		_aim_at(e, e.lx, e.ly)
+		if e.stT <= 0:
+			_twin_bolt(e)
+			if e.hp < e.max * 0.5 and not e.dbl:
+				e.dbl = true
+				e.stT = 0.5
+				e.stM = 0.5
+				sfx("charge", e.x, e.y)
+			else:
+				e.st = 0
+				e.dbl = false
+				e.cd = 3.0 + rnd() * 0.8
+		return [true, null]
+	return _think_storm(e, dt, tgt, mv)   # out of an attack he moves and aims exactly as the Stormcaller
+
+
+func _twin_bolt(e: Dictionary) -> void:
+	var a := atan2(e.ly - e.y, e.lx - e.x)
+	var nx := -sin(a) * TWIN_GAP
+	var ny := cos(a) * TWIN_GAP
+	var x: float = e.x
+	var y: float = e.y
+	var lx: float = e.lx
+	var ly: float = e.ly
+	for s in [-1.0, 1.0]:
+		e.x = x + nx * s
+		e.y = y + ny * s
+		e.lx = lx + nx * s
+		e.ly = ly + ny * s
+		_lightning(e)
+	e.x = x
+	e.y = y
+	e.lx = lx
+	e.ly = ly
+
+
+func _think_bulldozer(e: Dictionary, dt: float, tgt, mv) -> Array:
+	e.ab -= dt
+	if e.st == 6:   # dazed
+		e.stT -= dt
+		if e.stT <= 0:
+			e.st = 0
+			e.ab = 1.6
+			e.cd = 0.5
+		return [false, null]
+	if e.st == 1:
+		e.stT -= dt
+		_aim_at(e, e.lx, e.ly)
+		if rnd() < dt * 22:
+			emit(e.x, e.y, "dust")
+		if e.stT <= 0:
+			var a := atan2(e.ly - e.y, e.lx - e.x)
+			e.st = 2
+			e.stT = BULL.lane / BULL.speed
+			e.stM = e.stT
+			e.cvx = cos(a) * BULL.speed
+			e.cvy = sin(a) * BULL.speed
+			e.hit = []
+			sfx("charge", e.x, e.y)
+		return [true, null]
+	if e.st == 2:
+		e.stT -= dt
+		var stop: bool = e.stT <= 0
+		var daze := false
+		var move_dt: float = dt * (1.0 - (e.get("slowPct", 0.0) if e.get("slowT", 0.0) > 0 else 0.0))
+		for s in 4:
+			if stop:
+				break
+			var nx: float = e.x + e.cvx * move_dt / 4
+			var ny: float = e.y + e.cvy * move_dt / 4
+			var i := floori(nx)
+			var j := floori(ny)
+			var n = node_at(i, j)
+			if not inb(i, j) or (n != null and n.solid):
+				stop = true
+				daze = true
+				break
+			var k := idx(i, j)
+			if k == core_k:
+				hurt_stake(45.0 * Df.dmg)
+				stop = true
+				daze = true
+				break
+			if walls[k] != null:
+				damage_wall(k, 200.0 * Pal.MAT[walls[k].mat].blast)
+				ev({"k": "shake", "x": nx, "y": ny, "amt": 9.0})
+				sfx("collapse", nx, ny)
+				stop = true
+				daze = true
+				break
+			e.x = nx
+			e.y = ny
+			for a in allies():
+				if a.alive and not e.hit.any(func(h): return is_same(h, a)) and Vector2(a.x - e.x, a.y - e.y).length() < 0.65:
+					e.hit.append(a)
+					hurt_ally(a, 34.0 * Df.dmg)
+					var l := Vector2(e.cvx, e.cvy).length()
+					var sd := 1.0 if ((a.x - e.x) * -e.cvy + (a.y - e.y) * e.cvx) >= 0 else -1.0
+					move_ent(a, -e.cvy / l * 0.6 * sd, e.cvx / l * 0.6 * sd, true)
+		e.walk += dt * 20
+		if rnd() < 0.6:
+			emit(e.x, e.y, "dust")
+		if daze:
+			e.st = 6
+			e.stT = BULL.daze
+			e.stM = BULL.daze
+			flt(e.x, e.y - 0.5, "DAZED", "#ffd23a")
+			ev({"k": "shake", "x": e.x, "y": e.y, "amt": 8.0})
+		elif stop:
+			e.st = 0
+			e.ab = 2.4
+			e.cd = 0.6
+		return [true, null]
+	var f = e.foe
+	if f != null and e.cd <= 0 and e.ab <= 0 and d2(f, e) < 9 and d2(f, e) > 1.2:
+		var a := _aim_at(e, f.x, f.y)
+		e.st = 1
+		e.stT = 0.7
+		e.stM = 0.7
+		e.lx = clampf(e.x + cos(a) * BULL.lane, 0.2, N - 0.2)
+		e.ly = clampf(e.y + sin(a) * BULL.lane, 0.2, N - 0.2)
+		sfx("drill", e.x, e.y)
+		return [true, null]
+	if tgt != null and hdist(tgt.x, tgt.y, e.x, e.y) < 1.35:
+		_aim_at(e, tgt.x, tgt.y)
+		if e.cd <= 0:
+			e.cd = 1.0
+			var k := idx(floori(tgt.x), floori(tgt.y))
+			if walls[k] != null:
+				damage_wall(k, 60.0 * Pal.MAT[walls[k].mat].blast)
+			elif k == core_k:
+				hurt_stake(20.0 * Df.dmg)
+			sfx("drill", e.x, e.y)
+		return [true, null]
+	if f != null:
+		_aim_at(e, f.x, f.y)
+		if d2(f, e) < 1.3:
+			if e.cd <= 0:
+				e.cd = 1.1
+				hurt_ally(f, 20.0 * Df.dmg)
+				sfx("drill", e.x, e.y)
+			return [true, null]
+		return [false, Vector2(f.x, f.y)]
+	return [false, mv]
+
+
+func _think_harbinger(e: Dictionary, dt: float, tgt, mv) -> Array:
+	e.ab -= dt
+	if not e.rage and e.hp < e.max * 0.5:
+		e.rage = true
+		flt(e.x, e.y - 0.4, "FULL SALVO", "#ff7a3a")
+	if e.st == 1:
+		e.stT -= dt
+		if e.stT > 0.3 and e.foe != null and e.foe.alive:
+			e.lx = e.foe.x
+			e.ly = e.foe.y
+		_aim_at(e, e.lx, e.ly)
+		if e.stT <= 0:
+			e.st = 0
+			var n := 4 if e.rage else 3
+			for m in n:
+				var a := rnd() * 6.283
+				var r := 0.0 if m == 0 else 0.9 + rnd() * 1.1
+				var x1 := clampf(e.lx + cos(a) * r, 0.3, N - 0.3)
+				var y1 := clampf(e.ly + sin(a) * r, 0.3, N - 0.3)
+				var d := hdist(x1, y1, e.x, e.y)
+				lobs.append({"x0": e.x, "y0": e.y, "x1": x1, "y1": y1, "t": -m * 0.22, "T": 1.45 + d * 0.03, "R": 1.35, "power": 1.1 * Df.dmg, "k": 3, "own": null})
+			sfx("rocket", e.x, e.y)
+			e.cd = 2.6 if e.rage else 3.4
+		return [true, null]
+	var f = e.foe if e.foe != null else _nearest_ally(e)
+	if f != null and e.cd <= 0 and d2(f, e) < 12:
+		e.st = 1
+		e.stT = 0.8
+		e.stM = 0.8
+		e.lx = f.x
+		e.ly = f.y
+		sfx("lock", e.x, e.y)
+		return [true, null]
+	if f != null:
+		_aim_at(e, f.x, f.y)
+	return [true, null]
+
+
+func _winter_rupture(e: Dictionary, r: float = 3.4) -> void:
+	for a in allies():
+		if a.alive and hdist(e.lx, e.ly, a.x, a.y) < r:
+			hurt_ally(a, 30.0 * Df.dmg)
+	if hdist(e.lx, e.ly, core.i + 0.5, core.j + 0.5) < r:
+		hurt_stake(18.0 * Df.dmg)
+	for i in range(floori(e.lx - r), floori(e.lx + r) + 1):
+		for j in range(floori(e.ly - r), floori(e.ly + r) + 1):
+			if inb(i, j) and hdist(e.lx, e.ly, i + 0.5, j + 0.5) < r and walls[idx(i, j)] != null:
+				damage_wall(idx(i, j), 35.0 * Pal.MAT[walls[idx(i, j)].mat].blast)
+	ev({"k": "ring", "x": e.lx, "y": e.ly, "r0": 0.2, "r1": r, "life": 0.7, "c1": "#c0fff2"})
+	sfx("bigboom", e.lx, e.ly)
+	ev({"k": "shake", "x": e.lx, "y": e.ly, "amt": 7.0})
+	for q in 12:
+		emit(e.lx + (rnd() - 0.5) * r, e.ly + (rnd() - 0.5) * r, "spark")
+
+
+func _winter_variant(e: Dictionary, dt: float, tgt, mv, base: Callable) -> Array:
+	e.winterT = e.get("winterT", 8.0) - dt
+	if e.st == 101:
+		e.stT -= dt
+		_aim_at(e, e.lx, e.ly)
+		if e.stT <= 0:
+			_winter_rupture(e, 2.3)
+			e.st = 0
+			e.cd = 1.0
+			e.winterT = 6.0 if e.hp < e.max * 0.35 else 9.0
+		return [true, null]
+	if e.st == 0 and e.winterT <= 0 and e.foe != null:
+		if enemies.any(func(o): return not is_same(o, e) and not o.dead and (o.get("st", 0) == 101 or o.get("st", 0) == 102)):
+			e.winterT = 0.6
+			return base.call(e, dt, tgt, mv)
+		e.st = 101
+		e.stT = 1.5
+		e.stM = 1.5
+		e.lx = e.foe.x
+		e.ly = e.foe.y
+		sfx("charge", e.x, e.y)
+		return [true, null]
+	return base.call(e, dt, tgt, mv)
+
+
+func _travel_clear(x0: float, y0: float, x1: float, y1: float) -> bool:
+	var d := hdist(x0, y0, x1, y1)
+	var n := maxi(1, ceili(d / 0.2))
+	for s in range(1, n + 1):
+		var t := float(s) / n
+		if collides(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, R_ENT, false):
+			return false
+	return true
+
+
+func _think_rime(e: Dictionary, dt: float, tgt, mv) -> Array:
+	var phase := 2 if e.hp < e.max * 0.35 else (1 if e.hp < e.max * 0.7 else 0)
+	e.ab -= dt
+	if e.st == 101:
+		e.stT -= dt
+		_aim_at(e, e.lx, e.ly)
+		if e.stT <= 0:
+			_winter_rupture(e)
+			e.st = 0
+			e.cd = 1.2
+			e.ab = 6.0 - phase
+		return [true, null]
+	if e.st == 102:
+		e.stT -= dt
+		_aim_at(e, e.lx, e.ly)
+		if e.stT <= 0:
+			e.st = 103
+			e.stT = 1.05
+			e.dashHits = []
+			e.frostD = 0.0
+			sfx("slash", e.x, e.y)
+		return [true, null]
+	if e.st == 103:
+		e.stT -= dt
+		var dx: float = e.lx - e.x
+		var dy: float = e.ly - e.y
+		var l := maxf(0.001, Vector2(dx, dy).length())
+		var step := minf(l, 7.2 * dt * maxf(0.5, 1.0 - (e.get("slowPct", 0.0) if e.get("slowT", 0.0) > 0 else 0.0)))
+		var x: float = e.x
+		var y: float = e.y
+		move_ent(e, dx / l * step, dy / l * step, false)
+		e.walk += dt * 15
+		e.frostD += hdist(e.x, e.y, x, y)
+		if e.frostD >= 0.32:
+			add_frost(e.x, e.y)
+			e.frostD = 0.0
+		for a in allies():
+			if a.alive and not e.dashHits.any(func(h): return is_same(h, a)) and hdist(e.x, e.y, a.x, a.y) < 0.85:
+				e.dashHits.append(a)
+				hurt_ally(a, 26.0 * Df.dmg)
+		if l < 0.4 or e.stT <= 0 or hdist(e.x, e.y, x, y) < 0.01:
+			e.st = 0
+			e.cd = 1.3
+			e.ab = 5.5 - phase
+		return [true, null]
+	var f = e.foe if e.foe != null else tgt
+	if e.st == 0 and e.ab <= 0 and f != null and hdist(e.x, e.y, f.x, f.y) < 10:
+		if enemies.any(func(o): return not is_same(o, e) and not o.dead and (o.get("st", 0) == 101 or o.get("st", 0) == 102)):
+			e.ab = 0.6
+			return [false, mv]
+		e.shots += 1
+		var dash_turn: bool = (e.shots % 3 != 1) if phase == 2 else (e.shots % 2 == 0)
+		if not dash_turn or not _travel_clear(e.x, e.y, f.x, f.y):
+			e.st = 101
+			e.stT = 1.5
+			e.stM = 1.5
+			e.lx = f.x
+			e.ly = f.y
+		else:
+			var a := _aim_at(e, f.x, f.y)
+			var L := minf(6.0, hdist(f.x, f.y, e.x, e.y) + 1)
+			e.lx = clampf(e.x + cos(a) * L, 0.4, N - 0.4)
+			e.ly = clampf(e.y + sin(a) * L, 0.4, N - 0.4)
+			e.st = 102
+			e.stT = 0.85
+			e.stM = 0.85
+		sfx("winterwarn" if e.st == 101 else "charge", e.x, e.y)
+		return [true, null]
+	if f != null:
+		_aim_at(e, f.x, f.y)
+	if tgt != null and hdist(e.x, e.y, tgt.x, tgt.y) < 1.3 and e.cd <= 0:
+		var k := idx(floori(tgt.x), floori(tgt.y))
+		if walls[k] != null:
+			damage_wall(k, 22.0 * Pal.MAT[walls[k].mat].bullet)
+		elif k == core_k:
+			hurt_stake(8.0 * Df.dmg)
+		e.cd = 1.1
+	return [false, mv]
+
+
+func add_frost(x: float, y: float) -> void:
+	if not inb(floori(x), floori(y)) or solid_tile(floori(x), floori(y), false):
+		return
+	var k := idx(floori(x), floori(y))
+	for f in frost_fields:
+		if f.k == k:
+			f.t = maxf(f.t, 10.0)
+			return
+	if frost_fields.size() >= 64:
+		frost_fields.pop_front()
+	frost_fields.append({"k": k, "x": x, "y": y, "r": 0.72, "t": 10.0})
+
+
+func slow_at(x: float, y: float) -> float:
+	for f in frost_fields:
+		if f.t > 0 and hdist(x, y, f.x, f.y) < f.r:
+			return 0.7
+	return 1.0
+
+
+func rocket_pts(x: float, y: float, lx: float, ly: float) -> Array:
+	var a0 := atan2(ly - y, lx - x)
+	var R: float = DEST.rockets.r
+	var out: Array = [Vector2(lx, ly)]
+	for n in 5:
+		var a := a0 + n * TAU / 5
+		out.append(Vector2(clampf(lx + cos(a) * R, 0.3, N - 0.3), clampf(ly + sin(a) * R, 0.3, N - 0.3)))
+	return out
+
+
+func fire_end(e: Dictionary) -> Vector2:
+	var dx: float = e.lx - e.x
+	var dy: float = e.ly - e.y
+	var l := maxf(0.001, Vector2(dx, dy).length())
+	return Vector2(clampf(e.x + dx / l * DEST.fire.len, 0.3, N - 0.3), clampf(e.y + dy / l * DEST.fire.len, 0.3, N - 0.3))
+
+
+static func in_lane(x: float, y: float, x0: float, y0: float, x1: float, y1: float, w: float) -> bool:
+	var dx := x1 - x0
+	var dy := y1 - y0
+	var L2 := dx * dx + dy * dy
+	if L2 == 0:
+		L2 = 1.0
+	var t := clampf(((x - x0) * dx + (y - y0) * dy) / L2, 0, 1)
+	return Vector2(x - (x0 + dx * t), y - (y0 + dy * t)).length() < w
+
+
+func _dest_state(e: Dictionary, st: int, T: float, lx: float, ly: float) -> void:
+	e.st = st
+	e.stT = T
+	e.stM = T
+	e.lx = clampf(lx, 0.3, N - 0.3)
+	e.ly = clampf(ly, 0.3, N - 0.3)
+
+
+func _think_destroyer(e: Dictionary, dt: float, tgt, mv) -> Array:
+	e.orbT = e.get("orbT", 4.0) - dt
+	if not e.rage and e.hp < e.max * DEST.orb.below:
+		e.rage = true
+		flt(e.x, e.y - 0.6, "ORBITAL CANNON ONLINE", "#ff6a2a")
+		sfx("siren")
+	if e.st >= 40 and e.st <= 47:
+		return _run_destroyer(e, dt)
+	var f = e.foe if e.foe != null and e.foe.alive else null
+	var d := hdist(f.x, f.y, e.x, e.y) if f != null else 1e9
+	if e.cd <= 0 and (f != null or tgt != null):
+		var t: Vector2 = Vector2(f.x, f.y) if f != null else tgt
+		if e.rage and f != null and e.orbT <= 0:
+			_dest_state(e, 46, DEST.orb.follow, f.x, f.y)
+			e.orbT = DEST.orb.every
+			sfx("lock", e.x, e.y)
+			return [true, null]
+		var seq := ["rockets", "gun", "gas", "mines"]
+		for n in 4:
+			e.seq = e.get("seq", 0) + 1
+			var k: String = seq[e.seq % 4]
+			if k == "rockets":
+				_dest_state(e, 40, DEST.rockets.tell, t.x, t.y)
+				sfx("lock", e.x, e.y)
+				return [true, null]
+			if k == "gun" and f != null and d < 11:
+				e.barrel = not e.get("barrel", false)
+				if e.barrel:
+					_dest_state(e, 41, DEST.fire.tell, f.x, f.y)
+					sfx("lock", e.x, e.y)
+				else:
+					_dest_state(e, 43, DEST.bolt.tell, f.x, f.y)
+					sfx("charge", e.x, e.y)
+				return [true, null]
+			if k == "gas" and f != null and d < DEST.gas.r + 0.5:
+				_dest_state(e, 44, DEST.gas.tell, e.x, e.y)
+				sfx("rumble", e.x, e.y)
+				return [true, null]
+			if k == "mines" and f != null and d < 10:
+				_dest_state(e, 45, DEST.mines.tell, f.x, f.y)
+				sfx("lock", e.x, e.y)
+				return [true, null]
+	if f != null:
+		_aim_at(e, f.x, f.y)
+		if d < 9:
+			return [true, null]   # in range: he stands and fights
+	return [false, mv]
+
+
+func _run_destroyer(e: Dictionary, dt: float) -> Array:
+	e.stT -= dt
+	_aim_at(e, e.lx, e.ly)
+	var done: bool = e.stT <= 0
+	match e.st:
+		40:
+			if done:
+				var M: Dictionary = DEST.rockets
+				var pts := rocket_pts(e.x, e.y, e.lx, e.ly)
+				for m in pts.size():
+					var p: Vector2 = pts[m]
+					var d := hdist(p.x, p.y, e.x, e.y)
+					lobs.append({"x0": e.x, "y0": e.y, "x1": p.x, "y1": p.y, "t": -m * 0.12, "T": 1.1 + d * 0.03, "R": M.R, "power": M.pw * Df.dmg, "k": 3, "own": null})
+				sfx("rocket", e.x, e.y)
+				_end_move(e, 2.2)
+		41:
+			if done:
+				e.st = 42
+				e.stT = DEST.fire.go
+				e.stM = DEST.fire.go
+				e.flT = 0.0
+				sfx("bottle", e.x, e.y)
+		42:
+			var M: Dictionary = DEST.fire
+			var p1 := fire_end(e)
+			e.flT -= dt
+			if rnd() < dt * 40:
+				var t := rnd()
+				emit(e.x + (p1.x - e.x) * t + (rnd() - 0.5) * 0.6, e.y + (p1.y - e.y) * t + (rnd() - 0.5) * 0.6, "fire")
+			if e.flT <= 0:
+				e.flT = M.tick
+				for a in allies():
+					if a.alive and in_lane(a.x, a.y, e.x, e.y, p1.x, p1.y, M.w):
+						hurt_ally(a, M.dmg * Df.dmg)
+				var L := hdist(e.x, e.y, p1.x, p1.y)
+				var s := 0.5
+				while s < L:
+					var i := floori(e.x + (p1.x - e.x) * s / L)
+					var j := floori(e.y + (p1.y - e.y) * s / L)
+					if inb(i, j):
+						var w = walls[idx(i, j)]
+						if w != null and w.mat == 0 and not (w.fire > 0):
+							w.fire = 6.0
+					s += 0.5
+			if done:
+				for n in range(1, 5):
+					var t := n / 4.0
+					fires.append({"x": e.x + (p1.x - e.x) * t, "y": e.y + (p1.y - e.y) * t, "t": 5.0, "max": 5.0, "tick": 0.3, "r": 0.9})
+				_end_move(e, 1.6)
+		43:
+			if e.stT > 0.35 and e.foe != null and e.foe.alive:
+				e.lx = e.foe.x
+				e.ly = e.foe.y
+			if done:
+				_lightning(e, DEST.bolt.dmg)   # a heavier Stormcaller bolt
+				_end_move(e, 1.8)
+		44:
+			if done:
+				var M: Dictionary = DEST.gas
+				fires.append({"x": e.lx, "y": e.ly, "t": M.t, "max": M.t, "tick": 0.2, "r": M.r, "nap": 2})
+				sfx("rumble", e.x, e.y)
+				_end_move(e, 2.0)
+		45:
+			if done:
+				var M: Dictionary = DEST.mines
+				for n in M.n:
+					for tr in 4:
+						var a := rnd() * 6.283
+						var r: float = sqrt(rnd()) * M.r
+						var x := clampf(e.lx + cos(a) * r, 0.3, N - 0.3)
+						var y := clampf(e.ly + sin(a) * r, 0.3, N - 0.3)
+						if solid_tile(floori(x), floori(y), false):
+							continue
+						fires.append({"x": x, "y": y, "t": M.life, "max": M.life, "tick": 1e9, "r": 0.45, "nap": 3, "arm": M.arm})
+						break
+				sfx("lob", e.x, e.y)
+				_end_move(e, 1.6)
+		46:
+			var f = e.foe if e.foe != null and e.foe.alive else _nearest_ally(e)
+			if f != null:
+				var dx: float = f.x - e.lx
+				var dy: float = f.y - e.ly
+				var l := Vector2(dx, dy).length()
+				var s := minf(l, DEST.orb.speed * dt)
+				if l > 0.01:
+					e.lx += dx / l * s
+					e.ly += dy / l * s
+			if done:
+				e.st = 47
+				e.stT = DEST.orb.lock
+				e.stM = DEST.orb.lock
+				sfx("charge", e.lx, e.ly)
+		47:
+			if done:
+				var M: Dictionary = DEST.orb
+				for a in allies():
+					if a.alive and hdist(a.x, a.y, e.lx, e.ly) < M.r:
+						hurt_ally(a, M.dmg * Df.dmg)
+				for i in range(floori(e.lx - M.r), floori(e.lx + M.r) + 1):
+					for j in range(floori(e.ly - M.r), floori(e.ly + M.r) + 1):
+						if not inb(i, j) or hdist(i + 0.5, j + 0.5, e.lx, e.ly) > M.r:
+							continue
+						var k := idx(i, j)
+						if walls[k] != null:
+							damage_wall(k, M.wall)
+						elif k == core_k:
+							hurt_stake(60.0 * Df.dmg)
+				ev({"k": "ring", "x": e.lx, "y": e.ly, "r0": 0.2, "r1": M.r * 1.3, "life": 0.6, "c1": "#ffffff"})
+				ev({"k": "flash", "x": e.lx, "y": e.ly, "life": 0.35, "r": 3.0})
+				ev({"k": "shake", "x": e.lx, "y": e.ly, "amt": 14.0})
+				sfx("bigboom", e.lx, e.ly)
+				emit(e.lx, e.ly, "fire", 12)
+				emit(e.lx, e.ly, "spark", 12)
+				_end_move(e, 1.4)
+	return [true, null]
+
+
+func mines_tick(dt: float) -> void:
+	for f in fires:
+		if f.get("nap", 0) != 3 or f.t <= 0:
+			continue
+		f.arm = maxf(0.0, f.get("arm", 0.0) - dt)
+		if not f.get("blow", false):
+			for b in bullets:
+				if b.team == 0 and not b.dead and hdist(b.x, b.y, f.x, f.y) < 0.4:
+					b.dead = true
+					f.blow = true
+					break
+		if f.get("blow", false):
+			f.t = 0.0
+			explode(f.x, f.y, 0.9, 0.6, null, false)
+			continue
+		if f.arm <= 0:
+			for a in allies():
+				if a.alive and hdist(a.x, a.y, f.x, f.y) < DEST.mines.trip:
+					f.t = 0.0
+					explode(f.x, f.y, DEST.mines.R, DEST.mines.pw * Df.dmg, null, true)
+					break

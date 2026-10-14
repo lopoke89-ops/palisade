@@ -22,7 +22,28 @@ func _init() -> void:
 	for n in 30 * 25:
 		s.update(1.0 / 30.0, {})
 	s.events.clear()
-	if mode == "armory":
+	if mode == "zoo":
+		s.game.wave = 4
+		s.start_raid()
+		s.game.queue = []
+		var spots := [[11.5, 8.5, "destroyer"], [9.5, 13.5, "tempest"], [12.5, 12.5, "arsonist"], [8.5, 5.5, "foreman"]]
+		for sp in spots:
+			var b := s.spawn_boss(sp[2])
+			b.x = sp[0]
+			b.y = sp[1]
+		s.player.x = 6.5
+		s.player.y = 10.5
+		for n in 30 * 5:
+			s.player.hp = s.player.max
+			s.update(1.0 / 30.0, {})
+	elif mode == "skills":
+		main.profile.persist = false
+		main.profile.sp = 6
+		main.profile.sp_total = 12
+		main.profile.skills = {"dmg": 2, "hp": 1, "ammo_shock": 1}
+		s.game.paused = true
+		main.skills_open = true
+	elif mode == "armory":
 		s.player.sal = 140
 		s.player.x = 5.5
 		s.player.y = 12.5
@@ -47,7 +68,7 @@ func _init() -> void:
 		s.start_raid()
 		for n in 30 * 9:
 			s.update(1.0 / 30.0, {})
-	for n in (1 if mode == "boss" else 30):
+	for n in (1 if mode in ["boss", "zoo"] else 30):
 		await process_frame
 	var img := root.get_texture().get_image()
 	img.save_png(out)
