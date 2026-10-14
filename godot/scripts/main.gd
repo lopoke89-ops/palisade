@@ -6,9 +6,11 @@ const FIG := 1.18
 const PART_CAP := 600
 
 var sim := Sim.new()
+var audio := PalAudio.new()
 var v := IsoView.new()
 var parts: Array = []
 var flashes: Array = []
+var rings: Array = []
 var floats: Array = []
 var toasts: Array = []
 var shake := 0.0
@@ -20,10 +22,16 @@ var mouse_seen := false
 func _ready() -> void:
 	font = ThemeDB.fallback_font
 	sim.new_game()
+	audio.sim = sim
+	add_child(audio)
 	_resize()
 	v.cam_snap(sim.player.x, sim.player.y)
 	get_viewport().size_changed.connect(_resize)
-	toasts.append({"title": "THE YARD", "body": "Gather wood (walk into a pile), SPACE to build, 1-3 material, F door, G grenade, ENTER to start the raid early.", "t": 7.0})
+	toasts.append({"title": "THE YARD", "body": "Gather wood (walk into a pile), SPACE to build, 1-3 material, F door, G grenade, H Delgado follow/defend, ENTER to start the raid early.", "t": 7.0})
+
+
+func _exit_tree() -> void:
+	sim.dispose()
 
 
 func _resize() -> void:
@@ -56,6 +64,8 @@ func _unhandled_input(e: InputEvent) -> void:
 			KEY_G, KEY_Q:
 				var w := _mouse_world()
 				sim.throw_nade(sim.player, w.x, w.y)
+			KEY_H:
+				sim.set_qm_mode("" if sim.qm.mode == "follow" else "follow")
 			KEY_ENTER, KEY_KP_ENTER:
 				if sim.game.phase == "build":
 					sim.start_raid()
@@ -65,6 +75,7 @@ func _restart() -> void:
 	sim.new_game()
 	parts.clear()
 	flashes.clear()
+	rings.clear()
 	floats.clear()
 	toasts.clear()
 	v.cam_snap(sim.player.x, sim.player.y)
@@ -107,6 +118,8 @@ func _process(dt: float) -> void:
 func _drain_events() -> void:
 	for e in sim.events:
 		match e.k:
+			"sfx":
+				audio.play(e.name, e.x, e.y)
 			"emit":
 				for n in e.n:
 					_emit(e.x, e.y, e.kind, e.mat)
@@ -116,6 +129,8 @@ func _drain_events() -> void:
 				toasts = [{"title": e.title, "body": e.body, "t": 4.5}]
 			"flash":
 				flashes.append({"x": e.x, "y": e.y, "life": e.life, "max": e.life, "r": e.r, "muzzle": e.get("muzzle", false)})
+			"ring":
+				rings.append({"x": e.x, "y": e.y, "r0": e.r0, "r1": e.r1, "life": e.life, "max": e.life, "c1": e.c1, "w": 2.0})
 			"shake":
 				var d := Vector2(e.x - sim.player.x, e.y - sim.player.y).length()
 				shake = maxf(shake, e.amt * clampf(1.0 - d / 14.0, 0.2, 1.0))
@@ -155,6 +170,9 @@ func _update_fx(dt: float) -> void:
 			q.vy *= 0.5
 			q.vz = 0.0
 	parts = parts.filter(func(q): return q.life > 0)
+	for r in rings:
+		r.life -= dt
+	rings = rings.filter(func(r): return r.life > 0)
 	for f in flashes:
 		f.life -= dt
 	flashes = flashes.filter(func(f): return f.life > 0)
@@ -246,6 +264,20 @@ func _draw() -> void:
 	for k in N * N:
 		if sim.debris[k] != 0 and sim.walls[k] == null:
 			_draw_debris(k % N, k / N, sim.debris[k] - 1)
+	# burning ground from a firebrand's bottle
+	for f in sim.fires:
+		var fc := v.iso(f.x, f.y)
+		var a: float = clampf(f.t / 1.0, 0, 1)
+		var flick := 0.9 + 0.1 * sin(sim.game.time * 17.0 + f.x * 3.0)
+		oval(fc.x, fc.y, f.r * v.TW2 * flick, f.r * v.TH2 * flick, Color(1, 0.45, 0.12, 0.35 * a))
+		oval(fc.x, fc.y, f.r * v.TW2 * 0.55, f.r * v.TH2 * 0.55, Color(1, 0.75, 0.3, 0.45 * a))
+	for r in rings:
+		var rc := v.iso(r.x, r.y)
+		var t: float = 1.0 - r.life / r.max
+		var rr: float = lerpf(r.r0, r.r1, t)
+		draw_set_transform(rc, 0, Vector2(1, v.TH2 / v.TW2))
+		draw_arc(Vector2.ZERO, rr * v.TW2, 0, TAU, 48, Color(c(r.c1), 1.0 - t), r.w * u)
+		draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 	# the build ghost
 	_draw_ghost()
 	# depth-sorted items: walls/nodes/stake key i+j+1, people x+y
@@ -262,6 +294,8 @@ func _draw() -> void:
 	items.append([sim.player.x + sim.player.y, 5, sim.player])
 	for s in sim.sacks:
 		items.append([s.x + s.y, 6, s])
+	for ch in sim.charges:
+		items.append([ch.x + ch.y, 7, ch])
 	items.sort_custom(func(a, b): return a[0] < b[0])
 	for it in items:
 		match it[1]:
@@ -273,17 +307,36 @@ func _draw() -> void:
 				_draw_stake()
 			3:
 				var e: Dictionary = it[2]
-				_draw_person(e.x, e.y, {"aim": e.aim, "walk": e.walk, "flash": e.flash > 0, "body": "#6b3a2a", "vest": "#4a2a1e", "head": "#c99a76", "hp": e.hp / e.max})
+				var o: Dictionary = LOOK.get(e.type, LOOK.rifle).duplicate()
+				o.merge({"aim": e.aim, "walk": e.walk, "flash": e.flash > 0, "hp": e.hp / e.max}, true)
+				if e.type == "breach":
+					o.satchel = not e.planted
+				if e.type == "shield":
+					o.shield_wear = 1.0 - float(e.shieldHitsLeft) / e.shieldHitsMax
+					if e.shieldBroken:
+						o.weapon = "pistol"
+				if e.type == "medic" and sim.game.phase == "raid":
+					var mc := v.iso(e.x, e.y)
+					draw_set_transform(mc, 0, Vector2(1, v.TH2 / v.TW2))
+					draw_arc(Vector2.ZERO, v.TW2 * 2.6, 0, TAU, 48, Color(143 / 255.0, 224 / 255.0, 160 / 255.0, 0.35), 1.2 * v.u)
+					draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
+				_draw_person(e.x, e.y, o)
 			4:
 				var q: Dictionary = it[2]
 				if q.alive:
-					_draw_person(q.x, q.y, {"aim": q.aim, "walk": q.walk, "flash": q.flash > 0, "body": "#7a6a4a", "vest": "#5a4c34", "head": "#b88a66", "hp": q.hp / q.max, "tag": "DELGADO"})
+					var o: Dictionary = QM_LOOK.duplicate()
+					o.merge({"aim": q.aim, "walk": q.walk, "flash": q.flash > 0, "hp": q.hp / q.max, "tag": "DELGADO"}, true)
+					_draw_person(q.x, q.y, o)
 				else:
 					_draw_downed(q.x, q.y, "DELGADO · DOWN", q.revive / 2.2)
 			5:
 				var p: Dictionary = it[2]
 				if p.alive:
-					_draw_person(p.x, p.y, {"aim": p.aim, "walk": p.walk, "flash": p.flash > 0, "body": "#4d5c40", "vest": "#38452e", "head": "#d8a882", "ring": "#e2b436"})
+					var o: Dictionary = SOLDIER_LOOK.duplicate()
+					o.merge({"aim": p.aim, "walk": p.walk, "flash": p.flash > 0, "ring": "#e2b436"}, true)
+					if p.markT > 0:
+						o.ring = "#ff5a4a"   # spotted
+					_draw_person(p.x, p.y, o)
 				elif p.downed:
 					_draw_downed(p.x, p.y, "DOWN · %ds" % ceili(p.rt), p.revive / 2.2)
 			6:
@@ -291,6 +344,12 @@ func _draw() -> void:
 				var sc := v.iso(s.x, s.y)
 				oval(sc.x, sc.y, 6 * u, 3 * u, Color(0, 0, 0, 0.35))
 				oval(sc.x, sc.y - 4 * u, 5 * u, 5 * u, c("#cbbf9f"))
+			7:
+				var ch: Dictionary = it[2]
+				var cs := v.iso(ch.x, ch.y)
+				draw_rect(Rect2(cs.x - 5 * u, cs.y - 5 * u, 10 * u, 6 * u), c("#1a1510"))
+				if sin(sim.game.time * (20.0 - ch.fuse * 5.0)) > 0:
+					draw_circle(Vector2(cs.x, cs.y - 6 * u), 2 * u, c("#ff5a3a"))
 	# grenades in the air
 	for l in sim.lobs:
 		var t: float = clampf(l.t / l.T, 0, 1)
@@ -457,10 +516,25 @@ func _draw_ghost() -> void:
 	draw_polyline(pts, line, maxf(1.0, v.u))
 
 
-## A cut-down drawPerson (16-characters.js): shadow, legs, body, vest, head and the gun on the aim side. No cosmetics yet.
+## The browser's LOOK table (16-characters.js) for raiders, and QM_LOOK for Delgado
+const LOOK := {
+	"rifle": {"body": "#7e3a2a", "vest": "#3f231a", "pants": "#2b2420", "head": "#b08868", "helmet": "#2f2820", "bandana": "#a8342a"},
+	"gren": {"body": "#6c5738", "vest": "#2f261b", "pants": "#2b2420", "head": "#a98262", "helmet": "#241f19", "pack": "#3a2e1f", "bandolier": true, "bandana": "#a8342a"},
+	"breach": {"body": "#5a2a22", "vest": "#1f1512", "pants": "#231c19", "head": "#a07a5c", "cap": "#1a1512", "bandana": "#a8342a", "nogun": true},
+	"shield": {"body": "#3f4048", "vest": "#23242a", "pants": "#26262b", "head": "#a98262", "helmet": "#2a2b30", "bandana": "#a8342a", "weapon": "shield", "big": 1.1},
+	"medic": {"body": "#6a5a48", "vest": "#e8e2d0", "pants": "#2b2420", "head": "#b08868", "helmet": "#e8e2d0", "pack": "#e8e2d0", "cross": true},
+	"spotter": {"body": "#4a4a36", "vest": "#2a2a1e", "pants": "#2b2420", "head": "#a98262", "boonie": "#8a2a22", "bandana": "#a8342a"},
+	"fire": {"body": "#6a3a1e", "vest": "#2a1a10", "pants": "#231c19", "head": "#a07a5c", "wrap": "#d06a1e", "pack": "#3a2a1a", "weapon": "bottle", "nogun": true},
+}
+const QM_LOOK := {"body": "#9e9a78", "vest": "#3d4a52", "pants": "#3a3a33", "head": "#b58f6e", "cap": "#3d4a52", "pack": "#5a4a30", "weapon": "sg"}
+const SOLDIER_LOOK := {"body": "#4d5c40", "vest": "#38452e", "pants": "#3b372c", "head": "#d8a882", "helmet": "#3a4630"}
+
+
+## A cut-down drawPerson (16-characters.js): shadow, legs, body, vest, head and headgear, the weapon on the aim side,
+## and each raider's one tell (riot shield, satchel, medic kit, red boonie, lit bottle, grenade strap). No cosmetics yet.
 func _draw_person(x: float, y: float, o: Dictionary) -> void:
 	var s := v.iso(x, y)
-	var k := v.u * FIG
+	var k: float = v.u * FIG * o.get("big", 1.0)
 	var walk: float = o.walk
 	var bob := -absf(sin(walk)) * 1.1
 	var sd := v.world_dir_to_screen(o.aim)
@@ -470,7 +544,8 @@ func _draw_person(x: float, y: float, o: Dictionary) -> void:
 	var body := Color.WHITE if lit else c(o.body)
 	var vest := c(o.vest)
 	var skin := Color.WHITE if lit else c(o.head)
-	var pants := c("#3b372c")
+	var pants := c(o.get("pants", "#3b372c"))
+	var dark := c("#1d1a16")
 	oval(s.x, s.y, 10 * k, 4.8 * k, Color(0, 0, 0, 0.38))
 	draw_set_transform(s, 0, Vector2(k, k))
 	if o.has("ring"):
@@ -479,17 +554,67 @@ func _draw_person(x: float, y: float, o: Dictionary) -> void:
 	var hy := -12 + bob
 	draw_line(Vector2(-2.5, hy), Vector2(-2.8 + sw, -2), pants, 3.2)
 	draw_line(Vector2(2.5, hy), Vector2(2.8 - sw, -2), pants, 3.2)
+	draw_rect(Rect2(-2.8 + sw + side * 0.8 - 2.3, -2 + 0.6 - 1.3, 4.6, 2.6), c("#1a1612"))
+	draw_rect(Rect2(2.8 - sw + side * 0.8 - 2.3, -2 + 0.6 - 1.3, 4.6, 2.6), c("#1a1612"))
 	var hand := Vector2(sd.x * 6, -17 + bob + sd.y * 3)
-	var gun_end := hand + sd * 9.0
+	var weapon: String = o.get("weapon", "")
+	var nogun: bool = o.get("nogun", false)
+	var held := func() -> void:
+		if weapon == "shield":
+			# a riot shield held out toward the aim, scuffed as it takes hits
+			var cc := Vector2(sd.x * 8, -16 + bob + sd.y * 3)
+			var wear: float = o.get("shield_wear", 0.0)
+			var sc := c("#9fb3b8").lerp(c("#5d6466"), wear)
+			draw_colored_polygon(PackedVector2Array([cc + Vector2(-4.5, -9), cc + Vector2(4.5, -9), cc + Vector2(4.5, 7), cc + Vector2(-4.5, 7)]), Color(sc, 0.9))
+			draw_polyline(PackedVector2Array([cc + Vector2(-4.5, -9), cc + Vector2(4.5, -9), cc + Vector2(4.5, 7), cc + Vector2(-4.5, 7), cc + Vector2(-4.5, -9)]), c("#2a2b30"), 0.9)
+			draw_rect(Rect2(cc.x - 3, cc.y - 6, 6, 1.6), c("#1c2a30"))
+		elif weapon == "bottle":
+			var bt := hand + Vector2(0, -3)
+			draw_rect(Rect2(bt.x - 1.3, bt.y - 2, 2.6, 5), c("#5a8a4a"))
+			var fl := sin(sim.game.time * 20.0) * 0.6
+			draw_circle(bt + Vector2(fl, -3.5), 1.6, c("#ffb04a"))
+		elif not nogun:
+			var ln := 11.0 if weapon == "sg" else 9.0
+			draw_line(hand, hand + sd * ln, dark, 2.6 if weapon == "sg" else 2.4)
+	if o.has("pack") and front:
+		draw_rect(Rect2(-side * 1.2 - 6.5, -19.5 + bob - 5.5, 13, 11), c(o.pack))
 	if not front:
-		draw_line(hand, gun_end, c("#1d1a16"), 2.4)
+		held.call()
 	draw_colored_polygon(PackedVector2Array([Vector2(-6.2, -24.5 + bob), Vector2(6.2, -24.5 + bob), Vector2(4.8, -11.5 + bob), Vector2(-4.8, -11.5 + bob)]), body)
 	draw_colored_polygon(PackedVector2Array([Vector2(-5, -23 + bob), Vector2(5, -23 + bob), Vector2(4.3, -14.5 + bob), Vector2(-4.3, -14.5 + bob)]), vest)
+	if o.get("cross", false):
+		draw_rect(Rect2(-0.8, -21 + bob, 1.6, 5), c("#c8322a"))
+		draw_rect(Rect2(-2.5, -19.3 + bob, 5, 1.6), c("#c8322a"))
+	if o.get("bandolier", false):
+		draw_line(Vector2(-5.2 * side, -23.5 + bob), Vector2(4.6 * side, -13 + bob), c("#8a6a36"), 1.8)
+		if front:
+			for n in 4:
+				var t := (n + 0.6) / 4.4
+				draw_circle(Vector2(-5.2 * side + 9.8 * side * t, -23.5 + 10.5 * t + bob), 1.05, c("#8aa83f"))
+	if o.has("wrap"):
+		draw_rect(Rect2(-6.2, -15 + bob, 12.4, 2), c(o.wrap))
+	if o.get("satchel", false):
+		draw_rect(Rect2(side * 3, -15 + bob, 5, 4.5), c("#5a4630"))
+		draw_rect(Rect2(side * 3 + 1, -14 + bob, 3, 1), c("#d65a3a"))
 	draw_circle(Vector2(side * 0.6, -29 + bob), 4.6, skin)
-	draw_circle(Vector2(side * 0.3, -31 + bob), 4.4, vest.darkened(0.2))   # helmet
+	if o.has("bandana"):
+		draw_rect(Rect2(side * 0.6 - 4.4, -28 + bob, 8.8, 2.2), c(o.bandana))
+	if o.has("helmet"):
+		draw_circle(Vector2(side * 0.3, -31 + bob), 4.4, c(o.helmet))
+	elif o.has("cap"):
+		draw_circle(Vector2(side * 0.3, -31.5 + bob), 3.9, c(o.cap))
+		draw_rect(Rect2(side * 2.2 - 2.5 + side * 1.5, -30.5 + bob, 5, 1.4), c(o.cap))
+	elif o.has("boonie"):
+		draw_set_transform(s + Vector2(side * 0.3, -31.5 + bob) * k, 0, Vector2(k, k * 0.45))
+		draw_circle(Vector2.ZERO, 7.0, c(o.boonie))
+		draw_set_transform(s, 0, Vector2(k, k))
+		draw_circle(Vector2(side * 0.3, -32.5 + bob), 3.6, c(o.boonie))
+		if sin(sim.game.time * 3.0 + x) > 0.7:
+			draw_circle(Vector2(side * 4.5, -28 + bob), 1.1, c("#fff6c8"))   # scope glint
 	if front:
-		draw_line(Vector2(side * 5, -22.5 + bob), hand, body, 2.6)
-		draw_line(hand, gun_end, c("#1d1a16"), 2.4)
+		if not nogun or weapon == "bottle":
+			draw_line(Vector2(side * 5, -22.5 + bob), hand, body, 2.6)
+		held.call()
 	draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 	if o.has("hp") and o.hp < 1:
 		draw_rect(Rect2(s.x - 8 * v.u, s.y - 43 * v.u, 16 * v.u, 2.6 * v.u), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.8))
@@ -550,6 +675,10 @@ func _draw_hud() -> void:
 		draw_rect(Rect2(x, y0 + 24, 12, 12), col)
 		draw_string(font, Vector2(x + 18, y0 + 36), "%d %s %d" % [m + 1, Pal.MAT[m].name, p.mats[m]], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, paper if sel else dim)
 	draw_string(font, Vector2(20, y0 + 58), "PIECE: %s (F)   SALVAGE %d   DROPS %d" % [g.piece.to_upper(), p.sal, p.kills], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, dim)
+	var q: Dictionary = sim.qm
+	var qtxt: String = ("DELGADO · %s · %s   (H)" % ["FOLLOW" if q.mode == "follow" else "DEFEND", q.status]) if q.alive else "DELGADO IS DOWN · stand over him"
+	draw_rect(Rect2(10, y0 - 34, 330, 22), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.72))
+	draw_string(font, Vector2(20, y0 - 18), qtxt, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, c("#a9bccb") if q.alive else c("#d65a3a"))
 	# what SPACE would do
 	if p.alive and g.phase != "over":
 		var t := sim.build_target(p, g.sel, g.piece == "door")

@@ -17,10 +17,22 @@ func _init() -> void:
 		s.do_build(s.player, 6, j, 0, j == 12)
 	s.player.bcd = 0.0
 	s.do_build(s.player, 6, 9, 1, false)
+	# let Delgado work through the build phase, then send raid 4 (every raider type but the spotter)
+	for n in 30 * 25:
+		s.update(1.0 / 30.0, {})
+	s.events.clear()
+	s.game.wave = 3
 	s.start_raid()
-	for n in 420:
+	for n in 30 * 9:
+		s.update(1.0 / 30.0, {})
+	for n in 30:
 		await process_frame
 	var img := root.get_texture().get_image()
 	img.save_png(out)
+	var playing := 0
+	for pl in main.audio.players:
+		if pl.playing:
+			playing += 1
+	print("audio: ", main.audio.streams.size(), " effects loaded, ", playing, " playing; music ", main.audio.mus_token, " ", main.audio.mus_cur != null and main.audio.mus_cur.playing)
 	print("saved ", out, " ", img.get_size(), " raiders ", s.enemies.size(), " stake ", s.core.hp)
 	quit()
