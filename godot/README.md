@@ -1,7 +1,7 @@
 # Palisade: Godot client
 
 The Godot 4.7 port of the browser game, built against v0.10.9 (`4c26769`, protocol `yard-29`).
-The plan is in `dev/plans/godot-conversion-blueprint.md`. This is **Phase 1, the fidelity slice**: the Yard on Normal, the Soldier, Delgado, all seven raider types, sound and music.
+The plan is in `dev/plans/godot-conversion-blueprint.md`. This is **Phase 1, the fidelity slice**: the Yard on Normal, the Soldier, Delgado, all seven raider types, the Yard's three bosses, the armory, sound and music.
 
 ## Run it
 
@@ -18,7 +18,9 @@ Controls:
 | Build or repair the faced tile | Space |
 | Material | 1 / 2 / 3 |
 | Wall or door | F |
-| Grenade at the cursor | G / Q |
+| Grenade at the cursor | G |
+| Rocket at the cursor (5, +2 each build phase) | Q |
+| Armory, at the stake between raids | E / U |
 | Delgado: follow you / defend the stake | H |
 | Start the raid early | Enter |
 | Pause | Esc / P |
@@ -53,11 +55,22 @@ What `sim.gd` covers:
   - He builds and upgrades a 4×4 perimeter with doors round the stake, gathers for it, repairs and douses walls, and revives you.
   - He shoots his shotgun and restocks your grenades.
   - H switches him between defending and following you.
+- **Bosses:** every fifth raid brings one, in the Yard's order: the Butcher, the Demolisher, then the Stormcaller.
+  - On a five-raid game you meet the Butcher on raid 5.
+  - Each has the browser's health (+25%), attacks and warnings:
+    - the Butcher's slash wedge and charge lane, and his rage below 40%;
+    - the Demolisher's red line and his rocket fans;
+    - the Stormcaller's tracking bolt that locks, stuns and jumps, and fires twice below half health.
+  - A boss pays 40 salvage to whoever lands the kill, and hits from his weak ammo deal +35%.
+- **Armory:** spend salvage at the stake between raids. Kills pay the browser's bounties.
+  - The five upgrades go to 8 levels at the browser's costs and steps.
+  - Delgado's level, the stake repair (+50 for 25), and the four ammo types, at skill rank 0 until the account skill tree is ported.
+  - The Soldier's rockets.
 
 ## Not yet
 
 These are later phases:
-- **Bosses.**
+- **Account skill tree:** perks, and the ammo ranks above 0.
 - **Progression:** armory, perks and mods.
 - **Other content:** maps, elevation, other classes, difficulties.
 - **Presentation:** cosmetics, lighting, trees and the fence.
@@ -90,7 +103,9 @@ xvfb-run godot --path godot --script res://tests/shot.gd -- /tmp/shot.png # rend
 - the raid mix against the browser's `waveMix` for 15 raid and crew-size cases;
 - what each raider type does: the shield stopping frontal fire, satchels breaching, bottles lighting wood, medics healing, spotters marking;
 - Delgado building the perimeter and reviving you;
-- a bot playing raid 1, then a whole five-raid game with Delgado;
+- the boss raid mix and order, each boss's attack, boss bounty;
+- every armory purchase against the browser's numbers, the shop rules, ammo effects, bounties and rockets;
+- a bot playing raid 1, then a whole five-raid game with Delgado (it shops between raids and fires rockets at the boss);
 - same seed + same inputs = same game.
 
 Note: `Vector2` is 32-bit in Godot, while the browser's numbers are 64-bit. Positions and timers are kept as 64-bit floats in the sim; only directions use `Vector2`.

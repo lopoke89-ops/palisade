@@ -6,6 +6,7 @@ func _init() -> void:
 	var args := OS.get_cmdline_user_args()
 	if args.size() > 0:
 		out = args[0]
+	var mode: String = args[1] if args.size() > 1 else "raid"
 	var main: Node2D = load("res://main.tscn").instantiate()
 	root.add_child(main)
 	await process_frame
@@ -21,11 +22,32 @@ func _init() -> void:
 	for n in 30 * 25:
 		s.update(1.0 / 30.0, {})
 	s.events.clear()
-	s.game.wave = 3
-	s.start_raid()
-	for n in 30 * 9:
-		s.update(1.0 / 30.0, {})
-	for n in 30:
+	if mode == "armory":
+		s.player.sal = 140
+		s.player.x = 5.5
+		s.player.y = 12.5
+		main._try_armory()
+	elif mode == "boss":
+		s.game.wave = 4
+		s.start_raid()
+		s.game.queue = []
+		var b := s.spawn_boss("butcher")
+		b.x = 9.5
+		b.y = 12.5
+		b.ab = 0.0
+		s.player.x = 6.5
+		s.player.y = 13.5
+		s.qm.alive = false
+		for n in 30 * 6:
+			s.update(1.0 / 30.0, {})
+			if b.st == 2:
+				break
+	else:
+		s.game.wave = 3
+		s.start_raid()
+		for n in 30 * 9:
+			s.update(1.0 / 30.0, {})
+	for n in (1 if mode == "boss" else 30):
 		await process_frame
 	var img := root.get_texture().get_image()
 	img.save_png(out)

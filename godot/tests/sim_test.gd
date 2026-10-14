@@ -116,7 +116,8 @@ func _init() -> void:
 		time += 1.0 / 60.0
 	check(r.game.stats.dropped >= 3, "the bot dropped the raid (%d) in %.0f s" % [r.game.stats.dropped, time])
 	check(r.game.phase == "build" and r.game.wave == 1, "raid 1 broken, back to building")
-	check(r.player.sal == 9, "8 + raid salvage paid")
+	var by_bot: int = r.player.kills
+	check(r.player.sal == 9 + 4 * by_bot + (3 - by_bot), "8 + raid salvage, 4 per rifleman you drop, 1 each for Delgado's (%d)" % r.player.sal)
 	check(shots_back > 0, "raiders shot back")
 
 	print("raid mix matches the browser's waveMix (values from node)")
@@ -205,6 +206,137 @@ func _init() -> void:
 		spt.update_enemies(1.0 / 60.0)
 	check(spt.player.markT > 0, "a spotter marks the soldier after 0.8 s in sight")
 
+	print("bosses")
+	var bm := _mk()
+	bm.new_game(30)
+	var w5 := bm.wave_mix(5, 1, 0, true)
+	check(w5.rifle == 2 and w5.gren == 4 and w5.breach == 3 and w5.fire == 2 and w5.shield == 1 and w5.medic == 1, "raid 5 mix with a boss matches the browser")
+	var w10 := bm.wave_mix(10, 1, 0, true)
+	check(w10.rifle == 4 and w10.gren == 9 and w10.breach == 8 and w10.spotter == 1, "raid 10 mix with a boss matches the browser")
+	check(bm.boss_of(5) == "butcher" and bm.boss_of(10) == "demolisher" and bm.boss_of(15) == "storm" and bm.boss_of(4) == "", "the Yard's boss order: Butcher, Demolisher, Stormcaller")
+	bm.game.wave = 4
+	bm.start_raid()
+	check(bm.game.queue.has("boss:butcher"), "raid 5 brings the Butcher")
+	var bt := _mk()
+	bt.new_game(31)
+	bt.game.phase = "raid"
+	bt.game.wave = 5
+	bt.qm.alive = false
+	var bu := bt.spawn_boss("butcher")
+	check(is_equal_approx(bu.hp, 760.0 * 1.25), "the Butcher has 950 health on Normal")
+	bu.x = 9.5
+	bu.y = 11.5
+	bu.ab = 0.0   # charge ready (he spawns with 3 s on it)
+	var charged := false
+	var php0: float = bt.player.hp
+	for n in 60 * 6:
+		bt.update_enemies(1.0 / 60.0)
+		if bu.st == 3:
+			charged = true
+		if bt.player.hp < php0:
+			break
+	check(charged, "he charges down a red lane from range")
+	check(bt.player.hp < php0, "and it lands (%.0f health left)" % bt.player.hp)
+	var dm := _mk()
+	dm.new_game(32)
+	dm.game.phase = "raid"
+	dm.qm.alive = false
+	var de := dm.spawn_boss("demolisher")
+	de.x = 12.5
+	de.y = 11.5
+	var fired := false
+	for n in 60 * 5:
+		dm.update_enemies(1.0 / 60.0)
+		dm.update_rockets(1.0 / 60.0)
+		if not dm.rockets.is_empty():
+			fired = true
+	check(fired, "the Demolisher fires rockets after his red line")
+	var sm := _mk()
+	sm.new_game(33)
+	sm.game.phase = "raid"
+	var se2 := sm.spawn_boss("storm")
+	se2.x = 12.5
+	se2.y = 13.5
+	sm.player.hp = 115.0
+	sm.qm.x = 6.5
+	sm.qm.y = 12.0
+	var zapped := false
+	for n in 60 * 5:
+		sm.update_enemies(1.0 / 60.0)
+		if sm.player.stun > 0:
+			zapped = true
+			break
+		sm.player.stun = maxf(0.0, sm.player.stun - 1.0 / 60.0)
+	check(zapped, "the Stormcaller's bolt hits and stuns")
+	var bds := _mk()
+	bds.new_game(34)
+	bds.game.phase = "raid"
+	var bb := bds.spawn_boss("butcher")
+	bds.hurt_enemy(bb, 9999.0, bds.player.id)
+	check(bds.player.sal == 40, "landing the kill on a boss pays 40 salvage")
+
+	print("armory")
+	var ar := _mk()
+	ar.new_game(40)
+	ar.player.sal = 5000
+	check(ar.buy_upgrade(ar.player, "d") and is_equal_approx(ar.player.gun.dmg, 14.4) and ar.player.sal == 4980, "DAMAGE 1: 12 -> 14.4 for 20 salvage")
+	check(Pal.burst_n(ar.player.up_d) == 5, "and the burst grows to 5 rounds")
+	ar.buy_upgrade(ar.player, "r")
+	check(is_equal_approx(ar.player.gun.cd, 0.081), "FIRE RATE 1: 0.09 -> 0.081")
+	ar.buy_upgrade(ar.player, "g")
+	check(is_equal_approx(ar.player.gun.range, 12.32) and is_equal_approx(ar.player.gun.speed, 24.2), "RANGE 1: 11 -> 12.32 tiles, 22 -> 24.2 speed")
+	ar.buy_upgrade(ar.player, "a")
+	check(ar.player.max == 132.0 and ar.player.hp == 132.0, "ARMOR 1: 115 -> 132 health")
+	ar.buy_upgrade(ar.player, "n")
+	check(ar.player.maxN == 3 and ar.player.nades == 3 and is_equal_approx(ar.player.blast, 1.08), "GRENADES 1: 3 grenades, blast x1.08")
+	for n in 7:
+		ar.buy_upgrade(ar.player, "d")
+	check(ar.player.up.d == 8 and is_equal_approx(ar.player.gun.dmg, 24.0) and not ar.buy_upgrade(ar.player, "d"), "DAMAGE 8 is +100% and the cap")
+	check(ar.buy_upgrade(ar.player, "dell") and ar.dell_gun().dmg > 6.0, "Delgado level 1: his shotgun hits harder")
+	ar.core.hp = 400.0
+	var sal0: int = ar.player.sal
+	check(ar.buy_upgrade(ar.player, "core") and ar.core.hp == 450.0 and ar.player.sal == sal0 - 25, "stake repair: +50 for 25")
+	check(ar.buy_ammo(ar.player, "shock") and ar.player.ammoEq[0] == "shock", "lightning rounds")
+	ar.player.x = 12.5
+	check(not ar.buy_upgrade(ar.player, "r"), "away from the stake: nothing for sale")
+	ar.player.x = 5.5
+	ar.game.phase = "raid"
+	check(not ar.buy_upgrade(ar.player, "r"), "during a raid: nothing for sale")
+	var am := _mk()
+	am.new_game(41)
+	am.game.phase = "raid"
+	am.player.ammoEq[0] = "shock"
+	var t1 := am.spawn_enemy_at("rifle", 8.5, 11.5)
+	var t2 := am.spawn_enemy_at("rifle", 9.0, 12.5)
+	am.shoot(am.player, {"spread": 0.0, "dmg": 1.0, "speed": 22.0, "range": 11.0}, 0.0)
+	for n in 20:
+		am.update_bullets(1.0 / 60.0)
+	check(t1.get("slowT", 0.0) > 0 and t2.get("slowT", 0.0) > 0, "lightning rounds slow the target and the raider next to him")
+	am.player.ammoEq[0] = "fire"
+	var t3 := am.spawn_enemy_at("rifle", 8.5, 10.5)
+	am.player.aim = Vector2(3.0, -1.0).normalized()
+	am.shoot(am.player, {"spread": 0.0, "dmg": 1.0, "speed": 22.0, "range": 11.0}, 0.0)
+	for n in 20:
+		am.update_bullets(1.0 / 60.0)
+	var h3: float = t3.hp
+	for n in 60:
+		am.update_enemies(1.0 / 60.0)
+	check(t3.get("burnT", 0.0) >= 0 and t3.hp < h3 - 5, "incendiary rounds burn (%.1f health lost in 1 s)" % (h3 - t3.hp))
+	var kb := _mk()
+	kb.new_game(42)
+	kb.game.phase = "raid"
+	var kr := kb.spawn_enemy_at("rifle", 8.5, 11.5)
+	kb.hurt_enemy(kr, 999.0, kb.player.id)
+	check(kb.player.sal == 4 and kb.player.kills == 1, "a rifleman pays 4 salvage")
+	var rkt := _mk()
+	rkt.new_game(43)
+	rkt.game.phase = "raid"
+	var rt := rkt.spawn_enemy_at("gren", 10.5, 11.5)
+	rkt.use_rocket(rkt.player, 10.5, 11.5)
+	for n in 60:
+		rkt.update_rockets(1.0 / 60.0)
+	check(rt.dead and rkt.player.rk == 4, "a rocket (Q) drops a grenadier; 4 left")
+
 	print("Delgado")
 	var dg := _mk()
 	dg.new_game(12)
@@ -244,6 +376,11 @@ func _init() -> void:
 				best = en
 		if best != null and bd < 9:
 			ctl = {"aim": Vector2(best.x - p.x, best.y - p.y), "fire": true}
+			if best.type == "boss" and p.rk > 0 and p.rkCd <= 0:
+				full.use_rocket(p, best.x, best.y)
+		if full.game.phase == "build":
+			for uk in ["d", "a", "r", "core", "dell", "g", "n"]:
+				full.buy_upgrade(p, uk)
 		full.update(1.0 / 30.0, ctl)
 		tt += 1.0 / 30.0
 	var fs: Dictionary = full.game.stats

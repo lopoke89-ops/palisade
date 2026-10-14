@@ -11,6 +11,10 @@ var v := IsoView.new()
 var parts: Array = []
 var flashes: Array = []
 var rings: Array = []
+var zaps: Array = []
+var slashes: Array = []
+var armory_open := false
+var arm_buttons: Array = []   # [Rect2, key] drawn this frame, clicked in _unhandled_input
 var floats: Array = []
 var toasts: Array = []
 var shake := 0.0
@@ -27,7 +31,7 @@ func _ready() -> void:
 	_resize()
 	v.cam_snap(sim.player.x, sim.player.y)
 	get_viewport().size_changed.connect(_resize)
-	toasts.append({"title": "THE YARD", "body": "Gather wood (walk into a pile), SPACE to build, 1-3 material, F door, G grenade, H Delgado follow/defend, ENTER to start the raid early.", "t": 7.0})
+	toasts.append({"title": "THE YARD", "body": "Gather wood (walk into a pile), SPACE to build, 1-3 material, F door, G grenade, Q rocket, E armory at the stake, H Delgado follow/defend, ENTER to start the raid early.", "t": 7.0})
 
 
 func _exit_tree() -> void:
@@ -44,6 +48,9 @@ func _resize() -> void:
 func _unhandled_input(e: InputEvent) -> void:
 	if e is InputEventMouseMotion:
 		mouse_seen = true
+	if armory_open:
+		_armory_input(e)
+		return
 	if e is InputEventKey and e.pressed and not e.echo:
 		var k: int = e.keycode
 		if k == KEY_ESCAPE or k == KEY_P:
@@ -61,9 +68,14 @@ func _unhandled_input(e: InputEvent) -> void:
 				sim.game.sel = k - KEY_1
 			KEY_F:
 				sim.game.piece = "door" if sim.game.piece == "wall" else "wall"
-			KEY_G, KEY_Q:
+			KEY_G:
 				var w := _mouse_world()
 				sim.throw_nade(sim.player, w.x, w.y)
+			KEY_Q:
+				var w := _mouse_world() if mouse_seen else Vector2(sim.player.x + sim.player.aim.x * 6, sim.player.y + sim.player.aim.y * 6)
+				sim.use_rocket(sim.player, w.x, w.y)
+			KEY_E, KEY_U:
+				_try_armory()
 			KEY_H:
 				sim.set_qm_mode("" if sim.qm.mode == "follow" else "follow")
 			KEY_ENTER, KEY_KP_ENTER:
@@ -76,6 +88,9 @@ func _restart() -> void:
 	parts.clear()
 	flashes.clear()
 	rings.clear()
+	zaps.clear()
+	slashes.clear()
+	armory_open = false
 	floats.clear()
 	toasts.clear()
 	v.cam_snap(sim.player.x, sim.player.y)
@@ -131,6 +146,10 @@ func _drain_events() -> void:
 				flashes.append({"x": e.x, "y": e.y, "life": e.life, "max": e.life, "r": e.r, "muzzle": e.get("muzzle", false)})
 			"ring":
 				rings.append({"x": e.x, "y": e.y, "r0": e.r0, "r1": e.r1, "life": e.life, "max": e.life, "c1": e.c1, "w": 2.0})
+			"zap":
+				zaps.append({"pts": e.pts, "life": 0.38, "max": 0.38})
+			"slash":
+				slashes.append({"x": e.x, "y": e.y, "ax": e.ax, "ay": e.ay, "life": 0.28, "max": 0.28})
 			"shake":
 				var d := Vector2(e.x - sim.player.x, e.y - sim.player.y).length()
 				shake = maxf(shake, e.amt * clampf(1.0 - d / 14.0, 0.2, 1.0))
@@ -170,6 +189,12 @@ func _update_fx(dt: float) -> void:
 			q.vy *= 0.5
 			q.vz = 0.0
 	parts = parts.filter(func(q): return q.life > 0)
+	for z in zaps:
+		z.life -= dt
+	zaps = zaps.filter(func(z): return z.life > 0)
+	for sl in slashes:
+		sl.life -= dt
+	slashes = slashes.filter(func(sl): return sl.life > 0)
 	for r in rings:
 		r.life -= dt
 	rings = rings.filter(func(r): return r.life > 0)
@@ -307,8 +332,13 @@ func _draw() -> void:
 				_draw_stake()
 			3:
 				var e: Dictionary = it[2]
-				var o: Dictionary = LOOK.get(e.type, LOOK.rifle).duplicate()
+				var o: Dictionary = (Sim.BOSSES[e.boss].look if e.type == "boss" else LOOK.get(e.type, LOOK.rifle)).duplicate()
 				o.merge({"aim": e.aim, "walk": e.walk, "flash": e.flash > 0, "hp": e.hp / e.max}, true)
+				if e.type == "boss":
+					o.big = 1.45
+					o.erase("hp")   # bosses have the bar at the top of the screen
+					o.tag = Sim.BOSSES[e.boss].name
+					o.tag_col = Sim.BOSSES[e.boss].col
 				if e.type == "breach":
 					o.satchel = not e.planted
 				if e.type == "shield":
@@ -350,6 +380,37 @@ func _draw() -> void:
 				draw_rect(Rect2(cs.x - 5 * u, cs.y - 5 * u, 10 * u, 6 * u), c("#1a1510"))
 				if sin(sim.game.time * (20.0 - ch.fuse * 5.0)) > 0:
 					draw_circle(Vector2(cs.x, cs.y - 6 * u), 2 * u, c("#ff5a3a"))
+	_draw_boss_fx()
+	for r in sim.rockets:
+		var rp := v.iso(r.x, r.y)
+		var dir := v.world_dir_to_screen(Vector2(r.vx, r.vy))
+		var hpx := v.WH * 0.6
+		draw_line(Vector2(rp.x, rp.y - hpx) - dir * 7 * v.u, Vector2(rp.x, rp.y - hpx) + dir * 4 * v.u, c("#4a4a3a"), 3.2 * v.u)
+		draw_circle(Vector2(rp.x, rp.y - hpx) - dir * 8 * v.u, (2.2 + randf()) * v.u, c("#ffb04a"))
+		if randf() < 0.6:
+			_emit(r.x, r.y, "smoke", 0)
+	for z in zaps:
+		var a: float = z.life / z.max
+		var pts := PackedVector2Array()
+		for n in z.pts.size() - 1:
+			var p0 := v.iso(z.pts[n].x, z.pts[n].y) - Vector2(0, v.WH * 0.6)
+			var p1 := v.iso(z.pts[n + 1].x, z.pts[n + 1].y) - Vector2(0, v.WH * 0.6)
+			pts.append(p0)
+			for q in 6:
+				var t := (q + 1) / 7.0
+				var nrm := (p1 - p0).orthogonal().normalized()
+				pts.append(p0.lerp(p1, t) + nrm * randf_range(-6, 6) * v.u)
+			pts.append(p1)
+		if pts.size() > 1:
+			draw_polyline(pts, Color(c("#7fe0ff"), 0.5 * a), 5 * v.u)
+			draw_polyline(pts, Color(1, 1, 1, a), 1.6 * v.u)
+	for sl in slashes:
+		var sp := v.iso(sl.x, sl.y)
+		var a: float = sl.life / sl.max
+		var a0 := v.world_dir_to_screen(Vector2(sl.ax, sl.ay)).angle()
+		draw_set_transform(Vector2(sp.x, sp.y - v.WH * 0.6), 0, Vector2(1, 0.6))
+		draw_arc(Vector2.ZERO, v.TW2 * 1.2, a0 - 1.1, a0 + 1.1, 18, Color(1, 0.9, 0.85, 0.8 * a), 3 * v.u)
+		draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 	# grenades in the air
 	for l in sim.lobs:
 		var t: float = clampf(l.t / l.T, 0, 1)
@@ -573,6 +634,16 @@ func _draw_person(x: float, y: float, o: Dictionary) -> void:
 			draw_rect(Rect2(bt.x - 1.3, bt.y - 2, 2.6, 5), c("#5a8a4a"))
 			var fl := sin(sim.game.time * 20.0) * 0.6
 			draw_circle(bt + Vector2(fl, -3.5), 1.6, c("#ffb04a"))
+		elif weapon == "rpg":
+			var tube := hand + sd * 4.0
+			draw_line(tube - sd * 8.0 + Vector2(0, -2), tube + sd * 8.0 + Vector2(0, -2), c("#3d4030"), 4.2)
+			draw_circle(tube + sd * 8.0 + Vector2(0, -2), 2.4, c("#6a6e52"))
+		elif weapon == "sword":
+			draw_line(hand, hand + sd * 13.0 + Vector2(0, -3), c("#d8dcd8"), 1.8)
+			draw_line(hand - Vector2(sd.y, -sd.x) * 2.0, hand + Vector2(sd.y, -sd.x) * 2.0, c("#3a2a1a"), 1.6)
+		elif weapon == "zap":
+			draw_line(hand, hand + sd * 11.0, dark, 2.8)
+			draw_circle(hand + sd * 11.0, 1.8, Color(c("#7fe0ff"), 0.6 + 0.4 * sin(sim.game.time * 14.0)))
 		elif not nogun:
 			var ln := 11.0 if weapon == "sg" else 9.0
 			draw_line(hand, hand + sd * ln, dark, 2.6 if weapon == "sg" else 2.4)
@@ -620,7 +691,7 @@ func _draw_person(x: float, y: float, o: Dictionary) -> void:
 		draw_rect(Rect2(s.x - 8 * v.u, s.y - 43 * v.u, 16 * v.u, 2.6 * v.u), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.8))
 		draw_rect(Rect2(s.x - 8 * v.u, s.y - 43 * v.u, 16 * v.u * maxf(0, o.hp), 2.6 * v.u), c("#d65a3a"))
 	if o.has("tag"):
-		label(o.tag, s.x, s.y - 46 * v.u, c("#a9bccb"), 9)
+		label(o.tag, s.x, s.y - 46 * v.u * o.get("big", 1.0), c(o.get("tag_col", "#a9bccb")), 11 if o.has("big") else 9)
 
 
 func _draw_downed(x: float, y: float, text: String, prog: float) -> void:
@@ -664,7 +735,14 @@ func _draw_hud() -> void:
 	draw_string(font, Vector2(20, y0 + 10), "SOLDIER", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, dim)
 	draw_rect(Rect2(86, y0, 150, 10), Color(0, 0, 0, 0.6))
 	draw_rect(Rect2(86, y0, 150 * maxf(0, p.hp / p.max), 10), c("#8fe0a0") if p.hp / p.max > 0.35 else c("#d65a3a"))
-	draw_string(font, Vector2(246, y0 + 10), "NADES %d" % p.nades, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, paper)
+	draw_string(font, Vector2(246, y0 + 10), "NADES %d · RKT %d" % [p.nades, p.rk], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, paper)
+	if p.ammoEq[0] != "":
+		for A in Sim.AMMO:
+			if A.id == p.ammoEq[0]:
+				draw_string(font, Vector2(20, y0 - 44), "AMMO · " + A.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, c(A.col))
+	if sim.can_shop(p) and not armory_open:
+		label("E · ARMORY  (%d salvage)" % p.sal, v.W / 2, H - 24, gold, 14)
+	_draw_boss_bar()
 	for m in 3:
 		var x := 20 + m * 100
 		var sel: bool = g.sel == m
@@ -691,7 +769,9 @@ func _draw_hud() -> void:
 		var a: float = clampf(tt.t / 0.6, 0, 1)
 		label(tt.title, W / 2, 78, Color(gold, a), 22)
 		label(tt.body, W / 2, 102, Color(paper, a), 13)
-	if g.paused or g.phase == "over":
+	if armory_open:
+		_draw_armory()
+	elif g.paused or g.phase == "over":
 		draw_rect(Rect2(0, 0, W, H), Color(0, 0, 0, 0.55))
 		if g.paused:
 			label("PAUSED", W / 2, H / 2 - 20, gold, 30)
@@ -701,3 +781,187 @@ func _draw_hud() -> void:
 			var st: Dictionary = g.stats
 			label("Raids survived %d · Raiders dropped %d · Walls raised %d · Walls lost %d" % [g.wave - (0 if g.won else 1), st.dropped, st.built, st.lost], W / 2, H / 2 + 6, paper, 14)
 			label("ENTER to play again", W / 2, H / 2 + 34, dim, 13)
+
+
+## boss warnings (drawBossFx in 16-characters.js): the Demolisher's red line and landing ring, the Butcher's wedge and
+## charge lane, the Stormcaller's blue line (dashed while it tracks you, solid once it locks)
+func _draw_boss_fx() -> void:
+	var u := v.u
+	var ch := v.WH * 0.55
+	var pulse := 0.55 + 0.45 * sin(sim.game.time * 22.0)
+	for e in sim.enemies:
+		if e.type != "boss" or e.st == 0:
+			continue
+		var f: float = maxf(0.0, e.stT / e.stM)
+		var b0 := v.iso(e.x, e.y)
+		if e.boss == "demolisher":
+			var a := atan2(e.ly - e.y, e.lx - e.x)
+			var L := Vector2(e.lx - e.x, e.ly - e.y).length()
+			var col := Color(1, 60 / 255.0, 40 / 255.0, 0.5 + 0.45 * pulse)
+			for o in ([-0.3, 0.0, 0.3] if e.st == 2 else [0.0]):
+				var q := v.iso(e.x + cos(a + o) * L, e.y + sin(a + o) * L)
+				draw_dashed_line(b0 - Vector2(0, ch * 1.2), q - Vector2(0, ch * 1.2), col, 2.2 * u, 7 * u)
+				draw_set_transform(q, 0, Vector2(1, 0.5))
+				draw_arc(Vector2.ZERO, v.TW2 * 1.5 * (1.15 - f * 0.15), 0, TAU, 40, col, 2.2 * u)
+				draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
+		elif e.boss == "butcher" and e.st == 1:
+			var a0 := atan2(e.aim.y, e.aim.x)
+			var pts := PackedVector2Array([b0])
+			for k in 11:
+				var a := a0 + (k / 10.0 - 0.5) * 2.4
+				pts.append(v.iso(e.x + cos(a) * 1.5, e.y + sin(a) * 1.5))
+			draw_colored_polygon(pts, Color(1, 50 / 255.0, 40 / 255.0, 0.18 + 0.2 * pulse))
+		elif e.boss == "butcher" and e.st == 2:
+			var dx: float = e.lx - e.x
+			var dy: float = e.ly - e.y
+			var l := maxf(0.001, Vector2(dx, dy).length())
+			var nx := -dy / l * 0.45
+			var ny := dx / l * 0.45
+			var P := PackedVector2Array([v.iso(e.x + nx, e.y + ny), v.iso(e.lx + nx, e.ly + ny), v.iso(e.lx - nx, e.ly - ny), v.iso(e.x - nx, e.y - ny)])
+			draw_colored_polygon(P, Color(1, 50 / 255.0, 40 / 255.0, 0.16 + 0.22 * pulse))
+			P.append(P[0])
+			draw_polyline(P, Color(1, 80 / 255.0, 60 / 255.0, 0.6 + 0.3 * pulse), 1.6 * u)
+		elif e.boss == "storm":
+			var dx: float = e.lx - e.x
+			var dy: float = e.ly - e.y
+			var l := maxf(0.001, Vector2(dx, dy).length())
+			var q := v.iso(clampf(e.x + dx / l * 12, 0, sim.N), clampf(e.y + dy / l * 12, 0, sim.N))
+			var locked := f < 0.36
+			var col := Color(127 / 255.0, 224 / 255.0, 1, (0.75 + 0.25 * pulse) if locked else (0.35 + 0.3 * pulse))
+			if locked:
+				draw_line(b0 - Vector2(0, ch), q - Vector2(0, ch), col, 2.4 * u)
+			else:
+				draw_dashed_line(b0 - Vector2(0, ch), q - Vector2(0, ch), col, 1.4 * u, 6 * u)
+
+
+func _draw_boss_bar() -> void:
+	for e in sim.enemies:
+		if e.type != "boss":
+			continue
+		var B: Dictionary = Sim.BOSSES[e.boss]
+		var w := minf(420.0, v.W - 40)
+		var x := (v.W - w) / 2
+		draw_rect(Rect2(x - 2, 114, w + 4, 26), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.8))
+		draw_rect(Rect2(x, 128, w * maxf(0, e.hp / e.max), 9), c(B.col))
+		label(B.name + (" · ENRAGED" if e.get("rage", false) else ""), v.W / 2, 125, c(B.col), 12)
+		return
+
+
+# ---------------------------------------------------------------- armory (20-locker-ui.js)
+
+func _try_armory() -> void:
+	var p: Dictionary = sim.player
+	if not sim.shop_open(p):
+		return
+	if not sim.near_stake(p):
+		toasts = [{"title": "ARMORY", "body": "Walk back to the stake to spend salvage.", "t": 3.0}]
+		return
+	armory_open = true
+	sim.game.paused = true
+
+
+func _close_armory() -> void:
+	armory_open = false
+	sim.game.paused = false
+
+
+func _armory_input(e: InputEvent) -> void:
+	if e is InputEventKey and e.pressed and not e.echo:
+		if e.keycode in [KEY_ESCAPE, KEY_E, KEY_U, KEY_P]:
+			_close_armory()
+		elif e.keycode >= KEY_1 and e.keycode <= KEY_9:
+			var n: int = e.keycode - KEY_1
+			if n < arm_buttons.size():
+				_arm_buy(arm_buttons[n][1])
+	elif e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
+		for b in arm_buttons:
+			if b[0].has_point(e.position):
+				_arm_buy(b[1])
+				return
+		if b_close.has_point(e.position):
+			_close_armory()
+
+
+var b_close := Rect2()
+
+
+func _arm_buy(key: String) -> void:
+	var p: Dictionary = sim.player
+	var ok: bool
+	if key.begins_with("ammo:"):
+		ok = sim.buy_ammo(p, key.substr(5))
+	else:
+		ok = sim.buy_upgrade(p, key)
+	if ok:
+		audio.play("restock")
+	else:
+		audio.play("deny")
+
+
+## armUpgradeSummary
+func _arm_summary(k: String, lv: int) -> String:
+	var n := mini(Sim.ARM_MAX, lv + 1)
+	var pct := func(x: float) -> String: return str(snappedf(100.0 * x, 0.01))
+	if k == "n":
+		return "+5 stock · +40% blast" if lv >= Sim.ARM_MAX else "Next: +%d stock · +%s%% blast" % [mini(n, 4) + (1 if n >= 8 else 0), pct.call(Sim.arm_boost(n, 0.08, 0.02))]
+	var steps := {"d": [0.2, 0.05, "Damage"], "r": [0.1, 0.025, "Cooldown"], "g": [0.12, 0.03, "Reach"], "a": [0.15, 0.0375, "HP"], "dell": [0.15, 0.0375, "Power"]}
+	var st: Array = steps[k]
+	var sign := "−" if k == "r" else "+"
+	var out := "%s %s%s%%" % [st[2], sign, pct.call(Sim.arm_boost(lv, st[0], st[1]))]
+	if lv < Sim.ARM_MAX:
+		out += " → %s%s%%" % [sign, pct.call(Sim.arm_boost(n, st[0], st[1]))]
+	return out
+
+
+func _draw_armory() -> void:
+	arm_buttons.clear()
+	var p: Dictionary = sim.player
+	var gold := c("#e2b436")
+	var paper := c("#e8dcc0")
+	var dim := c("#9a8f7a")
+	draw_rect(Rect2(0, 0, v.W, v.H), Color(0, 0, 0, 0.55))
+	var w := minf(640.0, v.W - 32)
+	var rows: Array = []
+	for U in Sim.UPG:
+		var t: int = p.up[U.k]
+		rows.append({"name": U.name, "lvl": t, "what": _arm_summary(U.k, t), "label": "MAXED" if t >= Sim.ARM_MAX else "%d SAL" % U.cost[t], "dis": t >= Sim.ARM_MAX or p.sal < U.cost[t], "key": U.k})
+	var L: int = sim.game.get("dellLv", 0)
+	rows.append({"name": Sim.DELL_UP.name, "lvl": L, "what": _arm_summary("dell", L), "label": "MAXED" if L >= Sim.ARM_MAX else "%d SAL" % Sim.DELL_UP.cost[L], "dis": L >= Sim.ARM_MAX or p.sal < Sim.DELL_UP.cost[L], "key": "dell"})
+	var full: bool = sim.core.hp >= sim.core.max
+	var cost := sim.core_fix_cost(p)
+	rows.append({"name": "STAKE", "lvl": -1, "what": "%d / %d · +%d health" % [ceili(sim.core.hp), int(sim.core.max), int(Sim.CORE_FIX.hp)], "label": "FULL" if full else "%d SAL" % cost, "dis": full or p.sal < cost, "key": "core"})
+	for A in Sim.AMMO:
+		var eq: bool = p.ammoEq[0] == A.id
+		var ac := 75 if p.ammoEq[0] != "" else 150
+		rows.append({"name": A.name, "lvl": -1, "what": A.what, "label": "EQUIPPED" if eq else "%d SAL" % ac, "dis": eq or p.sal < ac, "key": "ammo:" + A.id, "col": A.col})
+	var rh := 34.0
+	var h := 74.0 + rows.size() * rh + 36
+	var x0 := (v.W - w) / 2
+	var y0 := maxf(10.0, (v.H - h) / 2)
+	draw_rect(Rect2(x0, y0, w, h), c("#16130f"))
+	draw_rect(Rect2(x0, y0, w, h), Color(gold, 0.5), false, 1.5)
+	draw_string(font, Vector2(x0 + 18, y0 + 26), "ARMORY · BETWEEN RAIDS", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, dim)
+	draw_string(font, Vector2(x0 + 18, y0 + 52), "SALVAGE %d" % p.sal, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, gold)
+	draw_string(font, Vector2(x0 + w - 230, y0 + 26), "click or 1-9 · E / Esc closes", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, dim)
+	var y := y0 + 70
+	for n in rows.size():
+		var r: Dictionary = rows[n]
+		if n == 5 or n == 7:
+			draw_line(Vector2(x0 + 12, y + 1), Vector2(x0 + w - 12, y + 1), Color(dim, 0.3), 1.0)
+		var namecol: Color = c(r.col) if r.has("col") else paper
+		draw_string(font, Vector2(x0 + 18, y + 22), ("%d " % (n + 1) if n < 9 else "") + r.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, namecol)
+		if r.lvl >= 0:
+			for k in Sim.ARM_MAX:
+				draw_rect(Rect2(x0 + 190 + k * 11, y + 13, 8, 8), gold if k < r.lvl else Color(dim, 0.35))
+		draw_string(font, Vector2(x0 + (290 if r.lvl >= 0 else 190), y + 22), r.what, HORIZONTAL_ALIGNMENT_LEFT, w - 420 if r.lvl >= 0 else w - 320, 11, dim)
+		var br := Rect2(x0 + w - 116, y + 5, 100, 24)
+		draw_rect(br, Color(gold, 0.12) if not r.dis else Color(0.2, 0.2, 0.2, 0.4))
+		draw_rect(br, Color(gold, 0.8) if not r.dis else Color(dim, 0.4), false, 1.2)
+		var lw := font.get_string_size(r.label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
+		draw_string(font, Vector2(br.position.x + (br.size.x - lw) / 2, y + 22), r.label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, gold if not r.dis else dim)
+		arm_buttons.append([br, r.key])
+		y += rh
+	b_close = Rect2(x0 + w / 2 - 60, y + 4, 120, 26)
+	draw_rect(b_close, Color(paper, 0.1))
+	draw_rect(b_close, Color(paper, 0.6), false, 1.2)
+	label("CLOSE", v.W / 2, y + 22, paper, 12)

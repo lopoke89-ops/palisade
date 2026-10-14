@@ -36,6 +36,20 @@ var Df: Dictionary = Pal.DIFF.normal
 var events: Array = []   # {k:'sfx'|'emit'|'flt'|'toast'|'flash'|'shake', ...}: drained by the client each frame
 var charges: Array = []
 var fires: Array = []
+var rockets: Array = []
+var shot_seq := 0
+const BOSSES := {"demolisher": {"name": "THE DEMOLISHER", "hp": 620.0, "speed": 1.05, "scan": 9.0, "bounty": 40, "col": "#ff8a3a", "look": {"body": "#4b4a38", "vest": "#23241c", "pants": "#26241e", "head": "#a98262", "helmet": "#1f201a", "pack": "#3a3a28", "bandana": "#c8551e", "weapon": "rpg"}, "intro": "He fires slow rockets. A red line shows where the next one goes: step out of it."}, "butcher": {"name": "THE BUTCHER", "hp": 760.0, "speed": 2.05, "scan": 8.0, "bounty": 40, "col": "#ff4a3a", "look": {"body": "#5c1d18", "vest": "#2a0c09", "pants": "#221412", "head": "#9c7456", "helmet": "#3a0f0c", "bandana": "#1a0a08", "weapon": "sword"}, "intro": "A blade and a temper. A red lane means he is about to charge down it: get out of the lane."}, "storm": {"name": "THE STORMCALLER", "hp": 540.0, "speed": 1.2, "scan": 12.5, "bounty": 40, "col": "#7fe0ff", "look": {"body": "#26323f", "vest": "#10171e", "pants": "#1a2028", "head": "#b0896a", "boonie": "#1b2530", "glow": "#7fe0ff", "weapon": "zap"}, "intro": "A lightning rifle that jumps between people. A blue line means a shot is coming: break line of sight, and spread out."}}
+const BOSS_WEAK := {"demolisher": "ap", "storm": "blast", "butcher": "shock"}
+const BOSS_ORDER := ["butcher", "demolisher", "storm"]
+const WEAK_BONUS := 1.35
+const BOSS_HP := 1.25
+const ABIL_ROCKET := {"stock": 5, "refill": 2, "cd": 1.5, "speed": 11.0, "range": 12.0, "R": 1.9, "power": 1.5}
+const BOUNTY := {"rifle": 4, "gren": 7, "breach": 6, "shield": 6, "medic": 5, "spotter": 5, "fire": 6}
+const CORE_FIX := {"hp": 50.0, "cost": 25}
+const DELL_UP := {"name": "DELGADO", "what": "Shared damage, reach and fire rate up to +75%.", "cost": [30, 60, 100, 150, 200, 270, 350, 450]}
+const AMMO := [{"id": "ap", "name": "ARMOR PIERCING", "what": "Damage through a frontal riot shield", "col": "#c8e0f2"}, {"id": "fire", "name": "INCENDIARY", "what": "Burns for 10 HP/s; hits refresh the timer", "col": "#ff8244"}, {"id": "blast", "name": "EXPLOSIVE", "what": "Small enemy-only blast on impact", "col": "#ffc05a"}, {"id": "shock", "name": "LIGHTNING", "what": "Slows the target and nearby enemies", "col": "#81dafa"}]
+const UPG := [{"k": "d", "name": "DAMAGE", "what": "Bullet damage up to +100%", "cost": [20, 45, 80, 130, 175, 225, 290, 370]}, {"k": "r", "name": "FIRE RATE", "what": "Shot cooldown up to 50% shorter", "cost": [20, 45, 80, 130, 175, 225, 290, 370]}, {"k": "g", "name": "RANGE", "what": "Reach up to +60%; bullet speed up to +50%", "cost": [15, 35, 60, 100, 140, 185, 240, 310]}, {"k": "a", "name": "ARMOR", "what": "Maximum health up to +75%", "cost": [20, 45, 80, 130, 175, 225, 290, 370]}, {"k": "n", "name": "GRENADES", "what": "Up to +5 grenades and +40% blast power", "cost": [15, 35, 60, 100, 140, 185, 240, 310]}]
+const ARM_MAX := 8
 const ENAMES := {"rifle": ["rifleman", "riflemen"], "gren": ["grenadier", "grenadiers"], "breach": ["breacher", "breachers"], "shield": ["shieldbearer", "shieldbearers"], "medic": ["field medic", "field medics"], "spotter": ["spotter", "spotters"], "fire": ["firebrand", "firebrands"]}
 const QM_RESERVE := [16, 8, 8]
 const DELL_GUN := {"dmg": 6.0, "cd": 0.8, "spread": 0.2, "range": 6.0, "speed": 24.0, "pellets": 5, "fall": [2.5, 6.0, 0.55]}
@@ -110,6 +124,7 @@ func new_game(seed_v: int = -1, diff: String = "normal") -> void:
 	sacks.clear()
 	charges.clear()
 	fires.clear()
+	rockets.clear()
 	events.clear()
 	# THE YARD (06b-maps.js MAPS.yard.lay, offset 0,0)
 	core = {"i": 4, "j": 11, "hp": float(Df.core), "max": float(Df.core), "flash": 0.0}
@@ -144,11 +159,14 @@ func new_game(seed_v: int = -1, diff: String = "normal") -> void:
 
 func make_player(id: int) -> Dictionary:
 	var C: Dictionary = Pal.SOLDIER
-	return {"id": id, "name": "YOU", "cls": "soldier", "C": C, "gun": C.gun, "x": 0.0, "y": 0.0, "hp": C.hp, "max": C.hp,
+	var p := {"id": id, "name": "YOU", "cls": "soldier", "C": C, "gun": C.gun, "x": 0.0, "y": 0.0, "hp": C.hp, "max": C.hp,
 		"alive": true, "downed": false, "revive": 0.0, "rt": 0.0, "mats": [24, 0, 0], "cap": C.cap.duplicate(),
 		"nades": C.nades, "maxN": C.nades, "ncd": 0.0, "blast": C.blast, "cd": 0.0, "bcd": 0.0, "gt": 0.0, "bLeft": 0,
 		"hurt": 9.0, "flash": 0.0, "walk": 0.0, "face": Vector2(1, 0), "aim": Vector2(1, 0), "fire_in": false,
-		"up_d": 0, "sal": 0, "kills": 0, "move_dir": Vector2(1, 0), "markT": 0.0}
+		"up": {"d": 0, "r": 0, "g": 0, "a": 0, "n": 0}, "sal": 0, "kills": 0, "move_dir": Vector2(1, 0), "markT": 0.0, "stun": 0.0,
+		"rk": ABIL_ROCKET.stock, "rkCd": 0.0, "ammoEq": [""], "trT": 0.0}
+	refit(p)
+	return p
 
 
 # ---------------------------------------------------------------- pathing
@@ -389,17 +407,22 @@ func hurt_ally(a: Dictionary, d: float) -> void:
 		hurt_player(a, d)
 
 
-func hurt_enemy(e: Dictionary, d: float, own = null) -> void:
+func hurt_enemy(e: Dictionary, d: float, own = null, quiet: bool = false) -> void:
 	e.hp -= d
-	e.flash = 0.08
-	emit(e.x, e.y, "blood")
+	if not quiet:
+		e.flash = 0.08
+		emit(e.x, e.y, "blood")
 	if e.hp <= 0 and not e.get("dead", false):
 		e.dead = true
 		game.stats.dropped += 1
 		sfx("drop", e.x, e.y)
 		emit(e.x, e.y, "blood", 6)
-		if own is int and own == player.id:
-			player.kills += 1
+		if e.type == "boss":
+			boss_down(e, own)
+			if own is int and own == player.id:
+				player.kills += 1
+		else:
+			award(own, e)
 
 
 func hurt_stake(d: float) -> void:
@@ -409,7 +432,7 @@ func hurt_stake(d: float) -> void:
 	emit(core.i + 0.5, core.j + 0.5, "spark")
 
 
-func explode(x: float, y: float, R: float = 1.65, power: float = 1.0, own = null) -> void:
+func explode(x: float, y: float, R: float = 1.65, power: float = 1.0, own = null, raid: bool = false) -> void:
 	sfx("bigboom" if power > 1.2 else "boom", x, y)
 	ev({"k": "shake", "x": x, "y": y, "amt": 9.0 * power})
 	ev({"k": "flash", "x": x, "y": y, "life": 0.4, "r": R})
@@ -433,10 +456,11 @@ func explode(x: float, y: float, R: float = 1.65, power: float = 1.0, own = null
 	var fc: float = fall.call(hdist(x, y, core.i + 0.5, core.j + 0.5))
 	if fc > 0:
 		hurt_stake(48.0 * fc * power)
-	for e in enemies:
-		var f: float = fall.call(hdist(x, y, e.x, e.y))
-		if f > 0:
-			hurt_enemy(e, 62.0 * f * power, own)
+	if not raid:   # a raider's rocket or charge doesn't hurt raiders
+		for e in enemies:
+			var f: float = fall.call(hdist(x, y, e.x, e.y))
+			if f > 0:
+				hurt_enemy(e, 62.0 * f * power, own)
 	for a in allies():
 		if not a.alive:
 			continue
@@ -597,7 +621,12 @@ func throw_nade(p: Dictionary, tx: float, ty: float) -> void:
 
 func shoot(p: Dictionary, G: Dictionary, late: float) -> void:
 	var a := atan2(p.aim.y, p.aim.x)
+	shot_seq += 1
 	fire(p, a + (rnd() - 0.5) * G.spread, 0, G, late)
+	var b: Dictionary = bullets[bullets.size() - 1]
+	b.shot = shot_seq
+	if p.has("ammoEq") and p.ammoEq[0] != "":
+		b.ammo = [[p.ammoEq[0], 0]]   # skill rank 0: the account skill tree is a later phase
 
 
 func fire(from: Dictionary, ang: float, team: int, gun: Dictionary, late: float = 0.0, quiet: bool = false) -> void:
@@ -631,7 +660,7 @@ func update(dt: float, ctl: Dictionary = {}) -> void:
 			if game.spawnT <= 0:
 				spawn_enemy(game.queue.pop_front())
 				game.spawnT = game.spawnGap
-		elif enemies.is_empty() and charges.is_empty():
+		elif enemies.is_empty() and charges.is_empty() and rockets.is_empty():
 			qm.completedRaids = maxi(qm.completedRaids, game.wave)
 			if game.wave >= game.waves:
 				end_game(true)
@@ -649,6 +678,7 @@ func update(dt: float, ctl: Dictionary = {}) -> void:
 	update_bullets(dt)
 	update_lobs(dt)
 	update_charges(dt)
+	update_rockets(dt)
 	update_fires(dt)
 	update_walls(dt)
 	update_nodes(dt)
@@ -661,13 +691,15 @@ func update(dt: float, ctl: Dictionary = {}) -> void:
 func control_local(dt: float, ctl: Dictionary) -> void:
 	var p := player
 	p.fire_in = false
+	p.rkCd = maxf(0.0, p.rkCd - dt)
+	p.stun = maxf(0.0, p.stun - dt)
 	if not p.alive:
 		return
 	var mv: Vector2 = ctl.get("move", Vector2.ZERO)
 	var mag := minf(1.0, mv.length())
 	if mag > 0.12:
 		var d := mv.normalized()
-		var sp: float = 3.3 * mag * p.C.spd
+		var sp: float = 3.3 * mag * p.C.spd * (0.45 if p.stun > 0 else 1.0)
 		move_ent(p, d.x * sp * dt, d.y * sp * dt, true)
 		p.walk += dt * mag * 10.0
 		p.move_dir = d
@@ -805,7 +837,7 @@ func update_qm(dt: float) -> void:
 		return
 	if q.hurt > 5:
 		q.hp = minf(q.max, q.hp + 3 * dt)
-	var DG: Dictionary = DELL_GUN
+	var DG: Dictionary = dell_gun()
 	if q.scanT <= 0:
 		q.scanT = 0.2
 		q.foe = null
@@ -940,6 +972,7 @@ func start_build(dur: float) -> void:
 	player.sal += pay
 	var p := player
 	p.nades = maxi(p.nades, p.maxN)
+	p.rk = mini(ABIL_ROCKET.stock, p.rk + ABIL_ROCKET.refill)   # refillAbilities
 	if p.downed:
 		p.alive = true
 		p.downed = false
@@ -966,13 +999,16 @@ func start_raid() -> void:
 	game.wave += 1
 	game.phase = "raid"
 	var k: int = game.wave
-	var W := wave_mix(k, 1, Df.extra)
+	var boss := boss_of(k)
+	var W := wave_mix(k, 1, Df.extra, boss != "")
 	var q: Array = []
 	for n in W.rifle:
 		q.append("rifle")
 	for t in ["gren", "fire", "shield", "medic", "spotter", "breach"]:
 		for n in W[t]:
 			q.insert(1 + floori(rnd() * q.size()), t)
+	if boss != "":
+		q.insert(maxi(2, floori(q.size() * 0.45)), "boss:" + boss)
 	game.queue = q
 	game.spawnT = 0.8
 	game.spawnGap = 1.1
@@ -981,7 +1017,12 @@ func start_raid() -> void:
 	for t in ["gren", "breach", "shield", "medic", "spotter", "fire"]:
 		if W[t] > 0:
 			bits.append("%d %s" % [W[t], ENAMES[t][1] if W[t] > 1 else ENAMES[t][0]])
-	toast("RAID %d" % k, "%s coming over the east fence." % ", ".join(bits))
+	var title := "RAID %d" % k
+	var tail := ""
+	if boss != "":
+		title += " · BOSS"
+		tail = " and " + BOSSES[boss].name
+	toast(title, "%s%s coming over the east fence." % [", ".join(bits), tail])
 
 
 func spawn_tile() -> Array:
@@ -1009,6 +1050,9 @@ func spawn_tile() -> Array:
 
 
 func spawn_enemy(type: String) -> void:
+	if type.begins_with("boss:"):
+		spawn_boss(type.substr(5))
+		return
 	var t := spawn_tile()
 	if t.is_empty():
 		return
@@ -1047,6 +1091,7 @@ func end_game(win: bool) -> void:
 	lobs.clear()
 	charges.clear()
 	fires.clear()
+	rockets.clear()
 	toast("VICTORY" if win else "THE STAKE FELL", "Every raid broken." if win else "They got through.")
 
 
@@ -1059,6 +1104,16 @@ func update_enemies(dt: float) -> void:
 	for e in enemies:
 		if e.dead:
 			continue
+		if e.get("burnT", 0.0) > 0:
+			var tick := minf(dt, e.burnT)
+			e.burnT = maxf(0.0, e.burnT - dt)
+			hurt_enemy(e, 10.0 * tick, e.burnOwn, true)
+			if e.dead:
+				continue
+		if e.get("slowT", 0.0) > 0:
+			e.slowT = maxf(0.0, e.slowT - dt)
+			if e.slowT == 0:
+				e.slowPct = 0.0
 		e.cd = maxf(e.cd - dt, -dt)
 		e.flash = maxf(0.0, e.flash - dt)
 		e.scanT -= dt
@@ -1079,7 +1134,7 @@ func update_enemies(dt: float) -> void:
 		if e.scanT <= 0:
 			e.scanT = 0.2
 			e.foe = null
-			var bd: float = {"gren": 6.5, "spotter": 10.0, "medic": 5.0, "fire": 6.5}.get(e.type, 7.0)
+			var bd: float = BOSSES[e.boss].scan if e.type == "boss" else {"gren": 6.5, "spotter": 10.0, "medic": 5.0, "fire": 6.5}.get(e.type, 7.0)
 			# spotted: riflemen go for the marked soldier first
 			if e.type == "rifle":
 				for a in allies():
@@ -1099,6 +1154,10 @@ func update_enemies(dt: float) -> void:
 			e.foe = null
 		var engaging := false
 		match e.type:
+			"boss":
+				var r := think_boss(e, dt, tgt, move_to)
+				engaging = r[0]
+				move_to = r[1]
 			"rifle":
 				# a spotter's mark tightens their aim a lot (0.2 rad spread down to 0.06) and adds a little range
 				if e.foe != null:
@@ -1273,7 +1332,7 @@ func update_enemies(dt: float) -> void:
 			var dy: float = move_to.y - e.y
 			var l := Vector2(dx, dy).length()
 			if l > 0.02:
-				var s := minf(l, e.speed * dt)
+				var s := minf(l, e.speed * dt * maxf(0.5, 1.0 - (e.get("slowPct", 0.0) if e.get("slowT", 0.0) > 0 else 0.0)))
 				move_ent(e, dx / l * s, dy / l * s, false)
 				e.walk += dt * 9.0
 				if tgt == null and e.foe == null:
@@ -1346,17 +1405,22 @@ func update_bullets(dt: float) -> void:
 						break
 			if b.team == 0:
 				for e in enemies:
-					if not e.dead and Vector2(e.x - b.x, e.y - b.y).length() < 0.34:
+					if not e.dead and Vector2(e.x - b.x, e.y - b.y).length() < (0.55 if e.get("big", false) else 0.34):
 						# a shieldbearer's shield covers his front (about 130°): the round sparks off it
+						var shield := 1.0
 						if e.type == "shield" and not e.shieldBroken:
 							var l := sp if sp > 0 else 1.0
 							if -(b.vx * e.aim.x + b.vy * e.aim.y) / l > 0.42:
 								shield_bullet_hit(e, b)
-								emit(b.x, b.y, "spark", 2, 2)
-								sfx("shieldhit", b.x, b.y)
-								b.dead = true
-								break
-						hurt_enemy(e, bdmg(b), b.own)
+								var ap: bool = b.has("ammo") and b.ammo.any(func(am): return am[0] == "ap")
+								if not ap:
+									emit(b.x, b.y, "spark", 2, 2)
+									sfx("shieldhit", b.x, b.y)
+									b.dead = true
+									break
+								shield = [0.5, 0.6, 0.7, 0.85, 1.0][0]   # armor piercing: half damage through the shield at skill rank 0
+						hurt_enemy(e, bdmg(b) * shield * boss_weak(e, b), b.own)
+						ammo_hit(e, b)
 						b.dead = true
 						break
 			else:
@@ -1444,8 +1508,8 @@ func spawn_near_core() -> Vector2:
 	return Vector2(core.i + 1.5, core.j + 0.5)
 
 
-func wave_mix(k: int, P: int, extra: int) -> Dictionary:
-	var W := {"rifle": maxi(2, 2 + k + extra) + roundi((P - 1) * (1.5 + k * 0.45)),
+func wave_mix(k: int, P: int, extra: int, boss: bool = false) -> Dictionary:
+	var W := {"rifle": maxi(2, 2 + k + extra - (2 if boss else 0)) + roundi((P - 1) * (1.5 + k * 0.45)),
 		"gren": maxi(0, k - 1) + ((P - 1) / 3 if k >= 2 else 0),
 		"breach": ((k - 2 + (1 if extra > 0 else 0)) if k >= 3 else 0) + ((P - 1) / 3 if k >= 3 else 0),
 		"fire": (1 + (k - 2) / 3 + (1 if P >= 4 else 0)) if k >= 2 else 0,
@@ -1720,3 +1784,575 @@ func qm_command_job() -> Dictionary:
 	var ci: int = core.i
 	var cj: int = core.j
 	return {"name": "hold", "goal": func(k): return maxi(absi(k % N - ci), absi(k / N - cj)) <= 2 and not solid_tile(k % N, k / N, true), "hold": true}
+
+
+func refit(p: Dictionary) -> void:
+	var G: Dictionary = p.C.gun
+	var U: Dictionary = p.up
+	var gun := G.duplicate()
+	gun.dmg = G.dmg * (1.0 + arm_boost(U.d, 0.2, 0.05))
+	gun.cd = G.cd * (1.0 - arm_boost(U.r, 0.1, 0.025))
+	gun.range = G.range * (1.0 + arm_boost(U.g, 0.12, 0.03))
+	gun.speed = G.speed * (1.0 + arm_boost(U.g, 0.1, 0.025))
+	p.gun = gun
+	var mx := roundf(p.C.hp * (1.0 + arm_boost(U.a, 0.15, 0.0375)))
+	if mx > p.max:
+		p.hp += mx - p.max
+	p.max = mx
+	if p.hp > p.max:
+		p.hp = p.max
+	p.maxN = p.C.nades + mini(U.n, 4) + (1 if U.n >= 8 else 0)
+	p.blast = p.C.blast * (1.0 + arm_boost(U.n, 0.08, 0.02))
+	p.up_d = U.d
+
+
+func near_stake(p: Dictionary) -> bool:
+	return hdist(p.x, p.y, core.i + 0.5, core.j + 0.5) < 2.7
+
+
+func shop_open(p: Dictionary) -> bool:
+	return p.alive and game.phase == "build"
+
+
+func can_shop(p: Dictionary) -> bool:
+	return shop_open(p) and near_stake(p)
+
+
+func buy_upgrade(p: Dictionary, k: String) -> bool:
+	if k == "core":
+		return repair_core(p)
+	if k == "dell":
+		return buy_dell(p)
+	var U = null
+	for x in UPG:
+		if x.k == k:
+			U = x
+	if U == null or not can_shop(p):
+		return false
+	var t: int = p.up[k]
+	if t >= ARM_MAX or p.sal < U.cost[t]:
+		return false
+	p.sal -= U.cost[t]
+	p.up[k] = t + 1
+	refit(p)
+	if k == "n":
+		p.nades = maxi(p.nades, p.maxN)
+	sfx("restock")
+	return true
+
+
+func core_fix_cost(p: Dictionary) -> int:
+	return ceili(CORE_FIX.cost * p.C.get("repair", 1.0))
+
+
+func repair_core(p: Dictionary) -> bool:
+	var cost := core_fix_cost(p)
+	if not can_shop(p) or core.hp <= 0 or core.hp >= core.max or p.sal < cost:
+		return false   # full stake: nothing to buy, nothing charged
+	var add := minf(CORE_FIX.hp, core.max - core.hp)
+	p.sal -= cost
+	core.hp += add
+	flt(core.i + 0.5, core.j + 0.5, "+%d CORE" % roundi(add), "#8fe0a0")
+	sfx("restock")
+	return true
+
+
+func buy_dell(p: Dictionary) -> bool:
+	var L: int = game.get("dellLv", 0)
+	if not can_shop(p) or L >= ARM_MAX or p.sal < DELL_UP.cost[L]:
+		return false
+	p.sal -= DELL_UP.cost[L]
+	game.dellLv = L + 1
+	toast("DELGADO · LEVEL %d" % (L + 1), "You upgraded Delgado's shotgun: +%d%% damage, range and fire rate." % roundi(arm_boost(L + 1, 0.15, 0.0375) * 100))
+	sfx("restock")
+	return true
+
+
+func buy_ammo(p: Dictionary, id: String) -> bool:
+	if not can_shop(p):
+		return false
+	if p.ammoEq[0] == id:
+		return false
+	var cost := 75 if p.ammoEq[0] != "" else 150
+	if p.sal < cost:
+		return false
+	p.sal -= cost
+	p.ammoEq[0] = id
+	sfx("restock")
+	return true
+
+
+func dell_gun() -> Dictionary:
+	var L: int = game.get("dellLv", 0)
+	var m := 1.0 + arm_boost(L, 0.15, 0.0375)
+	var G: Dictionary = DELL_GUN
+	return {"dmg": G.dmg * m, "cd": G.cd / m, "spread": G.spread, "range": G.range * m, "speed": G.speed * (1.0 + arm_boost(L, 0.1, 0.025)),
+		"pellets": G.pellets, "fall": [G.fall[0] * m, G.fall[1] * m, G.fall[2]]}
+
+
+func award(own, e: Dictionary) -> void:
+	if own is String and own == "dell":
+		player.sal += 1
+		return
+	if not (own is int and own == player.id):
+		return
+	var v: int = BOUNTY.get(e.type, 4)
+	player.sal += v
+	player.kills += 1
+	flt(e.x, e.y - 0.2, "+%d" % v, "#e2b436")
+
+
+func ammo_hit(e: Dictionary, b: Dictionary) -> void:
+	if not b.has("ammo"):
+		return
+	var own = b.own
+	var seen: Array = e.get("ammoSeen", [])
+	if seen.has(b.shot):
+		return
+	seen.append(b.shot)
+	if seen.size() > 128:
+		seen.pop_front()
+	e.ammoSeen = seen
+	for am in b.ammo:
+		var id: String = am[0]
+		var rank: int = am[1]
+		if id == "fire" and not e.dead:
+			e.burnT = maxf(e.get("burnT", 0.0), 3.0 + 0.5 * rank)
+			e.burnOwn = own
+			emit(e.x, e.y, "fire")
+		elif id == "blast":
+			if game.time - e.get("ammoBlast", -1e9) < 0.4:
+				continue
+			e.ammoBlast = game.time
+			for o in enemies:
+				if not o.dead:
+					var d := hdist(e.x, e.y, o.x, o.y)
+					if d < 1.25:
+						hurt_enemy(o, (8.0 + 2 * rank) * (1.0 if d < 0.35 else 1.0 - (d - 0.35) / 0.9), own)
+			emit(e.x, e.y, "spark")
+			ev({"k": "flash", "x": e.x, "y": e.y, "life": 0.14, "r": 0.7})
+		elif id == "shock":
+			var near: Array = enemies.filter(func(o): return not is_same(o, e) and not o.dead and hdist(e.x, e.y, o.x, o.y) <= 3)
+			near.sort_custom(func(a, c): return hdist(a.x, a.y, e.x, e.y) < hdist(c.x, c.y, e.x, e.y))
+			near = near.slice(0, 3)
+			near.push_front(e)
+			for o in near:
+				if not o.dead:
+					o.slowT = maxf(o.get("slowT", 0.0), 2.0)
+					o.slowPct = maxf(o.get("slowPct", 0.0), minf(0.2 if o.type == "boss" else 1.0, 0.25 + 0.05 * rank))
+					emit(o.x, o.y, "spark")
+
+
+func boss_weak(e: Dictionary, b: Dictionary) -> float:
+	if e.type != "boss" or not b.has("ammo"):
+		return 1.0
+	var w: String = BOSS_WEAK.get(e.boss, "")
+	for am in b.ammo:
+		if am[0] == w:
+			if not e.get("weakSeen", false):
+				e.weakSeen = true
+				flt(e.x, e.y - 0.6, "WEAK POINT", "#ffe08a")
+			return WEAK_BONUS
+	return 1.0
+
+
+func use_rocket(p: Dictionary, tx: float, ty: float) -> void:
+	var R: Dictionary = ABIL_ROCKET
+	if not p.alive or p.rk <= 0 or p.rkCd > 0 or game.phase == "over":
+		sfx("deny")
+		return
+	var dx: float = tx - p.x
+	var dy: float = ty - p.y
+	if Vector2(dx, dy).length() < 0.2:
+		dx = p.aim.x
+		dy = p.aim.y
+	var l := Vector2(dx, dy).length()
+	if l == 0:
+		l = 1.0
+	rockets.append({"x": p.x + dx / l * 0.6, "y": p.y + dy / l * 0.6, "vx": dx / l * R.speed, "vy": dy / l * R.speed, "d": 0.0, "max": R.range, "pw": R.power, "pl": true, "own": p.id})
+	p.rk -= 1
+	p.rkCd = R.cd
+	sfx("rocket", p.x, p.y)
+	ev({"k": "flash", "x": p.x + dx / l * 0.6, "y": p.y + dy / l * 0.6, "life": 0.14, "r": 1.4})
+
+
+func update_rockets(dt: float) -> void:
+	for r in rockets:
+		var sp := Vector2(r.vx, r.vy).length()
+		var steps := ceili(sp * dt / 0.12)
+		for s in steps:
+			if r.get("dead", false):
+				break
+			r.x += r.vx * dt / steps
+			r.y += r.vy * dt / steps
+			r.d += sp * dt / steps
+			var i := floori(r.x)
+			var j := floori(r.y)
+			var hit: bool = not inb(i, j) or r.d > r.max
+			if not hit:
+				var k := idx(i, j)
+				var n = node_at(i, j)
+				hit = walls[k] != null or k == core_k or (n != null and n.solid)
+			if not hit and r.get("pl", false):
+				for e in enemies:
+					if not e.dead and Vector2(e.x - r.x, e.y - r.y).length() < (0.6 if e.get("big", false) else 0.4):
+						hit = true
+						break
+			elif not hit:
+				for a in allies():
+					if a.alive and Vector2(a.x - r.x, a.y - r.y).length() < 0.45:
+						hit = true
+						break
+			if hit:
+				r.dead = true
+				var bx := clampf(r.x - r.vx / sp * 0.2, 0.1, N - 0.1)
+				var by := clampf(r.y - r.vy / sp * 0.2, 0.1, N - 0.1)
+				if r.get("pl", false):
+					explode(bx, by, ABIL_ROCKET.R, r.pw, r.own, false)
+				else:
+					explode(bx, by, 1.7, r.pw, null, true)
+					fires.append({"x": bx, "y": by, "t": 4.0, "max": 4.0, "tick": 0.2, "r": 0.9})
+	rockets = rockets.filter(func(r): return not r.get("dead", false))
+
+
+func boss_of(w: int) -> String:
+	if w % 5 != 0:
+		return ""
+	return BOSS_ORDER[(w / 5 - 1) % BOSS_ORDER.size()]
+
+
+func spawn_boss(key: String) -> Dictionary:
+	var B: Dictionary = BOSSES[key]
+	var x := 0.0
+	var y := 0.0
+	var at: Array = []
+	for s in range(2, 11):   # the Yard's bossAt: the east fence, rows 2-10
+		at.append([N - 1, s])
+	for a in 40:
+		var t: Array = at[floori(rnd() * at.size())]
+		if not solid_tile(t[0], t[1], false):
+			x = t[0] + 0.5
+			y = t[1] + 0.5
+			break
+	if x == 0:
+		var t := spawn_tile()
+		x = t[0] + 0.5 if not t.is_empty() else N - 0.5
+		y = t[1] + 0.5 if not t.is_empty() else 6.5
+	var hp: float = B.hp * BOSS_HP * Df.hp * (1.0 + 0.25 * floori(maxi(0, game.wave - 5) / 15.0))
+	var e := {"id": next_id, "type": "boss", "boss": key, "big": true, "x": x, "y": y, "hp": hp, "max": hp, "cd": 2.2, "walk": 0.0,
+		"aim": Vector2(-1, 0), "flash": 0.0, "speed": B.speed, "scanT": 0.0, "foe": null, "dead": false, "planted": false,
+		"st": 0, "stT": 0.0, "stM": 1.0, "lx": x, "ly": y, "shots": 0, "ab": 3.0, "rage": false, "dbl": false}
+	next_id += 1
+	enemies.append(e)
+	sfx("horn")
+	ev({"k": "shake", "x": x, "y": y, "amt": 8.0})
+	toast(B.name, B.intro)
+	return e
+
+
+func boss_down(e: Dictionary, own) -> void:
+	var B: Dictionary = BOSSES[e.boss]
+	var mine: bool = own is int and own == player.id
+	var share := 15 if mine else 20
+	player.sal += B.bounty if mine else share
+	flt(e.x, e.y - 0.4, ("+%d SALVAGE" % B.bounty) if mine else ("+%d SALVAGE EACH" % share), "#e2b436")
+	emit(e.x, e.y, "fire", 13)
+	emit(e.x, e.y, "spark", 13)
+	ev({"k": "shake", "x": e.x, "y": e.y, "amt": 11.0})
+	sfx("bigboom", e.x, e.y)
+	toast("%s IS DOWN" % B.name, ("You landed it: +%d salvage." % B.bounty) if mine else ("+%d salvage each." % share))
+
+
+func think_boss(e: Dictionary, dt: float, tgt, mv) -> Array:
+	match e.boss:
+		"demolisher":
+			return _think_demolisher(e, dt, tgt, mv)
+		"storm":
+			return _think_storm(e, dt, tgt, mv)
+	return _think_butcher(e, dt, tgt, mv)
+
+
+func _think_demolisher(e: Dictionary, dt: float, tgt, mv) -> Array:
+	if e.st != 0:
+		e.stT -= dt
+		_aim_at(e, e.lx, e.ly)
+		if e.stT <= 0:
+			var a := atan2(e.ly - e.y, e.lx - e.x)
+			var fan: Array = [-0.3, 0.0, 0.3] if e.st == 2 else [0.0]
+			e.st = 0
+			e.shots += 1
+			for o in fan:
+				rockets.append({"x": e.x + cos(a + o) * 0.7, "y": e.y + sin(a + o) * 0.7, "vx": cos(a + o) * 4.2, "vy": sin(a + o) * 4.2, "d": 0.0, "max": 12.0, "pw": 1.15 * Df.dmg})
+			sfx("rocket", e.x, e.y)
+			ev({"k": "flash", "x": e.x + cos(a) * 0.7, "y": e.y + sin(a) * 0.7, "life": 0.14, "r": 1.5})
+			e.cd = 2.4 + rnd() * 0.8
+		return [true, null]
+	var t = Vector2(e.foe.x, e.foe.y) if e.foe != null else (tgt if tgt != null else look_ahead(e))
+	if t != null and e.cd <= 0 and hdist(t.x, t.y, e.x, e.y) < 10:
+		e.st = 2 if e.shots % 3 == 2 else 1
+		e.stT = 0.95
+		e.stM = 0.95
+		e.lx = clampf(t.x, 0.3, N - 0.3)
+		e.ly = clampf(t.y, 0.3, N - 0.3)
+		sfx("lock", e.x, e.y)
+		return [true, null]
+	return [e.foe != null and d2(e.foe, e) < 7.5, mv]
+
+
+func _think_butcher(e: Dictionary, dt: float, tgt, mv) -> Array:
+	if not e.rage and e.hp < e.max * 0.4:
+		e.rage = true
+		e.speed = BOSSES.butcher.speed * 1.25
+		flt(e.x, e.y - 0.4, "ENRAGED", "#ff4a3a")
+		sfx("horn", e.x, e.y)
+	e.ab -= dt
+	if e.st == 1:
+		e.stT -= dt
+		if e.foe != null:
+			_aim_at(e, e.foe.x, e.foe.y)
+		if e.stT <= 0:
+			e.st = 0
+			_blade_slash(e)
+			e.cd = 0.75 if e.rage else 1.05
+		return [true, null]
+	if e.st == 2:
+		e.stT -= dt
+		_aim_at(e, e.lx, e.ly)
+		if e.stT <= 0:
+			var a := atan2(e.ly - e.y, e.lx - e.x)
+			e.st = 3
+			e.stT = 0.72
+			e.stM = 0.72
+			e.cvx = cos(a) * 9
+			e.cvy = sin(a) * 9
+			e.hit = []
+			sfx("slash", e.x, e.y)
+		return [true, null]
+	if e.st == 3:
+		e.stT -= dt
+		var stop: bool = e.stT <= 0
+		var move_dt: float = dt * (1.0 - (e.get("slowPct", 0.0) if e.get("slowT", 0.0) > 0 else 0.0))
+		for s in 3:
+			if stop:
+				break
+			var nx: float = e.x + e.cvx * move_dt / 3
+			var ny: float = e.y + e.cvy * move_dt / 3
+			var i := floori(nx)
+			var j := floori(ny)
+			var n = node_at(i, j)
+			if not inb(i, j) or (n != null and n.solid):
+				stop = true
+				break
+			var k := idx(i, j)
+			if k == core_k:
+				hurt_stake(40.0 * Df.dmg)
+				ev({"k": "shake", "x": nx, "y": ny, "amt": 8.0})
+				stop = true
+				break
+			if walls[k] != null:
+				damage_wall(k, 150.0 * Pal.MAT[walls[k].mat].blast)
+				ev({"k": "shake", "x": nx, "y": ny, "amt": 6.0})
+				if walls[k] != null:
+					stop = true
+					break
+			e.x = nx
+			e.y = ny
+			for a in allies():
+				if a.alive and not e.hit.any(func(h): return is_same(h, a)) and Vector2(a.x - e.x, a.y - e.y).length() < 0.62:
+					e.hit.append(a)
+					hurt_ally(a, 32.0 * Df.dmg)
+					var l := Vector2(e.cvx, e.cvy).length()
+					var sd := 1.0 if ((a.x - e.x) * -e.cvy + (a.y - e.y) * e.cvx) >= 0 else -1.0
+					move_ent(a, -e.cvy / l * 0.55 * sd, e.cvx / l * 0.55 * sd, true)
+					ev({"k": "shake", "x": a.x, "y": a.y, "amt": 6.0})
+		e.walk += dt * 18
+		if rnd() < 0.5:
+			emit(e.x, e.y, "dust")
+		if stop:
+			e.st = 0
+			e.ab = 3.5 if e.rage else 5.5
+			e.cd = 0.45
+		return [true, null]
+	var f = e.foe
+	if f != null:
+		var d := d2(f, e)
+		if d < 1.15 and e.cd <= 0:
+			e.st = 1
+			e.stT = 0.28 if e.rage else 0.4
+			e.stM = e.stT
+			_aim_at(e, f.x, f.y)
+			sfx("lock", e.x, e.y)
+			return [true, null]
+		if d > 2.4 and d < 7 and e.ab <= 0:
+			var a := _aim_at(e, f.x, f.y)
+			e.st = 2
+			e.stT = 0.8
+			e.stM = 0.8
+			e.lx = clampf(e.x + cos(a) * 6.5, 0.2, N - 0.2)
+			e.ly = clampf(e.y + sin(a) * 6.5, 0.2, N - 0.2)
+			sfx("charge", e.x, e.y)
+			return [true, null]
+		_aim_at(e, f.x, f.y)
+		return [false, null if d < 0.85 else Vector2(f.x, f.y)]   # straight at you
+	if tgt != null and hdist(tgt.x, tgt.y, e.x, e.y) < 1.35:
+		_aim_at(e, tgt.x, tgt.y)
+		if e.cd <= 0:
+			e.cd = 0.9
+			var k := idx(floori(tgt.x), floori(tgt.y))
+			if walls[k] != null:
+				damage_wall(k, 70.0 * Pal.MAT[walls[k].mat].blast)
+			elif k == core_k:
+				hurt_stake(20.0 * Df.dmg)
+			sfx("slash", e.x, e.y)
+			ev({"k": "slash", "x": e.x, "y": e.y, "ax": e.aim.x, "ay": e.aim.y})
+		return [true, null]
+	return [false, mv]
+
+
+func _blade_slash(e: Dictionary) -> void:
+	var a0 := atan2(e.aim.y, e.aim.x)
+	var hit := false
+	for a in allies():
+		if not a.alive:
+			continue
+		var dx: float = a.x - e.x
+		var dy: float = a.y - e.y
+		if Vector2(dx, dy).length() > 1.5:
+			continue
+		var da := absf(atan2(dy, dx) - a0)
+		if da > PI:
+			da = TAU - da
+		if da < 1.2:
+			hurt_ally(a, 28.0 * Df.dmg)
+			hit = true
+	sfx("slash", e.x, e.y)
+	ev({"k": "slash", "x": e.x, "y": e.y, "ax": e.aim.x, "ay": e.aim.y})
+	if hit:
+		ev({"k": "shake", "x": e.x, "y": e.y, "amt": 5.0})
+
+
+func _think_storm(e: Dictionary, dt: float, tgt, mv) -> Array:
+	if e.st != 0:
+		e.stT -= dt
+		if e.stT > 0.4 and e.foe != null and e.foe.alive:
+			e.lx = e.foe.x
+			e.ly = e.foe.y
+		_aim_at(e, e.lx, e.ly)
+		if e.stT <= 0:
+			_lightning(e)
+			if e.hp < e.max * 0.5 and not e.dbl:
+				e.dbl = true
+				e.stT = 0.5
+				e.stM = 0.5
+				sfx("charge", e.x, e.y)
+			else:
+				e.st = 0
+				e.dbl = false
+				e.cd = 3.0 + rnd() * 0.8
+		return [true, null]
+	var f = e.foe
+	if f != null and e.cd <= 0:
+		e.st = 1
+		e.stT = 1.15
+		e.stM = 1.15
+		e.lx = f.x
+		e.ly = f.y
+		sfx("charge", e.x, e.y)
+		return [true, null]
+	if f != null:
+		var d := d2(f, e)
+		_aim_at(e, f.x, f.y)
+		if d < 4.5:
+			var dx: float = e.x - f.x
+			var dy: float = e.y - f.y
+			var l := Vector2(dx, dy).length()
+			if l == 0:
+				l = 1.0
+			return [false, Vector2(clampf(e.x + dx / l, 0.5, N - 0.5), clampf(e.y + dy / l, 0.5, N - 0.5))]
+		return [true, null]
+	if tgt != null:
+		_aim_at(e, tgt.x, tgt.y)
+		if e.cd <= 0:
+			e.st = 1
+			e.stT = 0.8
+			e.stM = 0.8
+			e.lx = tgt.x
+			e.ly = tgt.y
+			sfx("charge", e.x, e.y)
+		return [true, null]
+	return [false, mv]
+
+
+func _lightning(e: Dictionary) -> void:
+	var a := atan2(e.ly - e.y, e.lx - e.x)
+	var cx := cos(a)
+	var cy := sin(a)
+	var x: float = e.x
+	var y: float = e.y
+	var hit_a = null
+	var last := -1
+	var d := 0.5
+	while d < 12.5:
+		x = e.x + cx * d
+		y = e.y + cy * d
+		var i := floori(x)
+		var j := floori(y)
+		if not inb(i, j):
+			break
+		var k := idx(i, j)
+		if k == core_k:
+			hurt_stake(30.0 * Df.dmg)
+			break
+		var n = node_at(i, j)
+		if n != null and n.solid:
+			break
+		var w = walls[k]
+		if w != null and k != last:
+			last = k
+			var m: int = w.mat
+			damage_wall(k, 95.0 if m == 0 else 40.0 + 60.0 * Pal.MAT[m].bullet)
+			if m > 0 and walls[k] != null:
+				break
+		for al in allies():
+			if al.alive and Vector2(al.x - x, al.y - y).length() < 0.42:
+				hit_a = al
+				break
+		if hit_a != null:
+			break
+		d += 0.1
+	var pts: Array = [Vector2(e.x + cx * 0.5, e.y + cy * 0.5), Vector2(hit_a.x, hit_a.y) if hit_a != null else Vector2(x, y)]
+	if hit_a != null:
+		hurt_ally(hit_a, 40.0 * Df.dmg)
+		_stun(hit_a, 0.9)
+		var done: Array = [hit_a]
+		var from: Dictionary = hit_a
+		for c in 2:
+			var nb = null
+			var nd := 2.6
+			for o in allies():
+				if o.alive and not done.any(func(h): return is_same(h, o)):
+					var dd := d2(o, from)
+					if dd < nd:
+						nd = dd
+						nb = o
+			if nb == null:
+				break
+			done.append(nb)
+			hurt_ally(nb, 18.0 * Df.dmg)
+			_stun(nb, 0.5)
+			pts.append(Vector2(nb.x, nb.y))
+			from = nb
+	ev({"k": "zap", "pts": pts})
+	sfx("zap", x, y)
+	ev({"k": "shake", "x": x, "y": y, "amt": 7.0})
+	ev({"k": "flash", "x": x, "y": y, "life": 0.2, "r": 1.7})
+	emit(x, y, "spark", 8)
+
+
+func _stun(a: Dictionary, t: float) -> void:
+	if not is_same(a, qm):
+		a.stun = maxf(a.get("stun", 0.0), t)
+
+## armBoost: the first four levels add oldStep each, the next four newStep each
+static func arm_boost(lv: int, old_step: float, new_step: float) -> float:
+	return old_step * mini(4, lv) + new_step * maxi(0, lv - 4)
