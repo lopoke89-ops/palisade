@@ -12,6 +12,11 @@ func _init() -> void:
 	await process_frame
 	main.settings.data.setup = PalSettings.new().data.setup
 	main.start_game()   # out of the menu's demo yard and into a game
+	var wear := OS.get_environment("PAL_COS")   # "skin,hat": dress the soldier for the shot (not saved)
+	if wear != "":
+		main.locker.persist = false
+		main.locker.eq.skin = wear.get_slice(",", 0)
+		main.locker.eq.hat = wear.get_slice(",", 1)
 	var s: Sim = main.sim
 	# a short wall line east of the stake, one brick, and a door
 	s.player.mats = [40, 8, 0]

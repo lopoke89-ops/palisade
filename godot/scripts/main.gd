@@ -13,6 +13,8 @@ var sk_reset := Rect2()
 var run_sp := -1
 var locker: PalLocker   # cosmetics, cases and shards (18-cosmetics.js)
 var last_reward := {}   # what the run that just ended paid
+var looks := {}   # outfit|class -> wardrobe look
+var pmotion := {}   # player id -> presentation motion
 var mouse_pulls := 0   # left-button presses so far (the bolt and pump guns buffer a click)
 var draw_alpha := 1.0   # people drawn faded (stealth) multiply their colours by this
 var next_cls := "soldier"   # the next game's setup (from Match Setup)
@@ -791,14 +793,21 @@ func _draw_scene() -> void:
 					Figure.downed(self, q.x, q.y, QM_LOOK, q.revive / 2.0, "DELGADO · DOWN")
 			5:
 				var p: Dictionary = it[2]
-				var o: Dictionary = class_look(p.cls)
+				var o: Dictionary = player_look(p)
 				if p.alive:
-					o.merge({"aim": p.aim, "walk": p.walk, "flash": p.flash > 0, "faded": p.stl > 0}, true)
+					o.merge({"aim": p.aim, "flash": p.flash > 0, "faded": p.stl > 0}, true)
+					o.merge(_motion(p), true)
 					if p.bolt > 0:
 						o.bolt = 1.0 - p.bolt / p.boltT
-					Figure.person(self, p.x, p.y, o)
+					draw_wardrobe(p.x, p.y, o)
 				elif p.downed:
-					Figure.downed(self, p.x, p.y, o, p.revive / 2.2, "DOWN · UNTIL THE RAID IS BROKEN" if p.rt > 1e5 else "DOWN · %d" % ceili(p.rt))
+					var tag := "DOWN · UNTIL THE RAID IS BROKEN" if p.rt > 1e5 else "DOWN · %d" % ceili(p.rt)
+					var sc := iso(p.x, p.y)
+					o.merge({"downed": true, "nogun": true}, true)
+					Wardrobe.draw(cv, o, 0.7, sim.game.time, v.u * Figure.FIG, sc.x, sc.y, 0, draw_alpha)
+					label(tag, sc.x, sc.y - 20 * v.u, c("#d65a3a"), 10)
+					if p.revive > 0:
+						cv.draw_arc(Vector2(sc.x, sc.y - 10 * v.u), 10 * v.u, -PI / 2, -PI / 2 + TAU * clampf(p.revive / 2.2, 0, 1), 32, c("#a9bccb"), 3 * v.u)
 			6:
 				var s: Dictionary = it[2]
 				var sc := iso(s.x, s.y)
@@ -1394,6 +1403,57 @@ const LOOK := {
 }
 const QM_LOOK := {"body": "#9e9a78", "vest": "#3d4a52", "pants": "#3a3a33", "head": "#b58f6e", "cap": "#3d4a52", "pack": "#5a4a30", "gl": 14, "weapon": "sg"}
 ## buildLook (16-characters.js) on the default "std" skin: each class's kit and headgear
+## the player's outfit (the locker's equipped skin and headgear) on their class, as a wardrobe look
+func player_look(p: Dictionary) -> Dictionary:
+	var eq: Dictionary = locker.eq if locker and p.id == sim.player.id else PalLocker.DEFAULT_COS
+	var key := "%s|%s|%s" % [eq.get("skin", "std"), eq.get("hat", "class"), p.cls]
+	if not looks.has(key):
+		looks[key] = Wardrobe.look_for(eq, p.cls)
+	return looks[key].duplicate()
+
+
+## render-only gait from how far the soldier actually moved (presentationMotion): phase, weight and lean
+func _motion(p: Dictionary) -> Dictionary:
+	var now: float = sim.game.time
+	var m: Dictionary = pmotion.get(p.id, {})
+	if m.is_empty() or now < m.at or now - m.at > 1:
+		m = {"x": p.x, "y": p.y, "at": now, "moved": now - 1, "weight": 0.0, "strength": 0.0, "phase": 0.0, "dx": 0.0, "dy": 1.0}
+		pmotion[p.id] = m
+	var dt: float = now - m.at
+	if dt > 0:
+		var dx: float = p.x - m.x
+		var dy: float = p.y - m.y
+		var d := sqrt(dx * dx + dy * dy)
+		if d > maxf(0.0001, dt * 0.12) and d < 2:
+			m.phase = fmod(m.phase + d * 3, TAU)
+			m.moved = now
+			m.strength = minf(1, d / dt / 1.4)
+			m.dx = dx / d
+			m.dy = dy / d
+		var target: float = 0.0 if p.downed or not p.alive else (m.strength if now - m.moved < 0.085 else 0.0)
+		m.weight += (target - m.weight) * (1 - exp(-dt / (0.075 if target > 0 else 0.085)))
+		m.x = p.x
+		m.y = p.y
+		m.at = now
+	var dir := Wardrobe.aim_angle(v.world_dir_to_screen(Vector2(m.dx, m.dy))) - Wardrobe.aim_angle(v.world_dir_to_screen(p.aim))
+	return {"walk": m.phase, "gaitWeight": roundf(m.weight * 4) / 4, "gaitDir": roundf(dir / (PI / 4)) * PI / 4}
+
+
+## a figure in the 3D-shaded wardrobe style (players, and anyone wearing a cosmetic), with its outfit effect
+func draw_wardrobe(x: float, y: float, o: Dictionary) -> void:
+	var sc := iso(x, y)
+	var k: float = v.u * Figure.FIG * o.get("big", 1.0)
+	var t: float = sim.game.time
+	var fa := (0.5 if o.get("faded") else 1.0) * draw_alpha
+	if o.get("aura"):
+		CosFx.paint_aura(cv, o.aura, sc.x, sc.y, k, t, fa, "ground")
+	Wardrobe.draw(cv, o, Wardrobe.aim_angle(v.world_dir_to_screen(o.aim)), t, k, sc.x, sc.y, o.get("walk", 0.0), draw_alpha)
+	if o.get("aura"):
+		CosFx.paint_aura(cv, o.aura, sc.x, sc.y, k, t, fa, "top")
+	if o.has("tag"):
+		label(o.tag, sc.x, sc.y - 46 * v.u * o.get("big", 1.0), c(o.get("tag_col", "#a9bccb")), 11 if o.get("big", 1.0) > 1 else 9)
+
+
 static func class_look(cls: String) -> Dictionary:
 	var o := {"body": "#b9aa82", "vest": "#4d6b47", "pants": "#4a4636", "head": "#c19a78", "gl": 14}
 	match cls:
