@@ -13,6 +13,8 @@ func check(cond: bool, what: String) -> void:
 
 func _init() -> void:
 	var keep := FileAccess.get_file_as_string(PalSettings.PATH) if FileAccess.file_exists(PalSettings.PATH) else ""   # put the player's settings back after
+	var keep_l := FileAccess.get_file_as_string(PalLocker.PATH) if FileAccess.file_exists(PalLocker.PATH) else ""
+	var keep_p := FileAccess.get_file_as_string(PalProfile.PATH) if FileAccess.file_exists(PalProfile.PATH) else ""
 	print("settings")
 	var st := PalSettings.new()
 	check(st.data.keys.build == [KEY_SPACE] and st.data.pad.fire == 7 and st.data.pad.build == 0, "browser defaults: SPACE builds; RT fires, A builds")
@@ -22,6 +24,37 @@ func _init() -> void:
 	ev.pressed = true
 	check(InputMap.has_action("pal_build") and ev.is_action_pressed("pal_build"), "keys go into the InputMap as pal_ actions")
 	check(PalSettings.glyph(7, "ps") == "R2" and PalSettings.glyph(0, "xbox") == "A", "button names follow the controller in hand")
+	print("locker: the browser's run payouts (tests/locker_ref.json, from tools/locker_ref.js)")
+	var ref: Array = JSON.parse_string(FileAccess.get_file_as_string("res://tests/locker_ref.json"))
+	for r in ref:
+		var prof := PalProfile.new()
+		prof.persist = false
+		var L := PalLocker.new(prof)
+		L.persist = false
+		L.fixed_r = 0.99
+		L.cases = 0
+		var c: Dictionary = r.claim
+		var R := L.local_run(c, int(r.shards))
+		var o: Dictionary = r.out
+		var st_ok := true
+		for k in o.st:
+			if int(L.st.get(k, 0)) != int(o.st[k]):
+				st_ok = false
+				print("    st ", k, " godot ", L.st.get(k, 0), " browser ", o.st[k])
+		var bag_ok := true
+		for k in o.bag:
+			if int(L.bag.get(k, 0)) != int(o.bag[k]):
+				bag_ok = false
+				print("    bag ", k, " godot ", L.bag.get(k, 0), " browser ", o.bag[k])
+		var unl: Array = R.unlocked.duplicate()
+		unl.sort()
+		var unl2: Array = o.unlocked.duplicate()
+		unl2.sort()
+		var same: bool = L.cases == int(o.cases) and L.shards == int(o.shards) and L.prog == int(o.prog) and prof.sp == int(o.sp) and st_ok and bag_ok and unl == unl2 and R.text == o.text
+		if not same:
+			print("    godot:   ", L.cases, " ", L.shards, " ", L.prog, " ", prof.sp, " ", R.text)
+			print("    browser: ", o.cases, " ", o.shards, " ", o.prog, " ", o.sp, " ", o.text)
+		check(same, "%s: cases, shards, milestones, skill points and unlocks match" % r.name)
 	print("controller")
 	var dz: Array = PalInput.deadzone(Vector2(0.1, 0), 0.2)
 	var full: Array = PalInput.deadzone(Vector2(1, 0), 0.2)
@@ -75,6 +108,7 @@ func _init() -> void:
 	main.sim.game.phase = "over"
 	await create_timer(1.3).timeout
 	check(main.menus.screen == "results", "the after-action screen comes up at the end")
+	check(not main.last_reward.is_empty() and main.last_reward.text.ends_with("."), "and the run is paid into the locker (%s)" % main.last_reward.get("text", ""))
 	main.to_menu()
 	check(main.demo and main.menus.screen == "main", "MAIN MENU goes back to the demo yard")
 	if keep != "":
@@ -82,5 +116,11 @@ func _init() -> void:
 		f.store_string(keep)
 	else:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(PalSettings.PATH))
+	for kp in [[PalLocker.PATH, keep_l], [PalProfile.PATH, keep_p]]:
+		if kp[1] != "":
+			var f2 := FileAccess.open(kp[0], FileAccess.WRITE)
+			f2.store_string(kp[1])
+		elif FileAccess.file_exists(kp[0]):
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(kp[0]))
 	print("\nALL PASSED" if fails == 0 else "\nFAILED %d" % fails)
 	quit(1 if fails else 0)

@@ -11,6 +11,8 @@ var skills_open := false
 var sk_buttons: Array = []
 var sk_reset := Rect2()
 var run_sp := -1
+var locker: PalLocker   # cosmetics, cases and shards (18-cosmetics.js)
+var last_reward := {}   # what the run that just ended paid
 var mouse_pulls := 0   # left-button presses so far (the bolt and pump guns buffer a click)
 var draw_alpha := 1.0   # people drawn faded (stealth) multiply their colours by this
 var next_cls := "soldier"   # the next game's setup (from Match Setup)
@@ -103,6 +105,8 @@ func _ready() -> void:
 	glow_tex.width = 64
 	glow_tex.height = 64
 	profile.load_file()
+	locker = PalLocker.new(profile)
+	locker.load_file()
 	settings.load_file()
 	settings.apply_keys()
 	for a in ["ui_up", "ui_down", "ui_left", "ui_right", "ui_accept", "ui_cancel", "ui_select", "ui_focus_next", "ui_focus_prev"]:
@@ -373,6 +377,7 @@ func _restart() -> void:
 	game_n += 1
 	sim.new_game(-1, next_opt.diff, profile.perk_mods(), _game_opt())
 	run_sp = -1
+	last_reward = {}
 	parts.clear()
 	flashes.clear()
 	rings.clear()
@@ -455,7 +460,8 @@ func _process(dt: float) -> void:
 	sim.update(dt, _controls())
 	if not demo and sim.game.phase == "over":
 		if run_sp < 0:
-			run_sp = profile.award_run(sim.qm.completedRaids, sim.game.get("bosses", 0))
+			last_reward = locker.pay_run(sim)
+			run_sp = last_reward.sp
 		if menus.screen == "pause":
 			menus.close()
 		over_t += dt

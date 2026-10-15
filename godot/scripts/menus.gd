@@ -628,8 +628,9 @@ func show_results() -> void:
 		v.add_child(_label(str(row[1]), 24, PAPER))
 		v.add_child(_label(row[0], 11, DIM))
 		grid.add_child(v)
-	if m.run_sp > 0:
-		col.add_child(_label("+%d SKILL POINT%s" % [m.run_sp, "" if m.run_sp == 1 else "S"], 16, GOLD))
+	if not m.last_reward.is_empty():
+		col.add_child(_label("REWARDS", 12, DIM))
+		col.add_child(_label(m.last_reward.text, 14, GOLD, true))
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	col.add_child(row)

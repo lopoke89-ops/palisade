@@ -223,7 +223,8 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 	game = {"phase": "build", "timer": BO.gather if mode == "blackout" else 40.0 + Df.build, "bo": null, "dark": false, "wave": 0, "waves": waves, "mode": mode, "queue": [], "spawnT": 0.0, "spawnGap": 1.1,
 		"time": 0.0, "sel": 0, "piece": "wall", "won": false, "paused": false, "bosses": 0, "fb": null, "wx": 0, "wxHit": 0.0,
 		"flood": {"t": 0.0, "warned": false}, "end_reason": "", "dellLv": 0, "chapter": 0, "diff": diff, "map": map_id, "size": opt.get("size", "std"),
-		"stats": {"built": 0, "lost": 0, "dropped": 0, "revives": 0, "repairs": 0}}
+		"stats": {"built": 0, "lost": 0, "dropped": 0, "revives": 0, "repairs": 0},
+		"bossLog": [], "sbN": 0, "sbLog": [], "fbLog": []}
 	player = make_player(0, opt.get("cls", "soldier"))
 	var off: Array = [core.i - 4, core.j - 11]   # the spawn spots are laid out round a stake at (4,11)
 	player.x = 5.5 + off[0]
@@ -2468,6 +2469,15 @@ func boss_down(e: Dictionary, own) -> void:
 	var share := 15 if mine else 20
 	player.sal += B.bounty if mine else share
 	game.bosses = game.get("bosses", 0) + 1
+	if e.get("fb", false):   # each kind of boss has its own list for the rewards (18-cosmetics.js runClaim)
+		if game.fbLog.size() < 20:
+			game.fbLog.append(e.boss)
+	elif e.get("sb", false):
+		game.sbN += 1
+		if game.sbLog.size() < 100:
+			game.sbLog.append(e.boss)
+	else:
+		game.bossLog.append(e.boss)
 	if e.get("gw", 0) > 0:   # the Gauntlet counts each wave's kills
 		var gk: Array = game.get("gKill", [])
 		while gk.size() < e.gw:
