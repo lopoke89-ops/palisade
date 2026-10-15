@@ -22,6 +22,7 @@ var next_opt := {"map": "yard", "size": "std", "mode": "5", "diff": "normal", "m
 var audio := PalAudio.new()
 var v := IsoView.new()
 var parts: Array = []
+var cparts: Array = []   # kill-effect and tracer particles (the browser's emit kinds) and painted finishers
 var flashes: Array = []
 var rings: Array = []
 var zaps: Array = []
@@ -336,6 +337,7 @@ func _demo_game() -> void:
 	sim.player.y = -40.0
 	game_n += 1
 	parts.clear()
+	cparts.clear()
 	floats.clear()
 	toasts.clear()
 	city_map = null
@@ -381,6 +383,7 @@ func _restart() -> void:
 	run_sp = -1
 	last_reward = {}
 	parts.clear()
+	cparts.clear()
 	flashes.clear()
 	rings.clear()
 	zaps.clear()
@@ -459,6 +462,7 @@ func _process(dt: float) -> void:
 	if demo:
 		sim.game.timer = maxf(sim.game.timer, 30.0)   # the menu's yard never raids
 		sim.player.hp = sim.player.max
+	_dress(sim.player)
 	sim.update(dt, _controls())
 	if not demo and sim.game.phase == "over":
 		if run_sp < 0:
@@ -519,6 +523,8 @@ func _drain_events() -> void:
 			"toast":
 				if not demo:
 					toasts = [{"title": e.title, "body": e.body, "t": 4.5 * settings.data.msgTime}]
+			"killfx":
+				kill_fx(e.x, e.y, e.fx)
 			"flash":
 				flashes.append({"x": e.x, "y": e.y, "life": e.life, "max": e.life, "r": e.r, "muzzle": e.get("muzzle", false)})
 			"ring":
@@ -530,6 +536,7 @@ func _drain_events() -> void:
 			"map":   # a campaign chapter moved everyone to the next map
 				game_n += 1
 				parts.clear()
+				cparts.clear()
 				rings.clear()
 				v.cam_snap(sim.player.x, sim.player.y, sim.height_at(sim.player.x, sim.player.y))
 			"shake":
@@ -573,6 +580,21 @@ func _update_fx(dt: float) -> void:
 			q.vy *= 0.5
 			q.vz = 0.0
 	parts = parts.filter(func(q): return q.life > 0)
+	for q in cparts:   # the cosmetic particles move as the browser's do: z in base units over the ground
+		q.life -= dt
+		q.x += q.vx * dt * 0.6
+		q.y += q.vy * dt * 0.6
+		q.vz -= q.grav * dt
+		q.z += q.vz * dt
+		if q.get("floor", -1.0) >= 0 and q.z < q.floor:   # the spider stops at the end of its thread
+			q.z = q.floor
+			q.vz = 0.0
+		if q.z < 0:
+			q.z = 0.0
+			q.vz *= -0.3
+			q.vx *= 0.5
+			q.vy *= 0.5
+	cparts = cparts.filter(func(q): return q.life > 0)
 	for z in zaps:
 		z.life -= dt
 	zaps = zaps.filter(func(z): return z.life > 0)
@@ -692,7 +714,8 @@ func _draw_scene() -> void:
 		var t: float = 1.0 - r.life / r.max
 		var rr: float = lerpf(r.r0, r.r1, t)
 		cv.draw_set_transform(rc, 0, Vector2(1, v.TH2 / v.TW2))
-		cv.draw_arc(Vector2.ZERO, rr * v.TW2, 0, TAU, 48, Color(c(r.c1), 1.0 - t), r.w * u)
+		var rcol: Color = c(r.c1).lerp(c(r.c2), t) if r.has("c2") else c(r.c1)
+		cv.draw_arc(Vector2.ZERO, rr * v.TW2, 0, TAU, 48, Color(rcol, 1.0 - t), r.w * u)
 		cv.draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 	# the build ghost
 	_draw_ghost()
@@ -868,6 +891,7 @@ func _draw_scene() -> void:
 		var col: Color = q.col
 		col.a = a
 		cv.draw_rect(Rect2(pp.x - 1.2 * u * q.s, pp.y - q.z * u - 1.2 * u * q.s, 2.4 * u * q.s, 2.4 * u * q.s), col)
+	_draw_cparts()
 
 
 # ---------------------------------------------------------------- layers over the world
@@ -1013,7 +1037,7 @@ func _draw_touch() -> void:
 ## plain orange line. It sits at the bullet's height on the firing line.
 func _draw_tracer(b: Dictionary) -> void:
 	var u := v.u
-	var L := 0.018
+	var L := 0.018 * (minf(CosArt.trail(b.get("tr", "std")).get("len", 1.0), 2.0) if b.team == 0 else 1.0)
 	var a := iso(b.x, b.y)
 	var hz: float = ((sim.bullet_z(b) - 0.7) if b.has("z0") else sim.height_at(b.x, b.y)) * v.height_px() - sim.height_at(b.x, b.y) * v.height_px()
 	a.y -= hz + v.WH * 0.62
@@ -1026,6 +1050,11 @@ func _draw_tracer(b: Dictionary) -> void:
 	if b.team != 0:
 		cv.draw_line(a, tail, Color(1, 140 / 255.0, 90 / 255.0, 0.95), w)
 		cv.draw_circle(a, w / 2, Color(1, 140 / 255.0, 90 / 255.0, 0.95))
+		return
+	var tr: String = b.get("tr", "std")
+	if tr != "std":
+		CosArt.paint_tracer(Ctx2D.new(cv), a.x, a.y, tail.x, tail.y, tr, w * CosArt.trail(tr).get("w", 1.0), sim.game.time, b.get("heavy", false), b.get("tc", 0))
+		_shed(b, a, tail)
 		return
 	var ln := minf(a.distance_to(tail), w * 22)
 	if ln < 0.01:
@@ -2600,3 +2629,301 @@ func _body_under(sx: float, sy: float):
 			by = p.y
 			best = Vector2(e.x, e.y)
 	return best
+
+
+# ---------------------------------------------------------------- cosmetics in play (20-locker-ui.js, 07-effects.js)
+
+## the soldier wears what the locker has equipped: tracer, its sound and colour cycle, and kill effect (read by the sim)
+func _dress(p: Dictionary) -> void:
+	if locker == null or demo:
+		return
+	var eq: Dictionary = locker.eq
+	var tr: String = eq.get("trail", "std")
+	if p.get("trail", "") != tr:
+		var st := CosArt.trail(tr)
+		p.trail = tr
+		p.tsnd = st.get("snd", "")
+		p.tcyc = st.get("cycle", []).size()
+		p.tcn = 0
+	p.kfx = eq.get("fx", "none")
+
+
+## emit: one particle of a kind, as the browser makes it (z, vz and gravity in base units, positions in tiles)
+func cemit(x: float, y: float, z: float, kind: String, thin: float = 1.0) -> Dictionary:
+	if thin < 1 and randf() > thin and not kind.begins_with("finish:"):
+		return {}
+	var R := func() -> float: return randf()
+	var p := {"x": x, "y": y, "z": z, "vx": (randf() - 0.5) * 2, "vy": (randf() - 0.5) * 2, "vz": randf() * 60, "life": 0.5, "max": 0.5, "kind": kind,
+		"size": 2.0, "col": "#ffffff", "grav": 220.0}
+	var pick := func(a: Array) -> String: return a[randi() % a.size()]
+	if kind.begins_with("finish:"):
+		p.vx = 0.0
+		p.vy = 0.0
+		p.vz = 0.0
+		p.grav = 0.0
+		p.life = CosArt.life(kind.substr(7))
+		p.max = p.life
+		var fin := cparts.filter(func(q): return q.kind.begins_with("finish:"))
+		if fin.size() >= 24:
+			cparts.erase(fin[0])
+	match kind:
+		"snowdust":
+			p.merge({"col": "#e2f5fa", "vx": p.vx * 0.12, "vy": p.vy * 0.12, "vz": 3.0, "grav": 0.0, "life": 0.32, "max": 0.32, "size": 1.4}, true)
+		"yulelight":
+			p.merge({"col": "#ffe09a", "vx": p.vx * 0.1, "vy": p.vy * 0.1, "vz": 0.0, "grav": 15.0, "life": 0.38, "max": 0.38, "size": 2.0}, true)
+		"flagmote":
+			p.merge({"vx": p.vx * 0.15, "vy": p.vy * 0.15, "vz": 4.0, "grav": 0.0, "life": 0.3, "max": 0.3, "size": 1.5}, true)
+		"spark":
+			p.merge({"col": pick.call(["#ffe39a", "#ffb14a"]), "vx": p.vx * 3, "vy": p.vy * 3, "vz": 40 + R.call() * 90, "life": 0.3, "max": 0.3, "size": 1.6}, true)
+		"fire":
+			var l: float = 0.5 + R.call() * 0.3
+			p.merge({"col": pick.call(["#ffcf6a", "#e8662d"]), "vx": p.vx * 2.4, "vy": p.vy * 2.4, "vz": 30 + R.call() * 120, "grav": 60.0, "life": l, "max": l, "size": 3.5}, true)
+		"flame":
+			var l: float = 0.5 + R.call() * 0.3
+			p.merge({"col": pick.call(["#ffb347", "#e8552a"]), "vx": p.vx * 0.3, "vy": p.vy * 0.3, "vz": 25 + R.call() * 25, "grav": -30.0, "life": l, "max": l, "size": 3.0}, true)
+		"smoke":
+			var l: float = 1.4 + R.call()
+			p.merge({"col": "#3c3832", "vx": p.vx * 0.5, "vy": p.vy * 0.5, "vz": 15 + R.call() * 15, "grav": -12.0, "life": l, "max": l, "size": 9.0}, true)
+		"confetti":
+			p.merge({"col": pick.call(["#ff5a8a", "#ffd24a", "#5ad8ff", "#8aff6a", "#c78aff"]), "vx": p.vx * 1.8, "vy": p.vy * 1.8, "vz": 70 + R.call() * 80, "grav": 110.0, "life": 1.1, "max": 1.1, "size": 2.6}, true)
+		"ember":
+			var l: float = 0.9 + R.call() * 0.4
+			p.merge({"col": pick.call(["#ff8a3a", "#ffd06a"]), "vx": p.vx * 0.8, "vy": p.vy * 0.8, "vz": 20 + R.call() * 30, "grav": -25.0, "life": l, "max": l, "size": 2.0}, true)
+		"bolt":
+			p.merge({"col": pick.call(["#e8f6ff", "#8fd4ff"]), "vx": (R.call() - 0.5) * 0.3, "vy": (R.call() - 0.5) * 0.3, "vz": 0.0, "grav": 0.0, "life": 0.32, "max": 0.32, "size": 3.2}, true)
+		"glint":
+			p.merge({"col": pick.call(["#bfe9ff", "#ffffff"]), "vx": p.vx * 3.2, "vy": p.vy * 3.2, "vz": 60 + R.call() * 90, "life": 0.4, "max": 0.4, "size": 1.8}, true)
+		"rune":
+			var l: float = 0.75 + R.call() * 0.2
+			p.merge({"col": "#ffb040", "vx": p.vx * 0.25, "vy": p.vy * 0.25, "vz": 4 + R.call() * 8, "grav": -6.0, "life": l, "max": l, "size": 2.6, "h": R.call() * 6.28}, true)
+		"tealdust":
+			var l: float = 0.4 + R.call() * 0.12
+			p.merge({"col": pick.call(["#5af0ff", "#b8fbff"]), "vx": p.vx * 0.35, "vy": p.vy * 0.35, "vz": 6 + R.call() * 14, "grav": -12.0, "life": l, "max": l, "size": 2.6}, true)
+		"star":
+			var l: float = 0.55 + R.call() * 0.3
+			p.merge({"col": "#fffbe8" if R.call() < 0.6 else "#ffe9a0", "vx": p.vx * 0.4, "vy": p.vy * 0.4, "vz": 8 + R.call() * 10, "grav": 0.0, "life": l, "max": l, "size": 2.0}, true)
+		"cosmic":
+			p.merge({"col": pick.call(["#c07aff", "#6a8aff", "#ff8ad8", "#ffffff"]), "vx": p.vx * 0.5, "vy": p.vy * 0.5, "vz": 4 + R.call() * 10, "grav": -6.0, "life": 0.7, "max": 0.7, "size": 1.8}, true)
+		"rock":
+			p.merge({"col": pick.call(["#8a7e70", "#6a5e52"]), "vx": p.vx * 1.2, "vy": p.vy * 1.2, "vz": 18 + R.call() * 20, "grav": 160.0, "life": 0.6, "max": 0.6, "size": 2.4}, true)
+		"goldsp":
+			p.merge({"col": pick.call(["#ffe066", "#fff6c8", "#ffd24a"]), "vx": p.vx * 1.4, "vy": p.vy * 1.4, "vz": 25 + R.call() * 40, "grav": 45.0, "life": 0.7, "max": 0.7, "size": 2.0}, true)
+		"pix":
+			p.merge({"col": pick.call(["#ff3a6a", "#3affd8", "#ffe03a", "#6a8aff"]), "vx": p.vx * 2.2, "vy": p.vy * 2.2, "vz": 60 + R.call() * 70, "grav": 190.0, "life": 0.8, "max": 0.8, "size": 3.4}, true)
+		"ice":
+			p.merge({"col": pick.call(["#f2fbff", "#9fd8f0"]), "vx": p.vx * 2.6, "vy": p.vy * 2.6, "vz": 40 + R.call() * 70, "grav": 210.0, "life": 0.6, "max": 0.6, "size": 2.2}, true)
+		"grad1", "grad2":
+			p.merge({"c1": "#e0a0ff" if kind == "grad1" else "#ff5ad8", "c2": "#3a6aff" if kind == "grad1" else "#ffb03a", "vx": p.vx * 2.4, "vy": p.vy * 2.4, "vz": 40 + R.call() * 70, "grav": 80.0, "life": 0.95, "max": 0.95, "size": 3.0}, true)
+		"toxic":
+			p.merge({"col": pick.call(["#b6ff3a", "#7adf2a"]), "vx": p.vx * 1.6, "vy": p.vy * 1.6, "vz": 50 + R.call() * 50, "grav": 230.0, "life": 0.8, "max": 0.8, "size": 3.0}, true)
+		"nova":
+			p.merge({"c1": "#ffffff", "c2": "#6a8aff", "vx": p.vx * 3.6, "vy": p.vy * 3.6, "vz": 15 + R.call() * 50, "grav": 0.0, "life": 0.75, "max": 0.75, "size": 2.4}, true)
+		"glitch":
+			var l: float = 0.25 + R.call() * 0.25
+			p.merge({"col": pick.call(["#ff3a6a", "#3affd8", "#6a8aff", "#ffffff"]), "vx": p.vx * 1.2, "vy": p.vy * 1.2, "vz": 10 + R.call() * 40, "grav": 0.0, "life": l, "max": l, "size": 3 + R.call() * 4}, true)
+		"void":
+			var an: float = R.call() * 6.283
+			var r: float = 0.5 + R.call() * 0.45
+			p.merge({"x": x + cos(an) * r, "y": y + sin(an) * r, "vx": -cos(an) * r * 3.2, "vy": -sin(an) * r * 3.2, "vz": 0.0, "grav": 0.0, "col": pick.call(["#b06aff", "#3a1060"]), "life": 0.42, "max": 0.42, "size": 2.4}, true)
+		"neon":
+			p.merge({"col": pick.call(["#2af5ff", "#ff3ad0"]), "vx": p.vx * 3, "vy": p.vy * 3, "vz": 30 + R.call() * 50, "grav": 60.0, "life": 0.6, "max": 0.6, "size": 2.2}, true)
+		"bubble":
+			var l: float = 1.2 + R.call() * 0.7
+			p.merge({"vx": p.vx * 0.55, "vy": p.vy * 0.55, "vz": 15 + R.call() * 35, "grav": -38.0, "life": l, "max": l, "size": 2.4 + R.call() * 4.2, "h": R.call() * 360}, true)
+		"heal":
+			p.merge({"col": pick.call(["#8fe0a0", "#e8fff0"]), "vx": p.vx * 0.6, "vy": p.vy * 0.6, "vz": 30 + R.call() * 30, "grav": -40.0, "life": 0.8, "max": 0.8, "size": 2.4}, true)
+		"gflame":
+			var l: float = 0.5 + R.call() * 0.3
+			p.merge({"col": pick.call(["#b8ff8a", "#2ae86a"]), "vx": p.vx * 0.3, "vy": p.vy * 0.3, "vz": 25 + R.call() * 25, "grav": -30.0, "life": l, "max": l, "size": 3.0}, true)
+		"bat":
+			var l: float = 1 + R.call() * 0.5
+			p.merge({"vx": p.vx * 1.6, "vy": p.vy * 1.6, "vz": 45 + R.call() * 45, "grav": -15.0, "life": l, "max": l, "size": 5 + R.call() * 2.2, "h": R.call() * 9}, true)
+		"spider":
+			var wh: float = v.WH / v.u
+			p.merge({"vx": 0.0, "vy": 0.0, "z": wh * 2.6, "vz": -wh * 3.2, "grav": 0.0, "life": 1.6, "max": 1.6, "size": 7.0, "h": R.call() * 9, "floor": wh * 0.25}, true)
+		"soul":
+			var l: float = 1.5 + R.call() * 0.5
+			p.merge({"vx": p.vx * 0.35, "vy": p.vy * 0.35, "vz": 26 + R.call() * 18, "grav": -4.0, "life": l, "max": l, "size": 6.5 + R.call() * 2, "h": R.call() * 9}, true)
+	cparts.append(p)
+	if cparts.size() > 600:
+		cparts = cparts.slice(cparts.size() - 600)
+	return p
+
+
+## killFx: a kill effect where a raider dropped (its sound, the painted finisher, its particles, rings and flashes)
+func kill_fx(x: float, y: float, id: String) -> void:
+	if id == "" or id == "none":
+		return
+	audio.play("kx_" + id, x, y)
+	var thin := 0.3 if cparts.size() > 480 else (0.6 if cparts.size() > 320 else 1.0)
+	var wh: float = v.WH / v.u
+	if id != "skull" and CosArt.life(id) > 0:
+		cemit(x, y, wh * 0.6, "finish:" + id)
+	var E := func(n: int, k: String, z: float = 0.6) -> void:
+		for i in ceili(n * 0.65):
+			cemit(x, y, wh * z, k, thin)
+	var ring := func(r0: float, r1: float, life: float, c1: String, c2: String, w: float) -> void:
+		rings.append({"x": x, "y": y, "r0": r0, "r1": r1, "life": life, "max": life, "c1": c1, "c2": c2, "w": w})
+	var flash := func(life: float, r: float) -> void:
+		flashes.append({"x": x, "y": y, "life": life, "max": life, "r": r, "muzzle": false})
+	match id:
+		"pixel":
+			E.call(14, "pix")
+		"frost":
+			E.call(12, "ice")
+			ring.call(0, 0.8, 0.35, "#ffffff", "#9fd8f0", 1.6)
+		"gradburst":
+			E.call(16, "grad1")
+			ring.call(0, 1.1, 0.5, "#e0a0ff", "#3a6aff", 2)
+		"sunburst":
+			E.call(16, "grad2")
+			ring.call(0, 1.1, 0.5, "#ff5ad8", "#ffb03a", 2)
+		"toxic":
+			E.call(12, "toxic", 0.5)
+			ring.call(0, 0.7, 0.45, "#b6ff3a", "#3a6a10", 2.4)
+		"supernova":
+			E.call(18, "nova")
+			E.call(8, "star", 0.8)
+			ring.call(0, 1.7, 0.6, "#ffffff", "#6a8aff", 2.6)
+			flash.call(0.25, 1.2)
+		"glitchout":
+			E.call(16, "glitch")
+		"singularity":
+			E.call(18, "void")
+			ring.call(1.3, 0, 0.42, "#b06aff", "#1a0630", 2.4)
+			E.call(8, "nova", 0.6)
+		"shockwave":
+			E.call(12, "neon")
+			ring.call(0, 1.8, 0.55, "#2af5ff", "#1a4aff", 2.4)
+			ring.call(0, 1.2, 0.45, "#ff3ad0", "#6a1aff", 2)
+		"bubbles":
+			for i in 12:
+				cemit(x + (randf() - 0.5) * 0.4, y + (randf() - 0.5) * 0.4, wh * (0.3 + 0.6 * randf()), "bubble", thin)
+			E.call(12, "goldsp", 0.7)
+			E.call(6, "glint", 0.7)
+			ring.call(0, 1.5, 0.6, "#fff6c8", "#e2b436", 2.6)
+			ring.call(0, 0.9, 0.4, "#ffffff", "#ffd24a", 1.6)
+			flash.call(0.22, 1.1)
+		"sparks":
+			for n in 10:
+				cemit(x, y, wh * 0.6, "spark", thin)
+		"smoke":
+			for n in 5:
+				cemit(x, y, wh * 0.4, "smoke", thin)
+		"confetti":
+			for n in 16:
+				cemit(x, y, wh * 0.8, "confetti", thin)
+		"embers":
+			for n in 12:
+				cemit(x, y, wh * 0.4, "ember", thin)
+		"glint":
+			for n in 10:
+				cemit(x, y, wh * 0.6, "glint", thin)
+		"bolt":
+			for n in 9:
+				cemit(x + (randf() - 0.5) * 0.15, y + (randf() - 0.5) * 0.15, wh * (0.2 + n * 0.3), "bolt", thin)
+			flash.call(0.22, 1.1)
+		"skull":
+			floats.append({"x": x, "y": y, "text": "☠", "col": Color.html("#efe6d2"), "t": 1.4})
+			for n in 6:
+				cemit(x, y, wh * 0.6, "spark", thin)
+		"bats":
+			E.call(11, "bat", 0.55)
+			E.call(3, "smoke", 0.3)
+		"hellportal":
+			E.call(10, "ember", 0.3)
+			E.call(4, "smoke", 0.25)
+			ring.call(0, 1.1, 0.5, "#ffb040", "#7a0c06", 2.4)
+			ring.call(1.2, 0, 0.9, "#ff3a0a", "#1a0204", 2)
+		"cinder":
+			E.call(12, "ember", 0.5)
+			E.call(3, "smoke", 0.4)
+		"orbital":
+			flash.call(0.3, 2)
+			ring.call(0, 1.4, 0.5, "#ffffff", "#ff6a2a", 3)
+			E.call(10, "spark", 0.5)
+			E.call(4, "smoke", 0.3)
+		"tealslash":
+			E.call(12, "tealdust", 0.6)
+		"ashbrand":
+			E.call(6, "ember", 0.3)
+			E.call(5, "smoke", 0.3)
+			ring.call(0, 0.9, 0.45, "#ffd070", "#5a1a0a", 1.8)
+		"demonclaw":
+			E.call(8, "ember", 0.4)
+			ring.call(1, 0, 0.6, "#c8102e", "#1a0204", 2.2)
+			shake = maxf(shake, 3 * settings.data.shake)
+		"spider":
+			E.call(1, "spider", 0)
+			ring.call(0, 0.75, 0.7, "#f0f0f8", "#8a8aa0", 1.1)
+			ring.call(0, 0.45, 0.55, "#f0f0f8", "#8a8aa0", 0.8)
+		"souls":
+			E.call(4, "soul", 0.35)
+			E.call(10, "gflame", 0.25)
+			ring.call(0, 1.3, 0.7, "#c8ffe0", "#1ee860", 2.2)
+			flash.call(0.2, 0.9)
+		"rocketburst":
+			E.call(10, "fire", 0.5)
+			E.call(5, "smoke", 0.5)
+			ring.call(0, 1.3, 0.5, "#ffd070", "#ff6a1a", 2.4)
+			flash.call(0.2, 1)
+		"reticle":
+			E.call(6, "glint", 0.7)
+			ring.call(1.1, 0, 0.4, "#ff6a6a", "#ff2a2a", 1.6)
+		"frag":
+			E.call(10, "rock", 0.5)
+			E.call(8, "spark")
+			ring.call(0, 1.2, 0.45, "#fff0c0", "#8a8680", 2)
+			flash.call(0.16, 0.8)
+		"salvage":
+			E.call(10, "rock", 0.6)
+			E.call(6, "heal", 0.5)
+
+
+## a tracer that sheds motes (st.pk) leaves one now and then at its tail, every 80 ms at most
+func _shed(b: Dictionary, a: Vector2, tail: Vector2) -> void:
+	var st := CosArt.trail(b.get("tr", "std"))
+	var pk: String = st.get("pk", "")
+	if pk == "" or sim.game.time < b.get("nextTrailFx", 0.0) or cparts.size() >= 520:
+		return
+	b.nextTrailFx = sim.game.time + (0.16 if settings.data.fpsMode == "30" else 0.08)
+	if randf() >= st.get("pr", 0.0):
+		return
+	var g := iso(b.x, b.y)
+	var f := 0.5   # partway back along the visible streak
+	var q := cemit(b.x - b.vx * 0.018 * f, b.y - b.vy * 0.018 * f, (g.y - a.lerp(tail, f).y) / v.u, pk)
+	if q.is_empty():
+		return
+	var cyc: Array = st.get("cycle", [])
+	if not cyc.is_empty():
+		q.col = cyc[b.get("tc", 0) % cyc.size()]
+	if pk == "yulelight":
+		var n: int = b.get("trailLightNext", 0)
+		q.col = ["#ef5462", "#65c780", "#ffe09a", "#a6e8ff"][n % 4]
+		b.trailLightNext = n + 1
+
+
+## the cosmetic particles and the painted kill finishers, at their place in the world
+func _draw_cparts() -> void:
+	if cparts.is_empty():
+		return
+	var x := Ctx2D.new(cv)
+	var u := v.u
+	var t: float = sim.game.time
+	for q in cparts:
+		var g := iso(q.x, q.y)
+		if q.kind.begins_with("finish:"):
+			CosArt.paint_finish(x, q.kind.substr(7), 1.0 - q.life / q.max, u, g.x, g.y - q.z * u)
+			continue
+		if q.kind == "spider":
+			q.top = g.y - v.WH * 2.6
+		var py: float = g.y - q.z * u
+		if CosArt.paint_particle(x, q, g.x, py, u, t):
+			continue
+		var a: float = clampf(q.life / q.max, 0, 1)
+		if q.kind == "smoke":
+			cv.draw_circle(Vector2(g.x, py), q.size * u * (1.6 - a * 0.6), Color(CosFx.col(q.col), a * 0.5))
+		else:
+			var col := CosFx.col(q.col)
+			col.a *= minf(1, a * 1.5)
+			cv.draw_rect(Rect2(g.x - q.size * u / 2, py - q.size * u / 2, q.size * u, q.size * u), col)

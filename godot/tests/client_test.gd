@@ -73,6 +73,22 @@ func _init() -> void:
 	check(main.sim.game.paused and main.menus.screen == "pause", "pause opens the pause menu")
 	main.do_action("pause")
 	check(not main.sim.game.paused and not main.menus.active(), "and closes it")
+	print("cosmetics in play")
+	main.locker.eq.trail = "f_pride"
+	main.locker.eq.fx = "supernova"
+	main._dress(main.sim.player)
+	var sp: Dictionary = main.sim.player
+	check(sp.trail == "f_pride" and sp.tsnd == "ts_grainbow" and sp.tcyc == 6 and sp.kfx == "supernova", "the soldier wears the locker's tracer and kill effect")
+	var nb: int = main.sim.bullets.size()
+	main.sim.shoot(sp, sp.gun, 0.0)
+	main.sim.shoot(sp, sp.gun, 0.0)
+	check(main.sim.bullets.size() > nb and main.sim.bullets[-1].tr == "f_pride" and main.sim.bullets[-1].tc == 1, "rounds carry the tracer, a flag tracer one colour per round")
+	main.cparts.clear()
+	main.kill_fx(sp.x + 2, sp.y, "supernova")
+	check(main.cparts.any(func(q): return q.kind == "finish:supernova") and main.cparts.size() > 10, "a kill paints its finisher and throws its particles")
+	main.sim.bullets.resize(nb)
+	main.locker.eq.trail = "std"
+	main.locker.eq.fx = "none"
 	main.do_action("mat2")
 	check(main.sim.game.sel == 1, "actions reach the game: brick picked")
 	main.menus.came_from = "main"

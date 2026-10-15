@@ -49,7 +49,7 @@ static func glow_tex() -> Texture2D:
 	if _glow_tex == null:
 		var g := Gradient.new()
 		g.offsets = PackedFloat32Array([0.0, 0.2, 1.0])
-		g.colors = PackedColorArray([Color.WHITE, Color.WHITE, Color(1, 1, 1, 0)])
+		g.colors = PackedColorArray([Color.WHITE, Color.WHITE, Color(0, 0, 0, 0)])   # to transparent black, as the canvas fades it
 		var t := GradientTexture2D.new()
 		t.gradient = g
 		t.fill = GradientTexture2D.FILL_RADIAL

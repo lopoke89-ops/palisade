@@ -520,6 +520,7 @@ func hurt_enemy(e: Dictionary, d: float, own = null, quiet: bool = false) -> voi
 			boss_down(e, own)
 			if own is int and own == player.id:
 				player.kills += 1
+				ev({"k": "killfx", "x": e.x, "y": e.y, "fx": player.get("kfx", "none")})
 		else:
 			award(own, e)
 
@@ -750,8 +751,15 @@ func shoot(p: Dictionary, G: Dictionary, late: float) -> void:
 		am = [[p.ammoEq[0], perk.ammo.get(p.ammoEq[0], 0)]]
 		if p.ammoEq[1] != "":
 			am.append([p.ammoEq[1], perk.ammo.get(p.ammoEq[1], 0)])
+	var tc := 0
+	var cyc: int = p.get("tcyc", 0)   # a flag tracer: one colour per round, shared by its pellets
+	if cyc > 0:
+		tc = p.get("tcn", 0)
+		p.tcn = (tc + 1) % cyc
 	for i in range(first, bullets.size()):
 		bullets[i].shot = shot_seq
+		bullets[i].tr = p.get("trail", "std")
+		bullets[i].tc = tc
 		if am != null:
 			bullets[i].ammo = am
 
@@ -970,6 +978,9 @@ func sim_player(p: Dictionary, dt: float) -> void:
 				p.ammo -= 1
 		if n > 0:
 			sfx(G.get("snd", "ar"), p.x, p.y)
+			if p.get("tsnd", "") != "" and game.time - p.trT > 0.22:   # the tracer's own soft layer over the gunshot
+				p.trT = game.time
+				sfx(p.tsnd, p.x, p.y)
 			p.sinceShot = 0.0
 			p.rl = 0.0
 			if G.get("bolt", false):
@@ -2286,6 +2297,7 @@ func award(own, e: Dictionary) -> void:
 	player.sal += v
 	player.kills += 1
 	flt(e.x, e.y - 0.2, "+%d" % v, "#e2b436")
+	ev({"k": "killfx", "x": e.x, "y": e.y, "fx": player.get("kfx", "none")})
 
 
 func ammo_hit(e: Dictionary, b: Dictionary) -> void:
