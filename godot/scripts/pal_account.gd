@@ -378,10 +378,10 @@ func _save_claims() -> void:
 ## a finished run goes in the queue; the reward shows when the server answers (claim_done)
 func queue_claim(c: Dictionary) -> Dictionary:
 	var q := c.duplicate(true)
-	if q.get("mode") not in ["blitz", "campaign"]:   # the browser only sends these for Blitzkrieg and Whiteout
+	if q.get("kind", "run") == "run" and q.get("mode") not in ["blitz", "campaign"]:   # the browser only sends these for Blitzkrieg and Whiteout
 		q.erase("fb_keys")
 		q.erase("evac")
-	if q.get("mode") != "campaign":
+	if q.get("kind", "run") == "run" and q.get("mode") != "campaign":
 		q.erase("g_cleared")
 		q.erase("ch_evac")
 	q.uid = m.locker.cloud.get("id")
@@ -439,6 +439,8 @@ func claim_reward(c: Dictionary, j: Dictionary) -> Dictionary:
 			cases[id] = int(j.cases[id])
 	elif c.get("kind") == "run":
 		cases.supply = int(j.get("cases_granted", 0))
+	elif j.get("case_id"):
+		cases[j.case_id] = int(j.get("cases_granted", 0))
 		var bl: Array = j.get("bonuses") if j.get("bonuses") is Array else [j.get("bonus") if j.get("bonus") is Dictionary else {}]
 		for b in bl:
 			if b is Dictionary and b.get("case"):

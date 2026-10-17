@@ -1133,7 +1133,7 @@ func truce() -> bool:
 func control_local(dt: float, ctl: Dictionary) -> void:
 	var p := player
 	p.fire_in = false
-	if not p.alive or guest:
+	if not p.alive:
 		return
 	var mv: Vector2 = ctl.get("move", Vector2.ZERO)
 	var mag := minf(1.0, mv.length())

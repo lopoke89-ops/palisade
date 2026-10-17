@@ -317,18 +317,24 @@ static func run_claim(s: Sim) -> Dictionary:
 		g.gid = _b36(int(Time.get_unix_time_from_system() * 1000)) + "-" + r
 	var up: Dictionary = p.get("up", {})
 	var ups := "".join(["d", "r", "g", "a", "n"].map(func(k): return str(up.get(k, 0))))
-	var dur := roundi(g.time)
-	var c := {"kind": "run", "mode": g.mode, "diff": g.diff, "win": win, "held": held, "raid_from": 0, "raid_to": held, "kills": p.kills,
-		"bosses": mini(40, g.bossLog.size()), "boss_keys": g.bossLog.slice(0, 40),
-		"shard_bosses": g.sbN, "sb_keys": g.sbLog.slice(0, 40), "fb_keys": g.fbLog.slice(0, 20), "salvage": maxi(0, p.sal), "size": g.size, "duration_s": dur,
-		"game_id": g.gid, "joined_s": 0, "left_s": dur, "left": false, "upgrades": ups + ":" + str(int(g.get("dellLv", 0))),
+	# an online guest's claim counts from where this screen came in (the host's is 0 throughout)
+	var j_held: int = int(g.get("joinHeld", 0)) if g.get("joinHeld") != null else 0
+	var from := mini(held, j_held)
+	var jt := float(g.get("joinT", 0.0))
+	var dur := roundi(g.time - jt)
+	var keys: Array = g.bossLog.slice(int(g.get("joinBoss", 0))).slice(0, 40)
+	var c := {"kind": "run", "mode": g.mode, "diff": g.diff, "win": win, "held": held - from, "raid_from": from, "raid_to": held, "kills": p.kills,
+		"bosses": keys.size(), "boss_keys": keys,
+		"shard_bosses": maxi(0, int(g.sbN) - int(g.get("joinSB", 0))), "sb_keys": g.sbLog.slice(int(g.get("joinSB", 0))).slice(0, 40),
+		"fb_keys": g.fbLog.slice(int(g.get("joinFB", 0))).slice(0, 20), "salvage": maxi(0, p.sal), "size": g.size, "duration_s": dur,
+		"game_id": g.gid, "joined_s": roundi(jt), "left_s": roundi(g.time), "left": false, "upgrades": ups + ":" + str(int(g.get("dellLv", 0))),
 		"mods": s.mods, "map": g.map, "cls": p.cls, "end_reason": g.get("end_reason", ""), "evac": res, "cv": 4, "g_cleared": 0, "ch_evac": []}
-	c.claim_id = "%s:0:%d:0:%d" % [g.gid, held, dur]
+	c.claim_id = "%s:%d:%d:%d:%d" % [g.gid, from, held, roundi(jt), roundi(g.time)]
 	if s.blackout():
 		var B = g.bo
 		c.cv = 5
 		c.boss_keys = []
-		c.pois_held = B.held if B != null else 0
+		c.pois_held = maxi(0, (B.held if B != null else 0) - int(g.get("joinPois", 0)))
 		var lostM := s.cores.filter(func(k): return k.has("poi") and k.poi.major and k.lost).size()
 		c.pois_major = maxi(0, maxi(0, (B.held + B.lost if B != null else 0) - 4) - lostM)
 		c.destroyer = B != null and B.destroyer
@@ -374,6 +380,71 @@ static func _fb_cap(c: Dictionary) -> int:
 
 ## the reward for a finished run (lockerReward + localRun): converts leftover salvage to shards, pays cases, drops,
 ## milestones and skill points, and returns the reward data the end screen shows
+## pvpReward: a Base Battle or Free-for-all match. The account's server pays it; offline, the Afterglow case's
+## PvP chance (win or loss), the flag case's win chance, and the drop and match counts for the milestones
+func pay_pvp(s: Sim) -> Dictionary:
+	var g: Dictionary = s.game
+	var p: Dictionary = s.player
+	var jt := float(g.get("joinT", 0.0))
+	if not cloud.is_empty() and account != null:
+		return account.queue_claim({"kind": "match", "pvp": g.pvp, "win": g.won, "kills": int(p.kills), "duration_s": roundi(g.time - jt), "game_id": g.gid,
+			"mods": s.mods, "joined_s": roundi(jt), "left_s": roundi(g.time), "map": g.map})
+	catalog()
+	st.drops += int(p.kills)
+	st.pvp = int(st.get("pvp", 0)) + 1
+	if g.won:
+		st.pvpWins = int(st.get("pvpWins", 0)) + 1
+	var got_cases := {}
+	var cid := ""
+	for id in CAT.CASES:
+		var D = CAT.CASES[id].get("drop")
+		if D is Dictionary and D.has(g.pvp):
+			cid = id
+			break
+	var ch := 0.0
+	var miss := ""
+	if cid != "":
+		var D: Dictionary = CAT.CASES[cid].drop[g.pvp]
+		ch = (D.win if g.won else D.loss) * (100 + mod_bonus(s.mods, g.pvp)) / 100.0
+		if _r() < ch:
+			case_add(cid, 1)
+			got_cases[cid] = 1
+		else:
+			miss = cid
+	if g.won and _r() < float(CAT.CASES.flags.drop.win):
+		case_add("flags", 1)
+		got_cases.flags = 1
+	var got := check_unlocks()
+	save()
+	var R := {"kind": "match", "cases": got_cases, "shards": 0, "bossShards": 0, "sp": 0, "unlocked": got.map(func(x): return x.id), "left": false, "blitzShards": false,
+		"pois": -1, "toNext": 3 - prog, "prog": prog, "chance": ch, "missCase": miss}
+	var bits: Array = []
+	for id in got_cases:
+		bits.append("+1 %s" % CAT.CASES[id].name.to_lower())
+	if miss != "":
+		bits.append("No %s this time (%d%% chance)" % [CAT.CASES[miss].name.to_lower(), roundi(ch * 100)])
+	if not R.unlocked.is_empty():
+		bits.append("Unlocked " + ", ".join(R.unlocked.map(func(id): return item(id).get("name", id))))
+	R.text = (" · ".join(bits) + ".") if not bits.is_empty() else "No case this time."
+	return R
+
+
+## a cosmetics string from the wire ('skin|hat|trail|fx'), with anything unknown back to the default
+static func parse_cos(v: String) -> Dictionary:
+	catalog()
+	var o := DEFAULT_COS.duplicate()
+	var a := v.split("|")
+	var ks := ["skin", "hat", "trail", "fx"]
+	for i in ks.size():
+		if i < a.size() and a[i] != "" and BY.has(ks[i] + ":" + a[i]):
+			o[ks[i]] = a[i]
+	return o
+
+
+static func cos_str(eq: Dictionary) -> String:
+	return "|".join([eq.get("skin", "std"), eq.get("hat", "class"), eq.get("trail", "std"), eq.get("fx", "none")])
+
+
 func pay_run(s: Sim) -> Dictionary:
 	var c := run_claim(s)
 	var pct := mod_bonus(c.mods, "blitz" if c.mode == "blitz" else "")
