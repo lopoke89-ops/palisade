@@ -41,6 +41,8 @@ const ACTIONS := [
 var data := {
 	"volume": 0.8, "music": 0.7, "shake": 1.0, "zoom": 1.0, "msgTime": 1.0, "fpsMode": "auto", "fps": false, "tips": true,
 	"haptics": true, "fullscreen": false, "vsync": true, "reduceMotion": false,
+	"models3d": true,   # graphics: the 3D models (the world drawn with the model library) or the 2D drawing
+	"gfx3d": {},   # the 3D view's quality knobs (Quality3D.KEYS: shadows, effects, draw_margin, anim_rate, msaa...)
 	"setup": {"mode": "5", "map": "yard", "size": "std", "diff": "normal", "cls": "soldier", "mods": []},
 	"keys": {}, "pad": {},
 }
