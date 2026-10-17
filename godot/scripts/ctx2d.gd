@@ -30,6 +30,10 @@ var _subs: Array = []   # [PackedVector2Array (device space), closed]
 var _cur := PackedVector2Array()
 var _closed := false
 var _stack: Array = []
+var _layered := false
+var _pool: Array = []
+var _pi := -1
+var _pmode := ""
 
 static var _tex_cache := {}
 static var _fonts := {}
@@ -299,8 +303,53 @@ func clip() -> void:
 
 # ---------------------------------------------------------------- painting
 
-func _target() -> CanvasItem:
-	return add_cv if composite == "lighter" and add_cv != null else cv
+func _target() -> RID:
+	var add := composite == "lighter"
+	if _layered:
+		var mode := "add" if add else "mix"
+		if _pi < 0 or mode != _pmode:
+			_pi += 1
+			_pmode = mode
+			if _pi >= _pool.size():
+				var r := RenderingServer.canvas_item_create()
+				RenderingServer.canvas_item_set_parent(r, cv.get_canvas_item())
+				_pool.append(r)
+			var item: RID = _pool[_pi]
+			RenderingServer.canvas_item_set_draw_index(item, _pi)
+			RenderingServer.canvas_item_set_material(item, _add_material().get_rid() if add else RID())
+		return _pool[_pi]
+	if add and add_cv != null:
+		return add_cv.get_canvas_item()
+	return cv.get_canvas_item()
+
+
+static var _addmat: CanvasItemMaterial
+
+
+static func _add_material() -> CanvasItemMaterial:
+	if _addmat == null:
+		_addmat = CanvasItemMaterial.new()
+		_addmat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	return _addmat
+
+
+## layered drawing: every run of one blend mode goes into its own child canvas item of cv (from pool, kept by the
+## caller and reused each frame), so 'lighter' adds light like the canvas does while the order stays as written.
+## cv itself should draw nothing else: the children are drawn over it.
+func layered(pool: Array) -> Ctx2D:
+	_layered = true
+	_pool = pool
+	for r in pool:
+		RenderingServer.canvas_item_clear(r)
+	_pi = -1
+	return self
+
+
+## free a layered pool's canvas items (when its node leaves)
+static func free_pool(pool: Array) -> void:
+	for r in pool:
+		RenderingServer.free_rid(r)
+	pool.clear()
 
 
 func _solid(style) -> Color:
@@ -376,13 +425,13 @@ func _tris(pts: PackedVector2Array) -> PackedInt32Array:
 	return idx
 
 
-func _fill_poly(target: CanvasItem, pts: PackedVector2Array, style) -> void:
+func _fill_poly(target: RID, pts: PackedVector2Array, style) -> void:
 	if pts.size() < 3:
 		return
 	var idx := _tris(pts)
 	if idx.is_empty():
 		return
-	var rid := target.get_canvas_item()
+	var rid := target
 	if style is Grad:
 		var uv := _grad_uv(style, pts)
 		var cols := PackedColorArray()
@@ -408,7 +457,7 @@ func _clipped(pts: PackedVector2Array) -> Array:
 	return out
 
 
-func _shadow_fill(target: CanvasItem, pts: PackedVector2Array) -> void:
+func _shadow_fill(target: RID, pts: PackedVector2Array) -> void:
 	var sc := CosFx.col(shadow_color)
 	if shadow_blur <= 0 or sc.a <= 0:
 		return
@@ -508,7 +557,7 @@ func stroke(style = null) -> void:
 			_stroke_line(target, p, w, st)
 
 
-func _stroke_line(target: CanvasItem, pts: PackedVector2Array, w: float, st) -> void:
+func _stroke_line(target: RID, pts: PackedVector2Array, w: float, st) -> void:
 	if pts.size() < 2:
 		return
 	if line_cap != "butt" and pts.size() >= 2:   # round and square caps reach half the width past the ends
@@ -516,14 +565,14 @@ func _stroke_line(target: CanvasItem, pts: PackedVector2Array, w: float, st) -> 
 		var e1 := (pts[-1] - pts[-2]).normalized() * w / 2
 		pts = pts.duplicate()
 		if line_cap == "round":
-			target.draw_circle(pts[0], w / 2, _solid(st) if not (st is Grad) else st.at(0.0))
-			target.draw_circle(pts[-1], w / 2, _solid(st) if not (st is Grad) else st.at(1.0))
+			RenderingServer.canvas_item_add_circle(target, pts[0], w / 2, _solid(st) if not (st is Grad) else st.at(0.0))
+			RenderingServer.canvas_item_add_circle(target, pts[-1], w / 2, _solid(st) if not (st is Grad) else st.at(1.0))
 		else:
 			pts[0] += e0
 			pts[-1] += e1
 	var sc := CosFx.col(shadow_color)
 	if shadow_blur > 0 and sc.a > 0:
-		target.draw_polyline(pts, Color(sc, sc.a * 0.25), w + shadow_blur, true)
+		RenderingServer.canvas_item_add_polyline(target, pts, PackedColorArray([Color(sc, sc.a * 0.25)]), w + shadow_blur, true)
 	if st is Grad:
 		var inv := xf.affine_inverse()
 		var cols := PackedColorArray()
@@ -538,11 +587,11 @@ func _stroke_line(target: CanvasItem, pts: PackedVector2Array, w: float, st) -> 
 			var k: Color = st.at(t)
 			k.a *= global_alpha
 			cols.append(k)
-		target.draw_polyline_colors(pts, cols, w, true)
+		RenderingServer.canvas_item_add_polyline(target, pts, cols, w, true)
 	else:
 		var k := _solid(st)
 		if k.a > 0.002:
-			target.draw_polyline(pts, k, w, w >= 1.5 or w < 1)
+			RenderingServer.canvas_item_add_polyline(target, pts, PackedColorArray([k]), w, w >= 1.5 or w < 1)
 
 
 ## a texture (or a Ctx2D blob, see blob()) stretched over (x, y, w, h) in user space
@@ -553,7 +602,7 @@ func draw_image(tex: Texture2D, x: float, y: float, w: float, h: float, tint: Co
 	var uv := PackedVector2Array([Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)])
 	var k := Color(tint, tint.a * global_alpha)
 	var cols := PackedColorArray([k, k, k, k])
-	RenderingServer.canvas_item_add_triangle_array(_target().get_canvas_item(), PackedInt32Array([0, 1, 2, 0, 2, 3]), pts, cols, uv, PackedInt32Array(), PackedFloat32Array(), tex.get_rid())
+	RenderingServer.canvas_item_add_triangle_array(_target(), PackedInt32Array([0, 1, 2, 0, 2, 3]), pts, cols, uv, PackedInt32Array(), PackedFloat32Array(), tex.get_rid())
 
 
 ## cosmeticGlow: the shared soft light, solid to a fifth of r
@@ -624,13 +673,13 @@ func _text(s: String, x: float, y: float, st, outline: float) -> void:
 	elif text_baseline == "bottom":
 		oy = -f.get_descent(size)
 	var target := _target()
-	target.draw_set_transform_matrix(xf)
+	RenderingServer.canvas_item_add_set_transform(target, xf)
 	var k: Color = _solid(st) if not (st is Grad) else st.at(0.5)
 	if outline > 0:
-		target.draw_string_outline(f, Vector2(x + ox, y + oy), s, HORIZONTAL_ALIGNMENT_LEFT, -1, size, int(outline), k)
+		f.draw_string_outline(target, Vector2(x + ox, y + oy), s, HORIZONTAL_ALIGNMENT_LEFT, -1, size, int(outline), k)
 	else:
-		target.draw_string(f, Vector2(x + ox, y + oy), s, HORIZONTAL_ALIGNMENT_LEFT, -1, size, k)
-	target.draw_set_transform_matrix(Transform2D.IDENTITY)
+		f.draw_string(target, Vector2(x + ox, y + oy), s, HORIZONTAL_ALIGNMENT_LEFT, -1, size, k)
+	RenderingServer.canvas_item_add_set_transform(target, Transform2D.IDENTITY)
 
 
 func fill_text(s: String, x: float, y: float) -> void:
