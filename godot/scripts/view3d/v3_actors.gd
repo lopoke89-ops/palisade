@@ -42,7 +42,6 @@ var corpses: Array = []   # {node, mkey, t}
 var shots: Array = []   # this frame's muzzle flashes: [x, y]
 var throws: Array = []   # this frame's lobs and launches: [x, y, kind]
 var clipsets := {}   # character id -> {clip name: duration}
-var flash_mat: StandardMaterial3D
 var ring_mats := {}
 var ring_scene: PackedScene
 var frame_n := 0
@@ -54,11 +53,6 @@ func _init(view) -> void:
 	sim = view.sim
 	lib = view.lib
 	name = "Actors"
-	flash_mat = StandardMaterial3D.new()
-	flash_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	flash_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	flash_mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	flash_mat.albedo_color = Color(1, 0.92, 0.85, 0.55)
 	var rp := "res://palisade_art/models/utilities/player_ring.glb"
 	if ResourceLoader.exists(rp):
 		ring_scene = load(rp)
@@ -136,7 +130,6 @@ func _park(n: Node3D, mkey: String) -> void:
 	n.visible = false
 	var info: Dictionary = n.get_meta("info")
 	for g in info.geoms:
-		g.material_overlay = null
 		g.transparency = 0.0
 	if info.has("ring"):
 		info.ring.visible = false
@@ -413,17 +406,16 @@ func _once_on(r: Dictionary) -> bool:
 	return r.once != "" and time < r.once_end
 
 
-## hit and hurt flashes: a short white overlay on every mesh of the body
+## hit: the body kicks (a short swell; an overlay pass reads as see-through in the Compatibility renderer); faded
+## (stealth, a body going) through the instances' transparency
 func _flash(r: Dictionary, on: bool, alpha: float = 1.0) -> void:
-	var want: Material = flash_mat if on else null
-	var tr := 1.0 - alpha
-	if r.get("ov", null) == want and is_equal_approx(r.alpha, alpha):
+	var k := 1.0 + (0.06 if on else 0.0)
+	r.node.scale = Vector3.ONE * V3.CHAR * k
+	if is_equal_approx(r.alpha, alpha):
 		return
-	r.ov = want
 	r.alpha = alpha
 	for g in r.info.geoms:
-		g.material_overlay = want
-		g.transparency = tr
+		g.transparency = 1.0 - alpha
 
 
 ## a slim ring under a soldier in their team colour (PvP) or slot colour (the online crew)

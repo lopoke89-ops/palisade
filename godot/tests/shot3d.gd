@@ -72,6 +72,11 @@ func _init() -> void:
 		main.v3.frame(0.0)
 	for l in [main, main.fx_layer, main.glow_layer, main.ui_layer]:
 		l.queue_redraw()
+	if OS.get_environment("PAL_DEBUG") != "" and main.v3 != null:
+		for k in main.v3.actors.recs:
+			var r: Dictionary = main.v3.actors.recs[k]
+			var tr: Array = r.info.geoms.map(func(g): return g.transparency)
+			print("actor ", k, " ", r.cid, " clip ", r.clip, " vis ", r.node.visible, " transp ", tr.slice(0, 3))
 	if OS.get_environment("PAL_DEBUG") != "":
 		print("light ", main.light, " rect ", main.light_rect.size, " vis ", main.light_rect.visible, " shade ", main.light_rect.material.get_shader_parameter("shade"))
 	main.set_process(false)   # hold the moment: both pictures show the same frame
@@ -80,14 +85,16 @@ func _init() -> void:
 		await frames(4)
 		var t3: Array = await measure(nf)
 		root.get_texture().get_image().save_png(prefix + "_3d.png")
-		print("3d %s: %.2f ms/frame mean, %.2f worst (%d frames)" % [scene, t3[0], t3[1], nf])
+		var cpu := 0
+		for k in 10:
+			main.v3.frame(1.0 / 60.0)
+			cpu += main.v3.frame_us
+		print("3d %s: %.2f ms/frame mean, %.2f worst (%d frames); 3D update on the CPU %.2f ms" % [scene, t3[0], t3[1], nf, cpu / 10000.0])
 	if only != "3d":
 		main.settings.data.models3d = false
 		main.setup_3d()
 		main.ground_key = ""
-		main.set_process(true)
-		await process_frame   # the 2D ground repaints
-		main.set_process(false)
+		main._sync_ground()   # the 2D ground repaints (without the sim moving on)
 		main.v.cam_snap(ct.x, ct.y, s.height_at(ct.x, ct.y))
 		main._update_light(100.0)
 		for l in [main, main.fx_layer, main.glow_layer, main.ui_layer]:
@@ -208,14 +215,80 @@ func _scene(scene: String, a: Array) -> void:
 			s.player.dgE = float(a[0]) if a.size() > 0 else 0.22
 			s.player.dgX = -s.player.aim.x
 			s.player.dgY = -s.player.aim.y
-		"tracers", "killfx":
+		"tracers", "killfx":   # a firing line of soldiers in different tracers (args: trail ids) and kill effects
 			step(30 * 3)
 			s.game.wave = 2
 			s.start_raid()
 			s.game.queue = []
+			s.qm.alive = false
+			s.qm.gone = true
+			var trails: Array = a if scene == "tracers" and a.size() > 0 else ["rainbow", "f_usa", "hellfire", "blackhole", "glitch", "plasma"]
+			var fxs: Array = a if scene == "killfx" and a.size() > 0 else ["nuke", "skull", "hellportal", "bolt", "winterbloom", "swish"]
+			var crew: Array = []
+			var x0: float = 4.5
+			var y0: float = 5.0
 			for n in 6:
-				s.spawn_enemy_at("rifle", s.player.x + 4 + n * 0.6, s.player.y - 2 + n * 0.7)
-			step(30 * 1)
+				var pl: Dictionary = s.make_player("t%d" % n, ["soldier", "quartermaster", "sniper", "grenadier"][n % 4], n + 1)
+				pl.cosS = "std|class|%s|%s" % [trails[n % trails.size()], fxs[n % fxs.size()]]
+				pl.x = x0
+				pl.y = y0 + n * 1.2
+				pl.aim = Vector2(1, 0)
+				s.players[pl.id] = pl
+				main._dress(pl)
+				crew.append(pl)
+			s.player.x = x0 - 1.2
+			s.player.y = y0 + 3.0
+			var foes: Array = []
+			for n in 6:
+				foes.append(s.spawn_enemy_at("rifle", x0 + 5.5, y0 + n * 1.2))
+			if scene == "tracers":
+				for k in 14:
+					for pl in crew:
+						pl.fire_in = true
+						pl.aim = Vector2(1, 0)
+						pl.hp = pl.max
+					for e in foes:
+						e.hp = e.max
+						e.x = x0 + 5.5
+					s.update(1.0 / 30.0, {"fire": true, "aim": Vector2(1, 0)})
+			else:
+				for n in 6:
+					s.hurt_enemy(foes[n], 9999.0, crew[n].id)
+				main._drain_events()
+				for k in 12:   # the effects half a second on
+					main._update_fx(1.0 / 30.0)
+					if main.v3 != null:
+						main.v3.frame(1.0 / 30.0)
+		"explode":   # grenades and a rocket in the air, a firebrand's bottle, fire on the ground, a burning wall
+			s.player.mats = [40, 8, 8]
+			s.player.bcd = 0.0
+			s.do_build(s.player, 9, 11, 0, false)
+			step(30 * 3)
+			s.game.wave = 2
+			s.start_raid()
+			s.game.queue = []
+			s.qm.alive = false
+			s.qm.gone = true
+			var px: float = s.player.x
+			var py: float = s.player.y
+			s.player.ncd = 0.0
+			s.throw_nade(s.player, px + 4.0, py - 2.5)
+			s.player.rkCd = 0.0
+			s.use_rocket(s.player, px + 6.0, py + 1.0)
+			s.lobs.append({"x0": px + 6.0, "y0": py - 3.0, "x1": px + 2.0, "y1": py - 1.0, "t": 0.0, "T": 0.9, "R": 1.0, "power": 1.0, "k": 1, "own": null})
+			s.lobs.append({"x0": px + 7.0, "y0": py + 3.0, "x1": px + 3.0, "y1": py + 2.0, "t": 0.0, "T": 1.4, "R": 1.35, "power": 1.0, "k": 3, "own": null})
+			s.fires.append({"x": px + 2.5, "y": py + 3.0, "t": 5.0, "max": 5.0, "tick": 0.3, "r": 1.2})
+			s.fires.append({"x": px - 2.0, "y": py + 1.5, "t": 5.0, "max": 5.0, "tick": 0.2, "r": 1.6, "nap": 2})
+			if s.walls[s.idx(9, 11)] != null:
+				s.walls[s.idx(9, 11)].fire = 5.0
+			var e := s.spawn_enemy_at("gren", px + 5.0, py - 1.0)
+			e.burnT = 3.0
+			e.burnOwn = s.player.id
+			for k in 8:
+				s.player.hp = s.player.max
+				s.update(1.0 / 30.0, {})
+				main._drain_events()
+				main._update_fx(1.0 / 30.0)
 		"blitz":
 			main.next_opt.mode = "blitz"
 			main._restart()

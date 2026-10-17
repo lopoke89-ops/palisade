@@ -1118,7 +1118,8 @@ func mixc(a: String, b: String, t: float) -> Color:
 func _draw() -> void:
 	var t_draw := Time.get_ticks_usec()
 	if v3 != null and v3.visible:
-		v3.paint_labels()   # the world is the 3D view's; only its labels draw here
+		v3.paint_labels()   # the world is the 3D view's; its labels and the cosmetic particles draw here
+		_draw_cparts()
 	else:
 		_draw_scene()
 	draw_us = Time.get_ticks_usec() - t_draw
@@ -3523,7 +3524,8 @@ func _draw_cparts() -> void:
 	for q in cparts:
 		var g := iso(q.x, q.y)
 		if q.kind.begins_with("finish:"):
-			CosArt.paint_finish(x, q.kind.substr(7), 1.0 - q.life / q.max, u, g.x, g.y - q.z * u)
+			if v3 == null:   # in 3D the kill effect's model is the finisher
+				CosArt.paint_finish(x, q.kind.substr(7), 1.0 - q.life / q.max, u, g.x, g.y - q.z * u)
 			continue
 		if q.kind == "spider":
 			q.top = g.y - v.WH * 2.6

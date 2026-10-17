@@ -31,6 +31,7 @@ var actors: V3Actors
 var world: V3World
 var fx: V3Fx
 var fill: DirectionalLight3D   # a soft front light on the people only (layer 2), as the lobby lights them
+var frame_us := 0   # how long the last frame's 3D update took on the CPU (the screenshot test reports it)
 var on := true   # drawing (the settings switch; the view also pauses behind the menus' own 3D lobby)
 const AMBIENT := 0.45   # the shadowed share of a face's colour; the sun (world shaders' sun_k) brings lit faces to it
 
@@ -107,6 +108,12 @@ func screen_of(p: Vector3) -> Vector2:
 
 ## the frame: after the sim and the camera have moved
 func frame(dt: float) -> void:
+	var t0 := Time.get_ticks_usec()
+	_frame(dt)
+	frame_us = Time.get_ticks_usec() - t0
+
+
+func _frame(dt: float) -> void:
 	var hide: bool = m.demo and m.menus.stage != null and m.menus.stage.is_inside_tree() and m.menus.active()
 	visible = on and not hide
 	cam.current = visible
