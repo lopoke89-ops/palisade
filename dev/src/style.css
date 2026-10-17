@@ -73,10 +73,13 @@ body:not(.desk) #phaseNote{max-width:150px;font-size:10px}
 #buildAct{font-family:var(--stencil);font-weight:900;font-size:19px;letter-spacing:.05em;line-height:1}
 #buildSub{font-size:10px;line-height:1.2}
 #buildBtn.no{background:#4a4234;color:var(--bone)}
-#nadeBtn,#sprBtn,#abBtn{height:40px;background:rgba(27,24,20,.86);border:1px solid var(--rust);display:flex;justify-content:space-between;align-items:center;padding:0 10px;
+#nadeBtn,#sprBtn,#rollBtn,#abBtn{height:40px;background:rgba(27,24,20,.86);border:1px solid var(--rust);display:flex;justify-content:space-between;align-items:center;padding:0 10px;
   font-family:var(--stencil);font-weight:800;letter-spacing:.08em;font-size:15px;color:#e58a64}
-#nadeBtn b,#sprBtn b,#abBtn b{font-family:var(--mono);font-size:12px;color:var(--bone)}
+#nadeBtn b,#sprBtn b,#rollBtn b,#abBtn b{font-family:var(--mono);font-size:12px;color:var(--bone)}
 #sprBtn{border-color:#6f9a7c;color:#9fd6ae}#sprBtn.empty{opacity:.45}#sprBtn.on{background:rgba(60,98,70,.92)}
+#rollBtn{border-color:#8a8fa8;color:#c9cde0;gap:6px}
+/* v0.11.0: on phones held upright the kit column can't grow (the Black Out mini-map sits above it), so ROLL sits beside its bottom button */
+@media (orientation:portrait){body:not(.desk) #kit #rollBtn{position:absolute;right:calc(100% + 6px);bottom:0;width:88px}}#rollBtn .kc{background:#c9cde0}#rollBtn.empty{opacity:.45}#rollBtn.on{background:rgba(70,74,98,.92)}
 #nadeBtn.empty{opacity:.4}
 
 /* ---------- overlays ---------- */
@@ -188,7 +191,7 @@ body.desk .kc{display:inline-block}
 #buildBtn.no .kc.kb{background:var(--bone);color:#17140f}
 .chip .kc{margin-left:auto;margin-right:8px}
 #skipBtn,#armBtn,#bmBtn{display:flex;align-items:center;justify-content:center;gap:0}
-#nadeBtn .kc,#sprBtn .kc,#abBtn .kc{margin-left:auto;margin-right:8px}
+#nadeBtn .kc,#sprBtn .kc,#rollBtn .kc,#abBtn .kc{margin-left:auto;margin-right:8px}
 #feed{display:grid;gap:3px;justify-items:end;margin-top:6px}
 #feed span{font-family:var(--stencil);font-weight:800;font-size:13px;letter-spacing:.06em;background:rgba(14,12,10,.72);padding:2px 7px;border-right:3px solid currentColor;transition:opacity .6s}
 #feed span.old{opacity:0}
@@ -213,7 +216,7 @@ body.desk .chip .k{font-size:18px}
 body.desk #buildBtn{height:70px}
 body.desk #buildAct{font-size:22px}
 body.desk #armBtn{height:44px;font-size:17px}
-body.desk #nadeBtn,body.desk #sprBtn,body.desk #abBtn{height:44px;font-size:17px}
+body.desk #nadeBtn,body.desk #sprBtn,body.desk #rollBtn,body.desk #abBtn{height:44px;font-size:17px}
 body.desk #bmBtn{height:30px;font-size:14px}
 body.desk #feed span{font-size:15px}
 body.desk #board li{font-size:16px}
@@ -413,7 +416,7 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
 @media (pointer:coarse) and (max-height:650px){
   #kit{bottom:calc(env(safe-area-inset-bottom,0px) + 116px);gap:4px;width:88px;right:12px}
   #buildKit{gap:4px}.chip{height:28px}.piece{height:24px}
-  #buildBtn{height:42px}#armBtn,#nadeBtn,#sprBtn,#abBtn{height:32px}
+  #buildBtn{height:42px}#armBtn,#nadeBtn,#sprBtn,#rollBtn,#abBtn{height:32px}
   #buildAct{font-size:17px}#buildSub{font-size:9px}
 }
 /* Landscape phones keep the kit beside the thumb area and below the status bar. */
@@ -425,7 +428,7 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
   #kit .chip{height:36px;padding:0 6px}
   #kit .chip .k{font-size:14px}
   #kit #buildBtn{height:40px}
-  #kit #armBtn,#kit #nadeBtn,#kit #sprBtn,#kit #abBtn{height:40px;font-size:13px;padding:0 6px}
+  #kit #armBtn,#kit #nadeBtn,#kit #sprBtn,#kit #rollBtn,#kit #abBtn{height:40px;font-size:13px;padding:0 6px}
 }
 /* Party lobby: character stage, play controls, and account-backed social panel. */
 .accountDock{display:flex;align-items:center;justify-content:flex-end;gap:12px;min-width:0}

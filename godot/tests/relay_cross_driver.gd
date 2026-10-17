@@ -48,7 +48,7 @@ func _on_connected(p: String) -> void:
 	say(["connected", p])
 	if mode == "guest":
 		# what PalNet sends when its host connection opens
-		net.send(p, {"t": "hello", "name": "GodotGuest", "cls": "soldier", "cos": "std|class|std|none", "v": "yard-29", "sk": "", "uid": "",
+		net.send(p, {"t": "hello", "name": "GodotGuest", "cls": "soldier", "cos": "std|class|std|none", "v": "yard-30", "sk": "", "uid": "",
 			"session": "0123456789abcdef01234567", "invitationSession": ""})
 
 

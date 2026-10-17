@@ -601,6 +601,7 @@ func _init() -> void:
 	check(a.core.hp < 500.0 or a.player.hp < a.player.max or a.qm.hp < a.qm.max, "undefended, the raid does damage")
 
 	_pvp()
+	_roll()
 
 	print("")
 	print("FAILED %d" % fails if fails else "ALL PASSED")
@@ -1039,3 +1040,99 @@ func _pvp() -> void:
 	check(cp.players.g2.alive and cp.players.g2.hp == roundf(cp.players.g2.max * 0.6) or cp.players.g2.alive, "the quartermaster's touch gets him up")
 	cp.start_build(30.0)
 	check(cp.players.g1.sal == cp.players.host.sal and cp.players.host.sal >= 9, "raid pay for everyone")
+
+
+## the back roll (v0.11.0, yard-30), the browser's numbers: 2 tiles straight back from the aim in 0.55 s, 3 s cooldown,
+## walls stop it, bullets miss from 0.1 s to 0.4 s, no shooting while rolling (dev/test/back_roll.js is the browser's check)
+func _roll() -> void:
+	print("the back roll")
+	var s := _mk()
+	s.new_game(3, "normal", {}, {"mode": "5", "map": "yard"})
+	var p: Dictionary = s.player
+	var spot := Vector2(-1, -1)
+	for j in range(4, s.N - 4):
+		for i in range(6, s.N - 4):
+			var ok := true
+			for k in range(-4, 2):
+				for dj in [-1, 0, 1]:
+					if s.solid_tile(i + k, j + dj) or s.walls[s.idx(i + k, j + dj)] != null:
+						ok = false
+			if ok and spot.x < 0:
+				spot = Vector2(i + 0.5, j + 0.5)
+	check(spot.x > 0, "an open lane")
+	var place := func() -> void:
+		p.x = spot.x
+		p.y = spot.y
+		p.dgCd = 0.0
+		p.dgE = -1.0
+	place.call()
+	var aim := Vector2(0.95, -0.3).normalized()
+	s.control_local(1.0 / 60.0, {"aim": aim})
+	var x0 := Vector2(p.x, p.y)
+	check(s.local_roll() and s.rolling(p) and is_equal_approx(p.dgCd, 3.0), "V starts a roll and its 3 s cooldown")
+	check(not s.local_roll(), "no second roll while rolling")
+	var held := {"aim": aim, "fire": true, "move": Vector2(1, 0)}
+	var shots := 0
+	for f in 45:   # until it lands (walking and the trigger resume after that)
+		if not s.rolling(p):
+			break
+		s.control_local(1.0 / 60.0, held)
+		var n0 := s.bullets.size()
+		s.sim_player(p, 1.0 / 60.0)
+		shots += s.bullets.size() - n0
+	var moved := Vector2(p.x, p.y) - x0
+	check(absf(moved.length() - 2.0) < 0.06, "2 tiles (%.3f), walking input ignored" % moved.length())
+	check(moved.normalized().dot(aim) < -0.98, "straight back from the aim")
+	check(shots == 0, "no rounds while rolling, trigger held")
+	check(p.dgE == -1.0 and p.dgCd > 2.0, "over after 0.55 s; the cooldown still runs (%.2f)" % p.dgCd)
+	check(not s.local_roll(), "no roll inside the cooldown")
+	for f in 160:
+		s.control_local(1.0 / 60.0, {})
+	check(p.dgCd == 0.0 and s.local_roll(), "after 3 s it rolls again")
+	# the curve: eased travel between 0.06 s and 0.45 s
+	check(Sim.roll_pos(0.06) == 0.0 and Sim.roll_pos(0.45) == 1.0 and absf(Sim.roll_pos(0.255) - 0.5) < 1e-9, "travel eases from 0.06 s to 0.45 s")
+	# a wall one tile behind stops it, with no catching up
+	place.call()
+	var wi := floori(p.x) - 1
+	var wj := floori(p.y)
+	s.walls[s.idx(wi, wj)] = Pal.make_wall(2, false)
+	p.aim = Vector2(1, 0)
+	s.local_roll()
+	for f in 45:
+		s.control_local(1.0 / 60.0, {"aim": Vector2(1, 0)})
+	check(p.x > wi + 1.2 and spot.x - p.x < 0.5, "a wall stops the roll (x %.2f, wall ends at %d)" % [p.x, wi + 1])
+	s.walls[s.idx(wi, wj)] = null
+	# bullets: a raider's round misses inside the safe window, hits outside it
+	for rolling_now in [true, false]:
+		place.call()
+		p.hp = p.max
+		var e := s.spawn_enemy_at("rifle", p.x + 1.6, p.y)
+		e.speed = 0.0
+		var hp0: float = p.hp
+		s.fire(e, atan2(p.y - e.y, p.x - e.x), 1, {"dmg": 10.0, "speed": 22.0, "range": 9.0, "cd": 1.0})
+		for f in 12:
+			if rolling_now:
+				p.dgE = 0.2
+				p.dgX = 0.0
+				p.dgY = 0.0
+			e.cd = 99.0
+			s.update_bullets(1.0 / 60.0)
+		check((p.hp == hp0) == rolling_now, ("a bullet misses a rolling soldier" if rolling_now else "and hits one who is not") + " (%.0f -> %.0f)" % [hp0, p.hp])
+		s.enemies.erase(e)
+		p.dgE = -1.0
+	check(s.roll_safe({"dgE": 0.1}) and s.roll_safe({"dgE": 0.39}) and not s.roll_safe({"dgE": 0.05}) and not s.roll_safe({"dgE": 0.4}), "bullets miss from 0.1 s to 0.4 s")
+	# going down ends a roll; seated or in the casino there is none
+	place.call()
+	s.local_roll()
+	s.hurt_player(p, 9999.0)
+	check(p.dgE == -1.0 and not p.alive, "going down ends the roll")
+	var c := _mk()
+	c.new_game(4, "normal", {}, {"mode": "casino", "map": "casino"})
+	check(not c.local_roll(), "no rolling in the casino")
+	# a host ticks a remote player's roll (its guest moves it); the host's own soldier is moved by control_local
+	var d := _duo("ffa")
+	var g: Dictionary = d.players.g1
+	d.start_roll(g, -1, 0)
+	for f in 20:
+		d.sim_player(g, 1.0 / 60.0)
+	check(d.rolling(g) and absf(g.dgE - 20.0 / 60.0) < 1e-6 and g.dgCd < 3.0, "the host runs a guest's roll clock")

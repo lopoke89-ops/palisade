@@ -61,14 +61,27 @@ function throwNade(p,tx,ty){
 }
 // this phone's buttons: do it (host/solo) or ask the host (guest)
 function localBuild(){
-  const p=player;if(!p||!p.alive||!cfg.build||game.pvp==='ffa')return;const t=buildTarget(p,game.sel,game.piece==='door');
+  const p=player;if(!p||!p.alive||rolling(p)||!cfg.build||game.pvp==='ffa')return;const t=buildTarget(p,game.sel,game.piece==='door');
   if(NET.mode==='guest'){if(!t.ok){sfx('deny',undefined,undefined,true);return}NET.toHost({t:'b',i:t.i,j:t.j,s:game.sel,d:game.piece==='door'});return}
   doBuild(p,t.i,t.j,game.sel,game.piece==='door');
   if(game.tip===1&&game.stats.built>=3){game.tip=2;setTip('Ring the CORE. Make one tile a DOOR so your crew and Delgado can get in and out. Raiders treat doors like walls.')}
 }
 // quartermaster sprint: 1.4x speed for 2.5 s, no shooting while it lasts, then 6 s to recharge
 const SPRINT={mult:1.4,dur:2.5,cd:6};
-function localSprint(){const p=player;if(!p||!p.alive||!p.C.sprint||demo||(p.sprCd||0)>0)return;const L=(p.perk||PERK0).stride|0;p.sprT=SPRINT.dur+.6*L;p.sprCd=p.sprT+SPRINT.cd-L}   // Long Stride: longer, and back sooner
+// v0.11.0 (yard-30): the back roll, every class. Straight back from where you aim, 2 tiles in 0.55 s, then 3 s to recharge.
+// The travel runs from 0.06 s to 0.45 s (eased); bullets miss you from 0.1 s to 0.4 s (blasts, fire and bosses' moves still hit).
+// Walls stop it (no catching up). It cancels a reload or a burst, and you can't shoot, build or throw while rolling.
+const ROLL={dist:2,dur:.55,cd:3,go:.06,end:.45,safe0:.1,safe1:.4};
+const rollPos=e=>{const x=Math.max(0,Math.min(1,(e-ROLL.go)/(ROLL.end-ROLL.go)));return x*x*(3-2*x)};
+const rolling=p=>!!p&&p.dgE>=0&&p.dgE<ROLL.dur;
+const rollSafe=p=>!!p&&p.dgE>=ROLL.safe0&&p.dgE<ROLL.safe1;
+const canRoll=p=>!!p&&p.alive&&!demo&&!casino()&&!p.seat&&!(p.dgCd>0)&&!rolling(p)&&game.phase!=='over';
+function startRoll(p,dx,dy){const l=Math.hypot(dx,dy)||1;p.dgX=dx/l;p.dgY=dy/l;p.dgE=0;p.dgCd=ROLL.cd;p.rl=0;p.rlReq=false;p.bLeft=0;sfx('roll',p.x,p.y)}
+// a roll's timers on the host, for everyone but this screen's own soldier (controlLocal moves that one)
+function rollTick(p,dt){p.dgCd=Math.max(0,(p.dgCd||0)-dt);if(!p.alive){p.dgE=-1;return}if(rolling(p)){p.dgE+=dt;if(p.dgE>=ROLL.dur)p.dgE=-1}}
+function localRoll(){const p=player;if(!canRoll(p)||overlayOpen()||chatOpen())return;
+  startRoll(p,-p.aim.x,-p.aim.y);if(NET.mode==='guest')NET.toHost({t:'dg',x:r2(p.dgX),y:r2(p.dgY)})}
+function localSprint(){const p=player;if(!p||!p.alive||rolling(p)||!p.C.sprint||demo||(p.sprCd||0)>0)return;const L=(p.perk||PERK0).stride|0;p.sprT=SPRINT.dur+.6*L;p.sprCd=p.sprT+SPRINT.cd-L}   // Long Stride: longer, and back sooner
 // v0.9.3.7 touch aim assist: on a touch screen a grenade or rocket locks onto the nearest raider at least 6 tiles away
 // with nothing solid in between, so the blast can't land on your own walls or crew by accident. Mouse and controller
 // aim stay manual, PvP stays manual, and the host checks the throw exactly as before (it is just a target point).
@@ -91,7 +104,7 @@ function touchLock(p,kind){
 function lockKind(p){return p.cls==='soldier'&&hasAbility(p)&&(NET.mode==='guest'?p.ab>0:p.rk>0&&!(p.rkCd>0))?'rocket':p.nades>0?'nade':''}
 function lockNow(p){const L=game.lockC||(game.lockC={t:-1,e:null});if(game.time-L.t>=LOCK.every||game.time<L.t){L.t=game.time;const k=lockKind(p);L.e=k?touchLock(p,k):null}return L.e}
 function localNade(){
-  const p=player;if(!p||!p.alive)return;let tx,ty;const L=touchLock(p,'nade');
+  const p=player;if(!p||!p.alive||rolling(p))return;let tx,ty;const L=touchLock(p,'nade');
   if(L){tx=L.x;ty=L.y}
   else if(!touchMode&&!padMode&&mouse.seen){const w=screenToWorld(mouse.x,mouse.y+WH*.55);tx=w.x;ty=w.y}else{tx=p.x+p.face.x*5;ty=p.y+p.face.y*5}
   if(NET.mode==='guest'){if(p.nades<=0){sfx('deny',undefined,undefined,true);return}NET.toHost({t:'n',x:r2(tx),y:r2(ty)});return}

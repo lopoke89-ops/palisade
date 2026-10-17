@@ -21,7 +21,7 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
   await G.click('[data-nav=multi]'); await G.fill('#mCode', code); await G.click('#joinBtn');
   await G.waitForFunction(() => !document.getElementById('pg-lobby').hidden, null, { timeout: 15000 });
   await H.evaluate(() => __pal.lobbyReadyAll()); await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await synced(H, G);
-  out.proto = await G.evaluate(() => __pal.PROTO); assert.equal(out.proto, 'yard-29');
+  out.proto = await G.evaluate(() => __pal.PROTO); assert.equal(out.proto, 'yard-30');
   // 1. the floor: 16x16, no stake, no raiders, nothing to build, a clock that never runs out
   out.mode = await G.evaluate(() => ({ mode: __pal.game.mode, map: __pal.game.map, N: __pal.N, cores: __pal.cores.length, nodes: __pal.nodes.length }));
   assert.deepEqual(out.mode, { mode: 'casino', map: 'casino', N: 16, cores: 0, nodes: 0 });

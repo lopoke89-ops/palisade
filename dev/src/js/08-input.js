@@ -5,7 +5,7 @@ const stickMove={id:null,ox:0,oy:0,vx:0,vy:0,mag:0},stickAim={id:null,ox:0,oy:0,
 function stickSet(s,x,y){let dx=x-s.ox,dy=y-s.oy;const l=Math.hypot(dx,dy);if(l>SR){dx*=SR/l;dy*=SR/l}s.vx=dx/SR;s.vy=dy/SR;s.mag=Math.min(1,l/SR)}
 cv.addEventListener('pointerdown',e=>{
   initAudio();
-  if(e.pointerType==='mouse'){touchMode=false;mouse.seen=true;mouse.x=e.clientX;mouse.y=e.clientY;if(e.button===0){mouse.down=true;mouse.pulls=(mouse.pulls+1)&255}return}
+  if(e.pointerType==='mouse'){touchMode=false;mouse.seen=true;mouse.x=e.clientX;mouse.y=e.clientY;if(e.button===0){mouse.down=true;mouse.pulls=(mouse.pulls+1)&255}else if(e.button===2&&playing()&&!overlayOpen()&&!casino())localRoll();return}   // v0.11.0: the right button rolls
   touchMode=true;const s=e.clientX<W*.45?stickMove:stickAim;if(s.id!==null)return;
   s.id=e.pointerId;s.ox=e.clientX;s.oy=e.clientY;s.vx=s.vy=s.mag=0;try{cv.setPointerCapture(e.pointerId)}catch(_){}
   e.preventDefault();
@@ -43,6 +43,7 @@ addEventListener('keydown',e=>{
   else if(k==='q'&&hasAbility(player))localAbility();   // the soldier's rocket, the sniper's stealth (co-op)
   else if(k==='g'||k==='q')localNade();
   else if(k==='shift')localSprint();
+  else if(k==='v')localRoll();
   else if(k==='r')localReload();
   else if(k==='enter'&&boReadyPress()){}   // v0.9.7.1
   else if(k==='enter'&&game.phase==='build'&&NET.mode!=='guest')startRaid();
@@ -59,7 +60,7 @@ function tapBtn(el,fn){el._tap=fn;el.addEventListener('pointerdown',e=>{e.preven
 const live=fn=>()=>{if(playing()&&!overlayOpen())fn()};
 [0,1,2].forEach(m=>tapBtn($('c'+m),live(()=>{game.sel=m})));
 tapBtn($('pWall'),live(()=>{game.piece='wall'}));tapBtn($('pDoor'),live(()=>{game.piece='door'}));
-tapBtn($('buildBtn'),live(localBuild));tapBtn($('nadeBtn'),live(localNade));tapBtn($('sprBtn'),live(localSprint));tapBtn($('abBtn'),live(localAbility));
+tapBtn($('buildBtn'),live(localBuild));tapBtn($('nadeBtn'),live(localNade));tapBtn($('sprBtn'),live(localSprint));tapBtn($('rollBtn'),live(localRoll));tapBtn($('abBtn'),live(localAbility));
 tapBtn($('skipBtn'),live(()=>{if(boReadyPress())return;if(game.phase==='build'&&NET.mode!=='guest')startRaid()}));
 tapBtn($('pauseBtn'),()=>{if(playing())togglePause()});
 $('chatBtn').addEventListener('click',e=>{e.preventDefault();initAudio();chatOpen()?closeChat():openChat()});

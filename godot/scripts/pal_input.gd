@@ -134,7 +134,7 @@ func _game_pad() -> void:
 		m.do_action("pause")
 		return
 	var now := Time.get_ticks_msec() / 1000.0
-	for id in ["nade", "special", "armory", "piece", "matPrev", "matNext", "start", "reload", "delgado", "sprint", "skills", "mat1", "mat2", "mat3"]:
+	for id in ["nade", "special", "roll", "armory", "piece", "matPrev", "matNext", "start", "reload", "delgado", "sprint", "skills", "mat1", "mat2", "mat3"]:
 		if M.get(id, -1) >= 0 and hit(M[id]):
 			m.do_action(id)
 	if M.build >= 0:   # hold to keep building

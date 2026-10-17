@@ -23,6 +23,7 @@ const ACTIONS := [
 	["nade", "GRENADE", [KEY_G], 6],
 	["special", "ABILITY", [KEY_Q], 1],
 	["sprint", "SPRINT", [KEY_SHIFT], -1],
+	["roll", "BACK ROLL", [KEY_V], 5],
 	["reload", "RELOAD", [KEY_R], -1],
 	["armory", "ARMORY", [KEY_E, KEY_U], 2],
 	["piece", "WALL / DOOR", [KEY_F], 3],

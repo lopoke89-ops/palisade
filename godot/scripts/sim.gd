@@ -1,6 +1,6 @@
 class_name Sim
 extends RefCounted
-## The host/solo simulation, ported from the browser build (v0.10.9, protocol yard-29).
+## The host/solo simulation, ported from the browser build (v0.11.0, protocol yard-30).
 ## Phase 1 slice: the Yard on Normal, one Soldier, Delgado standing guard, riflemen raids.
 ## Function names follow the browser so the two can be read side by side:
 ##   06-world.js   pathing, collision, damage, explode
@@ -355,7 +355,7 @@ func make_player(id: String, cls: String = "soldier", slot: int = 0, team: Strin
 		"nades": C.nades, "maxN": C.nades, "ncd": 0.0, "blast": C.blast, "cd": 0.0, "bcd": 0.0, "gt": 0.0, "bLeft": 0,
 		"hurt": 9.0, "flash": 0.0, "walk": 0.0, "face": Vector2(0.7, -0.7).normalized(), "aim": Vector2(0.7, -0.7).normalized(), "fire_in": false,
 		"up": {"d": 0, "r": 0, "g": 0, "a": 0, "n": 0}, "sal": 0, "kills": 0, "move_dir": Vector2(0.7, -0.7).normalized(), "markT": 0.0, "stun": 0.0,
-		"rk": 0, "rkCd": 0.0, "stl": 0.0, "stlCd": 0.0, "sprT": 0.0, "sprCd": 0.0, "ammoEq": ["", ""], "trT": 0.0,
+		"rk": 0, "rkCd": 0.0, "stl": 0.0, "stlCd": 0.0, "sprT": 0.0, "sprCd": 0.0, "ammoEq": ["", ""], "trT": 0.0, "dgE": -1.0, "dgCd": 0.0, "dgX": 0.0, "dgY": 0.0,
 		"ammo": -1, "rl": 0.0, "rlReq": false, "bolt": 0.0, "boltT": 0.0, "sinceShot": 9.0, "dryT": 0.0,
 		"pullIn": -1, "pullUsed": -1, "pullT": -9.0, "auto": false}
 	p.max = 0.0
@@ -629,6 +629,7 @@ func hurt_player(p: Dictionary, d: float, own = null) -> void:
 	if p.hp <= 0:
 		var help := any_up(p)
 		var last: bool = has_mod("laststand") and game.phase == "raid"
+		p.dgE = -1.0
 		p.alive = false
 		p.downed = true
 		p.hp = 0.0
@@ -640,6 +641,7 @@ func hurt_player(p: Dictionary, d: float, own = null) -> void:
 
 
 func pvp_down(p: Dictionary, own) -> void:
+	p.dgE = -1.0
 	p.alive = false
 	p.downed = true
 	p.hp = 0.0
@@ -934,7 +936,7 @@ func do_build(p: Dictionary, i: int, j: int, sel: int, door: bool) -> void:
 
 func local_build() -> void:
 	var p := player
-	if not p.alive or game.phase == "over":
+	if not p.alive or rolling(p) or game.phase == "over":
 		return
 	var t := build_target(p, game.sel, game.piece == "door")
 	do_build(p, t.i, t.j, game.sel, game.piece == "door")
@@ -1153,14 +1155,30 @@ func truce() -> bool:
 func control_local(dt: float, ctl: Dictionary) -> void:
 	var p := player
 	p.fire_in = false
-	if not p.alive or p.get("seat", 0):   # seated at a casino table: the sheet has the controls
+	if not p.alive:
+		p.dgE = -1.0
+		return
+	if p.get("seat", 0):   # seated at a casino table: the sheet has the controls
 		return
 	var mv: Vector2 = ctl.get("move", Vector2.ZERO)
 	var mag := minf(1.0, mv.length())
 	p.sprT = maxf(0.0, p.sprT - dt)
 	p.sprCd = maxf(0.0, p.sprCd - dt)
 	var spr: bool = p.sprT > 0
-	if mag > 0.12:
+	p.dgCd = maxf(0.0, p.dgCd - dt)
+	var roll := rolling(p)
+	if roll:   # the back roll moves this screen's soldier; walking waits until it lands
+		var e0: float = p.dgE
+		p.dgE = minf(Pal.ROLL.dur, p.dgE + dt)
+		var s: float = Pal.ROLL.dist * (roll_pos(p.dgE) - roll_pos(e0))
+		if s > 0:
+			move_ent(p, p.dgX * s, p.dgY * s, pt(p))
+			p.walk += s * 3
+		if rnd() < dt * 22:
+			emit(p.x, p.y, "dust")
+		if p.dgE >= Pal.ROLL.dur:
+			p.dgE = -1.0
+	if mag > 0.12 and not roll:
 		var d := mv.normalized()
 		var sp: float = 3.3 * mag * p.C.spd * (Pal.SPRINT.mult if spr else 1.0) * (0.45 if p.stun > 0 else 1.0) * slow_at(p.x, p.y) * p.perk.speed * (1.2 if has_mod("adrenaline") else 1.0)
 		move_ent(p, d.x * sp * dt, d.y * sp * dt, pt(p))
@@ -1175,7 +1193,7 @@ func control_local(dt: float, ctl: Dictionary) -> void:
 	elif mag > 0.12:
 		p.face = p.move_dir
 		p.aim = p.move_dir
-	p.fire_in = ctl.get("fire", false) and not spr and not casino()   # no weapons in the casino
+	p.fire_in = ctl.get("fire", false) and not spr and not roll and not casino()   # no weapons in the casino
 	p.auto = ctl.get("auto", false)
 	var pulls: int = ctl.get("pulls", p.pullIn)
 	if p.pullIn != pulls:
@@ -1186,6 +1204,8 @@ func control_local(dt: float, ctl: Dictionary) -> void:
 
 
 func sim_player(p: Dictionary, dt: float) -> void:
+	if not is_same(p, player):
+		roll_tick(p, dt)
 	p.hurt += dt
 	p.cd = maxf(p.cd - dt, -dt)
 	if p.bolt > 0:
@@ -1263,7 +1283,9 @@ func sim_player(p: Dictionary, dt: float) -> void:
 	if click and p.sinceShot >= G.clickCd:
 		p.cd = minf(p.cd, 0.0)
 	var want: bool
-	if semi:
+	if rolling(p):   # no shooting while rolling
+		want = false
+	elif semi:
 		want = p.fire_in or fresh
 	elif pump:
 		want = (click and p.sinceShot >= G.clickCd) or (p.fire_in and p.cd <= 0)
@@ -2155,7 +2177,7 @@ func update_bullets(dt: float) -> void:
 							break
 			if pvp() != "":
 				for o in players.values():
-					if o.alive and not (o.prot > 0) and o.id != b.own and (pvp() == "ffa" or o.team != b.pt) and Vector2(o.x - b.x, o.y - b.y).length() < 0.3:
+					if o.alive and not (o.prot > 0) and not roll_safe(o) and o.id != b.own and (pvp() == "ffa" or o.team != b.pt) and Vector2(o.x - b.x, o.y - b.y).length() < 0.3:
 						hurt_player(o, bdmg(b) * (Pal.PVP.snipe if b.heavy else Pal.PVP.dmg), b.own)
 						b.dead = true
 						break
@@ -2185,7 +2207,7 @@ func update_bullets(dt: float) -> void:
 						break
 			else:
 				for a in allies():
-					if a.alive and at_actor(b, a) and Vector2(a.x - b.x, a.y - b.y).length() < 0.3:
+					if a.alive and not roll_safe(a) and at_actor(b, a) and Vector2(a.x - b.x, a.y - b.y).length() < 0.3:
 						hurt_ally(a, b.dmg * (0.7 if is_same(a, qm) else 1.0))
 						b.dead = true
 						break
@@ -4584,11 +4606,64 @@ func seen(a: Dictionary) -> bool:
 
 func local_sprint() -> void:
 	var p := player
-	if not p.alive or not p.C.get("sprint", false) or p.sprCd > 0:
+	if not p.alive or rolling(p) or not p.C.get("sprint", false) or p.sprCd > 0:
 		return
 	var L: int = p.perk.stride
 	p.sprT = Pal.SPRINT.dur + 0.6 * L
 	p.sprCd = p.sprT + Pal.SPRINT.cd - L
+
+
+# ---------------------------------------------------------------- the back roll (09-actions.js)
+
+static func roll_pos(e: float) -> float:
+	var x := clampf((e - Pal.ROLL.go) / (Pal.ROLL.end - Pal.ROLL.go), 0.0, 1.0)
+	return x * x * (3.0 - 2.0 * x)
+
+
+func rolling(p) -> bool:
+	return p is Dictionary and p.get("dgE", -1.0) >= 0 and p.dgE < Pal.ROLL.dur
+
+
+func roll_safe(p) -> bool:
+	return p is Dictionary and p.get("dgE", -1.0) >= Pal.ROLL.safe0 and p.dgE < Pal.ROLL.safe1
+
+
+func can_roll(p: Dictionary) -> bool:
+	return p.alive and not casino() and not p.get("seat", 0) and not (p.dgCd > 0) and not rolling(p) and game.phase != "over"
+
+
+func start_roll(p: Dictionary, dx: float, dy: float) -> void:
+	var d := Vector2(dx, dy)
+	d = d.normalized() if d.length() > 0 else Vector2(-1, 0)
+	p.dgX = d.x
+	p.dgY = d.y
+	p.dgE = 0.0
+	p.dgCd = Pal.ROLL.cd
+	p.rl = 0.0
+	p.rlReq = false
+	p.bLeft = 0
+	sfx("roll", p.x, p.y)
+
+
+## a roll's timers on the host, for everyone but this screen's own soldier (control_local moves that one)
+func roll_tick(p: Dictionary, dt: float) -> void:
+	p.dgCd = maxf(0.0, p.dgCd - dt)
+	if not p.alive:
+		p.dgE = -1.0
+		return
+	if rolling(p):
+		p.dgE += dt
+		if p.dgE >= Pal.ROLL.dur:
+			p.dgE = -1.0
+
+
+## V, the right mouse button, RB, the ROLL button: straight back from the aim. True if it rolled.
+func local_roll() -> bool:
+	var p := player
+	if not can_roll(p):
+		return false
+	start_roll(p, -p.aim.x, -p.aim.y)
+	return true
 
 
 func local_reload() -> void:

@@ -1,6 +1,6 @@
 class_name PalNet
 extends Node
-## Online play (dev/src/js/21-online.js and 05-net-record.js), wire-compatible with the browser (protocol yard-29),
+## Online play (dev/src/js/21-online.js and 05-net-record.js), wire-compatible with the browser (protocol yard-30),
 ## so a Godot screen and a browser tab can share one room either way round.
 ##
 ## One screen hosts and runs the real match; the others join with a 4-character room code. PeerJS only introduces
@@ -10,7 +10,7 @@ extends Node
 ## main.gd owns the screen: it calls host_frame() after sim.update on the host, guest_frame() instead of sim.update on
 ## a guest, and the send_* functions where a guest's actions would otherwise go straight into the sim.
 
-const PROTO := "yard-29"
+const PROTO := "yard-30"   # yard-30 (v0.11.0): the back roll ("dg", and the "dg" field on player rows)
 const ROOM_PREFIX := "palisade-yard-27-"
 const CODE_CHARS := "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
 const LIMITS := {"name": 12, "chat": 120, "cos": 160, "skills": 160, "targetPad": 100, "moveBurst": 2.0}
@@ -505,8 +505,13 @@ func _host_action(c: Dictionary, t: String, d: Dictionary) -> void:
 					* maxf(sim.slow_at(p.x, p.y), sim.slow_at(d.x, d.y)) * 1.15
 				c.moveBudget = minf(LIMITS.moveBurst, c.get("moveBudget", 0.55) + speed * dt)
 				var dd := Vector2(d.x - p.x, d.y - p.y).length()
-				if dd <= c.moveBudget + 0.02 and dd < 3 and sim.travel_clear(p.x, p.y, d.x, d.y, sim.pt(p), 0.27):
-					c.moveBudget = maxf(0.0, c.moveBudget - dd)
+				if c.get("rollB", 0.0) > 0 and now > c.get("rollUntil", 0.0):
+					c.rollB = 0.0
+				var rb: float = c.get("rollB", 0.0)   # a roll's distance, on top of the walking pace, spent first
+				if dd <= c.moveBudget + rb + 0.02 and dd < 3 and sim.travel_clear(p.x, p.y, d.x, d.y, sim.pt(p), 0.27):
+					var from_roll := minf(rb, dd)
+					c.rollB = rb - from_roll
+					c.moveBudget = maxf(0.0, c.moveBudget - (dd - from_roll))
 					p.walk += dd * 3
 					p.x = float(d.x)
 					p.y = float(d.y)
@@ -527,6 +532,12 @@ func _host_action(c: Dictionary, t: String, d: Dictionary) -> void:
 		"rl":
 			if p.gun.has("mag"):
 				p.rlReq = true
+		"dg":   # yard-30: a guest's back roll. The host keeps the cooldown and lets the roll's distance through its speed check.
+			if _fin(d.get("x"), -1.1, 1.1) and _fin(d.get("y"), -1.1, 1.1) and Vector2(d.x, d.y).length() > 0.5 and p.alive and not sim.casino() \
+					and not p.get("seat", 0) and not sim.rolling(p) and not (p.dgCd > 0.35):
+				sim.start_roll(p, d.x, d.y)
+				c.rollB = Pal.ROLL.dist + 0.15
+				c.rollUntil = _now() + (Pal.ROLL.dur + 0.6) * 1000.0
 		"ab":
 			if _fin(d.get("x"), -pad, N + pad) and _fin(d.get("y"), -pad, N + pad):
 				sim.use_ability(p, d.x, d.y)
@@ -979,7 +990,7 @@ func _apply_wall_diff(d: Array) -> void:
 func _pl_state(p: Dictionary) -> Array:
 	return [p.id, r2(p.x), r2(p.y), r2(p.aim.x), r2(p.aim.y), ceili(p.hp), 1 if p.alive else 0, int(p.ammo) if p.gun.has("mag") else -1, int(p.tp),
 		1 if p.downed else 0, r2(p.revive), r2(minf(p.rt, 1e6)), r2(maxf(0.0, p.bcd)), r2(p.bolt / p.boltT) if p.bolt > 0 and p.boltT > 0 else 0, 1 if p.rl > 0 else 0,
-		r2(p.stun), r2(p.get("ev", 0.0))]
+		r2(p.stun), r2(p.get("ev", 0.0)), r2(p.dgE) + 0.01 if sim.rolling(p) else 0]   # dg (yard-30): how far into a back roll, +0.01
 
 
 static func _ch_evac_bits(p: Dictionary) -> int:
@@ -1370,6 +1381,7 @@ func _apply_snap(s: Dictionary) -> void:
 			p.aim = Vector2(v.call(3), v.call(4))
 			p.face = p.aim
 			p.tp = int(v.call(8))
+			p.dgE = v.call(17) - 0.01 if v.call(17) > 0 else -1.0
 		if v.call(5) < p.hp - 0.01:
 			p.flash = 0.1
 		p.hp = v.call(5)
@@ -1653,6 +1665,10 @@ func guest_frame(dt: float, ctl: Dictionary) -> void:
 		if o.get("boltF", 0.0) > 0:
 			o.boltF = maxf(0.0, o.boltF - dt * 1.9)
 		o.stun = maxf(0.0, o.stun - dt)
+		if not is_same(o, p) and sim.rolling(o):
+			o.dgE += dt
+			if o.dgE >= Pal.ROLL.dur:
+				o.dgE = -1.0
 	smooth.call(sim.qm)
 	sim.qm.flash = maxf(0.0, sim.qm.flash - dt)
 	for e in sim.enemies:
@@ -1723,6 +1739,10 @@ func send_ammo(id: String, slot: int) -> void:
 
 func send_reload() -> void:
 	peer.send(_host_peer, {"t": "rl"})
+
+
+func send_roll(dx: float, dy: float) -> void:
+	peer.send(_host_peer, {"t": "dg", "x": r2(dx), "y": r2(dy)})
 
 
 func send_ability(x: float, y: float) -> void:

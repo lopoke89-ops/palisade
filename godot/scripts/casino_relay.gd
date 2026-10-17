@@ -20,7 +20,7 @@ extends Node
 ##             "" when signed out), url (default the public endpoint, dev/render/client.json), enabled (default true),
 ##         session (24 hex: this run of the game; random by default), incarnation (host: a uuid, random by default;
 ##             guest: from an invitation, or ""), uid_fn (Callable -> the signed-in account id; a change ends the
-##             session as the browser's heartbeat does), game (default "yard-29"), join_ms (default 120000),
+##             session as the browser's heartbeat does), game (default "yard-30"), join_ms (default 120000),
 ##         tls_options (a TLSOptions for wss://; default TLSOptions.client(): the system's CAs. Tests and a relay with a
 ##             private CA pass TLSOptions.client(their certificate))
 ##   send(peer_id, msg, "r"|"u"|"st") -> bool   send_all(msg, ch)   is_open(peer_id, ch)   peers()   close_peer(peer_id)
@@ -60,7 +60,7 @@ signal peer_resumed(peer_id: String)
 signal status(text: String)
 
 const WIRE := "casino-relay-1"
-const GAME := "yard-29"
+const GAME := "yard-30"
 const DEFAULT_URL := "https://palisade-casino-staging.onrender.com"   # dev/render/client.json (public)
 const HOST_ID := "host"
 const GRACE_MS := 120000   # also the join window, as rlyEnter's deadline

@@ -26,7 +26,7 @@ function makePlayer(id,name,cls,slot,cos,team,sk){
   if(!CLASSES[cls])cls='soldier';const C=CLASSES[cls],[x,y]=SPAWNS[slot%SPAWNS.length];
   const p={id,name,cls,slot,x,y,hp:C.hp,max:C.hp,alive:true,downed:false,rt:0,revive:0,aim:{x:.7,y:-.7},face:{x:.7,y:-.7},moveDir:{x:.7,y:-.7},
     cd:0,bcd:0,gt:0,ncd:0,mats:[24,0,0],cap:C.cap.slice(),nades:C.nades,maxN:C.nades,hurt:9,walk:0,flash:0,C,tp:0,fireIn:false,
-    sal:0,kills:0,deaths:0,prot:0,ab:0,team:team==='b'?'b':team==='a'?'a':'',up:{d:0,r:0,g:0,a:0,n:0},upS:'00000',ammoEq:['',''],cos:parseCos(cos),cosS:'',sk:String(sk||''),perk:PERK0,rk:0,rkCd:0,stl:0,stlCd:0};
+    sal:0,kills:0,deaths:0,prot:0,ab:0,team:team==='b'?'b':team==='a'?'a':'',up:{d:0,r:0,g:0,a:0,n:0},upS:'00000',ammoEq:['',''],cos:parseCos(cos),cosS:'',sk:String(sk||''),perk:PERK0,rk:0,rkCd:0,stl:0,stlCd:0,dgE:-1,dgCd:0,dgX:0,dgY:0};
   p.cosS=cosStr(p.cos);refit(p);return p;
 }
 // The one way to change jobs (the room, Free-for-all respawns, and later the skill tree all use it): a fresh gun,

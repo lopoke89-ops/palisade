@@ -123,6 +123,7 @@ func _init() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir))
 	var all := RECIPES.duplicate()
 	all.merge(_casino())   # after the others, so their noise (one stream for every recipe, in order) stays the same
+	all.merge({"roll": [["n", 0, .24, "bandpass", 1100, .9, .2, 320], ["n", .34, .12, "lowpass", 300, 1, .32, 0]]})   # v0.11.0: the back roll (last, for the same reason)
 	for name in all:
 		var layers: Array = all[name]
 		var end := 0.0

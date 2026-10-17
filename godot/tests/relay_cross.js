@@ -149,7 +149,7 @@ async function godotHosts(b, port, fx, url) {
   const bpeer = await G.evaluate(() => __pal.RLY.peer);
   check(!!g.has('connected', e => e[1] === bpeer), "Godot's peer is the browser's relay id");
   const hello = g.data('hello');
-  check(hello && hello[3].uid === users[3].id && hello[3].name === users[3].name && hello[3].v === 'yard-29', `the browser's hello arrives with its verified account: ${hello && JSON.stringify(hello[3])}`);
+  check(hello && hello[3].uid === users[3].id && hello[3].name === users[3].name && hello[3].v === 'yard-30', `the browser's hello arrives with its verified account: ${hello && JSON.stringify(hello[3])}`);
   check(await G.evaluate(() => __pal.NET.code) === code, "the browser took Godot's lobby (its code)");
   await G.evaluate(() => __pal.NET.toHost({ t: 'c', m: 'hi from the browser' }));
   check(!!await until(() => g.data('c', e => e[3].m === 'hi from the browser' && e[1] === bpeer), 5000), 'browser -> Godot chat');
