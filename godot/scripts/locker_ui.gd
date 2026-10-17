@@ -160,7 +160,7 @@ class BgView extends Control:
 		Ctx2D.free_pool(pool)
 
 	func _process(dt: float) -> void:
-		if Backgrounds.is_still(id):
+		if Backgrounds.is_still(id) or PalSettings.reduce_motion:
 			return
 		acc += dt
 		if acc >= 1.0 / 30:

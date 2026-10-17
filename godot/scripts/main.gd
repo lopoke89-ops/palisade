@@ -654,6 +654,7 @@ func _close_skills() -> void:
 
 func apply_settings() -> void:
 	var D: Dictionary = settings.data
+	PalSettings.reduce_motion = D.get("reduceMotion", false)
 	audio.volume = D.volume
 	audio.music_vol = D.music
 	if absf(v.ZOOM - D.zoom) > 0.001:

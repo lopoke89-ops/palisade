@@ -4,6 +4,8 @@ extends RefCounted
 ## sound, screen, the next game's setup, keyboard keys and controller buttons.
 
 const PATH := "user://settings.json"
+## the browser follows the system's reduced-motion preference; here it's a setting: backgrounds and auras hold still
+static var reduce_motion := false
 
 ## Controller buttons in the browser's "standard" numbering, the same on Xbox and PlayStation pads
 const PB := {"A": 0, "B": 1, "X": 2, "Y": 3, "LB": 4, "RB": 5, "LT": 6, "RT": 7, "VIEW": 8, "MENU": 9, "LS": 10, "RS": 11, "UP": 12, "DOWN": 13, "LEFT": 14, "RIGHT": 15, "HOME": 16}
@@ -37,7 +39,7 @@ const ACTIONS := [
 
 var data := {
 	"volume": 0.8, "music": 0.7, "shake": 1.0, "zoom": 1.0, "msgTime": 1.0, "fpsMode": "auto", "fps": false, "tips": true,
-	"haptics": true, "fullscreen": false, "vsync": true,
+	"haptics": true, "fullscreen": false, "vsync": true, "reduceMotion": false,
 	"setup": {"mode": "5", "map": "yard", "size": "std", "diff": "normal", "cls": "soldier", "mods": []},
 	"keys": {}, "pad": {},
 }

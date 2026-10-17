@@ -416,6 +416,7 @@ func show_settings() -> void:
 	_check(col, "VSync", D.vsync, func(on): D.vsync = on)
 	_check(col, "Show frame rate", D.fps, func(on): D.fps = on)
 	_check(col, "Show tips during games", D.tips, func(on): D.tips = on)
+	_check(col, "Reduce motion (backgrounds and outfit effects hold still)", D.get("reduceMotion", false), func(on): D.reduceMotion = on)
 	col.add_child(_label("FEEL", 12, DIM))
 	_check(col, "Controller rumble on hits and blasts", D.haptics, func(on): D.haptics = on)
 	var row := HBoxContainer.new()

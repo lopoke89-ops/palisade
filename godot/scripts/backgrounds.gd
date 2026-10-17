@@ -43,6 +43,8 @@ static func is_still(id: String) -> bool:
 
 ## the one call the lobby and the Locker use
 static func draw(x: Ctx2D, id: String, w: float, h: float, t: float) -> void:
+	if PalSettings.reduce_motion:
+		t = 0.0
 	var B: Dictionary = PalLocker.catalog().get("BGS", {}).get(id, {})
 	if B.is_empty():
 		id = "campfire"

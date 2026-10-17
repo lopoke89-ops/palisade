@@ -144,6 +144,8 @@ static func _pick(part: String, p: String) -> bool:
 ## an outfit's moving effect at the feet (x, y), s pixels per model unit, t seconds. part: "ground" (under the figure),
 ## "top" (over it) or "" for all.
 static func paint_aura(cv: CanvasItem, kind: String, x: float, y: float, s: float, t: float, alpha: float = 1.0, part: String = "") -> void:
+	if PalSettings.reduce_motion:
+		t = 0.0
 	var L: Array = PalLocker.catalog().get("AURAS", {}).get(kind, [])
 	for o in L:
 		if part != "" and not _pick(part, o.p):
