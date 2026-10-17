@@ -34,6 +34,21 @@ var sp_prog := 0     # raids held toward the next point (0-4)
 var skills := {}     # id -> level
 var mol_off := false   # Molotovs switched off (the browser's 'm' on the skill string)
 var persist := true  # tests switch this off so they never touch a real profile
+var cloud := false   # the skill tree is the account's: points come from the server, buying goes through it
+
+
+## an account's locker brought the skill tree (sp, sp_prog, sp_total, skills); {} when signed out
+func from_cloud(j: Dictionary) -> void:
+	cloud = not j.is_empty()
+	sp = maxi(0, int(j.get("sp", 0)))
+	sp_prog = maxi(0, int(j.get("sp_prog", 0)))
+	sp_total = maxi(0, int(j.get("sp_total", 0)))
+	skills = {}
+	var t: Dictionary = j.get("skills") if j.get("skills") is Dictionary else {}
+	for S in SKILLS:
+		if int(t.get(S.id, 0)) > 0:
+			skills[S.id] = mini(S.max, int(t[S.id]))
+	save()
 
 
 static func skill_by(id: String) -> Dictionary:
@@ -117,6 +132,7 @@ func load_file() -> void:
 		sp_total = int(d.get("sp_total", 0))
 		sp_prog = int(d.get("sp_prog", 0))
 		mol_off = bool(d.get("mol_off", false))
+		cloud = bool(d.get("cloud", false))
 		skills = {}
 		var sk = d.get("skills", {})
 		if sk is Dictionary:
@@ -131,4 +147,4 @@ func save() -> void:
 	var f := FileAccess.open(PATH, FileAccess.WRITE)
 	if f == null:
 		return
-	f.store_string(JSON.stringify({"sp": sp, "sp_total": sp_total, "sp_prog": sp_prog, "skills": skills, "mol_off": mol_off}))
+	f.store_string(JSON.stringify({"sp": sp, "sp_total": sp_total, "sp_prog": sp_prog, "skills": skills, "mol_off": mol_off, "cloud": cloud}))

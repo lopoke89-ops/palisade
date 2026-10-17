@@ -281,6 +281,8 @@ func show_main() -> void:
 	_button("MATCH SETUP", func(): show_setup(), col)
 	_button("LOCKER" + (" · %d CASE%s" % [m.locker.all_cases(), "" if m.locker.all_cases() == 1 else "S"] if m.locker != null and m.locker.all_cases() > 0 else ""), func(): show_locker(), col)
 	_button("SKILL TREE", func(): m.open_skills(), col)
+	if m.account != null and m.account.state != "off":
+		_button("ACCOUNT · " + _acct_tag(), func(): show_account(), col)
 	_button("INDEX", func(): _go("main", "index"), col)
 	_button("SETTINGS", func(): _go("main", "settings"), col)
 	_button("QUIT", func(): get_tree().quit(), col)
@@ -685,7 +687,7 @@ func _go(from: String, to: String) -> void:
 ## B, Esc: back out of the current screen
 func back() -> void:
 	match screen:
-		"setup", "locker":
+		"setup", "locker", "account":
 			show_main()
 		"settings", "index":
 			if came_from == "pause":
@@ -707,6 +709,14 @@ func reward_cards(R: Dictionary) -> HFlowContainer:
 	row.add_theme_constant_override("h_separation", 8)
 	row.add_theme_constant_override("v_separation", 8)
 	var cards: Array = []
+	if R.get("pending"):
+		var pc := PanelContainer.new()
+		row.add_child(pc)
+		var v := VBoxContainer.new()
+		pc.add_child(v)
+		v.add_child(_label("SAVING", 13, GOLD))
+		v.add_child(_label("Sending your result to your account…", 11, DIM, true))
+		return row
 	var card := func(border: Color) -> VBoxContainer:
 		var pc := PanelContainer.new()
 		var sb := StyleBoxFlat.new()
@@ -797,3 +807,138 @@ func reward_cards(R: Dictionary) -> HFlowContainer:
 		tw.tween_interval(i * minf(0.32, 1.5 / cards.size()))
 		tw.tween_property(pc, "modulate:a", 1.0, 0.25)
 	return row
+
+
+# ---------------------------------------------------------------- the account page (19-accounts.js renderAcct)
+
+func _acct_tag() -> String:
+	var A: PalAccount = m.account
+	match A.state:
+		"wait":
+			return "CONNECTING"
+		"guest":
+			return "GUEST"
+		"full":
+			return A.name_.to_upper() if A.name_ != "" else "SIGNED IN"
+	return "OFFLINE"
+
+
+## the account told us something changed: redraw what shows it
+func on_account_changed() -> void:
+	match screen:
+		"account":
+			if not acct_busy:
+				show_account()
+		"locker":
+			for ch in root.get_children():
+				if ch is LockerUI and not ch.busy and not ch.get_children().any(func(n): return n is CaseOpen):
+					ch.refresh()
+		"main":
+			pass
+
+
+var acct_busy := false
+
+
+func _acct_do(fn: Callable) -> void:
+	if acct_busy:
+		return
+	acct_busy = true
+	m.account.msg = ""
+	show_account()
+	var out = await fn.call()
+	m.account.msg = out if out is String else ""
+	acct_busy = false
+	show_account()
+
+
+func _field(col: VBoxContainer, title: String, value: String = "", secret: bool = false, hint_text: String = "") -> LineEdit:
+	col.add_child(_label(title, 12, DIM))
+	var e := LineEdit.new()
+	e.text = value
+	e.secret = secret
+	e.placeholder_text = hint_text
+	e.custom_minimum_size = Vector2(280, 0)
+	col.add_child(e)
+	return e
+
+
+func show_account() -> void:
+	_clear()
+	screen = "account"
+	var A: PalAccount = m.account
+	var st := A.state
+	var g := A.is_guest()
+	var live := st == "guest" or st == "full"
+	var u: Dictionary = A.s.get("user") if A.s.get("user") is Dictionary else {}
+	var title := (A.name_ if A.name_ != "" else ("GUEST" if g else "SIGNED IN")) if live else ("CONNECTING" if st == "wait" else "NO ACCOUNT")
+	var col := _card(520, title, "ACCOUNT")
+	var lede := ""
+	match st:
+		"off":
+			lede = "This build is playing offline. Your locker is saved on this PC."
+		"wait":
+			lede = "Connecting to your account…"
+		"down":
+			lede = "Can't reach the account server right now. You can still play: finished runs are sent when you're back online, and opening cases waits for a connection." if A.signed_in() else "No account yet. Your locker is saved on this PC, and it moves into your account once one is made."
+		_:
+			lede = "You're playing as a guest. Your locker is backed up online, but only this PC can get back into it. Add an email to keep it on any device, or sign in to an account you already have." if g else "Signed in%s%s. Your locker is saved to your account and follows you to any device you sign in on, the browser game included." % [(" as " + A.name_) if A.name_ != "" else "", (" · " + u.email) if u.get("email") else ""]
+	col.add_child(_label(lede, 14, PAPER, true))
+	if A.msg != "":
+		col.add_child(_label(A.msg, 13, GOLD, true))
+	var dis := acct_busy or st == "wait"
+	if st == "down":
+		_button("TRY AGAIN", func():
+			A.msg = ""
+			A.boot(), col).disabled = dis
+	if live:
+		var un := _field(col, "USERNAME (3 TO 16 LETTERS, NUMBERS OR _)", A.name_)
+		_button("SAVE NAME", func():
+			var n := un.text.strip_edges()
+			if not RegEx.create_from_string("^[A-Za-z0-9_]{3,16}$").search(n):
+				A.msg = "Usernames are 3 to 16 letters, numbers or _."
+				show_account()
+				return
+			_acct_do(func(): return await A.set_username(n)), col).disabled = dis
+	if live and g:
+		var mail := _field(col, "ADD AN EMAIL TO KEEP THIS LOCKER ON ANY DEVICE", "", false, "you@example.com")
+		_button("SEND LINK", func():
+			var mm := mail.text.strip_edges()
+			if not RegEx.create_from_string("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$").search(mm):
+				A.msg = "That doesn't look like an email address."
+				show_account()
+				return
+			_acct_do(func(): return await A.link_email(mm)), col).disabled = dis
+	if live and not g and A.needs_password():
+		var pw := _field(col, "SET A PASSWORD (AT LEAST 8 CHARACTERS)", "", true)
+		_button("SAVE PASSWORD", func():
+			if pw.text.length() < 8:
+				A.msg = "Pick a longer password: at least 8 characters."
+				show_account()
+				return
+			_acct_do(func(): return await A.set_password(pw.text)), col).disabled = dis
+	if st == "guest" or (st == "down" and not A.signed_in()):
+		col.add_child(_label("SIGN IN TO AN ACCOUNT YOU ALREADY HAVE", 12, GOLD))
+		var im := _field(col, "EMAIL", "", false, "you@example.com")
+		var ip := _field(col, "PASSWORD", "", true)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		col.add_child(row)
+		_button("SIGN IN", func():
+			var mm := im.text.strip_edges()
+			if mm == "" or ip.text == "":
+				A.msg = "Enter your email and password."
+				show_account()
+				return
+			_acct_do(func(): return await A.sign_in(mm, ip.text)), row).disabled = dis
+		_button("FORGOT PASSWORD", func():
+			var mm := im.text.strip_edges()
+			if not mm.contains("@"):
+				A.msg = "Type your email above first, then press Forgot password."
+				show_account()
+				return
+			_acct_do(func(): return await A.forgot(mm)), row).disabled = dis
+	if live and not g:
+		_button("SIGN OUT", func(): _acct_do(func(): return await A.sign_out()), col).disabled = dis
+	_button("BACK", func(): show_main(), col)
+	_focus_first()

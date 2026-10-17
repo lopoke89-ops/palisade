@@ -13,6 +13,7 @@ var m
 var id := ""
 var results: Array = []
 var phase := "intro"
+var want_reveal := false   # SKIP pressed before the server answered
 var t0 := 0.0
 var stage: Control
 var reels: VBoxContainer
@@ -113,7 +114,9 @@ func _process(_dt: float) -> void:
 			boomed = true
 			m.audio.play("kx_confetti")
 		stage.queue_redraw()
-		if t >= INTRO:
+		if results.is_empty() and t > 1.9:   # the server is still rolling: keep shaking
+			t0 = _now() - 1.2
+		elif t >= INTRO and not results.is_empty():
 			_start_reels()
 	elif phase == "reel":
 		var p := minf(1, t / REEL)
@@ -241,8 +244,29 @@ func _start_reels() -> void:
 	target = win_i * TW + 44 - width / 2
 
 
+## the account's server answered with what the cases gave
+func set_results(res: Array) -> void:
+	results = res
+	if want_reveal:
+		reveal()
+
+
+## it didn't: say why; an opening that may have gone through stays saved to resume
+func fail(err: String, uncertain: bool) -> void:
+	phase = "failed"
+	stage.visible = false
+	eye.text = "OPENING SAVED" if uncertain else "NOT OPENED"
+	sub_l.text = err
+	skip_b.visible = false
+	done_b.visible = true
+	done_b.grab_focus()
+
+
 func reveal() -> void:
-	if phase == "reveal":
+	if phase == "reveal" or phase == "failed":
+		return
+	if results.is_empty():
+		want_reveal = true
 		return
 	if phase == "intro":
 		_start_reels()
@@ -274,6 +298,8 @@ func reveal() -> void:
 				var e: Button = m.menus._button("EQUIP", func(): pass, row)
 				e.pressed.connect(func():
 					ui.L.equip(it.id)
+					if not ui.L.cloud.is_empty():
+						ui.L.account.equip(it.id)
 					e.disabled = true
 					e.text = "EQUIPPED")
 	var best: Dictionary = results[0].it
@@ -293,6 +319,8 @@ func _can_equip(res: Dictionary) -> bool:
 func _equip_close() -> void:
 	var it: Dictionary = results[0].it
 	ui.L.equip(it.id)
+	if not ui.L.cloud.is_empty():
+		ui.L.account.equip(it.id)
 	LockerUI.cat = "ms" if it.get("ladder") else it.cat
 	if it.get("box"):
 		LockerUI.open_sections[LockerUI.cat + ":" + it.box] = true
@@ -302,5 +330,7 @@ func _equip_close() -> void:
 
 
 func close() -> void:
+	if phase == "reveal" and not ui.L.cloud.is_empty():   # seen: the saved opening is done with
+		ui.L.account.clear_opening()
 	ui.refresh()
 	queue_free()

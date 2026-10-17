@@ -6,6 +6,7 @@ extends SceneTree
 func _init() -> void:
 	var args := OS.get_cmdline_user_args()
 	var out: String = args[0] if args.size() > 0 else "user://cos.png"
+	PalAccount.offline = true   # tests never make or touch real accounts
 	var main: Node2D = load("res://main.tscn").instantiate()
 	root.add_child(main)
 	await process_frame

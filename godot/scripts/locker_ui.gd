@@ -25,6 +25,7 @@ var shard_txt: Label
 var tab_buttons := {}
 var tiles: Array = []   # [Button, item]
 var sp_armed := -10.0
+var busy := false   # waiting for the account server
 
 
 # ---------------------------------------------------------------- icons
@@ -348,11 +349,11 @@ func _render_boxes() -> void:
 		op.disabled = n < 1
 		var five: Button = menus._button("OPEN 5", func(): open_cases(id, 5), bt)
 		five.disabled = n < 5
+		if not L.cloud.is_empty() and L.account != null and L.account.pending_opening().get("case") == id:
+			menus._button("RESUME OPENING", func(): resume_opening(), bt)
 		if D.get("cost") != null:
 			var buy: Button = menus._button("BUY · %d SHARDS" % int(D.cost), func():
-				if L.buy_case(id):
-					m.audio.play("restock")
-					render(), bt)
+				_buy(id), bt)
 			buy.disabled = L.shards < int(D.cost)
 		if id == "supply":
 			var sp: int = m.profile.sp
@@ -376,9 +377,34 @@ func _buy_sp() -> void:
 				_render_boxes())
 		return
 	sp_armed = -10.0
-	if L.buy_case_sp():
+	if not L.cloud.is_empty():
+		_wait(true)
+		var e: String = await L.account.buy_case_sp()
+		_wait(false)
+		if e == "":
+			m.audio.play("restock")
+		msg.text = e
+	elif L.buy_case_sp():
 		m.audio.play("restock")
 	render()
+
+
+func _buy(id: String) -> void:
+	if not L.cloud.is_empty():
+		_wait(true)
+		var e: String = await L.account.buy_case(id)
+		_wait(false)
+		if e == "":
+			m.audio.play("restock")
+		msg.text = e
+	elif L.buy_case(id):
+		m.audio.play("restock")
+	render()
+
+
+func _wait(on: bool) -> void:
+	busy = on
+	msg.text = "Talking to the quartermaster…" if on else ""
 
 
 func _section(title: String, sub: String = "") -> void:
@@ -523,6 +549,8 @@ func _equip(c: Dictionary) -> void:
 		return
 	msg.text = ""
 	L.equip(c.id)
+	if not L.cloud.is_empty():
+		L.account.equip(c.id)
 	m.audio.play("place0")
 	if c.cat == "bg":
 		menus.refresh_bg()
@@ -532,7 +560,13 @@ func _equip(c: Dictionary) -> void:
 
 
 func open_cases(id: String, n: int) -> void:
-	if L.case_count(id) < n:
+	if L.case_count(id) < n or busy:
+		return
+	if not L.cloud.is_empty():
+		if not L.account.pending_opening().is_empty():
+			msg.text = "Resume the saved opening before starting another."
+			return
+		_cloud_open(id, n, {})
 		return
 	var results: Array = []
 	for i in n:   # the rewards are in the locker before the animation starts
@@ -544,6 +578,27 @@ func open_cases(id: String, n: int) -> void:
 		return
 	var ov := CaseOpen.new(self, id, results)
 	add_child(ov)
+
+
+## an account's opening: the crate shakes while the server rolls; an answer that never came back stays saved
+func _cloud_open(id: String, n: int, resume: Dictionary) -> void:
+	busy = true
+	var ov := CaseOpen.new(self, id, [])
+	add_child(ov)
+	var res: Dictionary = await L.account.open_cases(id, n, resume)
+	busy = false
+	if not is_instance_valid(ov):
+		return
+	if res.ok:
+		ov.set_results(res.results)
+	else:
+		ov.fail(res.err, res.uncertain)
+
+
+func resume_opening() -> void:
+	var p: Dictionary = L.account.pending_opening()
+	if not p.is_empty() and not busy:
+		_cloud_open(p.case, int(p.quantity), p)
 
 
 ## after an opening closes: the counts and tiles change

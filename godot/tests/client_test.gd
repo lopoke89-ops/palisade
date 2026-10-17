@@ -69,10 +69,13 @@ func _init() -> void:
 	var dz: Array = PalInput.deadzone(Vector2(0.1, 0), 0.2)
 	var full: Array = PalInput.deadzone(Vector2(1, 0), 0.2)
 	check(dz[1] == 0.0 and is_equal_approx(full[1], 1.0), "stick deadzone: the middle is ignored, the rest stretched to 0..1")
+	PalAccount.offline = true   # tests never make or touch real accounts
 	var main: Node2D = load("res://main.tscn").instantiate()
 	root.add_child(main)
 	for n in 5:
 		await process_frame
+	main.locker.cloud = {}   # whatever the PC's own locker is, the tests play it as a local one
+	main.profile.cloud = false
 	print("menus")
 	check(main.demo and main.menus.screen == "main", "it opens on the main menu over the demo yard")
 	check(main._controls().is_empty(), "nobody plays the demo")
@@ -139,6 +142,8 @@ func _init() -> void:
 	main.to_menu()
 	check(main.demo and main.menus.screen == "main", "MAIN MENU goes back to the demo yard")
 	check(main.menus.root.get_child(0) is LockerUI.BgView, "outside a game the menus sit on the lobby background")
+	print("accounts (a stand-in server)")
+	await _accounts(main)
 	print("locker screen")
 	var L: PalLocker = main.locker
 	L.cases = 2
@@ -185,3 +190,129 @@ func _init() -> void:
 			DirAccess.remove_absolute(ProjectSettings.globalize_path(kp[0]))
 	print("\nALL PASSED" if fails == 0 else "\nFAILED %d" % fails)
 	quit(1 if fails else 0)
+
+
+## a fake Supabase: the account's calls are answered from here, and logged
+class Fake:
+	var log: Array = []
+	var locker := {"owned": ["skin:std", "hat:class", "hat:cap", "trail:std", "fx:none", "bg:campfire"], "eq": {"skin": "std"}, "cases": 1, "bag": {}, "shards": 0, "prog": 0,
+		"st": {"raids": 0}, "sp": 2, "sp_prog": 1, "sp_total": 2, "skills": {"dmg": 1}, "imported": false}
+	var imported: Dictionary = {}
+	var claim_status := 200
+	var open_status := 200
+	var opens := {}   # operation -> results (the server's idempotency)
+	var expired_once := false
+
+	static func tok(sub: String, exp: int) -> String:
+		var b := Marshalls.utf8_to_base64(JSON.stringify({"sub": sub, "exp": exp})).replace("+", "-").replace("/", "_").replace("=", "")
+		return "h." + b + ".s"
+
+	func call_(method: String, path: String, body, _h) -> Dictionary:
+		log.append(method + " " + path.split("?")[0])
+		var now := int(Time.get_unix_time_from_system())
+		if path.begins_with("/auth/v1/signup"):
+			return {"ok": true, "status": 200, "j": {"access_token": tok("guest-1", now + 3600), "refresh_token": "r1", "expires_in": 3600, "user": {"id": "guest-1", "is_anonymous": true}}}
+		if path.begins_with("/auth/v1/token?grant_type=refresh_token"):
+			return {"ok": true, "status": 200, "j": {"access_token": tok("guest-1", now + 3600), "refresh_token": "r2", "expires_in": 3600, "user": {"id": "guest-1", "is_anonymous": true}}}
+		if path.begins_with("/auth/v1/user"):
+			return {"ok": true, "status": 200, "j": {"id": "guest-1", "is_anonymous": true}}
+		if path.begins_with("/rest/v1/profiles"):
+			return {"ok": true, "status": 200, "j": [{"username": "tester"}]}
+		match path:
+			"/rest/v1/rpc/get_my_locker":
+				return {"ok": true, "status": 200, "j": locker}
+			"/rest/v1/rpc/import_local_save":
+				imported = body.p_save
+				locker.imported = true
+				locker.shards = int(body.p_save.shards)
+				return {"ok": true, "status": 200, "j": locker}
+			"/rest/v1/rpc/claim_match_reward":
+				if claim_status != 200:
+					return {"ok": false, "status": claim_status, "j": {"message": "That raid count doesn't add up"}}
+				locker.cases += 1
+				return {"ok": true, "status": 200, "j": {"locker": locker, "cases_granted": 1, "shards": 2, "skill_points": 1, "to_next": 2}}
+			"/rest/v1/rpc/open_cases_v0964":
+				if open_status != 200:
+					return {"ok": false, "status": open_status, "j": {"message": "Not enough cases for this opening."}}
+				if not opens.has(body.p_operation):
+					opens[body.p_operation] = [{"item": {"id": "skin:forest", "rarity": "r"}, "dup": false, "shards": 0}]
+					locker.cases -= 1
+					locker.owned.append("skin:forest")
+				return {"ok": true, "status": 200, "j": {"locker": locker, "results": opens[body.p_operation]}}
+			"/rest/v1/rpc/buy_case":
+				return {"ok": false, "status": 400, "j": {"message": "Not enough shards"}}
+		return {"ok": false, "status": 404, "j": {"message": "no route"}}
+
+
+func _accounts(main) -> void:
+	var F := Fake.new()
+	var A: PalAccount = main.account
+	A.persist = false
+	A.transport = F.call_
+	var L: PalLocker = main.locker
+	var keep := {"owned": L.owned.duplicate(), "eq": L.eq.duplicate(), "cases": L.cases, "bag": L.bag.duplicate(), "shards": L.shards, "prog": L.prog, "st": L.st.duplicate()}
+	L.persist = false
+	main.profile.persist = false
+	L.norm({})
+	L.shards = 9   # progress made on this PC with no account
+	await A.boot()
+	check(A.state == "guest" and A.uid() == "guest-1" and L.cloud.get("id") == "guest-1", "a guest account is made quietly at start, and the locker becomes its copy")
+	check(int(F.imported.get("shards", -1)) == 9 and L.shards == 9, "this PC's own progress goes into the account once (import_local_save)")
+	check(main.profile.cloud and main.profile.sp == 2 and main.profile.level("dmg") == 1, "the skill tree comes from the account")
+	check(F.log.has("POST /rest/v1/rpc/get_my_locker") and A.name_ == "tester", "and the username with it")
+	# a run: the server checks and pays it
+	main.sim.game.phase = "over"
+	var R: Dictionary = L.pay_run(main.sim)
+	check(R.get("pending", false) and A.claims.size() <= 1, "a finished run goes to the account's server (%s)" % R.text)
+	for n in 5:
+		await process_frame
+	check(A.claims.is_empty() and L.cases == 2 and main.profile.sp == 2, "the server paid it: its case is in the locker")
+	var got := []
+	A.claim_done.connect(func(c, r2, big): got.append([r2, big]), CONNECT_ONE_SHOT)
+	F.claim_status = 400
+	L.pay_run(main.sim)
+	for n in 5:
+		await process_frame
+	check(A.claims.is_empty() and got.size() == 1 and got[0][1] == "NOT SAVED", "a refused result is said plainly, not dropped quietly")
+	F.claim_status = 0
+	L.pay_run(main.sim)
+	for n in 5:
+		await process_frame
+	check(A.claims.size() == 1, "with no connection the result waits in the queue")
+	F.claim_status = 200
+	await A.flush_claims()
+	check(A.claims.is_empty(), "and goes when the connection is back")
+	# cases: the server rolls; an answer that never came back is resumed with the same operation
+	var before := L.case_count("supply")
+	var res: Dictionary = await A.open_cases("supply", 1)
+	check(res.ok and res.results[0].it.id == "skin:forest" and L.owns("skin:forest") and L.case_count("supply") == before - 1, "OPEN goes to the server, which rolls the case")
+	F.open_status = 0
+	A.persist = true   # the saved opening needs its file
+	var lost: Dictionary = await A.open_cases("supply", 1)
+	var pend := A.pending_opening()
+	check(not lost.ok and lost.uncertain and pend.get("case") == "supply", "a lost answer keeps the opening to resume")
+	F.open_status = 200
+	F.opens[pend.operation] = [{"item": {"id": "hat:beanie", "rarity": "c"}, "dup": false, "shards": 0}]
+	var again: Dictionary = await A.open_cases("supply", 1, pend)
+	check(again.ok and again.results[0].it.id == "hat:beanie", "RESUME gets the same results back, not another opening")
+	A.clear_opening()
+	F.open_status = 400
+	var no: Dictionary = await A.open_cases("supply", 1)
+	check(not no.ok and not no.uncertain and A.pending_opening().is_empty(), "a refusal opens nothing and keeps nothing")
+	A.persist = false
+	var e: String = await A.buy_case("halloween")
+	check(e == "Not enough shards", "the server's answers come through in plain words")
+	# an expired sign-in is refreshed before the call
+	A.s.expires_at = 0
+	F.log.clear()
+	await A.rpc_call("get_my_locker")
+	check(F.log.size() == 2 and F.log[0].begins_with("POST /auth/v1/token"), "an expired sign-in is refreshed first")
+	# back to a local locker for the rest of the tests
+	A.transport = Callable()
+	A.s = {}
+	A.state = "off"
+	L.norm(keep)
+	L.cloud = {}
+	main.profile.from_cloud({})
+	main.profile.cloud = false
+	main.sim.game.phase = "build"

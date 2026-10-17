@@ -58,6 +58,8 @@ var glow_tex: GradientTexture2D
 var settings := PalSettings.new()
 var inp: PalInput
 var menus: Menus
+var account: PalAccount   # the Supabase account and the cloud locker (19-accounts.js)
+var sk_msg := ""   # the skill tree's last answer from the server
 var demo := true   # the main menu's yard: Delgado builds, the camera circles the stake, nobody plays
 var over_t := 0.0   # the after-action screen comes up a moment after the end
 var arm_sel := 0   # the armory and skill tree rows a key or controller has picked
@@ -128,7 +130,64 @@ func _ready() -> void:
 	v.cam_snap(sim.player.x, sim.player.y, sim.height_at(sim.player.x, sim.player.y))
 	get_viewport().size_changed.connect(_resize)
 	apply_settings()
+	account = PalAccount.new(self)
+	add_child(account)
+	locker.account = account
+	account.changed.connect(func(): menus.on_account_changed())
+	account.claim_done.connect(_on_claim_done)
 	menus.show_main()
+	account.boot()
+
+
+## the skill tree: an account's goes through the server (skill_buy, skill_respec), a local one changes here
+func skill_buy(id: String) -> void:
+	if not profile.cloud:
+		audio.play("restock" if profile.buy(id) else "deny")
+		return
+	if profile.block_reason(id) != "":
+		audio.play("deny")
+		return
+	var r := await account.rpc_call("skill_buy", {"p_node": id})
+	if r.ok:
+		account.take_locker(r.j)
+		audio.play("restock")
+	else:
+		audio.play("deny")
+		sk_msg = PalAccount.err_text(r) if r.status else "Buying a skill needs a connection."
+
+
+func skill_respec() -> void:
+	if not profile.cloud:
+		profile.respec()
+		audio.play("restock")
+		return
+	var r := await account.rpc_call("skill_respec")
+	if r.ok:
+		account.take_locker(r.j)
+		audio.play("restock")
+		sk_msg = "Your points are back. Spend them again."
+	else:
+		audio.play("deny")
+		sk_msg = PalAccount.err_text(r) if r.status else "Resetting needs a connection."
+
+
+## a queued run reached the account: its rewards replace "sending…" on the after-action screen, or show as a toast
+func _on_claim_done(_c: Dictionary, R, big: String) -> void:
+	if R is Dictionary and last_reward.get("pending") and last_reward.get("claim_at") == R.get("claim_at"):
+		last_reward = R
+		if menus.screen == "results":
+			menus.show_results()
+		return
+	if last_reward.get("pending") and not (R is Dictionary) and menus.screen == "results":
+		last_reward = {"kind": "run", "cases": {}, "shards": 0, "sp": 0, "unlocked": [], "text": R}
+		menus.show_results()
+		return
+	toasts = [{"title": big, "body": R.text if R is Dictionary else R, "t": 4.5 * settings.data.msgTime}]
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_IN and account != null:
+		account.resume()
 
 
 func _exit_tree() -> void:
@@ -1723,7 +1782,7 @@ func _panel_nav(dir: String) -> void:
 		if armory_open:
 			_arm_buy(list[sel][1])
 		else:
-			audio.play("restock" if profile.buy(list[sel][1]) else "deny")
+			skill_buy(list[sel][1])
 		return
 	var cur_r: Rect2 = list[sel][0]
 	var cc := cur_r.get_center()
@@ -2045,11 +2104,10 @@ func _skills_input(e: InputEvent) -> void:
 	elif e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
 		for b in sk_buttons:
 			if b[0].has_point(e.position):
-				audio.play("restock" if profile.buy(b[1]) else "deny")
+				skill_buy(b[1])
 				return
 		if sk_reset.has_point(e.position):
-			profile.respec()
-			audio.play("restock")
+			skill_respec()
 
 
 func _draw_skills() -> void:
@@ -2097,7 +2155,9 @@ func _draw_skills() -> void:
 	sk_reset = Rect2(x0 + 16, y + 8, 150, 24)
 	cv.draw_rect(sk_reset, Color(paper, 0.08))
 	cv.draw_rect(sk_reset, Color(paper, 0.5), false, 1.0)
-	cv.draw_string(font, Vector2(sk_reset.position.x + 14, y + 25), "RESET ALL POINTS", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, paper)
+	cv.draw_string(font, Vector2(sk_reset.position.x + 14, y + 25), "RESET · 40 SHARDS" if profile.cloud else "RESET ALL POINTS", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, paper)
+	if sk_msg != "":
+		cv.draw_string(font, Vector2(x0 + 180, y + 25), sk_msg, HORIZONTAL_ALIGNMENT_LEFT, w - 420, 11, gold)
 	cv.draw_string(font, Vector2(x0 + w - 220, y + 25), "K / Esc closes", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, dim)
 
 

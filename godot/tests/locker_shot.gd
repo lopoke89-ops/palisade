@@ -5,6 +5,7 @@ extends SceneTree
 
 func _init() -> void:
 	var pre: String = OS.get_cmdline_user_args()[0] if OS.get_cmdline_user_args().size() > 0 else "user://locker"
+	PalAccount.offline = true   # tests never make or touch real accounts
 	var main: Node2D = load("res://main.tscn").instantiate()
 	root.add_child(main)
 	await process_frame
@@ -55,6 +56,13 @@ func _init() -> void:
 	for n in 6:
 		await process_frame
 	await _save(pre + "_five.png")
+	main.account.state = "guest"   # the Account page as a guest sees it (no network)
+	main.account.s = {"access_token": "a", "refresh_token": "r", "expires_at": 9e9, "user": {"id": "x", "is_anonymous": true}}
+	main.account.name_ = "Yardhand"
+	main.menus.show_account()
+	for n in 6:
+		await process_frame
+	await _save(pre + "_account.png")
 	quit()
 
 

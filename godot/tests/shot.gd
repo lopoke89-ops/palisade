@@ -7,6 +7,7 @@ func _init() -> void:
 	if args.size() > 0:
 		out = args[0]
 	var mode: String = args[1] if args.size() > 1 else "raid"
+	PalAccount.offline = true   # tests never make or touch real accounts
 	var main: Node2D = load("res://main.tscn").instantiate()
 	root.add_child(main)
 	await process_frame

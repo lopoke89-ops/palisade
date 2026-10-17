@@ -122,18 +122,29 @@ What `sim.gd` covers:
   - The five upgrades go to 8 levels at the browser's costs and steps.
   - Delgado's level, the stake repair (+50 for 25), and the four ammo types, at skill rank 0 until the account skill tree is ported.
   - The Soldier's rockets.
-- **Cosmetics:** the whole catalog (skins, headgear, tracers, kill effects, backgrounds, the milestone ladders), saved locally in `user://locker.json` until accounts are ported.
+- **Cosmetics:** the whole catalog (skins, headgear, tracers, kill effects, backgrounds, the milestone ladders), kept on the account's server when signed in (with a copy in `user://locker.json`), or locally when offline.
   - A run pays out exactly as the browser's no-account `localRun` does: cases, shards, milestones, skill points and unlocks (checked against the browser for eight runs).
   - Players wear their outfit in the browser's shaded wardrobe figure, with its aura, tracer (and the tracer's sound and shed motes) and kill effect.
   - The Locker: case boxes (open one or five, buy with shards or three skill points), every item by tab and collection, equip with a click. Openings play the crate, the reel and the reveal.
   - The menus sit on the equipped lobby background, and the after-action screen shows the rewards as cards.
 
+## Accounts
+
+`scripts/pal_account.gd` is `19-accounts.js` on the same Supabase project and public key, so an account and its locker, skills and rewards work in both games.
+- At first launch a guest account is made quietly. The Account page (main menu) adds an email, signs in with email and password, sends a password reset, sets the username and signs out (back to the guest).
+- Email links (confirming an address, resetting a password) open the website, which finishes them; the player then signs in here.
+- Signed in, the server owns the locker and skill tree. The PC keeps a copy, so menus open at once and solo plays offline.
+- Finished runs go to `claim_match_reward` through a queue in `user://claims.json` (8 runs, 30 days, per account).
+- Case openings use `open_cases_v0964` with an operation ID saved in `user://opening.json`, so a crash or lost connection resumes the same opening instead of opening more.
+- This PC's progress from before it had an account goes in once, through the account's one-time `import_local_save`.
+- Godot reads no system proxy settings: `HTTPS_PROXY` and `SSL_CERT_FILE` in the environment are honoured.
+- Tests set `PalAccount.offline` and never touch the network; `tests/client_test.gd` runs the account against a stand-in server. `tests/account_live.gd` is the live check: it makes one guest account (named `godot_test_…`), walks it through the real server and prints its ID so it can be deleted.
+
 ## Not yet
 
 These are later phases:
-- **Accounts:** the skill tree saves locally until then.
 - **PvP:** Base Battle and Free-for-all come with online play.
-- **Cosmetics online:** the cloud locker, server-side case openings and reward claims come with accounts. The lobby stage with the crew standing on it comes with online play.
+- **Friends and invitations**, and the lobby stage with the crew standing on it, come with online play.
 - **Music:** the menu and finale tracks, and the casino playlist.
 - **Network:** online play (PeerJS cross-play probe, casino relay client).
 

@@ -19,19 +19,21 @@ The rules are ported from the browser code and checked against it by 177 sim tes
 
 It has menus, settings, remappable keys and controller buttons, touch controls, and the browser's lighting, scenery and character figures.
 
-It has the cosmetics, saved locally until accounts come: the whole catalog, the locker and its payouts, cases and their openings, the shaded wardrobe figure with every skin and headgear, auras, tracers, kill effects and the 78 lobby backgrounds. The art is compared with the browser's own drawing, sheet against sheet.
+It has the cosmetics: the whole catalog, the locker and its payouts, cases and their openings, the shaded wardrobe figure with every skin and headgear, auras, tracers, kill effects and the 78 lobby backgrounds. The art is compared with the browser's own drawing, sheet against sheet.
+
+It has accounts on the browser's own Supabase project, so one account works in both: a quiet guest account at first launch, sign-in with email and password, the cloud locker and skill tree, server-checked run rewards with an offline queue, and server-side case openings that resume after a crash. It was checked live with one test account (see the README).
 
 Still to do:
-- accounts (and with them the cloud locker and server-side case openings);
+- friends and invitations;
 - online play;
 - the casino;
 - a Windows build for Steam or Epic.
 
 | Status | Blueprint items |
 |---|---|
-| Done (for solo play) | 38 |
-| Partly done | 13 |
-| Not started | 26 |
+| Done (for solo play) | 43 |
+| Partly done | 11 |
+| Not started | 23 |
 | Measured, not finished | 1 (performance) |
 | Not a client job | 2 (PAL-064 trust rules and PAL-080 SLIM's wallet live on the server) |
 
@@ -108,13 +110,16 @@ The sounds have never been listened to, because the container has no speakers.
 
 | ID | Feature | Status | What's in, what's missing |
 |---|---|---|---|
-| PAL-047 | Locker | Partly | The Locker screen: the outfit on show, every item by tab and collection, equip, milestone ladders, unlock progress. Saved locally; the cloud locker comes with accounts. |
-| PAL-048 | Cases | Partly | Case rewards for every mode (checked against the browser's localRun), opening one or five with the crate, reel and reveal, buying with shards or skill points, reward cards. Local only; server-side openings come with accounts. |
+| PAL-047 | Locker | Done | The Locker screen: the outfit on show, every item by tab and collection, equip, milestone ladders, unlock progress. The account's locker when signed in, a local one offline. |
+| PAL-048 | Cases | Done | Case rewards for every mode (the server's claim_match_reward when signed in; offline, the browser's localRun, checked against it), opening one or five with the crate, reel and reveal (open_cases_v0964 with a saved operation ID that resumes), buying with shards or skill points, reward cards. |
 | PAL-051 | Startup and offline | Not started | |
 | PAL-052 | Pause and focus | Partly | Solo pause and the pause menu. Online keeps running in the browser; that comes with online. |
 | PAL-053 | Errors and recovery | Not started | |
 | PAL-054 | Local saves | Partly | Settings and the next game's setup, and the skill-tree profile. The browser's best scores and backup are not ported. |
-| PAL-055 to 060 | Sign-in, cloud locker, reward claims, friends, invites, hosting and joining | Not started | Same Supabase project and accounts as the browser, so progress carries over. |
+| PAL-055 | Sign-in and profile | Done | The browser's Supabase project and accounts: a guest account made quietly at first launch, add an email, sign in with email and password, forgot password, sign out (back to the guest), username. Email links (confirm, reset) finish on the website. Token refresh. An HTTPS proxy and extra CA from the environment are honoured. |
+| PAL-056 | Cloud inventory | Done | get_my_locker, the one-time import_local_save of this PC's progress, equip, buy_case, buy_case_sp, open_cases_v0964, skill_buy and skill_respec. The PC keeps a copy for instant menus and offline play. |
+| PAL-057 | Reward claims | Done | Finished runs go to claim_match_reward through a per-account queue (8 entries, 30 days) that survives restarts; a refusal is said plainly, a lost connection keeps the run until it is back, the play-time budget is waited out. |
+| PAL-058 to 060 | Friends, invites, hosting and joining | Not started | |
 | PAL-061 to 063 | Network protocol, host checks, rejoining | Not started | The plan is cross-play with the browser through PeerJS/WebRTC. |
 | PAL-065 to 075 | Casino floor and all seven games | Not started | The game servers already exist; only the Godot screens are missing. |
 | PAL-076 | Performance | Measured | The ground and the city's buildings are painted once into chunks that Godot culls off screen. A city frame costs about 3.6 ms of drawing and a crowded final push about 3 ms of sim, on the container's CPU. Still to measure on a real PC. |
@@ -124,12 +129,12 @@ The sounds have never been listened to, because the container has no speakers.
 
 ## Where the Godot build knowingly differs from the browser today
 
-1. **Skill points:** they are saved on the player's PC, not the account, until accounts are ported. Reset is free.
+1. **Skill points offline:** with no account (offline), the skill tree is a local one and reset is free. With an account it is the account's, and reset costs 40 shards as in the browser.
 2. **Game setup:** with no menus yet, the next game's class, map, size, mode and difficulty are picked with keys on the pause screen. Modifiers can only be set in code.
 3. **Warning drawings:**
    - These are exact ports of the browser drawing: the Demolisher, Butcher and Stormcaller, the new moves (Thunderstrike to Overdrive), the Foreman, winter, and the Destroyer's rockets.
    - These follow the browser's colours and shapes, but I didn't port their exact drawing code: the Blitz variants' own warnings and the Destroyer's other attacks.
-4. **Cosmetics are local:** the locker is saved on the player's PC and cases open locally, as the browser does without an account.
+4. **Email links:** confirming an email and resetting a password finish on the website; the player then signs in here with their password.
 5. **No night:** night raids, the Quarry and the city are dark in the browser. Here the rules know it's night (the raid announcement says so), but nothing is drawn darker yet.
 6. **Sound noise:** each effect's noise is fixed when it's rendered. The browser picks a new noise each time it plays.
 7. **Precision:** in the sim, directions are 32-bit (Godot's `Vector2`); positions and timers are 64-bit as in the browser. This matters only for cross-play, where the host's numbers win anyway.
@@ -140,7 +145,6 @@ The order follows the blueprint's phases, aimed at a Windows release on Steam or
 
 1. **Hands-on pass:** play it on a Windows PC with a mouse, a controller and a touch screen; tune what the tests can't judge (feel, readability, sound).
 2. **The Windows .exe:** export templates, icon, version info.
-3. **Accounts:** sign-in, cloud locker, reward claims (cases, shards) and the skill tree on the server.
-4. **Online:** the PeerJS cross-play probe first, then hosting, joining, the lobby, the snapshot protocol, rejoining, spectating, PvP (Base Battle, Free-for-all) and chat.
-5. **The casino:** the relay client, the floor and the seven games. The servers already exist.
-6. **Release:** accessibility, phone-size HUD layouts if mobile is wanted, performance on real hardware, signing, and the Steam or Epic store build.
+3. **Online:** the PeerJS cross-play probe first, then hosting, joining, the lobby, the snapshot protocol, rejoining, spectating, PvP (Base Battle, Free-for-all) and chat.
+4. **The casino:** the relay client, the floor and the seven games. The servers already exist.
+5. **Release:** accessibility, phone-size HUD layouts if mobile is wanted, performance on real hardware, signing, and the Steam or Epic store build.

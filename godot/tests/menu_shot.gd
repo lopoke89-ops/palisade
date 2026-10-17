@@ -2,6 +2,7 @@ extends SceneTree
 ## Renders the menus: xvfb-run godot --path godot --script res://tests/menu_shot.gd -- out_prefix
 func _init() -> void:
 	var pre: String = OS.get_cmdline_user_args()[0] if OS.get_cmdline_user_args().size() > 0 else "user://menu"
+	PalAccount.offline = true   # tests never make or touch real accounts
 	var main: Node2D = load("res://main.tscn").instantiate()
 	root.add_child(main)
 	main.locker.persist = false   # the run it plays is not paid into the player's own locker

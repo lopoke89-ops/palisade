@@ -30,6 +30,8 @@ var bag := {}
 var shards := 0
 var prog := 0
 var st := {}
+var cloud := {}   # {id, guest} while this is a copy of an account's locker (the server owns it then)
+var account   # PalAccount: when cloud, runs, cases and equipment go through it
 
 
 static func catalog() -> Dictionary:
@@ -87,6 +89,7 @@ func load_file() -> void:
 	var d = JSON.parse_string(FileAccess.get_file_as_string(PATH))
 	if d is Dictionary:
 		norm(d)
+		cloud = d.cloud if d.get("cloud") is Dictionary else {}
 
 
 func save() -> void:
@@ -94,7 +97,7 @@ func save() -> void:
 		return
 	var f := FileAccess.open(PATH, FileAccess.WRITE)
 	if f != null:
-		f.store_string(JSON.stringify({"owned": owned, "eq": eq, "cases": cases, "bag": bag, "shards": shards, "prog": prog, "st": st}))
+		f.store_string(JSON.stringify({"owned": owned, "eq": eq, "cases": cases, "bag": bag, "shards": shards, "prog": prog, "st": st, "cloud": cloud}))
 
 
 func _r() -> float:
@@ -306,9 +309,21 @@ static func run_claim(s: Sim) -> Dictionary:
 	if res != "":
 		held = s.final_wave()
 		win = res == "evac"
-	var c := {"mode": g.mode, "diff": g.diff, "win": win, "held": held, "raid_from": 0, "raid_to": held, "kills": p.kills, "boss_keys": g.bossLog.slice(0, 40),
-		"shard_bosses": g.sbN, "sb_keys": g.sbLog.slice(0, 40), "fb_keys": g.fbLog.slice(0, 20), "salvage": maxi(0, p.sal), "size": g.size, "duration_s": roundi(g.time),
-		"mods": s.mods, "map": g.map, "cls": p.cls, "evac": res, "cv": 4, "g_cleared": 0, "ch_evac": []}
+	if not g.has("gid"):   # the browser's newGid: base-36 time, then 12 letters
+		var A := "abcdefghijkmnpqrstuvwxyz23456789"
+		var r := ""
+		for i in 12:
+			r += A[randi() % A.length()]
+		g.gid = _b36(int(Time.get_unix_time_from_system() * 1000)) + "-" + r
+	var up: Dictionary = p.get("up", {})
+	var ups := "".join(["d", "r", "g", "a", "n"].map(func(k): return str(up.get(k, 0))))
+	var dur := roundi(g.time)
+	var c := {"kind": "run", "mode": g.mode, "diff": g.diff, "win": win, "held": held, "raid_from": 0, "raid_to": held, "kills": p.kills,
+		"bosses": mini(40, g.bossLog.size()), "boss_keys": g.bossLog.slice(0, 40),
+		"shard_bosses": g.sbN, "sb_keys": g.sbLog.slice(0, 40), "fb_keys": g.fbLog.slice(0, 20), "salvage": maxi(0, p.sal), "size": g.size, "duration_s": dur,
+		"game_id": g.gid, "joined_s": 0, "left_s": dur, "left": false, "upgrades": ups + ":" + str(int(g.get("dellLv", 0))),
+		"mods": s.mods, "map": g.map, "cls": p.cls, "end_reason": g.get("end_reason", ""), "evac": res, "cv": 4, "g_cleared": 0, "ch_evac": []}
+	c.claim_id = "%s:0:%d:0:%d" % [g.gid, held, dur]
 	if s.blackout():
 		var B = g.bo
 		c.cv = 5
@@ -323,6 +338,15 @@ static func run_claim(s: Sim) -> Dictionary:
 		var ce: Array = p.get("chEvac", [])
 		c.ch_evac = [0, 1, 2].map(func(i): return null if i >= ce.size() else ce[i] == 1)
 	return c
+
+
+static func _b36(n: int) -> String:
+	var D := "0123456789abcdefghijklmnopqrstuvwxyz"
+	var out := ""
+	while n > 0:
+		out = D[n % 36] + out
+		n /= 36
+	return out if out != "" else "0"
 
 
 func _bo_local_pay(c: Dictionary) -> Dictionary:
@@ -356,6 +380,8 @@ func pay_run(s: Sim) -> Dictionary:
 	var sh := mini(salvage_shards(c.salvage, c.held), floori(SAL_SHARD.max * (100 + pct) / 100.0))
 	if sh > 0:
 		s.player.sal -= sh * SAL_SHARD.rate   # what converts is spent, so it can't count twice
+	if not cloud.is_empty() and account != null:   # the account's server checks the run and pays it
+		return account.queue_claim(c)
 	return local_run(c, sh)
 
 
