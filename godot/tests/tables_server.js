@@ -18,7 +18,8 @@ const PORT=+process.argv[2]||18787;
  for(const f of MIGS)await db.exec(fs.readFileSync(f,'utf8'));
  // four players: A and B with plenty, C broke, G a guest (anonymous sign-in: refused by the handler)
  const U={'tok-a':{id:'a0000000-0000-4000-8000-00000000000a',anon:false,name:'Ace',shards:5000},'tok-b':{id:'b0000000-0000-4000-8000-00000000000b',anon:false,name:'Bea',shards:5000},
-  'tok-c':{id:'c0000000-0000-4000-8000-00000000000c',anon:false,name:'Cy',shards:3},'tok-g':{id:'d0000000-0000-4000-8000-00000000000d',anon:true,name:'Guest',shards:50}};
+  'tok-c':{id:'c0000000-0000-4000-8000-00000000000c',anon:false,name:'Cy',shards:3},'tok-g':{id:'d0000000-0000-4000-8000-00000000000d',anon:true,name:'Guest',shards:50},
+  'tok-e':{id:'e0000000-0000-4000-8000-00000000000e',anon:false,name:'Eve',shards:5000}};
  for(const u of Object.values(U))await db.query('insert into lockers(user_id,shards) values($1,$2)',[u.id,u.shards]),await db.query('insert into profiles(id,username) values($1,$2)',[u.id,u.name]);
  await db.exec('update private.casino_bot_wallet set balance=400');   // SLIM has a wallet to sit in with at Hold'em
  const svc=async(q,p)=>{await db.exec('set role service_role');try{return(await db.query(q,p)).rows}finally{await db.exec('reset role')}};

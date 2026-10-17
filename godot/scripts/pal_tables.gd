@@ -215,6 +215,25 @@ func lobby() -> Dictionary:
 	return r
 
 
+## Before sitting down, as the browser's TABLES page does on the way in: the lobby stands players up from tables left
+## idle, rolls out craps bets left working, and says where you're still seated. A seat you can't walk back to (an older
+## casino room, or another table while this game has you standing) is stood up from here, as that page's LEAVE does;
+## its shards come home.
+func free_old_seat(room_id: String, game: String, st: String) -> void:
+	var r := await lobby()
+	if r.get("error") or not (mine is Dictionary) or id != 0:
+		return
+	var m: Dictionary = mine
+	if m.get("pending") != null or int(m.get("id", 0)) == 0:
+		return   # craps bets still rolling out: the server says so when you sit
+	if str(m.get("room", "")) == room_id and str(m.get("game", "")) == game and str(m.get("station", "")) == st:
+		return   # that very seat: sitting takes you back to it
+	var lr := await call_op({"op": "leave", "id": int(m.id)})
+	if lr.get("balance") != null:
+		_set_balance(int(lr.balance))
+	mine = null
+
+
 func history() -> Dictionary:
 	var r := await call_api({"op": "history"})
 	if not r.get("error"):

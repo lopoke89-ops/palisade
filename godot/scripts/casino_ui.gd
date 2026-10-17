@@ -189,8 +189,7 @@ func open(seat_code: int, room_id: String) -> void:
 	_no = ""
 	_keys_reset()
 	_show_no("Starting the machine…" if station != "" else "Taking a seat…", "wait")
-	if tables.mine is Dictionary and tables.mine.get("pending") != null:   # craps bets left working: the lobby has the dealer roll them out
-		await tables.lobby()
+	await tables.free_old_seat(room, game, station)   # a seat left behind on an earlier visit: stood up first
 	var r := await tables.sit(room, game, int(q.k), station, seed_in.text)
 	if not (r.get("view") is Dictionary) or int(r.view.get("me", -1)) < 0:
 		_no = str(r.get("error", "")) if r.get("error") else "Could not sit down"
