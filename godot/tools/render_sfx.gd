@@ -121,17 +121,23 @@ func _init() -> void:
 	rng.seed = 1   # the noise is fixed once rendered; the browser starts each play at a random point in its noise buffer
 	var dir := "res://sfx"
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir))
-	for name in RECIPES:
-		var layers: Array = RECIPES[name]
+	var all := RECIPES.duplicate()
+	all.merge(_casino())   # after the others, so their noise (one stream for every recipe, in order) stays the same
+	for name in all:
+		var layers: Array = all[name]
 		var end := 0.0
 		for L in layers:
-			end = maxf(end, L[1] + L[2] + 0.05)
+			end = maxf(end, L[1] + L[2] + (0.25 if L[0] == "b" else 0.05))
 		var n := int(ceil(end * RATE))
 		var buf := PackedFloat32Array()
 		buf.resize(n)
 		for L in layers:
 			if L[0] == "o":
 				_osc(buf, L[1], L[2], L[3], L[4], L[5], L[6])
+			elif L[0] == "b":
+				_brass(buf, L[1], L[2], L[3], L[4], L[5], L[6])
+			elif L[0] == "w":
+				_whir(buf, L[1], L[2])
 			else:
 				_nz(buf, L[1], L[2], L[3], L[4], L[5], L[6], L[7])
 		var pcm := PackedByteArray()
@@ -229,3 +235,192 @@ func _nz(buf: PackedFloat32Array, t0: float, dur: float, type: String, f: float,
 		y1 = y
 		if i0 + s < buf.size():
 			buf[i0 + s] += y * _env(t, 0.003, dur, peak)
+
+
+# ---------------------------------------------------------------- the casino (v0.10.3 and v0.10.8 cues)
+# ["b", start, dur, f, peak, wah, vib]: brass(); ["w", start, dur]: the roulette ball's whir (rlWheelSfx). The browser's chips,
+# bells, coins and ringer are layers of the plain kinds; their random pitches and timings are drawn once, from a fixed seed.
+
+var crng := RandomNumberGenerator.new()
+
+
+func _casino() -> Dictionary:
+	crng.seed = 73
+	var R := {}
+	R.cas_card = [["n", 0, .05, "highpass", 3000, .8, .12, 0], ["o", 0, .04, "triangle", 900, .03, 0]]
+	R.cas_reel = [["n", 0, .04, "lowpass", 900, 1, .25, 0], ["o", 0, .06, "square", 220, .06, 140]]
+	R.cas_lever = [["n", 0, .18, "bandpass", 600, 1.2, .15, 300], ["o", .12, .08, "triangle", 300, .06, 0]]
+	R.cas_chip = [["n", 0, .03, "highpass", 4200, 1, .2, 0], ["o", 0, .05, "sine", 2400, .03, 1800]]
+	R.cas_peg = [["o", 0, .05, "sine", 1500 + crng.randf() * 500, .035, 0]]
+	# the dice: shaken in the hand, then thrown, tumbling down the felt into the back wall
+	var d: Array = []
+	for k in 6:
+		d.append(["n", k * .045, .02, "bandpass", 2800 + (k % 2) * 600, 3, .1, 0])
+	var dt := [.34, .46, .55, .62, .67]
+	for k in dt.size():
+		d.append(["n", dt[k], .04, "lowpass", 900, 1, .22 - k * .03, 0])
+		d.append(["n", dt[k], .015, "bandpass", 2400 + k * 300, 3, .1, 0])
+	R.cas_dice = d
+	# the result of every round (cgResultSfx picks one): chips raked away; the sad trombone; a push; a small win; a win; the fanfare; the jackpot
+	R.cas_lose = [["n", 0, .32, "bandpass", 1400, 1.1, .12, 500], ["o", .12, .3, "triangle", 294, .05, 277], ["o", .36, .5, "triangle", 262, .05, 247]]
+	var b: Array = [["n", 0, .32, "bandpass", 1400, 1.1, .12, 500]]
+	var tb := [233.08, 220, 207.65]
+	for i in 3:
+		b.append(["b", .15 + i * .42, .3, tb[i], .07, 1, 0])
+	b.append(["b", 1.41, 1.1, 196, .07, 1, 5.5])
+	R.cas_bust = b
+	R.cas_push = _chip(0, .14) + _chip(.08, .1) + [["o", .05, .3, "sine", 587, .04, 0]]
+	R.cas_small = _chip(0, .16) + _chip(.06, .12) + _bell(.08, 1318.5, .06, .5) + _bell(.2, 1568, .065, .7)
+	var w: Array = []
+	for k in 3:
+		w += _chip(k * .05, .15)
+	var fs := [1046.5, 1318.5, 1568, 2093]
+	for i in 4:
+		w += _bell(.1 + i * .08, fs[i], .06, .8)
+	R.cas_win = w + _coins(.35, .6, 7, .045)
+	var g: Array = []
+	for k in 3:
+		g.append(["b", k * .12, .08, 392, .085, 0, 0])
+	for f in [261.63, 523.25, 659.25, 783.99]:
+		g.append(["b", .36, .8, f, .1 if f < 300 else .07, 0, 0])
+	g.append(["b", .36, .8, 1046.5, .035, 0, 0])
+	for i in 4:
+		g += _bell(.4 + i * .06, fs[i], .05, 1.1)
+	R.cas_big = g + _coins(.45, 1.1, 16, .045)
+	var j: Array = _ringer(0, 2, .028)
+	for x in [[392, 0, .09], [392, .12, .09], [392, .24, .09], [523.25, .36, .3], [392, .72, .09]]:
+		j.append(["b", x[1], x[2], x[0], .085, 0, 0])
+		j.append(["b", x[1], x[2], x[0] / 2.0, .055, 0, 0])
+	for f in [130.81, 261.63, 523.25, 659.25, 783.99, 1046.5]:
+		j.append(["b", .86, 1.5, f, .085 if f < 300 else .065, 0, 0])
+	var fj := [1046.5, 1318.5, 1568, 2093, 2637, 3136]
+	for i in fj.size():
+		j += _bell(.9 + i * .07, fj[i], .05, 1.3)
+	j += _coins(.3, 2.4, 30, .05)
+	j.append(["o", 2.2, .7, "sine", 1200, .03, 4200])
+	for i in 3:
+		j += _bell(2.6 + i * .08, [2093, 2637, 3136][i], .04, 1)
+	R.cas_jackpot = j
+	# the roulette ball over a whole 6 s spin: it whirs round the rim, slows, rattles over the frets and drops in its pocket
+	var dur := 6.0
+	var wl: Array = [["w", 0, dur]]
+	var c := .35
+	while c < dur - .7:
+		var p := c / dur
+		wl.append(["n", c, .012, "highpass", 3800, .8, .05 * (.4 + p), 0])
+		c += .045 + .3 * p * p
+	var rt := [0, .11, .2, .27, .32]
+	for i in rt.size():
+		wl.append(["n", dur - .6 + rt[i], .02, "bandpass", 3000 - i * 250, 2, .12 - i * .015, 0])
+		wl.append(["o", dur - .6 + rt[i], .03, "triangle", 1100 - i * 80, .03, 0])
+	wl.append(["n", dur - .25, .06, "lowpass", 500, 1, .15, 0])
+	R.cas_wheel = wl
+	return R
+
+
+func _chip(t0: float, peak: float) -> Array:   # casChip: a clay chip
+	return [["n", t0, .025, "bandpass", 2600 + crng.randf() * 900, 2.2, peak, 0], ["o", t0, .03, "triangle", 1500 + crng.randf() * 400, peak * .2, 900]]
+
+
+func _bell(t0: float, f: float, peak: float, dur: float = .9) -> Array:   # casBell: the slot machine's bell
+	return [["o", t0, dur, "sine", f, peak, 0], ["o", t0, dur * .55, "sine", f * 2.76, peak * .45, 0], ["o", t0, dur * .3, "sine", f * 5.4, peak * .2, 0]]
+
+
+func _coins(t0: float, span: float, n: int, peak: float) -> Array:   # casCoins: coins landing in the tray
+	var o: Array = []
+	for i in n:
+		var t := t0 + span * pow(crng.randf(), 1.4)
+		var pk := peak * (.6 + crng.randf() * .4)
+		var f := 2600 + crng.randf() * 1800
+		o += [["o", t, .08 + crng.randf() * .1, "sine", f, pk, 0], ["o", t, .06, "sine", f * 1.47, pk * .55, 0], ["o", t, .012, "square", f * .5, pk * .25, 0]]
+	return o
+
+
+func _ringer(t0: float, dur: float, peak: float) -> Array:   # casRinger: the jackpot bell that rings and rings
+	var o: Array = []
+	var s := 0.0
+	while s < dur:
+		var p := peak * (1 - .5 * s / dur)
+		o += [["o", t0 + s, .1, "sine", 2350, p, 0], ["o", t0 + s, .05, "sine", 5640, p * .35, 0]]
+		s += .055
+	return o
+
+
+## brass(): two sawtooths detuned 7 cents either way (vibrato: +-30 cents from a quarter in) through a lowpass that opens
+## with the note (wah: a plunger mute, Q 5 dB, opening and closing again); gain up in 30 ms, sagging to 70%, a 150 ms release
+func _brass(buf: PackedFloat32Array, t0: float, dur: float, f: float, peak: float, wah: int, vib: float) -> void:
+	var i0 := int(t0 * RATE)
+	var n := int((dur + 0.2) * RATE)
+	var ph := [0.0, 0.0]
+	var x1 := 0.0
+	var x2 := 0.0
+	var y1 := 0.0
+	var y2 := 0.0
+	var qd := 5.0 if wah else 1.0
+	var f1 := minf(9000.0, f * 8)
+	for s in n:
+		var t := float(s) / RATE
+		var cents := 30.0 * sin(TAU * vib * (t - dur * .25)) if vib > 0 and t >= dur * .25 else 0.0
+		var x := 0.0
+		for k in 2:
+			ph[k] = fmod(ph[k] + f * pow(2.0, ([-7.0, 7.0][k] + cents) / 1200.0) / RATE, 1.0)
+			x += 2.0 * ph[k] - 1.0
+		var fc: float
+		if wah:
+			fc = f * 1.2 * pow(4.5 / 1.2, t / (dur * .35)) if t < dur * .35 else (f * 4.5 * pow(1.3 / 4.5, (t - dur * .35) / (dur * .65)) if t < dur else f * 1.3)
+		else:
+			fc = f * 2 * pow(f1 / (f * 2), t / .05) if t < .05 else (f1 * pow(f * 4 / f1, (t - .05) / (dur - .05)) if t < dur else f * 4)
+		fc = minf(fc, RATE * 0.49)
+		var w0 := TAU * fc / RATE
+		var cw := cos(w0)
+		var alpha := sin(w0) / (2.0 * pow(10.0, qd / 20.0))
+		var b0 := (1.0 - cw) / 2.0
+		var y := (b0 * x + (1.0 - cw) * x1 + b0 * x2 + 2.0 * cw * y1 - (1.0 - alpha) * y2) / (1.0 + alpha)
+		x2 = x1
+		x1 = x
+		y2 = y1
+		y1 = y
+		var g: float
+		if t < .03:
+			g = 0.0001 * pow(peak / 0.0001, t / .03)
+		elif t < dur:
+			g = peak + (peak * .7 - peak) * (t - .03) / (dur - .03)
+		elif t < dur + .15:
+			g = peak * .7 * pow(0.0001 / (peak * .7), (t - dur) / .15)
+		else:
+			g = 0.0001
+		if i0 + s < buf.size():
+			buf[i0 + s] += y * g
+
+
+## rlWheelSfx's whir: looped noise through a bandpass (Q 3) sliding 2600 -> 700 Hz, in over 0.25 s, fading to the drop
+func _whir(buf: PackedFloat32Array, t0: float, dur: float) -> void:
+	var i0 := int(t0 * RATE)
+	var n := int(dur * RATE)
+	var x1 := 0.0
+	var x2 := 0.0
+	var y1 := 0.0
+	var y2 := 0.0
+	for s in n:
+		var t := float(s) / RATE
+		var fc := 2600.0 * pow(700.0 / 2600.0, minf(1.0, t / (dur - .5)))
+		var w0 := TAU * fc / RATE
+		var cw := cos(w0)
+		var alpha := sin(w0) / (2.0 * 3.0)
+		var x := rng.randf() * 2.0 - 1.0
+		var y := (alpha * x - alpha * x2 + 2.0 * cw * y1 - (1.0 - alpha) * y2) / (1.0 + alpha)
+		x2 = x1
+		x1 = x
+		y2 = y1
+		y1 = y
+		var g: float
+		if t < .25:
+			g = 0.0001 * pow(.06 / 0.0001, t / .25)
+		elif t < dur - .6:
+			g = .06 + (.015 - .06) * (t - .25) / (dur - .6 - .25)
+		elif t < dur - .4:
+			g = .015 * pow(0.0001 / .015, (t - (dur - .6)) / .2)
+		else:
+			g = 0.0001
+		if i0 + s < buf.size():
+			buf[i0 + s] += y * g

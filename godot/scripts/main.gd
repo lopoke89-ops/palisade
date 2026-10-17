@@ -131,6 +131,7 @@ func _ready() -> void:
 	add_child(menus)
 	_demo_game()
 	audio.sim = sim
+	audio.main = self
 	add_child(audio)
 	_resize()
 	v.cam_snap(sim.player.x, sim.player.y, sim.height_at(sim.player.x, sim.player.y))
@@ -156,8 +157,10 @@ func _ready() -> void:
 	if ResourceLoader.exists("res://scripts/casino_ui.gd"):
 		casino_ui = load("res://scripts/casino_ui.gd").new(self)
 		add_child(casino_ui)
-		if casino_ui.has_signal("stood_up"):
-			casino_ui.stood_up.connect(func(): sim.player.seat = 0)
+		casino_ui.stood_up.connect(func(): sim.player.seat = 0)
+		casino_ui.shards_changed.connect(func(n: int):
+			if locker != null:
+				locker.shards = n)
 	net.room_closed.connect(func(inc: String): social.unpublish(inc))
 	social.changed.connect(func():
 		if menus.screen == "friends":
@@ -220,10 +223,11 @@ func cas_sit() -> void:
 		toasts = [{"title": "TABLES", "body": "The tables aren't in this build yet.", "t": 3.0}]
 
 
+## casStand: off the seat, and the server gives the seat (and the shards on it) back
 func cas_stand() -> void:
 	sim.player.seat = 0
-	if casino_ui != null and casino_ui.is_open():
-		casino_ui.close()
+	if casino_ui != null:
+		casino_ui.stand()
 
 
 # ---------------------------------------------------------------- online play
