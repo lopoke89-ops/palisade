@@ -58,6 +58,13 @@ Each part follows the browser code, with function names kept so the two read sid
 | Menus and settings | `page.html`, `19c-home.js`, `19e-index.js`, `22-loop-menus.js` | `scripts/menus.gd`, `scripts/pal_settings.gd` |
 | Controller and touch | `08-input.js`, `08b-pad.js` | `scripts/pal_input.gd` |
 | Sound and music | `03-audio.js` | `scripts/pal_audio.gd`, `tools/render_sfx.gd`, `tools/convert_music.sh` |
+| Cosmetics catalog, locker, rewards, cases | `18-cosmetics.js`, `18a`/`18e` catalogs, `16d`/`16e` data | `data/cosmetics.json` (made by `tools/cos_extract.js`), `scripts/pal_locker.gd` |
+| The shaded wardrobe figure and outfit looks | `16-characters.js` (`paintWardrobeCharacter`, `buildLook`) | `scripts/wardrobe.gd` |
+| Outfit auras | `16b-auras.js` | `scripts/cos_fx.gd` |
+| A canvas 2D context for the cosmetic art | (the browser's canvas) | `scripts/ctx2d.gd` |
+| Tracers, kill finishers, cosmetic particles | `20a-cosmetic-art.js`, `20b-winter-effects.js`, `20c-hybrid-effects.js`, `20-locker-ui.js` (`killFx`) | `scripts/cos_art.gd`, `scripts/main.gd` |
+| Lobby backgrounds | `18b-backgrounds.js`, `18c-background-depth.js`, `18d-winter-scenes.js`, `18f-hybrid-scenes.js` | `scripts/backgrounds.gd` |
+| Locker screen, case openings, reward cards | `20-locker-ui.js`, `20b-case-openings.js` | `scripts/locker_ui.gd`, `scripts/case_open.gd`, `scripts/menus.gd` |
 
 What `sim.gd` covers:
 - **Pathing and collision:** the Dijkstra flow field, `bestStep`, `moveEnt`, `losClear`.
@@ -115,17 +122,22 @@ What `sim.gd` covers:
   - The five upgrades go to 8 levels at the browser's costs and steps.
   - Delgado's level, the stake repair (+50 for 25), and the four ammo types, at skill rank 0 until the account skill tree is ported.
   - The Soldier's rockets.
+- **Cosmetics:** the whole catalog (skins, headgear, tracers, kill effects, backgrounds, the milestone ladders), saved locally in `user://locker.json` until accounts are ported.
+  - A run pays out exactly as the browser's no-account `localRun` does: cases, shards, milestones, skill points and unlocks (checked against the browser for eight runs).
+  - Players wear their outfit in the browser's shaded wardrobe figure, with its aura, tracer (and the tracer's sound and shed motes) and kill effect.
+  - The Locker: case boxes (open one or five, buy with shards or three skill points), every item by tab and collection, equip with a click. Openings play the crate, the reel and the reveal.
+  - The menus sit on the equipped lobby background, and the after-action screen shows the rewards as cards.
 
 ## Not yet
 
 These are later phases:
 - **Accounts:** the skill tree saves locally until then.
 - **PvP:** Base Battle and Free-for-all come with online play.
-- **Cosmetics:** skins, headgear, tracers and kill effects, the locker and cases, and the shaded wardrobe figure the browser draws for players.
+- **Cosmetics online:** the cloud locker, server-side case openings and reward claims come with accounts. The lobby stage with the crew standing on it comes with online play.
 - **Music:** the menu and finale tracks, and the casino playlist.
 - **Network:** online play (PeerJS cross-play probe, casino relay client).
 
-Players are drawn with the browser's flat `drawPerson` figure (as raiders and Delgado are); the browser's shaded wardrobe figure for players comes with cosmetics.
+Raiders, bosses and Delgado use the browser's flat `drawPerson` figure; players use the shaded wardrobe figure, as in the browser.
 
 ## Sound
 
@@ -142,12 +154,24 @@ Players are drawn with the browser's flat `drawPerson` figure (as raiders and De
 
 ```sh
 godot --headless --path godot --script res://tests/sim_test.gd           # exit 0 = pass
-godot --headless --path godot --script res://tests/client_test.gd        # settings, bindings, menu flow, touch
+godot --headless --path godot --script res://tests/client_test.gd        # settings, bindings, menu flow, touch, locker payouts, the Locker
 xvfb-run godot --path godot --script res://tests/shot.gd -- /tmp/shot.png # renders a raid frame
 xvfb-run godot --path godot --script res://tests/menu_shot.gd -- /tmp/m   # the main menu, setup, controls, results
 xvfb-run godot --path godot --script res://tests/shot.gd -- /tmp/city.png city            # a Black Out attack
 xvfb-run godot --path godot --script res://tests/shot.gd -- /tmp/frost.png map frost std  # any map, size and class
+PAL_COS=gsoldier,crown xvfb-run godot --path godot --script res://tests/shot.gd -- /tmp/s.png  # dressed in an outfit
+xvfb-run godot --path godot --script res://tests/cos_shot.gd -- /tmp/cos.png     # tracers and kill effects in play
+xvfb-run godot --path godot --script res://tests/locker_shot.gd -- /tmp/lk      # the Locker and a case opening
 ```
+
+The cosmetic art is checked against the browser's own drawing. Each tool below paints a contact sheet in the browser (from a site built with `dev/build.py`), and the matching test paints the same sheet in Godot:
+
+| Browser (`node godot/tools/…`) | Godot (`xvfb-run godot --path godot --rendering-driver opengl3 --script res://tests/…`) | Covers |
+|---|---|---|
+| `wardrobe_ref.js <site> sheet.png` (also writes `tests/wardrobe_looks.json`) | `wardrobe_shot.gd -- sheet.png` (also checks all 176 looks match) | every skin and headgear, two headings |
+| `fx_ref.js <site> prefix` | `fx_shot.gd -- prefix` | all 76 tracers, all 47 kill finishers at four moments |
+| `bg_ref.js <site> sheet.png` | `bg_shot.gd -- sheet.png` | all 78 lobby backgrounds |
+| `locker_ref.js <site>` (writes `tests/locker_ref.json`) | `client_test.gd` | eight runs' payouts |
 
 `sim_test.gd` checks the following:
 - `hash` matches the browser bit for bit;
