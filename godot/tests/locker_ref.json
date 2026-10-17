@@ -1,0 +1,493 @@
+[
+ {
+  "name": "5 raids, a win",
+  "claim": {
+   "diff": "normal",
+   "raid_from": 0,
+   "shard_bosses": 0,
+   "sb_keys": [],
+   "fb_keys": [],
+   "salvage": 0,
+   "size": "std",
+   "mods": [],
+   "map": "yard",
+   "cls": "soldier",
+   "evac": "",
+   "cv": 4,
+   "g_cleared": 0,
+   "ch_evac": [],
+   "mode": "5",
+   "win": true,
+   "held": 5,
+   "raid_to": 5,
+   "kills": 40,
+   "boss_keys": [
+    "butcher"
+   ],
+   "duration_s": 600
+  },
+  "shards": 3,
+  "out": {
+   "cases": 2,
+   "bag": {
+    "halloween": 1,
+    "hybrid": 1
+   },
+   "shards": 3,
+   "prog": 2,
+   "st": {
+    "raids": 5,
+    "wins": 1,
+    "drops": 40,
+    "endless": 0,
+    "hardWins": 0,
+    "boss_butcher": 1,
+    "map_yard": 5,
+    "cls_soldier_raids": 5
+   },
+   "sp": 2,
+   "unlocked": [
+    "skin:desert",
+    "skin:urban",
+    "bg:dawn"
+   ],
+   "text": "+2 supply cases · +1 halloween case from bosses · +1 hybrid theory case from bosses · +3 shards from leftover salvage · +2 skill points · 1 more raid to the next supply case · Unlocked Desert, Urban Grey, First Light."
+  }
+ },
+ {
+  "name": "endless, 12 held",
+  "claim": {
+   "diff": "normal",
+   "raid_from": 0,
+   "shard_bosses": 0,
+   "sb_keys": [],
+   "fb_keys": [],
+   "salvage": 0,
+   "size": "std",
+   "mods": [
+    "elite"
+   ],
+   "map": "yard",
+   "cls": "soldier",
+   "evac": "",
+   "cv": 4,
+   "g_cleared": 0,
+   "ch_evac": [],
+   "mode": "endless",
+   "win": false,
+   "held": 12,
+   "raid_to": 12,
+   "kills": 90,
+   "boss_keys": [
+    "butcher",
+    "demolisher"
+   ],
+   "duration_s": 900
+  },
+  "shards": 10,
+  "out": {
+   "cases": 6,
+   "bag": {
+    "halloween": 1,
+    "afterglow": 1
+   },
+   "shards": 10,
+   "prog": 1,
+   "st": {
+    "raids": 12,
+    "wins": 0,
+    "drops": 90,
+    "endless": 12,
+    "hardWins": 0,
+    "boss_butcher": 1,
+    "boss_demolisher": 1,
+    "map_yard": 12,
+    "cls_soldier_raids": 12
+   },
+   "sp": 4,
+   "unlocked": [
+    "skin:desert",
+    "hat:beanie",
+    "trail:green"
+   ],
+   "text": "+6 supply cases · +1 halloween case from bosses · +1 afterglow case from bosses · +10 shards from leftover salvage · +4 skill points · 2 more raids to the next supply case · Unlocked Desert, Beanie, Green Tracer."
+  }
+ },
+ {
+  "name": "10 raids XL on Hard, lost in raid 8",
+  "claim": {
+   "diff": "hard",
+   "raid_from": 0,
+   "shard_bosses": 0,
+   "sb_keys": [],
+   "fb_keys": [],
+   "salvage": 0,
+   "size": "xl",
+   "mods": [],
+   "map": "river",
+   "cls": "sniper",
+   "evac": "",
+   "cv": 4,
+   "g_cleared": 0,
+   "ch_evac": [],
+   "mode": "10",
+   "win": false,
+   "held": 7,
+   "raid_to": 7,
+   "kills": 70,
+   "boss_keys": [
+    "butcher",
+    "demolisher",
+    "storm"
+   ],
+   "duration_s": 800
+  },
+  "shards": 2,
+  "out": {
+   "cases": 2,
+   "bag": {
+    "halloween": 1,
+    "afterglow": 1
+   },
+   "shards": 2,
+   "prog": 1,
+   "st": {
+    "raids": 7,
+    "wins": 0,
+    "drops": 70,
+    "endless": 0,
+    "hardWins": 0,
+    "boss_butcher": 1,
+    "boss_demolisher": 1,
+    "map_river": 7,
+    "cls_sniper_raids": 7
+   },
+   "sp": 3,
+   "unlocked": [
+    "skin:desert",
+    "trail:green"
+   ],
+   "text": "+2 supply cases · +1 halloween case from bosses · +1 afterglow case from bosses · +2 shards from leftover salvage · +3 skill points · 2 more raids to the next supply case · Unlocked Desert, Green Tracer."
+  }
+ },
+ {
+  "name": "10 raids, a win on Hard",
+  "claim": {
+   "diff": "hard",
+   "raid_from": 0,
+   "shard_bosses": 0,
+   "sb_keys": [],
+   "fb_keys": [],
+   "salvage": 0,
+   "size": "std",
+   "mods": [
+    "nopatch",
+    "alone"
+   ],
+   "map": "river",
+   "cls": "grenadier",
+   "evac": "",
+   "cv": 4,
+   "g_cleared": 0,
+   "ch_evac": [],
+   "mode": "10",
+   "win": true,
+   "held": 10,
+   "raid_to": 10,
+   "kills": 120,
+   "boss_keys": [
+    "ferryman",
+    "butcher"
+   ],
+   "duration_s": 1500
+  },
+  "shards": 0,
+  "out": {
+   "cases": 6,
+   "bag": {
+    "halloween": 2,
+    "hybrid": 1
+   },
+   "shards": 0,
+   "prog": 1,
+   "st": {
+    "raids": 10,
+    "wins": 1,
+    "drops": 120,
+    "endless": 0,
+    "hardWins": 1,
+    "boss_ferryman": 1,
+    "boss_butcher": 1,
+    "map_river": 10,
+    "cls_grenadier_raids": 10
+   },
+   "sp": 4,
+   "unlocked": [
+    "skin:desert",
+    "skin:urban",
+    "hat:beanie",
+    "trail:green",
+    "fx:embers",
+    "bg:dawn",
+    "bg:emberfield"
+   ],
+   "text": "+6 supply cases · +2 halloween cases from bosses · +1 hybrid theory case from bosses · +4 skill points · 2 more raids to the next supply case · Unlocked Desert, Urban Grey, Beanie, Green Tracer, Embers, First Light, Ember Field."
+  }
+ },
+ {
+  "name": "Black Out, all 8 and the Destroyer",
+  "claim": {
+   "diff": "normal",
+   "raid_from": 0,
+   "shard_bosses": 0,
+   "sb_keys": [],
+   "fb_keys": [],
+   "salvage": 0,
+   "size": "std",
+   "mods": [],
+   "map": "city",
+   "cls": "soldier",
+   "evac": "",
+   "cv": 5,
+   "g_cleared": 0,
+   "ch_evac": [],
+   "mode": "blackout",
+   "win": true,
+   "held": 9,
+   "raid_to": 9,
+   "kills": 150,
+   "boss_keys": [],
+   "duration_s": 900,
+   "pois_held": 8,
+   "pois_major": 4,
+   "destroyer": true
+  },
+  "shards": 4,
+  "out": {
+   "cases": 8,
+   "bag": {
+    "hybrid": 1
+   },
+   "shards": 69,
+   "prog": 2,
+   "st": {
+    "raids": 9,
+    "wins": 1,
+    "drops": 150,
+    "endless": 0,
+    "hardWins": 0,
+    "bo_pois": 8,
+    "bo_wins": 1,
+    "bo_perfect": 1,
+    "bo_dest": 1,
+    "cls_soldier_raids": 9
+   },
+   "sp": 2,
+   "unlocked": [
+    "skin:desert",
+    "skin:urban",
+    "trail:green",
+    "hat:blackout",
+    "fx:orbital",
+    "bg:skyline",
+    "bg:dawn",
+    "bg:emberfield"
+   ],
+   "text": "+8 supply cases · +1 hybrid theory case from bosses · +65 shards from the win and the Destroyer · +4 shards from leftover salvage · +2 skill points · 8 points held · 1 more point to the next supply case · Unlocked Desert, Urban Grey, Green Tracer, Blackout Helmet, Orbital Strike, Lit Skyline, First Light, Ember Field."
+  }
+ },
+ {
+  "name": "Black Out, Command fell early",
+  "claim": {
+   "diff": "normal",
+   "raid_from": 0,
+   "shard_bosses": 0,
+   "sb_keys": [],
+   "fb_keys": [],
+   "salvage": 0,
+   "size": "std",
+   "mods": [],
+   "map": "city",
+   "cls": "soldier",
+   "evac": "",
+   "cv": 5,
+   "g_cleared": 0,
+   "ch_evac": [],
+   "mode": "blackout",
+   "win": false,
+   "held": 3,
+   "raid_to": 3,
+   "kills": 30,
+   "boss_keys": [],
+   "duration_s": 200,
+   "pois_held": 3,
+   "pois_major": 0,
+   "destroyer": false
+  },
+  "shards": 0,
+  "out": {
+   "cases": 1,
+   "bag": {},
+   "shards": 0,
+   "prog": 0,
+   "st": {
+    "raids": 3,
+    "wins": 0,
+    "drops": 30,
+    "endless": 0,
+    "hardWins": 0,
+    "bo_pois": 3,
+    "cls_soldier_raids": 3
+   },
+   "sp": 0,
+   "unlocked": [
+    "skin:desert"
+   ],
+   "text": "+1 supply case · 3 points held · 3 more points to the next supply case · Unlocked Desert."
+  }
+ },
+ {
+  "name": "Blitz, left behind",
+  "claim": {
+   "diff": "normal",
+   "raid_from": 0,
+   "shard_bosses": 0,
+   "sb_keys": [],
+   "fb_keys": [
+    "bluebutcher",
+    "arsonist",
+    "tempest"
+   ],
+   "salvage": 0,
+   "size": "std",
+   "mods": [],
+   "map": "yard",
+   "cls": "soldier",
+   "evac": "left",
+   "cv": 4,
+   "g_cleared": 0,
+   "ch_evac": [],
+   "mode": "blitz",
+   "win": false,
+   "held": 15,
+   "raid_to": 15,
+   "kills": 200,
+   "boss_keys": [
+    "bluebutcher",
+    "arsonist"
+   ],
+   "duration_s": 1600
+  },
+  "shards": 5,
+  "out": {
+   "cases": 3,
+   "bag": {
+    "blitz": 5
+   },
+   "shards": 48,
+   "prog": 0,
+   "st": {
+    "raids": 15,
+    "wins": 0,
+    "drops": 200,
+    "endless": 0,
+    "hardWins": 0,
+    "boss_butcher": 2,
+    "mode_blitz_bosses": 5,
+    "boss_demolisher": 2,
+    "map_yard": 15,
+    "cls_soldier_raids": 15,
+    "boss_storm": 1
+   },
+   "sp": 8,
+   "unlocked": [
+    "skin:desert",
+    "hat:beanie",
+    "trail:green",
+    "bg:emberfield"
+   ],
+   "text": "Left behind: half your cases and shards · +3 supply cases · +5 blitzkrieg cases from bosses · +48 shards from bosses and the evac · +8 skill points · 3 more raids to the next supply case · Unlocked Desert, Beanie, Green Tracer, Ember Field."
+  }
+ },
+ {
+  "name": "Campaign, out of the Gauntlet",
+  "claim": {
+   "diff": "normal",
+   "raid_from": 0,
+   "shard_bosses": 0,
+   "sb_keys": [],
+   "fb_keys": [
+    "rime",
+    "rime",
+    "rime",
+    "rime",
+    "rime",
+    "rime",
+    "rime",
+    "rime",
+    "rime"
+   ],
+   "salvage": 0,
+   "size": "std",
+   "mods": [],
+   "map": "yard",
+   "cls": "soldier",
+   "evac": "evac",
+   "cv": 4,
+   "g_cleared": 3,
+   "ch_evac": [
+    true,
+    true,
+    false
+   ],
+   "mode": "campaign",
+   "win": true,
+   "held": 13,
+   "raid_to": 13,
+   "kills": 260,
+   "boss_keys": [
+    "whitebutcher",
+    "whiteferryman",
+    "whiteforeman",
+    "rime"
+   ],
+   "duration_s": 2600
+  },
+  "shards": 5,
+  "out": {
+   "cases": 6,
+   "bag": {
+    "winter": 12,
+    "hybrid": 1
+   },
+   "shards": 120,
+   "prog": 1,
+   "st": {
+    "raids": 13,
+    "wins": 1,
+    "drops": 260,
+    "endless": 0,
+    "hardWins": 0,
+    "boss_butcher": 1,
+    "boss_ferryman": 1,
+    "boss_foreman": 1,
+    "boss_rime": 10,
+    "map_yard": 3,
+    "map_river": 3,
+    "map_quarry": 3,
+    "map_frost": 4,
+    "cls_soldier_raids": 13
+   },
+   "sp": 15,
+   "unlocked": [
+    "skin:desert",
+    "skin:urban",
+    "hat:beanie",
+    "trail:green",
+    "bg:dawn",
+    "bg:emberfield"
+   ],
+   "text": "+6 supply cases · +12 winter cases from bosses · +1 hybrid theory case from bosses · +115 shards from bosses and the evac · +5 shards from leftover salvage · +15 skill points · 2 more raids to the next supply case · Unlocked Desert, Urban Grey, Beanie, Green Tracer, First Light, Ember Field."
+  }
+ }
+]

@@ -1,0 +1,1041 @@
+extends SceneTree
+## Headless checks for the ported sim: godot --headless --path godot --script res://tests/sim_test.gd
+## Exit code 0 = all passed.
+
+var fails := 0
+var sims: Array = []
+
+
+func _mk() -> Sim:
+	var s := Sim.new()
+	sims.append(s)
+	return s
+
+
+func check(cond: bool, what: String) -> void:
+	if cond:
+		print("  ok   ", what)
+	else:
+		print("  FAIL ", what)
+		fails += 1
+
+
+func _init() -> void:
+	print("the client scripts load")
+	var main_script = load("res://scripts/main.gd")
+	check(main_script != null and main_script.can_instantiate(), "main.gd parses")
+
+	print("hash parity with the browser (values from node)")
+	var ref := [[0, 0, 0], [1, 0, 0.5081244610501743], [0, 1, 0.7682745544631674], [4, 11, 0.28116835986291255], [15, 15, 0.6118243966744804],
+		[400, 77, 0.9309408012616776], [-6, -6, 0.18195412777875414], [407, 93, 0.121274691801815], [12345, 678, 0.7270846461707458], [-3, 9, 0.02733767848167049]]
+	for r in ref:
+		check(absf(Pal.hash2(r[0], r[1]) - r[2]) < 1e-12, "hash(%d,%d) = %f" % [r[0], r[1], r[2]])
+
+	print("new game: the Yard on Normal")
+	var s := _mk()
+	s.new_game(7)
+	var ruins := 0
+	for w in s.walls:
+		if w != null:
+			ruins += 1
+	check(ruins == 6, "six ruin walls")
+	check(s.core.hp == 500.0, "stake 500 hp")
+	check(s.game.timer == 40.0, "40 s to build")
+	check(Vector2(s.player.x, s.player.y) == Vector2(5.5, 11.5), "soldier at 5.5,11.5")
+	check(s.player.mats == [24, 0, 0], "24 wood")
+	check(s.dist[s.core_k] == 0.0 and s.dist[s.idx(15, 0)] < 1e6, "flow field reaches the stake")
+
+	print("projection")
+	var v := IsoView.new()
+	v.resize(1280, 720)
+	check(is_equal_approx(v.S, 1.35) and is_equal_approx(v.TW2, 54.0), "S clamps to 1.35, TW2=54 at 1280x720")
+	v.cam_snap(5.5, 11.5)
+	var sp := v.iso(7.25, 3.5)
+	var back := v.screen_to_world(sp.x, sp.y)
+	check(back.distance_to(Vector2(7.25, 3.5)) < 1e-4, "screen_to_world inverts iso (Vector2 is 32-bit)")
+
+	print("building")
+	s.local_build()
+	var k := s.idx(6, 10)   # a new soldier faces up and to the right (0.7, -0.7), so the faced tile is the diagonal
+	check(s.walls[k] != null and s.walls[k].mat == 0 and s.walls[k].hp == 60.0, "wood wall raised at 6,10")
+	check(s.player.mats[0] == 20, "cost 4 wood")
+	check(is_equal_approx(s.player.bcd, 0.22 * 0.6), "build cooldown .22 x .6")
+	s.local_build()
+	check(s.player.mats[0] == 20, "cooldown blocks a second build")
+	s.player.bcd = 0.0
+	var t := s.build_target(s.player, 0, false)
+	check(not t.ok and t.reason == "At full strength", "full wall: At full strength")
+	s.game.piece = "door"
+	t = s.build_target(s.player, 0, true)
+	check(t.ok and t.act == "MAKE DOOR" and t.cost == 4, "make door costs 4")
+	s.game.piece = "wall"
+
+	print("gathering")
+	var g := _mk()
+	g.new_game(1)
+	g.player.x = 2.5
+	g.player.y = 8.3   # beside the wood pile at 2,7
+	for n in 60:
+		g.update(1.0 / 60.0, {})
+	check(g.player.mats[0] > 24, "walking into wood gathers (%d)" % g.player.mats[0])
+
+	print("explosions")
+	var e := _mk()
+	e.new_game(3)
+	var rk := e.idx(4, 9)
+	var hp0: float = e.walls[rk].hp
+	e.explode(4.5, 9.5, 1.65, 1.0, e.player.id)
+	check(e.walls[rk] == null, "a grenade on a weakened wood ruin (%.1f hp) knocks it down" % hp0)
+	check(e.debris[rk] == 1, "leaves wood debris")
+	check(e.walls[e.idx(3, 9)] == null and e.walls[e.idx(5, 9)] == null, "the blast also takes both neighbouring ruins (f=.68 x 80 x 2.2)")
+	check(e.player.sal == 15, "three wood ruins pay 5 salvage each (%d)" % e.player.sal)
+
+	print("a raid, played by a simple bot")
+	var r := _mk()
+	r.new_game(11)
+	r.start_raid()
+	check(r.game.queue.size() == 3, "raid 1 sends 3 riflemen")
+	var shots_back := 0
+	var time := 0.0
+	while time < 240.0 and r.game.phase == "raid":
+		var ctl := {}
+		var p: Dictionary = r.player
+		var best = null
+		var bd := 1e9
+		for en in r.enemies:
+			var d := Vector2(en.x - p.x, en.y - p.y).length()
+			if d < bd:
+				bd = d
+				best = en
+		if best != null and bd < 5.5:   # inside a rifleman's 7-tile sight, so both sides trade fire
+			ctl = {"aim": Vector2(best.x - p.x, best.y - p.y), "fire": true}
+		r.update(1.0 / 60.0, ctl)
+		for bl in r.bullets:
+			if bl.team == 1:
+				shots_back += 1
+		time += 1.0 / 60.0
+	check(r.game.stats.dropped >= 3, "the bot dropped the raid (%d) in %.0f s" % [r.game.stats.dropped, time])
+	check(r.game.phase == "build" and r.game.wave == 1, "raid 1 broken, back to building")
+	var by_bot: int = r.player.kills
+	check(r.player.sal == 9 + 4 * by_bot + (3 - by_bot), "8 + raid salvage, 4 per rifleman you drop, 1 each for Delgado's (%d)" % r.player.sal)
+	check(shots_back > 0, "raiders shot back")
+
+	print("raid mix matches the browser's waveMix (values from node)")
+	var mix_ref := [[1,1,{"rifle":3,"gren":0,"breach":0,"fire":0,"shield":0,"medic":0,"spotter":0}],[2,1,{"rifle":3,"gren":1,"breach":0,"fire":1,"shield":0,"medic":0,"spotter":0}],[3,1,{"rifle":3,"gren":2,"breach":1,"fire":1,"shield":1,"medic":0,"spotter":0}],[4,1,{"rifle":3,"gren":3,"breach":2,"fire":1,"shield":1,"medic":1,"spotter":0}],[5,1,{"rifle":3,"gren":4,"breach":3,"fire":2,"shield":1,"medic":1,"spotter":0}],[6,1,{"rifle":3,"gren":5,"breach":4,"fire":2,"shield":2,"medic":1,"spotter":1}],[7,1,{"rifle":4,"gren":6,"breach":5,"fire":2,"shield":2,"medic":1,"spotter":1}],[1,2,{"rifle":5,"gren":0,"breach":0,"fire":0,"shield":0,"medic":0,"spotter":0}],[3,2,{"rifle":6,"gren":2,"breach":1,"fire":1,"shield":1,"medic":0,"spotter":0}],[5,2,{"rifle":7,"gren":4,"breach":3,"fire":2,"shield":1,"medic":1,"spotter":0}],[7,2,{"rifle":8,"gren":6,"breach":5,"fire":2,"shield":2,"medic":1,"spotter":1}],[2,4,{"rifle":9,"gren":2,"breach":0,"fire":2,"shield":0,"medic":0,"spotter":0}],[4,4,{"rifle":11,"gren":4,"breach":3,"fire":2,"shield":2,"medic":1,"spotter":0}],[6,4,{"rifle":13,"gren":6,"breach":5,"fire":3,"shield":3,"medic":1,"spotter":1}],[7,4,{"rifle":15,"gren":7,"breach":6,"fire":3,"shield":3,"medic":1,"spotter":1}]]
+	var mix_ok := true
+	for m in mix_ref:
+		var got := s.wave_mix(m[0], m[1], 0)
+		for key in m[2]:
+			if got[key] != m[2][key]:
+				mix_ok = false
+				print("    raid %d crew %d %s: %d, browser %d" % [m[0], m[1], key, got[key], m[2][key]])
+	check(mix_ok, "15 raid/crew combinations identical")
+
+	print("raider types")
+	var sh := _mk()
+	sh.new_game(5)
+	sh.game.phase = "raid"
+	var se := sh.spawn_enemy_at("shield", 9.5, 11.5)
+	se.aim = Vector2(-1, 0)   # facing the soldier at 5.5,11.5
+	var hp_s: float = se.hp
+	sh.player.aim = Vector2(1, 0)
+	for n in 5:
+		sh.fire(sh.player, 0.0, 0, Pal.SOLDIER.gun)
+	for n in 20:
+		sh.update_bullets(1.0 / 60.0)
+	check(se.hp == hp_s and se.shieldHitsLeft == 15, "a riot shield stops 5 rounds from the front (%d of 20 hits left)" % se.shieldHitsLeft)
+	se.aim = Vector2(1, 0)   # turned away
+	sh.fire(sh.player, 0.0, 0, Pal.SOLDIER.gun)
+	for n in 20:
+		sh.update_bullets(1.0 / 60.0)
+	check(se.hp < hp_s, "but not from behind")
+
+	var br := _mk()
+	br.new_game(6)
+	br.game.phase = "raid"
+	for j in 16:   # a full wall line across the yard, so there is no way round
+		br.walls[br.idx(8, j)] = Pal.make_wall(0, false)
+	br.compute_flow()
+	br.spawn_enemy_at("breach", 10.5, 11.5)
+	var boom := false
+	for n in 600:
+		br.update_enemies(1.0 / 60.0)
+		br.update_charges(1.0 / 60.0)
+		if br.walls[br.idx(8, 11)] == null or br.walls[br.idx(8, 10)] == null or br.walls[br.idx(8, 12)] == null:
+			boom = true
+			break
+	check(boom, "a breacher's satchel takes out the wall in his way")
+
+	var fb := _mk()
+	fb.new_game(8)
+	fb.game.phase = "raid"
+	for j in 16:   # a full wall line across the yard, so there is no way round
+		fb.walls[fb.idx(8, j)] = Pal.make_wall(0, false)
+	fb.compute_flow()
+	fb.player.x = 1.5
+	fb.player.y = 2.5
+	fb.qm.alive = false   # keep the two of them out of it
+	fb.spawn_enemy_at("fire", 12.5, 11.5)
+	var lit := false
+	for n in 600:
+		fb.update_enemies(1.0 / 60.0)
+		fb.update_lobs(1.0 / 60.0)
+		fb.update_fires(1.0 / 60.0)
+		var w = fb.walls[fb.idx(8, 11)]
+		if w != null and w.fire > 0:
+			lit = true
+			break
+	check(lit, "a firebrand sets the wooden wall in his way alight")
+
+	var md := _mk()
+	md.new_game(9)
+	md.game.phase = "raid"
+	var hurt := md.spawn_enemy_at("rifle", 14.5, 2.5)
+	hurt.hp = 10.0
+	md.spawn_enemy_at("medic", 14.5, 3.5)
+	for n in 120:
+		md.update_enemies(1.0 / 60.0)
+	check(hurt.hp > 10.0, "a field medic patches up the raider next to him (%.1f)" % hurt.hp)
+
+	var spt := _mk()
+	spt.new_game(10)
+	spt.game.phase = "raid"
+	spt.qm.alive = false
+	spt.spawn_enemy_at("spotter", 12.5, 13.5)   # clear line of sight (the kiln at 11,11 blocks 11.5)
+	for n in 90:
+		spt.update_enemies(1.0 / 60.0)
+	check(spt.player.markT > 0, "a spotter marks the soldier after 0.8 s in sight")
+
+	print("bosses")
+	var bm := _mk()
+	bm.new_game(30)
+	var w5 := bm.wave_mix(5, 1, 0, true)
+	check(w5.rifle == 2 and w5.gren == 4 and w5.breach == 3 and w5.fire == 2 and w5.shield == 1 and w5.medic == 1, "raid 5 mix with a boss matches the browser")
+	var w10 := bm.wave_mix(10, 1, 0, true)
+	check(w10.rifle == 4 and w10.gren == 9 and w10.breach == 8 and w10.spotter == 1, "raid 10 mix with a boss matches the browser")
+	check(bm.boss_of(5) == "butcher" and bm.boss_of(10) == "demolisher" and bm.boss_of(15) == "storm" and bm.boss_of(4) == "", "the Yard's boss order: Butcher, Demolisher, Stormcaller")
+	bm.game.wave = 4
+	bm.start_raid()
+	check(bm.game.queue.has("boss:butcher"), "raid 5 brings the Butcher")
+	var bt := _mk()
+	bt.new_game(31)
+	bt.game.phase = "raid"
+	bt.game.wave = 5
+	bt.qm.alive = false
+	var bu := bt.spawn_boss("butcher")
+	check(is_equal_approx(bu.hp, 760.0 * 1.25), "the Butcher has 950 health on Normal")
+	bu.x = 9.5
+	bu.y = 11.5
+	bu.ab = 0.0   # charge ready (he spawns with 3 s on it)
+	var charged := false
+	var php0: float = bt.player.hp
+	for n in 60 * 6:
+		bt.update_enemies(1.0 / 60.0)
+		if bu.st == 3:
+			charged = true
+		if bt.player.hp < php0:
+			break
+	check(charged, "he charges down a red lane from range")
+	check(bt.player.hp < php0, "and it lands (%.0f health left)" % bt.player.hp)
+	var dm := _mk()
+	dm.new_game(32)
+	dm.game.phase = "raid"
+	dm.qm.alive = false
+	var de := dm.spawn_boss("demolisher")
+	de.x = 12.5
+	de.y = 11.5
+	var fired := false
+	for n in 60 * 5:
+		dm.update_enemies(1.0 / 60.0)
+		dm.update_rockets(1.0 / 60.0)
+		if not dm.rockets.is_empty():
+			fired = true
+	check(fired, "the Demolisher fires rockets after his red line")
+	var sm := _mk()
+	sm.new_game(33)
+	sm.game.phase = "raid"
+	var se2 := sm.spawn_boss("storm")
+	se2.x = 12.5
+	se2.y = 13.5
+	sm.player.hp = 115.0
+	sm.qm.x = 6.5
+	sm.qm.y = 12.0
+	var zapped := false
+	for n in 60 * 5:
+		sm.update_enemies(1.0 / 60.0)
+		if sm.player.stun > 0:
+			zapped = true
+			break
+		sm.player.stun = maxf(0.0, sm.player.stun - 1.0 / 60.0)
+	check(zapped, "the Stormcaller's bolt hits and stuns")
+	var bds := _mk()
+	bds.new_game(34)
+	bds.game.phase = "raid"
+	var bb := bds.spawn_boss("butcher")
+	bds.hurt_enemy(bb, 9999.0, bds.player.id)
+	check(bds.player.sal == 40, "landing the kill on a boss pays 40 salvage")
+
+	print("every other boss: each one fights, using its own moves")
+	for key in Sim.BOSS_LIST:
+		if key.ends_with("ferryman"):   # river bosses: tested on Riverbend below
+			continue
+		var bs := _mk()
+		bs.new_game(60 + Sim.BOSS_LIST.find(key))
+		bs.game.phase = "raid"
+		bs.game.wave = 5
+		bs.player.x = 6.5
+		bs.player.y = 13.5
+		var bo := bs.spawn_boss(key)
+		bo.x = 12.5
+		bo.y = 12.5
+		var seen := {}
+		var hurt0: float = bs.player.hp + bs.qm.hp + bs.core.hp
+		var extra := {"arcs": false, "napalm": false, "missile": false, "frost": false, "gas": false, "mines": false, "slab": false, "burrow": false}
+		var t_end := 0.0
+		for n in 60 * 30:
+			bs.player.hp = bs.player.max   # keep the soldier up so the boss keeps working
+			bs.player.alive = true
+			bs.player.downed = false
+			# the soldier keeps moving in and out (2 to 7 tiles), so melee and ranged moves both come up
+			var want_d := 4.5 + 2.5 * sin(t_end * 0.8)
+			var nx := clampf(bo.x - 0.96 * want_d, 0.5, 15.5)
+			var ny := clampf(bo.y + 0.28 * want_d, 0.5, 15.5)
+			if not bs.collides(nx, ny, 0.27, true):
+				bs.player.x = nx
+				bs.player.y = ny
+			bs.update(1.0 / 60.0, {})
+			t_end += 1.0 / 60.0
+			seen[bo.st] = true
+			if not bs.arcs.is_empty(): extra.arcs = true
+			if bo.get("burrow", false): extra.burrow = true
+			if not bs.frost_fields.is_empty(): extra.frost = true
+			for l in bs.lobs:
+				if l.get("k", 0) == 3: extra.missile = true
+			for f in bs.fires:
+				match f.get("nap", 0):
+					1: extra.napalm = true
+					2: extra.gas = true
+					3: extra.mines = true
+			for w in bs.walls:
+				if w != null and w.get("slab", false): extra.slab = true
+			if bo.dead or bs.game.phase == "over":
+				break
+		var states: Array = seen.keys()
+		states.sort()
+		var want: Array = {"butcher": [1, 2], "demolisher": [1], "storm": [1, 20, 21], "foreman": [1, 2, 4], "bluebutcher": [5], "arsonist": [1], "tempest": [1], "bulldozer": [1, 2], "harbinger": [1], "rime": [101], "whitebutcher": [101], "whiteforeman": [101], "destroyer": [40, 41, 44, 45]}[key]
+		var missing: Array = want.filter(func(st): return not seen.has(st))
+		var sign_ok := true
+		match key:
+			"foreman": sign_ok = extra.burrow and extra.slab
+			"bluebutcher", "whitebutcher": sign_ok = extra.arcs
+			"arsonist": sign_ok = extra.napalm
+			"harbinger": sign_ok = extra.missile
+			"destroyer": sign_ok = extra.gas and extra.mines
+		check(missing.is_empty() and sign_ok, "%s: warnings/attacks seen %s%s" % [key, str(states), "" if missing.is_empty() else " · MISSING " + str(missing)])
+	var rf := _mk()
+	rf.new_game(80)
+	rf.game.phase = "raid"
+	rf.add_frost(8.5, 11.5)
+	check(is_equal_approx(rf.slow_at(8.5, 11.5), 0.7) and rf.slow_at(2.5, 2.5) == 1.0, "the Rime Colossus's frost slows movement to 70%")
+	var fb2 := _mk()
+	fb2.new_game(81)
+	fb2.game.phase = "raid"
+	var fo := fb2.spawn_boss("foreman")
+	fo.burrow = true
+	fo.x = 8.5
+	fo.y = 11.5
+	var fhp: float = fo.hp
+	fb2.fire(fb2.player, 0.0, 0, {"dmg": 20.0, "speed": 22.0, "range": 11.0})
+	for n in 20:
+		fb2.update_bullets(1.0 / 60.0)
+	check(fo.hp == fhp, "the Foreman underground can't be shot")
+
+	print("skill tree")
+	var pr := PalProfile.new()
+	pr.persist = false
+	check(pr.award_run(7, 1) == 2 and pr.sp_prog == 2 and pr.sp == 2, "7 raids held and a boss: 2 points, 2 raids carried toward the next")
+	check(pr.award_run(3, 0) == 1 and pr.sp_prog == 0, "3 more raids complete the next point")
+	check(pr.block_reason("ammo_ap") == "5 lifetime SP", "ammo tiers are gated by lifetime points (5, 10, 15, 20)")
+	pr.sp_total = 5
+	check(pr.buy("ammo_ap") and pr.level("ammo_ap") == 1, "rank 1 armor piercing once 5 points have been earned")
+	check(pr.block_reason("molotov") == "Needs EXTRA POUCH", "Molotovs need Extra Pouch first")
+	pr.sp = 20
+	pr.buy("dmg")
+	pr.buy("dmg")
+	pr.buy("hp")
+	pr.buy("rockets")
+	pr.buy("vest")
+	check(pr.level("dmg") == 2 and pr.sp == 20 - 3 - 1 - 1 - 2, "point costs follow the tree (Hot Loads 1 then 2)")
+	var sk := _mk()
+	sk.new_game(82, "normal", pr.perk_mods())
+	check(is_equal_approx(sk.player.gun.dmg, 12.0 * 1.08) and sk.player.max == roundf(115 * 1.06) and sk.player.rk == 6, "perks: +8% damage, +6% health, +1 rocket")
+	var hp_before: float = sk.player.hp
+	sk.hurt_player(sk.player, 10.0)
+	check(is_equal_approx(hp_before - sk.player.hp, 9.6), "Kevlar 1: 4% less damage taken")
+	pr.skills["ammo_ap"] = 4
+	var ap := _mk()
+	ap.new_game(83, "normal", pr.perk_mods())
+	ap.game.phase = "raid"
+	ap.player.ammoEq[0] = "ap"
+	var sb := ap.spawn_enemy_at("shield", 9.5, 11.5)
+	sb.aim = Vector2(-1, 0)
+	var shp: float = sb.hp
+	ap.player.aim = Vector2(1, 0)
+	ap.shoot(ap.player, {"spread": 0.0, "dmg": 10.0, "speed": 22.0, "range": 11.0}, 0.0)
+	for n in 20:
+		ap.update_bullets(1.0 / 60.0)
+	check(is_equal_approx(shp - sb.hp, 10.0), "armor piercing rank 4: full damage through a riot shield")
+	pr.respec()
+	check(pr.skills.is_empty() and pr.sp == 30, "reset hands every point back (13 unspent + 17 spent)")
+
+	print("classes")
+	var cs := _mk()
+	cs.new_game(90, "normal", {}, {"cls": "sniper"})
+	var sn: Dictionary = cs.player
+	check(sn.max == 90.0 and is_equal_approx(sn.gun.dmg, 47.0) and sn.rk == 0, "Sniper: 90 health, 47-damage bolt, no rockets")
+	cs.game.phase = "raid"
+	sn.aim = Vector2(1, 0)
+	var shots := 0
+	for n in 60 * 3:
+		var before := cs.bullets.size()
+		cs.update(1.0 / 60.0, {"aim": Vector2(1, 0), "fire": true, "pulls": 0})
+		if cs.bullets.size() > before:
+			shots += 1
+	check(shots >= 4 and shots <= 5, "the bolt fires every 0.7 s while held (%d in 3 s)" % shots)
+	var pw := _mk()
+	pw.new_game(91, "normal", {}, {"cls": "sniper"})
+	pw.game.phase = "raid"
+	pw.walls[pw.idx(8, 11)] = Pal.make_wall(0, false)   # not the adjacent tile: shots go over a wall right next to you
+	var tgt := pw.spawn_enemy_at("rifle", 9.5, 11.5)
+	tgt.hp = 999.0
+	pw.player.aim = Vector2(1, 0)
+	pw.shoot(pw.player, {"spread": 0.0, "dmg": 47.0, "speed": 34.0, "range": 16.0, "pierce": 2}, 0.0)
+	for n in 30:
+		pw.update_bullets(1.0 / 60.0)
+	check(tgt.hp < 999.0 and absf((999.0 - tgt.hp) - 47.0 * 0.8) < 0.01, "a sniper round goes through a wood wall and hits for 80%% (%.1f)" % (999.0 - tgt.hp))
+	var gr := _mk()
+	gr.new_game(92, "normal", {}, {"cls": "grenadier"})
+	gr.game.phase = "raid"
+	check(gr.player.nades == 3 and gr.player.ammo == 6, "Grenadier: 3 grenades, 6 shells")
+	var before_b := gr.bullets.size()
+	gr.update(1.0 / 60.0, {"aim": Vector2(1, 0), "fire": true, "pulls": 0})
+	check(gr.bullets.size() - before_b == 7, "the pump throws 7 pellets")
+	for n in 60 * 4:
+		gr.update(1.0 / 60.0, {"aim": Vector2(1, 0), "fire": true, "pulls": 0})
+	check(gr.player.ammo <= 1, "holding the trigger empties the tube (%d left)" % gr.player.ammo)
+	for n in 60 * 4:
+		gr.update(1.0 / 60.0, {"aim": Vector2(1, 0), "fire": false, "pulls": 0})
+	check(gr.player.ammo == 6, "and it loads back one shell at a time, 0.42 s each (6 after 4 s)")
+	var qmc := _mk()
+	qmc.new_game(93, "normal", {}, {"cls": "quartermaster"})
+	check(qmc.player.cap[0] == 96 and qmc.core_fix_cost(qmc.player) == 13, "Quartermaster: packs of 96, stake repair for 13")
+	qmc.local_sprint()
+	var x0: float = qmc.player.x
+	qmc.player.y = 3.5
+	qmc.player.x = 2.5
+	x0 = qmc.player.x
+	for n in 60:
+		qmc.update(1.0 / 60.0, {"move": Vector2(1, 0), "fire": true})
+	check(absf((qmc.player.x - x0) - 3.3 * 1.4) < 0.15 and qmc.bullets.is_empty(), "sprint: 1.4x speed and no shooting (%.2f tiles in 1 s)" % (qmc.player.x - x0))
+	qmc.qm.alive = false
+	qmc.qm.x = qmc.player.x + 0.3
+	qmc.qm.y = qmc.player.y
+	qmc.update(1.0 / 60.0, {})
+	check(qmc.qm.alive, "touching Delgado gets him straight up")
+	var st := _mk()
+	st.new_game(94, "normal", {}, {"cls": "sniper"})
+	st.game.phase = "raid"
+	st.qm.alive = false
+	var ri := st.spawn_enemy_at("rifle", 10.5, 11.5)
+	for n in 30:
+		st.update_enemies(1.0 / 60.0)
+	check(ri.foe != null, "a rifleman sees the sniper")
+	st.use_ability(st.player, 0, 0)
+	for n in 30:
+		st.update_enemies(1.0 / 60.0)
+	check(ri.foe == null and st.player.stl > 11, "stealth (Q): raiders lose him for 12 s")
+	var mp := PalProfile.new()
+	mp.persist = false
+	mp.skills = {"pouch": 1, "molotov": 1}
+	var ml := _mk()
+	ml.new_game(95, "normal", mp.perk_mods(), {"cls": "grenadier"})
+	ml.game.phase = "raid"
+	check(ml.player.maxN == 4, "Extra Pouch: a 4th grenade")
+	ml.throw_nade(ml.player, 9.5, 11.5)
+	for n in 60:
+		ml.update_lobs(1.0 / 60.0)
+	check(ml.fires.any(func(f): return f.get("pl", false)), "Molotovs: the grenade leaves burning ground")
+
+	_maps_and_modes()
+	_campaign()
+	_blackout()
+
+	print("armory")
+	var ar := _mk()
+	ar.new_game(40)
+	ar.player.sal = 5000
+	check(ar.buy_upgrade(ar.player, "d") and is_equal_approx(ar.player.gun.dmg, 14.4) and ar.player.sal == 4980, "DAMAGE 1: 12 -> 14.4 for 20 salvage")
+	check(Pal.burst_n(ar.player.up_d) == 5, "and the burst grows to 5 rounds")
+	ar.buy_upgrade(ar.player, "r")
+	check(is_equal_approx(ar.player.gun.cd, 0.081), "FIRE RATE 1: 0.09 -> 0.081")
+	ar.buy_upgrade(ar.player, "g")
+	check(is_equal_approx(ar.player.gun.range, 12.32) and is_equal_approx(ar.player.gun.speed, 24.2), "RANGE 1: 11 -> 12.32 tiles, 22 -> 24.2 speed")
+	ar.buy_upgrade(ar.player, "a")
+	check(ar.player.max == 132.0 and ar.player.hp == 132.0, "ARMOR 1: 115 -> 132 health")
+	ar.buy_upgrade(ar.player, "n")
+	check(ar.player.maxN == 3 and ar.player.nades == 3 and is_equal_approx(ar.player.blast, 1.08), "GRENADES 1: 3 grenades, blast x1.08")
+	for n in 7:
+		ar.buy_upgrade(ar.player, "d")
+	check(ar.player.up.d == 8 and is_equal_approx(ar.player.gun.dmg, 24.0) and not ar.buy_upgrade(ar.player, "d"), "DAMAGE 8 is +100% and the cap")
+	check(ar.buy_upgrade(ar.player, "dell") and ar.dell_gun().dmg > 6.0, "Delgado level 1: his shotgun hits harder")
+	ar.core.hp = 400.0
+	var sal0: int = ar.player.sal
+	check(ar.buy_upgrade(ar.player, "core") and ar.core.hp == 450.0 and ar.player.sal == sal0 - 25, "stake repair: +50 for 25")
+	check(ar.buy_ammo(ar.player, "shock") and ar.player.ammoEq[0] == "shock", "lightning rounds")
+	ar.player.x = 12.5
+	check(not ar.buy_upgrade(ar.player, "r"), "away from the stake: nothing for sale")
+	ar.player.x = 5.5
+	ar.game.phase = "raid"
+	check(not ar.buy_upgrade(ar.player, "r"), "during a raid: nothing for sale")
+	var am := _mk()
+	am.new_game(41)
+	am.game.phase = "raid"
+	am.player.ammoEq[0] = "shock"
+	am.player.aim = Vector2(1, 0)
+	var t1 := am.spawn_enemy_at("rifle", 8.5, 11.5)
+	var t2 := am.spawn_enemy_at("rifle", 9.0, 12.5)
+	am.shoot(am.player, {"spread": 0.0, "dmg": 1.0, "speed": 22.0, "range": 11.0}, 0.0)
+	for n in 20:
+		am.update_bullets(1.0 / 60.0)
+	check(t1.get("slowT", 0.0) > 0 and t2.get("slowT", 0.0) > 0, "lightning rounds slow the target and the raider next to him")
+	am.player.ammoEq[0] = "fire"
+	var t3 := am.spawn_enemy_at("rifle", 8.5, 10.5)
+	am.player.aim = Vector2(3.0, -1.0).normalized()
+	am.shoot(am.player, {"spread": 0.0, "dmg": 1.0, "speed": 22.0, "range": 11.0}, 0.0)
+	for n in 20:
+		am.update_bullets(1.0 / 60.0)
+	var h3: float = t3.hp
+	for n in 60:
+		am.update_enemies(1.0 / 60.0)
+	check(t3.get("burnT", 0.0) >= 0 and t3.hp < h3 - 5, "incendiary rounds burn (%.1f health lost in 1 s)" % (h3 - t3.hp))
+	var kb := _mk()
+	kb.new_game(42)
+	kb.game.phase = "raid"
+	var kr := kb.spawn_enemy_at("rifle", 8.5, 11.5)
+	kb.hurt_enemy(kr, 999.0, kb.player.id)
+	check(kb.player.sal == 4 and kb.player.kills == 1, "a rifleman pays 4 salvage")
+	var rkt := _mk()
+	rkt.new_game(43)
+	rkt.game.phase = "raid"
+	var rt := rkt.spawn_enemy_at("gren", 10.5, 11.5)
+	rkt.use_rocket(rkt.player, 10.5, 11.5)
+	for n in 60:
+		rkt.update_rockets(1.0 / 60.0)
+	check(rt.dead and rkt.player.rk == 4, "a rocket (Q) drops a grenadier; 4 left")
+
+	print("Delgado")
+	var dg := _mk()
+	dg.new_game(12)
+	dg.set_qm_mode("")   # defend: he builds the ring round the stake (he starts on follow, as in the browser)
+	for n in 60 * 30:
+		dg.update(1.0 / 60.0, {})
+	var ring := 0
+	for lt in dg.qm_layout():
+		if dg.walls[lt.k] != null:
+			ring += 1
+	check(ring >= 4, "builds the perimeter round the stake in 30 s of build time (%d walls, %s)" % [ring, dg.qm.status])
+	var dv := _mk()
+	dv.new_game(13)
+	dv.player.x = 7.5
+	dv.player.y = 11.5
+	dv.hurt_player(dv.player, 999)
+	var up := false
+	for n in 60 * 8:
+		dv.update(1.0 / 60.0, {})
+		if dv.player.alive:
+			up = true
+			break
+	check(up and dv.game.stats.revives == 1, "walks over and revives the downed soldier")
+
+	_games_on_every_map()
+
+	print("a whole game, played by the bot with Delgado")
+	var full := _mk()
+	full.new_game(21)
+	var tt := 0.0
+	while tt < 1200.0 and full.game.phase != "over":
+		var ctl := {}
+		var p: Dictionary = full.player
+		var best = null
+		var bd := 1e9
+		for en in full.enemies:
+			var d := Vector2(en.x - p.x, en.y - p.y).length()
+			if d < bd:
+				bd = d
+				best = en
+		if best != null and bd < 9:
+			ctl = {"aim": Vector2(best.x - p.x, best.y - p.y), "fire": true}
+			if best.type == "boss" and p.rk > 0 and p.rkCd <= 0:
+				full.use_rocket(p, best.x, best.y)
+		if full.game.phase == "build":
+			for uk in ["d", "a", "r", "core", "dell", "g", "n"]:
+				full.buy_upgrade(p, uk)
+		full.update(1.0 / 30.0, ctl)
+		tt += 1.0 / 30.0
+	var fs: Dictionary = full.game.stats
+	print("    %s after raid %d at %.0f s: stake %.0f, dropped %d, walls built %d lost %d, Delgado repairs %d" % ["WON" if full.game.won else ("LOST" if full.game.phase == "over" else "STILL GOING"), full.game.wave, tt, full.core.hp, fs.dropped, fs.built, fs.lost, fs.repairs])
+	check(full.game.phase == "over", "the game reaches an end")
+	check(fs.dropped >= 10, "raiders were dropped")
+
+	print("determinism: same seed, same inputs, same yard")
+	var a := _mk()
+	var b := _mk()
+	a.new_game(42)
+	b.new_game(42)
+	a.start_raid()
+	b.start_raid()
+	for n in 1800:
+		a.update(1.0 / 60.0, {})
+		b.update(1.0 / 60.0, {})
+	check(a.core.hp == b.core.hp and a.enemies.size() == b.enemies.size(), "identical after 30 s (stake %.1f)" % a.core.hp)
+	check(a.core.hp < 500.0 or a.player.hp < a.player.max or a.qm.hp < a.qm.max, "undefended, the raid does damage")
+
+	_pvp()
+
+	print("")
+	print("FAILED %d" % fails if fails else "ALL PASSED")
+	for x in sims:
+		x.dispose()
+	sims.clear()
+	quit(1 if fails else 0)
+
+
+func _maps_and_modes() -> void:
+	print("maps: every map and size laid out tile for tile as the browser does (tests/maps_ref.json, from tools/maps_ref.js)")
+	var mref = JSON.parse_string(FileAccess.get_file_as_string("res://tests/maps_ref.json"))
+	for key in mref:
+		if key == "city":   # checked with Black Out
+			continue
+		var r: Dictionary = mref[key]
+		var parts: PackedStringArray = key.split("_")
+		var L := PalMaps.lay(parts[0], parts[1])
+		var ts := ""
+		var hs := ""
+		var cs := ""
+		for k in L.N * L.N:
+			ts += str(L.terr[k])
+			hs += str(L.heights[k])
+			cs += str(L.connectors[k])
+		var nodes_ok: bool = L.nodes.size() == r.nodes.size()
+		if nodes_ok:
+			for n in L.nodes.size():
+				var a: Dictionary = L.nodes[n]
+				var b: Array = r.nodes[n]
+				if a.i != int(b[0]) or a.j != int(b[1]) or a.type != int(b[2]) or (a.unlock if a.locked else 0) != int(b[3]):
+					nodes_ok = false
+		var spawns_ok: bool = L.spawns.size() == r.spawns.size()
+		for n in mini(L.spawns.size(), r.spawns.size()):
+			if L.spawns[n].tiles.size() != int(r.spawns[n][1]) or absf(L.spawns[n].w - r.spawns[n][0]) > 1e-9:
+				spawns_ok = false
+		check(ts == r.terr and hs == r.heights and cs == r.conn and L.core[0] == int(r.core[0]) and L.core[1] == int(r.core[1]) and nodes_ok and spawns_ok and L.bossAt.size() == int(r.bossAt) and L.raftAt.size() == int(r.raftAt),
+			"%s: terrain, heights, stake, piles, spawns and boss spots match" % key)
+	for key in mref:
+		if key == "city":
+			continue
+		var parts: PackedStringArray = key.split("_")
+		var ms := _mk()
+		ms.new_game(100, "normal", {}, {"map": parts[0], "size": parts[1]})
+		var reach := true
+		for g in ms.lay.spawns:
+			for t in g.tiles:
+				if not ms.solid_tile(t[0], t[1], false) and ms.dist[ms.idx(t[0], t[1])] >= 1e6:
+					reach = false
+		check(reach and not ms.collides(ms.player.x, ms.player.y, 0.27, true), "%s: every spawn tile has a path to the stake; the soldier starts on open ground" % key)
+	var fp := _mk()
+	fp.new_game(101, "normal", {}, {"map": "frost"})
+	check(fp.height_at(3.5, 2.5) == 2.0 and fp.height_at(3.5, 12.5) == 0.0 and not fp.height_link(1, 4, 1, 5) and fp.height_link(4, 4, 4, 5), "Frostpeak: three terraces, cliffs between them, a lane of stairs or ramp joins them")
+	var rv := _mk()
+	rv.new_game(102, "normal", {}, {"map": "river"})
+	var wk := -1
+	for k in rv.N * rv.N:
+		if rv.terr[k] == PalMaps.T_WATER:
+			wk = k
+			break
+	check(is_equal_approx(rv.slow_at(wk % 16 + 0.5, wk / 16 + 0.5), 0.5) and rv.build_eval(rv.player, wk % 16, wk / 16, 0, false).reason == "Can't build on water", "Riverbend: wading is half speed, and you can't build on water")
+	rv.game.wave = 3
+	rv.game.phase = "raid"
+	for n in 60 * 15:
+		rv.update_flood(1.0 / 60.0)
+	check(rv.flood_on, "from raid 3 the low banks flood after 14 s")
+	var fy := _mk()
+	fy.new_game(103, "normal", {}, {"map": "river"})
+	fy.game.phase = "raid"
+	var fe := fy.spawn_boss("ferryman")
+	check(fe.boss == "ferryman" and fe.get("raft", false) and fy.terr[fy.idx(int(fe.x), int(fe.y))] == PalMaps.T_WATER, "the Ferryman comes down the river on his raft")
+	var seen_h := false
+	var crews := 0
+	for n in 60 * 25:
+		fy.player.hp = fy.player.max
+		fy.update(1.0 / 60.0, {})
+		if fe.st == 1:
+			seen_h = true
+		crews = maxi(crews, fe.get("crews", 0))
+		if fe.dead:
+			break
+	check(seen_h and crews >= 1, "he harpoons and puts a boarding crew ashore")
+	var qp := _mk()
+	qp.new_game(104, "normal", {}, {"map": "quarry"})
+	var ck := -1
+	for k in qp.N * qp.N:
+		if qp.terr[k] == PalMaps.T_CRACK:
+			ck = k
+			break
+	qp.explode(ck % 16 + 0.5, ck / 16 + 0.5, 1.7, 1.3)
+	check(qp.terr[ck] == PalMaps.T_PIT, "Quarry: a heavy blast breaks cracked ground into a pit")
+	var xl := _mk()
+	xl.new_game(105, "normal", {}, {"size": "xl"})
+	check(xl.N == 24 and xl.core.i == 6 and xl.core.j == 17, "XL: 24x24, the yard two tiles in from the south-west corner")
+
+	print("modes and modifiers")
+	var md5 := _mk()
+	md5.new_game(110)
+	check(md5.tod_stage(3) == 1 and md5.tod_stage(5) == 2 and md5.tod_stage(2) == 0, "5 raids: raids 3-4 at golden hour, raid 5 at night")
+	var en := _mk()
+	en.new_game(111, "normal", {}, {"mode": "endless"})
+	en.game.wave = 3
+	check(is_inf(en.game.waves) and is_equal_approx(en.wave_eff(), 2.1) and en.tod_stage(6) == 2, "Endless: no last raid, raids climb 0.55 a time, day and night cycle")
+	var hd := _mk()
+	hd.new_game(112, "hard")
+	check(hd.core.max == 420.0 and is_equal_approx(hd.game.timer, 34.0), "Hard: a 420-health stake and 34 s to build")
+	var el := _mk()
+	el.new_game(113, "normal", {}, {"mods": ["elite"]})
+	var W := el.mod_wave_mix(el.wave_mix(1, 1, 0), 1)
+	check(W.rifle == 0 and W.shield + W.gren + W.fire >= 3, "Elite Raid: no riflemen")
+	var al := _mk()
+	al.new_game(114, "normal", {}, {"mods": ["alone"]})
+	check(not al.qm.alive and al.allies().size() == 1, "On Your Own: no Delgado")
+	var np := _mk()
+	np.new_game(115, "normal", {}, {"mods": ["nopatch", "laststand"]})
+	np.player.sal = 100
+	np.core.hp = 300.0
+	check(not np.repair_core(np.player), "No Patch-Ups: no stake repair")
+	np.game.phase = "raid"
+	np.hurt_player(np.player, 999)
+	check(np.player.rt >= 1e6, "Last Stand: down until the raid is broken")
+	var bz := _mk()
+	bz.new_game(116, "normal", {}, {"mode": "blitz"})
+	check(bz.game.waves == 15 and bz.boss_of(5) == "bluebutcher" and bz.boss_of(10) == "arsonist" and bz.boss_of(15) == "", "Blitzkrieg Rush: 15 raids, the Blue Butcher on 5, the Arsonist on 10")
+	bz.game.wave = 14
+	bz.start_raid()
+	check(bz.game.fb != null and is_equal_approx(bz.game.fb.t, 300.0), "raid 15 is the Final Blitz: five minutes")
+	bz.qm.alive = false
+	bz.qm.gone = true
+	for n in 60 * 241:
+		bz.player.hp = bz.player.max
+		bz.core.hp = bz.core.max   # nobody's defending in this test: keep the stake up so the clock runs out
+		bz.update(1.0 / 60.0, {})
+	check(bz.game.fb.evac != null and bz.live_bosses() >= 1, "bosses keep coming, and with a minute left the evac opens")
+	if bz.game.fb.evac == null:
+		return
+	bz.player.x = bz.game.fb.evac.x
+	bz.player.y = bz.game.fb.evac.y
+	for n in 60 * 4:
+		bz.player.hp = bz.player.max
+		bz.update(1.0 / 60.0, {})
+	check(bz.game.phase == "over" and bz.game.won and bz.game.end_reason == "evac", "3 s in the green ring gets you out: victory")
+
+
+func _campaign() -> void:
+	print("Operation Whiteout")
+	var cp := _mk()
+	cp.new_game(117, "normal", {}, {"mode": "campaign", "map": "frost", "mods": ["nightmare", "elite"]})
+	check(cp.map_id == "yard" and cp.game.waves == 13 and cp.mods == ["elite"], "starts in the Yard, 13 raids; boss rush style modifiers are dropped")
+	check(cp.boss_of(3) == "whitebutcher" and cp.boss_of(6) == "whiteferryman" and cp.boss_of(9) == "whiteforeman" and cp.boss_of(12) == "rime" and cp.boss_of(5) == "", "a winter boss ends each chapter: raids 3, 6, 9 and 12")
+	check(cp.raid_name(5) == "CHAPTER 2 · RAID 2/3" and cp.raid_name(13) == "THE WHITEOUT GAUNTLET", "raid names follow the chapters")
+	cp.qm.alive = false
+	cp.qm.gone = true
+	cp.game.wave = 2
+	cp.start_raid()
+	cp.game.queue = []
+	cp.enemies.clear()
+	cp.core.hp = 400.0
+	cp.update(1.0 / 60.0, {})
+	check(cp.game.fb != null and cp.game.fb.get("mapEvac", false) and cp.game.fb.evac != null, "after raid 3: a 15-second map evac, the ring open at once")
+	cp.player.x = cp.game.fb.evac.x
+	cp.player.y = cp.game.fb.evac.y
+	for n in 60 * 4:
+		cp.player.hp = cp.player.max
+		cp.update(1.0 / 60.0, {})
+	for n in 60 * 13:
+		cp.player.hp = cp.player.max
+		cp.update(1.0 / 60.0, {})
+	check(cp.game.chapter == 1 and cp.map_id == "river" and cp.game.phase == "build" and not cp.terr.is_empty() and cp.lay.raftAt.size() > 0, "made it out: chapter 2 on Riverbend")
+	check(is_equal_approx(cp.core.hp, 400.0) and cp.nodes.all(func(n): return not n.locked), "stake damage carries over and every resource is open")
+	var cf := _mk()
+	cf.new_game(118, "normal", {}, {"mode": "campaign"})
+	cf.qm.alive = false
+	cf.qm.gone = true
+	cf.game.wave = 2
+	cf.start_raid()
+	cf.game.queue = []
+	cf.enemies.clear()
+	cf.player.x = 1.5
+	cf.player.y = 1.5
+	for n in 60 * 17:
+		cf.player.hp = cf.player.max
+		cf.core.hp = cf.core.max
+		cf.player.x = 1.5
+		cf.player.y = 1.5
+		cf.update(1.0 / 60.0, {})
+	check(cf.game.phase == "over" and cf.game.end_reason == "evacfail", "nobody at the convoy: the campaign ends there")
+	var gt := _mk()
+	gt.new_game(119, "normal", {}, {"mode": "campaign"})
+	gt.change_chapter(3)
+	check(gt.map_id == "frost" and gt.heights.size() > 0, "chapter 4 is Frostpeak")
+	gt.qm.alive = false
+	gt.qm.gone = true
+	gt.game.wave = 12
+	gt.start_raid()
+	check(gt.game.fb != null and gt.game.fb.get("gauntlet", false) and is_equal_approx(gt.game.fb.t, 210.0), "raid 13 is the Whiteout Gauntlet: 3:30")
+	var most := 0
+	var rimes := 0
+	for n in 60 * 181:
+		gt.player.hp = gt.player.max
+		gt.core.hp = gt.core.max
+		gt.update(1.0 / 60.0, {})
+		most = maxi(most, gt.live_bosses())
+		rimes = maxi(rimes, gt.enemies.filter(func(e): return e.get("boss", "") == "rime").size())
+	check(gt.game.fb.wave == 6 and most <= 8 and most >= 6 and rimes >= 2, "six waves of two Rime Colossi and one more, never more than 8 up (most %d)" % most)
+	check(gt.game.fb.evac != null and gt.game.fb.pend.is_empty(), "the evac opens with 30 s left, and no more bosses land")
+
+
+func _blackout() -> void:
+	print("City Black Out")
+	var ref: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://tests/maps_ref.json")).city
+	var L := PalMaps.lay("city")
+	var ts := ""
+	for t in L.terr:
+		ts += String.num_int64(t, 36)
+	var pois: Array = L.pois.map(func(p): return [p.id, p.i, p.j, 1 if p.major else 0])
+	var nodes: Array = L.nodes.map(func(n): return [n.i, n.j, n.type])
+	var ruins: Array = L.ruins.map(func(r): return [r[0], r[1]])
+	var near: Array = [[5, 30], [60, 31], [31, 2], [32, 61], [10, 10]].map(func(q): return PalMaps.city_edge_for(q[0], q[1], 64))
+	ref = _ints(ref)
+	check(ts == ref.terr and str(L.core) == str(ref.core) and str(pois) == str(ref.pois) and str(nodes) == str(ref.nodes), "the 64x64 city: roads, sidewalks, blocks, rubble, plazas and piles match the browser tile for tile")
+	check(str(ruins) == str(ref.ruins) and str(L.lamps) == str(ref.lamps) and str(near) == str(ref.near), "sandbag rings, %d streetlamps and attack edges match" % L.lamps.size())
+	var bo := _mk()
+	var t0 := Time.get_ticks_msec()
+	bo.new_game(120, "normal", {}, {"mode": "blackout", "map": "river"})
+	check(bo.map_id == "city" and bo.N == 64 and bo.cores.size() == 9 and is_equal_approx(bo.game.timer, 45.0), "64x64, Main Command plus eight POIs, 45 s to gather (set up in %d ms)" % (Time.get_ticks_msec() - t0))
+	check(bo.cores[1].max == 350.0 and bo.cores[5].max == 250.0, "majors 70% of a stake, minors 50%")
+	var reach := true
+	for side in ["n", "e", "s", "w"]:
+		for t in bo.lay.edges[side]:
+			if bo.dist[bo.idx(t[0], t[1])] >= 1e8:
+				reach = false
+		for ci in range(1, 9):
+			var f: PackedFloat64Array = bo.poi_flow(ci)
+			var t: Array = bo.lay.edges[side][20]
+			if f[bo.idx(t[0], t[1])] >= 1e8:
+				reach = false
+	check(reach, "every edge has a way to Main Command and to every POI")
+	check(is_equal_approx(bo.slow_at(32.5, 20.5), 1.35) and is_equal_approx(bo.slow_at(31.5, 31.5), 1.0), "roads are quick going (1.35x)")
+	bo.qm.alive = false
+	bo.qm.gone = true
+	for n in 60 * 46:
+		bo.player.hp = bo.player.max
+		bo.update(1.0 / 60.0, {})
+	var B: Dictionary = bo.game.bo
+	check(bo.player.sal >= 40 and B.stage == "attack" and not bo.cores[B.cur.ci].poi.major, "after the gathering: a starting purse and the first attack, on a minor POI")
+	var ci: int = B.cur.ci
+	var hit := false
+	t0 = Time.get_ticks_msec()
+	for n in 60 * 61:
+		bo.player.hp = bo.player.max
+		bo.player.x = 32.5
+		bo.player.y = 33.5
+		bo.update(1.0 / 60.0, {})
+		if bo.cores[ci].hp < bo.cores[ci].max:
+			hit = true
+		if B.stage != "attack":
+			break
+	check(hit and B.stage == "gap" and B.log.size() == 1, "his troops go for the POI; the attack ends %s (%s; 60 s took %d ms)" % [B.log[0][1] if B.log.size() else "?", "%d/%d" % [bo.cores[ci].hp, bo.cores[ci].max], Time.get_ticks_msec() - t0])
+	check(bo.enemies.filter(func(e): return not e.dead).is_empty(), "and whoever is left pulls back")
+	B.t = 0.01
+	bo.update(1.0 / 60.0, {})
+	var c2: Dictionary = bo.cores[B.cur.ci]
+	c2.hp = 0.0
+	bo.update(1.0 / 60.0, {})
+	var lost0: int = B.log.filter(func(l): return l[1] == "lost").size()
+	check(c2.lost and B.lost == lost0 and bo.core_ks.has(bo.idx(c2.i, c2.j)), "a POI at 0 is lost (%s)" % c2.poi.name)
+	var pw: Dictionary = bo.cores.filter(func(c): return c.has("poi") and c.poi.perk == "lights")[0]
+	bo.bo_lose_perk(pw)
+	check(bo.game.dark, "losing the Power Station puts the lights out")
+	bo.enemies.clear()
+	B.n = 8
+	B.cur = null
+	B.stage = "gap"
+	B.t = 0.0
+	bo.update(1.0 / 60.0, {})
+	check(B.stage == "ready", "after the eighth: READY UP")
+	bo.bo_ready()
+	bo.update(1.0 / 60.0, {})
+	check(B.stage == "push" and is_equal_approx(B.push.hp, 1.0 + 0.05 * B.lost), "ready: the final push, bosses +5%% for each lost minor (%d)" % B.lost)
+	var most := 0
+	t0 = Time.get_ticks_msec()
+	for n in 60 * 185:
+		bo.player.hp = bo.player.max
+		bo.core.hp = bo.core.max
+		bo.update(1.0 / 60.0, {})
+		most = maxi(most, bo.live_bosses())
+	check(most >= 3 and most <= 4 and B.push.dest and bo.enemies.any(func(e): return e.get("dest", false)), "a boss every 30 s, at most 4 up; at 3:00 the Supreme Destroyer (%d ms)" % (Time.get_ticks_msec() - t0))
+	for e in bo.enemies:
+		if e.get("dest", false):
+			bo.hurt_enemy(e, 1e6, bo.player.id)
+	bo.update(1.0 / 60.0, {})
+	check(bo.game.phase == "over" and bo.game.won and B.destroyer and bo.bo_stages() == B.held + B.lost + 1, "the Destroyer down: the city held")
+
+
+## JSON numbers come back as floats: whole ones back to ints, to compare with str()
+func _ints(v):
+	if v is float and v == floorf(v):
+		return int(v)
+	if v is Array:
+		return v.map(_ints)
+	if v is Dictionary:
+		var o := {}
+		for k in v:
+			o[k] = _ints(v[k])
+		return o
+	return v
+
+
+func _games_on_every_map() -> void:
+	print("whole games on every map, played by the bot")
+	for mp in [["river", "std"], ["quarry", "std"], ["frost", "std"], ["yard", "xl"]]:
+		var gm := _mk()
+		gm.new_game(130, "normal", {}, {"map": mp[0], "size": mp[1]})
+		var tt2 := 0.0
+		while tt2 < 900.0 and gm.game.phase != "over":
+			var ctl2 := {}
+			var p2: Dictionary = gm.player
+			var best2 = null
+			var bd2 := 1e9
+			for en2 in gm.enemies:
+				var d := Vector2(en2.x - p2.x, en2.y - p2.y).length()
+				if d < bd2 and not en2.get("burrow", false):
+					bd2 = d
+					best2 = en2
+			if best2 != null and bd2 < 9:
+				ctl2 = {"aim": Vector2(best2.x - p2.x, best2.y - p2.y), "fire": true}
+				if best2.type == "boss" and p2.rk > 0 and p2.rkCd <= 0:
+					gm.use_rocket(p2, best2.x, best2.y)
+			if gm.game.phase == "build":
+				for uk2 in ["d", "a", "r", "core", "dell", "g", "n"]:
+					gm.buy_upgrade(p2, uk2)
+			gm.update(1.0 / 20.0, ctl2)
+			tt2 += 1.0 / 20.0
+		print("    %s %s: %s after raid %d at %.0f s, stake %.0f, dropped %d" % [mp[0], mp[1], "WON" if gm.game.won else ("LOST" if gm.game.phase == "over" else "STILL GOING"), gm.game.wave, tt2, gm.core.hp, gm.game.stats.dropped])
+		check(gm.game.phase == "over" and gm.game.stats.dropped >= 10, "%s %s: the game runs to an end" % [mp[0], mp[1]])
+
+
+## a two-soldier roster, as the host's lobby sends it
+func _duo(pvp: String, map: String = "yard", mods: Array = []) -> Sim:
+	var s := _mk()
+	s.new_game(140, "normal", {}, {"pvp": pvp, "map": map, "mods": mods, "my_id": "host",
+		"roster": [{"id": "host", "name": "Ann", "cls": "soldier", "team": "a"}, {"id": "g1", "name": "Bo", "cls": "soldier", "team": "b"}]})
+	return s
+
+
+func _pvp() -> void:
+	print("PvP: Base Battle and Free-for-all")
+	var bb := _duo("base")
+	check(bb.cores.size() == 2 and bb.cores[0].i == 4 and bb.cores[0].j == 11 and bb.cores[1].i == 11 and bb.cores[1].j == 4, "Base Battle: a stake each, point-mirrored")
+	check(bb.cores[0].hp == 700.0 and bb.cores[0].team == "a" and bb.cores[1].team == "b", "700-health stakes, WEST and EAST")
+	check(bb.qm.gone, "Delgado sits PvP out")
+	check(bb.game.phase == "build" and bb.game.timer == 45.0, "a 45-second truce first")
+	var A: Dictionary = bb.players.host
+	var B: Dictionary = bb.players.g1
+	check(A.sal == 20 and B.sal == 20, "20 salvage to start")
+	check(A.x - A.y < -0.35 and B.x - B.y > 0.35, "each side spawns on its own half")
+	check(bb.collides(8.0, 7.5, 0.27, "a") and not bb.collides(6.5, 10.5, 0.27, "a"), "the truce line stops the west side crossing")
+	A.aim = Vector2(1, -1).normalized()
+	bb.update(0.05, {"aim": Vector2(1, -1), "fire": true})
+	check(bb.bullets.is_empty(), "no shooting in the truce")
+	var t := bb.build_eval(A, 9, 3, 0, false)
+	check(not t.ok and t.reason == "Your side of the truce line", "no building over the line (%s)" % t.reason)
+	bb.game.timer = 0.01
+	bb.update(0.05, {})
+	check(bb.game.phase == "raid" and A.sal == 30, "the battle starts: +10 salvage each (%d)" % A.sal)
+	B.x = A.x + 2.0
+	B.y = A.y
+	B.prot = 0.0
+	var hp0: float = B.hp
+	bb.fire(A, 0.0, 0, A.gun)
+	for n in 20:
+		bb.update_bullets(0.02)
+	check(B.hp < hp0 and absf((hp0 - B.hp) - A.gun.dmg * Pal.PVP.dmg) < 0.01, "a round hits the rival for 70%% (%.1f)" % (hp0 - B.hp))
+	bb.hurt_player(B, 999.0, "host")
+	check(not B.alive and B.downed and B.deaths == 1 and A.kills == 1 and A.sal == 38, "a drop: kill, death, +8 bounty (%d)" % A.sal)
+	check(B.rt == 5.0, "nobody on his side to help: back at the stake in 5 s")
+	var c0: float = bb.cores[1].hp
+	bb.explode(bb.cores[1].i + 0.5, bb.cores[1].j + 0.5, 1.65, 1.0, "host")
+	check(bb.cores[1].hp < c0, "a grenade hurts their stake")
+	var c1: float = bb.cores[0].hp
+	bb.explode(bb.cores[0].i + 0.5, bb.cores[0].j + 0.5, 1.65, 1.0, "host")
+	check(bb.cores[0].hp == c1, "but not your own")
+	bb.cores[1].hp = 1.0
+	bb.explode(bb.cores[1].i + 0.5, bb.cores[1].j + 0.5, 1.65, 1.0, "host")
+	bb.update(0.05, {})
+	check(bb.game.phase == "over" and bb.game.winner == "a" and bb.game.won, "their stake falls: WEST wins")
+	print("    respawn")
+	var rs := _duo("base")
+	rs.game.timer = 0.01
+	rs.update(0.05, {})
+	rs.hurt_player(rs.players.g1, 999.0, "host")
+	for n in 120:
+		rs.update(0.05, {})
+	var g1: Dictionary = rs.players.g1
+	check(g1.alive and Vector2(g1.x - rs.cores[1].i - 0.5, g1.y - rs.cores[1].j - 0.5).length() < 3.0, "back up beside his own stake")
+
+	var ff := _duo("ffa", "river")
+	check(ff.cores.is_empty() and ff.game.phase == "raid" and ff.game.timer == 300.0, "Free-for-all: no stakes, a five-minute clock")
+	var cover := 0
+	for w in ff.walls:
+		if w != null and w.mat == 3:
+			cover += 1
+	check(cover == 24, "Riverbend's arena: 24 crates of cover (%d)" % cover)
+	check(ff.players.host.mats == [0, 0, 0] and ff.players.host.prot == 2.0, "an empty pack and 2 s of spawn protection")
+	check(not ff.build_eval(ff.players.host, 2, 2, 0, false).ok, "no building")
+	var w0: float = ff.walls[ff.idx(3, 3)].hp
+	ff.explode(3.5, 3.5, 1.65, 1.0, "host")
+	check(ff.walls[ff.idx(3, 3)] != null and ff.walls[ff.idx(3, 3)].hp == w0, "the cover can't be broken")
+	ff.players.host.kills = 14
+	ff.players.g1.prot = 0.0
+	ff.hurt_player(ff.players.g1, 999.0, "host")
+	check(ff.game.phase == "over" and ff.game.winner == "host" and ff.game.won, "the 15th drop wins it")
+	var fc := _duo("ffa", "quarry", ["sudden"])
+	fc.players.g1.kills = 2
+	fc.game.timer = 60.02
+	fc.update(0.05, {})
+	fc.update(0.05, {})
+	check(fc.game.sd, "Sudden Death in the last minute")
+	fc.game.timer = 0.02
+	fc.update(0.05, {})
+	check(fc.game.phase == "over" and fc.game.winner == "g1" and not fc.game.won, "time runs out: most drops wins")
+	var fq := _duo("base", "frost")
+	check(fq.map_id == "yard", "Frostpeak has no PvP layout: the Yard stands in")
+	var rb := _duo("base", "river")
+	check(rb.terr[rb.idx(7, 7)] == PalMaps.T_WATER and rb.terr[rb.idx(1, 1)] == PalMaps.T_BRIDGE, "Riverbend's Base Battle: the diagonal river and its bridges")
+	var cp := _mk()
+	cp.new_game(141, "normal", {}, {"my_id": "host", "roster": [{"id": "host", "name": "Ann", "cls": "soldier"}, {"id": "g1", "name": "Bo", "cls": "quartermaster"}, {"id": "g2", "name": "Cy", "cls": "sniper"}]})
+	check(cp.players.size() == 3 and not cp.qm.gone, "co-op: a crew of three and Delgado")
+	cp.start_raid()
+	cp.hurt_player(cp.players.g2, 999.0)
+	check(cp.players.g2.downed and cp.players.g2.rt == 10.0, "a downed crewman waits for help")
+	cp.players.g1.x = cp.players.g2.x + 0.3
+	cp.players.g1.y = cp.players.g2.y
+	cp.sim_player(cp.players.g1, 0.05)
+	check(cp.players.g2.alive and cp.players.g2.hp == roundf(cp.players.g2.max * 0.6) or cp.players.g2.alive, "the quartermaster's touch gets him up")
+	cp.start_build(30.0)
+	check(cp.players.g1.sal == cp.players.host.sal and cp.players.host.sal >= 9, "raid pay for everyone")

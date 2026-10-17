@@ -141,3 +141,19 @@ test('a stalled receiver expires without blocking another guest',async()=>{
   slow.ws._socket.resume();h.send({type:'depart'});await sleep(40);assert.equal(relay.rooms.size,0);assert.equal(relay.people.size,0);
  }finally{for(const s of sockets){s.ws._socket?.resume();s.ws.terminate()}await relay.stop()}
 });
+
+test('the desktop game (no Origin) gets in only when native clients are allowed; a wrong Origin never does',async()=>{
+ const closed=createRelay({origins:[origin],identity}),cport=await closed.start();
+ const open=createRelay({origins:[origin],identity,nativeClients:true}),oport=await open.start();
+ const sockets=[];
+ try{
+  const refuse=(port,o)=>new Promise(resolve=>{const ws=new WebSocket(`ws://127.0.0.1:${port}/relay`,o?{origin:o}:{});ws.on('error',resolve);ws.on('open',()=>{ws.close();resolve(new Error('opened'))})});
+  assert.match((await refuse(cport)).message,/403/);
+  assert.match((await refuse(oport,'https://untrusted.example')).message,/403/);
+  const ws=new WebSocket(`ws://127.0.0.1:${oport}/relay`);sockets.push(ws);
+  await new Promise((resolve,reject)=>{ws.on('open',resolve);ws.on('error',reject)});
+  const got=new Promise(resolve=>ws.on('message',m=>resolve(JSON.parse(m))));
+  ws.send(JSON.stringify({type:'hello',wire:WIRE,game:GAME,role:'host',token:'user1',session:'b'.repeat(24),incarnation:randomUUID()}));
+  const w=await got;assert.equal(w.type,'welcome');assert.equal(w.role,'host');assert.equal(open.rooms.size,1);
+ }finally{for(const s of sockets)s.close();await closed.stop();await open.stop()}
+});
