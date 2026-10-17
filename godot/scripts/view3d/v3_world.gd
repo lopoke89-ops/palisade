@@ -12,7 +12,8 @@ const V3 = preload("res://scripts/view3d/view3d.gd")
 const WORLD_SH := preload("res://shaders/v3/world.gdshader")
 const WALL_SH := preload("res://shaders/v3/wall.gdshader")
 const WATER_SH := preload("res://shaders/v3/water.gdshader")
-const SUN_K := 0.25   # with the ambient (View3D.AMBIENT) a lit face shows its 2D colour
+const FLOOD_SH := preload("res://shaders/v3/flood.gdshader")
+const SUN_K := 0.2   # with the ambient (View3D.AMBIENT) a lit face shows its 2D colour
 
 var V
 var sim: Sim
@@ -84,7 +85,7 @@ func _init(view) -> void:
 	mat_water.shader = WATER_SH
 	mat_water.set_shader_parameter("sun_k", SUN_K)
 	mat_flood = ShaderMaterial.new()
-	mat_flood.shader = WATER_SH
+	mat_flood.shader = FLOOD_SH
 	mat_flood.set_shader_parameter("sun_k", SUN_K)
 	mat_flood.set_shader_parameter("alpha", 0.0)
 	map_root = Node3D.new()
@@ -251,6 +252,8 @@ func _build_terrain() -> void:
 			var h := Pal.hash2(i, j)
 			if frost:
 				_frost_tile(g, pr, i, j)
+				if tt == PalMaps.T_ROCK or tt == PalMaps.T_DRUM:
+					_terr_item(pr, i, j, tt)
 				continue
 			if tt == PalMaps.T_WATER or tt == PalMaps.T_BRIDGE:
 				w.quad(Vector3(i, -0.04, j), Vector3(i + 1, -0.04, j), Vector3(i + 1, -0.04, j + 1), Vector3(i, -0.04, j + 1), m._ground_col(i, j, h))
@@ -279,13 +282,8 @@ func _build_terrain() -> void:
 				continue
 			if tt == PalMaps.T_CRACK:
 				_crack(g, i, j)
-			elif tt == PalMaps.T_ROCK:
-				var hr := Pal.hash2(i + 3, j + 17)
-				var h0 := V3.WALL_H * (0.75 + hr * 0.3)
-				pr.box(i + 0.08, j + 0.12, i + 0.9, j + 0.88, 0, h0, c("#6b655b"), c("#4e4a43"), c("#3c3934"))
-				pr.box(i + 0.2 + hr * 0.2, j + 0.2, i + 0.7 + hr * 0.2, j + 0.62, h0, h0 + V3.WALL_H * (0.25 + hr * 0.2), c("#787166"), c("#58534b"), c("#45413b"))
-			elif tt == PalMaps.T_DRUM:
-				_drum(pr, i, j)
+			elif tt == PalMaps.T_ROCK or tt == PalMaps.T_DRUM:
+				_terr_item(pr, i, j, tt)
 			elif sim.map_id == "quarry":
 				if h > 0.8:
 					g.disc(i + 0.3 + h * 0.4, j + 0.5, 2.4 * V3.PXH * 1.4, 1.4 * V3.PXH * 1.4, 0.003, col.lerp(Color8(150, 140, 120), 0.3), 8)
@@ -345,15 +343,23 @@ func _line(g: V3Mesh, a: Vector2, b: Vector2, w: float, col: Color, y: float = 0
 	g.quad(Vector3(a.x - d.x, y, a.y - d.y), Vector3(a.x + d.x, y, a.y + d.y), Vector3(b.x + d.x, y, b.y + d.y), Vector3(b.x - d.x, y, b.y - d.y), col)
 
 
-func _drum(pr: V3Mesh, i: int, j: int) -> void:
+## rock outcrops and oil drums (terrShape): a rock stands, a drum burns (its flames are the effects layer's)
+func _terr_item(pr: V3Mesh, i: int, j: int, tt: int) -> void:
+	var b := sim.height_at(i + 0.5, j + 0.5) * V3.TER
+	if tt == PalMaps.T_ROCK:
+		var hr := Pal.hash2(i + 3, j + 17)
+		var h0 := b + V3.WALL_H * (0.75 + hr * 0.3)
+		pr.box(i + 0.08, j + 0.12, i + 0.9, j + 0.88, b, h0, c("#6b655b"), c("#4e4a43"), c("#3c3934"))
+		pr.box(i + 0.2 + hr * 0.2, j + 0.2, i + 0.7 + hr * 0.2, j + 0.62, h0, h0 + V3.WALL_H * (0.25 + hr * 0.2), c("#787166"), c("#58534b"), c("#45413b"))
+		return
 	var r := 0.34 / V3.SQ2
 	var hh := V3.WALL_H * 0.9
 	var cx := i + 0.5
 	var cz := j + 0.5
-	pr.prism(cx, cz, r, 0, hh, c("#3b2f24"), c("#1a1411"), 10)
+	pr.prism(cx, cz, r, b, b + hh, c("#3b2f24"), c("#1a1411"), 10)
 	for f in [0.33, 0.66]:
-		pr.prism(cx, cz, r + 0.006, hh * f - 0.02, hh * f + 0.02, c("#2a211a"), c("#2a211a"), 10)
-	drums.append([cx, cz, hh])
+		pr.prism(cx, cz, r + 0.006, b + hh * f - 0.02, b + hh * f + 0.02, c("#2a211a"), c("#2a211a"), 10)
+	drums.append([cx, cz, b + hh])
 
 
 ## paintFrostTile: the terrace's snowy top (sloped on a ramp or stair), its cliff faces where it drops, the treads
@@ -565,7 +571,7 @@ func _node(g: V3Mesh, n: Dictionary, layers: int) -> void:
 		_face_oval(g, i + 0.5, j + 0.903, hz + WH * 0.3, 5 * V3.PXH * 1.5, 7 * P, mouth)
 		if not lk:
 			var glow := c("#ff8c32")
-			glow.a = 0.15   # lit: the world shader makes it glow
+			glow.a = 0.6   # lit: the world shader makes it glow
 			_face_oval(g, i + 0.5, j + 0.906, hz + WH * 0.27, 3.4 * V3.PXH * 1.5, 4.5 * P, glow)
 		g.box(i + 0.55, j + 0.15, i + 0.8, j + 0.4, hz + WH * 1.05, hz + WH * 1.95, cs[0], cs[1], cs[2])
 	else:

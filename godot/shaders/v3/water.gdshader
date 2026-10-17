@@ -1,9 +1,8 @@
 shader_type spatial;
-// Riverbend's water (drawTerrainLive): the tile colours, glints drifting downstream, a slow ripple. The flood over the
-// low banks uses the same shader with its own alpha.
-render_mode cull_disabled, specular_disabled, blend_mix, depth_draw_opaque;
+// Riverbend's water (drawTerrainLive): the tile colours, glints drifting downstream, a slow ripple. (flood.gdshader: the same over the
+// flooded banks, with an alpha).
+render_mode cull_disabled, specular_disabled;
 
-uniform float alpha = 1.0;
 uniform float t = 0.0;
 uniform float sun_k = 0.5;
 varying vec3 wpos;
@@ -34,7 +33,6 @@ void fragment() {
 	c = mix(c, lin(vec3(0.588, 0.784, 0.863)), g * 0.3);
 	c *= 0.94 + 0.06 * sin(wpos.x * 3.1 + wpos.z * 1.7 + t * 1.3);
 	ALBEDO = c;
-	ALPHA = alpha;
 }
 
 void light() {

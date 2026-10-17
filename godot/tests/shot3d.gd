@@ -65,6 +65,15 @@ func _init() -> void:
 	var only := OS.get_environment("PAL_ONLY")
 	var nf := int(OS.get_environment("PAL_FRAMES")) if OS.get_environment("PAL_FRAMES") != "" else 30
 	main._update_light(100.0)   # the time of day reached (it eases over seconds of real frames)
+	var ct: Dictionary = main._cam_target()
+	main.v.cam_snap(ct.x, ct.y, s.height_at(ct.x, ct.y))
+	main._update_light(100.0)   # again: the light pools follow the camera
+	if main.v3 != null:
+		main.v3.frame(0.0)
+	for l in [main, main.fx_layer, main.glow_layer, main.ui_layer]:
+		l.queue_redraw()
+	if OS.get_environment("PAL_DEBUG") != "":
+		print("light ", main.light, " rect ", main.light_rect.size, " vis ", main.light_rect.visible, " shade ", main.light_rect.material.get_shader_parameter("shade"))
 	main.set_process(false)   # hold the moment: both pictures show the same frame
 	s.events.clear()
 	if only != "2d":
@@ -79,6 +88,10 @@ func _init() -> void:
 		main.set_process(true)
 		await process_frame   # the 2D ground repaints
 		main.set_process(false)
+		main.v.cam_snap(ct.x, ct.y, s.height_at(ct.x, ct.y))
+		main._update_light(100.0)
+		for l in [main, main.fx_layer, main.glow_layer, main.ui_layer]:
+			l.queue_redraw()
 		await frames(4)
 		var t2: Array = await measure(nf)
 		root.get_texture().get_image().save_png(prefix + "_2d.png")
@@ -171,11 +184,21 @@ func _scene(scene: String, a: Array) -> void:
 				for n in 40:
 					var e := s.spawn_enemy_at(["rifle", "gren", "fire", "breach", "shield", "medic", "spotter"][n % 7], s.player.x + randf_range(-7, 7), s.player.y + randf_range(-7, 3))
 				step(30 * 3)
-		"base":
-			main.next_opt.mode = "base"
+		"base":   # a Base Battle: two stakes, WEST against EAST
+			main.next_opt.pvp = "base"
 			main._restart()
 			s = main.sim
-			step(30 * 8)
+			var foe := s.make_player("g1", "grenadier", 1, "b")
+			foe.name = "EAST"
+			s.players["g1"] = foe
+			step(30 * 4)
+			s.start_battle()
+			step(30 * 2)
+			var east: Dictionary = s.cores[1] if s.cores.size() > 1 else s.core
+			foe.x = s.player.x + 3.5
+			foe.y = s.player.y - 0.5
+			s.player.aim = Vector2(1, -0.1).normalized()
+			step(10)
 		"casino":
 			main.start_casino()
 			s = main.sim

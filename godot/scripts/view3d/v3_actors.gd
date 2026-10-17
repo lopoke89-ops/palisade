@@ -10,6 +10,9 @@ extends Node3D
 
 const V3 = preload("res://scripts/view3d/view3d.gd")
 const RAIDERS := ["rifle", "gren", "fire", "breach", "shield", "medic", "spotter"]
+## the casino's staff in 3D: a skin from the library each (no weapons), the 2D dealers' looks as near as it has
+const STAFF := {"vinnie": "skin:dracula", "rosa": "skin:redcoat", "marco": "skin:nightshift", "duke": "skin:gnightshift",
+	"lena": "skin:night", "keep": "skin:yard2", "bot": "skin:gpolice"}
 ## boss state -> the clip family it shows: "Name" is a tell (wind-up, timed to the state), "Name!" is the move itself
 const BOSS_ST := {
 	"demolisher": {1: "Rocket", 2: "RocketFan"},
@@ -275,6 +278,8 @@ func frame(dt: float) -> void:
 		var r := _rec("qm", _id_model("npc:delgado"), "qm")
 		if not r.is_empty():
 			_delgado(r, q, dt)
+	if sim.casino():
+		_casino_staff(dt)
 	for e in sim.enemies:
 		if e.get("dead", false):
 			continue
@@ -682,6 +687,30 @@ func _boss_clip(r: Dictionary, e: Dictionary, C: Dictionary) -> void:
 		return
 	var g := _gait(r, 2.6)
 	_play(r, g[0], g[1])
+
+
+## the dealers at their tables, the barkeep, and the bots sitting in at Hold'em
+func _casino_staff(dt: float) -> void:
+	CasinoView._ready_data()
+	var who: Array = []
+	for t in CasinoView.TABLES:
+		who.append(["cas:" + str(t.dealer.name), t.dealer.look, t.dealer.x, t.dealer.y, t.dealer.face, false])
+		for k in t.seats.size():
+			var w = CasinoView.taken(sim, t.n * 10 + k + 1, V.m.get("casino_ui"))
+			if w is Dictionary and w.get("bot", false):
+				var sp: Array = t.seats[k]
+				who.append(["bot:%d" % (t.n * 10 + k), "bot", sp[0], sp[1], Vector2(t.c[0] - sp[0], t.c[1] - sp[1]).normalized(), true])
+	who.append(["cas:keep", "keep", CasinoView.BAR.keep[0], CasinoView.BAR.keep[1], Vector2(0, 1), false])
+	for q in who:
+		var cid: String = STAFF.get(q[1], "npc:delgado")
+		if not lib.has(cid):
+			cid = "npc:delgado"
+		var r := _rec(q[0], _id_model(cid), "staff")
+		if r.is_empty():
+			continue
+		_place(r, q[2], q[3], q[4], dt, -0.12 if q[5] else 0.0)
+		lib.show_slot(r.info.model, "Weapon", false)
+		_play(r, "Idle_Loop")
 
 
 # ---------------------------------------------------------------- labels over the 3D people (main canvas)

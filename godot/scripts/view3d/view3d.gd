@@ -31,8 +31,8 @@ var actors: V3Actors
 var world: V3World
 var fx: V3Fx
 var fill: DirectionalLight3D   # a soft front light on the people only (layer 2), as the lobby lights them
-var on := true
-const AMBIENT := 0.55   # drawing (the settings switch, and paused behind the menus' own 3D lobby)
+var on := true   # drawing (the settings switch; the view also pauses behind the menus' own 3D lobby)
+const AMBIENT := 0.45   # the shadowed share of a face's colour; the sun (world shaders' sun_k) brings lit faces to it
 
 
 static func available() -> bool:
@@ -114,6 +114,15 @@ func frame(dt: float) -> void:
 		return
 	sync_camera()
 	_light(dt)
+	if sim.casino():   # the neon signs and slot screens glow on the 2D glow layer, as in the 2D
+		CasinoView.items(m)
+		var glow: Array = m.cas_glow
+		for k in CasinoView.MACHINES.size():
+			var mc: Dictionary = CasinoView.MACHINES[k]
+			if mc.game == "sl":
+				var p := screen_of(Vector3(mc.at[0] + (0.0 if mc.face == "s" else 0.25), WALL_H * 0.92, mc.at[1] + (0.25 if mc.face == "s" else 0.0)))
+				var on: bool = CasinoView.taken(sim, mc.code) != null or sin(sim.game.time * 3 + k * 1.7) > -0.2
+				glow.append(["dot", p.x, p.y, m.v.TW2 * 0.45, ["#ff4a6a", "#3ae0ff", "#ffd24a", "#9a6aff", "#4aff9a"][k % 5], 0.5 if on else 0.25])
 	world.frame(dt)
 	actors.frame(dt)
 	fx.frame(dt)
@@ -144,7 +153,7 @@ func events(list: Array) -> void:
 func _light(_dt: float) -> void:
 	var L: Dictionary = m.light
 	var warm := clampf(L.warm / 0.07, 0, 1)
-	sun.light_color = Color(1.0, 0.98, 0.94).lerp(Color(1.0, 0.86, 0.7), warm)
+	sun.light_color = Color(1.0, 1.0, 1.0).lerp(Color(1.0, 0.86, 0.7), warm)
 	sun.light_energy = 1.0
 	env.ambient_light_color = Color(1, 1, 1)
 	env.ambient_light_energy = AMBIENT

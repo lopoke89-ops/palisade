@@ -84,7 +84,7 @@ func _outside() -> void:
 	wv.anchor = g.anchor
 	var far := c("#161412") if Q else (c("#7c96a3") if F else c("#151a12"))
 	var E := 40.0
-	g.quad(Vector3(-B - E, -0.02, -B - E), Vector3(-B - E, -0.02, N + B + E), Vector3(N + B + E, -0.02, N + B + E), Vector3(N + B + E, -0.02, -B - E), far)
+	g.quad(Vector3(-B - E, -0.35, -B - E), Vector3(-B - E, -0.35, N + B + E), Vector3(N + B + E, -0.35, N + B + E), Vector3(N + B + E, -0.35, -B - E), far)
 	for i in range(-B, N + B):
 		for j in range(-B, N + B):
 			if i >= 0 and j >= 0 and i < N and j < N:
@@ -106,7 +106,16 @@ func _outside() -> void:
 				col = c("#342d21") if h < 0.5 else c("#2f2a1e")
 			else:
 				col = mixc("#1f2518", "#262c1b", h).lerp(c("#171c13"), clampf((d - 2) / 6.0, 0, 1))
-			g.quad(Vector3(i, 0, j), Vector3(i, 0, j + 1), Vector3(i + 1, 0, j + 1), Vector3(i + 1, 0, j), col)
+			var y := oh(i, j)
+			g.quad(Vector3(i, y, j), Vector3(i, y, j + 1), Vector3(i + 1, y, j + 1), Vector3(i + 1, y, j), col)
+			if y > 0.0:   # Frostpeak's mountain carries on behind the yard: its drops where the band steps down
+				var ys := oh(i, j + 1)
+				var ye := oh(i + 1, j)
+				if ys < y:
+					g.quad(Vector3(i, ys, j + 1), Vector3(i + 1, ys, j + 1), Vector3(i + 1, y, j + 1), Vector3(i, y, j + 1), col.darkened(0.45))
+				if ye < y:
+					g.quad(Vector3(i + 1, ye, j + 1), Vector3(i + 1, ye, j), Vector3(i + 1, y, j), Vector3(i + 1, y, j + 1), col.darkened(0.55))
+				continue
 			if Q and h > 0.7:
 				g.disc(i + 0.3 + h * 0.4, j + 0.5, 3 * V3.PXH * 1.4, 1.6 * V3.PXH * 1.4, 0.003, col.lerp(Color8(140, 130, 115), 0.25), 7)
 			elif not Q and d >= 2 and h > 0.55:
@@ -140,12 +149,23 @@ func _outside() -> void:
 		W.mesh_node(root, front.commit(), W.mat_front)
 
 
+## the ground's height outside the yard: Frostpeak's terraces carry on behind it (north and west, as the 2D paints
+## its back scenery over the mountain), everything else is at 0
+func oh(i: int, j: int) -> float:
+	var N: int = sim.N
+	if not sim.is_frost() or i >= N or j >= N or (i >= 0 and j >= 0):
+		return 0.0
+	return sim.heights[sim.idx(clampi(i, 0, N - 1), clampi(j, 0, N - 1))] * V3.TER
+
+
 ## drawTreeAt in 3D: a pine of three tiers (snow-capped on Frostpeak), a dead tree, a bush, a boulder or a stump
 func _tree(g: V3Mesh, t: Dictionary) -> void:
 	var x: float = t.x
 	var z: float = t.y
+	var lift := oh(floori(x), floori(z))
 	var P := V3.PXV
 	var H := V3.PXH
+	var start := g.size()
 	match int(t.kind):
 		0:
 			g.prism(x, z, 2.6 * H, 0, 13 * P, c("#45301f"), c("#45301f"), 5)
@@ -157,7 +177,7 @@ func _tree(g: V3Mesh, t: Dictionary) -> void:
 				var ty: float = by + t.h * 0.44
 				g.cone(x, z, w * H, by * P, ty * P, light, dk, 7)
 				if t.snow:
-					g.cone(x, z, w * 0.68 * H, (by + t.h * 0.12) * P, (ty + 0.5) * P, c("#d9ebef") if k % 2 else c("#b8d5e1"), c("#9fbccb"), 7)
+					g.cone(x, z, w * 0.82 * H, (by + t.h * 0.07) * P, (ty + 0.6) * P, c("#d9ebef") if k % 2 else c("#b8d5e1"), c("#9fbccb"), 7)
 		1:
 			var top := Vector3(x, t.h * 0.8 * P, z)
 			g.bar(Vector3(x, 0, z), top, 1.9 * H, c("#3d3326"))
@@ -175,6 +195,9 @@ func _tree(g: V3Mesh, t: Dictionary) -> void:
 			g.prism(x, z, r * H, 0, r * 1.15 * P, mixc("#5e584f", "#6b645a", t.v), c("#7a7368"), 5, r * 0.45 * H)
 		_:
 			g.prism(x, z, 5 * H, 0, 6 * P, c("#3a2b1c"), c("#806645"), 7)
+	if lift > 0.0:
+		for q in range(start, g.size()):
+			g.verts[q].y += lift
 
 
 ## one tile of the yard's edge: the fence (two rails on posts), a gap where the river runs out, or the quarry's rim
@@ -205,10 +228,13 @@ func _edge(g: V3Mesh, side: String, s: int) -> void:
 	var post := c("#4a3a28")
 	var rail := c("#5d4832")
 	var pw := 1.6 * V3.PXH
-	for p in [A, B]:
-		g.box(p[0] - pw, p[1] - pw, p[0] + pw, p[1] + pw, 0, WH * 0.85, post.lightened(0.1), post, post.darkened(0.2))
+	var ya := sim.height_at(A[0], A[1]) * V3.TER
+	var yb := sim.height_at(B[0], B[1]) * V3.TER if side == "s" or side == "e" else sim.height_at(B[0] - (0.001 if side == "n" else 0.0), B[1] - (0.001 if side == "w" else 0.0)) * V3.TER
+	for q in [[A, ya], [B, yb]]:
+		var p: Array = q[0]
+		g.box(p[0] - pw, p[1] - pw, p[0] + pw, p[1] + pw, q[1], q[1] + WH * 0.85, post.lightened(0.1), post, post.darkened(0.2))
 	for hh in [WH * 0.32, WH * 0.62]:
-		g.bar(Vector3(A[0], hh, A[1]), Vector3(B[0], hh, B[1]), 1.1 * V3.PXH, rail)
+		g.bar(Vector3(A[0], ya + hh, A[1]), Vector3(B[0], yb + hh, B[1]), 1.1 * V3.PXH, rail)
 
 
 ## Frostpeak's expedition caches, the summit beacon, the stair handrails and the route flags
@@ -218,13 +244,14 @@ func _frost_props(g: V3Mesh) -> void:
 	for q in [[-0.6, 3], [N + 0.6, N - 4], [-0.6, N - 3]]:
 		var x: float = q[0]
 		var y: float = q[1]
-		g.box(x - 0.32, y - 0.32, x + 0.32, y + 0.32, 0, WH * 0.3, c("#456571"), c("#203e4c"), c("#304f5a"))
-		g.box(x - 0.26, y - 0.06, x + 0.26, y + 0.06, WH * 0.3, WH * 0.3 + 0.02, c("#dfedf0"), c("#dfedf0"), c("#c8d8dc"))
-	var b := Vector3(sim.core.i + 2.1, 0, 0.8)
+		var b0 := oh(floori(x), floori(y))
+		g.box(x - 0.32, y - 0.32, x + 0.32, y + 0.32, b0, b0 + WH * 0.3, c("#456571"), c("#203e4c"), c("#304f5a"))
+		g.box(x - 0.26, y - 0.06, x + 0.26, y + 0.06, b0 + WH * 0.3, b0 + WH * 0.3 + 0.02, c("#dfedf0"), c("#dfedf0"), c("#c8d8dc"))
+	var b := Vector3(sim.core.i + 2.1, sim.height_at(sim.core.i + 2.1, 0.8) * V3.TER, 0.8)
 	g.bar(b, b + Vector3(0, WH * 1.5, 0), 0.03, c("#405969"))
 	var lit := c("#ffd882")
 	lit.a = 0.2
-	g.box(b.x - 0.06, b.z - 0.06, b.x + 0.06, b.z + 0.06, WH * 1.45, WH * 1.58, lit, lit, lit)
+	g.box(b.x - 0.06, b.z - 0.06, b.x + 0.06, b.z + 0.06, b.y + WH * 1.45, b.y + WH * 1.58, lit, lit, lit)
 	var ft := b + Vector3(0, WH * 1.35, 0)
 	g.tri(ft + Vector3(0.03, 0, 0), ft + V3.CAM_R * 15 * V3.PXH + Vector3(0, 0.07, 0), ft + Vector3(0.03, 0.18, 0), c("#bd5450"), V3.CAM_B)
 	var R := 11 * V3.PXV
@@ -609,23 +636,31 @@ func _casino_furniture(g: V3Mesh) -> void:
 	var px: float = CasinoView.PLINKO.at[0]
 	var py: float = CasinoView.PLINKO.at[1]
 	g.box(px - 0.45, py - 0.45, px + 0.45, py + 0.45, 0, WH * 0.2, c("#2a1a10"), c("#3a2414"), c("#2e1c10"))
-	var bw := 0.62 / V3.SQ2 * 1.2
+	var bw := 0.62 / V3.SQ2   # the board stands square to the viewer, as the 2D draws it
 	var y0 := WH * 0.2
 	var y1 := y0 + WH * 2.6
-	g.box(px - 0.04, py - bw, px + 0.04, py + bw, y0, y1, c("#121018"), c("#121018"), c("#121018"))
-	for e in [[y0, y0 + 0.015], [y1 - 0.015, y1]]:
-		g.box(px - 0.05, py - bw, px + 0.05, py + bw, e[0], e[1], c("#d6aa46"), c("#d6aa46"), c("#d6aa46"))
-	for r in 12:
+	var R := V3.CAM_R
+	var fwd := Vector3(V3.CAM_B.x, 0, V3.CAM_B.z).normalized()
+	var cb := Vector3(px, 0, py)
+	var panel := func(u0: float, u1: float, v0: float, v1: float, d: float, col: Color) -> void:
+		var o := cb + fwd * d
+		g.quad(o + R * u0 + Vector3(0, v0, 0), o + R * u1 + Vector3(0, v0, 0), o + R * u1 + Vector3(0, v1, 0), o + R * u0 + Vector3(0, v1, 0), col)
+	panel.call(-bw - 0.02, bw + 0.02, y0, y1 + 0.02, 0.0, c("#d6aa46"))
+	panel.call(-bw, bw, y0 + 0.02, y1, 0.005, c("#121018"))
+	var rows := 12
+	var H2 := y1 - y0
+	for r in rows:
 		for k in r + 1:
-			var zz := py + (k - r / 2.0) * bw * 1.7 / 12
-			var yy := y1 - (y1 - y0) * (0.06 + 0.8 * (r + 1) / 13.0)
-			g.box(px - 0.06, zz - 0.006, px - 0.04, zz + 0.006, yy - 0.006, yy + 0.006, c("#e8e0cf"), c("#e8e0cf"), c("#e8e0cf"))
+			var uu := (k - r / 2.0) * bw * 1.7 / 12
+			var vv := y1 - H2 * (0.06 + 0.8 * (r + 1) / 13.0)
+			panel.call(uu - 0.008, uu + 0.008, vv - 0.008, vv + 0.008, 0.01, c("#e8e0cf"))
+	var pw := bw * 1.7 / 13
 	for k in 13:
 		var mv: float = CasinoView.PK_MULT[k] / 10.0
 		var col := c("#ff4a6a" if mv >= 9 else ("#ffb43a" if mv >= 3 else ("#4aff9a" if mv >= 1 else "#3a8aff")))
 		col.a = 0.4
-		var zz := py - bw * 0.85 + (k + 0.5) * bw * 1.7 / 13
-		g.box(px - 0.06, zz - bw * 0.055, px - 0.045, zz + bw * 0.055, y0 + (y1 - y0) * 0.03, y0 + (y1 - y0) * 0.1, col, col, col)
+		var u0 := -bw * 0.85 + k * pw
+		panel.call(u0 + 0.004, u0 + pw - 0.004, y0 + H2 * 0.03, y0 + H2 * 0.1, 0.01, col)
 	# the tables
 	for tb in CasinoView.TABLES:
 		_table(g, tb, z, wood)
