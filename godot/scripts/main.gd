@@ -59,6 +59,8 @@ var settings := PalSettings.new()
 var inp: PalInput
 var menus: Menus
 var account: PalAccount   # the Supabase account and the cloud locker (19-accounts.js)
+var net: PalNet   # online play (21-online.js): hosting, joining, the lobby
+var feed: Array = []   # the kill feed: {text, col, t}
 var sk_msg := ""   # the skill tree's last answer from the server
 var demo := true   # the main menu's yard: Delgado builds, the camera circles the stake, nobody plays
 var over_t := 0.0   # the after-action screen comes up a moment after the end
@@ -135,8 +137,120 @@ func _ready() -> void:
 	locker.account = account
 	account.changed.connect(func(): menus.on_account_changed())
 	account.claim_done.connect(_on_claim_done)
+	net = PalNet.new()
+	net.sim = sim
+	add_child(net)
+	net.started.connect(_net_started)
+	net.left.connect(_net_left)
+	net.lobby_changed.connect(_net_lobby)
+	net.status.connect(func(t: String): menus.online_status(t))
+	net.chat_line.connect(func(_l): if menus.screen == "lobby": menus.show_lobby())
+	net.skills_check.connect(_check_guest_skills)
 	menus.show_main()
 	account.boot()
+
+
+# ---------------------------------------------------------------- online play
+
+## what this screen tells a room about itself: name, class, outfit, skill tree, account id
+func net_me() -> Dictionary:
+	var nm: String = account.name_ if account != null and account.state == "full" and account.name_ != "" else str(settings.data.get("name", ""))
+	if nm.strip_edges() == "":
+		nm = "Big U"
+	return {"name": nm.substr(0, 12), "cls": settings.data.setup.cls, "cos": PalLocker.cos_str(locker.eq) if locker != null else "std|class|std|none",
+		"sk": profile.skill_str_mine(), "uid": str(locker.cloud.get("id", "")) if locker != null and not locker.cloud.is_empty() else ""}
+
+
+func net_host() -> void:
+	net.me = net_me()
+	var S: Dictionary = settings.data.setup
+	net.pick = {"diff": S.diff, "mode": S.mode, "pvp": S.get("pvp", "coop"), "map": S.map, "size": S.size, "mods": S.mods.duplicate(), "job": S.get("job", "")}
+	net.host_room()
+
+
+func net_join(code: String) -> void:
+	net.me = net_me()
+	net.join_room(code)
+
+
+## the host's START: everyone's ready, the settings are the room's
+func net_start() -> void:
+	var why := net.start_block()
+	if why != "":
+		menus.online_status(why)
+		return
+	var pv: String = net.pick.pvp if net.pick.pvp in ["base", "ffa"] else ""
+	demo = false
+	menus.close()
+	skills_open = false
+	city_map = null
+	game_n += 1
+	sim.new_game(-1, net.pick.diff, profile.perk_mods(pv != ""), net.start_opt(pv))
+	net.host_started()
+	_after_start()
+
+
+func _net_started() -> void:   # a guest's match began
+	demo = false
+	menus.close()
+	skills_open = false
+	city_map = null
+	game_n += 1
+	_after_start()
+
+
+func _after_start() -> void:
+	run_sp = -1
+	last_reward = {}
+	parts.clear()
+	cparts.clear()
+	flashes.clear()
+	rings.clear()
+	zaps.clear()
+	slashes.clear()
+	feed.clear()
+	armory_open = false
+	floats.clear()
+	toasts.clear()
+	over_t = 0.0
+	v.cam_snap(sim.player.x, sim.player.y)
+
+
+func _net_left(msg: String) -> void:
+	_demo_game()
+	menus.show_online(msg)
+
+
+func _net_lobby() -> void:
+	if net.mode == "guest" and not net.in_game and not demo and sim.game.phase == "over":
+		_demo_game()   # the host went back to the lobby
+	if demo and (net.mode == "host" or net.mode == "guest") and menus.screen in ["online", "lobby", "results", ""]:
+		menus.show_lobby()
+
+
+func net_back_to_lobby() -> void:
+	if net.mode == "host":
+		net.host_back_to_lobby()
+	_demo_game()
+	menus.show_lobby()
+
+
+func net_leave() -> void:
+	net.leave()
+
+
+## the host checks a guest's claimed skill tree against their account (skills_of): only what they really own counts
+func _check_guest_skills(pid: String, uid: String, claimed: String) -> void:
+	if uid == "" or claimed == "" or account == null or account.s.is_empty():
+		return
+	var want := PalProfile.parse_skills(claimed)
+	var r: Dictionary = await account.rpc_call("skills_of", {"p_uid": uid})
+	if not r.ok or not (r.get("j") is Dictionary):
+		return
+	var t := {}
+	for S in PalProfile.SKILLS:
+		t[S.id] = mini(int(want.get(S.id, 0)), int(r.j.get(S.id, 0)))
+	net.set_guest_skills(pid, PalProfile.skill_str(PalProfile.parse_skills(PalProfile.skill_str(t)), want.get("molOff", false)))
 
 
 ## the skill tree: an account's goes through the server (skill_buy, skill_respec), a local one changes here
@@ -208,6 +322,10 @@ func _resize() -> void:
 func _unhandled_input(e: InputEvent) -> void:
 	if e is InputEventKey and e.pressed and not e.echo and menus.bind_key(e):
 		return
+	if e is InputEventKey and e.pressed and not e.echo and e.keycode == KEY_ENTER and net.is_online() and net.in_game and not menus.active() and not demo:
+		_open_chat()
+		get_viewport().set_input_as_handled()
+		return
 	if inp.handle(e):
 		return
 	if e is InputEventMouseMotion:
@@ -257,7 +375,7 @@ func do_action(id: String) -> void:
 			menus.close()
 			sim.game.paused = false
 		elif not menus.active():
-			sim.game.paused = true
+			sim.game.paused = not net.is_online()   # online the match keeps running
 			menus.show_pause()
 		else:
 			menus.back()
@@ -270,6 +388,40 @@ func do_action(id: String) -> void:
 			_close_armory()
 		return
 	var p: Dictionary = sim.player
+	if net.guest():   # a guest's actions go to the host, which runs them through the same rules
+		match id:
+			"build":
+				if p.alive and settings.data.get("build", true) and sim.pvp() != "ffa":
+					var t := sim.build_target(p, sim.game.sel, sim.game.piece == "door")
+					if t.ok:
+						net.send_build(t.i, t.j, sim.game.sel, sim.game.piece == "door")
+					else:
+						audio.play("deny")
+				return
+			"nade", "special":
+				var w := _throw_target(id == "special" and p.cls == "soldier")
+				if id == "special" and p.cls in ["soldier", "sniper"]:
+					if (p.cls == "soldier" and p.ab <= 0) or (p.cls == "sniper" and p.ab != 0) or sim.pvp() != "":
+						audio.play("deny")
+					else:
+						net.send_ability(w.x, w.y)
+				elif id == "special" and p.cls == "quartermaster":
+					sim.local_sprint()
+				elif p.nades <= 0:
+					audio.play("deny")
+				else:
+					net.send_nade(w.x, w.y)
+				return
+			"reload":
+				if p.alive and p.gun.has("mag") and p.ammo < p.gun.mag:
+					net.send_reload()
+				return
+			"delgado":
+				return
+			"start":
+				if sim.blackout() and sim.game.get("bo") != null and sim.game.bo.stage == "ready":
+					net.send_bo_ready(not p.get("boReady", false))
+				return
 	match id:
 		"build":
 			sim.local_build()
@@ -299,8 +451,8 @@ func do_action(id: String) -> void:
 			sim.set_qm_mode("" if sim.qm.mode == "follow" else "follow")
 		"start":
 			if sim.blackout() and sim.game.phase == "raid":
-				sim.bo_ready()
-			elif sim.game.phase == "build":
+				sim.bo_ready(not p.get("boReady", false))
+			elif sim.game.phase == "build" and sim.pvp() == "":
 				sim.start_raid()
 		"skills":
 			pass
@@ -381,6 +533,9 @@ func start_game() -> void:
 
 
 func to_menu() -> void:
+	if net.mode != "solo":
+		net.leave()
+		return
 	_demo_game()
 	menus.show_main()
 
@@ -521,12 +676,20 @@ func _process(dt: float) -> void:
 	if demo:
 		sim.game.timer = maxf(sim.game.timer, 30.0)   # the menu's yard never raids
 		sim.player.hp = sim.player.max
-	_dress(sim.player)
-	sim.update(dt, _controls())
+	for pl in sim.players.values():
+		_dress(pl)
+	if net.guest():
+		net.guest_frame(dt, _controls())
+	else:
+		sim.update(dt, _controls())
+	if net.mode == "host":
+		net.host_frame(dt)   # before the events drain: they go to the guests too
+	elif net.mode == "guest" and not net.in_game:
+		net.guest_frame(dt, {})
 	if not demo and sim.game.phase == "over":
 		if run_sp < 0:
-			last_reward = locker.pay_run(sim)
-			run_sp = last_reward.sp
+			last_reward = locker.pay_pvp(sim) if sim.pvp() != "" else locker.pay_run(sim)
+			run_sp = last_reward.get("sp", 0)
 		if menus.screen == "pause":
 			menus.close()
 		over_t += dt
@@ -583,7 +746,7 @@ func _drain_events() -> void:
 				if not demo:
 					toasts = [{"title": e.title, "body": e.body, "t": 4.5 * settings.data.msgTime}]
 			"killfx":
-				kill_fx(e.x, e.y, e.fx)
+				kill_fx(e.x, e.y, e.fx, e.get("quiet", false))
 			"flash":
 				flashes.append({"x": e.x, "y": e.y, "life": e.life, "max": e.life, "r": e.r, "muzzle": e.get("muzzle", false)})
 			"ring":
@@ -598,6 +761,19 @@ func _drain_events() -> void:
 				cparts.clear()
 				rings.clear()
 				v.cam_snap(sim.player.x, sim.player.y, sim.height_at(sim.player.x, sim.player.y))
+			"personal":   # a sound (or, for ~names, a feel) only this soldier's screen gets
+				if e.id == sim.player.id:
+					if e.name == "hurt":
+						inp.rumble(80)
+					if not e.name.begins_with("~"):
+						audio.play(e.name)
+			"toast_to":
+				if e.id == sim.player.id:
+					toasts = [{"title": e.title, "body": e.body, "t": 4.5 * settings.data.msgTime}]
+			"feed":
+				feed.push_front({"text": e.text, "col": e.col, "t": 5.7})
+				if feed.size() > 4:
+					feed.pop_back()
 			"shake":
 				var d := Vector2(e.x - sim.player.x, e.y - sim.player.y).length()
 				shake = maxf(shake, e.amt * clampf(1.0 - d / 14.0, 0.2, 1.0) * settings.data.shake)
@@ -623,7 +799,40 @@ func _emit(x: float, y: float, kind: String, mat: int) -> void:
 		"life": life, "max": life, "col": Color.html(cols[randi() % cols.size()]), "kind": kind, "s": 1.6 if kind == "chunk" else 1.0})
 
 
+var chat_box: LineEdit
+
+
+## online text chat in a match: Enter opens the line, Enter sends it, Esc closes it
+func _open_chat() -> void:
+	if chat_box == null:
+		chat_box = LineEdit.new()
+		chat_box.max_length = 120
+		chat_box.placeholder_text = "Say something to the room"
+		var layer := CanvasLayer.new()
+		layer.layer = 5
+		add_child(layer)
+		layer.add_child(chat_box)
+		chat_box.text_submitted.connect(func(t: String):
+			if t.strip_edges() != "":
+				net.send_chat(t)
+			chat_box.text = ""
+			chat_box.visible = false
+			chat_box.release_focus())
+		chat_box.gui_input.connect(func(ev: InputEvent):
+			if ev is InputEventKey and ev.pressed and ev.keycode == KEY_ESCAPE:
+				chat_box.visible = false
+				chat_box.release_focus()
+				chat_box.accept_event())
+	chat_box.position = Vector2(14, v.H - 130)
+	chat_box.size = Vector2(minf(420, v.W - 28), 30)
+	chat_box.visible = true
+	chat_box.grab_focus()
+
+
 func _update_fx(dt: float) -> void:
+	for f in feed:
+		f.t -= dt
+	feed = feed.filter(func(f): return f.t > 0)
 	for q in parts:
 		q.life -= dt
 		q.x += q.vx * dt
@@ -809,7 +1018,9 @@ func _draw_scene() -> void:
 	for e in sim.enemies:
 		items.append([e.x + e.y, 3, e])
 	items.append([sim.qm.x + sim.qm.y, 4, sim.qm])
-	items.append([sim.player.x + sim.player.y, 5, sim.player])
+	for pl in sim.players.values():
+		if not pl.get("out", false):
+			items.append([pl.x + pl.y, 5, pl])
 	for s in sim.sacks:
 		items.append([s.x + s.y, 6, s])
 	for ch in sim.charges:
@@ -1198,12 +1409,46 @@ func _draw_nameplates() -> void:
 	var W1 := clampf(34 * u, 26, 44)
 	var W0 := clampf(40 * u, 30, 50)
 	var BH := clampf(4.4 * u, 3.5, 6)
-	if p.alive:
-		var cc := iso(p.x, p.y)
+	var ready: bool = sim.game.get("bo") != null and sim.game.bo.get("stage", "") == "ready"
+	var friend := func(o: Dictionary) -> bool: return sim.pvp() == "" or (sim.pvp() == "base" and o.team == p.team) or is_same(o, p)
+	for o in sim.players.values():
+		if not o.alive:
+			continue
+		var me := is_same(o, p)
+		var fr: bool = friend.call(o)
+		if not me and not fr and o.get("stl", 0.0) > 0 and sim.pvp() == "":
+			continue
+		var cc := iso(o.x, o.y)
 		var top := cc.y - 46 * u
-		var tick := " ✓" if sim.game.get("bo") != null and sim.game.bo.stage == "ready" and p.get("boReady", false) else ""
-		_plate_bar(cc.x, top - 2 * u, W0, BH * 1.2, p.hp / p.max, c("#e8dcc0"), pulse)
-		label(str(ceili(p.hp)) + tick, cc.x, top - 7 * u, c("#ff8a6a") if p.hp / p.max < 0.3 else c("#f2ead6"), 10)
+		var tick := " ✓" if ready and o.get("boReady", false) else ""
+		var al := 0.55 if o.get("prot", 0.0) > 0 or o.get("stl", 0.0) > 0 else 1.0
+		if me:
+			_plate_bar(cc.x, top - 2 * u, W0, BH * 1.2, o.hp / o.max, c("#e8dcc0"), pulse)
+			label(str(ceili(o.hp)) + tick, cc.x, top - 7 * u, c("#ff8a6a") if o.hp / o.max < 0.3 else c("#f2ead6"), 10)
+		else:
+			var col := c(sim.team_col(o) if sim.pvp() != "" else Pal.SLOTCOL[int(o.slot) % 6])
+			col.a = al
+			label(str(o.name).to_upper() + tick, cc.x, top - (7 if fr else 2) * u, col, 9)
+			if fr:
+				_plate_bar(cc.x, top - 2 * u, W1, BH, o.hp / o.max, col, pulse)
+	# teammates off screen: an arrow on the edge with their name; downed ones blink red
+	var mg := 26.0
+	var topM := 110.0
+	for o in sim.players.values():
+		if is_same(o, p) or not friend.call(o) or o.get("out", false):
+			continue
+		var cc := iso(o.x, o.y)
+		if cc.x > mg and cc.x < v.W - mg and cc.y > topM and cc.y < v.H - mg:
+			continue
+		var ex := clampf(cc.x, mg, v.W - mg)
+		var ey := clampf(cc.y, topM + 10, v.H - mg)
+		var a := atan2(cc.y - v.H / 2, cc.x - v.W / 2)
+		var down: bool = not o.alive
+		var col := c(("#ff4a3a" if pulse else "#7a2218") if down else Pal.SLOTCOL[int(o.slot) % 6])
+		var tr := Transform2D(a, Vector2(ex, ey))
+		var pts := PackedVector2Array([tr * Vector2(11, 0), tr * Vector2(-6, -8), tr * Vector2(-2, 0), tr * Vector2(-6, 8)])
+		cv.draw_colored_polygon(pts, col)
+		label(str(o.name).to_upper() + (" · DOWN" if down else ""), ex, ey + (-14.0 if ey > v.H / 2 else 18.0), col, 9)
 	var q: Dictionary = sim.qm
 	if q.alive and not q.get("gone", false):
 		var cc := iso(q.x, q.y)
@@ -1493,7 +1738,7 @@ const QM_LOOK := {"body": "#9e9a78", "vest": "#3d4a52", "pants": "#3a3a33", "hea
 ## buildLook (16-characters.js) on the default "std" skin: each class's kit and headgear
 ## the player's outfit (the locker's equipped skin and headgear) on their class, as a wardrobe look
 func player_look(p: Dictionary) -> Dictionary:
-	var eq: Dictionary = locker.eq if locker and p.id == sim.player.id else PalLocker.DEFAULT_COS
+	var eq: Dictionary = (locker.eq if locker else PalLocker.DEFAULT_COS) if p.id == sim.player.id else PalLocker.parse_cos(p.get("cosS", ""))
 	var key := "%s|%s|%s" % [eq.get("skin", "std"), eq.get("hat", "class"), p.cls]
 	if not looks.has(key):
 		looks[key] = Wardrobe.look_for(eq, p.cls)
@@ -1585,6 +1830,20 @@ func _draw_hud() -> void:
 	var p: Dictionary = sim.player
 	var W := v.W
 	var H := v.H
+	# the kill feed (top right) and the room's chat (bottom left), online
+	for i in feed.size():
+		var f: Dictionary = feed[i]
+		var fc := c(f.col)
+		fc.a = clampf(f.t / 0.7, 0.0, 1.0)
+		var fw := font.get_string_size(f.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
+		cv.draw_string(font, Vector2(W - 14 - fw, 56 + i * 17), f.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, fc)
+	if net.is_online() and net.in_game:
+		var now := Time.get_ticks_msec()
+		var lines: Array = net.chat.filter(func(l): return now - l.get("at", now) < 9000 or (chat_box != null and chat_box.visible))
+		lines = lines.slice(maxi(0, lines.size() - 5))
+		for i in lines.size():
+			var l: Dictionary = lines[i]
+			cv.draw_string(font, Vector2(14, H - 140 - (lines.size() - 1 - i) * 17), "%s: %s" % [str(l.name).to_upper(), l.text], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, c(l.col))
 	var gold := c("#e2b436")
 	var paper := c("#e8dcc0")
 	var dim := c("#9a8f7a")
@@ -1758,7 +2017,7 @@ func _try_armory() -> void:
 		toasts = [{"title": "ARMORY", "body": "Walk back to the stake to spend salvage.", "t": 3.0}]
 		return
 	armory_open = true
-	sim.game.paused = true
+	sim.game.paused = not net.is_online()
 
 
 func _close_armory() -> void:
@@ -1836,6 +2095,12 @@ var b_close := Rect2()
 func _arm_buy(key: String) -> void:
 	var p: Dictionary = sim.player
 	var ok: bool
+	if net.guest():
+		if key.begins_with("ammo:"):
+			net.send_ammo(key.substr(5), 0)
+		else:
+			net.send_upgrade(key)
+		return
 	if key.begins_with("ammo:"):
 		ok = sim.buy_ammo(p, key.substr(5))
 	else:
@@ -2284,8 +2549,9 @@ func _paint_front(layer: CanvasItem, G: Dictionary) -> void:
 ## updateFades: a near tree goes see-through while anyone stands behind it
 func _update_fades() -> void:
 	var who: Array = sim.enemies.filter(func(e): return not e.dead)
-	if sim.player.alive or sim.player.downed:
-		who.append(sim.player)
+	for pl in sim.players.values():
+		if pl.alive or pl.downed:
+			who.append(pl)
 	if sim.qm.alive:
 		who.append(sim.qm)
 	for key in front_groups:
@@ -2335,8 +2601,9 @@ func _update_light(dt: float) -> void:
 			if cc.x < -r or cc.x > v.W + r or cc.y < -r or cc.y > v.H + r or holes.size() >= 96:
 				return
 			holes.append(Vector4(cc.x, cc.y, r, minf(1.0, st)))
-		var p: Dictionary = sim.player
-		hole.call(p.x, p.y, WH * 0.5, TW2 * 3.4, 0.95)
+		for p in sim.players.values():
+			if p.alive or p.downed:
+				hole.call(p.x, p.y, WH * 0.5, TW2 * 3.4, 0.95)
 		if sim.qm.alive:
 			hole.call(sim.qm.x, sim.qm.y, WH * 0.5, TW2 * 1.8, 0.7)
 		if sim.map_id == "city":
@@ -2421,8 +2688,9 @@ func _vis_bounds() -> void:
 func _city_occluders() -> Dictionary:
 	var occ := {}
 	var who: Array = sim.enemies.filter(func(e): return not e.dead)
-	if sim.player.alive or sim.player.downed:
-		who.append(sim.player)
+	for pl in sim.players.values():
+		if pl.alive or pl.downed:
+			who.append(pl)
 	if sim.qm.alive:
 		who.append(sim.qm)
 	who.append_array(sim.sacks)
@@ -2596,8 +2864,9 @@ func _draw_terrain_live() -> void:
 			quad(a, d, d + Vector2(0, v.WH * 0.35), a + Vector2(0, v.WH * 0.35), c("#241d18"))
 	if sim.map_id == "river":
 		var wading: Array = sim.enemies.filter(func(e): return not e.get("burrow", false))
-		if sim.player.alive:
-			wading.append(sim.player)
+		for pl in sim.players.values():
+			if pl.alive:
+				wading.append(pl)
 		if sim.qm.alive:
 			wading.append(sim.qm)
 		for e in wading:
@@ -2697,7 +2966,7 @@ func _body_under(sx: float, sy: float):
 func _dress(p: Dictionary) -> void:
 	if locker == null or demo:
 		return
-	var eq: Dictionary = locker.eq
+	var eq: Dictionary = locker.eq if p.id == sim.player.id else PalLocker.parse_cos(p.get("cosS", ""))
 	var tr: String = eq.get("trail", "std")
 	if p.get("trail", "") != tr:
 		var st := CosArt.trail(tr)
@@ -2811,10 +3080,11 @@ func cemit(x: float, y: float, z: float, kind: String, thin: float = 1.0) -> Dic
 
 
 ## killFx: a kill effect where a raider dropped (its sound, the painted finisher, its particles, rings and flashes)
-func kill_fx(x: float, y: float, id: String) -> void:
+func kill_fx(x: float, y: float, id: String, quiet: bool = false) -> void:
 	if id == "" or id == "none":
 		return
-	audio.play("kx_" + id, x, y)
+	if not quiet:
+		audio.play("kx_" + id, x, y)
 	var thin := 0.3 if cparts.size() > 480 else (0.6 if cparts.size() > 320 else 1.0)
 	var wh: float = v.WH / v.u
 	if id != "skull" and CosArt.life(id) > 0:

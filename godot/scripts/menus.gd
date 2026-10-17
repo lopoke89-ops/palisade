@@ -278,6 +278,7 @@ func show_main() -> void:
 	col.add_theme_constant_override("separation", 6)
 	box.add_child(col)
 	_button("PLAY", func(): m.start_game(), col)
+	_button("PLAY ONLINE", func(): show_online(""), col)
 	_button("MATCH SETUP", func(): show_setup(), col)
 	_button("LOCKER" + (" · %d CASE%s" % [m.locker.all_cases(), "" if m.locker.all_cases() == 1 else "S"] if m.locker != null and m.locker.all_cases() > 0 else ""), func(): show_locker(), col)
 	_button("SKILL TREE", func(): m.open_skills(), col)
@@ -609,11 +610,14 @@ func show_pause() -> void:
 	var col := _card(380, "PAUSED")
 	col.add_child(_label(setup_line(), 12, DIM, true))
 	_button("RESUME", func(): m.do_action("pause"), col)
-	_button("RESTART", func(): m.start_game(), col)
+	if m.net.is_online():
+		col.add_child(_label("Online: the match keeps going while this menu is open.", 12, DIM, true))
+	else:
+		_button("RESTART", func(): m.start_game(), col)
 	_button("SKILL TREE", func(): m.open_skills(), col)
 	_button("INDEX", func(): _go("pause", "index"), col)
 	_button("SETTINGS", func(): _go("pause", "settings"), col)
-	_button("QUIT TO MENU", func(): m.to_menu(), col)
+	_button("LEAVE THE GAME" if m.net.is_online() else "QUIT TO MENU", func(): m.to_menu(), col)
 	_focus_first()
 
 
@@ -650,6 +654,20 @@ func show_results() -> void:
 		title = "THE CITY HELD" if win else "COMMAND FELL"
 		eyebrow = "%s · %s · CITY BLACK OUT · %d OF 8 POINTS HELD%s%s" % [p.C.name, s.Df.name, B.held, " · THE DESTROYER IS DOWN" if B.destroyer else "", modt]
 		lede = ("The Supreme Destroyer is scrap and the lights are coming back on." if B.destroyer else "Main Command stood until the clock ran out.") if win else ("Main Command fell in the final push. Hold more points next time: every one lost makes the push harder." if B.push != null else "Main Command fell before the final push.")
+	if s.pvp() != "":
+		var P: Array = s.players.values()
+		if s.pvp() == "base":
+			var wT: Dictionary = Pal.TEAMS.get(g.winner, Pal.TEAMS.a)
+			var na := P.filter(func(o): return o.team == "a").size()
+			title = "YOUR SIDE WON" if win else "YOUR SIDE LOST"
+			eyebrow = "BASE BATTLE · %dV%d · %s TOOK THE %s STAKE%s" % [na, P.size() - na, wT.name, "EAST" if g.winner == "a" else "WEST", modt]
+			lede = "Their stake is splinters. Run it back and swap sides if it was lopsided." if win else "They got through. Look at which wall went first; that's where to put metal next time."
+		else:
+			var rank := P.duplicate()
+			rank.sort_custom(func(a, b): return a.kills > b.kills or (a.kills == b.kills and a.deaths < b.deaths))
+			title = "YOU WIN" if win else "%s WINS" % str(rank[0].name).to_upper()
+			eyebrow = "FREE-FOR-ALL · %d PLAYERS%s" % [P.size(), modt]
+			lede = "   ".join(range(rank.size()).map(func(i): return "%d. %s %d" % [i + 1, "YOU" if is_same(rank[i], p) else str(rank[i].name).to_upper(), rank[i].kills]))
 	var col := _card(640, "", eyebrow)
 	col.add_child(_label(title, 40, GOLD if win or g.end_reason == "evac" else RED))
 	col.add_child(_label(lede, 14, PAPER, true))
@@ -658,7 +676,10 @@ func show_results() -> void:
 	grid.columns = 3
 	grid.add_theme_constant_override("h_separation", 24)
 	col.add_child(grid)
-	for row in [["RAIDS HELD", held], ["RAIDERS DROPPED", st.dropped], ["WALLS RAISED", st.built], ["WALLS LOST", st.lost], ["REPAIRS", st.get("repairs", 0)], ["REVIVES", st.get("revives", 0)]]:
+	var rows: Array = [["RAIDS HELD", held], ["RAIDERS DROPPED", st.dropped], ["WALLS RAISED", st.built], ["WALLS LOST", st.lost], ["REPAIRS", st.get("repairs", 0)], ["REVIVES", st.get("revives", 0)]]
+	if s.pvp() != "":
+		rows = [["YOUR DROPS", p.kills], ["TIMES YOU FELL", p.deaths], ["WALLS RAISED", st.built], ["WALLS LOST", st.lost]]
+	for row in rows:
 		var v := VBoxContainer.new()
 		v.add_child(_label(str(row[1]), 24, PAPER))
 		v.add_child(_label(row[0], 11, DIM))
@@ -670,9 +691,14 @@ func show_results() -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	col.add_child(row)
-	_button("PLAY AGAIN", func(): m.start_game(), row)
+	if m.net.mode == "host":
+		_button("BACK TO THE LOBBY", func(): m.net_back_to_lobby(), row)
+	elif m.net.mode == "guest":
+		col.add_child(_label("Waiting for the host to go back to the lobby.", 13, DIM, true))
+	else:
+		_button("PLAY AGAIN", func(): m.start_game(), row)
 	_button("SKILL TREE", func(): m.open_skills(), row)
-	_button("MAIN MENU", func(): m.to_menu(), row)
+	_button("LEAVE" if m.net.is_online() else "MAIN MENU", func(): m.to_menu(), row)
 	_focus_first()
 
 
@@ -687,8 +713,10 @@ func _go(from: String, to: String) -> void:
 ## B, Esc: back out of the current screen
 func back() -> void:
 	match screen:
-		"setup", "locker", "account":
+		"setup", "locker", "account", "online":
 			show_main()
+		"lobby":
+			m.net_leave()
 		"settings", "index":
 			if came_from == "pause":
 				show_pause()
@@ -942,3 +970,145 @@ func show_account() -> void:
 		_button("SIGN OUT", func(): _acct_do(func(): return await A.sign_out()), col).disabled = dis
 	_button("BACK", func(): show_main(), col)
 	_focus_first()
+
+
+# ---------------------------------------------------------------- online (21-online.js, 19b-social-lobby.js)
+
+var _online_msg: Label
+var _code_in: LineEdit
+
+
+func online_status(text: String) -> void:
+	if is_instance_valid(_online_msg):
+		_online_msg.text = text
+
+
+## host a room, or join one with its 4-character code
+func show_online(msg: String) -> void:
+	_clear()
+	screen = "online"
+	var col := _card(520, "PLAY ONLINE", "CO-OP AND PVP · UP TO 6 PLAYERS")
+	col.add_child(_label("Host a room and share its code, or type a friend's code to join. Browser players and this game share rooms.", 14, PAPER, true))
+	_button("HOST A ROOM", func(): m.net_host(), col)
+	_code_in = _field(col, "ROOM CODE", "", false, "4 letters and numbers")
+	_code_in.max_length = 4
+	_code_in.text_submitted.connect(func(t: String): m.net_join(t))
+	_button("JOIN", func(): m.net_join(_code_in.text), col)
+	_online_msg = _label(msg, 13, RED if msg != "" else DIM, true)
+	col.add_child(_online_msg)
+	_button("BACK", func(): show_main(), col)
+	_focus_first()
+
+
+const PVP_MODES := [["coop", "CO-OP"], ["base", "BASE BATTLE"], ["ffa", "FREE-FOR-ALL"]]
+
+
+## the room: who is in it, the host's settings, ready, sides, start, chat
+func show_lobby() -> void:
+	var n: PalNet = m.net
+	if n.mode != "host" and n.mode != "guest":
+		show_online("")
+		return
+	_clear()
+	screen = "lobby"
+	var host: bool = n.mode == "host"
+	var col := _card(720, "ROOM %s" % n.code, "LOBBY · %d OF 6%s" % [n.roster.size(), " · LOCKED" if n.locked else ""])
+	col.add_child(_label("Share the code. Everyone readies up, then the host starts.", 13, DIM, true))
+	var pv: String = n.pick.pvp
+	for i in n.roster.size():
+		var r: Dictionary = n.roster[i]
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 10)
+		col.add_child(row)
+		var colr := Color(Pal.TEAMS[r.get("team", "a")].col) if pv == "base" else Color(Pal.SLOTCOL[i % 6])
+		var nm := _label(("%s%s" % [str(r.name).to_upper(), " (YOU)" if r.id == n.my_id else ""]), 15, colr)
+		nm.custom_minimum_size = Vector2(220, 0)
+		row.add_child(nm)
+		row.add_child(_label(Pal.CLASSES.get(r.get("cls", "soldier"), Pal.SOLDIER).name, 13, PAPER))
+		if pv == "base":
+			row.add_child(_label(Pal.TEAMS[r.get("team", "a")].name, 13, colr))
+		row.add_child(_label("HOST" if r.id == "host" else ("READY ✓" if r.get("ready", false) else "NOT READY"), 12, GOLD if r.id == "host" or r.get("ready", false) else DIM))
+		if host and r.id != "host":
+			var rid: String = r.id
+			_button("REMOVE", func(): n.kick(rid), row)
+	var me: Dictionary = {}
+	for r in n.roster:
+		if r.id == n.my_id:
+			me = r
+	var cls: Array = Pal.CLASS_IDS.map(func(id): return [id, Pal.CLASSES[id].name])
+	_choice(col, "YOUR CLASS", cls, me.get("cls", m.settings.data.setup.cls), func(id):
+		m.settings.data.setup.cls = id
+		m.settings.save()
+		var nm2: Dictionary = m.net_me()
+		n.set_loadout(id, nm2.cos, nm2.name, nm2.sk)
+		show_lobby())
+	if host:
+		var redo := func(k: String, val) -> void:
+			n.pick[k] = val
+			if k == "mode" or k == "pvp":
+				n.pick.mods = Sim.clean_mods(n.pick.mods, n.pick.pvp if n.pick.pvp != "coop" else n.pick.mode)
+			n.broadcast_lobby()
+			show_lobby()
+		_choice(col, "GAME", PVP_MODES, pv, func(id): redo.call("pvp", id))
+		if pv == "coop":
+			_choice(col, "LENGTH", MODES, n.pick.mode, func(id): redo.call("mode", id))
+		var fixed: bool = pv == "coop" and n.pick.mode in ["campaign", "blackout"]
+		var maps: Array = PalMaps.MAP_IDS.map(func(id): return [id, PalMaps.MAPS[id].name])
+		_choice(col, "MAP", maps, n.pick.map, func(id): redo.call("map", id), PalMaps.MAP_IDS if fixed else (["frost"] if pv != "coop" else []))
+		if pv != "coop":
+			col.add_child(_label(PalMaps.PVP_BLURB.get(n.pick.map, PalMaps.PVP_BLURB.yard)[pv], 13, DIM, true))
+		else:
+			_choice(col, "SIZE", [["std", "STANDARD"], ["xl", "XL"]], n.pick.size, func(id): redo.call("size", id))
+			_choice(col, "THREAT", [["easy", "EASY"], ["normal", "NORMAL"], ["hard", "HARD"]], n.pick.diff, func(id): redo.call("diff", id))
+		var mode_m: String = pv if pv != "coop" else n.pick.mode
+		var grid := HFlowContainer.new()
+		grid.add_theme_constant_override("h_separation", 6)
+		col.add_child(_label("MODIFIERS", 12, DIM))
+		col.add_child(grid)
+		for M in Sim.MODS:
+			if not Sim.clean_mods([M.id], mode_m).has(M.id):
+				continue
+			var b := Button.new()
+			b.text = M.name
+			b.toggle_mode = true
+			b.button_pressed = n.pick.mods.has(M.id)
+			b.tooltip_text = M.what
+			var id: String = M.id
+			b.toggled.connect(func(on: bool):
+				if on and not n.pick.mods.has(id):
+					n.pick.mods.append(id)
+				elif not on:
+					n.pick.mods.erase(id)
+				n.broadcast_lobby())
+			grid.add_child(b)
+		if n.pick.mods.has("onejob"):
+			_choice(col, "ONE JOB FOR EVERYONE", cls, n.pick.job if n.pick.job != "" else "soldier", func(id): redo.call("job", id))
+	else:
+		var what: String = PVP_MODES.filter(func(x): return x[0] == pv)[0][1] if pv in ["coop", "base", "ffa"] else "CO-OP"
+		col.add_child(_label("%s · %s%s" % [what, PalMaps.MAPS.get(n.pick.map, PalMaps.MAPS.yard).name, (" · " + " + ".join(n.pick.mods.map(func(id): return _mod(id).name))) if not n.pick.mods.is_empty() else ""], 13, GOLD, true))
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	col.add_child(row)
+	if host:
+		_button("START", func(): m.net_start(), row)
+		_button("UNLOCK" if n.locked else "LOCK ROOM", func():
+			n.set_locked(not n.locked)
+			show_lobby(), row)
+	else:
+		_button("NOT READY" if me.get("ready", false) else "READY", func(): n.set_ready(not me.get("ready", false)), row)
+	if pv == "base":
+		_button("SWITCH SIDES", func(): n.switch_team(), row)
+	_button("LEAVE", func(): m.net_leave(), row)
+	_online_msg = _label(n.start_block() if host else "", 13, DIM, true)
+	col.add_child(_online_msg)
+	col.add_child(_label("CHAT", 12, DIM))
+	for line in n.chat.slice(maxi(0, n.chat.size() - 8)):
+		col.add_child(_label("%s: %s" % [str(line.name).to_upper(), line.text], 13, Color(line.col), true))
+	var chat_in := LineEdit.new()
+	chat_in.placeholder_text = "Say something (Enter)"
+	chat_in.max_length = 120
+	chat_in.text_submitted.connect(func(t: String):
+		if t.strip_edges() != "":
+			n.send_chat(t)
+		chat_in.text = "")
+	col.add_child(chat_in)

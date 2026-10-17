@@ -88,6 +88,16 @@ func guest() -> bool:
 	return mode == "guest" and in_game
 
 
+## tracers travel as their place in the catalog's TRAILS (the browser's TRAIL_IDS, the same order)
+static func trail_index(id: String) -> int:
+	return maxi(0, PalLocker.catalog().TRAILS.keys().find(id))
+
+
+static func trail_id(i: int) -> String:
+	var ks: Array = PalLocker.catalog().TRAILS.keys()
+	return ks[i] if i >= 0 and i < ks.size() else "std"
+
+
 static func r2(v: float) -> float:
 	return roundf(v * 100.0) / 100.0
 
@@ -725,7 +735,7 @@ func _add_chat(id: String, nm: String, text: String, team: String) -> void:
 		for i in roster.size():
 			if roster[i].id == id:
 				col = Pal.SLOTCOL[i % 6]
-	var line := {"id": id, "name": nm.substr(0, 12), "text": text, "col": col}
+	var line := {"id": id, "name": nm.substr(0, 12), "text": text, "col": col, "at": Time.get_ticks_msec()}
 	chat.append(line)
 	if chat.size() > 40:
 		chat.pop_front()
@@ -1067,7 +1077,7 @@ func _bo_snap() -> Array:
 
 func _bullet_event(b: Dictionary) -> Array:
 	var scale := sqrt(1.0 + pow(b.zSlope * 0.8, 2))
-	return ["b", b.id, r2(b.x), r2(b.y), r2(b.vx), r2(b.vy), b.team, 1 if b.get("heavy", false) else 0, int(b.get("tr", 0)), r2(b.range / scale - b.dist), null, null,
+	return ["b", b.id, r2(b.x), r2(b.y), r2(b.vx), r2(b.vy), b.team, 1 if b.get("heavy", false) else 0, trail_index(str(b.get("tr", "std"))) if b.team == 0 else 0, r2(b.range / scale - b.dist), null, null,
 		int(b.get("tc", 0)), r2(sim.bullet_z(b)), r2(b.zSlope)]
 
 
@@ -1144,6 +1154,8 @@ func _guest_data(d: Dictionary) -> void:
 				pick.map = d.map if d.map in PalMaps.MAP_IDS else "yard"
 			if d.has("size"):
 				pick.size = "xl" if d.size == "xl" else "std"
+			if in_game and not d.get("playing", false):
+				in_game = false   # the host went back to the lobby
 			lobby_changed.emit()
 		"start":
 			pick.diff = str(d.get("diff", "normal"))
@@ -1485,7 +1497,7 @@ func _add_bullet(e: Array) -> void:
 	if sim.bullets.size() >= 300:
 		return
 	var z0: float = e[13] if e.size() > 13 and e[13] != null else sim.height_at(e[2], e[3]) + 0.7
-	sim.bullets.append({"id": e[1], "x": e[2], "y": e[3], "vx": e[4], "vy": e[5], "team": int(e[6]), "heavy": e[7] != 0, "tr": int(e[8]), "tc": maxi(0, int(e[12]) if e.size() > 12 and e[12] != null else 0),
+	sim.bullets.append({"id": e[1], "x": e[2], "y": e[3], "vx": e[4], "vy": e[5], "team": int(e[6]), "heavy": e[7] != 0, "tr": trail_id(int(e[8])), "tc": maxi(0, int(e[12]) if e.size() > 12 and e[12] != null else 0),
 		"left": float(e[9]), "dist": 0.0, "z0": z0, "zSlope": float(e[14]) if e.size() > 14 and e[14] != null else 0.0, "dead": false, "range": 99.0, "own": e[11] if e.size() > 11 else null})
 
 
@@ -1498,7 +1510,7 @@ func _replay(list: Array) -> void:
 			"e":
 				var kind := str(e[4])
 				if kind.begins_with("finish:"):
-					sim.ev({"k": "killfx", "x": e[1], "y": e[2], "fx": kind.substr(7), "quiet": true})
+					sim.ev({"k": "killfx", "x": e[1], "y": e[2], "fx": kind.substr(7)})
 				else:
 					sim.ev({"k": "emit", "x": e[1], "y": e[2], "kind": kind, "n": int(e[6]) if e.size() > 6 and e[6] != null else 1, "mat": int(e[5]) if e[5] != null else 0})
 			"E":
