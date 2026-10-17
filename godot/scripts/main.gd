@@ -612,6 +612,9 @@ func menu_nav(dir: String) -> void:
 	if dir == "back":
 		menus.back()
 		return
+	if dir == "next" or dir == "prev":   # LB / RB: the next or previous page tab
+		menus.page_step(1 if dir == "next" else -1)
+		return
 	if act == "":
 		return
 	var f := get_viewport().gui_get_focus_owner()
@@ -689,15 +692,16 @@ func _demo_game() -> void:
 	v.cam_snap(sim.core.i + 2.5, sim.core.j - 2)
 
 
+## the skill tree is a menu page (menu_pages.gd): from the menus, the pause menu or the after-action screen
 func open_skills() -> void:
-	skills_open = true
-	sk_sel = 0
-	menus.root.visible = false
+	skills_open = false
+	menus.came_from = "main" if demo else ("results" if sim.game.phase == "over" else "pause")
+	menus.show_skills()
 
 
 func _close_skills() -> void:
 	skills_open = false
-	menus.root.visible = true
+	menus.back()
 
 
 func apply_settings() -> void:
