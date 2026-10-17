@@ -1112,3 +1112,4 @@ func show_lobby() -> void:
 			n.send_chat(t)
 		chat_in.text = "")
 	col.add_child(chat_in)
+	_focus_first()

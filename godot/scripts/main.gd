@@ -454,6 +454,8 @@ func do_action(id: String) -> void:
 				sim.bo_ready(not p.get("boReady", false))
 			elif sim.game.phase == "build" and sim.pvp() == "":
 				sim.start_raid()
+			elif sim.pvp() == "base" and sim.game.phase == "build":
+				sim.start_battle()
 		"skills":
 			pass
 
@@ -650,6 +652,19 @@ func _controls() -> Dictionary:
 	return {"move": mv, "aim": aim, "fire": fire, "pulls": mouse_pulls, "auto": inp.mode == "touch" or (inp.mode == "mouse" and not mouse_seen)}
 
 
+## the camera follows you; once you're out (evacuated), it watches a teammate still in the fight
+func _cam_target() -> Dictionary:
+	var p: Dictionary = sim.player
+	if not p.get("out", false):
+		return p
+	var best = null
+	for o in sim.players.values():
+		if not is_same(o, p) and not o.get("out", false) and (o.alive or o.downed):
+			if best == null or (o.alive and not best.alive):
+				best = o
+	return best if best != null else p
+
+
 ## aim assist: a stick's aim snaps to the raider closest to it within about 18 degrees, in range and in sight
 func _assist(d: Vector2) -> Vector2:
 	var p: Dictionary = sim.player
@@ -715,7 +730,8 @@ func _process(dt: float) -> void:
 		var fy: float = sim.core.j - 2 + sin(t) * 2
 		v.cam_follow(fx, fy, sh, 0.0)
 	else:
-		v.cam_follow(sim.player.x, sim.player.y, sh, sim.height_at(sim.player.x, sim.player.y))
+		var fol: Dictionary = _cam_target()
+		v.cam_follow(fol.x, fol.y, sh, sim.height_at(fol.x, fol.y))
 	_sync_ground()
 	_update_light(dt)
 	_update_post(dt)
@@ -1005,7 +1021,11 @@ func _draw_scene() -> void:
 	for n in sim.nodes:
 		if _tile_on(n.i, n.j):
 			items.append([n.i + n.j + 1.0, 1, n])
-	items.append([sim.core.i + sim.core.j + 1.0, 2, null])
+	if sim.pvp() == "base":
+		for co in sim.cores:
+			items.append([co.i + co.j + 1.0, 2, co])
+	elif sim.pvp() == "":
+		items.append([sim.core.i + sim.core.j + 1.0, 2, null])
 	if city:
 		for k in _city_occluders():
 			items.append([k % N + k / N + 1.0, 10, k])
@@ -1040,7 +1060,7 @@ func _draw_scene() -> void:
 			1:
 				_draw_node(it[2])
 			2:
-				_draw_stake()
+				_draw_stake(it[2])
 			3:
 				var e: Dictionary = it[2]
 				var o: Dictionary = (Sim.boss_def(e.boss).look if e.type == "boss" else LOOK.get(e.type, LOOK.rifle)).duplicate()
@@ -1691,14 +1711,14 @@ func _draw_node(n: Dictionary) -> void:
 		label("%s · OPENS RAID %d" % ["KILN" if n.type == 1 else "SCRAP", n.unlock], cc.x, cc.y - WH * 2.1, c("#9a8f7a"), 10)
 
 
-func _draw_stake() -> void:
+func _draw_stake(which = null) -> void:
 	var u := v.u
 	var WH := v.WH
-	var co: Dictionary = sim.core
+	var co: Dictionary = which if which != null else sim.core
 	var i: int = co.i
 	var j: int = co.j
 	var f: bool = co.flash > 0
-	var band := c("#e2b436")
+	var band := c(Pal.TEAMS[co.team].col if Pal.TEAMS.has(co.get("team", "")) else "#e2b436")
 	var bx := box_r(i + 0.14, j + 0.14, i + 0.86, j + 0.86, 0, WH * 1.15, c("#8a4a34") if f else c("#4d5c40"), c("#6a3424") if f else c("#38452e"), c("#50281c") if f else c("#2a3421"))
 	for pq in [[bx.D, bx.C], [bx.C, bx.B]]:
 		quad(up(pq[0], WH * 0.62), up(pq[1], WH * 0.62), up(pq[1], WH * 0.8), up(pq[0], WH * 0.8), band)
@@ -1708,6 +1728,8 @@ func _draw_stake() -> void:
 	cv.draw_line(Vector2(px, py), Vector2(px, py - 28 * u), c("#1b1812"), 2 * u)
 	var fl := sin(sim.game.time * 5) * 2 * u
 	cv.draw_colored_polygon(PackedVector2Array([Vector2(px, py - 28 * u), Vector2(px + 15 * u, py - 24 * u + fl), Vector2(px, py - 19 * u)]), band)
+	if sim.pvp() == "base":
+		label("YOUR STAKE" if co.team == sim.player.team else "ENEMY STAKE", px, py - 36 * u, band, 10)
 
 
 func _draw_ghost() -> void:
@@ -1850,7 +1872,24 @@ func _draw_hud() -> void:
 	# top bar: phase, clock, stake
 	cv.draw_rect(Rect2(0, 0, W, 34), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.72))
 	var phase_txt: String
-	if sim.blackout() and g.phase != "over":
+	var clock := func(t: float) -> String:
+		var sec := maxi(0, ceili(t))
+		return "%d:%02d" % [sec / 60, sec % 60]
+	if sim.pvp() == "base" and g.phase != "over":
+		var mine := 0
+		var theirs := 0
+		for o in sim.players.values():
+			if o.team == p.team:
+				mine += o.kills
+			else:
+				theirs += o.kills
+		var other := "b" if p.team == "a" else "a"
+		phase_txt = ("TRUCE · %s until the battle%s" % [clock.call(g.timer), "   (ENTER: start the battle)" if not net.guest() else ""]) if g.phase == "build" else "BATTLE · %s %d · %s %d drops" % [Pal.TEAMS[p.team].name, mine, Pal.TEAMS[other].name, theirs]
+	elif sim.pvp() == "ffa" and g.phase != "over":
+		var rank: Array = sim.players.values()
+		rank.sort_custom(func(a, b): return a.kills > b.kills or (a.kills == b.kills and a.deaths < b.deaths))
+		phase_txt = "FREE-FOR-ALL · %s left · first to %d   %s" % [clock.call(g.timer), g.goal, "  ".join(rank.slice(0, 6).map(func(o): return "%s %d" % ["YOU" if is_same(o, p) else str(o.name).to_upper(), o.kills]))]
+	elif sim.blackout() and g.phase != "over":
 		phase_txt = CityView.phase_text(sim)
 	elif g.phase == "build" and sim.campaign():
 		phase_txt = "CH %d · BUILD · %s · %s IN %ds   (ENTER: start now)" % [g.chapter + 1, sim.map_def.name, "FINAL EVACUATION" if g.wave == 12 else "RAID %d/3" % (g.wave % 3 + 1), ceili(g.timer)]
@@ -1867,13 +1906,22 @@ func _draw_hud() -> void:
 	cv.draw_string(font, Vector2(14, 22), phase_txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, paper)
 	var bw := 220.0
 	var bx := W - bw - 16
-	cv.draw_string(font, Vector2(bx - 80, 22), "COMMAND" if sim.map_id == "city" else "STAKE", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, dim)
+	if sim.pvp() != "ffa":
+		cv.draw_string(font, Vector2(bx - 80, 22), "COMMAND" if sim.map_id == "city" else ("STAKES" if sim.pvp() == "base" else "STAKE"), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, dim)
 	if sim.map_id == "city":
 		if city_map == null:
 			city_map = CityView.map_image(sim)
 		CityView.minimap(self, city_map, W - 186, 44, 170)
-	cv.draw_rect(Rect2(bx, 11, bw, 12), Color(0, 0, 0, 0.6))
-	cv.draw_rect(Rect2(bx, 11, bw * maxf(0, sim.core.hp / sim.core.max), 12), gold)
+	if sim.pvp() == "base":   # yours over theirs, in the sides' colours
+		var mc: Dictionary = sim.stake_of(p)
+		var ec: Dictionary = sim.cores[1 if p.team == "a" else 0]
+		cv.draw_rect(Rect2(bx, 6, bw, 9), Color(0, 0, 0, 0.6))
+		cv.draw_rect(Rect2(bx, 6, bw * maxf(0, mc.hp / mc.max), 9), c(Pal.TEAMS[mc.team].col))
+		cv.draw_rect(Rect2(bx, 19, bw, 9), Color(0, 0, 0, 0.6))
+		cv.draw_rect(Rect2(bx, 19, bw * maxf(0, ec.hp / ec.max), 9), c(Pal.TEAMS[ec.team].col))
+	elif sim.pvp() == "":
+		cv.draw_rect(Rect2(bx, 11, bw, 12), Color(0, 0, 0, 0.6))
+		cv.draw_rect(Rect2(bx, 11, bw * maxf(0, sim.core.hp / sim.core.max), 12), gold)
 	# bottom-left: health, materials, grenades
 	var y0 := H - 74
 	cv.draw_rect(Rect2(10, y0 - 8, 330, 72), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.72))
