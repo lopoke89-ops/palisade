@@ -279,6 +279,7 @@ func show_main() -> void:
 	box.add_child(col)
 	_button("PLAY", func(): m.start_game(), col)
 	_button("PLAY ONLINE", func(): show_online(""), col)
+	_friends_btn = _button(_friends_label(), func(): show_friends(), col)
 	_button("MATCH SETUP", func(): show_setup(), col)
 	_button("LOCKER" + (" · %d CASE%s" % [m.locker.all_cases(), "" if m.locker.all_cases() == 1 else "S"] if m.locker != null and m.locker.all_cases() > 0 else ""), func(): show_locker(), col)
 	_button("SKILL TREE", func(): m.open_skills(), col)
@@ -713,7 +714,7 @@ func _go(from: String, to: String) -> void:
 ## B, Esc: back out of the current screen
 func back() -> void:
 	match screen:
-		"setup", "locker", "account", "online":
+		"setup", "locker", "account", "online", "friends":
 			show_main()
 		"lobby":
 			m.net_leave()
@@ -996,8 +997,43 @@ func show_online(msg: String) -> void:
 	_button("JOIN", func(): m.net_join(_code_in.text), col)
 	_online_msg = _label(msg, 13, RED if msg != "" else DIM, true)
 	col.add_child(_online_msg)
+	var lg := CheckBox.new()
+	lg.text = "List my game in Open Games"
+	lg.button_pressed = m.settings.data.get("listGame", true)
+	lg.toggled.connect(func(on: bool):
+		m.settings.data.listGame = on
+		m.settings.save())
+	col.add_child(lg)
+	col.add_child(_label("OPEN GAMES", 12, DIM))
+	var games := VBoxContainer.new()
+	col.add_child(games)
+	var note := _label("Loading…", 13, DIM, true)
+	games.add_child(note)
+	_button("REFRESH", func(): _fill_games(games, note), col)
+	_button("FRIENDS" + (" · %d NEW" % m.social.unseen if m.social.unseen > 0 else ""), func(): show_friends(), col)
 	_button("BACK", func(): show_main(), col)
 	_focus_first()
+	_fill_games(games, note)
+
+
+func _fill_games(box: VBoxContainer, note: Label) -> void:
+	var why: String = await m.social.refresh_open_games()
+	if not is_instance_valid(box):
+		return
+	for ch in box.get_children():
+		if ch != note:
+			ch.queue_free()
+	note.text = why
+	note.visible = why != ""
+	for g in m.social.open_games:
+		var b := Button.new()
+		b.text = "%s · %d/6 · %s" % [str(g.get("name", "Open game")), int(g.get("players", 0)), PalSocial.game_line(g)]
+		b.disabled = int(g.get("players", 6)) >= 6 or m.net.mode != "solo"
+		var code: String = g.get("code", "")
+		b.pressed.connect(func(): m.net_join(code))
+		box.add_child(b)
+	if is_instance_valid(_sc) and is_instance_valid(_col):
+		_sc.custom_minimum_size.y = minf(m.v.H - 60, _col.get_combined_minimum_size().y + 4)
 
 
 const PVP_MODES := [["coop", "CO-OP"], ["base", "BASE BATTLE"], ["ffa", "FREE-FOR-ALL"]]
@@ -1101,6 +1137,17 @@ func show_lobby() -> void:
 	_button("LEAVE", func(): m.net_leave(), row)
 	_online_msg = _label(n.start_block() if host else "", 13, DIM, true)
 	col.add_child(_online_msg)
+	if host and m.social.active() and not m.social.friends.is_empty():
+		col.add_child(_label("INVITE A FRIEND", 12, DIM))
+		var fr := HFlowContainer.new()
+		fr.add_theme_constant_override("h_separation", 6)
+		col.add_child(fr)
+		for f in m.social.friends:
+			var ff: Dictionary = f
+			var b := _button(str(f.get("username", "PLAYER")).to_upper(), func(): m.social.invite(ff), fr)
+			b.disabled = not m.social.can_invite() or m.social.busy
+		if m.social.msg != "":
+			col.add_child(_label(m.social.msg, 13, GOLD, true))
 	col.add_child(_label("CHAT", 12, DIM))
 	for line in n.chat.slice(maxi(0, n.chat.size() - 8)):
 		col.add_child(_label("%s: %s" % [str(line.name).to_upper(), line.text], 13, Color(line.col), true))
@@ -1112,4 +1159,132 @@ func show_lobby() -> void:
 			n.send_chat(t)
 		chat_in.text = "")
 	col.add_child(chat_in)
+	_focus_first()
+
+
+# ---------------------------------------------------------------- friends (19b-social-lobby.js)
+
+var _friends_btn: Button
+var friends_tab := "friends"
+
+
+func _friends_label() -> String:
+	var n: int = m.social.unseen if m.social != null and m.social.active() else 0
+	return "FRIENDS" + (" · %s NEW" % ("9+" if n > 9 else str(n)) if n > 0 else "")
+
+
+func refresh_friends_badge() -> void:
+	if is_instance_valid(_friends_btn):
+		_friends_btn.text = _friends_label()
+
+
+func _person(col: Container, prof: Dictionary, status: String, actions: Array) -> void:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	col.add_child(row)
+	var v := VBoxContainer.new()
+	v.custom_minimum_size = Vector2(260, 0)
+	v.add_child(_label(str(prof.get("username", "PLAYER")).to_upper(), 15, PAPER))
+	v.add_child(_label(status, 12, DIM))
+	row.add_child(v)
+	for a in actions:
+		var b := _button(a[0], a[1], row)
+		b.disabled = (a.size() > 2 and a[2]) or m.social.busy
+
+
+## friends, requests, the mailbox and invitations, recent players, a username search
+func show_friends() -> void:
+	var S: PalSocial = m.social
+	_clear()
+	screen = "friends"
+	var col := _card(720, "FRIENDS", "YOUR CREW")
+	if not S.active():
+		col.add_child(_label("Your crew starts here. Sign in with a saved account (not a guest), then find a player by username. Friends are shared with the browser game.", 14, PAPER, true))
+		if m.account.state != "off":
+			_button("OPEN ACCOUNT", func(): show_account(), col)
+		_button("BACK", func(): show_main(), col)
+		_focus_first()
+		return
+	var tabs := [["friends", "FRIENDS · %d" % S.friends.size()], ["requests", "REQUESTS" + (" · %d" % S.incoming.size() if not S.incoming.is_empty() else "")], ["mail", "MAIL" + (" · %d" % S.unseen if S.unseen > 0 else "")], ["recent", "RECENT · %d" % S.saved.size()]]
+	_choice(col, "", tabs, friends_tab, func(id):
+		friends_tab = id
+		if id == "mail":
+			S.mark_seen()
+		if id == "recent":
+			S.refresh_saved()
+		show_friends())
+	var find := _field(col, "FIND A PLAYER", "", false, "exact username")
+	find.text_submitted.connect(func(t: String): S.find(t))
+	_button("SEARCH", func(): S.find(find.text), col)
+	if S.result != null:
+		var r: Dictionary = S.result
+		var fr := S.friends.any(func(f): return f.id == r.id)
+		var sent := S.outgoing.any(func(q): return q.user.id == r.id)
+		var me: bool = r.id == S._me()
+		_person(col, r, "Already your friend" if fr else ("In your Recent list" if S.saved.has(r.id) else "Player found"),
+			([] if fr else [["REQUESTED" if sent else "ADD FRIEND", func(): S.send_request(r), sent or me]]) + [["SAVED" if S.saved.has(r.id) else "SAVE", func(): S.save_player(r.id, true), S.saved.has(r.id) or me]])
+	if S.msg != "":
+		col.add_child(_label(S.msg, 13, GOLD, true))
+	match friends_tab:
+		"friends":
+			if not S.loaded:
+				col.add_child(_label("Loading your friends…", 13, DIM))
+			elif not S.ok:
+				col.add_child(_label("Friends could not be loaded right now. Try Refresh.", 13, DIM))
+			elif S.friends.is_empty():
+				col.add_child(_label("No friends yet. Find someone above and send a request.", 13, DIM))
+			for f in S.friends:
+				var ff: Dictionary = f
+				var acts: Array = []
+				var room: Dictionary = S.room_of(f.id)
+				if not room.is_empty():
+					var code: String = room.code
+					acts.append(["FULL" if int(room.get("players", 0)) >= 6 else "JOIN", func(): m.net_join(code), int(room.get("players", 0)) >= 6 or m.net.mode != "solo"])
+				if m.net.mode == "host":
+					acts.append(["INVITE", func(): S.invite(ff), not S.can_invite()])
+				acts.append(["REMOVE", func(): S.remove_friend(ff)])
+				_person(col, f, S.room_text(f.id), acts)
+		"requests":
+			col.add_child(_label("WAITING FOR YOU", 12, DIM))
+			if S.incoming.is_empty():
+				col.add_child(_label("No requests waiting.", 13, DIM))
+			for r in S.incoming:
+				var rr: Dictionary = r
+				_person(col, r.user, "Sent " + PalSocial.ago(str(r.get("at", ""))), [["ACCEPT", func(): S.answer(rr, true)], ["DECLINE", func(): S.answer(rr, false)]])
+			col.add_child(_label("SENT", 12, DIM))
+			if S.outgoing.is_empty():
+				col.add_child(_label("No requests sent.", 13, DIM))
+			for r in S.outgoing:
+				var rr: Dictionary = r
+				_person(col, r.user, "Waiting · sent " + PalSocial.ago(str(r.get("at", ""))), [["CANCEL", func(): S.cancel(rr)]])
+		"mail":
+			for i in S.invites:
+				var ii: Dictionary = i
+				var ok: bool = Time.get_unix_time_from_datetime_string(str(i.get("expires_at", "")).substr(0, 19)) > Time.get_unix_time_from_system()
+				_person(col, i.get("user", {"username": "Your friend"}), PalSocial.invite_line(i), [["ACCEPT", func(): S.answer_invite(ii, true), not ok], ["DECLINE", func(): S.answer_invite(ii, false)]])
+			if S.notes.is_empty() and S.invites.is_empty():
+				col.add_child(_label("Nothing here yet.", 13, DIM))
+			for n in S.notes:
+				var who: String = n.user.username if n.get("user") is Dictionary and n.user.get("username") else "A player"
+				var t: String = ("%s sent you a friend request" % who) if n.get("kind") == "friend_request" else (("%s accepted your friend request" % who) if n.get("kind") == "friend_accepted" else str(n.get("data", {}).get("text", "Message")) if n.get("data") is Dictionary else "Message")
+				col.add_child(_label(t + " · " + PalSocial.ago(str(n.get("created_at", ""))), 13, PAPER if n.get("seen_at") else GOLD, true))
+		"recent":
+			if S.profiles.is_empty():
+				col.add_child(_label("Players you save show up here." if S.saved.is_empty() else "Loading…", 13, DIM))
+			for pr in S.profiles:
+				var pp: Dictionary = pr
+				var acts: Array = []
+				var room: Dictionary = S.room_of(pr.id)
+				if not room.is_empty():
+					var code: String = room.code
+					acts.append(["JOIN", func(): m.net_join(code), m.net.mode != "solo"])
+				if not S.friends.any(func(f): return f.id == pp.id):
+					acts.append(["ADD", func(): S.send_request(pp), S.outgoing.any(func(q): return q.user.id == pp.id)])
+				acts.append(["REMOVE", func(): S.save_player(pp.id, false)])
+				_person(col, pr, S.room_text(pr.id), acts)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	col.add_child(row)
+	_button("REFRESH", func(): S.poll(), row)
+	_button("BACK", func(): show_main() if not m.net.is_online() else show_lobby(), row)
 	_focus_first()

@@ -60,6 +60,7 @@ var inp: PalInput
 var menus: Menus
 var account: PalAccount   # the Supabase account and the cloud locker (19-accounts.js)
 var net: PalNet   # online play (21-online.js): hosting, joining, the lobby
+var social: PalSocial   # friends, invitations, the open games list
 var feed: Array = []   # the kill feed: {text, col, t}
 var sk_msg := ""   # the skill tree's last answer from the server
 var demo := true   # the main menu's yard: Delgado builds, the camera circles the stake, nobody plays
@@ -146,6 +147,14 @@ func _ready() -> void:
 	net.status.connect(func(t: String): menus.online_status(t))
 	net.chat_line.connect(func(_l): if menus.screen == "lobby": menus.show_lobby())
 	net.skills_check.connect(_check_guest_skills)
+	social = PalSocial.new(self)
+	add_child(social)
+	net.room_closed.connect(func(inc: String): social.unpublish(inc))
+	social.changed.connect(func():
+		if menus.screen == "friends":
+			menus.show_friends()
+		elif menus.screen == "main":
+			menus.refresh_friends_badge())
 	menus.show_main()
 	account.boot()
 
@@ -165,6 +174,7 @@ func net_host() -> void:
 	net.me = net_me()
 	var S: Dictionary = settings.data.setup
 	net.pick = {"diff": S.diff, "mode": S.mode, "pvp": S.get("pvp", "coop"), "map": S.map, "size": S.size, "mods": S.mods.duplicate(), "job": S.get("job", "")}
+	social.list_game = settings.data.get("listGame", true)
 	net.host_room()
 
 

@@ -30,6 +30,7 @@ signal started         # a match began on this screen (host or guest)
 signal left(msg: String)   # back to the menu, with why ("" when we chose to)
 signal status(text: String)   # a line for the online page while opening or joining
 signal chat_line(line: Dictionary)   # {id, name, text, col}
+signal room_closed(incarnation: String)   # the host's room is gone: take it off the open games list
 
 var sim: Sim
 var peer: PeerNet
@@ -134,7 +135,11 @@ func host_room() -> void:
 	peer.host(code, opts)
 
 
-func join_room(c: String) -> void:
+var _invite := ""   # the room incarnation an accepted invitation was for
+
+
+func join_room(c: String, invitation: String = "") -> void:
+	_invite = invitation
 	c = c.to_upper().strip_edges()
 	var clean := ""
 	for ch in c:
@@ -185,6 +190,8 @@ func leave(msg: String = "") -> void:
 
 
 func reset() -> void:
+	if mode == "host":
+		room_closed.emit(incarnation)
 	if peer != null:
 		peer.shutdown()
 		peer.queue_free()
@@ -211,7 +218,7 @@ func _on_peer_connected(pid: String) -> void:
 	elif mode == "joining":
 		_host_peer = pid
 		_heard = _now()
-		peer.send(pid, {"t": "hello", "name": me.name, "cls": me.cls, "cos": me.cos, "v": PROTO, "sk": me.sk, "uid": me.uid, "session": session, "invitationSession": ""})
+		peer.send(pid, {"t": "hello", "name": me.name, "cls": me.cls, "cos": me.cos, "v": PROTO, "sk": me.sk, "uid": me.uid, "session": session, "invitationSession": _invite})
 
 
 func _on_peer_closed(pid: String) -> void:
