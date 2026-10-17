@@ -109,6 +109,12 @@ func _make_theme() -> Theme:
 	t.set_stylebox("focus", "HSlider", sb.call(Color(0, 0, 0, 0), PAPER, 1))
 	t.set_stylebox("focus", "CheckBox", sb.call(Color(0, 0, 0, 0), PAPER, 1))
 	t.set_color("font_color", "CheckBox", PAPER)
+	var bar_bg := StyleBoxFlat.new()
+	bar_bg.bg_color = Color("#2a251c")
+	var bar_fg := StyleBoxFlat.new()
+	bar_fg.bg_color = GOLD
+	t.set_stylebox("background", "ProgressBar", bar_bg)
+	t.set_stylebox("fill", "ProgressBar", bar_fg)
 	return t
 
 
@@ -127,6 +133,32 @@ func _clear() -> void:
 	for ch in root.get_children():
 		root.remove_child(ch)
 		ch.queue_free()
+	if m.demo and m.locker != null:   # outside a game the menus sit on the lobby background (drawLobbyBg)
+		root.add_child(LockerUI.BgView.new(lobby_bg()))
+
+
+func lobby_bg() -> String:
+	var id: String = m.locker.eq.get("bg", "campfire") if m.locker != null else "campfire"
+	return id if PalLocker.catalog().BGS.has(id) else "campfire"
+
+
+## the equipped background changed: swap the one behind the menus
+func refresh_bg() -> void:
+	for ch in root.get_children():
+		if ch is LockerUI.BgView:
+			var nb := LockerUI.BgView.new(lobby_bg())
+			root.add_child(nb)
+			root.move_child(nb, ch.get_index())
+			root.remove_child(ch)
+			ch.queue_free()
+			return
+
+
+func show_locker() -> void:
+	_clear()
+	_sc = null
+	screen = "locker"
+	root.add_child(LockerUI.new(self))
 
 
 ## a centred card holding a column; returns the column
@@ -247,6 +279,7 @@ func show_main() -> void:
 	box.add_child(col)
 	_button("PLAY", func(): m.start_game(), col)
 	_button("MATCH SETUP", func(): show_setup(), col)
+	_button("LOCKER" + (" · %d CASE%s" % [m.locker.all_cases(), "" if m.locker.all_cases() == 1 else "S"] if m.locker != null and m.locker.all_cases() > 0 else ""), func(): show_locker(), col)
 	_button("SKILL TREE", func(): m.open_skills(), col)
 	_button("INDEX", func(): _go("main", "index"), col)
 	_button("SETTINGS", func(): _go("main", "settings"), col)
@@ -630,7 +663,8 @@ func show_results() -> void:
 		grid.add_child(v)
 	if not m.last_reward.is_empty():
 		col.add_child(_label("REWARDS", 12, DIM))
-		col.add_child(_label(m.last_reward.text, 14, GOLD, true))
+		col.add_child(reward_cards(m.last_reward))
+		col.add_child(_label(m.last_reward.text, 13, DIM, true))
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	col.add_child(row)
@@ -651,7 +685,7 @@ func _go(from: String, to: String) -> void:
 ## B, Esc: back out of the current screen
 func back() -> void:
 	match screen:
-		"setup":
+		"setup", "locker":
 			show_main()
 		"settings", "index":
 			if came_from == "pause":
@@ -662,3 +696,104 @@ func back() -> void:
 			show_settings()
 		"pause":
 			m.do_action("pause")
+
+
+## showRewards: cards for what the run paid, cases, shards, skill points, new items, the nearest milestone and
+## the way to the next Supply Case. They come in one after another.
+func reward_cards(R: Dictionary) -> HFlowContainer:
+	var C := PalLocker.catalog()
+	var L: PalLocker = m.locker
+	var row := HFlowContainer.new()
+	row.add_theme_constant_override("h_separation", 8)
+	row.add_theme_constant_override("v_separation", 8)
+	var cards: Array = []
+	var card := func(border: Color) -> VBoxContainer:
+		var pc := PanelContainer.new()
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color(20 / 255.0, 17 / 255.0, 13 / 255.0, 0.95)
+		sb.border_color = border
+		sb.set_border_width_all(1)
+		sb.border_width_top = 3
+		sb.set_content_margin_all(8)
+		pc.add_theme_stylebox_override("panel", sb)
+		pc.custom_minimum_size = Vector2(112, 0)
+		var v := VBoxContainer.new()
+		v.alignment = BoxContainer.ALIGNMENT_CENTER
+		pc.add_child(v)
+		row.add_child(pc)
+		cards.append(pc)
+		return v
+	for id in R.cases:
+		if R.cases[id] > 0 and C.CASES.has(id):
+			var v: VBoxContainer = card.call(Color(C.CASES[id].col))
+			var ic := LockerUI.CaseIcon.new(id, 64)
+			ic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			v.add_child(ic)
+			v.add_child(_label("×%d" % R.cases[id], 20, PAPER))
+			v.add_child(_label(C.CASES[id].name, 10, DIM))
+	if R.shards > 0:
+		var v: VBoxContainer = card.call(Color("#8fd8ff"))
+		v.add_child(_label("◆ +%d" % R.shards, 22, Color("#bfe9ff")))
+		v.add_child(_label("SHARDS", 10, DIM))
+	if R.sp > 0:
+		var v: VBoxContainer = card.call(GOLD)
+		v.add_child(_label("✦ +%d" % R.sp, 22, GOLD))
+		v.add_child(_label("SKILL POINT" if R.sp == 1 else "SKILL POINTS", 10, DIM))
+	for uid in R.unlocked:
+		var c := PalLocker.item(uid)
+		if c.is_empty():
+			continue
+		var v: VBoxContainer = card.call(Color(C.RAR[c.r].col))
+		v.add_child(_label("UNLOCKED", 10, Color(C.RAR[c.r].col)))
+		var ic := LockerUI.Icon.new(c, 72, L.eq.duplicate(), m.settings.data.setup.get("cls", "soldier"))
+		ic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		v.add_child(ic)
+		v.add_child(_label(c.name, 11, PAPER))
+	if R.get("kind") == "run":
+		var best = null   # the ladder this player is closest to finishing a step of
+		for Ld in C.LADDERS:
+			var i := -1
+			for k in Ld.items.size():
+				if not L.owns(Ld.items[k][0] + ":" + Ld.items[k][1]):
+					i = k
+					break
+			if i < 0:
+				continue
+			var have := int(L.st.get(Ld.sts[i] if Ld.get("sts") else Ld.st, 0))
+			if have <= 0:
+				continue
+			var f: float = float(have) / Ld.steps[i]
+			if best == null or f > best.f:
+				best = {"L": Ld, "i": i, "f": f, "have": have}
+		if best != null:
+			var Ld: Dictionary = best.L
+			var it := PalLocker.item(Ld.items[best.i][0] + ":" + Ld.items[best.i][1])
+			var v: VBoxContainer = card.call(GOLD)
+			v.add_child(_label(Ld.title, 11, GOLD))
+			var pb := ProgressBar.new()
+			pb.max_value = Ld.steps[best.i]
+			pb.value = best.have
+			pb.show_percentage = false
+			pb.custom_minimum_size = Vector2(140, 8)
+			v.add_child(pb)
+			v.add_child(_label("%d / %d %s · next: %s" % [best.have, Ld.steps[best.i], Ld.units[best.i] if Ld.get("units") else Ld.unit, it.get("name", "")], 10, DIM, true))
+		var v: VBoxContainer = card.call(Color("#e2b436"))
+		v.add_child(_label("SUPPLY CASE", 11, GOLD))
+		var pb := ProgressBar.new()
+		pb.max_value = 3
+		pb.value = R.get("prog", 0)
+		pb.show_percentage = false
+		pb.custom_minimum_size = Vector2(140, 8)
+		v.add_child(pb)
+		v.add_child(_label("1 more raid to the next case" if R.get("toNext", 3) == 1 else "%d more raids to the next case" % R.get("toNext", 3), 10, DIM, true))
+	if cards.is_empty():
+		var v: VBoxContainer = card.call(Color("#4a4030"))
+		v.add_child(_label("NO REWARDS", 13, DIM))
+		v.add_child(_label("Hold a raid or win to earn cases.", 10, DIM, true))
+	for i in cards.size():   # one after another over about 1.5 s
+		var pc: Control = cards[i]
+		pc.modulate.a = 0.0
+		var tw := pc.create_tween()
+		tw.tween_interval(i * minf(0.32, 1.5 / cards.size()))
+		tw.tween_property(pc, "modulate:a", 1.0, 0.25)
+	return row

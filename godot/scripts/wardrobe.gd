@@ -1805,3 +1805,28 @@ func bake() -> ArrayMesh:
 	if _vx.size() > 0:
 		m.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
 	return m
+
+
+## figFrame: where a look sits at a heading (model units from the feet): the whole body for "skin", the head and what
+## sits on it for "hat". {cx, cy, s}: the middle and the larger side, for framing a thumbnail.
+static func frame(look: Dictionary, angle: float, part: String = "skin") -> Dictionary:
+	var w := Wardrobe.new()
+	w.build(look, angle, 0, 3, false)
+	var r := Rect2()
+	var first := true
+	for f in w.faces:
+		for p in f.pts:
+			if part == "hat" and p.y > -25:
+				continue
+			if first:
+				r = Rect2(p.x, p.y, 0, 0)
+				first = false
+			else:
+				r = r.expand(Vector2(p.x, p.y))
+	if first:
+		return {"cx": 0.0, "cy": -20.0, "s": 44.0}
+	if part == "hat":
+		r = r.expand(Vector2(r.position.x, -25))
+	else:
+		r = r.expand(Vector2(r.position.x, 12 if look.get("ring") or look.get("glow") else 6))
+	return {"cx": r.get_center().x, "cy": r.get_center().y, "s": maxf(r.size.x, r.size.y)}

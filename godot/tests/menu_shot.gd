@@ -4,6 +4,8 @@ func _init() -> void:
 	var pre: String = OS.get_cmdline_user_args()[0] if OS.get_cmdline_user_args().size() > 0 else "user://menu"
 	var main: Node2D = load("res://main.tscn").instantiate()
 	root.add_child(main)
+	main.locker.persist = false   # the run it plays is not paid into the player's own locker
+	main.profile.persist = false
 	for n in 40:
 		await process_frame
 	await _save(pre + "_main.png")

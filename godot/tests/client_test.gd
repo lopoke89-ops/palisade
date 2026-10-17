@@ -5,6 +5,16 @@ extends SceneTree
 var fails := 0
 
 
+func _find(n: Node, cls: String) -> Node:
+	for ch in n.get_children():
+		if ch.get_class() == cls:
+			return ch
+		var r := _find(ch, cls)
+		if r != null:
+			return r
+	return null
+
+
 func check(cond: bool, what: String) -> void:
 	print(("  ok   " if cond else "  FAIL ") + what)
 	if not cond:
@@ -125,8 +135,43 @@ func _init() -> void:
 	await create_timer(1.3).timeout
 	check(main.menus.screen == "results", "the after-action screen comes up at the end")
 	check(not main.last_reward.is_empty() and main.last_reward.text.ends_with("."), "and the run is paid into the locker (%s)" % main.last_reward.get("text", ""))
+	check(_find(main.menus.root, "HFlowContainer") != null, "the rewards come as cards")
 	main.to_menu()
 	check(main.demo and main.menus.screen == "main", "MAIN MENU goes back to the demo yard")
+	check(main.menus.root.get_child(0) is LockerUI.BgView, "outside a game the menus sit on the lobby background")
+	print("locker screen")
+	var L: PalLocker = main.locker
+	L.cases = 2
+	L.bag = {"halloween": 0}
+	L.shards = 30
+	main.profile.sp = 5
+	main.menus.show_locker()
+	await process_frame
+	var ui: LockerUI = main.menus.root.get_children().filter(func(n): return n is LockerUI)[0]
+	check(main.menus.screen == "locker" and ui.tiles.size() > 0, "the Locker opens on its tiles (%d)" % ui.tiles.size())
+	var before := L.owned.size() + L.shards
+	ui.open_cases("supply", 1)
+	check(L.cases == 1 and L.owned.size() + L.shards > before, "OPEN takes a case and pays out before the show")
+	var ov: CaseOpen = ui.get_children().filter(func(n): return n is CaseOpen)[0]
+	ov.reveal()
+	check(ov.phase == "reveal" and ov.done_b.visible, "SKIP goes straight to what it gave")
+	ov.close()
+	await process_frame
+	ui = main.menus.root.get_children().filter(func(n): return n is LockerUI)[0]
+	var halloween := L.case_count("halloween")
+	ui._render_boxes()
+	check(L.buy_case("halloween") and L.case_count("halloween") == halloween + 1 and L.shards == 18, "BUY trades 12 shards for a Halloween Case")
+	ui._buy_sp()
+	check(main.profile.sp == 5 and L.cases == 1, "the skill-point buy needs a second press")
+	ui._buy_sp()
+	check(main.profile.sp == 2 and L.cases == 2, "and then trades 3 skill points for a Supply Case")
+	L.grant("bg:aurora")
+	ui._equip(PalLocker.item("bg:aurora"))
+	await process_frame
+	check(L.eq.bg == "aurora" and main.menus.root.get_children().any(func(n): return n is LockerUI.BgView and n.id == "aurora"), "equipping a background puts it behind the menus")
+	ui._equip(PalLocker.item("hat:witch"))
+	check(L.eq.hat != "witch" and ui.msg.text != "", "locked items say how to get them")
+	main.menus.show_main()
 	if keep != "":
 		var f := FileAccess.open(PalSettings.PATH, FileAccess.WRITE)
 		f.store_string(keep)
