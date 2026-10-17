@@ -25,7 +25,10 @@ var core_ks := {}   # tile index -> stake
 var poi_flows := {}   # Black Out: each POI's own flow field, built when a raider first needs it
 var _aim_save: Array = []
 var core_k := 0
-var player := {}
+var player := {}   # the soldier on this screen
+var players := {}   # every soldier in the match, by id ('solo' offline; 'host', 'g1'... online), in roster order
+var my_id := "solo"
+var guest := false   # a guest's screen: the host runs the match, this sim only mirrors it
 var qm := {}
 var enemies: Array = []
 var bullets: Array = []
@@ -43,7 +46,6 @@ var fires: Array = []
 var rockets: Array = []
 var shot_seq := 0
 var arcs: Array = []
-var perk: Dictionary = {}   # perkMods from the skill tree, fixed for the match (kitUp)
 var frost_fields: Array = []
 var terr := PackedByteArray()
 var heights := PackedByteArray()
@@ -61,7 +63,7 @@ const BO := {"pay": 20, "payStep": 5, "purse": 40, "pushPay": 60, "bounty": 1.25
 const GAUNTLET := {"t": 210.0, "evac": 30.0, "every": 30.0, "waves": 6, "rimes": 2, "cap": 8, "hp": 1.1, "warn": 1.0, "apart": 3.0, "pool": ["whitebutcher", "whiteforeman", "tempest", "bulldozer", "bluebutcher", "arsonist"]}
 const MAP_EVAC := {"t": 15.0, "want": 8, "wantXL": 9}
 const CAMPAIGN := {"waves": 13, "maps": ["yard", "river", "quarry", "frost"], "bosses": ["whitebutcher", "whiteferryman", "whiteforeman", "rime"], "story": ["Secure the Yard and recover the mountain evacuation route.", "Cross Riverbend and recover the stranded supply convoy.", "Secure quarry power for the summit beacon.", "Hold Frostpeak. Break the Rime Colossus and signal evacuation."]}
-const STORM := {"slow": 0.8, "every": 2.0, "look": {"yard": {"name": "DUST STORM", "col": [196, 160, 104]}, "river": {"name": "RAIN AND FOG", "col": [150, 172, 190]}, "quarry": {"name": "ASH FALL", "col": [120, 112, 104]}}}
+const STORM := {"slow": 0.8, "every": 2.0, "pvpOn": 40.0, "pvpOff": 40.0, "look": {"yard": {"name": "DUST STORM", "col": [196, 160, 104]}, "river": {"name": "RAIN AND FOG", "col": [150, 172, 190]}, "quarry": {"name": "ASH FALL", "col": [120, 112, 104]}}}
 const BLITZ := {"waves": 15, "fb": 300.0, "evac": 60.0, "evacHot": 45.0, "every": 30.0, "everyDT": 20.0, "max": 10, "maxDT": 15, "cap": 4, "ring": 1.5, "ringHot": 1.0, "hold": 3.0, "fbHp": 0.85, "order": ["bluebutcher", "arsonist", "tempest", "harbinger", "bulldozer"]}
 const MODS := [{"id": "nopatch", "name": "NO PATCH-UPS", "what": "No core repair at the armory. Walls can still be fixed.", "modes": ["coop", "blitz"], "bonus": 10}, {"id": "alone", "name": "ON YOUR OWN", "what": "No Delgado. Nobody hands out materials, fixes walls or picks you up but your crew.", "modes": ["coop", "blitz"], "bonus": 20}, {"id": "firestorm", "name": "FIRESTORM", "what": "More firebrands from raid 1. Bigger, longer fires, and walls burn down faster.", "modes": ["coop", "blitz"], "bonus": 10}, {"id": "adrenaline", "name": "ADRENALINE", "what": "Everyone moves 20% faster. Lowers rewards a little.", "modes": ["coop", "blitz", "base", "ffa"], "bonus": -15}, {"id": "laststand", "name": "LAST STAND", "what": "Go down in a raid and you stay down until it ends, unless a teammate, Delgado or a quartermaster gets you up.", "modes": ["coop", "blitz"], "bonus": 10}, {"id": "elite", "name": "ELITE RAID", "what": "No riflemen: every raider is a special. Spotters mark you for the grenadiers and firebrands instead.", "modes": ["coop", "blitz"], "bonus": 15}, {"id": "bossrush", "name": "BOSS RUSH", "what": "A boss every other raid. The extra bosses pay 15-30 shards each; raids 5, 10, 15 keep their case.", "modes": ["coop"], "bonus": 10}, {"id": "weather", "name": "WEATHER", "what": "A storm every other raid. It slows everyone, raiders and Delgado too; players lose 1 health every 2 s in it.", "modes": ["coop", "blitz", "base", "ffa"], "bonus": 10}, {"id": "nightmare", "name": "NIGHTMARE", "what": "Always night. Raiders move, spot and fire faster, and any raid without a boss has a 1-in-12 surprise boss.", "modes": ["coop", "blitz", "base", "ffa"], "bonus": 15}, {"id": "berserk", "name": "BERSERK", "what": "Bosses attack about a third more often. Their warnings are just as long, and they move no faster.", "modes": ["coop", "blitz"], "bonus": 10}, {"id": "glass", "name": "GLASS CANNON", "what": "Everyone deals 50% more damage and has 30% less health.", "modes": ["base", "ffa"], "bonus": 0}, {"id": "onejob", "name": "ONE JOB", "what": "The host picks one job for everyone. No job changes.", "modes": ["base", "ffa"], "bonus": 0}, {"id": "scrap", "name": "SCRAP SHORTAGE", "what": "Kills pay half the salvage.", "modes": ["base"], "bonus": 0}, {"id": "frenzy", "name": "GRENADE FRENZY", "what": "A grenade comes back every 6 s, and blasts are a third bigger.", "modes": ["base", "ffa"], "bonus": 0}, {"id": "sudden", "name": "SUDDEN DEATH", "what": "The last minute: every drop counts double and nobody gets spawn protection.", "modes": ["ffa"], "bonus": 0}, {"id": "hotlz", "name": "HOT LZ", "what": "The evac site opens at 0:45 instead of 1:00, and the ring is a third smaller.", "modes": ["blitz"], "bonus": 15}, {"id": "blitzclock", "name": "DOUBLE TIME", "what": "Final Blitz bosses come every 20 s instead of 30 s: 15 of them, not 10. Still 4 at a time at most.", "modes": ["blitz"], "bonus": 15}, {"id": "barrage", "name": "ARTILLERY BARRAGE", "what": "Shells fall across the map during the evacuation. Each one shows where it lands first.", "modes": ["blitz"], "bonus": 10}, {"id": "lockdown", "name": "LOCKDOWN", "what": "The armory is shut for the last build before the Final Blitz (no upgrades, no core repair), and Delgado stops fixing walls once it starts.", "modes": ["blitz"], "bonus": 10}, {"id": "scorched", "name": "SCORCHED EARTH", "what": "Napalm burns 15 s instead of 10, the Blue Butcher's arc dust burns for its half second, and twin beams scorch the ground.", "modes": ["blitz"], "bonus": 10}]
 const PIT_POWER := 1.2
@@ -158,7 +160,11 @@ func toast(title: String, body: String) -> void:
 
 func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {}, opt: Dictionary = {}) -> void:
 	dispose()
-	perk = perks if not perks.is_empty() else PalProfile.new().perk_mods()
+	var pvp: String = opt.get("pvp", "")
+	if pvp != "base" and pvp != "ffa":
+		pvp = ""
+	my_id = opt.get("my_id", "solo")
+	guest = opt.get("guest", false)
 	if seed_v >= 0:
 		rng.seed = seed_v
 	else:
@@ -167,11 +173,20 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 	var mode: String = opt.get("mode", "5")
 	if not ["5", "10", "endless", "blitz", "campaign", "blackout"].has(mode):
 		mode = "5"
-	mods = clean_mods(opt.get("mods", []), mode)
-	map_id = "yard" if mode == "campaign" else ("city" if mode == "blackout" else opt.get("map", "yard"))
-	if not PalMaps.MAPS.has(map_id) and map_id != "city":
-		map_id = "yard"
-	lay = PalMaps.lay(map_id, opt.get("size", "std"))
+	if pvp != "":
+		Df = Pal.DIFF.normal
+		mods = clean_mods(opt.get("mods", []), pvp)
+		map_id = opt.get("map", "yard")
+		if not PalMaps.PVP_BLURB.has(map_id):
+			map_id = "yard"   # Frostpeak has no PvP layout: the Yard stands in
+		lay = PalMaps.lay_pvp(map_id, pvp)
+	else:
+		mods = clean_mods(opt.get("mods", []), mode)
+		map_id = "yard" if mode == "campaign" else ("city" if mode == "blackout" else opt.get("map", "yard"))
+		if not PalMaps.MAPS.has(map_id) and map_id != "city":
+			map_id = "yard"
+		lay = PalMaps.lay(map_id, opt.get("size", "std"))
+	var job: String = opt.get("job", "") if mods.has("onejob") and Pal.CLASSES.has(opt.get("job", "")) else ""
 	map_def = lay.map
 	N = lay.N
 	terr = lay.terr
@@ -196,9 +211,14 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 	chains.clear()
 	frost_fields.clear()
 	events.clear()
-	core = {"i": lay.core[0], "j": lay.core[1], "hp": float(Df.core), "max": float(Df.core), "flash": 0.0}
-	core_k = idx(core.i, core.j)
-	cores = [core]
+	if pvp == "base":
+		cores = []
+		for n in 2:
+			cores.append({"team": "b" if n else "a", "i": lay.cores[n][0], "j": lay.cores[n][1], "hp": Pal.PVP.stake, "max": Pal.PVP.stake, "flash": 0.0})
+	elif pvp == "ffa":
+		cores = []
+	else:
+		cores = [{"team": "", "i": lay.core[0], "j": lay.core[1], "hp": float(Df.core), "max": float(Df.core), "flash": 0.0}]
 	for p in lay.get("pois", []):   # City Black Out: the eight POIs are stakes too; only Main Command ends the run
 		var php := float(roundi(Df.core * (0.7 if p.major else 0.5)))
 		cores.append({"i": p.i, "j": p.j, "hp": php, "max": php, "flash": 0.0, "poi": p, "lost": false, "attack": false, "next": false})
@@ -215,24 +235,64 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 			var w := Pal.make_wall(r[1], false, r[2])
 			w.char = r[3]
 			walls[idx(t[0], t[1])] = w
+	for c in lay.get("cover", []):   # Free-for-all's cover can't be broken
+		var w := Pal.make_wall(3, false)
+		w.cov = c[2]
+		walls[idx(c[0], c[1])] = w
 	if mode == "campaign":   # the Yard's metal opens after raid 2 in the campaign
 		for n in nodes:
 			if n.locked and n.unlock > 3:
 				n.unlock = 3
 	var waves: float = INF if mode == "endless" else (float(BLITZ.waves) if mode == "blitz" else (float(CAMPAIGN.waves) if mode == "campaign" else (8.0 if mode == "blackout" else float(mode))))
-	game = {"phase": "build", "timer": BO.gather if mode == "blackout" else 40.0 + Df.build, "bo": null, "dark": false, "wave": 0, "waves": waves, "mode": mode, "queue": [], "spawnT": 0.0, "spawnGap": 1.1,
+	var timer: float = Pal.PVP.truce if pvp == "base" else (Pal.PVP.ffaTime if pvp == "ffa" else (BO.gather if mode == "blackout" else 40.0 + Df.build))
+	game = {"phase": "raid" if pvp == "ffa" else "build", "timer": timer, "pvp": pvp, "goal": Pal.PVP.ffaGoal, "winner": "", "sd": false, "wxT": 0.0, "job": job,
+		"gid": str(opt.get("gid", new_gid())).substr(0, 40), "prepEpoch": 0, "bo": null, "dark": false, "wave": 0, "waves": waves, "mode": mode, "queue": [], "spawnT": 0.0, "spawnGap": 1.1,
 		"time": 0.0, "sel": 0, "piece": "wall", "won": false, "paused": false, "bosses": 0, "fb": null, "wx": 0, "wxHit": 0.0,
 		"flood": {"t": 0.0, "warned": false}, "end_reason": "", "dellLv": 0, "chapter": 0, "diff": diff, "map": map_id, "size": opt.get("size", "std"),
 		"stats": {"built": 0, "lost": 0, "dropped": 0, "revives": 0, "repairs": 0},
 		"bossLog": [], "sbN": 0, "sbLog": [], "fbLog": []}
-	player = make_player(0, opt.get("cls", "soldier"))
-	var off: Array = [core.i - 4, core.j - 11]   # the spawn spots are laid out round a stake at (4,11)
-	player.x = 5.5 + off[0]
-	player.y = 11.5 + off[1]
-	if collides(player.x, player.y, R_ENT, true):
-		var at := spawn_near_core()
-		player.x = at.x
-		player.y = at.y
+	var roster: Array = opt.get("roster", [])
+	if roster.is_empty():
+		roster = [{"id": my_id, "name": opt.get("name", "YOU"), "cls": opt.get("cls", "soldier"), "cos": opt.get("cos", ""), "team": "", "sk": ""}]
+	players.clear()
+	for n in roster.size():
+		var r: Dictionary = roster[n]
+		var team: String = ""
+		if pvp == "base":
+			team = r.get("team", "") if r.get("team", "") in ["a", "b"] else ("b" if n % 2 else "a")
+		var q := make_player(str(r.id), job if job != "" else r.get("cls", "soldier"), n, team)
+		q.name = str(r.get("name", "PLAYER")).substr(0, 12)
+		q.cosS = str(r.get("cos", ""))
+		q.sk = str(r.get("sk", ""))
+		players[q.id] = q
+	player = players.get(my_id, players.values()[0])
+	if pvp == "base":
+		var cnt := {"a": 0, "b": 0}
+		var TS: Array = lay.teamSpawns
+		for q in players.values():
+			var sp: Array = TS[cnt[q.team] % TS.size()]
+			cnt[q.team] += 1
+			q.x = N - sp[0] if q.team == "b" else sp[0]
+			q.y = N - sp[1] if q.team == "b" else sp[1]
+	elif pvp == "ffa":
+		var n := 0
+		var S: Array = lay.pspawns
+		for q in players.values():
+			var sp: Array = S[(n * 5) % S.size()]
+			n += 1
+			q.x = sp[0]
+			q.y = sp[1]
+	core = cores[1 if player.team == "b" else 0] if pvp == "base" else (cores[0] if not cores.is_empty() else {"team": "", "i": -9, "j": -9, "hp": 1.0, "max": 1.0, "flash": 0.0})
+	core_k = idx(core.i, core.j) if not cores.is_empty() else -1
+	var off: Array = [0, 0] if pvp != "" else [core.i - 4, core.j - 11]   # the spawn spots are laid out round a stake at (4,11)
+	if pvp == "":
+		for q in players.values():
+			q.x += off[0]
+			q.y += off[1]
+			if collides(q.x, q.y, R_ENT, true):
+				var at := spawn_near_core()
+				q.x = at.x
+				q.y = at.y
 	qm = {"id": "dell", "x": 3.5 + off[0], "y": 11.5 + off[1], "hp": 180.0, "max": 180.0, "alive": true, "revive": 0.0, "aim": Vector2(1, 0), "face": Vector2(1, 0),
 		"cd": 0.0, "sup": 8.0, "gt": 0.0, "work": 0.0, "job": "", "jobKey": "", "next": -1, "pathT": 0.0, "scanT": 0.0, "planT": 0.0, "bcd": 0.0,
 		"foe": null, "walk": 0.0, "flash": 0.0, "mats": [24, 0, 0], "hurt": 9.0, "mode": "follow", "status": "", "completedRaids": 0,
@@ -241,7 +301,18 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 		var at := spawn_near_core()
 		qm.x = at.x
 		qm.y = at.y
-	if has_mod("alone"):   # On Your Own: Delgado sits it out
+	for q in players.values():   # kitUp: perks for this match (PvP halves them), then a full kit
+		if q.id == my_id and not perks.is_empty() and not guest:
+			q.perk = perks
+		else:
+			q.perk = PalProfile.perk_from(PalProfile.parse_skills(q.sk), pvp != "")
+		kit_up(q)
+		if pvp == "base":
+			q.sal = Pal.PVP.startSal
+		if pvp == "ffa":
+			q.mats = [0, 0, 0]
+			q.prot = Pal.PVP.prot
+	if pvp != "" or has_mod("alone"):   # Delgado sits PvP (and On Your Own) out
 		qm.alive = false
 		qm.gone = true
 		qm.x = -9.0
@@ -249,11 +320,27 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 	compute_flow()
 
 
-func make_player(id: int, cls: String = "soldier") -> Dictionary:
+## the shared game id every screen in a match agrees on (newGid: base-36 time, a dash, 12 random characters)
+func new_gid() -> String:
+	const A := "abcdefghijkmnpqrstuvwxyz23456789"
+	var s := ""
+	for i in 12:   # not the match's seeded stream: the id must not change what happens in a seeded game
+		s += A[randi() % A.length()]
+	var t := int(Time.get_unix_time_from_system() * 1000)
+	var b36 := ""
+	while t > 0:
+		b36 = "0123456789abcdefghijklmnopqrstuvwxyz"[t % 36] + b36
+		t /= 36
+	return b36 + "-" + s
+
+
+func make_player(id: String, cls: String = "soldier", slot: int = 0, team: String = "") -> Dictionary:
 	if not Pal.CLASSES.has(cls):
 		cls = "soldier"
 	var C: Dictionary = Pal.CLASSES[cls]
-	var p := {"id": id, "name": "YOU", "cls": cls, "C": C, "gun": C.gun, "x": 0.0, "y": 0.0, "hp": C.hp, "max": C.hp,
+	var sp: Array = PalMaps.SPAWNS[slot % PalMaps.SPAWNS.size()]
+	var p := {"id": id, "name": "YOU", "cls": cls, "slot": slot, "team": team, "C": C, "gun": C.gun, "x": float(sp[0]), "y": float(sp[1]), "hp": C.hp, "max": C.hp,
+		"perk": PalProfile.perk_from({}), "sk": "", "cosS": "", "tp": 0, "deaths": 0, "prot": 0.0, "ab": 0, "out": false, "nextCls": "", "seat": 0,
 		"alive": true, "downed": false, "revive": 0.0, "rt": 0.0, "mats": [24, 0, 0], "cap": C.cap.duplicate(),
 		"nades": C.nades, "maxN": C.nades, "ncd": 0.0, "blast": C.blast, "cd": 0.0, "bcd": 0.0, "gt": 0.0, "bLeft": 0,
 		"hurt": 9.0, "flash": 0.0, "walk": 0.0, "face": Vector2(0.7, -0.7).normalized(), "aim": Vector2(0.7, -0.7).normalized(), "fire_in": false,
@@ -362,24 +449,26 @@ func best_step(ti: int, tj: int) -> int:
 # ---------------------------------------------------------------- collision
 
 ## team: false for raiders (doors are walls), true for the crew (doors open)
-func solid_tile(i: int, j: int, team: bool) -> bool:
+func solid_tile(i: int, j: int, team = false) -> bool:
 	if not inb(i, j):
 		return true
 	var k := idx(i, j)
 	if core_ks.has(k) or PalMaps.terr_solid(terr[k]):
 		return true
 	var w = walls[k]
-	if w != null:
-		return not (team and w.door)
+	if w != null:   # doors let the crew through (in Base Battle, only their own side's)
+		return not (team is String and w.door and w.get("tm", "") == team or team is bool and team and w.door)
 	var n = node_at(i, j)
 	return n != null and n.solid
 
 
-func collides(x: float, y: float, r: float, team: bool) -> bool:
+func collides(x: float, y: float, r: float, team = false) -> bool:
 	if x - r < 0 or y - r < 0 or x + r > N or y + r > N:
 		return true
 	if height_collision(x, y, r):
 		return true
+	if team is String and game.get("pvp", "") == "base" and game.phase == "build" and (x - y > -0.35 if team == "a" else x - y < 0.35):
+		return true   # the truce line
 	for i in range(floori(x - r), floori(x + r) + 1):
 		for j in range(floori(y - r), floori(y + r) + 1):
 			if solid_tile(i, j, team):
@@ -387,7 +476,7 @@ func collides(x: float, y: float, r: float, team: bool) -> bool:
 	return false
 
 
-func move_ent(e: Dictionary, dx: float, dy: float, team: bool) -> void:
+func move_ent(e: Dictionary, dx: float, dy: float, team = false) -> void:
 	if not is_frost():
 		if not collides(e.x + dx, e.y, R_ENT, team):
 			e.x += dx
@@ -450,10 +539,12 @@ func damage_wall(k: int, amt: float, own = null) -> void:
 		game.stats.lost += 1
 		var i := k % N
 		var j := k / N
-		if own is int and own == player.id and not w.crew:   # wallPays: the old ruins pay, your own walls never do
+		var by = payer(own)   # walls[k] is already empty, so this can only pay once
+		if by != null and wall_pays(w, by):
 			var v: int = Pal.WALL_SALVAGE[w.mat]
-			player.sal += v
+			by.sal += v
 			flt(i + 0.5, j + 0.3, "+%d SALVAGE · %s DOWN" % [v, Pal.MAT[w.mat].name], "#e2b436")
+			personal(by, "restock")
 		emit(i + 0.5, j + 0.5, "chunk", 14, w.mat)
 		emit(i + 0.5, j + 0.5, "dust", 6, w.mat)
 		sfx("collapse", i + 0.5, j + 0.5)
@@ -461,18 +552,70 @@ func damage_wall(k: int, amt: float, own = null) -> void:
 
 
 func any_up(p: Dictionary) -> bool:
-	return qm.alive and not qm.get("gone", false)
+	if qm.alive and not qm.get("gone", false):
+		return true
+	for o in players.values():
+		if not is_same(o, p) and o.alive:
+			return true
+	return false
 
 
-func hurt_player(p: Dictionary, d: float) -> void:
-	if not p.alive:
+## who can hurt whom, and which doors let you through (04-state-armory.js pt, rivals, stakeOf)
+func pvp() -> String:
+	return game.get("pvp", "")
+
+
+func pt(p: Dictionary):
+	return p.team if pvp() == "base" else true
+
+
+func rivals(a: Dictionary, b: Dictionary) -> bool:
+	return pvp() != "" and not is_same(a, b) and (pvp() == "ffa" or a.team != b.team)
+
+
+func stake_of(p: Dictionary):
+	return cores[1 if p.team == "b" else 0] if pvp() == "base" else core
+
+
+## a raid's or truce's wall, door or salvage belongs to whoever built it; the crew's own walls never pay
+func wall_pays(w: Dictionary, p) -> bool:
+	if pvp() == "ffa" or p == null or w.get("slab", false):
+		return false
+	if w.get("tm", "") != "":
+		return w.tm != p.team
+	return not w.get("crew", false)
+
+
+func payer(own):   # the soldier a bullet, grenade or fire belongs to; null for Delgado and raiders
+	return players.get(own) if own is String else null
+
+
+## a sound (or a screen feel) only that soldier's screen gets: here it's an event the host forwards
+func personal(p: Dictionary, name: String) -> void:
+	ev({"k": "personal", "id": p.id, "name": name})
+
+
+func toast_to(p: Dictionary, title: String, body: String) -> void:
+	if p.id == my_id:
+		toast(title, body)
+	else:
+		ev({"k": "toast_to", "id": p.id, "title": title, "body": body})
+
+
+func hurt_player(p: Dictionary, d: float, own = null) -> void:
+	if not p.alive or (pvp() != "" and p.prot > 0):
 		return
-	d *= perk.vest   # Kevlar
+	d *= p.perk.vest   # Kevlar
+	if pvp() != "" and has_mod("glass"):   # Glass Cannon hits harder
+		d *= 1.5
 	p.hp -= d
 	p.hurt = 0.0
 	p.flash = 0.1
-	sfx("hurt")
+	personal(p, "hurt")
 	emit(p.x, p.y, "blood")
+	if p.hp <= 0 and pvp() != "":
+		pvp_down(p, own)
+		return
 	if p.hp <= 0:
 		var help := any_up(p)
 		var last: bool = has_mod("laststand") and game.phase == "raid"
@@ -481,7 +624,47 @@ func hurt_player(p: Dictionary, d: float) -> void:
 		p.hp = 0.0
 		p.revive = 0.0
 		p.rt = 1e6 if last else (10.0 if help else 4.0)
-		toast("DOWN", "Last Stand: you're down until this raid is broken, unless someone gets you up." if last else ("Hang on. Delgado or a teammate can pick you up." if help else "Back at the stake in a few seconds."))
+		toast_to(p, "DOWN", "Last Stand: you're down until this raid is broken, unless someone gets you up." if last else ("Hang on. Delgado or a teammate can pick you up." if help else "Back at the stake in a few seconds."))
+		if players.size() > 1:
+			flt(p.x, p.y, "%s IS DOWN" % p.name.to_upper(), "#d65a3a")
+
+
+func pvp_down(p: Dictionary, own) -> void:
+	p.alive = false
+	p.downed = true
+	p.hp = 0.0
+	p.revive = 0.0
+	p.deaths += 1
+	var k = payer(own) if own != p.id else null
+	sfx("drop", p.x, p.y)
+	emit(p.x, p.y, "blood", 6)
+	if k != null:
+		k.kills += 2 if game.sd else 1
+		if pvp() == "base":
+			var v: int = ceili(Pal.PVP.bounty / 2.0) if has_mod("scrap") else Pal.PVP.bounty
+			k.sal += v
+			flt(p.x, p.y - 0.25, "+%d" % v, "#e2b436")
+		ev({"k": "killfx", "x": p.x, "y": p.y, "fx": k.get("kfx", "none"), "id": k.id})
+		personal(k, "restock")
+	ev({"k": "feed", "text": "%s ▸ %s" % [k.name.to_upper(), p.name.to_upper()] if k != null else "%s WENT DOWN" % p.name.to_upper(), "col": team_col(k) if k != null else "#9a8f7a"})
+	if pvp() == "base":
+		var help := false
+		for o in players.values():
+			if not is_same(o, p) and o.alive and o.team == p.team:
+				help = true
+		p.rt = 8.0 if help else 5.0
+		toast_to(p, "DOWN", "A teammate can pick you up. If not, you're back at your stake shortly." if help else "Back at your stake in a few seconds.")
+	else:
+		p.rt = 3.0
+		toast_to(p, "DROPPED", ("%s got you. Back in 3 seconds." % k.name) if k != null else "Back in 3 seconds.")
+		if k != null and k.kills >= game.goal:
+			end_pvp(k.id)
+
+
+func team_col(p: Dictionary) -> String:
+	if pvp() == "base" and Pal.TEAMS.has(p.team):
+		return Pal.TEAMS[p.team].col
+	return "#e0664a" if pvp() == "ffa" else Pal.SLOTCOL[int(p.slot) % 6]
 
 
 func hurt_qm(d: float) -> void:
@@ -518,9 +701,10 @@ func hurt_enemy(e: Dictionary, d: float, own = null, quiet: bool = false) -> voi
 		emit(e.x, e.y, "blood", 6)
 		if e.type == "boss":
 			boss_down(e, own)
-			if own is int and own == player.id:
-				player.kills += 1
-				ev({"k": "killfx", "x": e.x, "y": e.y, "fx": player.get("kfx", "none")})
+			var p = payer(own)
+			if p != null:
+				p.kills += 1
+				ev({"k": "killfx", "x": e.x, "y": e.y, "fx": p.get("kfx", "none"), "id": p.id})
 		else:
 			award(own, e)
 
@@ -563,9 +747,10 @@ func explode(x: float, y: float, R: float = 1.65, power: float = 1.0, own = null
 					w.fire_by = own
 				damage_wall(k, 80.0 * f * power * Pal.MAT[w.mat].blast, own)
 	crack_blast(x, y, R, power)
+	var src = payer(own)
 	for c in cores:
 		var fc: float = fall.call(hdist(x, y, c.i + 0.5, c.j + 0.5))
-		if fc > 0:
+		if fc > 0 and not (pvp() != "" and src != null and src.team == c.team):
 			hurt_stake(48.0 * fc * power, c)
 	if not raid:   # a raider's rocket or charge doesn't hurt raiders
 		for e in enemies:
@@ -574,6 +759,14 @@ func explode(x: float, y: float, R: float = 1.65, power: float = 1.0, own = null
 			var f: float = fall.call(hdist(x, y, e.x, e.y))
 			if f > 0:
 				hurt_enemy(e, 62.0 * f * power, own)
+	if pvp() != "":
+		for a in players.values():
+			if not a.alive or (src != null and not rivals(src, a)):
+				continue
+			var f: float = fall.call(Vector2(a.x - x, a.y - y).length())
+			if f > 0:
+				hurt_player(a, 50.0 * f * power * Pal.PVP.nade, own)
+		return
 	for a in allies():
 		if not a.alive:
 			continue
@@ -584,9 +777,10 @@ func explode(x: float, y: float, R: float = 1.65, power: float = 1.0, own = null
 
 func allies() -> Array:
 	var out: Array = []
-	if player.alive:
-		out.append(player)
-	if qm.alive and not qm.get("gone", false):
+	for p in players.values():
+		if p.alive:
+			out.append(p)
+	if pvp() == "" and qm.alive and not qm.get("gone", false):
 		out.append(qm)
 	return out
 
@@ -611,6 +805,9 @@ func build_eval(p: Dictionary, i: int, j: int, sel: int, door: bool) -> Dictiona
 		t.reason = "That is the fence line"
 		return t
 	var k := idx(i, j)
+	if pvp() == "ffa":
+		t.reason = "No building in free-for-all"
+		return t
 	if core_ks.has(k):
 		t.reason = "That is the stake"
 		return t
@@ -621,6 +818,14 @@ func build_eval(p: Dictionary, i: int, j: int, sel: int, door: bool) -> Dictiona
 	if tb != "":
 		t.reason = tb
 		return t
+	if pvp() == "base":
+		if game.phase == "build" and (i - j > -1 if p.team == "a" else i - j < 1):
+			t.reason = "Your side of the truce line"
+			return t
+		var ec: Dictionary = cores[1 if p.team == "a" else 0]
+		if maxi(absi(i - ec.i), absi(j - ec.j)) <= 1:
+			t.reason = "Too close to their stake"
+			return t
 	var near := func(o: Dictionary) -> bool: return absf(o.x - (i + 0.5)) < 0.77 and absf(o.y - (j + 0.5)) < 0.77
 	for e in enemies:
 		if near.call(e):
@@ -628,12 +833,19 @@ func build_eval(p: Dictionary, i: int, j: int, sel: int, door: bool) -> Dictiona
 			return t
 	var w = walls[k]
 	if not door and w == null:
-		if near.call(qm):
+		for o in players.values():
+			if not is_same(o, p) and (o.alive or o.downed) and near.call(o):
+				t.reason = "Someone is in the way" if pvp() != "" else "Teammate in the way"
+				return t
+		if pvp() == "" and near.call(qm):
 			t.reason = "Delgado is standing there"
 			return t
 	if w == null:
 		t.cost = Pal.DOOR_COST if door else Pal.WALL_COST
 		t.act = "DOOR" if door else "PLACE"
+	elif pvp() == "base" and w.get("tm", "") != "" and w.tm != p.team:
+		t.reason = "Their door" if w.door else "Their wall"
+		return t
 	elif sel > w.mat:
 		t.act = "UPGRADE"
 		t.door = w.door
@@ -666,7 +878,7 @@ func do_build(p: Dictionary, i: int, j: int, sel: int, door: bool) -> void:
 		return
 	var t := build_eval(p, i, j, clampi(sel, 0, 2), door)
 	if not t.ok:
-		sfx("deny")
+		personal(p, "deny")
 		return
 	var k := idx(t.i, t.j)
 	var prev = walls[k]
@@ -682,20 +894,24 @@ func do_build(p: Dictionary, i: int, j: int, sel: int, door: bool) -> void:
 		walls[k].flash = 0.1
 		debris[k] = 0
 	walls[k].crew = true   # a wall a player built on, fixed or changed is theirs now: it won't pay salvage
-	if collides(p.x, p.y, R_ENT, true):
+	if pvp() == "base":
+		walls[k].tm = p.team
+	var team = pt(p) if p.has("team") else true
+	if collides(p.x, p.y, R_ENT, team):
 		var ok := false
 		for s in range(1, 11):
 			var nx: float = p.x - p.face.x * 0.1 * s
 			var ny: float = p.y - p.face.y * 0.1 * s
-			if not collides(nx, ny, R_ENT, true):
+			if not collides(nx, ny, R_ENT, team):
 				p.x = nx
 				p.y = ny
 				ok = true
 				break
 		if not ok:
 			walls[k] = prev
-			sfx("deny")
+			personal(p, "deny")
 			return
+		p.tp = p.get("tp", 0) + 1
 	p.mats[t.mat] -= t.cost
 	var C: Dictionary = p.C
 	p.bcd = Pal.MAT[t.mat].cd * (C.build if t.mat == 0 else (C.build + 1.0) / 2.0)
@@ -730,7 +946,7 @@ func throw_nade(p: Dictionary, tx: float, ty: float) -> void:
 	var R := 1.65 * (1.15 if p.C.blast > 1 else 1.0) * (1.0 + arm_boost(p.up.n, 0.05, 0.0125))
 	lobs.append({"x0": p.x, "y0": p.y, "x1": tx, "y1": ty, "t": 0.0, "T": 0.5 + d * 0.08, "R": R, "power": p.blast, "own": p.id})
 	p.nades -= 1
-	p.ncd = p.C.nadeCd * perk.reload
+	p.ncd = p.C.nadeCd * p.perk.reload
 	sfx("lob", p.x, p.y)
 
 
@@ -748,9 +964,9 @@ func shoot(p: Dictionary, G: Dictionary, late: float) -> void:
 		fire(p, a + (rnd() - 0.5) * G.spread, 0, G, late)
 	var am = null
 	if p.has("ammoEq") and p.ammoEq[0] != "":
-		am = [[p.ammoEq[0], perk.ammo.get(p.ammoEq[0], 0)]]
+		am = [[p.ammoEq[0], p.perk.ammo.get(p.ammoEq[0], 0)]]
 		if p.ammoEq[1] != "":
-			am.append([p.ammoEq[1], perk.ammo.get(p.ammoEq[1], 0)])
+			am.append([p.ammoEq[1], p.perk.ammo.get(p.ammoEq[1], 0)])
 	var tc := 0
 	var cyc: int = p.get("tcyc", 0)   # a flag tracer: one colour per round, shared by its pellets
 	if cyc > 0:
@@ -770,7 +986,7 @@ func fire(from: Dictionary, ang: float, team: int, gun: Dictionary, late: float 
 	var zh := bullet_height(from, ang, gun.range)
 	bullet_seq += 1
 	bullets.append({"id": bullet_seq, "x": from.x + cos(ang) * ahead, "y": from.y + sin(ang) * ahead,
-		"vx": cos(ang) * gun.speed, "vy": sin(ang) * gun.speed, "team": team, "dmg": gun.dmg, "dist": ahead - 0.33,
+		"vx": cos(ang) * gun.speed, "vy": sin(ang) * gun.speed, "team": team, "pt": from.get("team", "") if from.get("team") is String else "", "dmg": gun.dmg, "dist": ahead - 0.33,
 		"over": gun.get("over", true), "skipped": false, "last": -1, "range": gun.range, "own": own, "dead": false,
 		"fall": gun.get("fall"), "pel": gun.get("pellets", 1) > 1, "shield_contact": -1, "pierce": gun.get("pierce", 0), "heavy": gun.has("pierce"),
 		"z0": zh[0] + zh[1] * 0.33, "zSlope": zh[1]})
@@ -789,9 +1005,13 @@ func update(dt: float, ctl: Dictionary = {}) -> void:
 	for c in cores:
 		c.flash = maxf(0.0, c.flash - dt)
 	update_flood(dt)
-	if game.phase == "raid":
+	if pvp() == "" and game.phase == "raid":
 		storm_tick(dt)
-	if game.phase == "build":
+	if pvp() != "":
+		update_pvp(dt)
+		if game.phase == "over":
+			return
+	elif game.phase == "build":
 		game.timer -= dt
 		if blackout():
 			bo_gather()
@@ -824,7 +1044,8 @@ func update(dt: float, ctl: Dictionary = {}) -> void:
 			compute_flow()
 			flow_dirty = false
 	control_local(dt, ctl)
-	sim_player(player, dt)
+	for p in players.values():
+		sim_player(p, dt)
 	if not qm.get("gone", false):
 		update_qm(dt)
 	update_enemies(dt)
@@ -838,7 +1059,16 @@ func update(dt: float, ctl: Dictionary = {}) -> void:
 	update_walls(dt)
 	update_nodes(dt)
 	update_chains(dt)
-	if core.hp <= 0 and game.phase != "over":
+	if pvp() == "base":
+		for c in cores:
+			if c.hp <= 0 and game.phase != "over":
+				c.hp = 0.0
+				explode(c.i + 0.5, c.j + 0.5, 1.8, 1.3)
+				end_pvp("b" if c.team == "a" else "a")
+				return
+	elif pvp() == "ffa":
+		pass
+	elif core.hp <= 0 and game.phase != "over" and not (game.fb != null and game.fb.get("evac") != null):   # once the evacuation starts, the core no longer decides it
 		core.hp = 0.0
 		explode(core.i + 0.5, core.j + 0.5, 1.8, 1.3)
 		end_game(false)
@@ -846,12 +1076,64 @@ func update(dt: float, ctl: Dictionary = {}) -> void:
 		check_dead_end()
 
 
+## Base Battle: the truce, then the battle clock. Free-for-all: the match clock; most drops (then fewest deaths) wins.
+func update_pvp(dt: float) -> void:
+	storm_tick(dt)
+	if has_mod("sudden") and pvp() == "ffa" and not game.sd and game.timer <= 60:
+		game.sd = true
+		for p in players.values():
+			p.prot = 0.0
+		toast("SUDDEN DEATH", "One minute left. Every drop counts double, and nobody gets spawn protection.")
+	if game.phase == "build":
+		game.timer -= dt
+		if game.timer <= 0:
+			start_battle()
+	elif pvp() == "ffa":
+		game.timer -= dt
+		if game.timer <= 0:
+			var best = null
+			for p in players.values():
+				if best == null or p.kills > best.kills or (p.kills == best.kills and p.deaths < best.deaths):
+					best = p
+			end_pvp(best.id if best != null else "")
+	else:
+		game.timer += dt
+
+
+func start_battle() -> void:
+	if pvp() != "base" or game.phase != "build":
+		return
+	game.phase = "raid"
+	game.timer = 0.0
+	sfx("siren")
+	for p in players.values():
+		p.sal += 10
+	game.wxT = 0.0
+	toast("BATTLE", "The truce is over. Knock down their stake, keep yours standing.")
+
+
+func end_pvp(winner: String) -> void:
+	if game.phase == "over":
+		return
+	game.phase = "over"
+	game.winner = winner
+	bullets.clear()
+	lobs.clear()
+	rockets.clear()
+	fires.clear()
+	game.won = player.team == winner if pvp() == "base" else player.id == winner
+	game.end_reason = "pvp"
+	ev({"k": "over", "win": game.won})
+
+
+func truce() -> bool:
+	return pvp() == "base" and game.phase == "build"
+
+
 func control_local(dt: float, ctl: Dictionary) -> void:
 	var p := player
 	p.fire_in = false
-	p.rkCd = maxf(0.0, p.rkCd - dt)
-	p.stun = maxf(0.0, p.stun - dt)
-	if not p.alive:
+	if not p.alive or guest:
 		return
 	var mv: Vector2 = ctl.get("move", Vector2.ZERO)
 	var mag := minf(1.0, mv.length())
@@ -860,8 +1142,8 @@ func control_local(dt: float, ctl: Dictionary) -> void:
 	var spr: bool = p.sprT > 0
 	if mag > 0.12:
 		var d := mv.normalized()
-		var sp: float = 3.3 * mag * p.C.spd * (Pal.SPRINT.mult if spr else 1.0) * (0.45 if p.stun > 0 else 1.0) * slow_at(p.x, p.y) * perk.speed * (1.2 if has_mod("adrenaline") else 1.0)
-		move_ent(p, d.x * sp * dt, d.y * sp * dt, true)
+		var sp: float = 3.3 * mag * p.C.spd * (Pal.SPRINT.mult if spr else 1.0) * (0.45 if p.stun > 0 else 1.0) * slow_at(p.x, p.y) * p.perk.speed * (1.2 if has_mod("adrenaline") else 1.0)
+		move_ent(p, d.x * sp * dt, d.y * sp * dt, pt(p))
 		p.walk += dt * mag * (13.0 if spr else 10.0)
 		p.move_dir = d
 		if spr and rnd() < dt * 14:
@@ -898,11 +1180,22 @@ func sim_player(p: Dictionary, dt: float) -> void:
 	p.gt = maxf(p.gt - dt, -dt)
 	p.ncd -= dt
 	p.flash = maxf(0.0, p.flash - dt)
-	sim_ability(p, dt)
+	p.stun = maxf(0.0, p.stun - dt)
+	p.prot = maxf(0.0, p.prot - dt)
+	if pvp() == "":
+		sim_ability(p, dt)
+	elif p.ab:
+		p.ab = 0
+	frenzy_tick(p, dt)
 	if not p.alive:
 		p.bLeft = 0
 		if not p.downed:
 			return
+		if pvp() != "ffa":   # Back On Your Feet: either side's perk counts
+			for o in players.values():
+				if not is_same(o, p) and o.alive and d2(o, p) < 1 and (pvp() == "" or o.team == p.team):
+					p.revive += dt * o.perk.revive * p.perk.revive * bo_revive_mul(p)
+					break
 		if p.revive >= 2.2:
 			revive_player(p)
 			return
@@ -916,9 +1209,13 @@ func sim_player(p: Dictionary, dt: float) -> void:
 				sacks.append({"x": p.x, "y": p.y, "mats": m})
 			for i in 3:
 				p.mats[i] -= m[i]
-			var at := respawn_at()
+			var at := respawn_at(p)
 			p.x = at.x
 			p.y = at.y
+			p.tp += 1
+			if pvp() == "ffa" and p.nextCls != "":   # the job picked for the next life
+				change_class(p, p.nextCls)
+				p.nextCls = ""
 			p.alive = true
 			p.downed = false
 			p.hp = p.max
@@ -928,7 +1225,12 @@ func sim_player(p: Dictionary, dt: float) -> void:
 			if p.gun.has("mag"):
 				p.ammo = p.gun.mag
 				p.rl = 0.0
-			toast("BACK AT THE STAKE", "Half your pack is in a sack where you fell." if any_m else "")
+			if pvp() != "":
+				p.prot = 0.0 if game.sd else Pal.PVP.prot
+				p.nades = maxi(p.nades, p.maxN)
+				toast_to(p, "BACK IN" if pvp() == "ffa" else "BACK AT YOUR STAKE", "Half your pack is in a sack where you fell." if any_m else "")
+			else:
+				toast_to(p, "BACK AT THE STAKE", "Half your pack is in a sack where you fell." if any_m else "")
 		return
 	var G: Dictionary = p.gun
 	# cooldowns keep leftover time, so the fire rate is the same at any frame rate. Bolt-action: holding the trigger
@@ -955,14 +1257,22 @@ func sim_player(p: Dictionary, dt: float) -> void:
 	var mag: int = G.get("mag", 0)
 	if mag > 0 and p.ammo < 0:
 		p.ammo = mag
-	if want and mag > 0 and p.ammo <= 0:
+	if want and truce():
+		p.cd = maxf(p.cd, 0.0)
+		p.pullUsed = p.pullIn
+		if not game.get("truceTold", false) and p.id == my_id:
+			game.truceTold = true
+			toast("TRUCE", "No shooting until the battle starts. Build.")
+	elif want and mag > 0 and p.ammo <= 0:
 		p.cd = maxf(p.cd, 0.0)
 		if semi or pump:
 			p.pullUsed = p.pullIn
 		if p.dryT <= 0:
 			p.dryT = 0.45
-			sfx("dry")
+			personal(p, "dry")
 	elif want or p.bLeft > 0:
+		p.prot = 0.0
+		var slow: float = Pal.PVP.snipeCd if pvp() != "" and G.get("pierce", false) else 1.0
 		var n := 0
 		while p.cd <= 0 and n < (1 if G.get("bolt", false) else 6) and not (mag > 0 and p.ammo <= 0):
 			if G.get("burst", false):
@@ -972,7 +1282,7 @@ func sim_player(p: Dictionary, dt: float) -> void:
 					p.bLeft = Pal.burst_n(p.up_d)
 				p.bLeft -= 1
 			shoot(p, G, -p.cd)
-			p.cd += Pal.burst_gap(p.up_d) if G.get("burst", false) and p.bLeft == 0 else G.cd   # after a burst's last round: the pause
+			p.cd += Pal.burst_gap(p.up_d) if G.get("burst", false) and p.bLeft == 0 else G.cd * slow   # after a burst's last round: the pause
 			n += 1
 			if mag > 0:
 				p.ammo -= 1
@@ -985,7 +1295,7 @@ func sim_player(p: Dictionary, dt: float) -> void:
 			p.rl = 0.0
 			if G.get("bolt", false):
 				p.pullUsed = p.pullIn
-				p.boltT = (minf(G.cd, 0.36) if pump else G.cd) * 0.92
+				p.boltT = (minf(G.cd, 0.36) if pump else G.cd) * slow * 0.92
 				p.bolt = p.boltT
 				if p.cd < 0:
 					p.cd = 0.0
@@ -1017,7 +1327,8 @@ func sim_player(p: Dictionary, dt: float) -> void:
 			p.mats[nd.type] += y
 			if nd.type == 0:
 				nd.amt -= y
-			p.gt += Pal.RATE[nd.type] * p.C.get("gather", 1.0) * perk.gather
+			p.gt += Pal.RATE[nd.type] * p.C.get("gather", 1.0) * p.perk.gather
+			personal(p, "gather")
 			emit(nd.i + 0.5, nd.j + 0.5, "splinter" if nd.type == 0 else ("dust" if nd.type == 1 else "spark"), 1, nd.type)
 	for s in range(sacks.size() - 1, -1, -1):
 		var sk: Dictionary = sacks[s]
@@ -1025,28 +1336,76 @@ func sim_player(p: Dictionary, dt: float) -> void:
 			for m in 3:
 				p.mats[m] = mini(p.cap[m], p.mats[m] + sk.mats[m])
 			sacks.remove_at(s)
+			personal(p, "gather")
 			flt(p.x, p.y, "PACK RECOVERED")
-	if p.hurt > perk.regenAfter:   # Second Wind
-		p.hp = minf(p.max, p.hp + perk.regen * dt)
+	if p.hurt > p.perk.regenAfter and not game.wx:   # Second Wind; no healing in a storm
+		p.hp = minf(p.max, p.hp + p.perk.regen * dt)
 
 
-func revive_player(p: Dictionary) -> void:
+func revive_player(p: Dictionary, by = null) -> bool:
+	if p.alive or not p.downed:   # already up: a revive can only land once
+		return false
 	p.alive = true
 	p.downed = false
-	p.hp = p.max * 0.45
+	p.hp = p.max * (0.6 if by != null else 0.45)
 	p.hurt = 0.0
 	p.revive = 0.0
 	game.stats.revives += 1
-	flt(p.x, p.y, "REVIVED", "#a9bccb")
+	if by != null:
+		p.prot = maxf(p.prot, 0.6)
+		flt(p.x, p.y, "PATCHED UP BY %s" % by.name.to_upper(), "#8fe0a0")
+		sfx("medic", p.x, p.y)
+		emit(p.x, p.y, "heal", 3)
+		personal(by, "restock")
+	else:
+		flt(p.x, p.y, "REVIVED", "#a9bccb")
+		sfx("revive", p.x, p.y)
+	return true
 
 
-func respawn_at() -> Vector2:
-	for s in [[5.5, 11.5], [5.5, 12.5], [3.5, 12.5], [4.5, 12.5], [5.5, 10.5], [3.5, 10.5]]:
-		var x: float = s[0] + core.i - 4
-		var y: float = s[1] + core.j - 11
-		if not collides(x, y, R_ENT, true):
-			return Vector2(x, y)
-	return Vector2(core.i + 1.5, core.j + 0.5)
+## respawnAt: next to the stake in co-op; in Base Battle by your own stake; in Free-for-all the arena spot furthest
+## from everyone still standing
+func respawn_at(p: Dictionary) -> Vector2:
+	if pvp() == "ffa":
+		var S: Array = lay.pspawns
+		var best: Array = S[0]
+		var bd := -1.0
+		for sp in S:
+			var m := 1e9
+			for o in players.values():
+				if not is_same(o, p) and o.alive:
+					m = minf(m, Vector2(o.x - sp[0], o.y - sp[1]).length())
+			m += rnd() * 0.5
+			if m > bd:
+				bd = m
+				best = sp
+		return Vector2(best[0], best[1])
+	if pvp() == "base":
+		return spawn_near_core(stake_of(p), p.team)
+	return spawn_near_core()
+
+
+## Black Out: teammates get up 50% faster near a held Hospital
+func bo_revive_mul(p: Dictionary) -> float:
+	if not blackout():
+		return 1.0
+	for c in cores:
+		if c.has("poi") and c.poi.perk == "heal":
+			return 1.5 if not c.lost and Vector2(p.x - c.i - 0.5, p.y - c.j - 0.5).length() < BO.healR else 1.0
+	return 1.0
+
+
+func frenzy_tick(p: Dictionary, dt: float) -> void:   # Grenade Frenzy: a grenade back every 6 s
+	if not has_mod("frenzy") or not p.alive:
+		return
+	if p.nades >= p.maxN:
+		p.nfT = 0.0
+		return
+	p.nfT = p.get("nfT", 0.0) + dt
+	if p.nfT >= 6:
+		p.nfT = 0.0
+		p.nades += 1
+		personal(p, "restock")
 
 
 ## Delgado stands his post at the stake for now; his gathering and repair AI (13-dell.js) is a later phase.
@@ -1065,7 +1424,13 @@ func update_qm(dt: float) -> void:
 		if w != null and w.get("skip", 0.0) > 0:
 			w.skip -= dt
 	if not q.alive:
-		if player.alive and d2(player, q) < 1.0:
+		var helper = null
+		var hd := 1e9
+		for p in players.values():
+			if p.alive and d2(p, q) < hd:
+				hd = d2(p, q)
+				helper = p
+		if helper != null and hd < 1.0:
 			q.revive += dt
 			if q.revive >= 2:
 				q.alive = true
@@ -1111,7 +1476,7 @@ func update_qm(dt: float) -> void:
 			"revive":
 				busy = true
 				if job.who.downed:
-					job.who.revive += dt * perk.revive
+					job.who.revive += dt * job.who.perk.revive
 			"construct":
 				busy = true
 				q.face = q.aim
@@ -1195,12 +1560,15 @@ func update_qm(dt: float) -> void:
 				q.cd += DG.cd
 			sfx("shotgun", q.x, q.y)
 	if q.sup <= 0:
-		var p := player
-		if p.alive and d2(p, q) < 1.7 and (p.nades < p.maxN or p.hp < p.max * 0.7):
-			p.nades = mini(p.maxN + 1, p.nades + 1)
-			p.hp = minf(p.max, p.hp + 35)
-			flt(p.x, p.y, "RESTOCK · +1 NADE", "#e2b436")
-			sfx("restock", p.x, p.y)
+		var gave := false
+		for p in players.values():
+			if p.alive and d2(p, q) < 1.7 and (p.nades < p.maxN or p.hp < p.max * 0.7):
+				p.nades = mini(p.maxN + 1, p.nades + 1)
+				p.hp = minf(p.max, p.hp + 35)
+				flt(p.x, p.y, "RESTOCK · +1 NADE", "#e2b436")
+				sfx("restock", p.x, p.y)
+				gave = true
+		if gave:
 			q.sup = 30.0
 
 
@@ -1213,19 +1581,20 @@ func start_build(dur: float) -> void:
 	game.phase = "build"
 	game.timer = dur
 	game.wx = 0
+	game.prepEpoch = game.get("prepEpoch", 0) + 1
 	var pay: int = 8 + game.wave
-	player.sal += pay
-	var p := player
-	p.nades = maxi(p.nades, p.maxN)
-	if p.downed:
-		p.alive = true
-		p.downed = false
-		p.revive = 0.0
-	p.hp = p.max
-	p.stun = 0.0
-	if p.gun.has("mag"):
-		p.ammo = p.gun.mag
-		p.rl = 0.0
+	for p in players.values():
+		p.sal += pay
+		p.nades = maxi(p.nades, p.maxN)
+		if p.downed:
+			p.alive = true
+			p.downed = false
+			p.revive = 0.0
+		p.hp = p.max
+		p.stun = 0.0
+		if p.gun.has("mag"):
+			p.ammo = p.gun.mag
+			p.rl = 0.0
 	if not qm.alive and not qm.get("gone", false):
 		qm.alive = true
 		var at := spawn_near_core()
@@ -1233,8 +1602,9 @@ func start_build(dur: float) -> void:
 		qm.y = at.y
 		flt(qm.x, qm.y, "DELGADO IS BACK", "#a9bccb")
 	qm.hp = qm.max
-	if p.cls == "soldier":
-		p.rk = mini(abil_rockets(p), p.rk + ABIL_ROCKET.refill)   # refillAbilities
+	for p in players.values():
+		if p.cls == "soldier":
+			p.rk = mini(abil_rockets(p), p.rk + ABIL_ROCKET.refill)   # refillAbilities
 	var note := "Grenades refilled." if qm.get("gone", false) else "Grenades refilled. Delgado will head out for materials."
 	for n in nodes:
 		if n.locked and n.unlock == game.wave + 1:
@@ -1727,8 +2097,11 @@ func update_bullets(dt: float) -> void:
 				b.dead = true
 				break
 			if core_ks.has(k) and bullet_z(b) < gz + 1.35:
-				if b.team == 1:
-					hurt_stake(6.0 * Df.dmg, core_ks[k])
+				var c: Dictionary = core_ks[k]
+				if pvp() != "" and c.team != b.pt:
+					hurt_stake(b.dmg * Pal.PVP.stakeHit, c)
+				elif pvp() == "" and b.team == 1:
+					hurt_stake(6.0 * Df.dmg, c)
 				else:
 					emit(b.x, b.y, "spark")
 				b.dead = true
@@ -1760,7 +2133,13 @@ func update_bullets(dt: float) -> void:
 						else:
 							b.dead = true
 							break
-			if b.team == 0:
+			if pvp() != "":
+				for o in players.values():
+					if o.alive and not (o.prot > 0) and o.id != b.own and (pvp() == "ffa" or o.team != b.pt) and Vector2(o.x - b.x, o.y - b.y).length() < 0.3:
+						hurt_player(o, bdmg(b) * (Pal.PVP.snipe if b.heavy else Pal.PVP.dmg), b.own)
+						b.dead = true
+						break
+			elif b.team == 0:
 				for e in enemies:
 					if not e.dead and not e.get("burrow", false) and at_actor(b, e) and Vector2(e.x - b.x, e.y - b.y).length() < (0.55 if e.get("big", false) else 0.34):
 						# a shieldbearer's shield covers his front (about 130°): the round sparks off it
@@ -1869,13 +2248,15 @@ func bdmg(b: Dictionary) -> float:
 	return b.dmg * (1.0 if d <= a else (m if d >= z else 1.0 - (1.0 - m) * (d - a) / (z - a)))
 
 
-func spawn_near_core() -> Vector2:
+func spawn_near_core(c = null, team = true) -> Vector2:
+	if c == null:
+		c = core
 	for d in [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1], [2, 0], [0, 2], [-2, 0], [0, -2]]:
-		var i: int = core.i + d[0]
-		var j: int = core.j + d[1]
-		if not solid_tile(i, j, true):
+		var i: int = c.i + d[0]
+		var j: int = c.j + d[1]
+		if not solid_tile(i, j, team):
 			return Vector2(i + 0.5, j + 0.5)
-	return Vector2(core.i + 1.5, core.j + 0.5)
+	return Vector2(c.i + 1.5, c.j + 0.5)
 
 
 func wave_mix(k: int, P: int, extra: int, boss: bool = false) -> Dictionary:
@@ -2041,8 +2422,9 @@ func qm_safe_placement(b: Dictionary) -> bool:
 	if b.door or walls[k] != null:
 		return true
 	var starts: Array = []
-	if player.alive or player.downed:
-		starts.append(player)
+	for p in players.values():
+		if p.alive or p.downed:
+			starts.append(p)
 	starts.append(qm)
 	var ci: int = core.i
 	var cj: int = core.j
@@ -2105,12 +2487,15 @@ func qm_gather(mat: int, limit: float = INF):
 
 func qm_command_job() -> Dictionary:
 	var q := qm
-	var host := player
-	var follow: bool = q.mode == "follow"
-	if player.downed and qm_can_revive(player):
-		var px: float = player.x
-		var py: float = player.y
-		return {"name": "revive", "who": player, "goal": func(k): return hdist(k % N + 0.5, k / N + 0.5, px, py) < 0.9, "pt": Vector2(px, py), "near": 0.9}
+	var host = players.get("host", players.get(my_id)) if not guest else null
+	var follow: bool = q.mode == "follow" and host != null and not host.get("out", false)
+	var downs: Array = players.values().filter(func(o): return o.downed and not o.get("out", false))
+	downs.sort_custom(func(a, b): return d2(a, q) < d2(b, q))
+	for o in downs:
+		if qm_can_revive(o):
+			var px: float = o.x
+			var py: float = o.y
+			return {"name": "revive", "who": o, "goal": func(k): return hdist(k % N + 0.5, k / N + 0.5, px, py) < 0.9, "pt": Vector2(px, py), "near": 0.9}
 	var layout := qm_layout()
 	var allowed := {}
 	for t in layout:
@@ -2182,7 +2567,7 @@ func qm_command_job() -> Dictionary:
 func refit(p: Dictionary) -> void:
 	var G: Dictionary = p.C.gun
 	var U: Dictionary = p.up
-	var K := perk
+	var K: Dictionary = p.perk
 	var gun := G.duplicate()
 	gun.dmg = G.dmg * (1.0 + arm_boost(U.d, 0.2, 0.05)) * K.dmg
 	gun.cd = G.cd * (1.0 - arm_boost(U.r, 0.1, 0.025)) / K.rate
@@ -2191,24 +2576,85 @@ func refit(p: Dictionary) -> void:
 	if G.has("reload"):
 		gun.reload = G.reload * K.reload
 	p.gun = gun
-	var mx := roundf(p.C.hp * (1.0 + arm_boost(U.a, 0.15, 0.0375)) * K.hp)
+	var mx := roundf(p.C.hp * (1.0 + arm_boost(U.a, 0.15, 0.0375)) * K.hp * (0.7 if has_mod("glass") else 1.0))
 	if mx > p.max:
 		p.hp += mx - p.max
 	p.max = mx
 	if p.hp > p.max:
 		p.hp = p.max
 	p.maxN = p.C.nades + mini(U.n, 4) + (1 if U.n >= 8 else 0) + (int(K.pouch) if p.cls == "grenadier" else 0)
-	p.blast = p.C.blast * (1.0 + arm_boost(U.n, 0.08, 0.02))
+	p.blast = p.C.blast * (1.0 + arm_boost(U.n, 0.08, 0.02)) * (1.33 if has_mod("frenzy") else 1.0)
 	p.cap = p.C.cap.map(func(cv): return cv + K.carry)
 	p.up_d = U.d
 
 
+## perks for this match (set by new_game), then a full kit: health, grenades, rockets
+func kit_up(p: Dictionary) -> void:
+	p.max = 0.0
+	refit(p)
+	p.hp = p.max
+	p.nades = p.maxN
+	p.rk = abil_rockets(p)
+	p.rkCd = 0.0
+	p.stl = 0.0
+	p.stlCd = 0.0
+
+
+## The one way to change jobs (One Job, Free-for-all respawns, a guest's job change on the host): a fresh gun, full
+## ammo, grenades and health for the new job. Kills, deaths, salvage, slot, team, upgrades and cosmetics stay.
+func change_class(p: Dictionary, cls: String) -> bool:
+	if not Pal.CLASSES.has(cls) or p.cls == cls:
+		return false
+	var C: Dictionary = Pal.CLASSES[cls]
+	p.cls = cls
+	p.C = C
+	p.cap = C.cap.duplicate()
+	p.max = 0.0
+	refit(p)
+	p.hp = p.max
+	p.nades = p.maxN
+	for i in 3:
+		p.mats[i] = mini(p.mats[i], p.cap[i])
+	p.ammo = C.gun.mag if C.gun.has("mag") else -1
+	p.rl = 0.0
+	p.rlReq = false
+	p.bolt = 0.0
+	p.cd = 0.0
+	p.bcd = 0.0
+	p.sinceShot = 9.0
+	p.bLeft = 0
+	p.ab = 0
+	p.rk = abil_rockets(p)
+	p.rkCd = 0.0
+	p.stl = 0.0
+	p.stlCd = 0.0
+	if cls != "sniper":
+		p.ammoEq[1] = ""
+	return true
+
+
 func near_stake(p: Dictionary) -> bool:
-	return hdist(p.x, p.y, core.i + 0.5, core.j + 0.5) < 2.7
+	var c = stake_of(p)
+	return c != null and hdist(p.x, p.y, c.i + 0.5, c.j + 0.5) < 2.7
 
 
 func shop_open(p: Dictionary) -> bool:
-	return p.alive and (game.phase == "build" or bo_quiet()) and not lockdown()
+	if not p.alive or lockdown():
+		return false
+	if pvp() == "base":
+		return game.phase != "over"
+	return pvp() == "" and (game.phase == "build" or bo_quiet())
+
+
+func ammo_mode() -> bool:
+	return pvp() == "" and game.get("mode", "5") in ["5", "10", "endless", "blitz", "campaign", "blackout"]
+
+
+func up_str(p: Dictionary) -> String:
+	var s := ""
+	for U in UPG:
+		s += str(p.up[U.k])
+	return s
 
 
 func can_shop(p: Dictionary) -> bool:
@@ -2234,7 +2680,7 @@ func buy_upgrade(p: Dictionary, k: String) -> bool:
 	refit(p)
 	if k == "n":
 		p.nades = maxi(p.nades, p.maxN)
-	sfx("restock")
+	personal(p, "restock")
 	return true
 
 
@@ -2244,38 +2690,41 @@ func core_fix_cost(p: Dictionary) -> int:
 
 func repair_core(p: Dictionary) -> bool:
 	var cost := core_fix_cost(p)
-	if has_mod("nopatch") or not can_shop(p) or core.hp <= 0 or core.hp >= core.max or p.sal < cost:
+	var c: Dictionary = cores[0] if not cores.is_empty() else core
+	if pvp() != "" or has_mod("nopatch") or not can_shop(p) or not near_stake(p) or c.hp <= 0 or c.hp >= c.max or p.sal < cost:
 		return false   # full stake: nothing to buy, nothing charged
-	var add := minf(CORE_FIX.hp, core.max - core.hp)
+	var add := minf(CORE_FIX.hp, c.max - c.hp)
 	p.sal -= cost
-	core.hp += add
-	flt(core.i + 0.5, core.j + 0.5, "+%d CORE" % roundi(add), "#8fe0a0")
-	sfx("restock")
+	c.hp += add
+	flt(c.i + 0.5, c.j + 0.5, "+%d CORE" % roundi(add), "#8fe0a0")
+	emit(c.i + 0.5, c.j + 0.5, "heal")
+	personal(p, "restock")
 	return true
 
 
 func buy_dell(p: Dictionary) -> bool:
 	var L: int = game.get("dellLv", 0)
-	if not can_shop(p) or L >= ARM_MAX or p.sal < DELL_UP.cost[L]:
+	if pvp() != "" or not can_shop(p) or L >= ARM_MAX or p.sal < DELL_UP.cost[L]:
 		return false
 	p.sal -= DELL_UP.cost[L]
 	game.dellLv = L + 1
-	toast("DELGADO · LEVEL %d" % (L + 1), "You upgraded Delgado's shotgun: +%d%% damage, range and fire rate." % roundi(arm_boost(L + 1, 0.15, 0.0375) * 100))
-	sfx("restock")
+	toast("DELGADO · LEVEL %d" % (L + 1), "%s upgraded Delgado's shotgun: +%d%% damage, range and fire rate." % ["You" if p.id == my_id else p.name, roundi(arm_boost(L + 1, 0.15, 0.0375) * 100)])
+	personal(p, "restock")
 	return true
 
 
-func buy_ammo(p: Dictionary, id: String) -> bool:
-	if not can_shop(p):
+## slot 1 is the Sniper's second slot
+func buy_ammo(p: Dictionary, id: String, slot: int = 0) -> bool:
+	if not ["ap", "fire", "blast", "shock"].has(id) or not ammo_mode() or not can_shop(p) or slot < 0 or slot >= (2 if p.cls == "sniper" else 1):
 		return false
-	if p.ammoEq[0] == id:
-		return false
-	var cost := 75 if p.ammoEq[0] != "" else 150
+	if p.ammoEq.has(id):
+		return p.ammoEq[slot] == id
+	var cost := 75 if p.ammoEq[slot] != "" else 150
 	if p.sal < cost:
 		return false
 	p.sal -= cost
-	p.ammoEq[0] = id
-	sfx("restock")
+	p.ammoEq[slot] = id
+	personal(p, "restock")
 	return true
 
 
@@ -2289,15 +2738,17 @@ func dell_gun() -> Dictionary:
 
 func award(own, e: Dictionary) -> void:
 	if own is String and own == "dell":
-		player.sal += 1
+		for p in players.values():
+			p.sal += 1
 		return
-	if not (own is int and own == player.id):
+	var p = payer(own)
+	if p == null:
 		return
 	var v: int = roundi(BOUNTY.get(e.type, 4) * bo_salvage(e))
-	player.sal += v
-	player.kills += 1
+	p.sal += v
+	p.kills += 1
 	flt(e.x, e.y - 0.2, "+%d" % v, "#e2b436")
-	ev({"k": "killfx", "x": e.x, "y": e.y, "fx": player.get("kfx", "none")})
+	ev({"k": "killfx", "x": e.x, "y": e.y, "fx": p.get("kfx", "none"), "id": p.id})
 
 
 func ammo_hit(e: Dictionary, b: Dictionary) -> void:
@@ -2477,9 +2928,11 @@ func spawn_boss(key: String, sb: bool = false, fb: bool = false) -> Dictionary:
 
 func boss_down(e: Dictionary, own) -> void:
 	var B: Dictionary = boss_def(e.boss)
-	var mine: bool = own is int and own == player.id
+	var by = payer(own)
+	var mine: bool = by != null
 	var share := 15 if mine else 20
-	player.sal += B.bounty if mine else share
+	for o in players.values():
+		o.sal += B.bounty if is_same(o, by) else share
 	game.bosses = game.get("bosses", 0) + 1
 	if e.get("fb", false):   # each kind of boss has its own list for the rewards (18-cosmetics.js runClaim)
 		if game.fbLog.size() < 20:
@@ -2501,7 +2954,10 @@ func boss_down(e: Dictionary, own) -> void:
 	emit(e.x, e.y, "spark", 13)
 	ev({"k": "shake", "x": e.x, "y": e.y, "amt": 11.0})
 	sfx("bigboom", e.x, e.y)
-	toast("%s IS DOWN" % B.name, ("You landed it: +%d salvage." % B.bounty) if mine else ("+%d salvage each." % share))
+	if mine and by.id == my_id:
+		toast("%s IS DOWN" % B.name, "You landed it: +%d salvage." % B.bounty)
+	else:
+		toast("%s IS DOWN" % B.name, ("%s landed it: +%d salvage, +%d each for the rest." % [by.name, B.bounty, share]) if mine else ("+%d salvage each." % share))
 
 
 func think_boss(e: Dictionary, dt: float, tgt, mv) -> Array:
@@ -3349,7 +3805,8 @@ func slab_land(l: Dictionary) -> void:
 	w.crew = true
 	walls[k] = w
 	mark_flow()
-	var others: Array = [player, qm]
+	var others: Array = players.values()
+	others.append(qm)
 	others.append_array(enemies)
 	for o in others:   # nobody ends up inside it
 		if floori(o.x) == i and floori(o.y) == j:
@@ -4098,7 +4555,7 @@ func mines_tick(dt: float) -> void:
 
 
 func abil_rockets(p: Dictionary) -> int:
-	return ABIL_ROCKET.stock + int(perk.rockets) if p.cls == "soldier" else 0
+	return ABIL_ROCKET.stock + int(p.perk.rockets) if p.cls == "soldier" and pvp() == "" else 0
 
 
 func seen(a: Dictionary) -> bool:
@@ -4109,7 +4566,7 @@ func local_sprint() -> void:
 	var p := player
 	if not p.alive or not p.C.get("sprint", false) or p.sprCd > 0:
 		return
-	var L: int = perk.stride
+	var L: int = p.perk.stride
 	p.sprT = Pal.SPRINT.dur + 0.6 * L
 	p.sprCd = p.sprT + Pal.SPRINT.cd - L
 
@@ -4127,10 +4584,10 @@ func use_ability(p: Dictionary, tx: float, ty: float) -> void:
 		if not p.alive or p.stl > 0 or p.stlCd > 0 or game.phase == "over":
 			sfx("deny")
 			return
-		p.stl = Pal.STEALTH.dur + perk.ghillie
+		p.stl = Pal.STEALTH.dur + p.perk.ghillie
 		sfx("mark", p.x, p.y)
 		emit(p.x, p.y, "smoke", 8)
-		toast("STEALTH", "Raiders can't see you for %d seconds. Anything already thrown can still land." % roundi(p.stl))
+		toast_to(p, "STEALTH", "Raiders can't see you for %d seconds. Anything already thrown can still land." % roundi(p.stl))
 
 
 func sim_ability(p: Dictionary, dt: float) -> void:
@@ -4140,15 +4597,18 @@ func sim_ability(p: Dictionary, dt: float) -> void:
 			p.stl = 0.0
 			p.stlCd = Pal.STEALTH.cd
 			if p.alive:
-				toast("SEEN", "Stealth is over. It comes back in 30 seconds.")
+				toast_to(p, "SEEN", "Stealth is over. It comes back in 30 seconds.")
 	elif p.stlCd > 0:
 		p.stlCd = maxf(0.0, p.stlCd - dt)
 
 
 func medic_touch(p: Dictionary) -> void:
-	if not p.C.get("medic", false) or not p.alive:
+	if not p.C.get("medic", false) or not p.alive or pvp() == "ffa":
 		return
-	if not qm.alive and not qm.get("gone", false) and d2(qm, p) < 0.8:
+	for o in players.values():
+		if not is_same(o, p) and o.downed and not o.alive and (pvp() == "" or o.team == p.team) and d2(o, p) < 0.8:
+			revive_player(o, p)
+	if pvp() == "" and not qm.alive and not qm.get("gone", false) and d2(qm, p) < 0.8:
 		qm.alive = true
 		qm.hp = qm.max * 0.6
 		qm.revive = 0.0
@@ -4158,9 +4618,10 @@ func medic_touch(p: Dictionary) -> void:
 
 
 func molotov_at(l: Dictionary) -> void:
-	if not (l.own is int and l.own == player.id) or player.cls != "grenadier" or not perk.molotov:
+	var p = payer(l.own)
+	if p == null or pvp() != "" or p.cls != "grenadier" or not p.perk.molotov:
 		return
-	fires.append({"x": l.x1, "y": l.y1, "t": 5.0, "max": 5.0, "tick": 0.3, "r": 1.2, "pl": true, "own": player.id})
+	fires.append({"x": l.x1, "y": l.y1, "t": 5.0, "max": 5.0, "tick": 0.3, "r": 1.2, "pl": true, "own": p.id})
 	emit(l.x1, l.y1, "fire", 8)
 
 
@@ -4235,7 +4696,7 @@ func ground_reach(x: float, y: float, tx: float, ty: float, r: float) -> bool:
 	return absf(height_at(x, y) - height_at(tx, ty)) < 0.45 and Vector2(tx - x, ty - y).length() < r
 
 
-func travel_clear(x: float, y: float, tx: float, ty: float, team: bool, r: float = 0.2) -> bool:
+func travel_clear(x: float, y: float, tx: float, ty: float, team = false, r: float = 0.2) -> bool:
 	var d := Vector2(tx - x, ty - y).length()
 	var n := maxi(1, ceili(d / 0.1))
 	var px := x
@@ -4337,7 +4798,8 @@ func make_pit(k: int) -> void:
 	emit(i + 0.5, j + 0.5, "dust", 8, 1)
 	sfx("collapse", i + 0.5, j + 0.5)
 	ev({"k": "shake", "x": i + 0.5, "y": j + 0.5, "amt": 6.0})
-	var all: Array = [player, qm]
+	var all: Array = players.values()
+	all.append(qm)
 	all.append_array(enemies)
 	for e in all:   # anyone standing there is pushed to solid ground
 		if floori(e.x) == i and floori(e.y) == j:
@@ -4376,7 +4838,8 @@ func bullet_height(from: Dictionary, ang: float, range_: float) -> Array:
 	var target = from.get("foe")
 	var score := 0.1
 	if target == null:
-		var pool: Array = enemies if (is_same(from, qm) or is_same(from, player)) else allies()
+		var shooter: bool = is_same(from, qm) or is_same(players.get(from.get("id", ""), {}), from)
+		var pool: Array = (players.values().filter(func(o): return rivals(from, o)) if pvp() != "" else enemies) if shooter else allies()
 		for e in pool:
 			if e.get("dead", false) or e.get("burrow", false) or e.get("alive", true) == false:
 				continue
@@ -4736,7 +5199,7 @@ func update_chains(dt: float) -> void:
 
 
 static func clean_mods(list: Array, mode: String) -> Array:
-	var m := "blitz" if mode == "blitz" else "coop"
+	var m := mode if mode in ["blitz", "base", "ffa"] else "coop"
 	var out: Array = []
 	for M in MODS:
 		if list.has(M.id) and M.modes.has(m):
@@ -4835,14 +5298,24 @@ func storm_raid() -> void:
 
 
 func storm_tick(dt: float) -> void:
-	if not has_mod("weather") or game.wx != 1:
+	if not has_mod("weather"):
+		return
+	if pvp() != "" and game.phase == "raid":   # PvP: 40 s of storm in every 80 of battle
+		game.wxT += dt
+		var on := 1 if fmod(game.wxT, STORM.pvpOn + STORM.pvpOff) >= STORM.pvpOff else 0
+		if on != game.wx:
+			game.wx = on
+			if on:
+				toast(STORM.look.get(map_id, STORM.look.yard).name, "Everyone slows down, and it wears you down: 1 health every 2 seconds.")
+	if game.wx != 1:
 		return
 	game.wxHit += dt
 	if game.wxHit < STORM.every:
 		return
 	game.wxHit -= STORM.every
-	if player.alive and player.hp > 1:   # it wears you down but never drops you on its own
-		player.hp = maxf(1.0, player.hp - 1)
+	for p in players.values():
+		if p.alive and not (p.prot > 0) and p.hp > 1:   # it wears you down but never drops you on its own
+			p.hp = maxf(1.0, p.hp - 1)
 
 
 func lockdown() -> bool:
@@ -4971,17 +5444,19 @@ func open_evac() -> void:
 		toast("EVACUATE", "Get to the green ring. The convoy leaves in 15 seconds. Stand in it for 3 seconds, on your feet. Miss it and you lose half this chapter's cases and shards.")
 	else:
 		toast("EVACUATE", "The evac site is open. Stand in the green ring for 3 seconds, on your feet, to get out. Anyone still here at 0:00 is left behind.")
-	player.ev = 0.0
-	if player.downed:
-		player.rt = maxf(player.rt, 1e6)
+	for p in players.values():
+		p.ev = 0.0
+		if p.downed:
+			p.rt = maxf(p.rt, 1e6)
 
 
 func evac_tick(dt: float) -> void:
 	var F: Dictionary = game.fb
 	var E: Dictionary = F.evac
-	var p := player
-	if not p.get("out", false):
-		if p.downed:   # no respawns in the evacuation: someone has to pick you up
+	for p in players.values():
+		if p.get("out", false):
+			continue
+		if p.downed:   # no respawns in the evacuation: a teammate has to pick you up
 			p.rt = maxf(p.rt, 1e6)
 			p.ev = 0.0
 		elif p.alive and hdist(p.x, p.y, E.x, E.y) <= E.r and height_ray_clear(p.x, p.y, E.x, E.y):
@@ -4994,16 +5469,26 @@ func evac_tick(dt: float) -> void:
 		F.shellT -= dt
 		if F.shellT <= 0:
 			F.shellT = 1.1
-			if p.alive and not p.get("out", false):
+			var on: Array = players.values().filter(func(o): return o.alive and not o.get("out", false))
+			if not on.is_empty():
+				var p: Dictionary = on[int(rnd() * on.size())]
 				var a := rnd() * 6.283
 				var r := 0.6 + rnd() * 2.6
 				var tx := clampf(p.x + cos(a) * r, 0.4, N - 0.4)
 				var ty := clampf(p.y + sin(a) * r, 0.4, N - 0.4)
 				if Vector2(tx - E.x, ty - E.y).length() > E.r + 0.4:
 					lobs.append({"x0": tx - 2.5, "y0": ty - 2.5, "x1": tx, "y1": ty, "t": 0.0, "T": 1.6, "R": 1.3, "power": Df.dmg * 0.9, "k": 5, "own": null})
-	if p.get("out", false):
+	# everyone is out, or nobody left standing (Delgado included) to pick the downed up: the clock doesn't need to run out
+	var up := 0
+	var left := 0
+	for p in players.values():
+		if not p.get("out", false):
+			left += 1
+			if p.alive:
+				up += 1
+	if left == 0:
 		finish_blitz()
-	elif not p.alive:
+	elif up == 0:
 		check_dead_end()
 
 
@@ -5013,10 +5498,13 @@ func extract(p: Dictionary) -> void:
 	p.alive = false
 	p.downed = false
 	p.stun = 0.0
+	p.tp += 1
 	sfx("win", p.x, p.y)
 	ev({"k": "ring", "x": p.x, "y": p.y, "r0": 0.2, "r1": 1.4, "life": 0.7, "c1": "#8aff9a"})
-	flt(p.x, p.y - 0.4, "YOU MADE IT OUT", "#8aff9a")
-	toast("EVACUATED", "You made it out.")
+	flt(p.x, p.y - 0.4, "YOU MADE IT OUT" if p.id == my_id else "%s IS OUT" % p.name.to_upper(), "#8aff9a")
+	toast_to(p, "EVACUATED", "You made it out." if players.size() == 1 else "You made it out. Watch your crew: they have to get there on their own.")
+	if players.size() > 1:
+		ev({"k": "feed", "text": "%s EVACUATED" % p.name.to_upper(), "col": "#8aff9a"})
 
 
 func finish_blitz() -> void:
@@ -5034,25 +5522,33 @@ func finish_blitz() -> void:
 	game.queue = []
 	lobs.clear()
 	arcs.clear()
+	for p in players.values():
+		p.res = "evac" if p.get("out", false) else "left"
 	end_game(player.get("out", false), "evac" if player.get("out", false) else "left")
 
 
 func check_dead_end() -> bool:
-	if game.phase != "raid":
+	if guest or pvp() != "" or game.phase != "raid":
 		return false
-	var p := player
-	if p.get("out", false) or p.alive or (p.downed and p.rt < 100000):
+	var crew: Array = players.values().filter(func(o): return not o.get("out", false))
+	if crew.is_empty():
 		return false
+	for p in crew:
+		if p.alive or (p.downed and p.rt < 100000):
+			return false
 	if game.fb == null and game.queue.is_empty() and not enemies.any(func(e): return not e.dead):
 		return false
-	if qm_can_revive(p):
-		return false
+	for p in crew:
+		if qm_can_revive(p):
+			return false
 	if game.fb != null and game.fb.get("mapEvac", false):
 		finish_map_evac()
 		return true
 	if game.fb != null:
 		game.fb.done = true
-	end_game(false, "deadend")
+		for p in players.values():
+			p.res = "evac" if p.get("out", false) else "left"
+	end_game(player.get("out", false), "deadend")
 	return true
 
 
@@ -5082,8 +5578,9 @@ func start_map_evac() -> void:
 	game.queue = []
 	game.spawnT = 1.0
 	game.spawnGap = 1.3
-	player.out = false
-	player.ev = 0.0
+	for p in players.values():
+		p.out = false
+		p.ev = 0.0
 	open_evac()
 
 
@@ -5093,9 +5590,15 @@ func finish_map_evac() -> void:
 		return
 	F.done = true
 	var ch: int = F.ch
-	var made: bool = player.get("out", false)
-	player.chEvac = player.get("chEvac", [])
-	player.chEvac.append(1 if made else 0)
+	var P: Array = players.values()
+	var left: Array = P.filter(func(o): return not o.get("out", false))
+	var made := left.size() < P.size()
+	for p in P:
+		var ce: Array = p.get("chEvac", [])
+		while ce.size() <= ch:
+			ce.append(0)
+		ce[ch] = 1 if p.get("out", false) else 0
+		p.chEvac = ce
 	enemies.clear()
 	game.queue = []
 	lobs.clear()
@@ -5104,21 +5607,38 @@ func finish_map_evac() -> void:
 	rockets.clear()
 	if not made:   # nobody made it: the campaign ends there
 		game.fb = null
-		player.out = false
+		for p in P:
+			p.out = false
+			p.ev = 0.0
 		end_game(false, "evacfail")
 		return
-	player.out = false
-	player.ev = 0.0
-	player.stun = 0.0
-	if not player.alive:
-		player.alive = true
-		player.downed = false
-		player.revive = 0.0
-	player.rt = 0.0
+	for p in P:
+		p.out = false
+		p.ev = 0.0
+		p.res = ""
+		p.stun = 0.0
+		if not p.alive:
+			p.alive = true
+			p.downed = false
+			p.revive = 0.0
+		p.rt = 0.0
+	for p in left:
+		p.sal = 0
 	game.fb = null
 	change_chapter(ch + 1)
 	start_build(30.0 + Df.build)
-	toast("CHAPTER %d · %s" % [game.chapter + 1, map_def.name], CAMPAIGN.story[game.chapter] + " Everyone made it out. Prepare at the core.")
+	if not left.is_empty():   # Delgado's +35 restock waits its usual 30 s, so the left-behind really start at half health
+		qm.sup = maxf(qm.sup, 30.0)
+	for p in left:
+		p.hp = ceilf(p.max * 0.5)
+		toast_to(p, "LEFT BEHIND", "You missed the convoy. You lose half this chapter's cases and shards, your salvage, and half your health.")
+	var who := ""
+	if not left.is_empty():
+		who = (" %s was left behind." % left[0].name.to_upper()) if left.size() == 1 and P.size() > 1 else ((" %d soldiers were left behind." % left.size()) if left.size() > 1 else " You were left behind.")
+	toast("CHAPTER %d · %s" % [game.chapter + 1, map_def.name], CAMPAIGN.story[game.chapter] + (who if who != "" else " Everyone made it out.") + " Prepare at the core.")
+	if P.size() > 1:
+		for p in left:
+			ev({"k": "feed", "text": "%s WAS LEFT BEHIND" % p.name.to_upper(), "col": "#e0a050"})
 
 
 func change_chapter(ch: int) -> void:
@@ -5170,9 +5690,11 @@ func change_chapter(ch: int) -> void:
 	arcs.clear()
 	sacks.clear()
 	frost_fields.clear()
-	var at := spawn_near_core()
-	player.x = at.x
-	player.y = at.y
+	for p in players.values():
+		var at := spawn_near_core()
+		p.x = at.x
+		p.y = at.y
+		p.tp += 1
 	var aq := spawn_near_core()
 	qm.x = aq.x
 	qm.y = aq.y
@@ -5319,7 +5841,8 @@ func bo_start() -> void:
 
 
 func bo_pay(n: int, why: String, dy: float = 0.0) -> void:
-	player.sal += n
+	for p in players.values():
+		p.sal += n
 	flt(player.x, player.y - 0.6 - dy, "+%d SALVAGE · %s" % [n, why], "#e2b436")
 
 
@@ -5441,15 +5964,29 @@ func bo_ready_stage() -> void:
 	var B: Dictionary = game.bo
 	B.stage = "ready"
 	B.t = BO.ready
-	player.boReady = false
+	for p in players.values():
+		p.boReady = false
 	bo_pay(BO.pushPay, "FINAL PUSH", 0.9)
 	toast("READY UP", "The final push starts in %d seconds, or as soon as everyone is ready. Spend your salvage at any point you hold." % int(BO.ready))
 
 
-func bo_ready(on: bool = true) -> void:
+func bo_ready(on: bool = true, p = null) -> void:
 	if game.bo == null or game.bo.stage != "ready":
 		return
-	player.boReady = on
+	if p == null:
+		p = player
+	p.boReady = on
+
+
+func bo_ready_count() -> Array:
+	var r := 0
+	var n := 0
+	for p in players.values():
+		if p.alive or p.downed:
+			n += 1
+			if p.get("boReady", false):
+				r += 1
+	return [r, n]
 
 
 func bo_lose_perk(c: Dictionary) -> void:
@@ -5573,8 +6110,10 @@ func bo_tick(dt: float) -> void:
 		for c in bo_pois():
 			if not c.lost and c.hp < c.max:
 				c.hp = minf(c.max, c.hp + 2 * BO.repair * dt)
-		if B.t <= 0 or player.get("boReady", false):
-			player.boReady = false
+		var rn := bo_ready_count()
+		if B.t <= 0 or (rn[1] > 0 and rn[0] >= rn[1]):
+			for p in players.values():
+				p.boReady = false
 			bo_push()
 		return
 	if B.stage == "attack":
@@ -5609,19 +6148,19 @@ func bo_perks(dt: float) -> void:
 	var B: Dictionary = game.bo
 	for c in cores:
 		if c.has("poi") and c.poi.perk == "heal" and not c.lost:
-			var p := player
-			if p.alive and p.hp < p.max and Vector2(p.x - c.i - 0.5, p.y - c.j - 0.5).length() < BO.healR:
-				p.hp = minf(p.max, p.hp + BO.heal * dt)
+			for p in players.values():
+				if p.alive and p.hp < p.max and Vector2(p.x - c.i - 0.5, p.y - c.j - 0.5).length() < BO.healR:
+					p.hp = minf(p.max, p.hp + BO.heal * dt)
 	B.refT -= dt
 	if B.refT <= 0:
 		B.refT = BO.refill
 		if bo_held("refill"):
-			var p := player
-			if p.nades < p.maxN:
-				p.nades += 1
-			if p.cls == "soldier":
-				p.rk = mini(abil_rockets(p), p.rk + 1)
-			flt(p.x, p.y - 0.5, "+1 GRENADE · ARMORY DEPOT", "#e2b436")
+			for p in players.values():
+				if p.nades < p.maxN:
+					p.nades += 1
+				if p.cls == "soldier":
+					p.rk = mini(abil_rockets(p), p.rk + 1)
+			flt(player.x, player.y - 0.5, "+1 GRENADE · ARMORY DEPOT", "#e2b436")
 
 
 func bo_salvage(e: Dictionary) -> float:

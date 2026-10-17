@@ -110,14 +110,51 @@ func award_run(held: int, bosses: int) -> int:
 	return got
 
 
-## perkMods (01b-mods-skills.js) for co-op
-func perk_mods() -> Dictionary:
-	var L := func(id: String) -> int: return level(id)
-	return {"dmg": 1 + 0.04 * L.call("dmg"), "rate": 1 + 0.04 * L.call("rate"), "reload": 1 - 0.12 * L.call("reload"), "range": 1 + 0.06 * L.call("range"),
-		"hp": 1 + 0.06 * L.call("hp"), "regenAfter": 4 - 0.75 * L.call("regen"), "regen": 4 + 2 * L.call("regen"), "revive": 1 + 0.25 * L.call("revive"),
-		"speed": 1 + 0.03 * L.call("speed"), "vest": 1 - 0.04 * L.call("vest"), "gather": 1 - 0.1 * L.call("haul"), "carry": roundi(8 * L.call("haul")),
-		"rockets": L.call("rockets"), "pouch": L.call("pouch"), "molotov": L.call("molotov") > 0 and L.call("pouch") >= 1 and not mol_off,
-		"ghillie": 3 * L.call("ghillie"), "stride": L.call("stride"), "ammo": {"ap": mini(4, L.call("ammo_ap")), "fire": mini(4, L.call("ammo_fire")), "blast": mini(4, L.call("ammo_blast")), "shock": mini(4, L.call("ammo_shock"))}}
+## perkMods (01b-mods-skills.js) for this profile's tree
+func perk_mods(pvp: bool = false) -> Dictionary:
+	var t := skills.duplicate()
+	t.molOff = mol_off
+	return perk_from(t, pvp)
+
+
+## the tree as the browser's skill string (one digit per node, then 'm' with Molotovs off); "" with no account,
+## as the browser sends: a guest's perks only count once the host has checked them against the account
+func skill_str_mine() -> String:
+	return skill_str(skills, mol_off) if cloud else ""
+
+
+static func skill_str(t: Dictionary, molOff: bool = false) -> String:
+	var s := ""
+	for S in SKILLS:
+		s += str(clampi(int(t.get(S.id, 0)), 0, S.max))
+	return s + ("m" if molOff else "")
+
+
+static func parse_skills(s) -> Dictionary:
+	var t := {}
+	var str_v := str(s) if s != null else ""
+	for i in SKILLS.size():
+		var S: Dictionary = SKILLS[i]
+		var v := int(str_v[i]) if i < str_v.length() and str_v[i].is_valid_int() else 0
+		if v > 0:
+			t[S.id] = mini(v, S.max)
+	for S in SKILLS:
+		if S.has("req") and int(t.get(S.req[0], 0)) < S.req[1]:
+			t.erase(S.id)
+	t.molOff = str_v.substr(15).contains("m")   # old 15-node strings put the Molotov toggle at index 15
+	return t
+
+
+## pvp: stat perks at half, class nodes and special ammo off
+static func perk_from(t: Dictionary, pvp: bool = false) -> Dictionary:
+	var k := 0.5 if pvp else 1.0
+	var L := func(id: String) -> int: return int(t.get(id, 0))
+	var A := func(id: String) -> int: return 0 if pvp else int(t.get(id, 0))
+	return {"dmg": 1 + 0.04 * L.call("dmg") * k, "rate": 1 + 0.04 * L.call("rate") * k, "reload": 1 - 0.12 * L.call("reload") * k, "range": 1 + 0.06 * L.call("range") * k,
+		"hp": 1 + 0.06 * L.call("hp") * k, "regenAfter": 4 - 0.75 * L.call("regen") * k, "regen": 4 + 2 * L.call("regen") * k, "revive": 1 + 0.25 * L.call("revive") * k,
+		"speed": 1 + 0.03 * L.call("speed") * k, "vest": 1 - 0.04 * L.call("vest") * k, "gather": 1 - 0.1 * L.call("haul") * k, "carry": roundi(8 * L.call("haul") * k),
+		"rockets": A.call("rockets"), "pouch": A.call("pouch"), "molotov": A.call("molotov") > 0 and not t.get("molOff", false),
+		"ghillie": 3 * A.call("ghillie"), "stride": A.call("stride"), "ammo": {"ap": mini(4, A.call("ammo_ap")), "fire": mini(4, A.call("ammo_fire")), "blast": mini(4, A.call("ammo_blast")), "shock": mini(4, A.call("ammo_shock"))}}
 
 
 func load_file() -> void:

@@ -256,6 +256,154 @@ static func lay(id: String, size: String = "std") -> Dictionary:
 	return L
 
 
+## PvP layouts (06c-pvp-maps.js): every map but Frostpeak has a Base Battle and a Free-for-all version, always 16x16.
+## Base Battle is point-mirrored (tile i,j on one side is 15-i,15-j on the other). Free-for-all arenas are turned four
+## times round the middle, with spawns on the same symmetry; their cover can't be broken.
+const PVP_BLURB := {
+	"yard": {"base": "Today's yard, split down the middle: a stake each, the same piles and ruins on both sides.", "ffa": "Stacked-timber lanes round an open middle, and two ruined sheds to fight over."},
+	"river": {"base": "The river runs corner to corner between the stakes. Two bridges and a ford on each side; both banks flood.", "ffa": "Four islands round a deep pool, one bridge to each neighbour. Wading is slow."},
+	"quarry": {"base": "Lit by drums, the same rock on both sides and a cracked middle. A ramp behind each stake.", "ffa": "A stepped pit: a ring of ledges with ramps, rock pillars, and a cracked floor round a stone spire."}}
+## the solo spawn spots round a stake at (4,11); PvP and the online crew use them too (SPAWNS in 04-state-armory.js)
+const SPAWNS := [[5.5, 11.5], [5.5, 12.5], [3.5, 12.5], [4.5, 12.5], [5.5, 10.5], [3.5, 10.5]]
+
+
+static func _pv_mir(list: Array) -> Array:
+	var out := list.duplicate()
+	for t in list:
+		var m: Array = [15 - t[0], 15 - t[1]]
+		m.append_array(t.slice(2))
+		out.append(m)
+	return out
+
+
+static func _pv_rot(list: Array) -> Array:
+	var out: Array = []
+	for t in list:
+		var c: Array = t
+		for r in 4:
+			out.append(c)
+			var n: Array = [15 - c[1], c[0]]
+			n.append_array(c.slice(2))
+			c = n
+	return out
+
+
+static func _pv_rot_xy(list: Array) -> Array:
+	var out: Array = []
+	for p in list:
+		var c: Array = p
+		for r in 4:
+			out.append(c)
+			c = [16 - c[1], c[0]]
+	return out
+
+
+static func lay_pvp(id: String, pvp: String) -> Dictionary:
+	if not PVP_BLURB.has(id):
+		id = "yard"
+	var N := 16
+	var terr := PackedByteArray()
+	terr.resize(N * N)
+	var heights := PackedByteArray()
+	heights.resize(N * N)
+	var conn := PackedByteArray()
+	conn.resize(N * N)
+	var put := func(list: Array, t: int) -> void:
+		for q in list:
+			if q[0] >= 0 and q[1] >= 0 and q[0] < N and q[1] < N:
+				terr[q[1] * N + q[0]] = t
+	var t_at := func(i: int, j: int) -> int: return terr[j * N + i] if i >= 0 and j >= 0 and i < N and j < N else T_GROUND
+	var L := {"N": N, "id": id, "map": MAPS[id], "nodes": [], "ruins": [], "cover": [], "raftAt": [], "ramps": [], "spawns": [], "pvp": pvp,
+		"o": {"ox": 0, "oy": 0, "xl": false, "pvp": pvp}}
+	match [id, pvp]:
+		["yard", "base"]:
+			L.cores = [[4, 11], [11, 4]]
+			L.nodes = _pv_mir([[2, 8], [6, 14], [1, 13], [5, 8]]).map(_wood)
+			L.nodes.append_array([_kiln([1, 6], 0), _kiln([14, 9], 0), _scrap([7, 13], 0), _scrap([8, 2], 0)])
+			L.ruins = [[_pv_mir([[3, 9], [4, 9], [5, 9]]), 0, 0.63, 0.25], [[[7, 8], [8, 7], [6, 6], [9, 9]], 1, 0.55, 0.3]]
+		["yard", "ffa"]:
+			L.cover = _pv_rot([[4, 3, "timber"], [5, 3, "timber"], [6, 3, "timber"], [9, 3, "timber"], [10, 3, "timber"], [11, 3, "timber"], [4, 1, "timber"], [11, 1, "timber"]])
+			L.cover.append_array(_pv_mir([[4, 5, "shed"], [4, 6, "shed"], [5, 5, "shed"]]))
+			L.pspawns = _pv_rot_xy([[1.5, 1.5], [6.5, 1.3]])
+		["river", "base"]:
+			L.cores = [[3, 12], [12, 3]]
+			for j in N:
+				for i in N:
+					if absi(i - j) <= 1:
+						terr[j * N + i] = T_WATER
+			var block := func(t: int, ty: int) -> void:
+				for q in [[t, t], [t + 1, t], [t, t + 1], [t + 1, t + 1]]:
+					if q[0] < N and q[1] < N and absi(q[0] - q[1]) <= 1:
+						terr[q[1] * N + q[0]] = ty
+			for t in [1, 5, 9, 13]:
+				block.call(t, T_BRIDGE)
+			for t in [3, 11]:
+				block.call(t, T_LOW)
+			for j in N:
+				for i in N:
+					if absi(i - j) != 2:
+						continue
+					var near := false
+					for a in range(-1, 2):
+						for b in range(-1, 2):
+							if t_at.call(i + a, j + b) == T_BRIDGE:
+								near = true
+					if not near:
+						terr[j * N + i] = T_LOW
+			L.nodes = _pv_mir([[1, 9], [6, 14], [5, 7]]).map(_wood)
+			L.nodes.append_array([_kiln([1, 14], 0), _kiln([14, 1], 0), _scrap([6, 10], 0), _scrap([9, 5], 0), _scrap([0, 6], 0), _scrap([15, 9], 0)])
+			L.ruins = [[_pv_mir([[2, 9], [3, 9]]), 0, 0.63, 0.25], [_pv_mir([[7, 12], [8, 12]]), 1, 0.55, 0.3]]
+		["river", "ffa"]:
+			for j in N:
+				for i in N:
+					if i == 7 or i == 8 or j == 7 or j == 8 or Vector2(i - 7.5, j - 7.5).length() < 2.7:
+						terr[j * N + i] = T_WATER
+			put.call(_pv_rot([[7, 3], [8, 3], [7, 4], [8, 4]]), T_BRIDGE)
+			L.cover = _pv_rot([[3, 3, "crate"], [4, 3, "crate"], [3, 4, "crate"], [6, 5, "crate"], [3, 1, "crate"], [1, 5, "crate"]])
+			L.pspawns = _pv_rot_xy([[1.5, 1.5], [5.5, 1.3]])
+		["quarry", "base"]:
+			L.cores = [[4, 11], [11, 4]]
+			L.ramps = [[2, 15], [3, 15], [13, 0], [12, 0]]
+			for j in N:
+				for i in N:
+					if absf(i - 7.5) + absf(j - 7.5) <= 2.5:
+						terr[j * N + i] = T_CRACK
+			put.call(_pv_mir([[6, 2], [2, 6], [7, 10], [10, 13]]), T_ROCK)
+			put.call(_pv_mir([[1, 9], [6, 13], [5, 6]]), T_DRUM)
+			L.nodes = _pv_mir([[2, 7], [5, 13]]).map(_wood)
+			L.nodes.append_array([_kiln([1, 12], 0), _kiln([14, 3], 0), _scrap([7, 14], 0), _scrap([8, 1], 0), _kiln([4, 8], 0), _kiln([11, 7], 0)])
+			L.ruins = [[_pv_mir([[5, 9], [6, 9]]), 1, 0.55, 0.3]]
+		["quarry", "ffa"]:
+			for j in N:
+				for i in N:
+					if absf(i - 7.5) + absf(j - 7.5) <= 3.5:
+						terr[j * N + i] = T_CRACK
+			put.call([[7, 7], [8, 7], [7, 8], [8, 8]], T_ROCK)
+			put.call(_pv_rot([[5, 5]]), T_ROCK)
+			put.call(_pv_rot([[3, 2], [4, 2], [5, 2], [10, 2], [11, 2], [12, 2]]), T_ROCK)
+			put.call(_pv_rot([[4, 1], [11, 1]]), T_ROCK)
+			put.call(_pv_rot([[2, 2], [7, 4]]), T_DRUM)
+			L.pspawns = _pv_rot_xy([[1.5, 1.5], [8.5, 0.9]])
+	var keep: Array = L.get("cores", []).duplicate()
+	for n in L.nodes:
+		keep.append([n.i, n.j])
+	for r in L.ruins:
+		keep.append_array(r[0])
+	keep.append_array(L.cover)
+	for q in keep:
+		var k: int = q[1] * N + q[0]
+		if terr[k] != T_GROUND and terr[k] != T_LOW and terr[k] != T_CRACK:
+			terr[k] = T_GROUND
+	L.core = L.cores[0] if L.has("cores") else [7, 7]
+	if pvp == "base":
+		var ca: Array = L.cores[0]
+		L.teamSpawns = SPAWNS.map(func(s): return [s[0] + ca[0] - 4, s[1] + ca[1] - 11])
+	L.terr = terr
+	L.heights = heights
+	L.connectors = conn
+	return L
+
+
 static func city_geo(n: int) -> Dictionary:
 	var C := n >> 1
 	var ri := roundi(n * 0.1)

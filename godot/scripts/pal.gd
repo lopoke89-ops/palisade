@@ -3,6 +3,11 @@ class_name Pal
 ## Change a number here only together with the browser build (protocol yard-29), or cross-play drifts.
 
 const D4: Array = [[1, 0], [-1, 0], [0, 1], [0, -1]]
+## PvP (01-setup.js): Base Battle sides, the stake, damage scales, the truce, bounties and Free-for-all's goal
+const TEAMS: Dictionary = {"a": {"name": "WEST", "col": "#6fa8dc"}, "b": {"name": "EAST", "col": "#e0664a"}}
+const PVP: Dictionary = {"stake": 700.0, "dmg": 0.7, "snipe": 52.0 / 47.0, "snipeCd": 1.25 / 0.7, "nade": 0.8, "stakeHit": 0.35, "truce": 45.0, "bounty": 8, "startSal": 20, "ffaGoal": 15, "ffaTime": 300.0, "prot": 2.0}
+## each crew slot's colour (11-hud-chat.js): nameplates, chat and the pause list
+const SLOTCOL: Array = ["#8fb58a", "#a9bccb", "#d0b077", "#c29ac4", "#86c0b8", "#d08f78"]
 
 const MAT: Array = [
 	{"name": "WOOD", "cost": 4, "hp": 60.0, "bullet": 1.0, "blast": 2.2, "cd": 0.22, "top": "#b8894f", "l": "#8b6236", "r": "#6b4a28", "line": Color(52 / 255.0, 32 / 255.0, 14 / 255.0, 0.55)},

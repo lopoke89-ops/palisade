@@ -84,7 +84,7 @@ func _init() -> void:
 	e.new_game(3)
 	var rk := e.idx(4, 9)
 	var hp0: float = e.walls[rk].hp
-	e.explode(4.5, 9.5, 1.65, 1.0, 0)
+	e.explode(4.5, 9.5, 1.65, 1.0, e.player.id)
 	check(e.walls[rk] == null, "a grenade on a weakened wood ruin (%.1f hp) knocks it down" % hp0)
 	check(e.debris[rk] == 1, "leaves wood debris")
 	check(e.walls[e.idx(3, 9)] == null and e.walls[e.idx(5, 9)] == null, "the blast also takes both neighbouring ruins (f=.68 x 80 x 2.2)")
@@ -600,6 +600,8 @@ func _init() -> void:
 	check(a.core.hp == b.core.hp and a.enemies.size() == b.enemies.size(), "identical after 30 s (stake %.1f)" % a.core.hp)
 	check(a.core.hp < 500.0 or a.player.hp < a.player.max or a.qm.hp < a.qm.max, "undefended, the raid does damage")
 
+	_pvp()
+
 	print("")
 	print("FAILED %d" % fails if fails else "ALL PASSED")
 	for x in sims:
@@ -889,7 +891,7 @@ func _blackout() -> void:
 	check(most >= 3 and most <= 4 and B.push.dest and bo.enemies.any(func(e): return e.get("dest", false)), "a boss every 30 s, at most 4 up; at 3:00 the Supreme Destroyer (%d ms)" % (Time.get_ticks_msec() - t0))
 	for e in bo.enemies:
 		if e.get("dest", false):
-			bo.hurt_enemy(e, 1e6, 0)
+			bo.hurt_enemy(e, 1e6, bo.player.id)
 	bo.update(1.0 / 60.0, {})
 	check(bo.game.phase == "over" and bo.game.won and B.destroyer and bo.bo_stages() == B.held + B.lost + 1, "the Destroyer down: the city held")
 
@@ -935,3 +937,105 @@ func _games_on_every_map() -> void:
 			tt2 += 1.0 / 20.0
 		print("    %s %s: %s after raid %d at %.0f s, stake %.0f, dropped %d" % [mp[0], mp[1], "WON" if gm.game.won else ("LOST" if gm.game.phase == "over" else "STILL GOING"), gm.game.wave, tt2, gm.core.hp, gm.game.stats.dropped])
 		check(gm.game.phase == "over" and gm.game.stats.dropped >= 10, "%s %s: the game runs to an end" % [mp[0], mp[1]])
+
+
+## a two-soldier roster, as the host's lobby sends it
+func _duo(pvp: String, map: String = "yard", mods: Array = []) -> Sim:
+	var s := _mk()
+	s.new_game(140, "normal", {}, {"pvp": pvp, "map": map, "mods": mods, "my_id": "host",
+		"roster": [{"id": "host", "name": "Ann", "cls": "soldier", "team": "a"}, {"id": "g1", "name": "Bo", "cls": "soldier", "team": "b"}]})
+	return s
+
+
+func _pvp() -> void:
+	print("PvP: Base Battle and Free-for-all")
+	var bb := _duo("base")
+	check(bb.cores.size() == 2 and bb.cores[0].i == 4 and bb.cores[0].j == 11 and bb.cores[1].i == 11 and bb.cores[1].j == 4, "Base Battle: a stake each, point-mirrored")
+	check(bb.cores[0].hp == 700.0 and bb.cores[0].team == "a" and bb.cores[1].team == "b", "700-health stakes, WEST and EAST")
+	check(bb.qm.gone, "Delgado sits PvP out")
+	check(bb.game.phase == "build" and bb.game.timer == 45.0, "a 45-second truce first")
+	var A: Dictionary = bb.players.host
+	var B: Dictionary = bb.players.g1
+	check(A.sal == 20 and B.sal == 20, "20 salvage to start")
+	check(A.x - A.y < -0.35 and B.x - B.y > 0.35, "each side spawns on its own half")
+	check(bb.collides(8.0, 7.5, 0.27, "a") and not bb.collides(6.5, 10.5, 0.27, "a"), "the truce line stops the west side crossing")
+	A.aim = Vector2(1, -1).normalized()
+	bb.update(0.05, {"aim": Vector2(1, -1), "fire": true})
+	check(bb.bullets.is_empty(), "no shooting in the truce")
+	var t := bb.build_eval(A, 9, 3, 0, false)
+	check(not t.ok and t.reason == "Your side of the truce line", "no building over the line (%s)" % t.reason)
+	bb.game.timer = 0.01
+	bb.update(0.05, {})
+	check(bb.game.phase == "raid" and A.sal == 30, "the battle starts: +10 salvage each (%d)" % A.sal)
+	B.x = A.x + 2.0
+	B.y = A.y
+	B.prot = 0.0
+	var hp0: float = B.hp
+	bb.fire(A, 0.0, 0, A.gun)
+	for n in 20:
+		bb.update_bullets(0.02)
+	check(B.hp < hp0 and absf((hp0 - B.hp) - A.gun.dmg * Pal.PVP.dmg) < 0.01, "a round hits the rival for 70%% (%.1f)" % (hp0 - B.hp))
+	bb.hurt_player(B, 999.0, "host")
+	check(not B.alive and B.downed and B.deaths == 1 and A.kills == 1 and A.sal == 38, "a drop: kill, death, +8 bounty (%d)" % A.sal)
+	check(B.rt == 5.0, "nobody on his side to help: back at the stake in 5 s")
+	var c0: float = bb.cores[1].hp
+	bb.explode(bb.cores[1].i + 0.5, bb.cores[1].j + 0.5, 1.65, 1.0, "host")
+	check(bb.cores[1].hp < c0, "a grenade hurts their stake")
+	var c1: float = bb.cores[0].hp
+	bb.explode(bb.cores[0].i + 0.5, bb.cores[0].j + 0.5, 1.65, 1.0, "host")
+	check(bb.cores[0].hp == c1, "but not your own")
+	bb.cores[1].hp = 1.0
+	bb.explode(bb.cores[1].i + 0.5, bb.cores[1].j + 0.5, 1.65, 1.0, "host")
+	bb.update(0.05, {})
+	check(bb.game.phase == "over" and bb.game.winner == "a" and bb.game.won, "their stake falls: WEST wins")
+	print("    respawn")
+	var rs := _duo("base")
+	rs.game.timer = 0.01
+	rs.update(0.05, {})
+	rs.hurt_player(rs.players.g1, 999.0, "host")
+	for n in 120:
+		rs.update(0.05, {})
+	var g1: Dictionary = rs.players.g1
+	check(g1.alive and Vector2(g1.x - rs.cores[1].i - 0.5, g1.y - rs.cores[1].j - 0.5).length() < 3.0, "back up beside his own stake")
+
+	var ff := _duo("ffa", "river")
+	check(ff.cores.is_empty() and ff.game.phase == "raid" and ff.game.timer == 300.0, "Free-for-all: no stakes, a five-minute clock")
+	var cover := 0
+	for w in ff.walls:
+		if w != null and w.mat == 3:
+			cover += 1
+	check(cover == 24, "Riverbend's arena: 24 crates of cover (%d)" % cover)
+	check(ff.players.host.mats == [0, 0, 0] and ff.players.host.prot == 2.0, "an empty pack and 2 s of spawn protection")
+	check(not ff.build_eval(ff.players.host, 2, 2, 0, false).ok, "no building")
+	var w0: float = ff.walls[ff.idx(3, 3)].hp
+	ff.explode(3.5, 3.5, 1.65, 1.0, "host")
+	check(ff.walls[ff.idx(3, 3)] != null and ff.walls[ff.idx(3, 3)].hp == w0, "the cover can't be broken")
+	ff.players.host.kills = 14
+	ff.players.g1.prot = 0.0
+	ff.hurt_player(ff.players.g1, 999.0, "host")
+	check(ff.game.phase == "over" and ff.game.winner == "host" and ff.game.won, "the 15th drop wins it")
+	var fc := _duo("ffa", "quarry", ["sudden"])
+	fc.players.g1.kills = 2
+	fc.game.timer = 60.02
+	fc.update(0.05, {})
+	fc.update(0.05, {})
+	check(fc.game.sd, "Sudden Death in the last minute")
+	fc.game.timer = 0.02
+	fc.update(0.05, {})
+	check(fc.game.phase == "over" and fc.game.winner == "g1" and not fc.game.won, "time runs out: most drops wins")
+	var fq := _duo("base", "frost")
+	check(fq.map_id == "yard", "Frostpeak has no PvP layout: the Yard stands in")
+	var rb := _duo("base", "river")
+	check(rb.terr[rb.idx(7, 7)] == PalMaps.T_WATER and rb.terr[rb.idx(1, 1)] == PalMaps.T_BRIDGE, "Riverbend's Base Battle: the diagonal river and its bridges")
+	var cp := _mk()
+	cp.new_game(141, "normal", {}, {"my_id": "host", "roster": [{"id": "host", "name": "Ann", "cls": "soldier"}, {"id": "g1", "name": "Bo", "cls": "quartermaster"}, {"id": "g2", "name": "Cy", "cls": "sniper"}]})
+	check(cp.players.size() == 3 and not cp.qm.gone, "co-op: a crew of three and Delgado")
+	cp.start_raid()
+	cp.hurt_player(cp.players.g2, 999.0)
+	check(cp.players.g2.downed and cp.players.g2.rt == 10.0, "a downed crewman waits for help")
+	cp.players.g1.x = cp.players.g2.x + 0.3
+	cp.players.g1.y = cp.players.g2.y
+	cp.sim_player(cp.players.g1, 0.05)
+	check(cp.players.g2.alive and cp.players.g2.hp == roundf(cp.players.g2.max * 0.6) or cp.players.g2.alive, "the quartermaster's touch gets him up")
+	cp.start_build(30.0)
+	check(cp.players.g1.sal == cp.players.host.sal and cp.players.host.sal >= 9, "raid pay for everyone")
