@@ -38,6 +38,7 @@ func _init() -> void:
 
 func _run() -> void:
 	PalAccount.offline = true
+	PalNet.keep_session = false
 	main = load("res://main.tscn").instantiate()
 	root.add_child(main)
 	for n in 5:

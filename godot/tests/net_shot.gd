@@ -34,6 +34,7 @@ func _run() -> void:
 	var pre: String = a[0] if a.size() > 0 else "user://net"
 	var pv: String = a[1] if a.size() > 1 else "base"
 	PalAccount.offline = true
+	PalNet.keep_session = false
 	main = load("res://main.tscn").instantiate()
 	root.add_child(main)
 	for n in 5:

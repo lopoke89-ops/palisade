@@ -72,11 +72,31 @@ var _chat_rate := {}
 var _join_t := 0.0
 
 
+const SESSION_PATH := "user://room_session.json"
+static var keep_session := true   # tests turn it off
+
+
+## the room session survives a restart for a while (the browser's survives a reload in the same tab), so a guest who
+## crashed or lost the game and comes straight back gets their armory, salvage and kills back from the host
 func _ready() -> void:
-	var b := PackedByteArray()
-	for i in 12:
-		b.append(randi() % 256)
-	session = b.hex_encode()
+	if keep_session and FileAccess.file_exists(SESSION_PATH):
+		var d = JSON.parse_string(FileAccess.get_file_as_string(SESSION_PATH))
+		if d is Dictionary and str(d.get("id", "")).length() == 24 and Time.get_unix_time_from_system() - float(d.get("at", 0)) < 3600:
+			session = d.id
+	if session == "":
+		var b := PackedByteArray()
+		for i in 12:
+			b.append(randi() % 256)
+		session = b.hex_encode()
+	_touch_session()
+
+
+func _touch_session() -> void:
+	if not keep_session:
+		return
+	var f := FileAccess.open(SESSION_PATH, FileAccess.WRITE)
+	if f != null:
+		f.store_string(JSON.stringify({"id": session, "at": Time.get_unix_time_from_system()}))
 
 
 func _now() -> float:
@@ -128,6 +148,7 @@ func _new_peer() -> void:
 
 
 func host_room() -> void:
+	_touch_session()
 	if mode == "opening" or mode == "joining" or is_online():
 		return
 	mode = "opening"
@@ -142,6 +163,7 @@ var _invite := ""   # the room incarnation an accepted invitation was for
 
 func join_room(c: String, invitation: String = "") -> void:
 	_invite = invitation
+	_touch_session()
 	c = c.to_upper().strip_edges()
 	var clean := ""
 	for ch in c:

@@ -49,6 +49,7 @@ func _init() -> void:
 
 
 func _run() -> void:
+	PalNet.keep_session = false
 	print("online: a Godot host and a Godot guest")
 	var H := _mk("Hana", "soldier")
 	var G := _mk("Gus", "quartermaster")
