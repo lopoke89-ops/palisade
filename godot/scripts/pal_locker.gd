@@ -298,14 +298,30 @@ func add_milestones(keys: Array, held: int, from: int, mine: int, cls: String, m
 
 
 ## runClaim: this run's facts, read off the sim when it ends
-static func run_claim(s: Sim) -> Dictionary:
+## raids held so far in a run still going (runHeldNow)
+static func held_now(s: Sim) -> int:
+	return s.bo_stages() if s.blackout() else (s.game.wave if s.game.phase == "build" else maxi(0, s.game.wave - 1))
+
+
+## something new since this screen came in, so leaving (or a crash) would pay for it (runDraftDue)
+static func draft_due(s: Sim) -> bool:
+	var g: Dictionary = s.game
+	if s.pvp() != "" or s.casino() or g.phase == "over":
+		return false
+	var jh: int = int(g.get("joinHeld", 0)) if g.get("joinHeld") != null else 0
+	return not (held_now(s) <= jh and g.bossLog.size() <= int(g.get("joinBoss", 0)) and int(g.sbN) <= int(g.get("joinSB", 0)) and g.fbLog.size() <= int(g.get("joinFB", 0))
+		and not (s.blitz() and s.player.get("out", false)))
+
+
+## early: the player leaves a run still going; it pays what's held so far, as a loss (left: true)
+static func run_claim(s: Sim, early: bool = false) -> Dictionary:
 	var g: Dictionary = s.game
 	var p: Dictionary = s.player
-	var held: int = s.bo_stages() if s.blackout() else (int(g.waves) if g.won else (g.wave if g.end_reason == "evacfail" else maxi(0, g.wave - 1)))
+	var held: int = held_now(s) if early else (s.bo_stages() if s.blackout() else (int(g.waves) if g.won else (g.wave if g.end_reason == "evacfail" else maxi(0, g.wave - 1))))
 	var res := ""
 	if s.blitz() and not (g.fb != null and g.fb.get("mapEvac", false)):
 		res = "evac" if p.get("out", false) else ("left" if g.end_reason == "left" else "")
-	var win: bool = g.won
+	var win: bool = g.won and not early
 	if res != "":
 		held = s.final_wave()
 		win = res == "evac"
@@ -327,7 +343,7 @@ static func run_claim(s: Sim) -> Dictionary:
 		"bosses": keys.size(), "boss_keys": keys,
 		"shard_bosses": maxi(0, int(g.sbN) - int(g.get("joinSB", 0))), "sb_keys": g.sbLog.slice(int(g.get("joinSB", 0))).slice(0, 40),
 		"fb_keys": g.fbLog.slice(int(g.get("joinFB", 0))).slice(0, 20), "salvage": maxi(0, p.sal), "size": g.size, "duration_s": dur,
-		"game_id": g.gid, "joined_s": roundi(jt), "left_s": roundi(g.time), "left": false, "upgrades": ups + ":" + str(int(g.get("dellLv", 0))),
+		"game_id": g.gid, "joined_s": roundi(jt), "left_s": roundi(g.time), "left": early, "upgrades": ups + ":" + str(int(g.get("dellLv", 0))),
 		"mods": s.mods, "map": g.map, "cls": p.cls, "end_reason": g.get("end_reason", ""), "evac": res, "cv": 4, "g_cleared": 0, "ch_evac": []}
 	c.claim_id = "%s:%d:%d:%d:%d" % [g.gid, from, held, roundi(jt), roundi(g.time)]
 	if s.blackout():
@@ -445,8 +461,9 @@ static func cos_str(eq: Dictionary) -> String:
 	return "|".join([eq.get("skin", "std"), eq.get("hat", "class"), eq.get("trail", "std"), eq.get("fx", "none")])
 
 
-func pay_run(s: Sim) -> Dictionary:
-	var c := run_claim(s)
+func pay_run(s: Sim, early: bool = false) -> Dictionary:
+	clear_draft()
+	var c := run_claim(s, early)
 	var pct := mod_bonus(c.mods, "blitz" if c.mode == "blitz" else "")
 	var sh := mini(salvage_shards(c.salvage, c.held), floori(SAL_SHARD.max * (100 + pct) / 100.0))
 	if sh > 0:
@@ -454,6 +471,47 @@ func pay_run(s: Sim) -> Dictionary:
 	if not cloud.is_empty() and account != null:   # the account's server checks the run and pays it
 		return account.queue_claim(c)
 	return local_run(c, sh)
+
+
+## A run in progress is saved as a draft claim when the window loses focus or a raid ends, so if the game is closed
+## or crashes mid-run the next start pays what was held (as an early leave) instead of losing it (saveRunDraft).
+const DRAFT_PATH := "user://run_draft.json"
+
+
+func save_draft(s: Sim) -> void:
+	if not persist or not draft_due(s):
+		return
+	var c := run_claim(s, true)
+	var pct := mod_bonus(c.mods, "blitz" if c.mode == "blitz" else "")
+	var sh := mini(salvage_shards(c.salvage, c.held), floori(SAL_SHARD.max * (100 + pct) / 100.0))
+	var f := FileAccess.open(DRAFT_PATH, FileAccess.WRITE)
+	if f != null:
+		f.store_string(JSON.stringify({"uid": str(cloud.get("id", "")), "at": int(Time.get_unix_time_from_system() * 1000), "claim": c, "shards": sh}))
+
+
+func clear_draft() -> void:
+	if persist and FileAccess.file_exists(DRAFT_PATH):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(DRAFT_PATH))
+
+
+## at start-up: an account's draft joins its claim queue; a no-account draft pays this PC's locker
+func recover_draft() -> Dictionary:
+	if not persist or not FileAccess.file_exists(DRAFT_PATH):
+		return {}
+	var d = JSON.parse_string(FileAccess.get_file_as_string(DRAFT_PATH))
+	clear_draft()
+	if not (d is Dictionary) or not (d.get("claim") is Dictionary):
+		return {}
+	var at := float(d.get("at", 0))
+	if at <= 0 or Time.get_unix_time_from_system() * 1000 - at > 30 * 864e5:
+		return {}
+	if str(d.get("uid", "")) != "":
+		if account != null:
+			account.recover_claim(str(d.uid), d.claim, at)
+		return {}
+	if not cloud.is_empty():
+		return {}   # a no-account draft never pays an account
+	return local_run(d.claim, maxi(0, int(d.get("shards", 0))))
 
 
 func local_run(c: Dictionary, sal_shards: int) -> Dictionary:

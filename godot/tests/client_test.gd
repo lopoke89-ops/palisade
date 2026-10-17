@@ -143,6 +143,20 @@ func _init() -> void:
 	check(main.demo and main.menus.screen == "main", "MAIN MENU goes back to the demo yard")
 	check(main.menus.root.get_child(0) is LockerUI.BgView, "outside a game the menus sit on the lobby background")
 	print("accounts (a stand-in server)")
+	print("leaving a run early")
+	main.locker.cloud = {}
+	main.locker.persist = false
+	main.start_game()
+	var raids0: int = main.locker.st.raids
+	main.sim.start_raid()
+	main.sim.game.wave = 3
+	main.sim.start_build(30.0)   # raid 3 broken: three raids held
+	check(PalLocker.held_now(main.sim) == 3 and PalLocker.draft_due(main.sim), "three raids held: leaving now would pay for them")
+	main.to_menu()
+	check(main.locker.st.raids == raids0 + 3 and main.demo, "QUIT TO MENU pays the raids held so far (%d -> %d)" % [raids0, main.locker.st.raids])
+	main.start_game()
+	main.to_menu()
+	check(main.locker.st.raids == raids0 + 3, "a run with nothing held pays nothing")
 	await _accounts(main)
 	print("locker screen")
 	var L: PalLocker = main.locker

@@ -62,6 +62,7 @@ var account: PalAccount   # the Supabase account and the cloud locker (19-accoun
 var net: PalNet   # online play (21-online.js): hosting, joining, the lobby
 var social: PalSocial   # friends, invitations, the open games list
 var feed: Array = []   # the kill feed: {text, col, t}
+var draft_wave := -1   # the raid the run draft was last saved at
 var casino_ui   # CasinoUI: the table sheets (scripts/casino_ui.gd)
 var cas_glow: Array = []   # this frame's neon and bulbs (CasinoView.items fills it)
 var sk_msg := ""   # the skill tree's last answer from the server
@@ -164,7 +165,10 @@ func _ready() -> void:
 		elif menus.screen == "main":
 			menus.refresh_friends_badge())
 	menus.show_main()
-	account.boot()
+	await account.boot()
+	var R := locker.recover_draft()   # a run cut short last time pays now
+	if R.has("text"):
+		toasts = [{"title": "RUN SAVED", "body": "Your last run ended early. " + R.text, "t": 8.0}]
 
 
 # ---------------------------------------------------------------- the casino
@@ -375,6 +379,13 @@ func _on_claim_done(_c: Dictionary, R, big: String) -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_IN and account != null:
 		account.resume()
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT and not demo and locker != null:
+		locker.save_draft(sim)
+		# alone, the game waits for you (online it can't: the crew keeps playing)
+		if net.mode == "solo" and sim.game.phase != "over" and not sim.game.paused and not menus.active() and not armory_open and not skills_open:
+			do_action("pause")
+	if what == NOTIFICATION_WM_CLOSE_REQUEST and not demo and locker != null:
+		leave_run()
 
 
 func _exit_tree() -> void:
@@ -603,6 +614,7 @@ func menu_nav(dir: String) -> void:
 
 
 func start_game() -> void:
+	leave_run()   # RESTART mid-run counts as leaving it
 	var S: Dictionary = settings.data.setup
 	next_opt = {"map": S.map, "size": S.size, "mode": S.mode, "diff": S.diff, "mods": S.mods.duplicate()}
 	next_cls = S.cls
@@ -615,7 +627,23 @@ func start_game() -> void:
 		toasts = [{"title": "GOOD LUCK", "body": "Gather wood (walk into a pile), %s to build, %s grenade, %s armory at the stake, %s to start the raid early." % [settings.keys_label("build"), settings.keys_label("nade"), settings.keys_label("armory"), settings.keys_label("start")], "t": 7.0 * settings.data.msgTime}]
 
 
+## leaveRun: leaving a run still going pays what's held so far (an early leave); the casino stands you up
+func leave_run() -> void:
+	if demo:
+		return
+	if sim.casino():
+		cas_stand()
+		return
+	if run_sp >= 0 or sim.game.phase == "over" or sim.pvp() != "" or not PalLocker.draft_due(sim):
+		return
+	run_sp = 0
+	var R := locker.pay_run(sim, true)
+	if locker.cloud.is_empty() and R.has("text"):
+		toasts = [{"title": "RUN SAVED", "body": R.text, "t": 6.0}]
+
+
 func to_menu() -> void:
+	leave_run()
 	if net.mode != "solo":
 		net.leave()
 		return
@@ -783,6 +811,9 @@ func _process(dt: float) -> void:
 		net.host_frame(dt)   # before the events drain: they go to the guests too
 	elif net.mode == "guest" and not net.in_game:
 		net.guest_frame(dt, {})
+	if not demo and sim.game.wave != draft_wave:
+		draft_wave = sim.game.wave
+		locker.save_draft(sim)
 	if not demo and sim.game.phase == "over":
 		if run_sp < 0:
 			if sim.pvp() == "" and not sim.casino() and net.mode == "solo":   # this PC's best runs (solo only, as in the browser)

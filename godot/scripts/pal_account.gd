@@ -393,6 +393,16 @@ func queue_claim(c: Dictionary) -> Dictionary:
 		"text": "Sending your result to your account…"}
 
 
+## a run draft from an earlier session, for the account it was played on (even if another is signed in now)
+func recover_claim(owner: String, c: Dictionary, at: float) -> void:
+	var q := c.duplicate(true)
+	q.uid = owner
+	q.at = int(at)
+	claims.append(q)
+	_save_claims()
+	flush_claims()
+
+
 func flush_claims() -> void:
 	if _flushing or claims.is_empty() or s.is_empty():
 		return
