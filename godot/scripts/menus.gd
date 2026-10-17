@@ -279,6 +279,7 @@ func show_main() -> void:
 	box.add_child(col)
 	_button("PLAY", func(): m.start_game(), col)
 	_button("PLAY ONLINE", func(): show_online(""), col)
+	_button("THE CASINO", func(): m.start_casino(), col)
 	_friends_btn = _button(_friends_label(), func(): show_friends(), col)
 	_button("MATCH SETUP", func(): show_setup(), col)
 	_button("LOCKER" + (" · %d CASE%s" % [m.locker.all_cases(), "" if m.locker.all_cases() == 1 else "S"] if m.locker != null and m.locker.all_cases() > 0 else ""), func(): show_locker(), col)
@@ -1087,8 +1088,8 @@ func show_lobby() -> void:
 			show_lobby()
 		_choice(col, "GAME", PVP_MODES, pv, func(id): redo.call("pvp", id))
 		if pv == "coop":
-			_choice(col, "LENGTH", MODES, n.pick.mode, func(id): redo.call("mode", id))
-		var fixed: bool = pv == "coop" and n.pick.mode in ["campaign", "blackout"]
+			_choice(col, "LENGTH", MODES + [["casino", "THE CASINO"]], n.pick.mode, func(id): redo.call("mode", id))
+		var fixed: bool = pv == "coop" and n.pick.mode in ["campaign", "blackout", "casino"]
 		var maps: Array = PalMaps.MAP_IDS.map(func(id): return [id, PalMaps.MAPS[id].name])
 		_choice(col, "MAP", maps, n.pick.map, func(id): redo.call("map", id), PalMaps.MAP_IDS if fixed else (["frost"] if pv != "coop" else []))
 		if pv != "coop":

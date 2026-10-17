@@ -47,6 +47,8 @@ var locked := false
 var incarnation := ""
 var session := ""   # this run of the game, so a dropped guest who comes back gets their kit back
 var chat: Array = []
+var cas_room := ""   # a guest's casino room id, from the host's start message
+var main_ref   # main, for the casino room id (cas_room()) in the start message
 
 var _conns := {}   # host: peer id -> {pid, session, name, cls, cos, uid, sk, heard, moveAt, moveBudget, kicked}
 var _host_peer := ""   # guest: the host's peer id
@@ -431,6 +433,18 @@ func _host_action(c: Dictionary, t: String, d: Dictionary) -> void:
 				return
 			if d.has("n") and not _int(d.n, 0, 9007199254740991):
 				return
+			if d.has("st") and not _int(d.st, 0, 199):
+				return
+			if sim.casino() and int(d.get("st", 0)) != int(p.get("seat", 0)):
+				# a casino seat nobody else has, next to where they stand (only codes in the seat registry)
+				var want := int(d.get("st", 0))
+				var q := CasinoView.seat_of(want)
+				var other = CasinoView.taken(sim, want) if want else null
+				p.seat = want if want and not q.is_empty() and Vector2(p.x - q.pos[0], p.y - q.pos[1]).length() < 1.2 and (other == null or is_same(other, p)) else 0
+				if p.seat:
+					p.x = q.pos[0]
+					p.y = q.pos[1]
+					c.moveBudget = 0.0
 			var a := Vector2(d.ax, d.ay)
 			if a.length() > 0.01:
 				p.aim = a.normalized()
@@ -689,7 +703,8 @@ func _start_msg() -> Dictionary:
 		if not b.dead:
 			shots.append(_bullet_event(b))
 	var g: Dictionary = sim.game
-	return {"t": "start", "roster": _roster_now(), "diff": g.diff, "mode": g.mode, "pvp": g.pvp, "map": g.map, "size": g.size, "oct": 0, "gid": g.gid,
+	var room = main_ref.cas_room() if g.mode == "casino" and main_ref != null else null
+	return {"t": "start", "room": room, "roster": _roster_now(), "diff": g.diff, "mode": g.mode, "pvp": g.pvp, "map": g.map, "size": g.size, "oct": 0, "gid": g.gid,
 		"mods": sim.mods, "job": g.job, "shots": shots}
 
 
@@ -1171,6 +1186,7 @@ func _guest_data(d: Dictionary) -> void:
 			pick.pvp = str(d.get("pvp", "")) if d.get("pvp") else "coop"
 			pick.map = d.map if d.get("map", "") in PalMaps.MAP_IDS else "yard"
 			pick.size = "xl" if d.get("size", "") == "xl" else "std"
+			cas_room = str(d.get("room", "")).substr(0, 80) if d.get("room") is String else ""
 			var pv: String = pick.pvp if pick.pvp in ["base", "ffa"] else ""
 			sim.new_game(-1, pick.diff, {}, {"roster": d.get("roster", []), "pvp": pv, "my_id": my_id, "guest": true, "gid": d.get("gid", ""),
 				"mods": d.get("mods", []), "job": d.get("job", ""), "mode": pick.mode, "map": pick.map, "size": pick.size})

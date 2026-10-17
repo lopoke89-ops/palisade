@@ -62,6 +62,8 @@ var account: PalAccount   # the Supabase account and the cloud locker (19-accoun
 var net: PalNet   # online play (21-online.js): hosting, joining, the lobby
 var social: PalSocial   # friends, invitations, the open games list
 var feed: Array = []   # the kill feed: {text, col, t}
+var casino_ui   # CasinoUI: the table sheets (scripts/casino_ui.gd)
+var cas_glow: Array = []   # this frame's neon and bulbs (CasinoView.items fills it)
 var sk_msg := ""   # the skill tree's last answer from the server
 var demo := true   # the main menu's yard: Delgado builds, the camera circles the stake, nobody plays
 var over_t := 0.0   # the after-action screen comes up a moment after the end
@@ -140,6 +142,7 @@ func _ready() -> void:
 	account.claim_done.connect(_on_claim_done)
 	net = PalNet.new()
 	net.sim = sim
+	net.main_ref = self
 	add_child(net)
 	net.started.connect(_net_started)
 	net.left.connect(_net_left)
@@ -149,6 +152,11 @@ func _ready() -> void:
 	net.skills_check.connect(_check_guest_skills)
 	social = PalSocial.new(self)
 	add_child(social)
+	if ResourceLoader.exists("res://scripts/casino_ui.gd"):
+		casino_ui = load("res://scripts/casino_ui.gd").new(self)
+		add_child(casino_ui)
+		if casino_ui.has_signal("stood_up"):
+			casino_ui.stood_up.connect(func(): sim.player.seat = 0)
 	net.room_closed.connect(func(inc: String): social.unpublish(inc))
 	social.changed.connect(func():
 		if menus.screen == "friends":
@@ -157,6 +165,61 @@ func _ready() -> void:
 			menus.refresh_friends_badge())
 	menus.show_main()
 	account.boot()
+
+
+# ---------------------------------------------------------------- the casino
+
+## ENTER THE CASINO alone (online, the room's host picks the casino in the lobby)
+func start_casino() -> void:
+	next_opt = {"map": "casino", "size": "std", "mode": "casino", "diff": "normal", "mods": []}
+	next_cls = settings.data.setup.cls
+	demo = false
+	menus.close()
+	skills_open = false
+	_restart()
+	over_t = 0.0
+	sim.game.casRoom = "SOLO:%s:%s" % [str(account.uid() if account != null and account.uid() != null else "x").substr(0, 8), PalLocker._b36(int(Time.get_unix_time_from_system() * 1000))]
+
+
+## the casino room id the server keys the tables by (casRoom)
+func cas_room() -> String:
+	if net.mode == "host" and net.code != "" and net.incarnation != "":
+		return "R:%s:%s" % [net.code, net.incarnation]
+	if net.mode == "guest" and net.cas_room != "":
+		return net.cas_room
+	if not sim.game.has("casRoom"):
+		sim.game.casRoom = "SOLO:%s:%s" % [str(account.uid() if account != null and account.uid() != null else "x").substr(0, 8), PalLocker._b36(int(Time.get_unix_time_from_system() * 1000))]
+	return sim.game.casRoom
+
+
+## E next to a free seat: snap onto it, face the table, open its sheet; seated: open the sheet again
+func cas_sit() -> void:
+	var p: Dictionary = sim.player
+	if not p.alive:
+		return
+	if p.get("seat", 0):
+		if casino_ui != null and not casino_ui.is_open():
+			casino_ui.open(p.seat, cas_room())
+		return
+	var sn := CasinoView.seat_near(sim, p, casino_ui)
+	if sn.is_empty():
+		return
+	p.x = sn.pos[0]
+	p.y = sn.pos[1]
+	p.seat = sn.code
+	var to: Array = sn.t.c if sn.has("t") else sn.m.at
+	p.aim = Vector2(to[0] - p.x, to[1] - p.y).normalized()
+	p.face = p.aim
+	if casino_ui != null:
+		casino_ui.open(sn.code, cas_room())
+	else:
+		toasts = [{"title": "TABLES", "body": "The tables aren't in this build yet.", "t": 3.0}]
+
+
+func cas_stand() -> void:
+	sim.player.seat = 0
+	if casino_ui != null and casino_ui.is_open():
+		casino_ui.close()
 
 
 # ---------------------------------------------------------------- online play
@@ -374,6 +437,11 @@ func _unhandled_input(e: InputEvent) -> void:
 
 ## every in-game action, from a key, a controller button or a touch button
 func do_action(id: String) -> void:
+	if id == "pause" and casino_ui != null and casino_ui.is_open():   # Esc at a table: close the sheet and stand up
+		cas_stand()
+		return
+	if sim.casino() and not demo and id in ["build", "nade", "special", "reload", "delgado", "start", "piece", "mat1", "mat2", "mat3", "matPrev", "matNext"]:
+		return   # no weapons and no building in the casino
 	if id == "pause":
 		if armory_open:
 			_close_armory()
@@ -456,7 +524,10 @@ func do_action(id: String) -> void:
 		"reload":
 			sim.local_reload()
 		"armory":
-			_try_armory()
+			if sim.casino():
+				cas_sit()
+			else:
+				_try_armory()
 		"delgado":
 			sim.set_qm_mode("" if sim.qm.mode == "follow" else "follow")
 		"start":
@@ -1034,6 +1105,9 @@ func _draw_scene() -> void:
 	if sim.pvp() == "base":
 		for co in sim.cores:
 			items.append([co.i + co.j + 1.0, 2, co])
+	elif sim.casino():
+		for q in CasinoView.items(self):
+			items.append([q[0], 20, q[1]])
 	elif sim.pvp() == "":
 		items.append([sim.core.i + sim.core.j + 1.0, 2, null])
 	if city:
@@ -1122,7 +1196,12 @@ func _draw_scene() -> void:
 					o.merge(_motion(p), true)
 					if p.bolt > 0:
 						o.bolt = 1.0 - p.bolt / p.boltT
-					draw_wardrobe(p.x, p.y, o)
+					if sim.casino():
+						o.nogun = true
+					if p.get("seat", 0):
+						CasinoView.seated(self, p.x, p.y, func(): draw_wardrobe(p.x, p.y, o))
+					else:
+						draw_wardrobe(p.x, p.y, o)
 				elif p.downed:
 					var tag := "DOWN · UNTIL THE RAID IS BROKEN" if p.rt > 1e5 else "DOWN · %d" % ceili(p.rt)
 					var sc := iso(p.x, p.y)
@@ -1138,6 +1217,8 @@ func _draw_scene() -> void:
 				oval(sc.x, sc.y - 4 * u, 5 * u, 5 * u, c("#cbbf9f"))
 			8:
 				_draw_terr_item(it[2] % N, it[2] / N, sim.terr[it[2]])
+			20:
+				it[2].call()
 			9:
 				_draw_frost_cliff(it[2])
 			10:
@@ -1256,6 +1337,8 @@ func _paint_glow(layer: CanvasItem) -> void:
 		var a: float = f.life / f.max
 		var r: float = v.TW2 * f.r * (1.0 if f.muzzle else 2.2) * (1.0 if f.muzzle else 1.4 - a * 0.4)
 		cv.draw_texture_rect(glow_tex, Rect2(fp.x - r, fp.y - r, r * 2, r * 2), false, Color(1, 1, 1, a))
+	if sim.casino():
+		CasinoView.glow(self, layer)
 	if sim.map_id == "city" and not sim.game.get("dark", false) and light.L > 0.25:
 		var r := v.TW2 * 3.5 * 0.9
 		for l in sim.lay.lamps:
@@ -1435,6 +1518,14 @@ func _plate_bar(x: float, y: float, w: float, h: float, frac: float, col: Color,
 func _draw_nameplates() -> void:
 	var u := v.u
 	var p: Dictionary = sim.player
+	if sim.casino():   # names only (nobody gets hurt in here), and the dealers in gold
+		for o in sim.players.values():
+			var cc := iso(o.x, o.y)
+			label(("YOU" if is_same(o, p) else str(o.name)).to_upper(), cc.x, cc.y - 48 * u + (5 * u if o.get("seat", 0) else 0.0), c(Pal.SLOTCOL[int(o.slot) % 6]), 9)
+		for t in CasinoView.TABLES:
+			var dc := iso(t.dealer.x, t.dealer.y)
+			label(t.dealer.name + " · DEALER", dc.x, dc.y - 48 * u, c("#d6aa46"), 8)
+		return
 	var pulse := sin(sim.game.time * 9) > 0
 	var W1 := clampf(34 * u, 26, 44)
 	var W0 := clampf(40 * u, 30, 50)
@@ -1513,6 +1604,18 @@ func _draw_prompts(p: Dictionary) -> void:
 	if not p.alive:
 		return
 	var u := v.u
+	if sim.casino():
+		var key := settings.keys_label("armory")
+		if p.get("seat", 0):
+			if casino_ui == null or not casino_ui.is_open():
+				var cc := iso(p.x, p.y)
+				_key_cap(cc.x, cc.y - 50 * u, key, "OPEN THE TABLE", c("#d6aa46"))
+			return
+		var sn := CasinoView.seat_near(sim, p, casino_ui)
+		if not sn.is_empty():
+			var sc := iso(sn.pos[0], sn.pos[1])
+			_key_cap(sc.x, sc.y - 34 * u, key, ("PLAY · " if sn.has("m") else "SIT · ") + (sn.m.name if sn.has("m") else sn.t.name), c("#d6aa46"))
+		return
 	if sim.can_shop(p):
 		var co: Dictionary = sim.core
 		if sim.blackout():   # the nearest held POI
@@ -1744,7 +1847,7 @@ func _draw_stake(which = null) -> void:
 
 func _draw_ghost() -> void:
 	var p: Dictionary = sim.player
-	if not p.alive or sim.game.phase == "over":
+	if not p.alive or sim.game.phase == "over" or sim.casino():
 		return
 	var t := sim.build_target(p, sim.game.sel, sim.game.piece == "door")
 	if not sim.inb(t.i, t.j):
@@ -1885,7 +1988,9 @@ func _draw_hud() -> void:
 	var clock := func(t: float) -> String:
 		var sec := maxi(0, ceili(t))
 		return "%d:%02d" % [sec / 60, sec % 60]
-	if sim.pvp() == "base" and g.phase != "over":
+	if sim.casino():
+		phase_txt = "PALISADE FALLS CASINO · %s◆ %d%s" % [("ROOM %s · " % net.code) if net.is_online() and net.code != "" else "", locker.shards if locker != null else 0, " · seated" if p.get("seat", 0) else ""]
+	elif sim.pvp() == "base" and g.phase != "over":
 		var mine := 0
 		var theirs := 0
 		for o in sim.players.values():
@@ -1916,7 +2021,7 @@ func _draw_hud() -> void:
 	cv.draw_string(font, Vector2(14, 22), phase_txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, paper)
 	var bw := 220.0
 	var bx := W - bw - 16
-	if sim.pvp() != "ffa":
+	if sim.pvp() != "ffa" and not sim.casino():
 		cv.draw_string(font, Vector2(bx - 80, 22), "COMMAND" if sim.map_id == "city" else ("STAKES" if sim.pvp() == "base" else "STAKE"), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, dim)
 	if sim.map_id == "city":
 		if city_map == null:
@@ -1929,9 +2034,11 @@ func _draw_hud() -> void:
 		cv.draw_rect(Rect2(bx, 6, bw * maxf(0, mc.hp / mc.max), 9), c(Pal.TEAMS[mc.team].col))
 		cv.draw_rect(Rect2(bx, 19, bw, 9), Color(0, 0, 0, 0.6))
 		cv.draw_rect(Rect2(bx, 19, bw * maxf(0, ec.hp / ec.max), 9), c(Pal.TEAMS[ec.team].col))
-	elif sim.pvp() == "":
+	elif sim.pvp() == "" and not sim.casino():
 		cv.draw_rect(Rect2(bx, 11, bw, 12), Color(0, 0, 0, 0.6))
 		cv.draw_rect(Rect2(bx, 11, bw * maxf(0, sim.core.hp / sim.core.max), 12), gold)
+	if sim.casino():   # no kit, no building, no Delgado in here
+		return
 	# bottom-left: health, materials, grenades
 	var y0 := H - 74
 	cv.draw_rect(Rect2(10, y0 - 8, 330, 72), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.72))
@@ -2510,7 +2617,9 @@ func paint_chunk(ch: GroundChunk) -> void:
 	v.cam_x = 0.0
 	v.cam_y = 0.0
 	cv = ch
-	if ch.back:
+	if ch.back and sim.casino():
+		pass   # the casino is a room: nothing outside its walls
+	elif ch.back:
 		Scenery.paint_outside(self)
 		for t in trees_back:
 			Scenery.tree(self, t)
@@ -2520,7 +2629,9 @@ func paint_chunk(ch: GroundChunk) -> void:
 				Scenery.edge(self, "w", q)
 	else:
 		_paint_ground(ch.i0, mini(sim.N, ch.i0 + ch.n), ch.j0, mini(sim.N, ch.j0 + ch.n))
-		if ch.n >= sim.N:   # the whole yard in one piece: the far fence and Frostpeak's props go over its ground
+		if ch.n >= sim.N and sim.casino():
+			CasinoView.walls(self)
+		elif ch.n >= sim.N:   # the whole yard in one piece: the far fence and Frostpeak's props go over its ground
 			for q in sim.N:
 				Scenery.edge(self, "n", q)
 				Scenery.edge(self, "w", q)
@@ -2561,6 +2672,14 @@ func _sync_ground() -> void:
 ## the near side: the south and east edges and the trees past them, in pieces along the edge so a fading tree only
 ## repaints its own piece
 func _build_front() -> void:
+	if sim.casino():   # four walls, no forest or fence in front
+		trees_back = []
+		trees_front = []
+		for ch in front_root.get_children():
+			ch.queue_free()
+			front_root.remove_child(ch)
+		front_groups.clear()
+		return
 	var forest := Scenery.gen_forest(sim)
 	trees_back = forest[0]
 	trees_front = forest[1]
@@ -2664,6 +2783,8 @@ func _update_light(dt: float) -> void:
 				hole.call(p.x, p.y, WH * 0.5, TW2 * 3.4, 0.95)
 		if sim.qm.alive:
 			hole.call(sim.qm.x, sim.qm.y, WH * 0.5, TW2 * 1.8, 0.7)
+		if sim.casino():
+			CasinoView.lights(self, hole)
 		if sim.map_id == "city":
 			for co in sim.cores:
 				if not co.has("poi"):
@@ -2783,6 +2904,12 @@ func _tile_on(i: int, j: int, m: float = 1.5) -> bool:
 func _paint_ground(i0: int, i1: int, j0: int, j1: int) -> void:
 	var N: int = sim.N
 	var u := v.u
+	if sim.casino():
+		for j in range(j0, j1):
+			for i in range(i0, i1):
+				quad(v.iso(i, j), v.iso(i + 1, j), v.iso(i + 1, j + 1), v.iso(i, j + 1), CasinoView.ground_col(self, i, j, Pal.hash2(i, j)))
+				CasinoView.ground_detail(self, i, j)
+		return
 	if sim.map_id == "city":
 		for j in range(j0, j1):
 			for i in range(i0, i1):

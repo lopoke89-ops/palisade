@@ -171,7 +171,7 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 		rng.randomize()
 	Df = Pal.DIFF.get(diff, Pal.DIFF.normal)
 	var mode: String = opt.get("mode", "5")
-	if not ["5", "10", "endless", "blitz", "campaign", "blackout"].has(mode):
+	if not ["5", "10", "endless", "blitz", "campaign", "blackout", "casino"].has(mode) or (mode == "casino" and pvp != ""):
 		mode = "5"
 	if pvp != "":
 		Df = Pal.DIFF.normal
@@ -180,6 +180,10 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 		if not PalMaps.PVP_BLURB.has(map_id):
 			map_id = "yard"   # Frostpeak has no PvP layout: the Yard stands in
 		lay = PalMaps.lay_pvp(map_id, pvp)
+	elif mode == "casino":   # THE PALISADE FALLS CASINO: no raiders, no stake, no weapons
+		mods = []
+		map_id = "casino"
+		lay = CasinoView.lay()
 	else:
 		mods = clean_mods(opt.get("mods", []), mode)
 		map_id = "yard" if mode == "campaign" else ("city" if mode == "blackout" else opt.get("map", "yard"))
@@ -215,7 +219,7 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 		cores = []
 		for n in 2:
 			cores.append({"team": "b" if n else "a", "i": lay.cores[n][0], "j": lay.cores[n][1], "hp": Pal.PVP.stake, "max": Pal.PVP.stake, "flash": 0.0})
-	elif pvp == "ffa":
+	elif pvp == "ffa" or mode == "casino":
 		cores = []
 	else:
 		cores = [{"team": "", "i": lay.core[0], "j": lay.core[1], "hp": float(Df.core), "max": float(Df.core), "flash": 0.0}]
@@ -244,7 +248,7 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 			if n.locked and n.unlock > 3:
 				n.unlock = 3
 	var waves: float = INF if mode == "endless" else (float(BLITZ.waves) if mode == "blitz" else (float(CAMPAIGN.waves) if mode == "campaign" else (8.0 if mode == "blackout" else float(mode))))
-	var timer: float = Pal.PVP.truce if pvp == "base" else (Pal.PVP.ffaTime if pvp == "ffa" else (BO.gather if mode == "blackout" else 40.0 + Df.build))
+	var timer: float = 1e9 if mode == "casino" else Pal.PVP.truce if pvp == "base" else (Pal.PVP.ffaTime if pvp == "ffa" else (BO.gather if mode == "blackout" else 40.0 + Df.build))
 	game = {"phase": "raid" if pvp == "ffa" else "build", "timer": timer, "pvp": pvp, "goal": Pal.PVP.ffaGoal, "winner": "", "sd": false, "wxT": 0.0, "job": job,
 		"gid": str(opt.get("gid", new_gid())).substr(0, 40), "prepEpoch": 0, "bo": null, "dark": false, "wave": 0, "waves": waves, "mode": mode, "queue": [], "spawnT": 0.0, "spawnGap": 1.1,
 		"time": 0.0, "sel": 0, "piece": "wall", "won": false, "paused": false, "bosses": 0, "fb": null, "wx": 0, "wxHit": 0.0,
@@ -274,6 +278,12 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 			cnt[q.team] += 1
 			q.x = N - sp[0] if q.team == "b" else sp[0]
 			q.y = N - sp[1] if q.team == "b" else sp[1]
+	elif mode == "casino":   # in at the door
+		var n := 0
+		for q in players.values():
+			q.x = CasinoView.SPAWN[n % 6][0]
+			q.y = CasinoView.SPAWN[n % 6][1]
+			n += 1
 	elif pvp == "ffa":
 		var n := 0
 		var S: Array = lay.pspawns
@@ -284,8 +294,8 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 			q.y = sp[1]
 	core = cores[1 if player.team == "b" else 0] if pvp == "base" else (cores[0] if not cores.is_empty() else {"team": "", "i": -9, "j": -9, "hp": 1.0, "max": 1.0, "flash": 0.0})
 	core_k = idx(core.i, core.j) if not cores.is_empty() else -1
-	var off: Array = [0, 0] if pvp != "" else [core.i - 4, core.j - 11]   # the spawn spots are laid out round a stake at (4,11)
-	if pvp == "":
+	var off: Array = [0, 0] if pvp != "" or mode == "casino" else [core.i - 4, core.j - 11]   # the spawn spots are laid out round a stake at (4,11)
+	if pvp == "" and mode != "casino":
 		for q in players.values():
 			q.x += off[0]
 			q.y += off[1]
@@ -312,7 +322,7 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 		if pvp == "ffa":
 			q.mats = [0, 0, 0]
 			q.prot = Pal.PVP.prot
-	if pvp != "" or has_mod("alone"):   # Delgado sits PvP (and On Your Own) out
+	if pvp != "" or has_mod("alone") or mode == "casino":   # Delgado sits PvP (and On Your Own, and the casino) out
 		qm.alive = false
 		qm.gone = true
 		qm.x = -9.0
@@ -1002,6 +1012,12 @@ func update(dt: float, ctl: Dictionary = {}) -> void:
 	if game.phase == "over" or game.paused:
 		return
 	game.time += dt
+	if casino():   # no raid clock, no raiders and no stake: people walk about and sit down
+		control_local(dt, ctl)
+		for p in players.values():
+			if p.get("seat", 0):
+				p.walk = 0.0
+		return
 	for c in cores:
 		c.flash = maxf(0.0, c.flash - dt)
 	update_flood(dt)
@@ -1126,6 +1142,10 @@ func end_pvp(winner: String) -> void:
 	ev({"k": "over", "win": game.won})
 
 
+func casino() -> bool:
+	return game.get("mode", "") == "casino"
+
+
 func truce() -> bool:
 	return pvp() == "base" and game.phase == "build"
 
@@ -1133,7 +1153,7 @@ func truce() -> bool:
 func control_local(dt: float, ctl: Dictionary) -> void:
 	var p := player
 	p.fire_in = false
-	if not p.alive:
+	if not p.alive or p.get("seat", 0):   # seated at a casino table: the sheet has the controls
 		return
 	var mv: Vector2 = ctl.get("move", Vector2.ZERO)
 	var mag := minf(1.0, mv.length())
@@ -1155,7 +1175,7 @@ func control_local(dt: float, ctl: Dictionary) -> void:
 	elif mag > 0.12:
 		p.face = p.move_dir
 		p.aim = p.move_dir
-	p.fire_in = ctl.get("fire", false) and not spr
+	p.fire_in = ctl.get("fire", false) and not spr and not casino()   # no weapons in the casino
 	p.auto = ctl.get("auto", false)
 	var pulls: int = ctl.get("pulls", p.pullIn)
 	if p.pullIn != pulls:
