@@ -9,6 +9,7 @@ extends SceneTree
 const PORT := 18797
 const A := "a0000000-0000-4000-8000-00000000000a"
 const B := "b0000000-0000-4000-8000-00000000000b"
+const E := "e0000000-0000-4000-8000-00000000000e"
 
 var fails := 0
 var pid := -1
@@ -106,6 +107,7 @@ func _init() -> void:
 	await _blackjack()
 	await _holdem()
 	await _sheet()
+	await _old_seat()
 	_end()
 
 
@@ -505,6 +507,44 @@ func _sheet() -> void:
 	ui._act("rlspin")
 	await create_timer(0.6).timeout
 	check(ui.tables.v.phase == "spin" and ui.wheel_state().ball != null, "SPIN: the ball is spinning (and on the floor's wheel)")
+	ui._act("stand")
+	await create_timer(0.6).timeout
+	ui.queue_free()
+
+
+## a seat left behind days ago in an earlier casino (the game was closed while seated): sitting in today's casino
+## stands up from it first and gives its shards back, instead of "You are still seated at another table"
+func _old_seat() -> void:
+	print("a seat left behind")
+	var old := client("tok-e", E)
+	var r := await old.sit("SOLO:e0000000:old%d" % Time.get_ticks_msec(), "bj", 0)
+	check(old.id > 0, "seated at blackjack in an earlier casino room")
+	var old_stack := int(old.v.seats[int(old.v.me)].stack) if old.id > 0 else 0
+	old.queue_free()   # the game closes without standing up
+	var b0 := await balance("tok-e")
+	var ui := CasinoUI.new(main)
+	ui.tables.account = account("tok-e", E)
+	ui.persist_seed = false
+	ui.sync_locker = false
+	root.add_child(ui)
+	await process_frame
+	var stood := [0]
+	ui.stood_up.connect(func(): stood[0] += 1)
+	ui.open(31, "SOLO:e0000000:new%d" % Time.get_ticks_msec())
+	for i in 120:
+		await process_frame
+		if ui.tables.id:
+			break
+	await create_timer(0.3).timeout
+	check(ui.tables.id > 0 and ui.tables.v.game == "rl" and stood[0] == 0, "today's casino seats us at roulette (%s)" % ui._no)
+	var stack := int(ui.tables.v.seats[int(ui.tables.v.me)].stack)
+	var b1 := await balance("tok-e")
+	check(b1 + stack == b0 + old_stack, "the old seat's %d shards came home before the new buy-in (%d -> %d, %d on the table)" % [old_stack, b0, b1, stack])
+	var same := ui.tables.id
+	ui.close()
+	ui.open(31, ui.room)
+	await create_timer(0.5).timeout
+	check(ui.tables.id == same and ui.tables.v.game == "rl", "opening the same seat again keeps it")
 	ui._act("stand")
 	await create_timer(0.6).timeout
 	ui.queue_free()
