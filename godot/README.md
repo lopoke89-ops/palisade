@@ -181,6 +181,18 @@ THE CASINO (main menu) opens Palisade Falls Casino alone. An online host can als
 - **Save code:** SETTINGS › SAVE BACKUP copies the browser's own `PALISADE-SAVE-1` code (locker, best runs, settings) and restores from one, so a code from the browser works here and the other way round.
 - **Interrupted runs:** a run in progress is saved as a draft. If the game is closed or crashes, the next start pays what was held.
 
+## The 3D models
+
+The menus, the online lobby and the Locker use the 3D model library (the private repo lopoke89-ops/palisade-3d-model-library).
+- **What's in the game:** `palisade_art/` is the runtime part of the library: its catalog, animation manifest, lobby layouts, weapon profiles and the class, skin, headgear, lobby environment, ring and weapon models. `palisade_art/LIBRARY.txt` names the library commit it came from.
+- **Updating it:** `godot/tools/sync_art.sh /path/to/palisade-3d-model-library` copies a new revision in. Godot then imports the models with the library's settings (60 fps clips, neutral tracks kept, clip names kept, the import script `tools/import/palisade_post_import.gd`). These are set as the scene importer defaults in `project.godot`, so they apply without `.import` files.
+- **Characters:** `scripts/art_library.gd` builds a dressed character from the game's own IDs. It uses the class model for the standard skin and the skin model otherwise, applies the headgear with the library's fit and replacement-head rules, and swaps in the class's weapon (carbine, bolt rifle, pump or SMG) where the skin was posed with another gun.
+- **The stage:** `scripts/lobby3d.gd` puts the equipped lobby environment behind the menus, with the library's captured camera and slots.
+  - On the main menu you stand alone.
+  - In an online lobby the whole room stands there, you in front and up to five more. Each player has a ring in their slot colour, brighter when ready, and their name above them.
+  - The Locker shows your outfit turning slowly in 3D.
+- **Without the models:** if `palisade_art/` is missing, the menus fall back to the painted backgrounds and the 2D figure.
+
 ## Windows build
 
 `tools/export_windows.sh` makes `export/palisade/Palisade.exe` (the game, with its data inside) and the WebRTC DLL next to it. It uses the "Windows Desktop" preset in `export_presets.cfg` and leaves the tests and tools out. If the Godot 4.7.2 export templates are missing, it downloads them once (about 1.3 GB) and keeps only the Windows ones.
@@ -222,6 +234,7 @@ xvfb-run godot --path godot --script res://tests/shot.gd -- /tmp/frost.png map f
 PAL_COS=gsoldier,crown xvfb-run godot --path godot --script res://tests/shot.gd -- /tmp/s.png  # dressed in an outfit
 xvfb-run godot --path godot --script res://tests/cos_shot.gd -- /tmp/cos.png     # tracers and kill effects in play
 xvfb-run godot --path godot --script res://tests/locker_shot.gd -- /tmp/lk      # the Locker and a case opening
+xvfb-run -a godot --path godot --rendering-driver opengl3 --resolution 1600x900 --script res://tests/lobby3d_shot.gd -- /tmp/l3   # the 3D lobby: main menu, a room of six, the Locker, portrait
 godot --headless --path godot --script res://tests/music_test.gd         # which track each screen and mode plays
 godot --headless --path godot --script res://tests/social_test.gd        # friends, invites, open games (against a stand-in server)
 ```

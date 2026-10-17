@@ -180,7 +180,16 @@ class Preview extends Control:
 		custom_minimum_size = Vector2(220, 240)
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
 
+	var three: Preview3D   # the 3D model, when the model library is in this build
+
+	func _ready() -> void:
+		if Lobby3D.available():
+			three = Preview3D.new()
+			add_child(three)
+
 	func _process(_dt: float) -> void:
+		if three != null:
+			three.show_outfit(ui.cls(), ui.L.eq)
 		queue_redraw()
 
 	func _draw() -> void:
@@ -192,9 +201,63 @@ class Preview extends Control:
 		var ang := THUMB_ANG + sin(t * 0.5) * 0.9
 		if look.get("aura"):
 			CosFx.paint_aura(self, look.aura, ox, oy, sc, t, 1, "ground")
-		Wardrobe.draw(self, look, ang, t, sc, ox, oy, false)
-		if look.get("aura"):
+		if three == null:   # the painted figure when the 3D models aren't in this build
+			Wardrobe.draw(self, look, ang, t, sc, ox, oy, false)
+		if look.get("aura") and three == null:
 			CosFx.paint_aura(self, look.aura, ox, oy, sc, t, 1, "top")
+
+
+## the Locker's outfit in 3D: the dressed model (class, skin, headgear, the class's weapon), turning slowly
+class Preview3D extends SubViewportContainer:
+	var vp: SubViewport
+	var pivot: Node3D
+	var model: Node3D
+	var key := ""
+
+	func _init() -> void:
+		set_anchors_preset(Control.PRESET_FULL_RECT)
+		stretch = true
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		vp = SubViewport.new()
+		vp.transparent_bg = true
+		vp.own_world_3d = true
+		vp.msaa_3d = Viewport.MSAA_4X
+		add_child(vp)
+		var cam := Camera3D.new()
+		cam.fov = 30
+		cam.position = Vector3(0, 1.15, 4.6)
+		vp.add_child(cam)
+		cam.look_at(Vector3(0, 0.95, 0))
+		var we := WorldEnvironment.new()
+		var e := Environment.new()
+		e.background_mode = Environment.BG_CLEAR_COLOR
+		e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+		e.ambient_light_color = Color(0.66, 0.64, 0.66)
+		we.environment = e
+		vp.add_child(we)
+		var key_l := DirectionalLight3D.new()
+		key_l.rotation_degrees = Vector3(-35, 30, 0)
+		key_l.light_energy = 1.1
+		vp.add_child(key_l)
+		var rim := DirectionalLight3D.new()
+		rim.rotation_degrees = Vector3(-15, 200, 0)
+		rim.light_energy = 0.6
+		vp.add_child(rim)
+		pivot = Node3D.new()
+		vp.add_child(pivot)
+
+	func show_outfit(cls: String, eq: Dictionary) -> void:
+		var k := "%s|%s|%s" % [cls, eq.get("skin", "std"), eq.get("hat", "class")]
+		if k != key:
+			key = k
+			if model != null:
+				pivot.remove_child(model)
+				model.queue_free()
+			model = ArtLibrary.get_lib().build(cls, eq)
+			if model != null:
+				pivot.add_child(model)
+		var t := Time.get_ticks_msec() / 1000.0
+		pivot.rotation.y = -0.45 + (0.0 if PalSettings.reduce_motion else sin(t * 0.5) * 0.9)
 
 
 # ---------------------------------------------------------------- the screen

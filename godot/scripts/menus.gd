@@ -63,6 +63,7 @@ var hint: Label   # setup: the line under the modifiers that says what the last 
 var binding := ""   # Settings: an action waiting for a key
 var _sc: ScrollContainer   # the open card's scroller: as tall as its content, up to the screen
 var _col: VBoxContainer
+var stage: Lobby3D   # the 3D lobby behind the menus, kept across screens (null: the painted backgrounds)
 
 
 func _init(main) -> void:
@@ -126,15 +127,54 @@ func close() -> void:
 	screen = ""
 	binding = ""
 	for ch in root.get_children():
+		if ch == stage:   # kept (hidden) for the next time the menus open: its models stay loaded
+			root.remove_child(ch)
+			continue
 		ch.queue_free()
 
 
 func _clear() -> void:
 	for ch in root.get_children():
 		root.remove_child(ch)
-		ch.queue_free()
-	if m.demo and m.locker != null:   # outside a game the menus sit on the lobby background (drawLobbyBg)
-		root.add_child(LockerUI.BgView.new(lobby_bg()))
+		if ch != stage:
+			ch.queue_free()
+	if m.demo and m.locker != null:   # outside a game the menus sit on the lobby: the 3D stage, or the painted background
+		if stage == null and Lobby3D.available():
+			stage = Lobby3D.new()
+		if stage != null:
+			root.add_child(stage)
+			stage.set_bg(lobby_bg())
+			_stage_crew.call_deferred()   # once the screen being opened has set `screen`
+		else:
+			root.add_child(LockerUI.BgView.new(lobby_bg()))
+
+
+## who stands on the stage: the room in its lobby (this player in front), this player alone everywhere else
+func _stage_crew() -> void:
+	if stage == null or not stage.is_inside_tree():
+		return
+	var me := {"name": str(m.settings.data.get("name", "")), "cls": str(m.settings.data.setup.cls), "cos": m.locker.eq.duplicate(), "ready": false, "slot": 0}
+	if screen == "lobby" and m.net.is_online():
+		var crew: Array = []
+		var rest: Array = []
+		for i in m.net.roster.size():
+			var r: Dictionary = m.net.roster[i]
+			var who := {"name": str(r.get("name", "")), "cls": str(r.get("cls", "soldier")), "cos": PalLocker.parse_cos(str(r.get("cos", ""))),
+				"ready": bool(r.get("ready", false)) or r.get("id", "") == "host", "slot": i}
+			if r.get("id", "") == m.net.my_id:
+				crew.append(who)
+			else:
+				rest.append(who)
+		var pf := 0.0   # the docked card's right edge, as a share of the screen
+		for ch in root.get_children():
+			if ch is MarginContainer and ch.anchor_right == 0.0:
+				pf = ch.offset_right / m.v.W
+		stage.set_crew("party", crew + rest, (pf + 1.0) / 2.0 + 0.02 if pf > 0 else -1.0)
+	else:
+		if screen == "locker":
+			stage.set_crew("locker", [])   # the Locker shows the outfit in its own preview
+		else:
+			stage.set_crew("solo", [me], 0.66 if screen == "main" and m.v.W >= 900 else -1.0)   # clear of the main menu's column
 
 
 func lobby_bg() -> String:
@@ -144,6 +184,10 @@ func lobby_bg() -> String:
 
 ## the equipped background changed: swap the one behind the menus
 func refresh_bg() -> void:
+	if stage != null:
+		stage.set_bg(lobby_bg())
+		_stage_crew()
+		return
 	for ch in root.get_children():
 		if ch is LockerUI.BgView:
 			var nb := LockerUI.BgView.new(lobby_bg())
@@ -162,16 +206,28 @@ func show_locker() -> void:
 
 
 ## a centred card holding a column; returns the column
-func _card(width: float, title: String, kicker: String = "") -> VBoxContainer:
-	var dim := ColorRect.new()
-	dim.color = Color(0, 0, 0, 0.45)
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.add_child(dim)
-	var cc := CenterContainer.new()
-	cc.set_anchors_preset(Control.PRESET_FULL_RECT)
+## dock: on a wide screen with the 3D stage, the card sits at the left and the crew stands visible on the right
+func _card(width: float, title: String, kicker: String = "", dock: bool = false) -> VBoxContainer:
+	var docked: bool = dock and stage != null and m.v.W >= 900
+	var cc: Container
+	if docked:
+		cc = MarginContainer.new()
+		cc.set_anchors_preset(Control.PRESET_LEFT_WIDE)
+		cc.offset_right = minf(width, m.v.W * 0.44) + 48
+		for side in ["left", "right", "top", "bottom"]:
+			cc.add_theme_constant_override("margin_" + side, 24)
+	else:
+		var dim := ColorRect.new()
+		dim.color = Color(0, 0, 0, 0.45)
+		dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+		root.add_child(dim)
+		cc = CenterContainer.new()
+		cc.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.add_child(cc)
 	var pc := PanelContainer.new()
-	pc.custom_minimum_size = Vector2(minf(width, m.v.W - 24), 0)
+	pc.custom_minimum_size = Vector2(minf(width, m.v.W - 24), 0) if not docked else Vector2.ZERO
+	if docked:
+		pc.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	cc.add_child(pc)
 	var sc := ScrollContainer.new()
 	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -1094,7 +1150,7 @@ func show_lobby() -> void:
 	_clear()
 	screen = "lobby"
 	var host: bool = n.mode == "host"
-	var col := _card(720, "ROOM %s" % n.code, "LOBBY · %d OF 6%s" % [n.roster.size(), " · LOCKED" if n.locked else ""])
+	var col := _card(720, "ROOM %s" % n.code, "LOBBY · %d OF 6%s" % [n.roster.size(), " · LOCKED" if n.locked else ""], true)
 	col.add_child(_label("Share the code. Everyone readies up, then the host starts.", 13, DIM, true))
 	var pv: String = n.pick.pvp
 	for i in n.roster.size():
