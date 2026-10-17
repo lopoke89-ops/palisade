@@ -29,7 +29,7 @@ export function supabaseIdentity(url,key){
  };
 }
 
-export function createRelay({identity,origins=[],maxRooms=10,graceMs=RECONNECT_MS,log=()=>{}}){
+export function createRelay({identity,origins=[],nativeClients=false,maxRooms=10,graceMs=RECONNECT_MS,log=()=>{}}){
  if(!identity?.verify)throw new Error('Verified identity provider required');
  const rooms=new Map(),people=new Map(),epoch=randomUUID(),allowed=new Set(origins);
  let closing=false,joins=0,forwarded=0,coalesced=0;
@@ -60,8 +60,11 @@ export function createRelay({identity,origins=[],maxRooms=10,graceMs=RECONNECT_M
  };
  const welcome=p=>send(p,{type:'welcome',wire:WIRE,epoch,id:p.id,resume:p.resume,role:p.role,code:p.room.code,incarnation:p.room.incarnation,graceMs});
  const code=()=>{const chars='ABCDEFGHJKMNPQRSTUVWXYZ23456789';let s='R';for(let i=0;i<5;i++)s+=chars[randomInt(chars.length)];return s};
+ // Browsers always send Origin, so a listed one keeps other websites out. The desktop (Godot) game sends none; with
+ // nativeClients it is let in, because the Supabase token checked on hello and on every heartbeat is the real gate.
+ const originOk=o=>allowed.has(o)||nativeClients&&o===undefined;
  server.on('upgrade',(req,socket,head)=>{
-  if(closing||new URL(req.url,'http://relay').pathname!=='/relay'||!allowed.has(req.headers.origin)||wss.clients.size>=maxRooms*6+8){socket.write('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');socket.destroy();return}
+  if(closing||new URL(req.url,'http://relay').pathname!=='/relay'||!originOk(req.headers.origin)||wss.clients.size>=maxRooms*6+8){socket.write('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');socket.destroy();return}
   wss.handleUpgrade(req,socket,head,ws=>wss.emit('connection',ws));
  });
  wss.on('connection',ws=>{
@@ -158,7 +161,7 @@ export function createRelay({identity,origins=[],maxRooms=10,graceMs=RECONNECT_M
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
  const {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,ALLOWED_ORIGINS}=process.env;
  if(!SUPABASE_URL||!SUPABASE_PUBLISHABLE_KEY||!ALLOWED_ORIGINS)throw new Error('Set public Auth configuration and exact allowed origins. No service-role key is needed.');
- const relay=createRelay({identity:supabaseIdentity(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY),origins:ALLOWED_ORIGINS.split(',').map(s=>s.trim()),maxRooms:Number(process.env.MAX_ROOMS)||10,log:e=>console.log(JSON.stringify(e))});
+ const relay=createRelay({identity:supabaseIdentity(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY),origins:ALLOWED_ORIGINS.split(',').map(s=>s.trim()),nativeClients:process.env.NATIVE_CLIENTS!=='0',maxRooms:Number(process.env.MAX_ROOMS)||10,log:e=>console.log(JSON.stringify(e))});
  await relay.start(Number(process.env.PORT)||10000,'0.0.0.0');console.log(JSON.stringify({event:'relay-listening',wire:WIRE}));
  process.on('SIGTERM',()=>relay.stop().then(()=>process.exit(0)));process.on('SIGINT',()=>relay.stop().then(()=>process.exit(0)));
 }

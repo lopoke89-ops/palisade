@@ -9,6 +9,7 @@ Run Node 22.17.0 and `npm ci --omit=dev` / `npm start` in this directory. Set:
 | `SUPABASE_URL` | Auth/database project's public HTTPS URL |
 | `SUPABASE_PUBLISHABLE_KEY` | That project's **public** publishable key |
 | `ALLOWED_ORIGINS` | Exact comma-separated site origins |
+| `NATIVE_CLIENTS` | Default on. `0` refuses handshakes with no Origin (the desktop Godot game sends none). A wrong Origin is refused either way. |
 | `MAX_ROOMS` | Bounded room count; default 10, six humans each |
 | `PORT` | Render supplies this; local default 10000 |
 

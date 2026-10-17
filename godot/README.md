@@ -171,7 +171,7 @@ THE CASINO (main menu) opens Palisade Falls Casino alone. An online host can als
   - CHECK replays a round from its revealed seeds, as the browser does, for every game.
 - **Signing in:** the tables need a signed-in account with an email (not a guest), as in the browser.
 - **Browser casinos:** the desktop game joins a browser-hosted casino by its `R…` code over the casino relay (`scripts/casino_relay.gd`).
-  - The live relay only lets in browser pages for now. Until it also accepts the desktop game, joining one says so.
+  - The relay lets the desktop game in because it sends no browser Origin (`NATIVE_CLIENTS`, on by default). A relay deployed before that change turns it away, and joining says so.
   - A casino hosted from the desktop game uses a normal 4-character room, which browsers join as usual.
 - **Music:** the casino has its own shuffled 11-track playlist with crossfades between tracks. Big wins and big losses dip the music under their fanfare.
 

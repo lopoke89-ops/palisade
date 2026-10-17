@@ -141,7 +141,7 @@ What hasn't been checked:
 | PAL-076 | Performance | Measured | The ground and the city's buildings are painted once into chunks that Godot culls off screen. A city frame costs about 3.6 ms of drawing and a crowded final push about 3 ms of sim, on the container's CPU. Still to measure on a real PC. |
 | PAL-077 | Accessibility | Partly | Every key and button remappable, the menus and tables work without a mouse (a controller cursor on the roulette board), reduce motion, message time. No localization or text scaling. |
 | PAL-078 | Build and release | Partly | `tools/export_windows.sh` builds Palisade.exe and the WebRTC DLL. Missing: a run on real Windows, an icon and version info, code signing, Steam or Epic integration. |
-| PAL-079 | Casino relay client | Done | `casino_relay.gd`: hello, heartbeat with token refresh, resume after a drop, lock, remove. Checked against the real relay running locally. The live relay only admits browser Origins, so it turns the desktop game away for now. |
+| PAL-079 | Casino relay client | Done | `casino_relay.gd`: hello, heartbeat with token refresh, resume after a drop, lock, remove. Checked against the real relay running locally. The relay now lets in the desktop game, which sends no Origin; the live one needs a deploy for that. |
 
 ## Where the Godot build knowingly differs from the browser today
 
@@ -152,12 +152,12 @@ What hasn't been checked:
 3. **Email links:** confirming an email and resetting a password finish on the website; the player then signs in here with their password.
 4. **Sound noise:** each effect's noise is fixed when it's rendered. The browser picks a new noise each time it plays. The roulette ball's whir is one recording started part way in when you join a spin late.
 5. **Precision:** in the sim, directions are 32-bit (Godot's `Vector2`); positions and timers are 64-bit as in the browser. This matters only for cross-play, where the host's numbers win anyway.
-6. **Casino rooms:** a casino hosted from the desktop game is a normal 4-character room, not a relay room. Browser-hosted casinos (`R…` codes) need the live relay to admit the desktop game (it sends no browser Origin).
+6. **Casino rooms:** a casino hosted from the desktop game is a normal 4-character room, not a relay room. Browser-hosted casinos (`R…` codes) are joined over the relay.
 7. **The lobby:** a roster list, not the browser's stage with the crew standing on it.
 
 ## What's left
 
-1. **A decision for the relay's owner:** let the live casino relay admit connections with no Origin. The Supabase token it already checks is the real gate. Until then the desktop game can't join browser-hosted casinos (everything else works).
+1. **Deploy the relay:** the relay now admits the desktop game (no Origin; a wrong Origin is still refused). Merge to `main` and run a manual deploy of `palisade-casino-relay` on Render; until then the desktop game can't join browser-hosted casinos.
 2. **Hands-on pass:** play it on a Windows PC with a mouse, a controller and a touch screen; tune what the tests can't judge (feel, readability, sound).
 3. **Release:** an icon and version info, code signing, the Steam or Epic store build and its integration (needs those accounts), performance on real hardware, phone-size HUD layouts if mobile is wanted.
 4. **Small gaps:** the lobby stage, each map's scenery outside the fence, the Pumpkin Butcher look, Index portraits, localization.

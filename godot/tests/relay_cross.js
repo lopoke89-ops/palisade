@@ -191,7 +191,7 @@ async function godotHosts(b, port, fx, url) {
   if (!fs.existsSync(path.join(SITE, 'debug.html'))) { console.log('no debug.html in ' + SITE); process.exit(2) }
   const web = await serve(SITE), port = web.address().port;
   const { startFixture } = await import('./relay_fixture.mjs');
-  // the page's origin, plus "no Origin" for Godot (an undecided policy: see relay_fixture.mjs)
+  // the page's origin, and "no Origin" for Godot (nativeClients, as the live relay runs)
   const fx = await startFixture({ origins: [`http://127.0.0.1:${port}`], native: true });
   const url = `http://127.0.0.1:${fx.port}`;
   const b = await chromium.launch({ executablePath: CHROMIUM, args: ['--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows'] });

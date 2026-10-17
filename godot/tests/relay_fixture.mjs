@@ -4,9 +4,9 @@
 //        [--strict-port 18112] [--tls-port 18113] [--grace 120000]
 // Auth: a token is 'x.' + base64url({sub, exp, name?, anon?}) + '.y' (what dev/test mints). verify() checks it the
 // way supabaseIdentity does: a saved (non-anonymous) uuid account, and an unexpired exp.
-// Origin: relay.js admits only exact allowed origins. A Godot WebSocketPeer sends no Origin header, so --native adds
-// "no Origin" to the allow-list: a stand-in for a native-client policy nobody has decided yet. --strict-port also
-// runs a relay with only the --origin list, as the live one is configured.
+// Origin: relay.js admits exact allowed origins, and with nativeClients (on in production) also a handshake with no
+// Origin, which is what the Godot game sends. --native turns nativeClients on here. --strict-port also runs a relay
+// with nativeClients off (only the --origin list), to check how the desktop game is told it can't get in.
 // --tls-port puts a TLS listener (a fresh self-signed certificate for 127.0.0.1, made with openssl) in front of the
 // same relay, for the wss:// path. Control (HTTP on --control, JSON): GET /state, GET /tls ({port, cert: PEM path}),
 // GET /upgrades (the Origin each handshake carried),
@@ -33,15 +33,14 @@ export const identity = {
 };
 
 export async function startFixture({port = 0, controlPort = null, origins = [], native = false, strictPort = null, tlsPort = null, graceMs} = {}) {
-	const allowed = native ? [...origins, undefined] : origins;
 	const upgrades = [], paused = [];
-	const make = async (p, list) => {
-		const relay = createRelay({identity, origins: list, ...(graceMs ? {graceMs} : {})});
+	const make = async (p, nativeClients) => {
+		const relay = createRelay({identity, origins, nativeClients, ...(graceMs ? {graceMs} : {})});
 		relay.server.on('upgrade', req => upgrades.push({port: p, origin: req.headers.origin ?? null, ua: req.headers['user-agent'] ?? null}));
 		return {relay, port: await relay.start(p)};
 	};
-	let main = await make(port, allowed);
-	const strict = strictPort != null ? await make(strictPort, origins) : null;
+	let main = await make(port, native);
+	const strict = strictPort != null ? await make(strictPort, false) : null;
 	let tls = null;
 	if (tlsPort != null) {
 		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'relay-tls-')), key = path.join(dir, 'key.pem'), cert = path.join(dir, 'cert.pem');
@@ -62,7 +61,7 @@ export async function startFixture({port = 0, controlPort = null, origins = [], 
 		pause(peer) { const ws = main.relay.people.get(peer)?.ws; if (!ws) return false; ws._socket.pause(); paused.push(ws); return true },
 		unpause() { for (const ws of paused.splice(0)) ws._socket?.resume(); return true },
 		drop(peer) { const p = main.relay.people.get(peer); if (!p?.ws) return false; p.ws.terminate(); return true },
-		async restart() { const p = main.port; await main.relay.stop(); main = await make(p, allowed); return true },
+		async restart() { const p = main.port; await main.relay.stop(); main = await make(p, native); return true },
 		async stop() { fx.unpause(); await main.relay.stop(); if (strict) await strict.relay.stop(); tls?.server.close(); control?.close() }
 	};
 	let control = null;
