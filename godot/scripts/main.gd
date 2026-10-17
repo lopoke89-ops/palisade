@@ -247,7 +247,15 @@ func net_host() -> void:
 
 func net_join(code: String) -> void:
 	net.me = net_me()
+	net.relay_opts = {"token_fn": _relay_token, "uid_fn": func(): return account.uid() if account != null else ""}
 	net.join_room(code)
+
+
+## the relay checks the account's token on hello and on every heartbeat
+func _relay_token() -> String:
+	if account == null or account.s.is_empty() or not await account.fresh_token():
+		return ""
+	return str(account.s.get("access_token", ""))
 
 
 ## the host's START: everyone's ready, the settings are the room's

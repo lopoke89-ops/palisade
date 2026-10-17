@@ -33,7 +33,9 @@ signal chat_line(line: Dictionary)   # {id, name, text, col}
 signal room_closed(incarnation: String)   # the host's room is gone: take it off the open games list
 
 var sim: Sim
-var peer: PeerNet
+var peer   # PeerNet (PeerJS), or CasinoRelay for a browser-hosted casino lobby (an R code)
+var relay := false   # this session runs over the casino relay
+var relay_opts := {}   # main fills token_fn and uid_fn for the relay
 var mode := "solo"   # solo, opening, host, joining, guest
 var code := ""
 var my_id := "solo"
@@ -134,12 +136,15 @@ static func gen_code() -> String:
 
 # ---------------------------------------------------------------- opening and joining
 
-func _new_peer() -> void:
+func _new_peer(use_relay: bool = false) -> void:
 	if peer != null:
 		peer.shutdown()
 		peer.queue_free()
-	peer = PeerNet.new()
+	relay = use_relay
+	peer = CasinoRelay.new() if use_relay else PeerNet.new()
 	add_child(peer)
+	if use_relay:
+		peer.status.connect(func(t: String): status.emit(t))
 	peer.opened.connect(_on_opened)
 	peer.error.connect(_on_error)
 	peer.peer_connected.connect(_on_peer_connected)
@@ -169,7 +174,8 @@ func join_room(c: String, invitation: String = "") -> void:
 	for ch in c:
 		if (ch >= "A" and ch <= "Z") or (ch >= "0" and ch <= "9"):
 			clean += ch
-	if clean.length() != 4:
+	var casino_code := CasinoRelay.is_code(clean)   # a browser-hosted casino lobby goes through the relay
+	if clean.length() != 4 and not casino_code:
 		status.emit("Room codes are 4 letters and numbers.")
 		return
 	if mode == "opening" or mode == "joining" or is_online():
@@ -177,8 +183,14 @@ func join_room(c: String, invitation: String = "") -> void:
 	mode = "joining"
 	code = clean
 	status.emit("Finding room %s…" % clean)
-	_new_peer()
-	peer.join(clean, opts)
+	_new_peer(casino_code)
+	if casino_code:
+		var o := relay_opts.duplicate()
+		o.session = session
+		o.incarnation = invitation
+		peer.join(clean, o)
+	else:
+		peer.join(clean, opts)
 
 
 func _on_opened(_id: String) -> void:
@@ -199,11 +211,17 @@ func _on_error(type: String, msg: String) -> void:
 		_new_peer()
 		peer.host(code, opts)
 		return
+	if relay:   # the relay reports only when the session is over; its message is the browser's
+		reset()
+		left.emit(msg if msg != "" else FAIL.get(type, "Couldn't connect (%s)." % type))
+		return
 	if mode == "host" and type in ["network", "server-error", "socket-error", "socket-closed", "disconnected", "peer-unavailable"]:
 		return   # players already connected keep playing; PeerNet re-registers the room
 	if mode == "guest" and type in ["network", "server-error", "socket-error", "socket-closed", "disconnected"]:
 		return
-	var why: String = FAIL.get(type, "Couldn't connect (%s)." % type)
+	var why: String = msg if relay and msg != "" else FAIL.get(type, "Couldn't connect (%s)." % type)
+	if relay and peer != null and int(peer.get("last_http_status")) == 403:
+		why = "That casino lobby runs on the browser's relay, which doesn't let the desktop game in yet. Ask the host to open a room from the desktop game, or join by a 4-character code."
 	reset()
 	left.emit(why)
 
@@ -855,7 +873,7 @@ func _lobby_net(dt: float) -> void:
 				_host_drop(k)
 	elif mode == "guest":
 		peer.send(_host_peer, {"t": "ping"})
-		if now - _heard > 25000:
+		if now - _heard > 25000 and not relay:   # the relay owns its own reconnect grace
 			leave("Lost the host while waiting in the lobby.")
 
 
@@ -1682,7 +1700,7 @@ func guest_frame(dt: float, ctl: Dictionary) -> void:
 	elif _in_t <= 0:
 		_in_t = 1.0
 		peer.send(_host_peer, {"t": "ping"}, "u")
-	if _now() - _heard > 12000:
+	if _now() - _heard > 12000 and not relay:
 		leave("Lost the host. Their game may have closed or dropped signal.")
 
 
