@@ -784,6 +784,9 @@ func _process(dt: float) -> void:
 		net.guest_frame(dt, {})
 	if not demo and sim.game.phase == "over":
 		if run_sp < 0:
+			if sim.pvp() == "" and not sim.casino() and net.mode == "solo":   # this PC's best runs (solo only, as in the browser)
+				var g: Dictionary = sim.game
+				PalSaves.save_best(sim, sim.bo_stages() if sim.blackout() else (int(g.waves) if g.won or g.end_reason in ["evac", "left"] else (g.wave if g.end_reason == "evacfail" else maxi(0, g.wave - 1))), int(g.stats.dropped))
 			last_reward = locker.pay_pvp(sim) if sim.pvp() != "" else locker.pay_run(sim)
 			run_sp = last_reward.get("sp", 0)
 		if menus.screen == "pause":

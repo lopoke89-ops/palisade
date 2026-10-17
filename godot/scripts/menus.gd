@@ -273,6 +273,9 @@ func show_main() -> void:
 	box.add_child(t)
 	box.add_child(_label("Neighbors with rifles and a deadline.", 16, DIM))
 	box.add_child(_label(setup_line(), 13, GOLD))
+	var best := PalSaves.best_line(m.settings.data.setup)
+	if best != "":
+		box.add_child(_label(best, 13, DIM))
 	var col := VBoxContainer.new()
 	col.custom_minimum_size = Vector2(300, 0)
 	col.add_theme_constant_override("separation", 6)
@@ -419,7 +422,48 @@ func show_settings() -> void:
 	row.add_theme_constant_override("separation", 8)
 	col.add_child(row)
 	_button("CONTROLS", func(): show_controls(), row)
+	if came_from != "pause":   # importing a save mid-run makes no sense
+		_button("SAVE BACKUP", func(): show_backup(), row)
 	_button("BACK", func(): back(), row)
+	_focus_first()
+
+
+## the save backup: the browser's own save code, so it moves between the browser game and this one
+func show_backup(msg: String = "") -> void:
+	_clear()
+	screen = "backup"
+	var col := _card(620, "SAVE BACKUP")
+	col.add_child(_label("Your locker, best runs and settings as one line of text. Keep it somewhere safe, or paste it into the browser game (Settings › Save backup) or another PC.", 14, PAPER, true))
+	if m.locker != null and not m.locker.cloud.is_empty():
+		col.add_child(_label("You're signed in: your locker lives on your account and follows you anyway. A backup still keeps this PC's best runs and settings.", 13, DIM, true))
+	var out := LineEdit.new()
+	out.editable = false
+	out.placeholder_text = "Press COPY to make a code"
+	col.add_child(out)
+	var note := _label(msg, 13, GOLD, true)
+	_button("COPY SAVE CODE", func():
+		out.text = PalSaves.export_code(m.locker, m.settings)
+		DisplayServer.clipboard_set(out.text)
+		note.text = "Copied. Paste it somewhere safe.", col)
+	var inp := _field(col, "RESTORE FROM A CODE", "", false, "paste a PALISADE-SAVE-1 code")
+	col.add_child(note)
+	var pending := {}
+	var confirm := _button("RESTORE", func():
+		if pending.is_empty():
+			var r := PalSaves.parse_code(inp.text)
+			if r.has("err"):
+				note.text = r.err
+				return
+			pending.merge(r.d)
+			note.text = PalSaves.summary(r.d) + ". Press RESTORE again to replace this PC's save (the current one is kept as a backup copy)."
+			return
+		PalSaves.restore(pending, m.locker, m.settings)
+		m.apply_settings()
+		pending.clear()
+		inp.text = ""
+		note.text = "Restored.", col)
+	inp.text_changed.connect(func(_t): pending.clear())
+	_button("BACK", func(): show_settings(), col)
 	_focus_first()
 
 
@@ -724,7 +768,7 @@ func back() -> void:
 				show_pause()
 			else:
 				show_main()
-		"controls":
+		"controls", "backup":
 			show_settings()
 		"pause":
 			m.do_action("pause")
