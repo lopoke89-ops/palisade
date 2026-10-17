@@ -8,7 +8,9 @@ The plan is in `dev/plans/godot-conversion-blueprint.md`. It plays every solo co
 - the three difficulties and all 20 modifiers;
 - Delgado, all seven raider types, all 16 bosses, the armory, the skill tree, sound and music.
 
-It opens on the main menu over the demo yard: PLAY, MATCH SETUP (length, map, size, threat, class, modifiers), SKILL TREE, INDEX, SETTINGS. Settings and the next game's setup are kept in `user://settings.json`.
+It also plays online with the browser (co-op, Base Battle and Free-for-all), has friends and invitations, and has the casino with all seven table games.
+
+It opens on the main menu over the demo yard: PLAY, PLAY ONLINE, THE CASINO, FRIENDS, MATCH SETUP (length, map, size, threat, class, modifiers), LOCKER, SKILL TREE, ACCOUNT, INDEX, SETTINGS. Settings and the next game's setup are kept in `user://settings.json`.
 
 ## Run it
 
@@ -159,6 +161,20 @@ FRIENDS (main menu) needs a signed-in account (not a guest). It uses the same se
 - **Invites:** INVITE A FRIEND in the lobby sends the room. The invitation shows up in the friend's mail, in either game, and joins with one press.
 - **Open games:** a host can list the room. OPEN GAMES on the online page shows listed rooms with their mode and player count.
 
+## The casino
+
+THE CASINO (main menu) opens Palisade Falls Casino alone. An online host can also pick the casino as the room's game. The floor is the browser's: seven games, 16 slot cabinets, the Plinko board, dealers, lights and the bar. Nobody fights or builds in there.
+- **Playing:** walk up to a seat and press E (X on a controller) to sit. The table's sheet opens on the right; HIDE puts it away and leaves you seated; STAND UP, Esc or leaving the casino gives the seat back.
+- **Games:** blackjack, hold'em (SLIM sits in), roulette, baccarat, craps, slots and Plinko. They run on the browser's `tables` server, so it holds the shards and decides every result.
+  - `scripts/pal_tables.gd` is the browser's table client. Every money move has an operation id that is reused on retries, so a dropped connection never pays twice.
+  - `scripts/casino_ui.gd` draws the sheets: bets, chips, cards, dice, the wheel, reels, the Plinko ball, receipts, hand history, house rules and the fair-play seed.
+  - CHECK replays a round from its revealed seeds, as the browser does, for every game.
+- **Signing in:** the tables need a signed-in account with an email (not a guest), as in the browser.
+- **Browser casinos:** the desktop game joins a browser-hosted casino by its `R…` code over the casino relay (`scripts/casino_relay.gd`).
+  - The live relay only lets in browser pages for now. Until it also accepts the desktop game, joining one says so.
+  - A casino hosted from the desktop game uses a normal 4-character room, which browsers join as usual.
+- **Music:** the casino has its own shuffled 11-track playlist with crossfades between tracks. Big wins and big losses dip the music under their fanfare.
+
 ## Saves and backup
 
 - **Best runs:** each length, threat, map, size and modifier set keeps its best run in `user://best.json`. The main menu shows the best for the next game's setup.
@@ -190,7 +206,8 @@ Raiders, bosses and Delgado use the browser's flat `drawPerson` figure; players 
   - To change a sound, edit its recipe and run `godot --headless --path godot --script res://tools/render_sfx.gd`.
 - **Music:** Godot can't play the site's Opus or AAC files, so `music/*.ogg` are the site's tracks re-encoded as Ogg Vorbis.
   - Each track is cut to its exact loop length by `tools/convert_music.sh` (needs ffmpeg).
-  - The build phase plays *between raids*, the raids cycle *attitude*, *cool* and *express*, and the end screen plays *results*.
+  - The menus play *main menu*. The build phase plays *between raids*, the raids cycle *attitude*, *cool* and *express*, and the end screen plays *results*.
+  - Blitzkrieg Rush, the Whiteout Gauntlet and Black Out's final push play *final blitz*. The casino shuffles its 11 tracks.
   - Tracks fade in over 1.6 s and fade out as the browser's do.
 
 ## Tests
@@ -205,7 +222,21 @@ xvfb-run godot --path godot --script res://tests/shot.gd -- /tmp/frost.png map f
 PAL_COS=gsoldier,crown xvfb-run godot --path godot --script res://tests/shot.gd -- /tmp/s.png  # dressed in an outfit
 xvfb-run godot --path godot --script res://tests/cos_shot.gd -- /tmp/cos.png     # tracers and kill effects in play
 xvfb-run godot --path godot --script res://tests/locker_shot.gd -- /tmp/lk      # the Locker and a case opening
+godot --headless --path godot --script res://tests/music_test.gd         # which track each screen and mode plays
+godot --headless --path godot --script res://tests/social_test.gd        # friends, invites, open games (against a stand-in server)
 ```
+
+Online play and the casino run against local servers, never the live ones:
+
+| Test | Needs | Covers |
+|---|---|---|
+| `godot --headless --path godot --script res://tests/net_test.gd` | `node dev/test/peer-server.js` | two Godot games in a room: lobby, start, input, snapshots, building, shopping, chat, leaving |
+| `node godot/tests/cross_game.js` | the peer server and a built site (`dev/build.py`) | Godot and the browser in one game: co-op both ways, a Free-for-all hosted by Godot, a Base Battle hosted by the browser |
+| `godot --headless --path godot --script res://tests/relay_test.gd` | `dev/render` node modules | the casino relay client against the real relay with fake sign-in: joining, resuming, refusals, token refresh, a relay restart |
+| `node godot/tests/relay_cross.js` | the same, and a built site | casinos over the relay with the browser, both ways, and the real game joining a browser casino |
+| `godot --headless --path godot --script res://tests/tables_test.gd` | `dev/test` node modules | every table game against the real `tables` handler on a throwaway Postgres: balances, retries that pay once, CHECK on real and tampered rounds |
+| `xvfb-run godot --path godot --script res://tests/casino_play_shot.gd -- /tmp/c` | the same | the casino floor and a table together: sit, play music, stand up |
+| `xvfb-run godot --path godot --script res://tests/casino_shot.gd -- /tmp/c` | the same | every game's sheet on screen |
 
 The cosmetic art is checked against the browser's own drawing. Each tool below paints a contact sheet in the browser (from a site built with `dev/build.py`), and the matching test paints the same sheet in Godot:
 
