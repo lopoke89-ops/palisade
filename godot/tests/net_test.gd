@@ -83,6 +83,40 @@ func _run() -> void:
 	var hgp: Dictionary = G.sim.players.host
 	H.sim.player.x += 1.0
 	check(await _wait(func(): return absf(hgp.x - H.sim.player.x) < 0.05, 3, [H, G]), "the host moves; the guest sees it")
+	# the back roll (yard-30): the guest rolls; the host lets it travel and keeps the cooldown; the guest sees the host roll
+	var lane := Vector2(-1, -1)
+	for j in range(4, H.sim.N - 4):
+		for i in range(6, H.sim.N - 4):
+			var ok := true
+			for kk in range(-4, 2):
+				for dj in [-1, 0, 1]:
+					if H.sim.solid_tile(i + kk, j + dj) or H.sim.walls[H.sim.idx(i + kk, j + dj)] != null:
+						ok = false
+			if ok and lane.x < 0:
+				lane = Vector2(i + 0.5, j + 0.5)
+	gp.x = lane.x
+	gp.y = lane.y
+	await _wait(func(): return Vector2(hp.x, hp.y).distance_to(lane) < 0.05, 3, [H, G])
+	var r0 := Vector2(hp.x, hp.y)
+	var tp0: int = hp.tp
+	gp.aim = Vector2(1, 0)
+	check(G.sim.local_roll(), "the guest rolls")
+	G.send_roll(gp.dgX, gp.dgY)
+	var sent2 := false
+	for n in 50:
+		G.sim.control_local(1.0 / 60.0, {"aim": Vector2(1, 0)})
+		_tick(H, 1.0 / 60.0)
+		_tick(G, 1.0 / 60.0)
+		if not sent2 and hp.dgE > 0.1:
+			sent2 = true
+			G.send_roll(-1, 0)   # a second one inside the cooldown: refused
+		await process_frame
+	await _wait(func(): return Vector2(hp.x, hp.y).distance_to(r0) > 1.9, 3, [H, G])
+	check(absf(Vector2(hp.x, hp.y).distance_to(r0) - 2.0) < 0.12 and hp.tp == tp0, "its 2 tiles land on the host, nothing refused (%.2f, tp %d -> %d)" % [Vector2(hp.x, hp.y).distance_to(r0), tp0, hp.tp])
+	check(hp.dgCd > 1.5 and hp.dgCd < 3.0, "the host runs its cooldown (%.2f); the second roll did not restart it" % hp.dgCd)
+	H.sim.player.aim = Vector2(0, 1)
+	H.sim.local_roll()
+	check(await _wait(func(): return G.sim.rolling(hgp), 3, [H, G]), "the host rolls; the guest sees it")
 	# a wall, built by the guest through the host's rules
 	var t := {}
 	for d in [Vector2(0, 1), Vector2(0, -1), Vector2(1, 0), Vector2(-1, 0)]:

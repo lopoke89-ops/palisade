@@ -429,6 +429,8 @@ func _unhandled_input(e: InputEvent) -> void:
 	if e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
 		mouse_seen = true
 		mouse_pulls = (mouse_pulls + 1) & 255
+	if e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_RIGHT and not armory_open and not skills_open:
+		do_action("roll")   # the right button rolls
 	if e is InputEventMouseButton and e.pressed and not demo and DisplayServer.get_name() != "headless":
 		if e.button_index == MOUSE_BUTTON_WHEEL_UP or e.button_index == MOUSE_BUTTON_WHEEL_DOWN:   # the wheel zooms, as on desktop in the browser
 			settings.data.zoom = clampf(snappedf(settings.data.zoom + (0.05 if e.button_index == MOUSE_BUTTON_WHEEL_UP else -0.05), 0.05), 0.7, 1.4)
@@ -489,6 +491,12 @@ func do_action(id: String) -> void:
 			_close_armory()
 		return
 	var p: Dictionary = sim.player
+	if id == "roll":   # the back roll: this screen moves its own soldier; a guest tells the host, which keeps the cooldown
+		if sim.local_roll() and net.guest():
+			net.send_roll(p.dgX, p.dgY)
+		return
+	if sim.rolling(p) and id in ["build", "nade", "special", "sprint"]:
+		return   # no building, throwing or sprinting mid-roll
 	if net.guest():   # a guest's actions go to the host, which runs them through the same rules
 		match id:
 			"build":
@@ -1247,6 +1255,13 @@ func _draw_scene() -> void:
 						o.nogun = true
 					if p.get("seat", 0):
 						CasinoView.seated(self, p.x, p.y, func(): draw_wardrobe(p.x, p.y, o))
+					elif sim.rolling(p):   # the back roll: tucked, head over heels, away from the aim
+						var sc := iso(p.x, p.y)
+						var cy: float = sc.y - 17 * v.u * Figure.FIG / 2.2
+						var a: float = Sim.roll_pos(p.dgE) * TAU * (-1.0 if v.world_dir_to_screen(p.aim).x >= 0 else 1.0)
+						cv.draw_set_transform_matrix(Transform2D(0, Vector2(sc.x, cy)) * Transform2D(a, Vector2(1, 0.86), 0, Vector2.ZERO) * Transform2D(0, Vector2(-sc.x, -cy)))
+						draw_wardrobe(p.x, p.y, o)
+						cv.draw_set_transform_matrix(Transform2D.IDENTITY)
 					else:
 						draw_wardrobe(p.x, p.y, o)
 				elif p.downed:
@@ -1453,6 +1468,8 @@ func _draw_touch() -> void:
 	var ab := "ROCKET %d" % p.rk if p.cls == "soldier" else ("STEALTH" if p.cls == "sniper" else ("SPRINT" if p.cls == "quartermaster" else ""))
 	if ab != "":
 		btn.call(Rect2(bx - 92, H - 270, 84, 48), "special", ab)
+	if not sim.casino():
+		btn.call(Rect2(bx - 92, H - 154, 84, 48), "roll", "ROLL" if p.dgCd <= 0 else "ROLL %ds" % ceili(p.dgCd), sim.rolling(p))
 	if sim.can_shop(p):
 		btn.call(Rect2(bx, H - 320, 84, 48), "armory", "ARMORY")
 	for k in 3:

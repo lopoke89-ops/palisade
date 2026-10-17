@@ -329,13 +329,17 @@ function drawMound(e){const c=iso(e.x,e.y),sw=e.st===4?1.35+Math.sin(game.time*4
   oval(0,-4*u,9*u,5*u,'#6b5642');g.restore()}
 function itemQM(q){drawPerson(q.x,q.y,Object.assign({aim:q.aim,walk:q.walk,flash:q.flash>0},QM_LOOK))}   // v0.9.9: his name and health are on his nameplate
 function itemQMDown(q){drawDowned(q.x,q.y,QM_LOOK,q.revive/2,'DELGADO · DOWN')}
+// v0.11.0: the back roll: the figure tucks and turns head over heels, away from where it aims
+function rollDraw(o,draw){if(!rolling(o)){draw();return}
+  const [sx,sy]=iso(o.x,o.y),sd=wdirToScreen(o.aim),a=rollPos(o.dgE)*Math.PI*2*(sd.x>=0?-1:1),cy=sy-17*u*FIG/2.2;
+  g.save();g.translate(sx,cy);g.rotate(a);g.scale(1,.86);g.translate(-sx,-cy);try{draw()}finally{g.restore()}}
 function itemPlayer(o){
   const p=player,PL=playerLook(o),me=o===p,tag=null;   // v0.9.9: names and health are drawn on the nameplates (16h-nameplates.js)
   if(o._shotDrawUntil>game.time)PL.syncRender=true;
   if(game.pvp){PL.mark=teamCol(o);if(game.pvp==='base')PL.ring=teamCol(o);else if(me)PL.ring='#e2b436'}
   const bf=NET.mode==='guest'?(o.boltF||0):(o.bolt>0?o.bolt/o.boltT:0);if(bf>0)PL.bolt=1-bf;
-  if(casino()){PL.nogun=true;const dr=()=>drawPerson(o.x,o.y,Object.assign({aim:o.aim,walk:o.seat?0:o.walk,flash:false},PL));if(o.seat)casSeated(o,dr);else dr();return}   // v0.10.0: no weapons; seated players sit
-  if(o.alive)drawPerson(o.x,o.y,Object.assign({aim:o.aim,walk:o.walk,flash:o.flash>0,tag,tagCol:game.pvp?teamCol(o):SLOTCOL[o.slot%6],faded:o.prot>0||stealthed(o)},PL));
+  if(casino()){PL.nogun=true;const dr=()=>drawPerson(o.x,o.y,Object.assign({aim:o.aim,walk:o.seat?0:o.walk,flash:false},PL));if(o.seat)casSeated(o,dr);else rollDraw(o,dr);return}   // v0.10.0: no weapons; seated players sit
+  if(o.alive)rollDraw(o,()=>drawPerson(o.x,o.y,Object.assign({aim:o.aim,walk:o.walk,flash:o.flash>0,tag,tagCol:game.pvp?teamCol(o):SLOTCOL[o.slot%6],faded:o.prot>0||stealthed(o)},PL)));
   else drawDowned(o.x,o.y,PL,o.revive/2.2,me?(o.rt>1e5?'DOWN · UNTIL THE RAID IS BROKEN':`DOWN · ${Math.ceil(o.rt)}`):`${o.name.toUpperCase()} · DOWN`);
 }
 // v0.9.3.7: corner brackets on the raider a touch grenade or rocket will lock onto

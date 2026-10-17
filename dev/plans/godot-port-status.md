@@ -21,7 +21,7 @@ It has the cosmetics: the whole catalog, the locker and its payouts, cases and t
 
 It has accounts on the browser's own Supabase project, so one account works in both games: guest accounts, sign-in, the cloud locker and skill tree, server-checked run rewards, and case openings that resume after a crash.
 
-It plays online with the browser, in one room, either side hosting: co-op, Base Battle and Free-for-all, up to four players. It has friends, invitations and open games.
+It plays online with the browser, in one room, either side hosting: co-op, Base Battle and Free-for-all, up to six players. It has friends, invitations and open games.
 
 It has the casino: the floor, and all seven table games on the browser's tables server. Its best runs and save backup use the browser's formats.
 
@@ -70,7 +70,7 @@ What hasn't been checked:
 |---|---|---|---|
 | PAL-001 | Startup and assembly | Done | Boots to the main menu over the demo yard. The catalog is `data/cosmetics.json`; the rules are GDScript constants. |
 | PAL-002 | Classes and tuning | Done | All four classes, the three materials, the formulas, the difficulty table. |
-| PAL-003 | Match state | Done | Phases, timers, the raid loop, the roster of up to four players and the match id. |
+| PAL-003 | Match state | Done | Phases, timers, the raid loop, the roster of up to six players and the match id. |
 | PAL-004 | Co-op 5 / 10 / Endless | Done | Raid mix and scaling, Endless's climb and day/night cycle, golden hour and night raids, bosses, build timers, salvage. |
 | PAL-005 | Base Battle and Free-for-all | Done | Two teams with two stakes, the truce, the storm, spawn protection, kills and the PvP rewards; Free-for-all. Checked in cross-play with the browser. |
 | PAL-006 | Blitzkrieg Rush | Done | 15 raids, Blitz bosses, the five-minute Final Blitz, the evac ring. |

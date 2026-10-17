@@ -1,6 +1,6 @@
 class_name Pal
 ## Tuning constants, ported 1:1 from dev/src/js/01-setup.js, 04-state-armory.js and 10-phases-bosses.js.
-## Change a number here only together with the browser build (protocol yard-29), or cross-play drifts.
+## Change a number here only together with the browser build (protocol yard-30), or cross-play drifts.
 
 const D4: Array = [[1, 0], [-1, 0], [0, 1], [0, -1]]
 ## PvP (01-setup.js): Base Battle sides, the stake, damage scales, the truce, bounties and Free-for-all's goal
@@ -32,6 +32,9 @@ const CLASSES: Dictionary = {
 }
 const CLASS_IDS: Array = ["soldier", "sniper", "grenadier", "quartermaster"]
 const SPRINT: Dictionary = {"mult": 1.4, "dur": 2.5, "cd": 6.0}
+## the back roll (v0.11.0, yard-30), every class: straight back from the aim, 2 tiles in 0.55 s, 3 s to recharge.
+## Travel runs from 0.06 s to 0.45 s (eased); bullets miss from 0.1 s to 0.4 s (blasts, fire and boss moves still hit).
+const ROLL: Dictionary = {"dist": 2.0, "dur": 0.55, "cd": 3.0, "go": 0.06, "end": 0.45, "safe0": 0.1, "safe1": 0.4}
 const STEALTH: Dictionary = {"dur": 12.0, "cd": 30.0}
 
 const DIFF: Dictionary = {

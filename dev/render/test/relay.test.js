@@ -157,3 +157,14 @@ test('the desktop game (no Origin) gets in only when native clients are allowed;
   const w=await got;assert.equal(w.type,'welcome');assert.equal(w.role,'host');assert.equal(open.rooms.size,1);
  }finally{for(const s of sockets)s.close();await closed.stop();await open.stop()}
 });
+
+test('a lobby keeps its host\'s game version: an older client still hosts, and a guest on another version is told to reload',async()=>{
+ const relay=createRelay({origins:[origin],identity,graceMs:40}),port=await relay.start(),sockets=[];
+ try{
+  const h=connect(port,'host','user1',{game:'yard-29'});sockets.push(h.ws);const hw=await h.wait('welcome');
+  const g=connect(port,'guest','user2',{game:'yard-29',code:hw.code,incarnation:hw.incarnation});sockets.push(g.ws);const gw=await g.wait('welcome');
+  g.send({type:'packet',data:{t:'hello',name:'x'}});const got=await h.wait('packet');assert.equal(got.from,gw.id);assert.equal(got.data.v,'yard-29');
+  const n=connect(port,'guest','user3',{game:GAME,code:hw.code,incarnation:hw.incarnation});sockets.push(n.ws);const e=await n.wait('error');assert.match(e.message,/Different game version/);
+  const old=connect(port,'host','user4',{game:'yard-28'});sockets.push(old.ws);const oe=await old.wait('error');assert.match(oe.message,/Reload/);
+ }finally{for(const s of sockets)s.close();await relay.stop()}
+});

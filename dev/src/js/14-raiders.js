@@ -136,12 +136,12 @@ function updateBullets(dt){
           const mult=b.team===0?(b.heavy?.6:.25):1;damageWall(k,bdmg(b)*MAT[w.mat].bullet*mult,b.own);hitFx(b.x,b.y,w.mat);sfx('hit'+w.mat,b.x,b.y);
           if(b.pierce>0&&w.mat===0){b.pierce--;b.dmg*=.8}else{b.dead=true;break}}}
       }
-      if(game.pvp){for(const o of players.values())if(o.alive&&!(o.prot>0)&&o.id!==b.own&&(game.pvp==='ffa'||o.team!==b.pt)&&Math.hypot(o.x-b.x,o.y-b.y)<.3){hurtPlayer(o,bdmg(b)*(b.heavy?PVP.snipe:PVP.dmg),b.own);feelHit(b.own,b.heavy);b.dead=true;break}}
+      if(game.pvp){for(const o of players.values())if(o.alive&&!(o.prot>0)&&!rollSafe(o)&&o.id!==b.own&&(game.pvp==='ffa'||o.team!==b.pt)&&Math.hypot(o.x-b.x,o.y-b.y)<.3){hurtPlayer(o,bdmg(b)*(b.heavy?PVP.snipe:PVP.dmg),b.own);feelHit(b.own,b.heavy);b.dead=true;break}}
       else if(b.team===0){for(const e of enemies)if(!e.dead&&!e.burrow&&bulletAtActor(b,e)&&Math.hypot(e.x-b.x,e.y-b.y)<(e.big?.55:.34)){
           // a shieldbearer's shield covers his front (about 130°): the round sparks off it
           let shield=1;if(e.type==='shield'&&!e.shieldBroken){const l=Math.hypot(b.vx,b.vy)||1;if(-(b.vx*e.aim.x+b.vy*e.aim.y)/l>.42){shieldBulletHit(e,b);const ap=b.ammo&&b.ammo.find(x=>x[0]==='ap');if(!ap){hitFx(b.x,b.y,2);sfx('shieldhit',b.x,b.y);if(!b.pel||!b.felt){b.felt=1;feelHit(b.own,false)}b.dead=true;break}shield=[.5,.6,.7,.85,1][ap[1]]||.5}}
           hurtEnemy(e,bdmg(b)*shield*bossWeak(e,b),b.own);ammoHit(e,b);if(!b.pel||!b.felt){b.felt=1;feelHit(b.own,b.heavy)}b.dead=true;break}}
-      else{for(const a of allies())if(a.alive&&bulletAtActor(b,a)&&Math.hypot(a.x-b.x,a.y-b.y)<.3){hurtAlly(a,b.dmg*(a===qm?.7:1));b.dead=true;break}}
+      else{for(const a of allies())if(a.alive&&!rollSafe(a)&&bulletAtActor(b,a)&&Math.hypot(a.x-b.x,a.y-b.y)<.3){hurtAlly(a,b.dmg*(a===qm?.7:1));b.dead=true;break}}
     }
   }
   {const hit=[];for(const b of bullets)if(b.dead&&!b.spent&&b.id)hit.push(b.id);if(hit.length)rec(['bx',...hit])}   // guests expire misses on their own

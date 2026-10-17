@@ -147,7 +147,7 @@ What `sim.gd` covers:
 PLAY ONLINE (main menu) hosts a room or joins one by its 4-character code. Rooms are the browser's own, so the desktop game and the browser play together either way round.
 - **Transport:** `scripts/peer_net.gd` is the PeerJS signalling protocol over WebSocket, with WebRTC data channels from the `webrtc-native` GDExtension in `addons/webrtc` (Linux and Windows x86_64). It uses the same PeerJS server and TURN relay as the site.
 - **Protocol:** `scripts/pal_net.gd` is protocol `yard-29`, word for word. The host runs the sim; guests send input and get snapshots, wall diffs and events.
-  - Up to 4 players. The lobby picks the game, map, size, threat, modifiers, the job, and locks the room.
+  - Up to 6 players, as in the browser. The lobby picks the game, map, size, threat, modifiers, the job, and locks the room.
   - Everyone readies up and keeps their class, outfit and skills (checked against their account).
   - Chat (Enter), a kill feed, nameplates and edge arrows for players off screen, and a spectator camera while down.
   - A guest whose game restarts gets back in within an hour with the same kit.

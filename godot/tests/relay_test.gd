@@ -180,7 +180,7 @@ func _basics() -> void:
 	check(g.send("host", {"t": "c", "m": UNI}), "guest sends chat on r")
 	check(await wait(func(): return _got("h", "hello") != [] and _got("h", "i") != [] and _got("h", "c") != [], 5), "host gets all three")
 	var hello: Array = _got("h", "hello")
-	check(hello[2] == g.id and hello[3] == "r" and hello[4].uid == uid(1) and hello[4].name == "Player1" and hello[4].v == "yard-29" and hello[4].s == UNI,
+	check(hello[2] == g.id and hello[3] == "r" and hello[4].uid == uid(1) and hello[4].name == "Player1" and hello[4].v == "yard-30" and hello[4].s == UNI,
 		"the relay vouches for the hello (uid/name/v from the account, not the guest): %s" % JSON.stringify(hello[4]))
 	check(_got("h", "i")[3] == "u" and _got("h", "i")[4].x == 1.5, "input arrives as 'u'")
 	check(_got("h", "c")[4].m == UNI, "unicode survives")

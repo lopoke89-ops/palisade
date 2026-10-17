@@ -4,7 +4,9 @@ import {randomInt, randomUUID} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
 import {WebSocketServer, WebSocket} from 'ws';
 
-export const WIRE='casino-relay-1', GAME='yard-29', CODE=/^R[A-Z2-9]{5}$/, RECONNECT_MS=120000;
+// GAME: the newest game protocol; GAMES: every one the relay serves, so a deploy can come before or after the game's.
+// A lobby keeps its host's protocol, and a guest on another one is told to reload.
+export const WIRE='casino-relay-1', GAME='yard-30', GAMES=new Set(['yard-29','yard-30']), CODE=/^R[A-Z2-9]{5}$/, RECONNECT_MS=120000;
 const uidPattern=/^[0-9a-f-]{36}$/i, sessionPattern=/^[0-9a-f]{24}$/, uuidPattern=/^[0-9a-f-]{36}$/i;
 const hostTypes=new Set(['welcome','lobby','start','ping','s','x','t','kick','c','relayResume']);
 const guestTypes=new Set(['hello','loadout','ping','c','i','ready']);
@@ -81,7 +83,7 @@ export function createRelay({identity,origins=[],nativeClients=false,maxRooms=10
    let ownsVerification=false;
    try{
     if(!p){
-     if(busy)return;if(b.type!=='hello'||b.wire!==WIRE||b.game!==GAME||!sessionPattern.test(b.session)||!['host','guest'].includes(b.role))fail('Reload before joining this casino.');
+     if(busy)return;if(b.type!=='hello'||b.wire!==WIRE||!GAMES.has(b.game)||!sessionPattern.test(b.session)||!['host','guest'].includes(b.role))fail('Reload before joining this casino.');
      busy=true;ownsVerification=true;const who=await identity.verify(b.token);
      if(ws.readyState!==WebSocket.OPEN)return;
      const existing=b.resume&&[...people.values()].find(x=>x.resume===b.resume);
@@ -98,16 +100,17 @@ export function createRelay({identity,origins=[],nativeClients=false,maxRooms=10
        if(b.code)fail('That lobby has closed. Open a new casino.');
        if(!uuidPattern.test(b.incarnation))fail('Bad lobby identity');
        let next=b.code;while(!next||rooms.has(next))next=code();
-       r={code:next,incarnation:b.incarnation,locked:false,banned:new Set(),members:new Map()};rooms.set(next,r);
+       r={code:next,incarnation:b.incarnation,game:b.game,locked:false,banned:new Set(),members:new Map()};rooms.set(next,r);
       }else{
        if(!CODE.test(b.code)||!r){send({ws},{type:'error',message:'Waiting for the casino host…',retry:true});return ws.close(4003,'Host not connected')}
        if(!r.host.ws){send({ws},{type:'error',message:'Reconnecting to the casino host…',retry:true});return ws.close(4003,'Host reconnecting')}
        if(r.locked)fail('This casino is locked.');if(r.members.size>=6)fail('This casino is full (6 players).');
        if(r.banned.has(who.uid))fail('The host removed you from this casino.');
        if(b.incarnation&&b.incarnation!==r.incarnation)fail('This invitation belongs to an earlier casino.');
+       if(b.game!==r.game)fail('Different game version. Reload before joining.');
       }
       if([...r.members.values()].some(x=>x.uid===who.uid))fail('This account is already in the casino.');
-      p={id:randomUUID(),resume:randomUUID(),session:b.session,role:b.role,uid:who.uid,name:who.name,expires:who.expires,room:r,ws,timer:null};
+      p={id:randomUUID(),resume:randomUUID(),session:b.session,game:b.game,role:b.role,uid:who.uid,name:who.name,expires:who.expires,room:r,ws,timer:null};
       people.set(p.id,p);r.members.set(p.id,p);if(p.role==='host')r.host=p;joins++;welcome(p);
       event('connection_joined',p);
       if(p.role==='guest')send(r.host,{type:'peer',peer:p.id,resumed:false});
@@ -133,7 +136,7 @@ export function createRelay({identity,origins=[],nativeClients=false,maxRooms=10
      send(g,{type:'packet',data:d},d.t==='s');forwarded++;
     }else{
      if(!guestTypes.has(d.t))return;
-     const safe=d.t==='hello'?{...d,uid:p.uid,name:p.name,session:p.session,v:GAME}:d;
+     const safe=d.t==='hello'?{...d,uid:p.uid,name:p.name,session:p.session,v:p.game}:d;
      send(p.room.host,{type:'packet',from:p.id,data:safe},d.t==='i');forwarded++;
     }
    }catch(e){event('request_refused',p,{reason:e.message==='Sign in again.'?'session_expired':'verification_or_protocol'});send({ws},{type:'error',message:e.message});ws.close(4001,'Request refused')}

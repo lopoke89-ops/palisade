@@ -254,6 +254,7 @@ function sfx(name,x,y,noRec,ui){
     case'core':osc(dest,t,.32,'sine',82,.6,38);nz(dest,t,.1,'lowpass',300,1,.3);break;
     case'hurt':osc(dest,t,.13,'square',210,.12,90);break;
     case'drop':nz(dest,t,.16,'lowpass',420,1,.4);break;
+    case'roll':nz(dest,t,.24,'bandpass',1100,.9,.2,320);nz(dest,t+.34,.12,'lowpass',300,1,.32);break;   // v0.11.0: the back roll
     case'lob':osc(dest,t,.12,'triangle',620,.1,300);break;
     case'plant':osc(dest,t,.05,'square',1400,.12);osc(dest,t+.12,.05,'square',1400,.12);break;
     case'beep':osc(dest,t,.04,'square',1800,.08);break;

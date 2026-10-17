@@ -83,14 +83,14 @@ function hurtPlayer(p,d,own){
   p.hp-=d;p.hurt=0;p.flash=.1;personal(p,'hurt');emit(p.x,p.y,16*u,'blood');
   if(p.hp<=0&&game.pvp){pvpDown(p,own);return}
   if(p.hp<=0){
-    const help=anyUp(p),last=hasMod('laststand')&&game.phase==='raid';p.alive=false;p.downed=true;p.hp=0;p.revive=0;p.rt=last?1e6:help?10:4;
+    const help=anyUp(p),last=hasMod('laststand')&&game.phase==='raid';p.dgE=-1;p.alive=false;p.downed=true;p.hp=0;p.revive=0;p.rt=last?1e6:help?10:4;
     if(p.id===myId)buzz(80);
     toastTo(p,'DOWN',last?'Last Stand: you\'re down until this raid is broken, unless someone gets you up.':help?'Hang on. Delgado or a teammate can pick you up.':'Back at the stake in a few seconds.');
     if(players.size>1)flt(p.x,p.y,`${p.name.toUpperCase()} IS DOWN`,'#d65a3a');
   }
 }
 function pvpDown(p,own){
-  p.alive=false;p.downed=true;p.hp=0;p.revive=0;p.deaths++;if(p.id===myId)buzz(80);
+  p.dgE=-1;p.alive=false;p.downed=true;p.hp=0;p.revive=0;p.deaths++;if(p.id===myId)buzz(80);
   const k=own&&own!==p.id?players.get(own):null;
   sfx('drop',p.x,p.y);for(let n=0;n<6;n++)emit(p.x,p.y,10*u,'blood');
   if(k){k.kills+=game.sd?2:1;if(game.pvp==='base'){const v=hasMod('scrap')?Math.ceil(PVP.bounty/2):PVP.bounty;k.sal+=v;flt(p.x,p.y-.25,'+'+v,'#e2b436')}killFx(p.x,p.y,k.cos.fx);personal(k,'restock')}

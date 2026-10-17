@@ -4,7 +4,7 @@
 // they talk directly. Each guest opens 'r' (reliable: hello, build, grenade, and every
 // one-off event: sounds, particles, bullets, toasts, wall changes), 'u' (fast: movement in),
 // and 'st' (never resent: game state out, 15 times a second).
-const PROTO='yard-29',ROOM_PREFIX='palisade-yard-27-';   // v0.10.3 yard-29: casino seat codes for craps, baccarat and the machines   // v0.9.7.1: ready states (lobby and the push), round pay
+const PROTO='yard-30',ROOM_PREFIX='palisade-yard-27-';   // v0.10.3 yard-29: casino seat codes for craps, baccarat and the machines   // v0.9.7.1: ready states (lobby and the push), round pay
 // v0.9.7 was yard-26:   // v0.9.7: City Black Out (POI summary, near-only raiders on the city, the Supreme Destroyer's states 40-47, gas and mines)
 const ROOM_SESSION=(()=>{let id='';try{id=sessionStorage.getItem('palisade.roomSession')||''}catch(e){}
   if(!/^[0-9a-f]{24}$/.test(id)){id=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');try{sessionStorage.setItem('palisade.roomSession',id)}catch(e){}}
@@ -172,7 +172,8 @@ function hostData(peerId,d){
         Math.max(slowAt(p.x,p.y),slowAt(d.x,d.y))*1.15;
       c.moveBudget=Math.min(HOST_LIMITS.moveBurst,(c.moveBudget??.55)+speed*dt);
       const dd=Math.hypot(d.x-p.x,d.y-p.y);
-      if(dd<=c.moveBudget+.02&&dd<3&&travelClear(p.x,p.y,d.x,d.y,pt(p))){c.moveBudget=Math.max(0,c.moveBudget-dd);p.walk+=dd*3;p.x=d.x;p.y=d.y;p.z=heightAt(p.x,p.y)}
+      if(c.rollB>0&&now>c.rollUntil)c.rollB=0;const rb=c.rollB||0;
+      if(dd<=c.moveBudget+rb+.02&&dd<3&&travelClear(p.x,p.y,d.x,d.y,pt(p))){const fromRoll=Math.min(rb,dd);c.rollB=rb-fromRoll;c.moveBudget=Math.max(0,c.moveBudget-(dd-fromRoll));p.walk+=dd*3;p.x=d.x;p.y=d.y;p.z=heightAt(p.x,p.y)}
       else{p.tp++;if(new URLSearchParams(location.search).has('debug'))c.moveRejects=(c.moveRejects||0)+1}
     }
   }
@@ -181,6 +182,8 @@ function hostData(peerId,d){
   else if(d.t==='u'){if(typeof d.k==='string'&&(UPG.some(u=>u.k===d.k)||d.k==='core'||d.k==='dell'))buyUpgrade(p,d.k)}
   else if(d.t==='am'){if(typeof d.id==='string'&&AMMO_BY[d.id]&&hostInt(d.slot,0,1))buyAmmo(p,d.id,d.slot)}
   else if(d.t==='rl'){if(p.gun.mag)p.rlReq=true}
+  else if(d.t==='dg'){   // v0.11.0 yard-30: a guest's back roll. The host keeps the cooldown and lets the guest travel the roll's distance on top of its walking pace.
+    if(hostFinite(d.x,-1.1,1.1)&&hostFinite(d.y,-1.1,1.1)&&Math.hypot(d.x,d.y)>.5&&p.alive&&!casino()&&!p.seat&&!rolling(p)&&!(p.dgCd>.35)){startRoll(p,d.x,d.y);c.rollB=ROLL.dist+.15;c.rollUntil=performance.now()+(ROLL.dur+.6)*1000}}
   else if(d.t==='ab'){if(hostFinite(d.x,-HOST_LIMITS.targetPad,N+HOST_LIMITS.targetPad)&&hostFinite(d.y,-HOST_LIMITS.targetPad,N+HOST_LIMITS.targetPad))useAbility(p,d.x,d.y)}
 }
 function hostDrop(peerId){
@@ -311,7 +314,7 @@ function applyWallDiff(d){for(let q=0;q+4<d.length;q+=5)setWallTile(d[q],d[q+1],
 // because every screen works it out from the same map. PL_SLOW rarely changes, so it goes out only when it does (see slowRows).
 const PL_STATE=[['id',p=>p.id],['x',p=>r2(p.x)],['y',p=>r2(p.y)],['ax',p=>r2(p.aim.x)],['ay',p=>r2(p.aim.y)],['hp',p=>Math.ceil(p.hp)],
   ['alive',p=>p.alive?1:0],['ammo',p=>p.gun.mag?p.ammo|0:-1],['tp',p=>p.tp],['down',p=>p.downed?1:0],['rev',p=>r2(p.revive)],['rt',p=>r2(p.rt)],
-  ['bcd',p=>r2(Math.max(0,p.bcd))],['bolt',p=>p.bolt>0?r2(p.bolt/p.boltT):0],['rl',p=>p.rl>0?1:0],['stun',p=>r2(p.stun||0)],['ev',p=>r2(p.ev||0)]];   // ev (v0.9.4.0): seconds stood in the evac ring
+  ['bcd',p=>r2(Math.max(0,p.bcd))],['bolt',p=>p.bolt>0?r2(p.bolt/p.boltT):0],['rl',p=>p.rl>0?1:0],['stun',p=>r2(p.stun||0)],['ev',p=>r2(p.ev||0)],['dg',p=>rolling(p)?r2(p.dgE)+.01:0]];   // dg (v0.11.0 yard-30): how far into a back roll, +0.01 (0: not rolling)   // ev (v0.9.4.0): seconds stood in the evac ring
 const PL_SLOW=[['id',p=>p.id],['m0',p=>p.mats[0]],['m1',p=>p.mats[1]],['m2',p=>p.mats[2]],['nades',p=>p.nades],['sal',p=>p.sal|0],['kills',p=>p.kills|0],['deaths',p=>p.deaths|0],
   ['prot',p=>p.prot>0?1:0],['ab',p=>p.ab|0],['out',p=>p.out?1:0],['ce',p=>chEvacBits(p)],['rdy',p=>p.boReady?1:0],['seat',p=>p.seat|0]];   // seat (v0.10.0, yard-28): casino seat code   // rdy (v0.9.7.1): ready for the final push   // ce (v0.9.6.4): chapter evac results, 2 bits a chapter   // out (v0.9.4.0): evacuated   // ab: class-ability state, reserved
 const PL_INFO=[['id',p=>p.id],['name',p=>p.name],['cls',p=>p.cls],['slot',p=>p.slot],['max',p=>p.max],['maxN',p=>p.maxN],['upS',p=>p.upS],['cosS',p=>p.cosS],['team',p=>p.team||''],['ammoEq',p=>p.ammoEq.join(',')],['sk',p=>p.sk]];
@@ -430,7 +433,7 @@ function applySnap(s){
     p.z=heightAt(v('x'),v('y'));   // v0.9.6.3: worked out here, not sent
     const mine=id===myId;
     if(mine){if(v('tp')!==p.tp){p.x=v('x');p.y=v('y');p.tp=v('tp')}}
-    else{p.tx=v('x');p.ty=v('y');p.aim={x:v('ax'),y:v('ay')};p.tp=v('tp')}
+    else{p.tx=v('x');p.ty=v('y');p.aim={x:v('ax'),y:v('ay')};p.tp=v('tp');p.dgE=v('dg')>0?v('dg')-.01:-1}
     if(v('hp')<p.hp-.01)p.flash=.1;
     p.hp=v('hp');p.alive=!!v('alive');p.downed=!!v('down');p.revive=v('rev');p.rt=v('rt');p.bcd=v('bcd');
     if(v('bolt')>(p.boltF||0)+.05)p.boltF=v('bolt');
@@ -499,7 +502,7 @@ function guestUpdate(dt){
   const k=1-Math.exp(-dt*14);
   const smooth=e=>{if(e.tx===undefined)return;const dx=e.tx-e.x,dy=e.ty-e.y,d=Math.hypot(dx,dy);
     if(d>3){e.x=e.tx;e.y=e.ty}else{e.x+=dx*k;e.y+=dy*k;e.walk=(e.walk||0)+d*k*3}};
-  for(const p of players.values()){if(p!==player)smooth(p);p.flash=Math.max(0,(p.flash||0)-dt);if(p.boltF>0)p.boltF=Math.max(0,p.boltF-dt*1.9);if(p.stun>0)p.stun=Math.max(0,p.stun-dt)}
+  for(const p of players.values()){if(p!==player)smooth(p);p.flash=Math.max(0,(p.flash||0)-dt);if(p.boltF>0)p.boltF=Math.max(0,p.boltF-dt*1.9);if(p.stun>0)p.stun=Math.max(0,p.stun-dt);if(p!==player&&rolling(p)){p.dgE+=dt;if(p.dgE>=ROLL.dur)p.dgE=-1}}
   smooth(qm);qm.flash=Math.max(0,qm.flash-dt);
   for(const e of enemies){smooth(e);e.flash=Math.max(0,e.flash-dt);e.burnT=Math.max(0,(e.burnT||0)-dt);e.slowT=Math.max(0,(e.slowT||0)-dt)}
   for(const b of bullets){b.x+=b.vx*dt;b.y+=b.vy*dt;b.dist=(b.dist||0)+Math.hypot(b.vx,b.vy)*dt;if(b.left!==undefined){b.left-=Math.hypot(b.vx,b.vy)*dt;if(b.left<=0||!inb(b.x|0,b.y|0))b.dead=true}}

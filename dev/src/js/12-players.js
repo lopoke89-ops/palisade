@@ -30,15 +30,19 @@ function assist(d){
 // this phone's thumbs/keys drive this phone's soldier (on every kind of phone)
 function controlLocal(dt){
   const p=player;if(!p||demo)return;p.fireIn=false;if(game.phase==='over')return;
-  if(!p.alive||overlayOpen()||chatOpen())return;
+  if(!p.alive){p.dgE=-1;return}
+  if(overlayOpen()||chatOpen())return;
   if(p.seat){p.fireIn=false;return}   // v0.10.0: seated at a casino table
   let mx=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),my=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
   if(stickMove.id!==null){mx+=stickMove.vx;my+=stickMove.vy}
   if(padMode){mx+=pad.mx;my+=pad.my}
   const mag=Math.min(1,Math.hypot(mx,my));
   p.sprT=Math.max(0,(p.sprT||0)-dt);p.sprCd=Math.max(0,(p.sprCd||0)-dt);const spr=p.sprT>0;
+  p.dgCd=Math.max(0,(p.dgCd||0)-dt);const roll=rolling(p);
+  if(roll){const e0=p.dgE;p.dgE=Math.min(ROLL.dur,p.dgE+dt);const s=ROLL.dist*(rollPos(p.dgE)-rollPos(e0));
+    if(s>0){moveEnt(p,p.dgX*s,p.dgY*s,pt(p));p.walk+=s*3}if(rnd()<dt*22)emit(p.x,p.y,2*u,'dust',0);if(p.dgE>=ROLL.dur)p.dgE=-1}
   // 3.3 tiles a second is everyone's pace; the class sets a multiplier (sniper 1.1, grenadier 0.9)
-  if(mag>.12){const d=sdirToWorld(mx,my),sp=3.3*mag*(p.C.spd||1)*(spr?SPRINT.mult:1)*(p.stun>0?.45:1)*slowAt(p.x,p.y)*(p.perk||PERK0).speed*(hasMod('adrenaline')?1.2:1);moveEnt(p,d.x*sp*dt,d.y*sp*dt,pt(p));p.walk+=dt*mag*(spr?13:10);p.moveDir=d;
+  if(mag>.12&&!roll){const d=sdirToWorld(mx,my),sp=3.3*mag*(p.C.spd||1)*(spr?SPRINT.mult:1)*(p.stun>0?.45:1)*slowAt(p.x,p.y)*(p.perk||PERK0).speed*(hasMod('adrenaline')?1.2:1);moveEnt(p,d.x*sp*dt,d.y*sp*dt,pt(p));p.walk+=dt*mag*(spr?13:10);p.moveDir=d;
     if(spr&&rnd()<dt*14)emit(p.x-d.x*.2,p.y-d.y*.2,3*u,'dust',0)}
   let firing=false;
   if(padMode){if(pad.amag>.2){const d=assist(sdirToWorld(pad.ax,pad.ay));p.aim=d;p.face=d}else if(mag>.12){p.face=p.moveDir;p.aim=p.moveDir}firing=pad.fire}   // v0.9.2.1: right stick aims, the trigger fires
@@ -46,11 +50,12 @@ function controlLocal(dt){
   else if(stickAim.id!==null&&stickAim.mag>.2){const d=assist(sdirToWorld(stickAim.vx,stickAim.vy));p.aim=d;p.face=d;firing=stickAim.mag>.5}
   else if(mag>.12){p.face=p.moveDir;p.aim=p.moveDir}
   if(casino())firing=false;   // no weapons in the casino
-  p.fireIn=firing&&!spr;p.autoFire=!padMode&&(touchMode||!mouse.seen);
+  p.fireIn=firing&&!spr&&!roll;p.autoFire=!padMode&&(touchMode||!mouse.seen);
   if(p.pullIn!==mouse.pulls){if(p.pullIn===undefined)p.pullUsed=mouse.pulls;p.pullIn=mouse.pulls;p.pullT=game.time}
 }
 // host and solo: one soldier's timers, trigger, gathering, downed state
 function simPlayer(p,dt){
+  if(p!==player)rollTick(p,dt);
   p.hurt+=dt;p.cd=Math.max(p.cd-dt,-dt);
   if(p.bolt>0){const b0=p.bolt;p.bolt=Math.max(0,p.bolt-dt);const open=p.boltT*.72;if(b0>open&&p.bolt<=open){sfx(p.gun.pump?'pump':'rack',p.x,p.y);emit(p.x,p.y,WH*.7,p.gun.pump?'hull':'shell')}}
   p.stun=Math.max(0,(p.stun||0)-dt);p.dryT=Math.max(0,(p.dryT||0)-dt);p.sinceShot=(p.sinceShot||0)+dt;p.bcd-=dt;p.gt=Math.max(p.gt-dt,-dt);p.ncd-=dt;p.flash=Math.max(0,p.flash-dt);p.prot=Math.max(0,(p.prot||0)-dt);
@@ -76,7 +81,7 @@ function simPlayer(p,dt){
   // the pump shotgun: every click fires (0.12 s apart at most), and holding the trigger or touch-aiming fires on its own cadence
   const pump=!!G.clickCd,semi=G.bolt&&!pump&&p.autoFire===false,click=pump&&p.autoFire===false&&p.pullIn!==p.pullUsed&&game.time-(p.pullT||0)<.6;
   if(click&&p.sinceShot>=G.clickCd)p.cd=Math.min(p.cd,0);
-  const want=semi?p.fireIn||p.pullIn!==p.pullUsed&&game.time-(p.pullT||0)<.6:pump?(click&&p.sinceShot>=G.clickCd)||(p.fireIn&&p.cd<=0):p.fireIn;
+  const want=rolling(p)?false:semi?p.fireIn||p.pullIn!==p.pullUsed&&game.time-(p.pullT||0)<.6:pump?(click&&p.sinceShot>=G.clickCd)||(p.fireIn&&p.cd<=0):p.fireIn;
   if(semi&&p.pullIn!==p.pullUsed&&!want)p.pullUsed=p.pullIn;
   if(pump&&p.pullIn!==p.pullUsed&&!click)p.pullUsed=p.pullIn;
   medicTouch(p);

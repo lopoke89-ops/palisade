@@ -55,6 +55,7 @@ casino_music           music casino
 
 # Host and guest over the network
 multiplayer            combat host net
+back_roll              combat host net
 cosmetic_network       cosmetics presentation net
 v090_net               host net
 hostcheck              serial host net
