@@ -132,14 +132,65 @@ async function browserHosts(b, port) {
   await H.close();
 }
 
+async function godotHostsFfa(b, port) {
+  console.log('3: Godot hosts a Free-for-all, the browser joins');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'xg3-')), errs = [];
+  const G = godot('pvphost', dir);
+  const code = await until(() => exists(dir, 'code.txt') && fs.readFileSync(path.join(dir, 'code.txt'), 'utf8').trim(), 30000);
+  const P = await page(b, port, errs, 'GUEST');
+  await P.click('[data-go=multi]'); await P.fill('#mName', 'Rook'); await P.fill('#mCode', code); await P.click('#joinBtn');
+  await P.waitForSelector('#pg-lobby:not([hidden])', { timeout: 20000 });
+  check(await until(() => P.evaluate(() => __pal.pick.pvp === 'ffa' && __pal.pick.map === 'quarry'), 8000), 'the browser sees the room is a Free-for-all on the Quarry');
+  await P.click('#lReady');
+  check(await until(() => P.evaluate(() => document.getElementById('menu').hidden && __pal.game.pvp === 'ffa' && __pal.players.size === 2), 30000), 'the Free-for-all starts in the browser');
+  check(await P.evaluate(() => __pal.walls.filter(w => w && w.mat === 3).length === 0 && __pal.game.map === 'quarry'), 'the Quarry arena loads (stone cover, no timber)');
+  put(dir, 'sawffa.txt', '1');
+  check(await until(() => exists(dir, 'dropped.txt') && P.evaluate(() => __pal.players.get('host').kills === 1 && __pal.player.deaths === 1), 20000), 'the browser counts the drop: host 1 kill, itself 1 death');
+  put(dir, 'sawdrop.txt', '1');
+  await sleep(1000);
+  check(errs.length === 0, 'no browser errors' + (errs.length ? ': ' + errs.slice(0, 3).join(' | ') : ''));
+  put(dir, 'done.txt', '1');
+  await until(() => G.exit !== null, 20000);
+  check(G.exit === 0 && G.lines.includes('DRIVER PASS'), 'the Godot side passed');
+  check(G.errs === 0, 'no Godot script errors (' + G.errs + ')');
+  await P.close();
+}
+
+async function browserHostsBase(b, port) {
+  console.log('4: the browser hosts a Base Battle, Godot joins');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'xg4-')), errs = [];
+  const G = godot('pvpguest', dir);
+  const H = await page(b, port, errs, 'HOST');
+  await H.click('[data-go=multi]'); await H.fill('#mName', 'Big U'); await H.click('#hostBtn');
+  await H.waitForSelector('#pg-lobby:not([hidden])', { timeout: 15000 });
+  await H.evaluate(() => { __pal.pick.pvp = 'base'; __pal.pick.map = 'yard'; __pal.broadcastLobby() });
+  put(dir, 'code.txt', (await H.textContent('#lCode')).trim());
+  check(await until(() => H.evaluate(() => __pal.NET.roster.length === 2 && __pal.NET.roster[1].ready), 30000), 'Godot joins and readies');
+  await H.click('#lStart');
+  check(await until(() => H.evaluate(() => document.getElementById('menu').hidden && __pal.game.pvp === 'base'), 10000), 'the browser starts the Base Battle');
+  await sleep(1500);
+  await H.evaluate(() => { __pal.game.timer = 0.05 });
+  await sleep(1500);
+  await H.evaluate(() => { __pal.hurtPlayer(__pal.players.get('g1'), 30, 'host') });
+  check(await until(() => exists(dir, 'sawhit.txt'), 25000), 'Godot saw the battle start and the host\'s hit');
+  await sleep(500);
+  check(errs.length === 0, 'no browser errors' + (errs.length ? ': ' + errs.slice(0, 3).join(' | ') : ''));
+  put(dir, 'done.txt', '1');
+  await until(() => G.exit !== null, 30000);
+  check(G.exit === 0 && G.lines.includes('DRIVER PASS'), 'the Godot side passed');
+  check(G.errs === 0, 'no Godot script errors (' + G.errs + ')');
+  await H.close();
+}
+
 (async () => {
   let peerProc = null;
   if (!(await portUp(9000))) { peerProc = spawn('node', ['peer-server.js'], { cwd: path.join(ROOT, '../dev/test'), stdio: 'ignore' }); await until(() => portUp(9000), 8000) }
   const srv = await serve(SITE), port = srv.address().port;
   const b = await chromium.launch({ executablePath: CHROMIUM, args: ['--disable-features=WebRtcHideLocalIpsWithMdns', '--autoplay-policy=no-user-gesture-required'] });
   try {
-    await godotHosts(b, port);
-    await browserHosts(b, port);
+    if (!process.argv.includes('--pvp-only')) { await godotHosts(b, port); await browserHosts(b, port) }
+    await godotHostsFfa(b, port);
+    await browserHostsBase(b, port);
   } catch (e) { check(false, 'crashed: ' + (e && e.stack || e)) }
   await b.close(); srv.close(); if (peerProc) peerProc.kill();
   console.log(`${passes} passed, ${fails} failed`);

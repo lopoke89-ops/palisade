@@ -52,6 +52,10 @@ func _run() -> void:
 	main.net.opts = {"host": "127.0.0.1", "port": 9000, "path": "/", "secure": false, "ice": []}
 	if role == "host":
 		await _as_host()
+	elif role == "pvphost":
+		await _pvp_host()
+	elif role == "pvpguest":
+		await _pvp_guest()
 	else:
 		await _as_guest()
 	print("DRIVER %s" % ("PASS" if fails == 0 else "FAIL %d" % fails))
@@ -165,3 +169,43 @@ func _as_guest() -> void:
 	check(await _wait(func(): return n.chat.any(func(l): return l.text == "hello from godot"), 20), "the browser host's chat arrives")
 	check(await _wait(func(): return s.player.downed or not s.player.alive, 20), "the browser host knocks Godot down; Godot sees it")
 	_put("sawdown.txt", "1")
+
+
+## Free-for-all on the Quarry, hosted here; the browser joins
+func _pvp_host() -> void:
+	var n: PalNet = main.net
+	main.net_host()
+	check(await _wait(func(): return n.mode == "host", 15), "the Godot room opens (%s)" % n.code)
+	n.pick.pvp = "ffa"
+	n.pick.map = "quarry"
+	n.broadcast_lobby()
+	_put("code.txt", n.code)
+	check(await _wait(func(): return n.roster.size() == 2 and n.start_block() == "", 30), "the browser joins and readies")
+	main.net_start()
+	var s: Sim = main.sim
+	check(s.pvp() == "ffa" and s.map_id == "quarry" and s.cores.is_empty() and s.players.size() == 2, "a Free-for-all on the Quarry starts")
+	_put("started.txt", "1")
+	var g: Dictionary = s.players.get("g1", {})
+	check(await _wait(func(): return FileAccess.file_exists(dir + "/sawffa.txt"), 20), "the browser sees the arena")
+	g.prot = 0.0
+	s.hurt_player(g, 999.0, "host")
+	check(s.players.host.kills == 1 and g.deaths == 1, "Godot drops the browser player: a kill")
+	_put("dropped.txt", "1")
+	check(await _wait(func(): return FileAccess.file_exists(dir + "/sawdrop.txt"), 20), "the browser counts it")
+
+
+## Base Battle, hosted by the browser; Godot joins
+func _pvp_guest() -> void:
+	var n: PalNet = main.net
+	check(await _wait(func(): return FileAccess.file_exists(dir + "/code.txt"), 40), "the browser room's code arrives")
+	main.net_join(FileAccess.get_file_as_string(dir + "/code.txt").strip_edges())
+	check(await _wait(func(): return n.mode == "guest" and n.roster.size() == 2 and n.pick.pvp == "base", 20), "Godot joins a Base Battle room")
+	n.set_ready(true)
+	check(await _wait(func(): return n.in_game and not main.demo, 30), "the battle starts")
+	var s: Sim = main.sim
+	check(s.pvp() == "base" and s.cores.size() == 2 and s.player.team == "b" and s.players.host.team == "a", "two stakes; Godot is EAST, the host WEST")
+	check(s.game.phase == "build" and s.game.timer > 30, "the truce is on (%.0f s)" % s.game.timer)
+	check(s.player.sal == 20, "20 salvage to start")
+	check(await _wait(func(): return s.game.phase == "raid", 30), "the browser host starts the battle")
+	check(await _wait(func(): return s.player.hp < s.player.max, 20), "the host's shot lands on Godot (%.0f of %.0f)" % [s.player.hp, s.player.max])
+	_put("sawhit.txt", "1")
