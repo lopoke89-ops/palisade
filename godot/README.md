@@ -140,13 +140,45 @@ What `sim.gd` covers:
 - Godot reads no system proxy settings: `HTTPS_PROXY` and `SSL_CERT_FILE` in the environment are honoured.
 - Tests set `PalAccount.offline` and never touch the network; `tests/client_test.gd` runs the account against a stand-in server. `tests/account_live.gd` is the live check: it makes one guest account (named `godot_test_…`), walks it through the real server and prints its ID so it can be deleted.
 
+## Online play
+
+PLAY ONLINE (main menu) hosts a room or joins one by its 4-character code. Rooms are the browser's own, so the desktop game and the browser play together either way round.
+- **Transport:** `scripts/peer_net.gd` is the PeerJS signalling protocol over WebSocket, with WebRTC data channels from the `webrtc-native` GDExtension in `addons/webrtc` (Linux and Windows x86_64). It uses the same PeerJS server and TURN relay as the site.
+- **Protocol:** `scripts/pal_net.gd` is protocol `yard-29`, word for word. The host runs the sim; guests send input and get snapshots, wall diffs and events.
+  - Up to 4 players. The lobby picks the game, map, size, threat, modifiers, the job, and locks the room.
+  - Everyone readies up and keeps their class, outfit and skills (checked against their account).
+  - Chat (Enter), a kill feed, nameplates and edge arrows for players off screen, and a spectator camera while down.
+  - A guest whose game restarts gets back in within an hour with the same kit.
+- **PvP:** Base Battle (two teams, two stakes, a truce to build, then a storm) and Free-for-all, on their own maps, with the browser's PvP rewards.
+- **Rewards:** online runs pay out as solo runs do. Leaving early pays what was held up to then.
+
+## Friends and invitations
+
+FRIENDS (main menu) needs a signed-in account (not a guest). It uses the same server tables and calls as the browser, through `scripts/pal_social.gd`.
+- **Tabs:** friends (with who is online and in a game), requests (accept or decline), mail (invitations) and recent players. Search finds players by username.
+- **Invites:** INVITE A FRIEND in the lobby sends the room. The invitation shows up in the friend's mail, in either game, and joins with one press.
+- **Open games:** a host can list the room. OPEN GAMES on the online page shows listed rooms with their mode and player count.
+
+## Saves and backup
+
+- **Best runs:** each length, threat, map, size and modifier set keeps its best run in `user://best.json`. The main menu shows the best for the next game's setup.
+- **Save code:** SETTINGS › SAVE BACKUP copies the browser's own `PALISADE-SAVE-1` code (locker, best runs, settings) and restores from one, so a code from the browser works here and the other way round.
+- **Interrupted runs:** a run in progress is saved as a draft. If the game is closed or crashes, the next start pays what was held.
+
+## Windows build
+
+`tools/export_windows.sh` makes `export/palisade/Palisade.exe` (the game, with its data inside) and the WebRTC DLL next to it. It uses the "Windows Desktop" preset in `export_presets.cfg` and leaves the tests and tools out. If the Godot 4.7.2 export templates are missing, it downloads them once (about 1.3 GB) and keeps only the Windows ones.
+
+```sh
+godot/tools/export_windows.sh /path/to/Godot_v4.7.2     # from Linux, macOS or Git Bash on Windows
+```
+
+Ship the .exe and the .dll together. The .exe is not code-signed: Windows SmartScreen warns on first run until it is signed with a certificate.
+
 ## Not yet
 
-These are later phases:
-- **PvP:** Base Battle and Free-for-all come with online play.
-- **Friends and invitations**, and the lobby stage with the crew standing on it, come with online play.
-- **Music:** the menu and finale tracks, and the casino playlist.
-- **Network:** online play (PeerJS cross-play probe, casino relay client).
+- **Steam or Epic:** no store integration (achievements, overlay, friends). That needs the store accounts.
+- **Other platforms:** only Linux and Windows. The WebRTC extension in `addons/webrtc` has no macOS, Android or iOS libraries yet.
 
 Raiders, bosses and Delgado use the browser's flat `drawPerson` figure; players use the shaded wardrobe figure, as in the browser.
 
