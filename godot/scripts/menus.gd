@@ -56,8 +56,8 @@ const IDX_BOSSES := [
 		["whiteforeman", "Campaign · chapter 3", ["Charge: a fast marked charge. Bait him into a wall to daze him.", "Frost rupture: a marked ring of cracking ice."], ""]]],
 	["CITY BLACK OUT", [
 		["destroyer", "City Black Out · the last 2 minutes of the final push", ["Back Rockets: six red landing rings round you, then missiles arc in. They break wood.", "Fire barrel: an orange lane, then a stream of fire down it that burns and lights wood.", "Lightning barrel: a blue line tracks you, then a heavy bolt that stuns and jumps to two more people.", "Poison Gas: a green ring grows round him, then a gas cloud fills it for 8 s. Fight him from range.", "Minefield: a marked area, then ten mines. Shoot one, or throw a grenade, to set them off safely.", "Orbital Cannon: a targeting circle follows you for 3 s, stops, then a beam hits. It wrecks walls."], "Below 40%: the Orbital Cannon, every 20 s."]]]]
-## the browser's STAGE.wide: where the party stands on the 2D stage (x, y, scale in a 1000x780 picture), used when the
-## 3D models aren't in this build
+## the browser's STAGE.wide: where the party stands on the stage (x, y, scale in a 1000x780 picture); the 3D models
+## stand on the same spots (Lobby3D), the painted figures when they aren't in this build (Hero2D)
 const STAGE2D := {"me": [500, 722, 13.4], "others": [[250, 660, 8.2], [762, 660, 8.2], [88, 612, 7.4], [918, 612, 7.4], [395, 568, 6.8]]}
 
 var m   # the main node
@@ -65,7 +65,7 @@ var root: Control
 var screen := ""
 var came_from := ""   # where BACK goes from settings, the index and the skill tree (the main menu or the pause menu)
 var binding := ""   # Settings: an action waiting for a key
-var stage: Lobby3D   # the 3D lobby behind the menus, kept across screens (null: the painted backgrounds)
+var stage: Lobby3D   # the 3D crew over the painted background, kept across screens (null: the painted figures)
 var pages: MenuPages
 var armory: ArmoryUI   # the armory over the game (it shows itself while the main node's armory is open)
 var sheet := ""   # the open tab of the setup sheet, "" while it's closed
@@ -76,7 +76,7 @@ var how_open := false   # PLAY: HOW TO PLAY unfolded
 var _under := ""   # the page the friends list was opened over
 var _redo: Callable   # builds the open page again (a window resize)
 var _focus: Control   # where a controller lands first on the open page
-var _stage_col: Control   # the column the crew stands in
+var _stage_hero: Control   # the stage column's hero box (the browser's partyHero): the stage canvas is fitted into it
 var _hero2d: Hero2D
 var _online_msg: Label
 var _code_in: LineEdit
@@ -168,19 +168,17 @@ func _clear() -> void:
 	_sheet_node = null
 	_drop = null
 	_focus = null
-	_stage_col = null
+	_stage_hero = null
 	_hero2d = null
 	_online_msg = null
 	_friends_btn = null
 	_friends_dot = null
-	if m.demo and m.locker != null:   # outside a game the menus sit on the lobby: the 3D stage, or the painted background
+	if m.demo and m.locker != null:   # outside a game the menus sit on the lobby: the painted background, the 3D crew over it
+		root.add_child(LockerUI.BgView.new(lobby_bg()))
 		if stage == null and Lobby3D.available():
 			stage = Lobby3D.new()
 		if stage != null:
 			root.add_child(stage)
-			stage.set_bg(lobby_bg())
-		else:
-			root.add_child(LockerUI.BgView.new(lobby_bg()))
 
 
 func _begin(name: String, redo: Callable) -> void:
@@ -197,9 +195,7 @@ func lobby_bg() -> String:
 ## the equipped background changed: swap the one behind the menus
 func refresh_bg() -> void:
 	if stage != null:
-		stage.set_bg(lobby_bg())
 		_stage_crew()
-		return
 	for ch in root.get_children():
 		if ch is LockerUI.BgView:
 			var nb := LockerUI.BgView.new(lobby_bg())
@@ -227,9 +223,9 @@ func my_name() -> String:
 func _stage_crew() -> void:
 	if screen == "" or not is_inside_tree():
 		return
-	var x := -1.0
-	if is_instance_valid(_stage_col) and _stage_col.is_inside_tree() and root.size.x > 0:
-		x = (_stage_col.global_position.x + _stage_col.size.x / 2) / root.size.x
+	var box := Rect2()
+	if is_instance_valid(_stage_hero) and _stage_hero.is_inside_tree():
+		box = _stage_hero.get_global_rect()
 	var crew: Array = []
 	var mode := "solo"
 	var who := screen if screen != "friends" else _under
@@ -252,9 +248,9 @@ func _stage_crew() -> void:
 		mode = "locker" if who == "locker" else "solo"
 		crew = [_me()]
 	if stage != null and stage.is_inside_tree():
-		stage.set_crew(mode, crew, x if not crew.is_empty() else -1.0)
+		stage.set_crew(mode, crew, box)
 	if is_instance_valid(_hero2d):
-		_hero2d.set_people(crew, mode == "party")
+		_hero2d.set_people(crew, mode, stage == null)
 
 
 ## after a page is built: the layout settles, then the crew takes its place and the controller its first stop
@@ -751,7 +747,6 @@ func _mods_line(mods: Array) -> String:
 func _stage_column(eyebrow: String, title: String, sub: String, mods: Array, name: String, state: String, hint_text: String, extra: Control = null) -> Control:
 	var c := UiKit.vbox(0)
 	c.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_stage_col = c
 	var head := UiKit.vbox(0)
 	head.add_child(UiKit.spacer(16))
 	var e := _l(eyebrow, "s8", 13, UiKit.WARN, 0.22)
@@ -779,6 +774,7 @@ func _stage_column(eyebrow: String, title: String, sub: String, mods: Array, nam
 	hero.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hero.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	c.add_child(hero)
+	_stage_hero = hero
 	var plate := UiKit.panel(Color("#12222bbb"), Color("#718b8f"), 1, [8, 16, 8, 16])
 	var pv := UiKit.vbox(5)
 	var pn := _l(name, "s8", 21, UiKit.BONE, 0.04)
@@ -791,7 +787,7 @@ func _stage_column(eyebrow: String, title: String, sub: String, mods: Array, nam
 	var pc := CenterContainer.new()
 	pc.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	pc.add_child(plate)
-	if stage == null and m.demo:   # no 3D models in this build: the painted figures stand here
+	if m.demo:   # the pads, the empty spots and the others' name plates (and the painted figures, without the 3D models)
 		var h2 := Hero2D.new()
 		h2.set_anchors_preset(Control.PRESET_FULL_RECT)
 		hero.add_child(h2)
@@ -799,7 +795,9 @@ func _stage_column(eyebrow: String, title: String, sub: String, mods: Array, nam
 	hero.add_child(pc)
 	hero.resized.connect(func():
 		pc.position = Vector2(0, UiKit.px(16))
-		pc.size = Vector2(hero.size.x, pc.get_combined_minimum_size().y))
+		pc.size = Vector2(hero.size.x, pc.get_combined_minimum_size().y)
+		if stage != null:   # the crew follows the box
+			_stage_crew.call_deferred())
 	if extra != null:
 		c.add_child(extra)
 	var hl := _l(hint_text, "m4", 10, Color("#a6bdc3"), 0.0, 1.5, true)
@@ -2670,22 +2668,26 @@ class DashBox extends StyleBox:
 			y += dash + gap
 
 
-## The crew in 2D, when this build has no 3D models: the painted figures on their pads (drawPartyPreview's back
-## and front layers), laid out like the browser's 1000x780 stage picture.
+## The browser's stage picture (drawPartyPreview's back and front layers, a 1000x780 canvas) over the page's hero box:
+## the empty spots' "+" and the others' name plates; with no 3D models in this build, the pads and painted figures too.
 class Hero2D extends Control:
 	var people: Array = []
 	var party := false
+	var locker := false
+	var figures := true
 
 	func _init() -> void:
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	func set_people(p: Array, is_party: bool) -> void:
+	func set_people(p: Array, mode: String, paint: bool) -> void:
 		people = p
-		party = is_party
+		party = mode == "party"
+		locker = mode == "locker"
+		figures = paint
 		queue_redraw()
 
 	func _process(_dt: float) -> void:
-		if not people.is_empty():
+		if figures and not people.is_empty():
 			queue_redraw()
 
 	func _pad(c: Vector2, r: float, on: bool) -> void:
@@ -2697,23 +2699,50 @@ class Hero2D extends Control:
 		pts.append(pts[0])
 		draw_polyline(pts, Color("#b4edee") if on else Color("#597386"), 3.0 if on else 2.0, true)
 
+	## a name plate under someone's feet (stagePlate)
+	func _plate(px: float, py: float, name: String, sub: String, sc: float) -> void:
+		var f := roundf(sc * 2.9)
+		var big := UiKit.face("s8")
+		var small := UiKit.face("m6")
+		var w := maxf(big.get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, int(f)).x, f * 3.2) + f * 1.1
+		var r := Rect2(px - w / 2, py, w, f * 1.9)
+		draw_rect(r, Color("#12222bd8"))
+		draw_rect(r, Color("#718b8f"), false, 2.0)
+		draw_string(big, Vector2(r.position.x, py + f * 0.2 + big.get_ascent(int(f))), name, HORIZONTAL_ALIGNMENT_CENTER, w, int(f), Color("#eef3ed"))
+		var fs := int(roundf(f * 0.52))
+		draw_string(small, Vector2(r.position.x, py + f * 1.25 + small.get_ascent(fs)), sub, HORIZONTAL_ALIGNMENT_CENTER, w, fs, Color("#ecd347"))
+
 	func _draw() -> void:
 		if people.is_empty():
 			return
-		var k := minf(size.x / 1000.0, size.y / 780.0)
-		var off := Vector2((size.x - 1000 * k) / 2, size.y - 780 * k)
+		var xf := Lobby3D.canvas_xf(Rect2(Vector2.ZERO, size))
+		var k: float = xf[0]
+		var off: Vector2 = xf[1]
 		var t := Time.get_ticks_msec() / 1000.0
-		var me: Array = Menus.STAGE2D.me
-		_pad(off + Vector2(me[0], me[1]) * k, me[2] * 11.5 * k, true)
+		var me := Lobby3D.me_spot(locker)
+		if figures:
+			_pad(off + Vector2(me[0], me[1]) * k, me[2] * 11.5 * k, true)
 		if party:
 			var order := range(5)
 			order.sort_custom(func(a, b): return Menus.STAGE2D.others[a][1] < Menus.STAGE2D.others[b][1])
 			for i in order:
 				var s: Array = Menus.STAGE2D.others[i]
 				var who: Dictionary = people[i + 1] if i + 1 < people.size() else {}
-				_pad(off + Vector2(s[0], s[1]) * k, s[2] * 9.5 * k, not who.is_empty())
+				var at := off + Vector2(s[0], s[1]) * k
+				if figures:
+					_pad(at, s[2] * 9.5 * k, not who.is_empty())
 				if not who.is_empty():
-					Wardrobe.draw(self, Wardrobe.look_for(who.cos, who.cls), [0.62, -0.62, 0.5, -0.5, 0.1][i], 0, s[2] * k, off.x + s[0] * k, off.y + s[1] * k, false)
+					if figures:
+						Wardrobe.draw(self, Wardrobe.look_for(who.cos, who.cls), [0.62, -0.62, 0.5, -0.5, 0.1][i], 0, s[2] * k, at.x, at.y, false)
+				elif i < 4:
+					draw_string(UiKit.face("m4"), at + Vector2(-24 * k, -28 * k), "+", HORIZONTAL_ALIGNMENT_CENTER, 48 * k, int(48 * k), Color("#7e98a5"))
+			for i in order:
+				var s: Array = Menus.STAGE2D.others[i]
+				var who: Dictionary = people[i + 1] if i + 1 < people.size() else {}
+				if not who.is_empty():
+					_plate(off.x + s[0] * k, off.y + (s[1] + s[2] * 2.4) * k, str(who.get("name", "PLAYER")).to_upper(), Pal.CLASSES.get(who.cls, {}).get("name", "PLAYER"), s[2] * k)
+		if not figures:
+			return
 		var p: Dictionary = people[0]
 		var look := Wardrobe.look_for(p.cos, p.cls)
 		var ang := 0.35 + (0.0 if PalSettings.reduce_motion else sin(t / 4.5) * 0.09)

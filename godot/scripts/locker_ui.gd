@@ -387,29 +387,33 @@ func _render_boxes() -> void:
 		v.add_child(bt)
 		var h := 32 if empty else 36
 		var fsz := 12.0 if empty else 14.0
-		var go_box := _go_box()
+		var gsz := 12.0 if empty else 23.0   # the yellow buttons take the browser's .go size in a full box
+		var go := _steady("go")
+		var gpad: Array = [0, 10, 0, 10] if empty else [0, 4, 0, 4]   # a full box's narrow columns: OPEN keeps its word
+		var ghost := _steady("ghost")
 		if not empty:
-			var op := UiKit.btn("OPEN", "go", fsz, func(): open_cases(id, 1), {"h": h, "box": go_box, "pad": [0, 10, 0, 10]})
+			var op := _wrap(UiKit.btn("OPEN", "go", gsz, func(): open_cases(id, 1), {"h": h, "box": go.box, "tint": go.tint, "pad": gpad}))
 			op.disabled = busy
 			menus._fid(op, "open:" + id)
 			bt.add_child(UiKit.expand(op))
-		var five := UiKit.btn("OPEN 5", "go", fsz, func(): open_cases(id, 5), {"h": h, "box": go_box, "pad": [0, 10, 0, 10]})
+		var five := UiKit.btn("OPEN 5", "go", gsz, func(): open_cases(id, 5), {"h": h, "box": go.box, "tint": go.tint, "pad": gpad})
+		if not empty:
+			_wrap(five)
 		five.disabled = n < 5 or busy
 		menus._fid(five, "open5:" + id)
 		bt.add_child(five if empty else UiKit.expand(five))
 		if not L.cloud.is_empty() and L.account != null and L.account.pending_opening().get("case") == id:
 			bt.add_child(UiKit.btn("RESUME OPENING", "ghost", fsz, func(): resume_opening(), {"h": h}))
 		if D.get("cost") != null:
-			var buy := UiKit.btn("BUY · %d SHARDS" % int(D.cost), "ghost", fsz, func(): _buy(id), {"h": h, "pad": [0, 12, 0, 12]})
+			var buy := UiKit.btn("BUY · %d SHARDS" % int(D.cost), "ghost", fsz, func(): _buy(id), {"h": h, "box": ghost.box, "tint": ghost.tint, "pad": [0, 12, 0, 12]})
 			buy.disabled = L.shards < int(D.cost) or busy
 			menus._fid(buy, "buy:" + id)
 			bt.add_child(buy if empty else UiKit.expand(buy))
 		if id == "supply":
 			var sp: int = m.profile.sp
 			var armed := Time.get_ticks_msec() / 1000.0 - sp_armed < 3
-			var sb2 := UiKit.btn(("TAP AGAIN · SPEND %d SKILL POINTS" % PalLocker.SP_CASE) if armed else ("BUY · %d SKILL POINTS (%d)" % [PalLocker.SP_CASE, sp]), "ghost", fsz, func(): _buy_sp(), {"h": h, "pad": [2, 6, 2, 6]})
-			sb2.label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			sb2.label.custom_minimum_size.x = UiKit.px(50)
+			var sb2 := UiKit.btn(("TAP AGAIN · SPEND %d SKILL POINTS" % PalLocker.SP_CASE) if armed else ("BUY · %d SKILL POINTS (%d)" % [PalLocker.SP_CASE, sp]), "ghost", fsz, func(): _buy_sp(), {"h": h, "box": ghost.box, "tint": ghost.tint, "pad": [2, 4, 2, 4]})
+			_wrap(sb2)
 			sb2.disabled = sp < PalLocker.SP_CASE or busy
 			sb2.tooltip_text = "You have %d skill point%s. Earn them by holding raids (1 per 5) and beating bosses." % [sp, "" if sp == 1 else "s"] if sp < PalLocker.SP_CASE else "Trade %d unspent skill points for a Supply Case" % PalLocker.SP_CASE
 			menus._fid(sb2, "buysp")
@@ -427,12 +431,21 @@ func _render_boxes() -> void:
 	hint.text = "Earn a supply case every 3 raids you survive and for every win. Duplicates turn into shards. So far: %d raids held, %d win%s, %d raiders dropped." % [st.get("raids", 0), st.get("wins", 0), "" if st.get("wins", 0) == 1 else "s", st.get("drops", 0)]
 
 
-## the locker's yellow buttons stay yellow when they can't be pressed (as the browser's do)
-func _go_box() -> Dictionary:
-	var K := UiKit.kind("go")
+## the case buttons look the same when they can't be pressed: the browser has no disabled style for them
+func _steady(kind: String) -> Dictionary:
+	var K := UiKit.kind(kind)
 	var box: Dictionary = K.box.duplicate()
-	box.disabled = UiKit.sb(Color(UiKit.WARN, 0.75))
-	return box
+	var tint: Dictionary = K.tint.duplicate()
+	box.disabled = box.normal
+	tint.disabled = tint.normal
+	return {"box": box, "tint": tint}
+
+
+## a full box's buttons share its width in equal columns and wrap their words (grid-auto-columns: 1fr)
+func _wrap(b: Control) -> Control:
+	b.label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	b.label.custom_minimum_size.x = UiKit.px(40)
+	return b
 
 
 ## 3 unspent skill points buy a Supply Case; the first press arms it for 3 s

@@ -169,8 +169,8 @@ func animation_player(model: Node) -> AnimationPlayer:
 	return null
 
 
-## a dressed character standing at its idle (offset so a crew doesn't breathe in step)
-func build(cls: String, cos: Dictionary, idle_offset: float = 0.0) -> Node3D:
+## a dressed character standing at its idle, or another looping clip it has (offset so a crew doesn't breathe in step)
+func build(cls: String, cos: Dictionary, idle_offset: float = 0.0, clip: String = "Idle_Loop") -> Node3D:
 	var cid := character_id(cls, str(cos.get("skin", "std")))
 	var model := instantiate_id(cid)
 	if model == null:
@@ -182,8 +182,10 @@ func build(cls: String, cos: Dictionary, idle_offset: float = 0.0) -> Node3D:
 		for c in characters.get(cid, {}).get("clips", []):
 			if ap.has_animation(c.name):
 				ap.get_animation(c.name).loop_mode = Animation.LOOP_LINEAR if c.get("loop", false) else Animation.LOOP_NONE
-		if ap.has_animation("Idle_Loop"):
-			ap.play("Idle_Loop")
+		if not ap.has_animation(clip):
+			clip = "Idle_Loop"
+		if ap.has_animation(clip):
+			ap.play(clip)
 			ap.seek(fmod(idle_offset, maxf(0.1, ap.current_animation_length)), true)
 	model.set_meta("char_id", cid)
 	return model

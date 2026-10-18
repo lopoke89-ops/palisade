@@ -152,7 +152,7 @@ func _init() -> void:
 	main.to_menu()
 	check(main.demo and main.menus.screen == "main", "MAIN MENU goes back to the demo yard")
 	var bg0 = main.menus.root.get_child(0)
-	check((bg0 is Lobby3D) if Lobby3D.available() else (bg0 is LockerUI.BgView), "outside a game the menus sit on the lobby (the 3D stage, or the painted background without the models)")
+	check(bg0 is LockerUI.BgView and ((main.menus.root.get_child(1) is Lobby3D) if Lobby3D.available() else true), "outside a game the menus sit on the painted lobby background (the 3D crew over it, when the models are in)")
 	print("accounts (a stand-in server)")
 	print("leaving a run early")
 	main.locker.cloud = {}
@@ -198,7 +198,7 @@ func _init() -> void:
 	L.grant("bg:aurora")
 	ui._equip(PalLocker.item("bg:aurora"))
 	await process_frame
-	check(L.eq.bg == "aurora" and main.menus.root.get_children().any(func(n): return (n is LockerUI.BgView and n.id == "aurora") or (n is Lobby3D and n.bg == "aurora" and n.env_root.get_child_count() == 1)), "equipping a background puts it behind the menus")
+	check(L.eq.bg == "aurora" and main.menus.root.get_children().any(func(n): return n is LockerUI.BgView and n.id == "aurora"), "equipping a background puts it behind the menus")
 	ui._equip(PalLocker.item("hat:witch"))
 	check(L.eq.hat != "witch" and ui.msg.text != "", "locked items say how to get them")
 	main.menus.show_main()

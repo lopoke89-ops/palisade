@@ -1,29 +1,30 @@
 class_name Lobby3D
 extends SubViewportContainer
-## The lobby stage in 3D: the equipped lobby environment, and the crew standing on it in the model library's captured
-## layouts (lobby_layouts.json: the camera with its lens shift, six party slots, solo, locker; desktop and portrait).
-## Slot 0 is this screen's player, in front; the others keep their slots as people join and leave. Under each one a
-## slim ring in their slot colour (brighter when ready); their name floats above them in the overlay.
-## Sits behind the menus in place of the painted background (menus.gd); the menus stay on top.
+## The lobby stage in 3D: the crew from the model library, standing where the browser paints them. The painted lobby
+## background stays behind the menus (as in the browser); this layer is see-through and holds only the people and
+## their pads. Each one stands on the browser's stage canvas (19b-social-lobby.js STAGE, Menus.STAGE2D: a 1000x780
+## canvas fitted into the page's hero box), at its scale, turned as the browser turns them; the camera is
+## orthographic and pitched so the pads lie at the browser's 0.22 squash. Slot 0 is this screen's player, in front.
+## The empty spots' "+" and the others' name plates are drawn over it by the page (Menus.Hero2D).
 
-const LAYOUT := {"solo": "02 - Peach Wire - solo", "party": "01 - Peach Wire - full party", "locker": "03 - Peach Wire - locker",
-	"solo_tall": "05 - Peach Wire - mobile solo", "party_tall": "04 - Peach Wire - mobile party"}
-const LobbyLayout = preload("res://scripts/lobby_layout.gd")
+const PITCH := 12.7   # degrees down: sin(12.7°) = 0.22, the browser's pad ellipse
+const FIG := 39.2   # the browser's figure is this many canvas units tall per unit of stage scale
+const CAM_SIZE := 10.0   # world units across the viewport's height
+const PAD := Color("#b4edee")   # the pads' outline and fill, someone on it or not (drawPartyPreview's pad)
+const PAD_EMPTY := Color("#597386")
+const FILL := Color(170 / 255.0, 239 / 255.0, 239 / 255.0, 0.12)
+const FILL_EMPTY := Color(122 / 255.0, 171 / 255.0, 192 / 255.0, 0.06)
 
 var lib: ArtLibrary
 var vp: SubViewport
 var world: Node3D
 var cam: Camera3D
-var env_root: Node3D
 var party_root: Node3D
-var names: Control
-var layouts := {}
-var bg := ""
 var mode := "solo"
 var crew: Array = []   # [{name, cls, cos: Dictionary, ready, slot}] (slot 0 first)
-var slots: Array = []   # per slot: {node, ring, ring_mat, model, key, label}
-var aim_x := -1.0   # where on screen (0..1 across) slot 0 should stand; -1 keeps the captured framing
-var _tall := false
+var hero := Rect2()   # the page's hero box, in this control's coordinates
+var slots: Array = []   # per slot: {node, ring, mats, fill, model, key}
+var _ref_h := 0.0   # the standard Soldier's height at scale 1: every outfit is scaled by it, not by its own hat
 var _size := Vector2.ZERO
 
 
@@ -40,16 +41,21 @@ func _init() -> void:
 	vp.render_target_update_mode = SubViewport.UPDATE_WHEN_VISIBLE
 	vp.msaa_3d = Viewport.MSAA_2X
 	vp.own_world_3d = true
+	vp.transparent_bg = true
 	add_child(vp)
 	world = Node3D.new()
 	vp.add_child(world)
 	cam = Camera3D.new()
+	cam.projection = Camera3D.PROJECTION_ORTHOGONAL
+	cam.size = CAM_SIZE
+	cam.near = 0.05
+	cam.far = 200.0
+	cam.rotation_degrees = Vector3(-PITCH, 0, 0)
 	world.add_child(cam)
 	cam.current = true
 	var we := WorldEnvironment.new()
 	var e := Environment.new()
-	e.background_mode = Environment.BG_COLOR
-	e.background_color = Color(0.05, 0.045, 0.04)
+	e.background_mode = Environment.BG_CLEAR_COLOR
 	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	e.ambient_light_color = Color(0.62, 0.6, 0.62)
 	e.ambient_light_energy = 0.9
@@ -64,153 +70,131 @@ func _init() -> void:
 	rim.rotation_degrees = Vector3(-18, 205, 0)
 	rim.light_energy = 0.55
 	world.add_child(rim)
-	env_root = Node3D.new()
-	world.add_child(env_root)
 	party_root = Node3D.new()
 	world.add_child(party_root)
-	names = Control.new()
-	names.set_anchors_preset(Control.PRESET_FULL_RECT)
-	names.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(names)
-	var d = JSON.parse_string(FileAccess.get_file_as_string(ArtLibrary.ROOT + "/lobby_layouts.json"))
-	layouts = d.get("layouts", {}) if d is Dictionary else {}
 
 
-## the lobby environment behind everyone (falls back to Campfire Dusk if this one isn't in the library)
-func set_bg(id: String) -> void:
-	if id == bg:
-		return
-	bg = id
-	for c in env_root.get_children():
-		env_root.remove_child(c)
-		c.queue_free()
-	var n := lib.instantiate_id("bg:" + id)
-	if n == null:
-		n = lib.instantiate_id("bg:campfire")
-	if n == null:
-		return
-	env_root.add_child(n)
-	var ap := lib.animation_player(n)   # the environments' own motion (40 of them have some)
-	if ap != null and not ap.get_animation_list().is_empty():
-		var a: String = ap.get_animation_list()[0]
-		ap.get_animation(a).loop_mode = Animation.LOOP_LINEAR
-		ap.play(a)
-		if PalSettings.reduce_motion:
-			ap.pause()
-
-
-## who stands on the stage: mode "solo" (this player), "party" (the room, this player in slot 0) or "locker"
-func set_crew(m: String, people: Array, slot0_x: float = -1.0) -> void:
+## who stands on the stage: mode "solo" (this player), "party" (the room, this player in slot 0) or "locker"; box: the
+## page's hero box in global coordinates (the browser's partyHero)
+func set_crew(m: String, people: Array, box: Rect2) -> void:
 	mode = m
-	aim_x = slot0_x
 	crew = people
+	hero = Rect2(box.position - global_position, box.size)
 	_layout()
 
 
+## where the browser's canvas puts a point of the stage, on this control (object-fit: contain, centred)
+static func canvas_xf(box: Rect2) -> Array:
+	var k := minf(box.size.x / 1000.0, box.size.y / 780.0)
+	return [k, box.position + Vector2((box.size.x - 1000 * k) / 2, (box.size.y - 780 * k) / 2)]
+
+
+## this player's spot: the Locker lifts it to leave room below the feet for glowing rings and other skin effects
+static func me_spot(locker: bool) -> Array:
+	var me: Array = Menus.STAGE2D.me
+	return [me[0], minf(me[1], 780 - me[2] * 11 - 8), me[2]] if locker else me
+
+
 func _layout() -> void:
-	_tall = size.y > size.x
-	var key := (mode + "_tall") if _tall and LAYOUT.has(mode + "_tall") else mode
-	var L: Dictionary = layouts.get(LAYOUT.get(key, LAYOUT.solo), {})
-	if L.is_empty():
+	if hero.size.x <= 0 or hero.size.y <= 0 or vp.size.y <= 0:
+		for S in slots:
+			S.node.visible = false
 		return
-	LobbyLayout.configure_camera(cam, L.camera)
-	var recs: Array = L.slots
-	if aim_x >= 0 and not _tall and size.y > 0:   # slide the framing sideways (the lens shift), so the crew clears the menus
-		cam.frustum_offset.x -= (aim_x - float(recs[0].screen_uv[0])) * cam.size * size.x / size.y
-	var want := 1 if mode != "party" else 6
-	while slots.size() < want:
+	if _ref_h <= 0:
+		var ref := lib.build("soldier", {"skin": "std", "hat": "class"})
+		if ref != null:
+			party_root.add_child(ref)
+			_ref_h = maxf(0.5, _top(ref) - ref.global_position.y)
+			party_root.remove_child(ref)
+			ref.queue_free()
+	var xf := canvas_xf(hero)
+	var k: float = xf[0]
+	var off: Vector2 = xf[1]
+	var ppu := vp.size.y / CAM_SIZE   # pixels per world unit
+	var spots: Array = [me_spot(mode == "locker")]
+	if mode == "party":
+		spots.append_array(Menus.STAGE2D.others)
+	while slots.size() < spots.size():
 		var node := Node3D.new()
 		party_root.add_child(node)
 		var ring := lib.instantiate_file("models/utilities/player_ring.glb")
 		var mats: Array = []
 		if ring != null:
 			node.add_child(ring)
-			for mi in ArtLibrary._all(ring):   # a copy of the ring's material each, so tinting one doesn't tint all
+			for mi in ArtLibrary._all(ring):   # a copy of the ring's material each, flat in the pad's colour
 				if mi is MeshInstance3D:
 					for s in mi.mesh.get_surface_count():
 						var mat = mi.get_active_material(s)
 						if mat is BaseMaterial3D:
 							mat = mat.duplicate()
+							mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+							mat.emission_enabled = false
 							mi.set_surface_override_material(s, mat)
 							mats.append(mat)
-		var lab := Label.new()
-		lab.add_theme_font_size_override("font_size", 14)
-		lab.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
-		lab.add_theme_constant_override("outline_size", 5)
-		lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		names.add_child(lab)
-		slots.append({"node": node, "ring": ring, "mats": mats, "model": null, "key": "", "label": lab, "top": 2.0})
+		var fill := MeshInstance3D.new()   # the pad's faint fill inside the ring
+		var disc := CylinderMesh.new()
+		disc.top_radius = 1.0
+		disc.bottom_radius = 1.0
+		disc.height = 0.002
+		disc.radial_segments = 48
+		fill.mesh = disc
+		fill.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		var fm := StandardMaterial3D.new()
+		fm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		fm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		fill.material_override = fm
+		node.add_child(fill)
+		slots.append({"node": node, "ring": ring, "mats": mats, "fill": fill, "model": null, "key": ""})
 	for i in slots.size():
 		var S: Dictionary = slots[i]
-		var used := i < want and i < recs.size()
-		S.node.visible = used
-		S.label.visible = false
-		if not used:
-			continue
-		var r: Dictionary = recs[i]
-		S.node.position = LobbyLayout.blender_point(r.position)
-		if S.ring != null:
-			S.ring.scale = Vector3(float(r.ring_radius), 1, float(r.ring_radius))
 		var who: Dictionary = crew[i] if i < crew.size() else {}
-		if who.is_empty() and mode != "party":   # solo and the Locker: no empty ring, just the place
-			S.node.visible = false
-		var k := "" if who.is_empty() else "%s|%s|%s|%s" % [who.cls, who.cos.get("skin", "std"), who.cos.get("hat", "class"), r.scale]
-		if k != S.key:   # rebuild only the slot that changed
+		S.node.visible = i < spots.size() and (not who.is_empty() or mode == "party")
+		if not S.node.visible:
+			continue
+		var sp: Array = spots[i]
+		# the feet on the canvas point (the browser paints the figure 4 units up), back rows further from the camera
+		var at := off + Vector2(float(sp[0]), float(sp[1]) - 4.0) * k
+		S.node.position = cam.project_position(at, 40.0 + (780.0 - float(sp[1])) * 0.05)
+		S.node.rotation.y = 0.0 if i == 0 else [0.62, -0.62, 0.5, -0.5, 0.1][i - 1]   # slot 0 turns in _process
+		var sc := float(sp[2]) * k / ppu   # one canvas unit of this figure, in world units
+		var r := (9.5 if i > 0 else 11.5) * sc   # the pad's radius
+		S.fill.scale = Vector3(r, 1, r)
+		if S.ring != null:
+			S.ring.scale = Vector3(r / 1.011, 1, r / 1.011)   # the ring model is 1.011 across
+		var key := "" if who.is_empty() else "%s|%s|%s" % [who.cls, who.cos.get("skin", "std"), who.cos.get("hat", "class")]
+		if key != S.key:   # rebuild only the slot that changed
 			if S.model != null:
 				S.node.remove_child(S.model)
 				S.model.queue_free()
 				S.model = null
-			S.key = k
+			S.key = key
 			if not who.is_empty():
-				S.model = lib.build(who.cls, who.cos, 0.37 * i)
+				S.model = lib.build(who.cls, who.cos, 0.37 * i, "Aim_Loop")
 				if S.model != null:
-					S.model.scale = Vector3.ONE * float(r.scale)
 					S.node.add_child(S.model)
-					S.top = _top(S.model) - S.node.global_position.y
-		var col: Color = Color(Pal.SLOTCOL[int(who.get("slot", i)) % Pal.SLOTCOL.size()]) if not who.is_empty() else Color(0.55, 0.52, 0.46)
-		var lit: float = 1.6 if who.get("ready", false) else (0.9 if not who.is_empty() else 0.25)
+		if S.model != null:
+			S.model.scale = Vector3.ONE * (FIG * sc / cos(deg_to_rad(PITCH)) / maxf(0.5, _ref_h))
 		for mat in S.mats:
-			mat.albedo_color = col
-			mat.emission_enabled = true
-			mat.emission = col
-			mat.emission_energy_multiplier = lit
-		if not who.is_empty() and mode == "party" and i > 0:   # this screen's player has the name plate over the stage
-			S.label.text = str(who.name).to_upper() + ("  ✓" if who.get("ready", false) else "")
-			S.label.add_theme_color_override("font_color", col.lightened(0.25))
-			S.label.visible = true
-	_place_names()
+			mat.albedo_color = PAD if not who.is_empty() else PAD_EMPTY
+		S.fill.material_override.albedo_color = FILL if not who.is_empty() else FILL_EMPTY
 
 
 ## the top of a dressed model (its hat included), in world height
 static func _top(model: Node3D) -> float:
 	var top := -INF
 	for n in ArtLibrary._all(model):
-		if n is MeshInstance3D and n.is_visible_in_tree():
+		if n is MeshInstance3D:
 			var b: AABB = n.global_transform * n.get_aabb()
 			top = maxf(top, b.end.y)
 	return top if top > -INF else model.global_position.y + 2.0
 
 
-## names float above the heads: project each slot's head height into the overlay
-func _place_names() -> void:
-	for i in slots.size():
-		var S: Dictionary = slots[i]
-		if not S.label.visible:
-			continue
-		var head: Vector3 = S.node.global_position + Vector3(0, S.top + 0.12, 0)
-		if cam.is_position_behind(head):
-			S.label.visible = false
-			continue
-		var p := cam.unproject_position(head) * (size / Vector2(vp.size)) if vp.size.x > 0 else Vector2.ZERO
-		S.label.reset_size()
-		S.label.position = p - Vector2(S.label.size.x / 2, S.label.size.y)
-
-
 func _process(_dt: float) -> void:
 	if not is_visible_in_tree():
 		return
-	if size != _size or (size.y > size.x) != _tall:
+	if size != _size:
 		_size = size
 		_layout()
-	else:
-		_place_names()
+	if not slots.is_empty():   # this player turns slowly, as in the browser (stageAngle)
+		var t := Time.get_ticks_msec() / 1000.0
+		slots[0].node.rotation.y = 0.35 + (0.0 if PalSettings.reduce_motion else sin(t / 4.5) * 0.09)

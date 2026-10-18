@@ -187,10 +187,11 @@ The menus, the online lobby and the Locker use the 3D model library (the private
 - **What's in the game:** `palisade_art/` is the runtime part of the library: its catalog, animation manifest, lobby layouts, weapon profiles and the class, skin, headgear, lobby environment, ring and weapon models. `palisade_art/LIBRARY.txt` names the library commit it came from.
 - **Updating it:** `godot/tools/sync_art.sh /path/to/palisade-3d-model-library` copies a new revision in. Godot then imports the models with the library's settings (60 fps clips, neutral tracks kept, clip names kept, the import script `tools/import/palisade_post_import.gd`). These are set as the scene importer defaults in `project.godot`, so they apply without `.import` files.
 - **Characters:** `scripts/art_library.gd` builds a dressed character from the game's own IDs. It uses the class model for the standard skin and the skin model otherwise, applies the headgear with the library's fit and replacement-head rules, and swaps in the class's weapon (carbine, bolt rifle, pump or SMG) where the skin was posed with another gun.
-- **The stage:** `scripts/lobby3d.gd` puts the equipped lobby environment behind the menus, with the library's captured camera and slots.
-  - On the main menu you stand alone.
-  - In an online lobby the whole room stands there, you in front and up to five more. Each player has a ring in their slot colour, brighter when ready, and their name above them.
-  - The Locker shows your outfit turning slowly in 3D.
+- **The stage:** the menus keep the browser's painted lobby background (the equipped one), and `scripts/lobby3d.gd` stands the crew over it in 3D, where the browser paints them.
+  - Each person stands on the browser's stage spot (`Menus.STAGE2D`, a 1000x780 canvas fitted into the page's hero box) at its scale, holding their weapon forward (`Aim_Loop`) and turned as the browser turns them. You turn slowly.
+  - The camera is orthographic and pitched 12.7°, so the pads lie at the browser's flattened ellipse. The page draws the empty spots' "+" and the others' name plates over it (`Menus.Hero2D`, which also paints the 2D figures when the models aren't in a build).
+  - On PLAY and INDEX you stand alone. In an online lobby the whole room stands there, you in front and up to five more. The Locker lifts you to leave room under your feet, as the browser does.
+  - The library's 3D lobby environments are not shown: the menus use the painted backgrounds, as in the browser.
 - **In play:** `scripts/view3d/` draws the game in 3D under the 2D HUD (Settings data `models3d`, on by default; F9 switches it in a game). It only reads the sim, so cross-play is untouched.
   - The camera is orthographic, pitched 30° and turned 45°, so it shows exactly what the 2D projection shows: nameplates, prompts, the crosshair, boss warnings and the night's light pools line up unchanged.
   - People (`v3_actors.gd`): the soldiers in their outfits, Delgado, the seven raiders and the bosses, pooled, with clips from sim state (walk/strafe/run, firing, shell insert, bolt, throws, the rocket, building, gathering, downed, revive, hit, death, the back roll, and each boss's tell, move and recovery).
@@ -240,7 +241,7 @@ xvfb-run godot --path godot --script res://tests/shot.gd -- /tmp/frost.png map f
 PAL_COS=gsoldier,crown xvfb-run godot --path godot --script res://tests/shot.gd -- /tmp/s.png  # dressed in an outfit
 xvfb-run godot --path godot --script res://tests/cos_shot.gd -- /tmp/cos.png     # tracers and kill effects in play
 xvfb-run godot --path godot --script res://tests/locker_shot.gd -- /tmp/lk      # the Locker and a case opening
-xvfb-run -a godot --path godot --rendering-driver opengl3 --resolution 1600x900 --script res://tests/lobby3d_shot.gd -- /tmp/l3   # the 3D lobby: main menu, a room of six, the Locker, portrait
+xvfb-run -a godot --path godot --rendering-driver opengl3 --resolution 1600x900 --script res://tests/lobby3d_shot.gd -- /tmp/l3   # the 3D crew: main menu, a room of six, the Locker, a smaller window, each on its browser spot
 xvfb-run -a godot --path godot --rendering-driver opengl3 --resolution 1600x900 --script res://tests/shot3d.gd -- /tmp/r raid   # the same moment in 3D and in 2D (r_3d.png, r_2d.png), frame times; scenes in the script
 godot --headless --path godot --script res://tests/music_test.gd         # which track each screen and mode plays
 godot --headless --path godot --script res://tests/social_test.gd        # friends, invites, open games (against a stand-in server)
