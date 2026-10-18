@@ -116,11 +116,7 @@ func show_settings() -> void:
 		sv[1].add_child(sr)
 		c3.add_child(sv[0])
 	# WINDOW: this game's own display settings
-	var win := _card("WINDOW")
-	win[1].add_child(_tog("Fullscreen", D.fullscreen, func(on): D.fullscreen = on))
-	win[1].add_child(_tog("VSync", D.vsync, func(on): D.vsync = on))
-	win[1].add_child(_tog("Reduce motion (backgrounds and outfit effects hold still)", D.get("reduceMotion", false), func(on): D.reduceMotion = on))
-	c3.add_child(win[0])
+	c3.add_child(_window_card(D))
 	# KEYBOARD
 	c3.add_child(_key_card())
 	if ig:
@@ -134,6 +130,51 @@ func show_settings() -> void:
 		body.add_child(UiKit.spacer(8))
 		body.add_child(row)
 	mn._settle()
+
+
+## the display (PC only, kept out of the save backup): the window's mode and size, VSync and the frame limit
+func _window_card(D: Dictionary) -> Control:
+	var win := _card("WINDOW")
+	var full: bool = D.windowMode != "windowed"
+	win[1].add_child(_set_label("DISPLAY MODE"))
+	win[1].add_child(_disp_seg([["windowed", "WINDOWED"], ["fullscreen", "FULLSCREEN"], ["exclusive", "EXCLUSIVE"]], D.windowMode, "windowMode", "mode", {}))
+	win[1].add_child(_note("FULLSCREEN is borderless. EXCLUSIVE takes the display over, which can run smoother on some PCs."))
+	var scr := DisplayServer.screen_get_size(DisplayServer.window_get_current_screen())
+	var sizes := PalSettings.sizes_for(scr)
+	if not sizes.is_empty():
+		win[1].add_child(_set_label("WINDOW SIZE"))
+		var now := "%dx%d" % [m.get_window().size.x, m.get_window().size.y]
+		var items := sizes.map(func(id): return [id, id.replace("x", "×")])
+		var cur: String = D.winSize if full or not now in sizes else now   # in fullscreen: the size the window comes back at
+		win[1].add_child(_disp_seg(items, cur, "winSize", "size", {"cols": mini(3, items.size()), "disabled": sizes if full else []}))
+		win[1].add_child(_note(("Fullscreen uses your display's own resolution, %d×%d." % [scr.x, scr.y]) if full else "You can also drag the window's edges to any size."))
+	win[1].add_child(_tog("VSync", D.vsync, func(on): D.vsync = on))
+	win[1].add_child(_set_label("FPS LIMIT"))
+	var auto: bool = D.fpsMode == "auto"
+	win[1].add_child(_disp_seg(PalSettings.FPS_CAPS.map(func(id): return [id, id.to_upper()]), D.fpsCap, "fpsCap", "cap", {"disabled": [] if auto else PalSettings.FPS_CAPS}))
+	win[1].add_child(_note("The most frames a second, with FRAME RATE on AUTO. With VSync on, your display's refresh rate is a limit too." if auto else "FRAME RATE is set to %s FPS. Set it to AUTO to use this limit." % D.fpsMode))
+	win[1].add_child(_tog("Reduce motion (backgrounds and outfit effects hold still)", D.get("reduceMotion", false), func(on): D.reduceMotion = on))
+	return win[0]
+
+
+## one of the display's choices: saved, applied, and the page built again with the controller on the same choice
+func _disp_seg(items: Array, cur: String, key: String, pre: String, opts: Dictionary) -> Control:
+	var names := {}
+	for it in items:
+		names[it[0]] = it[1]
+	var o := {"size": 15, "h": 40}
+	o.merge(opts)
+	var sg := UiKit.seg(items, cur, func(id):
+		m.settings.data[key] = id
+		_apply()
+		show_settings()
+		mn._refocus("%s:%s" % [pre, names[id]]), o)
+	mn._tag_seg(sg, pre)
+	return sg
+
+
+func _note(text: String) -> Label:
+	return _l(text, "m4", 11, UiKit.DIM, 0.0, 1.55, true)
 
 
 func _apply() -> void:

@@ -44,6 +44,27 @@ func _init() -> void:
 	ev.pressed = true
 	check(InputMap.has_action("pal_build") and ev.is_action_pressed("pal_build"), "keys go into the InputMap as pal_ actions")
 	check(PalSettings.glyph(7, "ps") == "R2" and PalSettings.glyph(0, "xbox") == "A", "button names follow the controller in hand")
+	print("display settings")
+	var disp := func(d: Dictionary) -> PalSettings:
+		var f := FileAccess.open(PalSettings.PATH, FileAccess.WRITE)
+		f.store_string(JSON.stringify(d))
+		f.close()
+		var s2 := PalSettings.new()
+		s2.load_file()
+		return s2
+	var d1: PalSettings = disp.call({"fullscreen": true, "fpsCap": "144", "winSize": "1600x900", "vsync": false})
+	check(d1.data.windowMode == "fullscreen" and d1.data.fpsCap == "144" and d1.data.winSize == "1600x900" and not d1.data.vsync, "the old Fullscreen switch carries over; FPS limit, window size and VSync load")
+	var d2: PalSettings = disp.call({"fullscreen": true, "windowMode": "windowed", "fpsCap": "77", "winSize": "999x1"})
+	check(d2.data.windowMode == "windowed" and d2.data.fpsCap == "off" and d2.data.winSize == "", "an explicit window mode wins; unknown limits and sizes fall back")
+	check(PalSettings.sizes_for(Vector2i(1920, 1080)) == ["1280x720", "1600x900", "1920x1080"] and PalSettings.sizes_for(Vector2i(1366, 768)) == ["1280x720"], "window sizes offered are the ones that fit the screen")
+	var cfg := _backup_cfg(d1)
+	check(cfg.has("fpsMode") and not (cfg.has("windowMode") or cfg.has("winSize") or cfg.has("fpsCap") or cfg.has("vsync")), "the save backup leaves the display settings out (the browser has none)")
+	if keep != "":
+		var f0 := FileAccess.open(PalSettings.PATH, FileAccess.WRITE)
+		f0.store_string(keep)
+		f0.close()
+	else:
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(PalSettings.PATH))
 	print("locker: the browser's run payouts (tests/locker_ref.json, from tools/locker_ref.js)")
 	var ref: Array = JSON.parse_string(FileAccess.get_file_as_string("res://tests/locker_ref.json"))
 	for r in ref:
@@ -86,6 +107,19 @@ func _init() -> void:
 		await process_frame
 	main.locker.cloud = {}   # whatever the PC's own locker is, the tests play it as a local one
 	main.profile.cloud = false
+	var D: Dictionary = main.settings.data
+	var fm: String = D.fpsMode
+	var fc: String = D.fpsCap
+	D.fpsMode = "auto"
+	D.fpsCap = "144"
+	main.apply_settings()
+	var cap_auto := Engine.max_fps
+	D.fpsMode = "30"
+	main.apply_settings()
+	check(cap_auto == 144 and Engine.max_fps == 30, "FPS LIMIT caps the frame rate on AUTO; FRAME RATE 30 wins over it (%d, %d)" % [cap_auto, Engine.max_fps])
+	D.fpsMode = fm
+	D.fpsCap = fc
+	main.apply_settings()
 	print("menus")
 	check(main.demo and main.menus.screen == "main", "it opens on the main menu over the demo yard")
 	check(main._controls().is_empty(), "nobody plays the demo")
@@ -341,3 +375,14 @@ func _accounts(main) -> void:
 	main.profile.from_cloud({})
 	main.profile.cloud = false
 	main.sim.game.phase = "build"
+
+
+## the settings part of an exported save, decoded (TAG.body.crc)
+func _backup_cfg(st: PalSettings) -> Dictionary:
+	var prof := PalProfile.new()
+	prof.persist = false
+	var L := PalLocker.new(prof)
+	L.persist = false
+	var code := PalSaves.export_code(L, st)
+	var body: String = code.split(".")[1]
+	return JSON.parse_string(Marshalls.base64_to_utf8(body)).get("cfg", {})

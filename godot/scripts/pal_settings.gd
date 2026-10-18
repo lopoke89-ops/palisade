@@ -1,9 +1,15 @@
 class_name PalSettings
 extends RefCounted
 ## Settings (the browser's cfg, 04-state-armory.js, and the controller map, 08b-pad.js), kept in user://settings.json:
-## sound, screen, the next game's setup, keyboard keys and controller buttons.
+## sound, screen, the next game's setup, keyboard keys and controller buttons; and this game's own display settings
+## (windowMode, winSize, vsync, fpsCap), which the browser doesn't have and the save backup leaves out.
 
 const PATH := "user://settings.json"
+## the display: how the window shows, the window sizes offered (16:9, the ones that fit the screen), the frame caps
+const WINDOW_MODES := ["windowed", "fullscreen", "exclusive"]
+const WIN_SIZES := ["1280x720", "1600x900", "1920x1080", "2560x1440", "3840x2160"]
+const FPS_CAPS := ["off", "60", "120", "144", "240"]
+
 ## the browser follows the system's reduced-motion preference; here it's a setting: backgrounds and auras hold still
 static var reduce_motion := false
 
@@ -40,7 +46,8 @@ const ACTIONS := [
 
 var data := {
 	"volume": 0.8, "music": 0.7, "shake": 1.0, "zoom": 1.0, "msgTime": 1.0, "fpsMode": "auto", "fps": false, "tips": true,
-	"haptics": true, "fullscreen": false, "vsync": true, "reduceMotion": false,
+	"haptics": true, "vsync": true, "reduceMotion": false,
+	"windowMode": "windowed", "winSize": "", "fpsCap": "off",   # the display ("" winSize: the window as it is)
 	"models3d": true,   # graphics: the 3D models (the world drawn with the model library) or the 2D drawing
 	"gfx3d": {},   # the 3D view's quality knobs (Quality3D.KEYS: shadows, effects, draw_margin, anim_rate, msaa...)
 	"setup": {"mode": "5", "map": "yard", "size": "std", "diff": "normal", "cls": "soldier", "mods": []},
@@ -71,6 +78,8 @@ func load_file() -> void:
 	var d = JSON.parse_string(FileAccess.get_file_as_string(PATH))
 	if not d is Dictionary:
 		return
+	if d.get("fullscreen") == true and not d.has("windowMode"):   # the old Fullscreen switch
+		d.windowMode = "fullscreen"
 	for k in data:
 		if not d.has(k):
 			continue
@@ -89,6 +98,23 @@ func load_file() -> void:
 			data[k] = d[k]
 	data.pad.pause = PB.MENU   # the pause button never moves
 	data.zoom = clampf(data.zoom, 0.7, 1.4)
+	if not data.windowMode in WINDOW_MODES:
+		data.windowMode = "windowed"
+	if not data.winSize in WIN_SIZES:
+		data.winSize = ""
+	if not data.fpsCap in FPS_CAPS:
+		data.fpsCap = "off"
+
+
+## a "1600x900" size as pixels
+static func size_of(id: String) -> Vector2i:
+	var p := id.split("x")
+	return Vector2i(int(p[0]), int(p[1])) if p.size() == 2 else Vector2i.ZERO
+
+
+## the window sizes that fit on a screen of this size
+static func sizes_for(screen: Vector2i) -> Array:
+	return WIN_SIZES.filter(func(id): return size_of(id).x <= screen.x and size_of(id).y <= screen.y)
 
 
 func save() -> void:

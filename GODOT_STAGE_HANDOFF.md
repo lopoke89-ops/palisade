@@ -15,6 +15,22 @@
   - **Locker:** the case buttons stay full-strength when they can't be pressed, as in the browser. OPEN and OPEN 5 use the browser's 23 px size in equal columns.
   - **Removed:** `lobby_layout.gd`, the captured Blender cameras, which are no longer used.
 
+- **Stage 2: display settings.** Settings › WINDOW now has:
+  - DISPLAY MODE: windowed, fullscreen (borderless) or exclusive.
+  - WINDOW SIZE: 16:9 sizes that fit the screen. The window is centred, and greyed out in fullscreen.
+  - VSync.
+  - FPS LIMIT: off, 60, 120, 144 or 240, used while the browser's FRAME RATE is on AUTO; FRAME RATE 30 or 60 still wins.
+  - The settings are kept in `user://settings.json` as `windowMode`, `winSize` and `fpsCap`. The old `fullscreen: true` carries over.
+  - The save backup leaves them out, so its code stays the browser's.
+  - A size you drag the window to isn't undone when another setting changes.
+
+## Verification (Stage 2)
+- All seven suites pass. `client_test` has new checks: loading and migrating the settings, falling back on bad values, the sizes offered, the save backup leaving the display settings out, and the FPS limit against FRAME RATE.
+- `lobby3d_shot` passes.
+- New `tests/display_shot.gd`, run on a real window under xvfb with openbox, passes. It checks window size and centring, a resize by hand surviving, FULLSCREEN, EXCLUSIVE, returning to WINDOWED at the chosen size, the FPS limit, and screenshots of both states.
+- Fullscreen on X11 needs a window manager. Under a bare xvfb the fullscreen checks fail.
+- Not tested on Windows itself; there it goes through Godot's own window API.
+
 ## Verification (Stage 1)
 - Godot 4.7.2: `sim_test`, `client_test`, `net_test`, `social_test`, `music_test`, `tables_test` and `relay_test` all pass.
 - `lobby3d_shot.gd` passes, including a new check that every figure's feet land within 3 px of their browser spot, at 1600x900 and 1280x720.
@@ -30,4 +46,4 @@
 - The menus leave the 3D crew loaded during games (from the previous session).
 
 ## Proposed next milestone
-Graphics settings, display group: window mode, resolution, vsync and FPS cap in Settings › Window, saved in `user://settings.json`.
+Graphics settings, 3D quality group: a GRAPHICS card in Settings with the 3D models switch, a LOW / MEDIUM / HIGH preset and render scale, using the existing `Quality3D` knobs (`gfx3d`).

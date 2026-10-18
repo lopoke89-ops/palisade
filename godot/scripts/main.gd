@@ -730,6 +730,10 @@ func setup_3d() -> void:
 	front_root.visible = v3 == null
 
 
+var _win_size := ""   # the window size last applied (Settings: winSize), so other settings don't undo a resize by hand
+const _WINDOW_MODE := {"windowed": Window.MODE_WINDOWED, "fullscreen": Window.MODE_FULLSCREEN, "exclusive": Window.MODE_EXCLUSIVE_FULLSCREEN}
+
+
 func apply_settings() -> void:
 	var D: Dictionary = settings.data
 	if v3 != null or D.get("models3d", true) == false:
@@ -740,12 +744,21 @@ func apply_settings() -> void:
 	if absf(v.ZOOM - D.zoom) > 0.001:
 		v.ZOOM = D.zoom
 		_resize()
-	Engine.max_fps = 30 if D.fpsMode == "30" else (60 if D.fpsMode == "60" else 0)
+	# FRAME RATE (the browser's) first; on AUTO, this game's FPS LIMIT
+	Engine.max_fps = 30 if D.fpsMode == "30" else (60 if D.fpsMode == "60" else (0 if D.fpsCap == "off" else int(D.fpsCap)))
 	if DisplayServer.get_name() != "headless":
 		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if D.vsync else DisplayServer.VSYNC_DISABLED)
-		var want := DisplayServer.WINDOW_MODE_FULLSCREEN if D.fullscreen else DisplayServer.WINDOW_MODE_WINDOWED
-		if DisplayServer.window_get_mode() != want and (D.fullscreen or DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN):
-			DisplayServer.window_set_mode(want)
+		var w := get_window()
+		var want: Window.Mode = _WINDOW_MODE[D.windowMode]
+		var full := w.mode == Window.MODE_FULLSCREEN or w.mode == Window.MODE_EXCLUSIVE_FULLSCREEN
+		if w.mode != want and (want != Window.MODE_WINDOWED or full):   # a maximized window stays maximized
+			w.mode = want
+			_win_size = ""   # back in a window: its size is applied again
+		if D.windowMode == "windowed" and D.winSize != "" and D.winSize != _win_size:
+			_win_size = D.winSize
+			var sz := PalSettings.size_of(D.winSize)
+			w.size = sz
+			w.position = DisplayServer.screen_get_position(w.current_screen) + (DisplayServer.screen_get_size(w.current_screen) - sz) / 2
 
 
 func _game_opt() -> Dictionary:

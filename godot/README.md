@@ -12,6 +12,14 @@ It also plays online with the browser (co-op, Base Battle and Free-for-all), has
 
 It opens on the main menu over the demo yard: PLAY, PLAY ONLINE, THE CASINO, FRIENDS, MATCH SETUP (length, map, size, threat, class, modifiers), LOCKER, SKILL TREE, ACCOUNT, INDEX, SETTINGS. Settings and the next game's setup are kept in `user://settings.json`.
 
+Settings › WINDOW has the PC's display settings, which the browser doesn't have:
+- **Display mode:** windowed, fullscreen (borderless) or exclusive fullscreen.
+- **Window size:** 16:9 sizes that fit the screen. The window is centred and can still be resized by hand.
+- **VSync.**
+- **FPS limit:** off, 60, 120, 144 or 240, used while FRAME RATE (the browser's setting) is on AUTO.
+
+The save backup leaves these out, so its code stays the browser's.
+
 ## Run it
 
 1. Install Godot 4.7.x (standard build, not .NET).
@@ -242,6 +250,7 @@ PAL_COS=gsoldier,crown xvfb-run godot --path godot --script res://tests/shot.gd 
 xvfb-run godot --path godot --script res://tests/cos_shot.gd -- /tmp/cos.png     # tracers and kill effects in play
 xvfb-run godot --path godot --script res://tests/locker_shot.gd -- /tmp/lk      # the Locker and a case opening
 xvfb-run -a godot --path godot --rendering-driver opengl3 --resolution 1600x900 --script res://tests/lobby3d_shot.gd -- /tmp/l3   # the 3D crew: main menu, a room of six, the Locker, a smaller window, each on its browser spot
+xvfb-run -a -s "-screen 0 1920x1080x24" sh -c 'openbox & sleep 1; godot --path godot --rendering-driver opengl3 --script res://tests/display_shot.gd -- /tmp/d'   # Settings › WINDOW on a real window (fullscreen needs a window manager)
 xvfb-run -a godot --path godot --rendering-driver opengl3 --resolution 1600x900 --script res://tests/shot3d.gd -- /tmp/r raid   # the same moment in 3D and in 2D (r_3d.png, r_2d.png), frame times; scenes in the script
 godot --headless --path godot --script res://tests/music_test.gd         # which track each screen and mode plays
 godot --headless --path godot --script res://tests/social_test.gd        # friends, invites, open games (against a stand-in server)
