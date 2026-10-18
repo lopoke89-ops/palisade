@@ -15,6 +15,16 @@ func _find(n: Node, cls: String) -> Node:
 	return null
 
 
+func _locker_ui(n: Node) -> LockerUI:   # the Locker sits inside the menu shell's body
+	for ch in n.get_children():
+		if ch is LockerUI:
+			return ch
+		var r := _locker_ui(ch)
+		if r != null:
+			return r
+	return null
+
+
 func check(cond: bool, what: String) -> void:
 	print(("  ok   " if cond else "  FAIL ") + what)
 	if not cond:
@@ -141,7 +151,8 @@ func _init() -> void:
 	check(_find(main.menus.root, "HFlowContainer") != null, "the rewards come as cards")
 	main.to_menu()
 	check(main.demo and main.menus.screen == "main", "MAIN MENU goes back to the demo yard")
-	check(main.menus.root.get_child(0) is LockerUI.BgView, "outside a game the menus sit on the lobby background")
+	var bg0 = main.menus.root.get_child(0)
+	check((bg0 is Lobby3D) if Lobby3D.available() else (bg0 is LockerUI.BgView), "outside a game the menus sit on the lobby (the 3D stage, or the painted background without the models)")
 	print("accounts (a stand-in server)")
 	print("leaving a run early")
 	main.locker.cloud = {}
@@ -166,7 +177,7 @@ func _init() -> void:
 	main.profile.sp = 5
 	main.menus.show_locker()
 	await process_frame
-	var ui: LockerUI = main.menus.root.get_children().filter(func(n): return n is LockerUI)[0]
+	var ui: LockerUI = _locker_ui(main.menus.root)
 	check(main.menus.screen == "locker" and ui.tiles.size() > 0, "the Locker opens on its tiles (%d)" % ui.tiles.size())
 	var before := L.owned.size() + L.shards
 	ui.open_cases("supply", 1)
@@ -176,7 +187,7 @@ func _init() -> void:
 	check(ov.phase == "reveal" and ov.done_b.visible, "SKIP goes straight to what it gave")
 	ov.close()
 	await process_frame
-	ui = main.menus.root.get_children().filter(func(n): return n is LockerUI)[0]
+	ui = _locker_ui(main.menus.root)
 	var halloween := L.case_count("halloween")
 	ui._render_boxes()
 	check(L.buy_case("halloween") and L.case_count("halloween") == halloween + 1 and L.shards == 18, "BUY trades 12 shards for a Halloween Case")
@@ -187,7 +198,7 @@ func _init() -> void:
 	L.grant("bg:aurora")
 	ui._equip(PalLocker.item("bg:aurora"))
 	await process_frame
-	check(L.eq.bg == "aurora" and main.menus.root.get_children().any(func(n): return n is LockerUI.BgView and n.id == "aurora"), "equipping a background puts it behind the menus")
+	check(L.eq.bg == "aurora" and main.menus.root.get_children().any(func(n): return (n is LockerUI.BgView and n.id == "aurora") or (n is Lobby3D and n.bg == "aurora" and n.env_root.get_child_count() == 1)), "equipping a background puts it behind the menus")
 	ui._equip(PalLocker.item("hat:witch"))
 	check(L.eq.hat != "witch" and ui.msg.text != "", "locked items say how to get them")
 	main.menus.show_main()

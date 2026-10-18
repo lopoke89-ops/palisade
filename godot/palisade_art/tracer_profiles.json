@@ -1,0 +1,5044 @@
+{
+  "schema_version": 2,
+  "coordinate_system": "Y up, projectile forward +X, origin at projectile nose",
+  "source_game_commit": "4c2676972c34b22e2da6f73d4a4fe59488642b83",
+  "profiles": [
+    {
+      "id": "trail:std",
+      "key": "std",
+      "name": "Standard Tracer",
+      "description": "",
+      "source_style": {
+        "c": "rgba(255,236,170,.95)"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#aa784b",
+        "tip": "#ffecaa",
+        "edge": "#ffecaa",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "solid",
+        "colors": [
+          "#ffecaa"
+        ],
+        "glow": "#ffecaa",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.014,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.22
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:green",
+      "key": "green",
+      "name": "Green Tracer",
+      "description": "",
+      "source_style": {
+        "c": "#86ff7a"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#86ff7a",
+        "edge": "#86ff7a",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "solid",
+        "colors": [
+          "#86ff7a"
+        ],
+        "glow": "#86ff7a",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.014,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:red",
+      "key": "red",
+      "name": "Hot Red",
+      "description": "",
+      "source_style": {
+        "c": "#ff5a46"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#ff5a46",
+        "edge": "#ff5a46",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "solid",
+        "colors": [
+          "#ff5a46"
+        ],
+        "glow": "#ff5a46",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.014,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:blue",
+      "key": "blue",
+      "name": "Ice Round",
+      "description": "",
+      "source_style": {
+        "c": "#9fe8ff"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#9fe8ff",
+        "edge": "#9fe8ff",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "solid",
+        "colors": [
+          "#9fe8ff"
+        ],
+        "glow": "#9fe8ff",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.014,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:pink",
+      "key": "pink",
+      "name": "Neon",
+      "description": "",
+      "source_style": {
+        "c": "#ff5ad8"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#ff5ad8",
+        "edge": "#ff5ad8",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "solid",
+        "colors": [
+          "#ff5ad8"
+        ],
+        "glow": "#ff5ad8",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.014,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:gold",
+      "key": "gold",
+      "name": "Gold Round",
+      "description": "",
+      "source_style": {
+        "c": "#ffd24a",
+        "w": 1.35,
+        "snd": "ts_gold"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#b89442",
+        "tip": "#ffd24a",
+        "edge": "#ffd24a",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "solid",
+        "colors": [
+          "#ffd24a"
+        ],
+        "glow": "#ffd24a",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:plasma",
+      "key": "plasma",
+      "name": "Plasma",
+      "description": "",
+      "source_style": {
+        "c": "#7af2ff",
+        "w": 1.5,
+        "glow": "rgba(106,240,255,.3)",
+        "len": 1.7,
+        "snd": "ts_plasma"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#7af2ff",
+        "edge": "#7af2ff",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "solid",
+        "colors": [
+          "#7af2ff"
+        ],
+        "glow": "#6af0ff",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.1145,
+        "width": 0.0165,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.13,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:rainbow",
+      "key": "rainbow",
+      "name": "Prism",
+      "description": "",
+      "source_style": {
+        "rainbow": true,
+        "w": 1.4,
+        "len": 2.2,
+        "snd": "ts_rainbow"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#ff8080",
+        "edge": "#ff8080",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "spectrum",
+        "colors": [
+          "#ff8080",
+          "#ffd580",
+          "#eaff80",
+          "#80ffc0",
+          "#80c0ff",
+          "#d580ff"
+        ],
+        "glow": "#ff8080",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.132,
+        "width": 0.016,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:sunset",
+      "key": "sunset",
+      "name": "Sunset Fade",
+      "description": "",
+      "source_style": {
+        "grad": [
+          "#ff5ad8",
+          "#ffa03a"
+        ],
+        "w": 1.35,
+        "snd": "ts_grad"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#ff5ad8",
+        "edge": "#ff5ad8",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "gradient",
+        "colors": [
+          "#ff5ad8",
+          "#ffa03a"
+        ],
+        "glow": "#ff5ad8",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:lagoon",
+      "key": "lagoon",
+      "name": "Lagoon Fade",
+      "description": "",
+      "source_style": {
+        "grad": [
+          "#3affb0",
+          "#3a8bff"
+        ],
+        "w": 1.35,
+        "snd": "ts_grad"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#3affb0",
+        "edge": "#3affb0",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "gradient",
+        "colors": [
+          "#3affb0",
+          "#3a8bff"
+        ],
+        "glow": "#3affb0",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:heat",
+      "key": "heat",
+      "name": "Heatwave",
+      "description": "",
+      "source_style": {
+        "grad": [
+          "#ffe03a",
+          "#ff3a2a"
+        ],
+        "w": 1.35,
+        "snd": "ts_grad"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#ffe03a",
+        "edge": "#ffe03a",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "gradient",
+        "colors": [
+          "#ffe03a",
+          "#ff3a2a"
+        ],
+        "glow": "#ffe03a",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:aurora",
+      "key": "aurora",
+      "name": "Aurora",
+      "description": "",
+      "source_style": {
+        "grad": [
+          "#6af0ff",
+          "#b06aff"
+        ],
+        "w": 1.5,
+        "glow": "rgba(140,120,255,.28)",
+        "len": 1.6,
+        "snd": "ts_aurora"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#6af0ff",
+        "edge": "#6af0ff",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "gradient",
+        "colors": [
+          "#6af0ff",
+          "#b06aff"
+        ],
+        "glow": "#8c78ff",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.111,
+        "width": 0.0165,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.13,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:starlight",
+      "key": "starlight",
+      "name": "Starlight",
+      "description": "",
+      "source_style": {
+        "c": "#fffbe8",
+        "w": 1.2,
+        "pk": "star",
+        "pr": 0.55,
+        "len": 1.5,
+        "snd": "ts_star"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#fffbe8",
+        "edge": "#fffbe8",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "solid",
+        "colors": [
+          "#fffbe8"
+        ],
+        "glow": "#fffbe8",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.1075,
+        "width": 0.015,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "star",
+        "rate": 39,
+        "lifetime": 0.22,
+        "size": 0.045,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:comet",
+      "key": "comet",
+      "name": "Comet",
+      "description": "",
+      "source_style": {
+        "grad": [
+          "#f2fcff",
+          "rgba(80,160,255,0)"
+        ],
+        "w": 1.9,
+        "len": 2.7,
+        "head": "#e6f8ff",
+        "glow": "rgba(120,190,255,.22)",
+        "snd": "ts_comet"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#e6f8ff",
+        "edge": "#f2fcff",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "gradient",
+        "colors": [
+          "#f2fcff",
+          "#50a0ff"
+        ],
+        "glow": "#78beff",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.139,
+        "width": 0.0185,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.13,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:neonpulse",
+      "key": "neonpulse",
+      "name": "Neon Pulse",
+      "description": "",
+      "source_style": {
+        "c": "#ff3ad0",
+        "w": 1.4,
+        "pulse": true,
+        "glow": "rgba(255,58,208,.32)",
+        "snd": "ts_neon"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#ff3ad0",
+        "edge": "#ff3ad0",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "solid",
+        "colors": [
+          "#ff3ad0"
+        ],
+        "glow": "#ff3ad0",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "pulse",
+        "lifetime": 0.09,
+        "width": 0.016,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.13,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:nebula",
+      "key": "nebula",
+      "name": "Nebula",
+      "description": "",
+      "source_style": {
+        "grad": [
+          "#c07aff",
+          "#3a6aff"
+        ],
+        "w": 2.2,
+        "glow": "rgba(150,90,255,.35)",
+        "len": 2,
+        "pk": "cosmic",
+        "pr": 0.45,
+        "snd": "ts_cosmic"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#c07aff",
+        "edge": "#c07aff",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "gradient",
+        "colors": [
+          "#c07aff",
+          "#3a6aff"
+        ],
+        "glow": "#965aff",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.125,
+        "width": 0.019,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "cosmic",
+        "rate": 34,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.13,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:asteroid",
+      "key": "asteroid",
+      "name": "Asteroid Belt",
+      "description": "",
+      "source_style": {
+        "c": "#a89a88",
+        "w": 1.3,
+        "pk": "rock",
+        "pr": 0.65,
+        "len": 1.4,
+        "head": "#6a5e52",
+        "snd": "ts_rock"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#61564a",
+        "tip": "#6a5e52",
+        "edge": "#a89a88",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "solid",
+        "colors": [
+          "#a89a88"
+        ],
+        "glow": "#a89a88",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.104,
+        "width": 0.0155,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "rock",
+        "rate": 43,
+        "lifetime": 0.3,
+        "size": 0.035,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:solar",
+      "key": "solar",
+      "name": "Solar Flare",
+      "description": "",
+      "source_style": {
+        "grad": [
+          "#fff6a0",
+          "#ff5a1a"
+        ],
+        "w": 1.8,
+        "glow": "rgba(255,140,40,.35)",
+        "pk": "flame",
+        "pr": 0.6,
+        "len": 1.8,
+        "snd": "ts_solar"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#fff6a0",
+        "edge": "#fff6a0",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "gradient",
+        "colors": [
+          "#fff6a0",
+          "#ff5a1a"
+        ],
+        "glow": "#ff8c28",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.118,
+        "width": 0.018,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "flame",
+        "rate": 41,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.13,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:glitch",
+      "key": "glitch",
+      "name": "Glitch Line",
+      "description": "",
+      "source_style": {
+        "c": "#ffffff",
+        "w": 1.25,
+        "glitch": true,
+        "snd": "ts_glitch"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#ffffff",
+        "edge": "#ffffff",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "solid",
+        "colors": [
+          "#ffffff"
+        ],
+        "glow": "#ffffff",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "glitch",
+        "lifetime": 0.09,
+        "width": 0.0152,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "glitch",
+        "rate": 28,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:galaxy",
+      "key": "galaxy",
+      "name": "Galaxy",
+      "description": "",
+      "source_style": {
+        "grad": [
+          "#ff8ad8",
+          "#6a5aff"
+        ],
+        "w": 1.8,
+        "glow": "rgba(120,100,255,.35)",
+        "pk": "cosmic",
+        "pr": 0.95,
+        "len": 2.2,
+        "core": true,
+        "snd": "ts_galaxy"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#ff8ad8",
+        "edge": "#ff8ad8",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "gradient",
+        "colors": [
+          "#ff8ad8",
+          "#6a5aff"
+        ],
+        "glow": "#7864ff",
+        "gold_core": false,
+        "white_core": true
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.132,
+        "width": 0.018,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0045
+      },
+      "particles": {
+        "kind": "cosmic",
+        "rate": 57,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.13,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:blackhole",
+      "key": "blackhole",
+      "name": "Event Horizon",
+      "description": "",
+      "source_style": {
+        "c": "#0c0616",
+        "w": 2.2,
+        "edge": "#b06aff",
+        "glow": "rgba(160,60,255,.42)",
+        "pk": "void2",
+        "pr": 0.6,
+        "len": 1.8,
+        "snd": "ts_void"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#100a18",
+        "edge": "#b06aff",
+        "emission": 0.15
+      },
+      "palette": {
+        "mode": "solid",
+        "colors": [
+          "#0c0616"
+        ],
+        "glow": "#a03cff",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "void",
+        "lifetime": 0.118,
+        "width": 0.019,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "void2",
+        "rate": 41,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.13,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:grainbow",
+      "key": "grainbow",
+      "name": "Gold Rainbow",
+      "description": "",
+      "source_style": {
+        "rgrad": true,
+        "w": 2,
+        "len": 2.7,
+        "glow": "rgba(255,215,110,.42)",
+        "core": true,
+        "pk": "goldsp",
+        "pr": 0.95,
+        "snd": "ts_grainbow"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#b89442",
+        "tip": "#ff8080",
+        "edge": "#ff8080",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "spectrum",
+        "colors": [
+          "#ff8080",
+          "#ffd580",
+          "#eaff80",
+          "#80ffc0",
+          "#80c0ff",
+          "#d580ff"
+        ],
+        "glow": "#ffd76e",
+        "gold_core": true,
+        "white_core": true
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.139,
+        "width": 0.019,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0045
+      },
+      "particles": {
+        "kind": "goldsp",
+        "rate": 57,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.13,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:candycorn",
+      "key": "candycorn",
+      "name": "Candy Corn",
+      "description": "",
+      "source_style": {
+        "bands": [
+          "#fff4d6",
+          "#ff8a1a",
+          "#ffd23a"
+        ],
+        "w": 1.6,
+        "len": 1.6,
+        "snd": "ts_grad"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#fff4d6",
+        "edge": "#fff4d6",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "bands",
+        "colors": [
+          "#fff4d6",
+          "#ff8a1a",
+          "#ffd23a"
+        ],
+        "glow": "#fff4d6",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.111,
+        "width": 0.017,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:ghostfire",
+      "key": "ghostfire",
+      "name": "Ghostfire",
+      "description": "",
+      "source_style": {
+        "grad": [
+          "#eaffc8",
+          "#1ee860"
+        ],
+        "w": 1.9,
+        "len": 2,
+        "glow": "rgba(60,255,130,.32)",
+        "pk": "gflame",
+        "pr": 0.7,
+        "snd": "ts_solar"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#eaffc8",
+        "edge": "#eaffc8",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "gradient",
+        "colors": [
+          "#eaffc8",
+          "#1ee860"
+        ],
+        "glow": "#3cff82",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.125,
+        "width": 0.0185,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "gflame",
+        "rate": 46,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.13,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:candle",
+      "key": "candle",
+      "name": "Candle Flicker",
+      "description": "",
+      "source_style": {
+        "bands": [
+          "#fff6d0",
+          "#ffc84a",
+          "#ff8a2a"
+        ],
+        "w": 1.3,
+        "len": 1.4,
+        "pk": "flame",
+        "pr": 0.3,
+        "snd": "ts_grad"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#fff6d0",
+        "edge": "#fff6d0",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "bands",
+        "colors": [
+          "#fff6d0",
+          "#ffc84a",
+          "#ff8a2a"
+        ],
+        "glow": "#fff6d0",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.104,
+        "width": 0.0155,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "flame",
+        "rate": 28,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:poison",
+      "key": "poison",
+      "name": "Poison Apple",
+      "description": "",
+      "source_style": {
+        "grad": [
+          "#b6ff3a",
+          "#c8102e"
+        ],
+        "w": 1.5,
+        "len": 1.6,
+        "glow": "rgba(150,255,60,.28)",
+        "snd": "ts_aurora"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#b6ff3a",
+        "edge": "#b6ff3a",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "gradient",
+        "colors": [
+          "#b6ff3a",
+          "#c8102e"
+        ],
+        "glow": "#96ff3c",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.111,
+        "width": 0.0165,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.13,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:blood",
+      "key": "blood",
+      "name": "Blood Trail",
+      "description": "",
+      "source_style": {
+        "grad": [
+          "#ff4a3a",
+          "#4a0006"
+        ],
+        "w": 1.8,
+        "len": 2,
+        "glow": "rgba(200,0,20,.3)",
+        "pk": "blood",
+        "pr": 0.6,
+        "snd": "ts_void"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#ff4a3a",
+        "edge": "#ff4a3a",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "gradient",
+        "colors": [
+          "#ff4a3a",
+          "#4a0006"
+        ],
+        "glow": "#c80014",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.125,
+        "width": 0.018,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "blood",
+        "rate": 41,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.13,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:hellfire",
+      "key": "hellfire",
+      "name": "Hellfire",
+      "description": "",
+      "source_style": {
+        "grad": [
+          "#fff2a0",
+          "#ff3a0a"
+        ],
+        "w": 2.1,
+        "len": 2.2,
+        "glow": "rgba(255,80,20,.4)",
+        "pk": "flame",
+        "pr": 0.9,
+        "head": "#fff8d0",
+        "snd": "ts_solar"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#fff8d0",
+        "edge": "#fff2a0",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "gradient",
+        "colors": [
+          "#fff2a0",
+          "#ff3a0a"
+        ],
+        "glow": "#ff5014",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.132,
+        "width": 0.019,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "flame",
+        "rate": 55,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.13,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:brimstone",
+      "key": "brimstone",
+      "name": "Brimstone",
+      "description": "",
+      "source_style": {
+        "grad": [
+          "#ffe14a",
+          "#7a0c06"
+        ],
+        "w": 1.4,
+        "len": 1.5,
+        "pk": "ember",
+        "pr": 0.35,
+        "snd": "ts_solar"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#ffe14a",
+        "edge": "#ffe14a",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "gradient",
+        "colors": [
+          "#ffe14a",
+          "#7a0c06"
+        ],
+        "glow": "#ffe14a",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.1075,
+        "width": 0.016,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "ember",
+        "rate": 30,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:tealwake",
+      "key": "tealwake",
+      "name": "Teal Wake",
+      "description": "",
+      "source_style": {
+        "c": "#5af0ff",
+        "w": 1.1,
+        "len": 1.9,
+        "glow": "rgba(90,240,255,.25)",
+        "pk": "tealdust",
+        "pr": 0.6,
+        "snd": "ts_aurora"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#5af0ff",
+        "edge": "#5af0ff",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "solid",
+        "colors": [
+          "#5af0ff"
+        ],
+        "glow": "#5af0ff",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.1215,
+        "width": 0.0145,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "tealdust",
+        "rate": 41,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.13,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:hellchain",
+      "key": "hellchain",
+      "name": "Hellfire Chain",
+      "description": "",
+      "source_style": {
+        "bands": [
+          "#ffd060",
+          "#ff4a0a",
+          "#3a0a04",
+          "#ff4a0a",
+          "#3a0a04"
+        ],
+        "w": 1.8,
+        "len": 1.9,
+        "glow": "rgba(255,74,10,.32)",
+        "pk": "flame",
+        "pr": 0.5,
+        "chain": true,
+        "snd": "ts_solar"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#ffd060",
+        "edge": "#ffd060",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "bands",
+        "colors": [
+          "#ffd060",
+          "#ff4a0a",
+          "#3a0a04",
+          "#ff4a0a",
+          "#3a0a04"
+        ],
+        "glow": "#ff4a0a",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "chain",
+        "lifetime": 0.1215,
+        "width": 0.018,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "flame",
+        "rate": 37,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.13,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:sigil",
+      "key": "sigil",
+      "name": "Infernal Sigil",
+      "description": "",
+      "source_style": {
+        "grad": [
+          "#fff0b0",
+          "#ff3a0a"
+        ],
+        "w": 1.9,
+        "len": 2.1,
+        "glow": "rgba(255,58,10,.38)",
+        "pk": "rune",
+        "pr": 0.95,
+        "head": "#fff8d0",
+        "snd": "ts_void"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#fff8d0",
+        "edge": "#fff0b0",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "gradient",
+        "colors": [
+          "#fff0b0",
+          "#ff3a0a"
+        ],
+        "glow": "#ff3a0a",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.1285,
+        "width": 0.0185,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "rune",
+        "rate": 57,
+        "lifetime": 0.22,
+        "size": 0.045,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.13,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:rocket",
+      "key": "rocket",
+      "name": "Rocket Trail",
+      "description": "",
+      "source_style": {
+        "grad": [
+          "#fff0b0",
+          "#ff6a1a"
+        ],
+        "w": 1.7,
+        "len": 1.9,
+        "glow": "rgba(255,120,40,.3)",
+        "pk": "flame",
+        "pr": 0.55,
+        "snd": "ts_solar"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#fff0b0",
+        "edge": "#fff0b0",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "gradient",
+        "colors": [
+          "#fff0b0",
+          "#ff6a1a"
+        ],
+        "glow": "#ff7828",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.1215,
+        "width": 0.0175,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "flame",
+        "rate": 39,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.13,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:hairline",
+      "key": "hairline",
+      "name": "Hairline",
+      "description": "",
+      "source_style": {
+        "c": "#ff4040",
+        "w": 0.85,
+        "len": 2.8,
+        "glow": "rgba(255,60,60,.22)",
+        "snd": "ts_star"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#ff4040",
+        "edge": "#ff4040",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "solid",
+        "colors": [
+          "#ff4040"
+        ],
+        "glow": "#ff3c3c",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.139,
+        "width": 0.0132,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.13,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:fuse",
+      "key": "fuse",
+      "name": "Lit Fuse",
+      "description": "",
+      "source_style": {
+        "bands": [
+          "#fff0a0",
+          "#ff8a1a",
+          "#6a4020"
+        ],
+        "w": 1.4,
+        "len": 1.5,
+        "pk": "goldsp",
+        "pr": 0.7,
+        "snd": "ts_solar"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#fff0a0",
+        "edge": "#fff0a0",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "bands",
+        "colors": [
+          "#fff0a0",
+          "#ff8a1a",
+          "#6a4020"
+        ],
+        "glow": "#fff0a0",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.1075,
+        "width": 0.016,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "goldsp",
+        "rate": 46,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:supply",
+      "key": "supply",
+      "name": "Supply Line",
+      "description": "",
+      "source_style": {
+        "bands": [
+          "#e8e2d0",
+          "#3d8a4a",
+          "#e8e2d0",
+          "#3d8a4a"
+        ],
+        "w": 1.4,
+        "len": 1.7,
+        "snd": "ts_neon"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#e8e2d0",
+        "edge": "#e8e2d0",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "bands",
+        "colors": [
+          "#e8e2d0",
+          "#3d8a4a",
+          "#e8e2d0",
+          "#3d8a4a"
+        ],
+        "glow": "#e8e2d0",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.1145,
+        "width": 0.016,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:bluearc",
+      "key": "bluearc",
+      "name": "Blue Arc",
+      "description": "",
+      "source_style": {
+        "arc": true,
+        "c": "#5af0ff",
+        "w": 1.6,
+        "len": 1.6,
+        "glow": "rgba(58,224,224,.4)",
+        "pk": "tealdust",
+        "pr": 0.9,
+        "edge": "#0a5a66",
+        "snd": "ts_plasma"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#5af0ff",
+        "edge": "#0a5a66",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "solid",
+        "colors": [
+          "#5af0ff"
+        ],
+        "glow": "#3ae0e0",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "arc",
+        "lifetime": 0.111,
+        "width": 0.017,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "tealdust",
+        "rate": 55,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.13,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:streetlight",
+      "key": "streetlight",
+      "name": "Streetlight",
+      "description": "",
+      "source_style": {
+        "c": "#ffc860",
+        "w": 1.3,
+        "len": 1.7,
+        "glow": "rgba(255,200,96,.35)",
+        "pk": "ember",
+        "pr": 0.3,
+        "snd": "ts_solar"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#ffc860",
+        "edge": "#ffc860",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "solid",
+        "colors": [
+          "#ffc860"
+        ],
+        "glow": "#ffc860",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.1145,
+        "width": 0.0155,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "ember",
+        "rate": 28,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.13,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_pride",
+      "key": "f_pride",
+      "name": "Rainbow Pride Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#e40303",
+          "#ff8c00",
+          "#ffed00",
+          "#008026",
+          "#004dff",
+          "#750787"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grainbow",
+        "pk": "flagmote",
+        "pr": 0.65,
+        "premium": "g"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#e40303",
+        "edge": "#e40303",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#e40303",
+          "#ff8c00",
+          "#ffed00",
+          "#008026",
+          "#004dff",
+          "#750787"
+        ],
+        "glow": "#e40303",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "flagmote",
+        "rate": 43,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_progress",
+      "key": "f_progress",
+      "name": "Progress Pride Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#ffffff",
+          "#f5a9b8",
+          "#5bcefa",
+          "#613915",
+          "#000000",
+          "#e40303",
+          "#ff8c00",
+          "#ffed00",
+          "#008026",
+          "#004dff",
+          "#750787"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grainbow",
+        "pk": "flagmote",
+        "pr": 0.65,
+        "premium": "g"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#ffffff",
+        "edge": "#ffffff",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#ffffff",
+          "#f5a9b8",
+          "#5bcefa",
+          "#613915",
+          "#000000",
+          "#e40303",
+          "#ff8c00",
+          "#ffed00",
+          "#008026",
+          "#004dff",
+          "#750787"
+        ],
+        "glow": "#ffffff",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "flagmote",
+        "rate": 43,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_trans",
+      "key": "f_trans",
+      "name": "Transgender Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#5bcefa",
+          "#ffffff",
+          "#f5a9b8"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad",
+        "pk": "flagmote",
+        "pr": 0.35,
+        "premium": "l"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#5bcefa",
+        "edge": "#5bcefa",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#5bcefa",
+          "#ffffff",
+          "#f5a9b8"
+        ],
+        "glow": "#5bcefa",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "flagmote",
+        "rate": 30,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_bi",
+      "key": "f_bi",
+      "name": "Bisexual Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#d60270",
+          "#9b4f96",
+          "#0038a8"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad",
+        "pk": "flagmote",
+        "pr": 0.35,
+        "premium": "l"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#d60270",
+        "edge": "#d60270",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#d60270",
+          "#9b4f96",
+          "#0038a8"
+        ],
+        "glow": "#d60270",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "flagmote",
+        "rate": 30,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_lesbian",
+      "key": "f_lesbian",
+      "name": "Lesbian Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#d52d00",
+          "#ff9a56",
+          "#ffffff",
+          "#d362a4",
+          "#a30262"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad",
+        "pk": "flagmote",
+        "pr": 0.35,
+        "premium": "l"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#d52d00",
+        "edge": "#d52d00",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#d52d00",
+          "#ff9a56",
+          "#ffffff",
+          "#d362a4",
+          "#a30262"
+        ],
+        "glow": "#d52d00",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "flagmote",
+        "rate": 30,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_gay",
+      "key": "f_gay",
+      "name": "Gay Men Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#078d70",
+          "#26ceaa",
+          "#98e8c1",
+          "#ffffff",
+          "#7bade2",
+          "#5049cc",
+          "#3d1a78"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad",
+        "pk": "flagmote",
+        "pr": 0.35,
+        "premium": "l"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#078d70",
+        "edge": "#078d70",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#078d70",
+          "#26ceaa",
+          "#98e8c1",
+          "#ffffff",
+          "#7bade2",
+          "#5049cc",
+          "#3d1a78"
+        ],
+        "glow": "#078d70",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "flagmote",
+        "rate": 30,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_pan",
+      "key": "f_pan",
+      "name": "Pansexual Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#ff218c",
+          "#ffd800",
+          "#21b1ff"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad",
+        "pk": "flagmote",
+        "pr": 0.35,
+        "premium": "l"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#ff218c",
+        "edge": "#ff218c",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#ff218c",
+          "#ffd800",
+          "#21b1ff"
+        ],
+        "glow": "#ff218c",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "flagmote",
+        "rate": 30,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_nonbinary",
+      "key": "f_nonbinary",
+      "name": "Nonbinary Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#fcf434",
+          "#ffffff",
+          "#9c59d1",
+          "#2c2c2c"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad",
+        "pk": "flagmote",
+        "pr": 0.35,
+        "premium": "l"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#fcf434",
+        "edge": "#fcf434",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#fcf434",
+          "#ffffff",
+          "#9c59d1",
+          "#2c2c2c"
+        ],
+        "glow": "#fcf434",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "flagmote",
+        "rate": 30,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_ace",
+      "key": "f_ace",
+      "name": "Asexual Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#000000",
+          "#a3a3a3",
+          "#ffffff",
+          "#800080"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad",
+        "pk": "flagmote",
+        "pr": 0.35,
+        "premium": "l"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#000000",
+        "edge": "#000000",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#000000",
+          "#a3a3a3",
+          "#ffffff",
+          "#800080"
+        ],
+        "glow": "#000000",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "flagmote",
+        "rate": 30,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_aro",
+      "key": "f_aro",
+      "name": "Aromantic Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#3da542",
+          "#a7d379",
+          "#ffffff",
+          "#a9a9a9",
+          "#000000"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad",
+        "pk": "flagmote",
+        "pr": 0.35,
+        "premium": "l"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#3da542",
+        "edge": "#3da542",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#3da542",
+          "#a7d379",
+          "#ffffff",
+          "#a9a9a9",
+          "#000000"
+        ],
+        "glow": "#3da542",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "flagmote",
+        "rate": 30,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_fluid",
+      "key": "f_fluid",
+      "name": "Genderfluid Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#ff76a4",
+          "#ffffff",
+          "#c011d7",
+          "#000000",
+          "#2f3cbe"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad",
+        "pk": "flagmote",
+        "pr": 0.35,
+        "premium": "l"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#ff76a4",
+        "edge": "#ff76a4",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#ff76a4",
+          "#ffffff",
+          "#c011d7",
+          "#000000",
+          "#2f3cbe"
+        ],
+        "glow": "#ff76a4",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "flagmote",
+        "rate": 30,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_agender",
+      "key": "f_agender",
+      "name": "Agender Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#000000",
+          "#bcc4c7",
+          "#ffffff",
+          "#b7f684",
+          "#ffffff",
+          "#bcc4c7",
+          "#000000"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad",
+        "pk": "flagmote",
+        "pr": 0.35,
+        "premium": "l"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#000000",
+        "edge": "#000000",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#000000",
+          "#bcc4c7",
+          "#ffffff",
+          "#b7f684",
+          "#ffffff",
+          "#bcc4c7",
+          "#000000"
+        ],
+        "glow": "#000000",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "flagmote",
+        "rate": 30,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_intersex",
+      "key": "f_intersex",
+      "name": "Intersex Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#ffd800",
+          "#7902aa",
+          "#ffd800"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad",
+        "pk": "flagmote",
+        "pr": 0.35,
+        "premium": "l"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#ffd800",
+        "edge": "#ffd800",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#ffd800",
+          "#7902aa",
+          "#ffd800"
+        ],
+        "glow": "#ffd800",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "flagmote",
+        "rate": 30,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_usa",
+      "key": "f_usa",
+      "name": "United States Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#b22234",
+          "#ffffff",
+          "#3c3b6e"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#b22234",
+        "edge": "#b22234",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#b22234",
+          "#ffffff",
+          "#3c3b6e"
+        ],
+        "glow": "#b22234",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_mexico",
+      "key": "f_mexico",
+      "name": "Mexico Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#006847",
+          "#ffffff",
+          "#ce1126"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#006847",
+        "edge": "#006847",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#006847",
+          "#ffffff",
+          "#ce1126"
+        ],
+        "glow": "#006847",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_brazil",
+      "key": "f_brazil",
+      "name": "Brazil Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#009c3b",
+          "#ffdf00",
+          "#002776"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#009c3b",
+        "edge": "#009c3b",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#009c3b",
+          "#ffdf00",
+          "#002776"
+        ],
+        "glow": "#009c3b",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_japan",
+      "key": "f_japan",
+      "name": "Japan Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#ffffff",
+          "#bc002d",
+          "#ffffff"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#ffffff",
+        "edge": "#ffffff",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#ffffff",
+          "#bc002d",
+          "#ffffff"
+        ],
+        "glow": "#ffffff",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_skorea",
+      "key": "f_skorea",
+      "name": "South Korea Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#ffffff",
+          "#cd2e3a",
+          "#0047a0",
+          "#000000"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#ffffff",
+        "edge": "#ffffff",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#ffffff",
+          "#cd2e3a",
+          "#0047a0",
+          "#000000"
+        ],
+        "glow": "#ffffff",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_puertorico",
+      "key": "f_puertorico",
+      "name": "Puerto Rico Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#ed0000",
+          "#ffffff",
+          "#0050f0"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#ed0000",
+        "edge": "#ed0000",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#ed0000",
+          "#ffffff",
+          "#0050f0"
+        ],
+        "glow": "#ed0000",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_canada",
+      "key": "f_canada",
+      "name": "Canada Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#d52b1e",
+          "#ffffff",
+          "#d52b1e"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#d52b1e",
+        "edge": "#d52b1e",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#d52b1e",
+          "#ffffff",
+          "#d52b1e"
+        ],
+        "glow": "#d52b1e",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_uk",
+      "key": "f_uk",
+      "name": "United Kingdom Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#012169",
+          "#ffffff",
+          "#c8102e"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#012169",
+        "edge": "#012169",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#012169",
+          "#ffffff",
+          "#c8102e"
+        ],
+        "glow": "#012169",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_germany",
+      "key": "f_germany",
+      "name": "Germany Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#000000",
+          "#dd0000",
+          "#ffce00"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#000000",
+        "edge": "#000000",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#000000",
+          "#dd0000",
+          "#ffce00"
+        ],
+        "glow": "#000000",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_france",
+      "key": "f_france",
+      "name": "France Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#002395",
+          "#ffffff",
+          "#ed2939"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#002395",
+        "edge": "#002395",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#002395",
+          "#ffffff",
+          "#ed2939"
+        ],
+        "glow": "#002395",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_italy",
+      "key": "f_italy",
+      "name": "Italy Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#009246",
+          "#ffffff",
+          "#ce2b37"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#009246",
+        "edge": "#009246",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#009246",
+          "#ffffff",
+          "#ce2b37"
+        ],
+        "glow": "#009246",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_spain",
+      "key": "f_spain",
+      "name": "Spain Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#aa151b",
+          "#f1bf00",
+          "#aa151b"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#aa151b",
+        "edge": "#aa151b",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#aa151b",
+          "#f1bf00",
+          "#aa151b"
+        ],
+        "glow": "#aa151b",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_ireland",
+      "key": "f_ireland",
+      "name": "Ireland Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#169b62",
+          "#ffffff",
+          "#ff883e"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#169b62",
+        "edge": "#169b62",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#169b62",
+          "#ffffff",
+          "#ff883e"
+        ],
+        "glow": "#169b62",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_argentina",
+      "key": "f_argentina",
+      "name": "Argentina Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#74acdf",
+          "#ffffff",
+          "#74acdf"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#74acdf",
+        "edge": "#74acdf",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#74acdf",
+          "#ffffff",
+          "#74acdf"
+        ],
+        "glow": "#74acdf",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_philippines",
+      "key": "f_philippines",
+      "name": "Philippines Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#0038a8",
+          "#ce1126",
+          "#ffffff",
+          "#fcd116"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#0038a8",
+        "edge": "#0038a8",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#0038a8",
+          "#ce1126",
+          "#ffffff",
+          "#fcd116"
+        ],
+        "glow": "#0038a8",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_india",
+      "key": "f_india",
+      "name": "India Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#ff9933",
+          "#ffffff",
+          "#138808"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#ff9933",
+        "edge": "#ff9933",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#ff9933",
+          "#ffffff",
+          "#138808"
+        ],
+        "glow": "#ff9933",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_israel",
+      "key": "f_israel",
+      "name": "Israel Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#0038b8",
+          "#ffffff",
+          "#0038b8"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#0038b8",
+        "edge": "#0038b8",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#0038b8",
+          "#ffffff",
+          "#0038b8"
+        ],
+        "glow": "#0038b8",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_russia",
+      "key": "f_russia",
+      "name": "Russia Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#ffffff",
+          "#0039a6",
+          "#d52b1e"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#ffffff",
+        "edge": "#ffffff",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#ffffff",
+          "#0039a6",
+          "#d52b1e"
+        ],
+        "glow": "#ffffff",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:f_nkorea",
+      "key": "f_nkorea",
+      "name": "North Korea Flag",
+      "description": "",
+      "source_style": {
+        "cycle": [
+          "#024fa2",
+          "#ed1c27",
+          "#024fa2"
+        ],
+        "w": 1.35,
+        "len": 1,
+        "snd": "ts_grad"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#024fa2",
+        "edge": "#024fa2",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "shot_cycle",
+        "colors": [
+          "#024fa2",
+          "#ed1c27",
+          "#024fa2"
+        ],
+        "glow": "#024fa2",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.09,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.7,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:snowstreak",
+      "key": "snowstreak",
+      "name": "Snowstreak",
+      "description": "Fine white rounds with sparse snowflake motes.",
+      "source_style": {
+        "c": "#e7f5ff",
+        "w": 1,
+        "len": 1.15,
+        "winter": "snowstreak",
+        "pk": "ice",
+        "pr": 0.06
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#e7f5ff",
+        "edge": "#e7f5ff",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "solid",
+        "colors": [
+          "#e7f5ff"
+        ],
+        "glow": "#e7f5ff",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.0953,
+        "width": 0.014,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "ice",
+        "rate": 17,
+        "lifetime": 0.28,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:glaciershard",
+      "key": "glaciershard",
+      "name": "Glacier Shard",
+      "description": "Translucent blue ice fragments along a short trail.",
+      "source_style": {
+        "c": "#9fddf1",
+        "w": 1,
+        "len": 1.15,
+        "winter": "glaciershard",
+        "pk": "ice",
+        "pr": 0.06
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#9fddf1",
+        "edge": "#9fddf1",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "solid",
+        "colors": [
+          "#9fddf1"
+        ],
+        "glow": "#9fddf1",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.0953,
+        "width": 0.014,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "ice",
+        "rate": 17,
+        "lifetime": 0.28,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:candyline",
+      "key": "candyline",
+      "name": "Candyline",
+      "description": "A restrained red-and-white candy spiral.",
+      "source_style": {
+        "c": "#ed7a8b",
+        "w": 1,
+        "len": 1.15,
+        "winter": "candyline",
+        "pk": "ice",
+        "pr": 0.06,
+        "grad": [
+          "#fff5e4",
+          "#e3465c",
+          "#fff5e4"
+        ]
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#fff5e4",
+        "edge": "#fff5e4",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "gradient",
+        "colors": [
+          "#fff5e4",
+          "#e3465c",
+          "#fff5e4"
+        ],
+        "glow": "#fff5e4",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.0953,
+        "width": 0.014,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "ice",
+        "rate": 17,
+        "lifetime": 0.28,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:polarspark",
+      "key": "polarspark",
+      "name": "Polar Spark",
+      "description": "Cool sparks with a crystalline tail.",
+      "source_style": {
+        "c": "#b4eafb",
+        "w": 1,
+        "len": 1.15,
+        "winter": "polarspark",
+        "pk": "ice",
+        "pr": 0.18
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#b4eafb",
+        "edge": "#b4eafb",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "solid",
+        "colors": [
+          "#b4eafb"
+        ],
+        "glow": "#b4eafb",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.0953,
+        "width": 0.014,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "ice",
+        "rate": 22,
+        "lifetime": 0.28,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:auroralance",
+      "key": "auroralance",
+      "name": "Aurora Lance",
+      "description": "Layered mint and violet aurora ribbon with an icy core.",
+      "source_style": {
+        "c": "#84ffd9",
+        "w": 1.35,
+        "len": 1.7,
+        "winter": "auroralance",
+        "pk": "snowdust",
+        "pr": 0.8,
+        "grad": [
+          "#d2ffef",
+          "#77efd7",
+          "#b79dff"
+        ]
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#d2ffef",
+        "edge": "#d2ffef",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "gradient",
+        "colors": [
+          "#d2ffef",
+          "#77efd7",
+          "#b79dff"
+        ],
+        "glow": "#d2ffef",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.1145,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "snowdust",
+        "rate": 50,
+        "lifetime": 0.28,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    },
+    {
+      "id": "trail:solsticecomet",
+      "key": "solsticecomet",
+      "name": "Solstice Comet",
+      "description": "Warm gold core, winter-star accents and a crisp frost wake.",
+      "source_style": {
+        "c": "#ffeab0",
+        "w": 1.35,
+        "len": 1.7,
+        "winter": "solsticecomet",
+        "pk": "yulelight",
+        "pr": 0.8,
+        "grad": [
+          "#fff7db",
+          "#ffe097",
+          "#9beaff"
+        ]
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#fff7db",
+        "edge": "#fff7db",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "gradient",
+        "colors": [
+          "#fff7db",
+          "#ffe097",
+          "#9beaff"
+        ],
+        "glow": "#fff7db",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.1145,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "yulelight",
+        "rate": 50,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      }
+    }
+  ]
+}
