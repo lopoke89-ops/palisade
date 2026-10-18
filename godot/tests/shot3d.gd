@@ -49,6 +49,8 @@ func _init() -> void:
 	await process_frame
 	main.settings.data.setup = PalSettings.new().data.setup
 	main.settings.data.models3d = true
+	if OS.get_environment("PAL_GFX") != "":   # quality knobs for the run, as JSON (Quality3D.KEYS)
+		main.settings.data.gfx3d = JSON.parse_string(OS.get_environment("PAL_GFX"))
 	main.setup_3d()
 	main.start_game()
 	s = main.sim
@@ -86,9 +88,13 @@ func _init() -> void:
 		var t3: Array = await measure(nf)
 		root.get_texture().get_image().save_png(prefix + "_3d.png")
 		var cpu := 0
+		var parts := [0, 0, 0]
 		for k in 10:
 			main.v3.frame(1.0 / 60.0)
 			cpu += main.v3.frame_us
+			for q in 3:
+				parts[q] += main.v3.parts_us[q]
+		print("  3D update: world %.2f ms, people %.2f ms (%d, animation %.2f), effects %.2f ms" % [parts[0] / 10000.0, parts[1] / 10000.0, main.v3.actors.recs.size(), main.v3.actors.anim_us / 1000.0, parts[2] / 10000.0])
 		print("3d %s: %.2f ms/frame mean, %.2f worst (%d frames); 3D update on the CPU %.2f ms" % [scene, t3[0], t3[1], nf, cpu / 10000.0])
 	if only != "3d":
 		main.settings.data.models3d = false
@@ -182,8 +188,10 @@ func _scene(scene: String, a: Array) -> void:
 				s.player.x = c.i + 0.5 + 3.5
 				s.player.y = c.j + 3.5
 				step(1)
-			if scene == "push":   # a crowded final push: bosses and squads round the stake
-				s.game.bo.stage = "push"
+			if scene == "push":   # a crowded final push at Main Command: bosses and squads round the soldier
+				s.bo_push()
+				s.player.x = s.core.i + 3.5
+				s.player.y = s.core.j + 2.5
 				for k in ["bluebutcher", "arsonist", "tempest", "bulldozer"]:
 					var b := s.spawn_boss(k)
 					b.x = s.player.x + randf_range(-4, 4)

@@ -31,6 +31,7 @@ var actors: V3Actors
 var world: V3World
 var fx: V3Fx
 var fill: DirectionalLight3D   # a soft front light on the people only (layer 2), as the lobby lights them
+var parts_us := [0, 0, 0]   # world, people, effects
 var frame_us := 0   # how long the last frame's 3D update took on the CPU (the screenshot test reports it)
 var on := true   # drawing (the settings switch; the view also pauses behind the menus' own 3D lobby)
 const AMBIENT := 0.45   # the shadowed share of a face's colour; the sun (world shaders' sun_k) brings lit faces to it
@@ -130,9 +131,13 @@ func _frame(dt: float) -> void:
 				var p := screen_of(Vector3(mc.at[0] + (0.0 if mc.face == "s" else 0.25), WALL_H * 0.92, mc.at[1] + (0.25 if mc.face == "s" else 0.0)))
 				var on: bool = CasinoView.taken(sim, mc.code) != null or sin(sim.game.time * 3 + k * 1.7) > -0.2
 				glow.append(["dot", p.x, p.y, m.v.TW2 * 0.45, ["#ff4a6a", "#3ae0ff", "#ffd24a", "#9a6aff", "#4aff9a"][k % 5], 0.5 if on else 0.25])
+	var t1 := Time.get_ticks_usec()
 	world.frame(dt)
+	var t2 := Time.get_ticks_usec()
 	actors.frame(dt)
+	var t3 := Time.get_ticks_usec()
 	fx.frame(dt)
+	parts_us = [t2 - t1, t3 - t2, Time.get_ticks_usec() - t3]
 
 
 ## the sim's events this frame, before the main node drains them (muzzle flashes tell who fired, kills, blasts)

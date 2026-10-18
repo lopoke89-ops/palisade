@@ -46,6 +46,7 @@ var ring_mats := {}
 var ring_scene: PackedScene
 var frame_n := 0
 var time := 0.0
+var anim_us := 0   # the last frame's animation updates (the profile the screenshot test prints)
 
 
 func _init(view) -> void:
@@ -258,8 +259,9 @@ func frame(dt: float) -> void:
 	frame_n += 1
 	time += dt
 	var marg: float = Quality3D.draw_margin
-	var cx: float = V.cam.position.x
-	var cz: float = V.cam.position.z
+	var mid: Vector2 = V.m.v.screen_to_world(V.m.v.W / 2.0, V.m.v.H / 2.0)   # the ground at the screen's centre
+	var cx: float = mid.x
+	var cz: float = mid.y
 	for p in sim.players.values():
 		if p.get("out", false):
 			continue
@@ -303,6 +305,7 @@ func frame(dt: float) -> void:
 		if c.t > 1.8:
 			_park(c.node, c.mkey)
 			corpses.remove_at(i)
+	var ta := Time.get_ticks_usec()
 	# the animation clocks: near the camera centre at full rate, far and off-screen ones slower
 	for k in recs:
 		var r: Dictionary = recs[k]
@@ -310,11 +313,12 @@ func frame(dt: float) -> void:
 			continue
 		var d := Vector2(r.node.position.x - cx, r.node.position.z - cz).length()
 		var on_screen := _on_screen(r.node.position, marg)
-		var rate: float = Quality3D.anim_rate if on_screen and d < Quality3D.anim_near + 30 else Quality3D.anim_far
+		var rate: float = Quality3D.anim_rate if on_screen and d < Quality3D.anim_near else Quality3D.anim_far
 		r.acc += dt
 		if r.acc >= 1.0 / rate - 0.0001:
 			r.ap.advance(r.acc)
 			r.acc = 0.0
+	anim_us = Time.get_ticks_usec() - ta
 	shots.clear()
 	throws.clear()
 

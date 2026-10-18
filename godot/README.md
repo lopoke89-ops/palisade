@@ -191,7 +191,13 @@ The menus, the online lobby and the Locker use the 3D model library (the private
   - On the main menu you stand alone.
   - In an online lobby the whole room stands there, you in front and up to five more. Each player has a ring in their slot colour, brighter when ready, and their name above them.
   - The Locker shows your outfit turning slowly in 3D.
-- **Without the models:** if `palisade_art/` is missing, the menus fall back to the painted backgrounds and the 2D figure.
+- **In play:** `scripts/view3d/` draws the game in 3D under the 2D HUD (Settings data `models3d`, on by default; F9 switches it in a game). It only reads the sim, so cross-play is untouched.
+  - The camera is orthographic, pitched 30° and turned 45°, so it shows exactly what the 2D projection shows: nameplates, prompts, the crosshair, boss warnings and the night's light pools line up unchanged.
+  - People (`v3_actors.gd`): the soldiers in their outfits, Delgado, the seven raiders and the bosses, pooled, with clips from sim state (walk/strafe/run, firing, shell insert, bolt, throws, the rocket, building, gathering, downed, revive, hit, death, the back roll, and each boss's tell, move and recovery).
+  - The world (`v3_world.gd`, `v3_scenery.gd`): every map's ground and terrain, walls in one MultiMesh, props, the forest and fence, the city and the casino, built from the 2D's own numbers and colours; see-through by the 2D rules.
+  - Effects (`v3_fx.gd`): the library's tracer rounds with their profile ribbons, the kill-effect models with the approved motion, particles, fire, things in flight.
+  - Quality knobs for a settings page are in `scripts/view3d/quality3d.gd` (Settings data `gfx3d`): shadows, effects density, draw margin, animation rates, MSAA, effect caps, render scale.
+- **Without the models:** if `palisade_art/` is missing (or `models3d` is off), the menus fall back to the painted backgrounds and the game to the 2D drawing.
 
 ## Windows build
 
@@ -208,7 +214,7 @@ Ship the .exe and the .dll together. The .exe is not code-signed: Windows SmartS
 - **Steam or Epic:** no store integration (achievements, overlay, friends). That needs the store accounts.
 - **Other platforms:** only Linux and Windows. The WebRTC extension in `addons/webrtc` has no macOS, Android or iOS libraries yet.
 
-Raiders, bosses and Delgado use the browser's flat `drawPerson` figure; players use the shaded wardrobe figure, as in the browser.
+In the 2D drawing (without the models), raiders, bosses and Delgado use the browser's flat `drawPerson` figure; players use the shaded wardrobe figure, as in the browser.
 
 ## Sound
 
@@ -235,6 +241,7 @@ PAL_COS=gsoldier,crown xvfb-run godot --path godot --script res://tests/shot.gd 
 xvfb-run godot --path godot --script res://tests/cos_shot.gd -- /tmp/cos.png     # tracers and kill effects in play
 xvfb-run godot --path godot --script res://tests/locker_shot.gd -- /tmp/lk      # the Locker and a case opening
 xvfb-run -a godot --path godot --rendering-driver opengl3 --resolution 1600x900 --script res://tests/lobby3d_shot.gd -- /tmp/l3   # the 3D lobby: main menu, a room of six, the Locker, portrait
+xvfb-run -a godot --path godot --rendering-driver opengl3 --resolution 1600x900 --script res://tests/shot3d.gd -- /tmp/r raid   # the same moment in 3D and in 2D (r_3d.png, r_2d.png), frame times; scenes in the script
 godot --headless --path godot --script res://tests/music_test.gd         # which track each screen and mode plays
 godot --headless --path godot --script res://tests/social_test.gd        # friends, invites, open games (against a stand-in server)
 ```

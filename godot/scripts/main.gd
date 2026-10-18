@@ -451,6 +451,11 @@ func _unhandled_input(e: InputEvent) -> void:
 		return
 	if not (e is InputEventKey and e.pressed and not e.echo):
 		return
+	if e.keycode == KEY_F9:   # graphics: the 3D models on or off (Settings data "models3d"; the settings page can show it)
+		settings.data.models3d = not bool(settings.data.get("models3d", true))
+		settings.save()
+		setup_3d()
+		return
 	if e.keycode == KEY_F8 and OS.is_debug_build():   # developer: bring in the next boss (any boss, any map), editor runs only
 		_dev_boss()
 		return

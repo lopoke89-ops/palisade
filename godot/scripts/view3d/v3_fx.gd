@@ -660,25 +660,52 @@ func _kills(dt: float) -> void:
 
 # ---------------------------------------------------------------- on the ground
 
-## a ring on the ground: centre, height, radius and half-width in tiles
+## a ring on the ground: centre, height, radius and half-width in tiles (from a table of unit circle points)
 func _ring(x: float, y: float, gy: float, r: float, w: float, col: Color, n: int = 36, v: Array = []) -> void:
 	var tv: Array = dec_v if v.is_empty() else v
+	var c: PackedVector2Array = _circle(n)
+	var vs: PackedVector3Array = tv[0]
+	var r0 := r - w
+	var r1 := r + w
 	for i in n:
-		var a0 := TAU * i / n
-		var a1 := TAU * (i + 1) / n
-		var c0 := Vector2(cos(a0), sin(a0))
-		var c1 := Vector2(cos(a1), sin(a1))
-		_quad4(tv, Vector3(x + c0.x * (r - w), gy, y + c0.y * (r - w)), Vector3(x + c1.x * (r - w), gy, y + c1.y * (r - w)),
-			Vector3(x + c1.x * (r + w), gy, y + c1.y * (r + w)), Vector3(x + c0.x * (r + w), gy, y + c0.y * (r + w)), col, col, col, col)
+		var c0 := c[i]
+		var c1 := c[i + 1]
+		var a := Vector3(x + c0.x * r0, gy, y + c0.y * r0)
+		var b := Vector3(x + c1.x * r0, gy, y + c1.y * r0)
+		var d := Vector3(x + c1.x * r1, gy, y + c1.y * r1)
+		var e := Vector3(x + c0.x * r1, gy, y + c0.y * r1)
+		vs.append_array([a, b, d, a, d, e])
+	tv[0] = vs   # packed arrays are copied on write: put it back
+	var cs := PackedColorArray()
+	cs.resize(n * 6)
+	cs.fill(col)
+	tv[1].append_array(cs)
+
+
+var _circles := {}
+
+
+func _circle(n: int) -> PackedVector2Array:
+	if not _circles.has(n):
+		var c := PackedVector2Array()
+		for i in n + 1:
+			c.append(Vector2(cos(TAU * i / n), sin(TAU * i / n)))
+		_circles[n] = c
+	return _circles[n]
 
 
 func _disc(x: float, y: float, gy: float, r: float, col: Color, n: int = 24, rz: float = -1.0) -> void:
-	var c := Vector3(x, gy, y)
+	var ctr := Vector3(x, gy, y)
 	var ry := r if rz < 0 else rz
+	var c: PackedVector2Array = _circle(n)
+	var vs: PackedVector3Array = dec_v[0]
 	for i in n:
-		var a0 := TAU * i / n
-		var a1 := TAU * (i + 1) / n
-		_tri(dec_v, c, Vector3(x + cos(a0) * r, gy, y + sin(a0) * ry), Vector3(x + cos(a1) * r, gy, y + sin(a1) * ry), col, col, col)
+		vs.append_array([ctr, Vector3(x + c[i].x * r, gy, y + c[i].y * ry), Vector3(x + c[i + 1].x * r, gy, y + c[i + 1].y * ry)])
+	dec_v[0] = vs
+	var cs := PackedColorArray()
+	cs.resize(n * 3)
+	cs.fill(col)
+	dec_v[1].append_array(cs)
 
 
 func _gy(x: float, y: float) -> float:
