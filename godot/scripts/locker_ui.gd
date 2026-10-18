@@ -1,8 +1,9 @@
 class_name LockerUI
 extends Control
-## The Locker (20-locker-ui.js): the equipped outfit on show, the case boxes (open one or five, buy with shards or
-## three skill points), and tabs of every skin, headgear, tracer, kill effect, background and milestone ladder.
-## Owned items equip on a click. Case openings play in CaseOpen.
+## The Locker (20-locker-ui.js), laid out as the browser's desktop lobby page: the case boxes on the left (open one or
+## five, buy with shards or three skill points), your kit on the stage in the middle, and on the right the tabs of every
+## skin, headgear, tracer, kill effect, background and milestone ladder. Owned items equip on a click. Case openings
+## play in CaseOpen.
 
 const TABS := [["skin", "SKINS"], ["hat", "HEADGEAR"], ["trail", "TRACERS"], ["fx", "KILL FX"], ["bg", "BACKGROUNDS"], ["ms", "MILESTONES"]]
 const THUMB_ANG := 0.55
@@ -225,9 +226,8 @@ class Preview3D extends SubViewportContainer:
 		add_child(vp)
 		var cam := Camera3D.new()
 		cam.fov = 30
-		cam.position = Vector3(0, 1.15, 4.6)
 		vp.add_child(cam)
-		cam.look_at(Vector3(0, 0.95, 0))
+		cam.look_at_from_position(Vector3(0, 1.15, 4.6), Vector3(0, 0.95, 0))
 		var we := WorldEnvironment.new()
 		var e := Environment.new()
 		e.background_mode = Environment.BG_CLEAR_COLOR
@@ -266,7 +266,7 @@ func _init(menus_node) -> void:
 	menus = menus_node
 	m = menus.m
 	L = m.locker
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
 func cls() -> String:
@@ -277,92 +277,52 @@ func _lbl(text: String, size_px: int = 15, col: Color = PAPER, wrap: bool = fals
 	return menus._label(text, size_px, col, wrap)
 
 
+func _l(text: String, f: String, size: float, col: Color, em: float = 0.0, lh: float = 0.0, wrap: bool = false) -> Label:
+	return UiKit.lbl(text, f, size, col, em, lh, wrap)
+
+
+## The Locker in the lobby shell (#menu[data-page=locker]): the cases on the left, your kit on the stage in the
+## middle, the tabs and the items on the right
 func _ready() -> void:
-	var W: float = m.v.W
-	var H: float = m.v.H
-	var shade := ColorRect.new()
-	shade.color = Color(0, 0, 0, 0.35)
-	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
-	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(shade)
-	var outer := MarginContainer.new()
-	outer.set_anchors_preset(Control.PRESET_FULL_RECT)
-	for side in ["left", "right", "top", "bottom"]:
-		outer.add_theme_constant_override("margin_" + side, 12 if W < 760 else 22)
-	add_child(outer)
-	var main := VBoxContainer.new()
-	main.add_theme_constant_override("separation", 8)
-	outer.add_child(main)
-	var top := HBoxContainer.new()
-	top.add_theme_constant_override("separation", 12)
-	main.add_child(top)
-	var back := Button.new()
-	back.text = "BACK"
-	back.pressed.connect(func(): menus.show_main())
-	top.add_child(back)
-	top.add_child(_lbl("LOCKER", 28, GOLD))
-	shard_txt = _lbl("", 13, DIM)
-	shard_txt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	shard_txt.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	top.add_child(shard_txt)
-	var body: BoxContainer = HBoxContainer.new() if W >= 760 else VBoxContainer.new()
-	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	body.add_theme_constant_override("separation", 14)
-	main.add_child(body)
-	# left: the outfit and the cases
-	var left := VBoxContainer.new()
-	left.custom_minimum_size = Vector2(clampf(W * 0.3, 240, 340) if W >= 760 else 0, 0)
-	left.add_theme_constant_override("separation", 6)
-	body.add_child(left)
-	if W >= 760:
-		var pv := Preview.new(self)
-		pv.custom_minimum_size = Vector2(0, clampf(H * 0.34, 160, 300))
-		left.add_child(pv)
-	var cs := ScrollContainer.new()
-	cs.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	cs.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	cs.custom_minimum_size = Vector2(0, 120)
-	left.add_child(cs)
-	boxes = VBoxContainer.new()
-	boxes.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	boxes.add_theme_constant_override("separation", 6)
-	cs.add_child(boxes)
-	# right: tabs and the items
-	var right := VBoxContainer.new()
-	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	right.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	right.size_flags_stretch_ratio = 2.4
-	body.add_child(right)
-	var tabs := HFlowContainer.new()
-	tabs.add_theme_constant_override("h_separation", 6)
-	right.add_child(tabs)
-	for tdef in TABS:
-		var b := Button.new()
-		b.text = tdef[1]
-		b.toggle_mode = true
-		var id: String = tdef[0]
-		b.pressed.connect(func():
-			cat = id
-			_render_grid())
-		tabs.add_child(b)
-		tab_buttons[id] = b
-	scroll = ScrollContainer.new()
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	var row := UiKit.hbox(18)
+	row.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(row)
+	# left: the cases
+	var lp: Array = menus._side_panel(280)
+	row.add_child(lp[0])
+	var col: VBoxContainer = lp[1]
+	col.add_child(menus._pt("LOCKER"))
+	boxes = UiKit.vbox(8)
+	col.add_child(boxes)
+	shard_txt = _l("", "m4", 10, UiKit.DIM, 0.0, 1.4, true)
+	col.add_child(shard_txt)
+	msg = _l("", "m4", 12, UiKit.WARN, 0.0, 1.5, true)
+	col.add_child(msg)
+	hint = _l("", "m4", 11, UiKit.DIM, 0.0, 1.55, true)
+	col.add_child(hint)
+	# the middle: your kit
+	var eq: Dictionary = L.eq
+	var nm := func(c: String, k: String) -> String: return str(PalLocker.item(c + ":" + k).get("name", k))
+	var trail: String = nm.call("trail", eq.get("trail", "std"))
+	var sub := "%s · %s · %s%s · %s" % [nm.call("skin", eq.get("skin", "std")), nm.call("hat", eq.get("hat", "class")), trail, "" if trail.to_lower().contains("tracer") else " tracer", nm.call("fx", eq.get("fx", "none"))]
+	row.add_child(menus._stage_column("LOCKER", "YOUR KIT", sub, [], menus.my_name(), "EQUIPPED", "Tap an item you own to wear it."))
+	# right: the tabs and the items
+	var rp := UiKit.panel(UiKit.PANEL, UiKit.PLINE, 1, 14)
+	rp.custom_minimum_size.x = UiKit.px(520)
+	rp.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	row.add_child(rp)
+	var rv := UiKit.vbox(10)
+	rp.add_child(rv)
+	tab_holder = UiKit.vbox(0)
+	rv.add_child(tab_holder)
+	grid = UiKit.vbox(8)
+	scroll = UiKit.scroller(grid)
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.follow_focus = true
-	right.add_child(scroll)
-	grid = VBoxContainer.new()
-	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	grid.add_theme_constant_override("separation", 8)
-	scroll.add_child(grid)
-	msg = _lbl("", 13, Color("#ff9a6a"), true)
-	right.add_child(msg)
-	hint = _lbl("", 12, DIM, true)
-	right.add_child(hint)
+	rv.add_child(scroll)
 	render()
-	await get_tree().process_frame
-	if tab_buttons.has(cat):
-		tab_buttons[cat].grab_focus()
+
+
+var tab_holder: VBoxContainer
 
 
 func render() -> void:
@@ -370,9 +330,28 @@ func render() -> void:
 	_render_grid()
 
 
+func _render_tabs() -> void:
+	for ch in tab_holder.get_children():
+		tab_holder.remove_child(ch)
+		ch.queue_free()
+	var sg := UiKit.seg(TABS, cat, func(id):
+		cat = id
+		_render_grid()
+		menus._refocus("ltab:" + id), {"cols": 3, "size": 12, "em": 0.04, "h": 44, "tabs": true})
+	for b in sg.get_child(0).get_children():
+		for t in TABS:
+			if t[1] == b.text:
+				menus._fid(b, "ltab:" + t[0])
+				tab_buttons[t[0]] = b
+				if t[0] == cat and menus._focus == null:
+					menus._focus = b
+	tab_holder.add_child(sg)
+
+
 ## one panel per case: how many you hold, OPEN, OPEN 5, and BUY where it has a price (renderCaseBoxes)
 func _render_boxes() -> void:
 	for ch in boxes.get_children():
+		boxes.remove_child(ch)
 		ch.queue_free()
 	var C: Dictionary = PalLocker.catalog().CASES
 	var ids: Array = C.keys()
@@ -380,53 +359,80 @@ func _render_boxes() -> void:
 	for id in ids:
 		var D: Dictionary = C[id]
 		var n := L.case_count(id)
-		var pc := PanelContainer.new()
-		var sb := StyleBoxFlat.new()
-		sb.bg_color = Color(14 / 255.0, 12 / 255.0, 10 / 255.0, 0.88)
-		sb.border_color = Color(D.col) if n > 0 else Color(D.col).darkened(0.55)
-		sb.set_border_width_all(1)
-		sb.border_width_left = 4
-		sb.set_content_margin_all(8)
-		pc.add_theme_stylebox_override("panel", sb)
-		boxes.add_child(pc)
-		var v := VBoxContainer.new()
-		v.add_theme_constant_override("separation", 4)
-		pc.add_child(v)
-		var head := HBoxContainer.new()
+		var empty := n < 1
+		var cc := Color(D.col)
+		var p := UiKit.panel(Color(20 / 255.0, 20 / 255.0, 19 / 255.0, 0.55) if empty else Color(27 / 255.0, 24 / 255.0, 20 / 255.0, 0.7), UiKit.LINE, [1, 1, 1, 3], [6, 8, 6, 8] if empty else [7, 8, 7, 8])
+		var s: StyleBoxFlat = p.get_theme_stylebox("panel")
+		s.border_color = UiKit.LINE
+		var edge := ColorRect.new()
+		edge.color = cc
+		edge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		boxes.add_child(p)
+		var v := UiKit.vbox(4)
+		p.add_child(v)
+		var head := UiKit.hbox(8)
+		var nl := _l(D.name, "s8", 13, cc, 0.1)
+		nl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		nl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		head.add_child(nl)
+		head.add_child(_l(str(n), "m6", 15 if empty else 20, UiKit.DIM if empty else UiKit.BONE))
 		v.add_child(head)
-		if n > 0:
-			head.add_child(CaseIcon.new(id, 34))
-		var nm := _lbl(D.name, 14, Color(D.col) if n > 0 else DIM)
-		nm.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		nm.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		head.add_child(nm)
-		head.add_child(_lbl(str(n), 22 if n > 0 else 15, PAPER if n > 0 else DIM))
-		var how := _lbl(D.how, 11, DIM, true)
-		how.custom_minimum_size = Vector2(150, 0)
+		var how := _l(D.how, "m4", 10.5, UiKit.DIM, 0.0, 1.35, not empty)
+		if empty:
+			how.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+			how.clip_text = true
+			how.custom_minimum_size.x = UiKit.px(40)
 		v.add_child(how)
-		var bt := HFlowContainer.new()
-		bt.add_theme_constant_override("h_separation", 6)
-		bt.add_theme_constant_override("v_separation", 6)
+		var bt := UiKit.hbox(6)
 		v.add_child(bt)
-		var op: Button = menus._button("OPEN", func(): open_cases(id, 1), bt)
-		op.disabled = n < 1
-		var five: Button = menus._button("OPEN 5", func(): open_cases(id, 5), bt)
-		five.disabled = n < 5
+		var h := 32 if empty else 36
+		var fsz := 12.0 if empty else 14.0
+		var go_box := _go_box()
+		if not empty:
+			var op := UiKit.btn("OPEN", "go", fsz, func(): open_cases(id, 1), {"h": h, "box": go_box, "pad": [0, 10, 0, 10]})
+			op.disabled = busy
+			menus._fid(op, "open:" + id)
+			bt.add_child(UiKit.expand(op))
+		var five := UiKit.btn("OPEN 5", "go", fsz, func(): open_cases(id, 5), {"h": h, "box": go_box, "pad": [0, 10, 0, 10]})
+		five.disabled = n < 5 or busy
+		menus._fid(five, "open5:" + id)
+		bt.add_child(five if empty else UiKit.expand(five))
 		if not L.cloud.is_empty() and L.account != null and L.account.pending_opening().get("case") == id:
-			menus._button("RESUME OPENING", func(): resume_opening(), bt)
+			bt.add_child(UiKit.btn("RESUME OPENING", "ghost", fsz, func(): resume_opening(), {"h": h}))
 		if D.get("cost") != null:
-			var buy: Button = menus._button("BUY · %d SHARDS" % int(D.cost), func():
-				_buy(id), bt)
-			buy.disabled = L.shards < int(D.cost)
+			var buy := UiKit.btn("BUY · %d SHARDS" % int(D.cost), "ghost", fsz, func(): _buy(id), {"h": h, "pad": [0, 12, 0, 12]})
+			buy.disabled = L.shards < int(D.cost) or busy
+			menus._fid(buy, "buy:" + id)
+			bt.add_child(buy if empty else UiKit.expand(buy))
 		if id == "supply":
 			var sp: int = m.profile.sp
 			var armed := Time.get_ticks_msec() / 1000.0 - sp_armed < 3
-			var sb2: Button = menus._button(("TAP AGAIN · SPEND %d SKILL POINTS" % PalLocker.SP_CASE) if armed else ("BUY · %d SKILL POINTS (%d)" % [PalLocker.SP_CASE, sp]), func(): _buy_sp(), bt)
-			sb2.disabled = sp < PalLocker.SP_CASE
+			var sb2 := UiKit.btn(("TAP AGAIN · SPEND %d SKILL POINTS" % PalLocker.SP_CASE) if armed else ("BUY · %d SKILL POINTS (%d)" % [PalLocker.SP_CASE, sp]), "ghost", fsz, func(): _buy_sp(), {"h": h, "pad": [2, 6, 2, 6]})
+			sb2.label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			sb2.label.custom_minimum_size.x = UiKit.px(50)
+			sb2.disabled = sp < PalLocker.SP_CASE or busy
 			sb2.tooltip_text = "You have %d skill point%s. Earn them by holding raids (1 per 5) and beating bosses." % [sp, "" if sp == 1 else "s"] if sp < PalLocker.SP_CASE else "Trade %d unspent skill points for a Supply Case" % PalLocker.SP_CASE
+			menus._fid(sb2, "buysp")
+			bt.add_child(sb2 if empty else UiKit.expand(sb2))
+		# the case's colour down the left edge
+		var holder := Control.new()
+		holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		p.add_child(holder)
+		holder.add_child(edge)
+		p.resized.connect(func():
+			edge.position = Vector2(-s.content_margin_left, -s.content_margin_top)
+			edge.size = Vector2(UiKit.bw(3), p.size.y))
 	shard_txt.text = "%d shard%s · duplicates and leftover run salvage turn into shards" % [L.shards, "" if L.shards == 1 else "s"]
 	var st: Dictionary = L.st
 	hint.text = "Earn a supply case every 3 raids you survive and for every win. Duplicates turn into shards. So far: %d raids held, %d win%s, %d raiders dropped." % [st.get("raids", 0), st.get("wins", 0), "" if st.get("wins", 0) == 1 else "s", st.get("drops", 0)]
+
+
+## the locker's yellow buttons stay yellow when they can't be pressed (as the browser's do)
+func _go_box() -> Dictionary:
+	var K := UiKit.kind("go")
+	var box: Dictionary = K.box.duplicate()
+	box.disabled = UiKit.sb(Color(UiKit.WARN, 0.75))
+	return box
 
 
 ## 3 unspent skill points buy a Supply Case; the first press arms it for 3 s
@@ -435,6 +441,7 @@ func _buy_sp() -> void:
 	if now - sp_armed >= 3:
 		sp_armed = now
 		_render_boxes()
+		menus._refocus("buysp")
 		get_tree().create_timer(3.05).timeout.connect(func():
 			if is_instance_valid(self) and Time.get_ticks_msec() / 1000.0 - sp_armed >= 3:
 				_render_boxes())
@@ -463,6 +470,7 @@ func _buy(id: String) -> void:
 	elif L.buy_case(id):
 		m.audio.play("restock")
 	render()
+	menus._refocus("buy:" + id)
 
 
 func _wait(on: bool) -> void:
@@ -470,28 +478,30 @@ func _wait(on: bool) -> void:
 	msg.text = "Talking to the quartermaster…" if on else ""
 
 
-func _section(title: String, sub: String = "") -> void:
-	var h := HBoxContainer.new()
-	h.add_child(_lbl(title, 13, GOLD))
+## .gsec: a section heading over the tiles, with a line under it
+func _section(title: String, sub: String = "", col: Color = UiKit.DIM) -> void:
+	var v := UiKit.vbox(2)
+	v.add_child(UiKit.spacer(4))
+	var h := UiKit.hbox(8)
+	h.add_child(_l(title, "s8", 12, col, 0.14))
 	if sub != "":
-		var s := _lbl(sub, 11, DIM)
-		s.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		s.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		var s := _l(sub, "m6", 10, UiKit.DIM, 0.04)
+		s.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		h.add_child(s)
-	grid.add_child(h)
+	v.add_child(h)
+	v.add_child(UiKit.spacer(1))
+	v.add_child(UiKit.rule())
+	grid.add_child(v)
 
 
-func _flow() -> HFlowContainer:
-	var f := HFlowContainer.new()
-	f.add_theme_constant_override("h_separation", 8)
-	f.add_theme_constant_override("v_separation", 8)
-	grid.add_child(f)
-	return f
+func _flow() -> GridContainer:
+	var g := UiKit.grid(4, 8)
+	grid.add_child(g)
+	return g
 
 
 func _render_grid() -> void:
-	for b in tab_buttons:
-		tab_buttons[b].button_pressed = b == cat
+	_render_tabs()
 	for ch in grid.get_children():
 		grid.remove_child(ch)
 		ch.queue_free()
@@ -508,7 +518,11 @@ func _render_grid() -> void:
 				sub = "%d points held · %d win%s · %d Destroyer%s · %d / %d unlocked" % [L.st.get("bo_pois", 0), L.st.get("bo_wins", 0), "" if L.st.get("bo_wins", 0) == 1 else "s", L.st.get("bo_dest", 0), "" if L.st.get("bo_dest", 0) == 1 else "s", got, Ld.items.size()]
 			else:
 				sub = "%d %s · %d / %d unlocked" % [L.st.get(Ld.st, 0), Ld.unit, got, Ld.items.size()]
-			_section(Ld.title, sub)
+			var v := UiKit.vbox(2)
+			v.add_child(UiKit.spacer(4))
+			v.add_child(_l(Ld.title, "s8", 12, UiKit.DIM, 0.14))
+			v.add_child(_l("  " + sub, "m6", 10, UiKit.DIM, 0.04))
+			grid.add_child(v)
 			var row := _flow()
 			for it in Ld.items:
 				var c := PalLocker.item(it[0] + ":" + it[1])
@@ -526,81 +540,159 @@ func _render_grid() -> void:
 		var group: Array = items.filter(func(c): return c.get("box") == id)
 		if group.is_empty():
 			continue
-		var key: String = cat + ":" + id
-		var own := group.filter(func(c): return L.owns(c.id)).size()
-		var is_open: bool = open_sections.get(key, false)
-		var tb := Button.new()
-		tb.text = "%s   %d / %d owned   %s" % [C.CASES[id].name, own, group.size(), "−" if is_open else "+"]
-		tb.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		tb.add_theme_color_override("font_color", Color(C.CASES[id].col))
-		tb.pressed.connect(func():
-			open_sections[key] = not open_sections.get(key, false)
-			var y := scroll.scroll_vertical
-			_render_grid()
-			scroll.scroll_vertical = y)
-		grid.add_child(tb)
-		if is_open:
-			var row := _flow()
-			for c in group:
-				row.add_child(_tile(c))
+		grid.add_child(_collection(id, group))
 
 
-## an item's tile: its picture, name, and what it is to you (equipped, rarity, or how to get it)
-func _tile(c: Dictionary) -> Button:
+## .lockerCollection: a case's items, folded under its name until opened
+func _collection(id: String, group: Array) -> Control:
+	var C := PalLocker.catalog()
+	var cc := Color(C.CASES[id].col)
+	var key: String = cat + ":" + id
+	var own := group.filter(func(c): return L.owns(c.id)).size()
+	var is_open: bool = open_sections.get(key, false)
+	var p := UiKit.panel(Color(6 / 255.0, 15 / 255.0, 23 / 255.0, 0.5), UiKit.LINE, [1, 1, 1, 3], 0)
+	var edge := ColorRect.new()
+	edge.color = cc
+	edge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var v := UiKit.vbox(0)
+	p.add_child(v)
+	var h := UiKit.hbox(10)
+	var tv := UiKit.vbox(4)
+	tv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tv.add_child(_l(C.CASES[id].name, "s8", 16, cc, 0.06))
+	tv.add_child(_l("%d / %d owned" % [own, group.size()], "m4", 10, UiKit.DIM, 0.02))
+	h.add_child(tv)
+	var ar := _l("−" if is_open else "+", "m4", 24, cc)
+	ar.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	h.add_child(ar)
+	var pad := [10, 12, 10, 12]
+	var box := {"normal": UiKit.sb(Color(0, 0, 0, 0), Color(0, 0, 0, 0), 0, pad), "hover": UiKit.sb(Color(1, 1, 1, 0.05), Color(0, 0, 0, 0), 0, pad),
+		"pressed": UiKit.sb(Color(1, 1, 1, 0.08), Color(0, 0, 0, 0), 0, pad), "disabled": UiKit.sb(Color(0, 0, 0, 0), Color(0, 0, 0, 0), 0, pad)}
+	var tb := UiKit.card_btn(h, box, func():
+		open_sections[key] = not open_sections.get(key, false)
+		var y := scroll.scroll_vertical
+		_render_grid()
+		scroll.scroll_vertical = y
+		menus._refocus("coll:" + key))
+	tb.custom_minimum_size.y = UiKit.px(52)
+	menus._fid(tb, "coll:" + key)
+	v.add_child(tb)
+	if is_open:
+		v.add_child(UiKit.rule())
+		var mc := UiKit.margin(8, 8, 8, 8)
+		var g := UiKit.grid(4, 8)
+		mc.add_child(g)
+		v.add_child(mc)
+		for c in group:
+			g.add_child(_tile(c))
+	var holder := Control.new()
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	p.add_child(holder)
+	holder.add_child(edge)
+	p.resized.connect(func():
+		edge.position = Vector2(0, 0)
+		edge.size = Vector2(UiKit.bw(3), p.size.y))
+	return p
+
+
+## .item: an item's tile: its picture, name, and what it is to you (equipped, rarity, or how to get it)
+func _tile(c: Dictionary) -> Control:
 	var R: Dictionary = PalLocker.catalog().RAR[c.r]
+	var rc := Color(R.col)
 	var own := L.owns(c.id)
 	var blocked: bool = c.cat == "hat" and not Wardrobe.headwear_allowed(L.eq.get("skin", "std"), c.key)
 	var eq: bool = not blocked and (L.eq.get(c.cat) == c.key or (c.cat == "hat" and c.key == "class" and not Wardrobe.headwear_allowed(L.eq.get("skin", "std"), L.eq.get("hat", "class"))))
-	var b := Button.new()
-	b.custom_minimum_size = Vector2(116, 0)
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(14 / 255.0, 12 / 255.0, 10 / 255.0, 0.9)
-	sb.border_color = GOLD if eq else Color(R.col)
-	sb.set_border_width_all(3 if eq else 1)
-	sb.border_width_bottom = 3
-	sb.set_content_margin_all(6)
-	for st in ["normal", "disabled"]:
-		b.add_theme_stylebox_override(st, sb)
-	var sbh: StyleBoxFlat = sb.duplicate()
-	sbh.bg_color = Color(40 / 255.0, 34 / 255.0, 26 / 255.0, 0.95)
-	sbh.border_color = PAPER
-	for st in ["hover", "pressed", "focus"]:
-		b.add_theme_stylebox_override(st, sbh)
-	var v := VBoxContainer.new()
-	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	v.add_theme_constant_override("separation", 2)
-	b.add_child(v)
-	var ic := Icon.new(c, 104, L.eq.duplicate(), cls())
-	ic.modulate = Color(1, 1, 1, 1.0 if own else 0.45)
-	v.add_child(ic)
-	var nm := _lbl(c.name, 12, PAPER if own else DIM)
-	nm.custom_minimum_size = Vector2(104, 0)
-	nm.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var v := UiKit.vbox(4)
+	var art := TileArt.new(c, L.eq.duplicate(), cls())
+	art.modulate.a = 1.0 if own else 0.35
+	v.add_child(art)
+	var nm := _l(c.name, "s8", 14, UiKit.BONE, 0.04, 1.05, true)
+	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	nm.modulate.a = 1.0 if own else 0.35
 	v.add_child(nm)
 	var status: String = "DOES NOT FIT THIS SKIN" if blocked else ("EQUIPPED" if eq else (R.n if own else c.get("how", "")))
-	var sl := _lbl(status, 10, GOLD if eq else (Color(R.col) if own else DIM))
-	sl.custom_minimum_size = Vector2(104, 0)
-	sl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var sl := _l(status, "m4", 9.5, UiKit.DIM, 0.0, 1.3, true)
+	sl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(sl)
 	if not own and c.src == "unlock" and c.get("need") is Dictionary and not c.need.is_empty():
 		var k: String = c.need.keys()[0]
 		var need := int(c.need[k])
 		var have := mini(need, int(L.st.get(k, 0)))
-		var pb := ProgressBar.new()
-		pb.max_value = need
-		pb.value = have
-		pb.show_percentage = false
-		pb.custom_minimum_size = Vector2(104, 6)
+		var pb := ProgBar.new()
+		pb.frac = float(have) / need
+		pb.col = rc
+		pb.text = "%d / %d" % [have, need]
+		pb.custom_minimum_size.y = UiKit.px(12)
 		v.add_child(pb)
-		v.add_child(_lbl("%d / %d" % [have, need], 10, DIM))
+	var pad := [6, 6, 9, 6]
+	var line: Color = UiKit.WARN if eq else (Color("#ffe27a") if c.r == "g" else (Color("#ff9260") if c.r == "u" else UiKit.LINE))
+	var bg := Color(27 / 255.0, 24 / 255.0, 20 / 255.0, 0.85)
+	var mk := func(b: Color, ln: Color) -> StyleBoxFlat:
+		var s := UiKit.sb(b, ln, 2 if eq else 1, pad)
+		return s
+	var box := {"normal": mk.call(bg, line), "hover": mk.call(Color(40 / 255.0, 36 / 255.0, 30 / 255.0, 0.95), UiKit.BONE if not eq else UiKit.WARN), "pressed": mk.call(bg, UiKit.WARN), "disabled": mk.call(bg, line)}
+	var b := UiKit.card_btn(v, box, func(): _equip(c))
+	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	if c.get("description"):
 		b.tooltip_text = c.description
-	b.pressed.connect(func(): _equip(c))
-	b.custom_minimum_size.y = v.get_combined_minimum_size().y + 12
-	b.resized.connect(func(): v.size = b.size - Vector2(12, 12), CONNECT_DEFERRED)
-	v.position = Vector2(6, 6)
+	var bar := ColorRect.new()   # the rarity strip along the bottom
+	bar.color = rc
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(bar)
+	b.resized.connect(func():
+		bar.position = Vector2(0, b.size.y - UiKit.bw(3))
+		bar.size = Vector2(b.size.x, UiKit.bw(3)))
+	menus._fid(b, "item:" + str(c.id))
 	tiles.append([b, c])
 	return b
+
+
+## a tile's picture: square, the tile's own width
+class TileArt extends Control:
+	var c: Dictionary
+	var eq: Dictionary
+	var klass := "soldier"
+	var pool: Array = []
+
+	func _init(item: Dictionary, equipped: Dictionary, k: String) -> void:
+		c = item
+		eq = equipped
+		klass = k
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		clip_contents = true
+		custom_minimum_size = Vector2(UiKit.px(60), UiKit.px(100))
+		resized.connect(func():
+			if absf(custom_minimum_size.y - size.x) > 1:
+				custom_minimum_size.y = size.x)
+
+	func _exit_tree() -> void:
+		Ctx2D.free_pool(pool)
+
+	func _draw() -> void:
+		var S := minf(size.x, size.y)
+		draw_set_transform(Vector2((size.x - S) / 2, 0))
+		LockerUI.paint_icon(self, c, S, eq, klass, pool)
+		draw_set_transform(Vector2.ZERO)
+
+
+## .iprog: how far along an unlock is, the count over the bar
+class ProgBar extends Control:
+	var frac := 0.0
+	var col := Color.WHITE
+	var text := ""
+
+	func _init() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		var r := Rect2(Vector2.ZERO, size)
+		draw_rect(r, Color(0, 0, 0, 0.45))
+		draw_rect(Rect2(0, 0, size.x * frac, size.y), Color(col, 0.55))
+		draw_rect(r, UiKit.LINE, false, UiKit.bw(1))
+		var f := UiKit.face("m4")
+		var fsz := UiKit.fs(8.5)
+		var w := f.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fsz).x
+		draw_string(f, Vector2((size.x - w) / 2, (size.y + f.get_ascent(fsz) - f.get_descent(fsz)) / 2), text, HORIZONTAL_ALIGNMENT_LEFT, -1, fsz, UiKit.BONE)
 
 
 func _equip(c: Dictionary) -> void:
@@ -617,9 +709,12 @@ func _equip(c: Dictionary) -> void:
 	m.audio.play("place0")
 	if c.cat == "bg":
 		menus.refresh_bg()
+	else:
+		menus._stage_crew()
 	var y := scroll.scroll_vertical
 	_render_grid()
 	scroll.scroll_vertical = y
+	menus._refocus("item:" + str(c.id))
 
 
 func open_cases(id: String, n: int) -> void:
@@ -664,8 +759,9 @@ func resume_opening() -> void:
 		_cloud_open(p.case, int(p.quantity), p)
 
 
-## after an opening closes: the counts and tiles change
+## after an opening closes: the counts and tiles change, and the kit on the stage
 func refresh() -> void:
 	var y := scroll.scroll_vertical
 	render()
 	scroll.scroll_vertical = y
+	menus._stage_crew()

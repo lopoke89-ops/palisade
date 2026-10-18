@@ -174,7 +174,7 @@ func _layout() -> void:
 			mat.emission_enabled = true
 			mat.emission = col
 			mat.emission_energy_multiplier = lit
-		if not who.is_empty() and mode == "party":
+		if not who.is_empty() and mode == "party" and i > 0:   # this screen's player has the name plate over the stage
 			S.label.text = str(who.name).to_upper() + ("  ✓" if who.get("ready", false) else "")
 			S.label.add_theme_color_override("font_color", col.lightened(0.25))
 			S.label.visible = true
