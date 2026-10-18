@@ -71,6 +71,7 @@ var over_t := 0.0   # the after-action screen comes up a moment after the end
 var arm_sel := 0   # the armory and skill tree rows a key or controller has picked
 var sk_sel := 0
 var fps_label := ""
+var v3: View3D = null   # the 3D view (scripts/view3d): the world drawn with the model library under the 2D HUD
 var fps_n := 0
 var fps_t := 0.0
 
@@ -137,6 +138,7 @@ func _ready() -> void:
 	v.cam_snap(sim.player.x, sim.player.y, sim.height_at(sim.player.x, sim.player.y))
 	get_viewport().size_changed.connect(_resize)
 	apply_settings()
+	setup_3d()
 	account = PalAccount.new(self)
 	add_child(account)
 	locker.account = account
@@ -449,6 +451,11 @@ func _unhandled_input(e: InputEvent) -> void:
 		return
 	if not (e is InputEventKey and e.pressed and not e.echo):
 		return
+	if e.keycode == KEY_F9:   # graphics: the 3D models on or off (Settings data "models3d"; the settings page can show it)
+		settings.data.models3d = not bool(settings.data.get("models3d", true))
+		settings.save()
+		setup_3d()
+		return
 	if e.keycode == KEY_F8 and OS.is_debug_build():   # developer: bring in the next boss (any boss, any map), editor runs only
 		_dev_boss()
 		return
@@ -700,8 +707,29 @@ func _close_skills() -> void:
 	menus.root.visible = true
 
 
+## the 3D view on or off (Settings: "models3d"; on by default when the model library is in this build), and its
+## quality knobs (Settings: "gfx3d", see Quality3D). Off, or without the library, the 2D drawing is the world.
+func setup_3d() -> void:
+	Quality3D.load_from(settings.data.get("gfx3d", {}))
+	var want: bool = bool(settings.data.get("models3d", true)) and View3D.available()
+	if want and v3 == null:
+		v3 = View3D.new(self)
+		add_child(v3)
+		ground_key = ""
+	elif not want and v3 != null:
+		v3.queue_free()
+		v3 = null
+		ground_key = ""
+	if v3 != null:
+		Quality3D.apply_viewport(get_viewport())
+	ground.visible = v3 == null
+	front_root.visible = v3 == null
+
+
 func apply_settings() -> void:
 	var D: Dictionary = settings.data
+	if v3 != null or D.get("models3d", true) == false:
+		setup_3d()
 	PalSettings.reduce_motion = D.get("reduceMotion", false)
 	audio.volume = D.volume
 	audio.music_vol = D.music
@@ -868,7 +896,10 @@ func _process(dt: float) -> void:
 	else:
 		var fol: Dictionary = _cam_target()
 		v.cam_follow(fol.x, fol.y, sh, sim.height_at(fol.x, fol.y))
-	_sync_ground()
+	if v3 != null:
+		v3.frame(dt)
+	else:
+		_sync_ground()
 	_update_light(dt)
 	_update_post(dt)
 	fade_t -= dt
@@ -885,6 +916,8 @@ func _process(dt: float) -> void:
 
 
 func _drain_events() -> void:
+	if v3 != null:
+		v3.events(sim.events)
 	for e in sim.events:
 		match e.k:
 			"sfx":
@@ -1089,7 +1122,11 @@ func mixc(a: String, b: String, t: float) -> Color:
 
 func _draw() -> void:
 	var t_draw := Time.get_ticks_usec()
-	_draw_scene()
+	if v3 != null and v3.visible:
+		v3.paint_labels()   # the world is the 3D view's; its labels and the cosmetic particles draw here
+		_draw_cparts()
+	else:
+		_draw_scene()
 	draw_us = Time.get_ticks_usec() - t_draw
 
 
@@ -3492,7 +3529,8 @@ func _draw_cparts() -> void:
 	for q in cparts:
 		var g := iso(q.x, q.y)
 		if q.kind.begins_with("finish:"):
-			CosArt.paint_finish(x, q.kind.substr(7), 1.0 - q.life / q.max, u, g.x, g.y - q.z * u)
+			if v3 == null:   # in 3D the kill effect's model is the finisher
+				CosArt.paint_finish(x, q.kind.substr(7), 1.0 - q.life / q.max, u, g.x, g.y - q.z * u)
 			continue
 		if q.kind == "spider":
 			q.top = g.y - v.WH * 2.6

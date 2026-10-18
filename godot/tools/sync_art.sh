@@ -11,11 +11,11 @@ DST=palisade_art
 [ -f "$SRC/catalog.json" ] || { echo "no art/3d/catalog.json under $LIB"; exit 1; }
 rm -rf "$DST"
 mkdir -p "$DST/animation" "$DST/models"
-cp "$SRC/catalog.json" "$SRC/lobby_layouts.json" "$SRC/weapon_profiles.json" "$DST/"
+cp "$SRC/catalog.json" "$SRC/lobby_layouts.json" "$SRC/weapon_profiles.json" "$SRC/tracer_profiles.json" "$DST/"
 cp "$SRC/animation/manifest.json" "$DST/animation/"
-# what the game uses so far: the classes, skins, headgear (and its fitted variants), the lobby environments, the
-# party ring, the weapons. Enemies, bosses, Delgado, tracers and kill effects come with the in-game models.
-for d in players skins headgear backgrounds utilities weapons; do
+# what the game uses: the classes, skins, headgear (and its fitted variants), the lobby environments, the party ring,
+# the weapons; and in play the raiders, the bosses, Delgado, the tracer rounds and the kill effects
+for d in players skins headgear backgrounds utilities weapons enemies bosses allies tracers kill_effects; do
   cp -r "$SRC/models/$d" "$DST/models/"
 done
 {
