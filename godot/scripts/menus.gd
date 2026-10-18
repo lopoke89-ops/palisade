@@ -67,6 +67,7 @@ var came_from := ""   # where BACK goes from settings, the index and the skill t
 var binding := ""   # Settings: an action waiting for a key
 var stage: Lobby3D   # the 3D lobby behind the menus, kept across screens (null: the painted backgrounds)
 var pages: MenuPages
+var armory: ArmoryUI   # the armory over the game (it shows itself while the main node's armory is open)
 var sheet := ""   # the open tab of the setup sheet, "" while it's closed
 var sheet_kind := "home"   # home (PLAY), host (MULTIPLAYER, before hosting) or room (the room, host only)
 var friends_tab := "friends"
@@ -100,6 +101,8 @@ func _ready() -> void:
 	_size = _vs()
 	UiKit.fit(_size.x, _size.y)
 	pages = MenuPages.new(self)
+	armory = ArmoryUI.new(m)
+	add_child(armory)
 	get_viewport().size_changed.connect(_on_resize)
 
 
@@ -468,7 +471,7 @@ func _shell(kind: String) -> Control:
 	root.add_child(cc)
 	var st: StyleBoxFlat
 	if card:
-		st = UiKit.sb(Color(10 / 255.0, 20 / 255.0, 27 / 255.0, 0.9), UiKit.FRAME, 1, [18, 37, 18, 37])
+		st = UiKit.sb(Color(10 / 255.0, 20 / 255.0, 27 / 255.0, 0.9), UiKit.FRAME, 1, [18, 22, 18, 22])
 	else:
 		st = UiKit.sb(Color(12 / 255.0, 11 / 255.0, 9 / 255.0, 0.94), Color(154 / 255.0, 143 / 255.0, 122 / 255.0, 0.28), 1, [32, 40, 32, 40])
 	var pc := PanelContainer.new()
@@ -476,7 +479,9 @@ func _shell(kind: String) -> Control:
 	pc.custom_minimum_size.x = minf(vs.x - UiKit.px(32), UiKit.px(1180 if card else 760))
 	cc.add_child(pc)
 	var col2 := UiKit.vbox(16 if card else 14)
-	var sc := UiKit.scroller(col2)
+	var gutter := UiKit.margin(0, 15 if card else 0, 0, 15 if card else 0)   # scrollbar-gutter: stable both-edges
+	gutter.add_child(col2)
+	var sc := UiKit.scroller(gutter)
 	pc.add_child(sc)
 	if not card:   # the gold top edge of the old panel
 		var top := ColorRect.new()
@@ -493,7 +498,7 @@ func _shell(kind: String) -> Control:
 	col2.add_child(_header(not card))
 	var body2 := UiKit.vbox(12)
 	col2.add_child(body2)
-	_fit_scroll(sc, col2, vs.y - UiKit.px(32) - st.content_margin_top - st.content_margin_bottom)
+	_fit_scroll(sc, gutter, vs.y - UiKit.px(32) - st.content_margin_top - st.content_margin_bottom)
 	return body2
 
 
@@ -748,17 +753,17 @@ func _stage_column(eyebrow: String, title: String, sub: String, mods: Array, nam
 	c.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_stage_col = c
 	var head := UiKit.vbox(0)
-	head.add_child(UiKit.spacer(14))
+	head.add_child(UiKit.spacer(16))
 	var e := _l(eyebrow, "s8", 13, UiKit.WARN, 0.22)
 	e.label_settings = _shadowed(e.label_settings)
 	e.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	head.add_child(e)
-	head.add_child(UiKit.spacer(6))
+	head.add_child(UiKit.spacer(8))
 	var t := _l(title, "s9", 36, UiKit.TITLE, 0.025)
 	t.label_settings = _shadowed(t.label_settings)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	head.add_child(t)
-	head.add_child(UiKit.spacer(4))
+	head.add_child(UiKit.spacer(6))
 	var s := _l(sub, "m4", 11, Color("#aabfc5"))
 	s.label_settings = _shadowed(s.label_settings)
 	s.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -892,7 +897,7 @@ func _setup_row(key: String, val: String, small: String, edit: bool, cb: Callabl
 	h.add_child(v)
 	if edit:
 		var go := Chevron.new()
-		go.custom_minimum_size = Vector2(UiKit.px(12), UiKit.px(30))
+		go.custom_minimum_size = Vector2(UiKit.px(9), UiKit.px(30))
 		go.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		h.add_child(go)
 	var pad := [9, 12, 9, 12]
@@ -1454,7 +1459,6 @@ func show_online(msg: String) -> void:
 			m.settings.save(), 11))
 	var host := UiKit.btn("HOST", "go", 23, func(): m.net_host(), {"h": 54})
 	_fid(host, "host")
-	_focus = host
 	hc[1].add_child(host)
 	col.add_child(hc[0])
 	col.add_child(_details("IF IT WON'T CONNECT", "Players connect straight to each other. Most home networks are fine; some cellular networks and strict firewalls block it. If a join hangs, put the host (or everyone) on a home network. Keep the host's game open: if it closes, the game ends for everyone.", "wont"))
@@ -1930,10 +1934,12 @@ func _overlay(width: float, bg: float = -1.0) -> VBoxContainer:
 	var col := UiKit.vbox(16)
 	var w := minf(_vs().x - UiKit.px(32), UiKit.px(width))
 	col.custom_minimum_size.x = w
-	var sc := UiKit.scroller(col)
-	sc.custom_minimum_size.x = w + UiKit.px(12)
+	var gm := UiKit.margin(0, 14, 0, 14)   # room for the scrollbar either side, so the column stays centred
+	gm.add_child(col)
+	var sc := UiKit.scroller(gm)
+	sc.custom_minimum_size.x = w + UiKit.px(28)
 	cc.add_child(sc)
-	_fit_scroll(sc, col, _vs().y - UiKit.px(40))
+	_fit_scroll(sc, gm, _vs().y - UiKit.px(40))
 	return col
 
 

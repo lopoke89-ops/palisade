@@ -66,7 +66,7 @@ func _run() -> void:
 	check(guns == 6, "each holds its class's weapon (%d)" % guns)
 	check(ArtLibrary.named(st.slots[1].model, "ClassWeapon") != null, "the sniper in the Sahur skin swapped its carbine for the bolt rifle")
 	check(ArtLibrary.named(st.slots[0].model, "EquippedCosmetic") != null, "the pumpkin head is on")
-	check(st.slots[0].label.visible and st.slots[0].label.text.begins_with("HANA"), "names over the crew")
+	check(st.slots[1].label.visible and st.slots[1].label.text.begins_with("GUS") and not st.slots[0].label.visible, "names over the rest of the crew (this player has the plate over the stage)")
 	# the Locker
 	main.menus.show_locker()
 	for n in 3:

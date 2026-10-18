@@ -649,7 +649,9 @@ func _idx_card(name: String, col: Color, look: Dictionary, lines: Array, overlay
 			"list":
 				for s in ln[1]:
 					var r := UiKit.hbox(6)
-					r.add_child(_l("•", "m4", 11, UiKit.DIM))
+					var dot := _l("•", "m4", 11, UiKit.DIM, 0.0, 1.4)
+					dot.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+					r.add_child(dot)
 					r.add_child(UiKit.expand(_l(s, "m4", 11, UiKit.DIM, 0.0, 1.4, true)))
 					v.add_child(r)
 			"phase":

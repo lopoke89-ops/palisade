@@ -74,15 +74,23 @@ static func face(f: String) -> Font:
 
 
 ## a face with CSS letter-spacing (in em of the given size)
-static func font(f: String, size: float = 13.0, em: float = 0.0) -> Font:
+static func font(f: String, size: float = 13.0, em: float = 0.0, lh: float = 0.0) -> Font:
 	var sp := roundi(em * size * k)
-	if sp == 0:
+	var top := 0
+	var bottom := 0
+	if lh > 0:   # CSS line-height: the difference from the font's own line, half above and half below
+		var d := roundi(lh * size * k - face(f).get_height(fs(size)))
+		top = floori(d / 2.0)
+		bottom = d - top
+	if sp == 0 and top == 0 and bottom == 0:
 		return face(f)
-	var key := "%s|%d" % [f, sp]
+	var key := "%s|%d|%d|%d" % [f, sp, top, bottom]
 	if not _var.has(key):
 		var v := FontVariation.new()
 		v.base_font = face(f)
 		v.spacing_glyph = sp
+		v.spacing_top = top
+		v.spacing_bottom = bottom
 		_var[key] = v
 	return _var[key]
 
@@ -93,10 +101,10 @@ static func ls(f: String, size: float, col: Color, em: float = 0.0, lh: float = 
 	if _ls.has(key):
 		return _ls[key]
 	var s := LabelSettings.new()
-	s.font = font(f, size, em)
+	s.font = font(f, size, em, lh)
 	s.font_size = fs(size)
 	s.font_color = col
-	s.line_spacing = maxf(0.0, lh * size * k - face(f).get_height(fs(size))) if lh > 0 else 0.0
+	s.line_spacing = 0.0
 	if outline > 0:
 		s.outline_size = bw(outline)
 		s.outline_color = ocol
@@ -128,10 +136,11 @@ static func sb(bg: Color, border: Color = Color(0, 0, 0, 0), widths = 0, pad = 0
 	var p: Array = pad if pad is Array else [pad, pad, pad, pad]
 	if p.size() == 2:
 		p = [p[0], p[1], p[0], p[1]]
-	s.content_margin_top = px(p[0])
-	s.content_margin_right = px(p[1])
-	s.content_margin_bottom = px(p[2])
-	s.content_margin_left = px(p[3])
+	# the CSS box: padding inside the border
+	s.content_margin_top = px(p[0]) + s.border_width_top
+	s.content_margin_right = px(p[1]) + s.border_width_right
+	s.content_margin_bottom = px(p[2]) + s.border_width_bottom
+	s.content_margin_left = px(p[3]) + s.border_width_left
 	return s
 
 
@@ -373,10 +382,10 @@ static func btn(text: String, kind_name: String, size: float, cb: Callable = Cal
 	var box := {}
 	for st in K.box:
 		var s: StyleBoxFlat = K.box[st].duplicate()
-		s.content_margin_top = px(pad[0])
-		s.content_margin_right = px(pad[1])
-		s.content_margin_bottom = px(pad[2])
-		s.content_margin_left = px(pad[3])
+		s.content_margin_top = px(pad[0]) + s.border_width_top
+		s.content_margin_right = px(pad[1]) + s.border_width_right
+		s.content_margin_bottom = px(pad[2]) + s.border_width_bottom
+		s.content_margin_left = px(pad[3]) + s.border_width_left
 		box[st] = s
 	var b := Btn.new(l, box, K.tint)
 	b.label = l
