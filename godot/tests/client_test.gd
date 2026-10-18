@@ -120,6 +120,32 @@ func _init() -> void:
 	D.fpsMode = fm
 	D.fpsCap = fc
 	main.apply_settings()
+	print("graphics")
+	var g0 = D.gfx3d.duplicate()
+	var m0: bool = D.get("models3d", true)
+	if View3D.available():
+		D.models3d = true
+		D.gfx3d = Quality3D.preset("low")
+		main.apply_settings()
+		check(main.v3 != null and Quality3D.shadows == 0 and Quality3D.max_tracers == 24 and is_equal_approx(main.get_viewport().scaling_3d_scale, 0.75), "QUALITY LOW reaches the 3D view: no shadows, fewer tracers, drawn at 75%")
+		D.gfx3d = Quality3D.preset("high")
+		D.gfx3d.render_scale = 0.6
+		main.apply_settings()
+		check(Quality3D.shadows == 2 and is_equal_approx(main.get_viewport().scaling_3d_scale, 0.6), "HIGH with RENDER SCALE 60%")
+		D.models3d = false
+		main.apply_settings()
+		var off: bool = main.v3 == null and main.ground.visible
+		D.models3d = true
+		main.apply_settings()
+		check(off and main.v3 != null and not main.ground.visible, "the 3D models switch off to the 2D drawing and back on from Settings")
+		main.menus.pages.show_settings()
+		await process_frame
+		var gl := _find_text(main.menus.root, "QUALITY") != null and _find_text(main.menus.root, "RENDER SCALE") != null and _find_text(main.menus.root, "HIGH") != null
+		check(gl, "Settings shows the GRAPHICS card: the switch, QUALITY and RENDER SCALE")
+		main.menus.show_main()
+	D.gfx3d = g0
+	D.models3d = m0
+	main.apply_settings()
 	print("menus")
 	check(main.demo and main.menus.screen == "main", "it opens on the main menu over the demo yard")
 	check(main._controls().is_empty(), "nobody plays the demo")
@@ -386,3 +412,14 @@ func _backup_cfg(st: PalSettings) -> Dictionary:
 	var code := PalSaves.export_code(L, st)
 	var body: String = code.split(".")[1]
 	return JSON.parse_string(Marshalls.base64_to_utf8(body)).get("cfg", {})
+
+
+## a label or button showing exactly this text
+func _find_text(n: Node, t: String) -> Node:
+	if (n is Label and n.text == t) or (n is UiKit.Btn and n.text == t):
+		return n
+	for c in n.get_children():
+		var r := _find_text(c, t)
+		if r != null:
+			return r
+	return null

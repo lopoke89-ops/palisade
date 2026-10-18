@@ -100,6 +100,8 @@ func show_settings() -> void:
 	scr[1].add_child(_tog("Show frame rate", D.fps, func(on): D.fps = on))
 	scr[1].add_child(_tog("Show tips during games", D.tips, func(on): D.tips = on))
 	c1.add_child(scr[0])
+	# GRAPHICS: the 3D view (this game's own, like WINDOW)
+	c1.add_child(_graphics_card(D))
 	# FEEL
 	var feel := _card("FEEL")
 	feel[1].add_child(_tog("Vibration and controller rumble on hits and blasts", D.haptics, func(on): D.haptics = on))
@@ -155,6 +157,49 @@ func _window_card(D: Dictionary) -> Control:
 	win[1].add_child(_note("The most frames a second, with FRAME RATE on AUTO. With VSync on, your display's refresh rate is a limit too." if auto else "FRAME RATE is set to %s FPS. Set it to AUTO to use this limit." % D.fpsMode))
 	win[1].add_child(_tog("Reduce motion (backgrounds and outfit effects hold still)", D.get("reduceMotion", false), func(on): D.reduceMotion = on))
 	return win[0]
+
+
+## the 3D view: the models on or off, a quality preset (Quality3D's knobs) and the 3D's render scale
+func _graphics_card(D: Dictionary) -> Control:
+	var g := _card("GRAPHICS")
+	if not View3D.available():
+		g[1].add_child(_note("This build has no 3D models: the world is drawn in 2D."))
+		return g[0]
+	var on: bool = D.get("models3d", true)
+	var label := "3D models (F9 switches them in a game)"
+	g[1].add_child(_tog(label, on, func(x):
+		D.models3d = x
+		(func():   # the card's rows follow the switch
+			show_settings()
+			mn._refocus("tog:" + label)).call_deferred()))
+	if not on:
+		g[1].add_child(_note("The world is drawn in 2D, as in the browser."))
+		return g[0]
+	g[1].add_child(_set_label("QUALITY"))
+	var q := UiKit.seg([["low", "LOW"], ["medium", "MEDIUM"], ["high", "HIGH"]], _preset_now(), func(id):
+		D.gfx3d = Quality3D.preset(id)
+		_apply()
+		show_settings()
+		mn._refocus("gfx:" + str(id).to_upper()), {"size": 15, "h": 40})
+	mn._tag_seg(q, "gfx")
+	g[1].add_child(q)
+	g[1].add_child(_note("LOW turns shadows off, thins the effects and draws the 3D at 75%. HIGH is everything the 2D shows, with soft shadows."))
+	g[1].add_child(_slider("RENDER SCALE", Quality3D.render_scale, 0.5, 1.0, func(x):
+		var d: Dictionary = D.get("gfx3d", {}).duplicate()
+		d.render_scale = x
+		D.gfx3d = d, "rscale"))
+	g[1].add_child(_note("The 3D world is drawn at this share of the window and stretched to fit. Lower is faster; the HUD and menus stay sharp."))
+	return g[0]
+
+
+## which preset the 3D knobs are on ("" when they've been set some other way); render scale has its own slider
+func _preset_now() -> String:
+	var now := Quality3D.to_dict()
+	for id in ["low", "medium", "high"]:
+		var P := Quality3D.preset(id)
+		if P.keys().all(func(k): return k == "render_scale" or is_equal_approx(float(P[k]), float(now[k]))):
+			return id
+	return ""
 
 
 ## one of the display's choices: saved, applied, and the page built again with the controller on the same choice

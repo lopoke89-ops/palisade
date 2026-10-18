@@ -24,6 +24,19 @@
   - The save backup leaves them out, so its code stays the browser's.
   - A size you drag the window to isn't undone when another setting changes.
 
+- **Stage 3: graphics settings.** A GRAPHICS card in Settings (in the menus and from the pause menu) has:
+  - The 3D models switch. F9 still switches them in a game.
+  - QUALITY LOW / MEDIUM / HIGH, the existing `Quality3D` presets.
+  - RENDER SCALE, 50–100%.
+  - These are kept in `gfx3d` / `models3d`. Builds without the model library say the world is 2D.
+  - Fixed: turning the 3D models back on from Settings did nothing, because `apply_settings` only rebuilt the 3D view when it already existed. It now always calls `setup_3d()`, which is idempotent.
+
+## Verification (Stage 3)
+- All seven suites pass. `client_test` has new checks: LOW reaches the 3D view (no shadows, 24 tracers, viewport at 75%), HIGH with render scale 60%, the switch going off to 2D and back on through Settings, and the card's rows.
+- `lobby3d_shot` and `display_shot` pass.
+- `shot3d raid`, same moment: LOW draws softer with no shadows, at about 134 ms per 3D frame against 385 ms for HIGH. This machine draws in software, so only the ratio means anything.
+- Card screenshots taken in the menus and in game.
+
 ## Verification (Stage 2)
 - All seven suites pass. `client_test` has new checks: loading and migrating the settings, falling back on bad values, the sizes offered, the save backup leaving the display settings out, and the FPS limit against FRAME RATE.
 - `lobby3d_shot` passes.
@@ -46,4 +59,4 @@
 - The menus leave the 3D crew loaded during games (from the previous session).
 
 ## Proposed next milestone
-Graphics settings, 3D quality group: a GRAPHICS card in Settings with the 3D models switch, a LOW / MEDIUM / HIGH preset and render scale, using the existing `Quality3D` knobs (`gfx3d`).
+Windows build and integration check: export `Palisade.exe` with `tools/export_windows.sh` and confirm the exported pack loads the art, menus and settings. Then do one broad presentation pass across the hub pages and a raid, plus a browser crossplay room check.

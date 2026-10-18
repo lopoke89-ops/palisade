@@ -137,8 +137,7 @@ func _ready() -> void:
 	_resize()
 	v.cam_snap(sim.player.x, sim.player.y, sim.height_at(sim.player.x, sim.player.y))
 	get_viewport().size_changed.connect(_resize)
-	apply_settings()
-	setup_3d()
+	apply_settings()   # and the 3D view (setup_3d)
 	account = PalAccount.new(self)
 	add_child(account)
 	locker.account = account
@@ -736,8 +735,7 @@ const _WINDOW_MODE := {"windowed": Window.MODE_WINDOWED, "fullscreen": Window.MO
 
 func apply_settings() -> void:
 	var D: Dictionary = settings.data
-	if v3 != null or D.get("models3d", true) == false:
-		setup_3d()
+	setup_3d()
 	PalSettings.reduce_motion = D.get("reduceMotion", false)
 	audio.volume = D.volume
 	audio.music_vol = D.music

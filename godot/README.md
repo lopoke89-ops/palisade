@@ -200,12 +200,12 @@ The menus, the online lobby and the Locker use the 3D model library (the private
   - The camera is orthographic and pitched 12.7°, so the pads lie at the browser's flattened ellipse. The page draws the empty spots' "+" and the others' name plates over it (`Menus.Hero2D`, which also paints the 2D figures when the models aren't in a build).
   - On PLAY and INDEX you stand alone. In an online lobby the whole room stands there, you in front and up to five more. The Locker lifts you to leave room under your feet, as the browser does.
   - The library's 3D lobby environments are not shown: the menus use the painted backgrounds, as in the browser.
-- **In play:** `scripts/view3d/` draws the game in 3D under the 2D HUD (Settings data `models3d`, on by default; F9 switches it in a game). It only reads the sim, so cross-play is untouched.
+- **In play:** `scripts/view3d/` draws the game in 3D under the 2D HUD (Settings › GRAPHICS › 3D models, on by default; F9 switches it in a game). It only reads the sim, so cross-play is untouched.
   - The camera is orthographic, pitched 30° and turned 45°, so it shows exactly what the 2D projection shows: nameplates, prompts, the crosshair, boss warnings and the night's light pools line up unchanged.
   - People (`v3_actors.gd`): the soldiers in their outfits, Delgado, the seven raiders and the bosses, pooled, with clips from sim state (walk/strafe/run, firing, shell insert, bolt, throws, the rocket, building, gathering, downed, revive, hit, death, the back roll, and each boss's tell, move and recovery).
   - The world (`v3_world.gd`, `v3_scenery.gd`): every map's ground and terrain, walls in one MultiMesh, props, the forest and fence, the city and the casino, built from the 2D's own numbers and colours; see-through by the 2D rules.
   - Effects (`v3_fx.gd`): the library's tracer rounds with their profile ribbons, the kill-effect models with the approved motion, particles, fire, things in flight.
-  - Quality knobs for a settings page are in `scripts/view3d/quality3d.gd` (Settings data `gfx3d`): shadows, effects density, draw margin, animation rates, MSAA, effect caps, render scale.
+  - Settings › GRAPHICS sets its quality. QUALITY LOW / MEDIUM / HIGH picks a preset of the knobs in `scripts/view3d/quality3d.gd`: shadows, effects density, draw margin, animation rates, MSAA and effect caps. RENDER SCALE (50–100%) draws the 3D smaller and stretches it to fit, leaving the HUD sharp. They are kept in Settings data `gfx3d` and apply at once, in the menus or in a game.
 - **Without the models:** if `palisade_art/` is missing (or `models3d` is off), the menus fall back to the painted backgrounds and the game to the 2D drawing.
 
 ## Windows build
