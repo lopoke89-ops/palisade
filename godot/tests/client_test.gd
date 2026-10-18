@@ -15,6 +15,16 @@ func _find(n: Node, cls: String) -> Node:
 	return null
 
 
+func _locker_ui(n: Node) -> LockerUI:   # the Locker sits inside the menu shell's body
+	for ch in n.get_children():
+		if ch is LockerUI:
+			return ch
+		var r := _locker_ui(ch)
+		if r != null:
+			return r
+	return null
+
+
 func check(cond: bool, what: String) -> void:
 	print(("  ok   " if cond else "  FAIL ") + what)
 	if not cond:
@@ -167,7 +177,7 @@ func _init() -> void:
 	main.profile.sp = 5
 	main.menus.show_locker()
 	await process_frame
-	var ui: LockerUI = main.menus.root.get_children().filter(func(n): return n is LockerUI)[0]
+	var ui: LockerUI = _locker_ui(main.menus.root)
 	check(main.menus.screen == "locker" and ui.tiles.size() > 0, "the Locker opens on its tiles (%d)" % ui.tiles.size())
 	var before := L.owned.size() + L.shards
 	ui.open_cases("supply", 1)
@@ -177,7 +187,7 @@ func _init() -> void:
 	check(ov.phase == "reveal" and ov.done_b.visible, "SKIP goes straight to what it gave")
 	ov.close()
 	await process_frame
-	ui = main.menus.root.get_children().filter(func(n): return n is LockerUI)[0]
+	ui = _locker_ui(main.menus.root)
 	var halloween := L.case_count("halloween")
 	ui._render_boxes()
 	check(L.buy_case("halloween") and L.case_count("halloween") == halloween + 1 and L.shards == 18, "BUY trades 12 shards for a Halloween Case")
