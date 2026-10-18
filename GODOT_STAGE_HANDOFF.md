@@ -31,6 +31,19 @@
   - These are kept in `gfx3d` / `models3d`. Builds without the model library say the world is 2D.
   - Fixed: turning the 3D models back on from Settings did nothing, because `apply_settings` only rebuilt the 3D view when it already existed. It now always calls `setup_3d()`, which is idempotent.
 
+- **Stage 4: Windows build and integration check.** No game code changed.
+  - `tools/export_windows.sh` exports `export/palisade/Palisade.exe` (318 MB, pack embedded, 423 art files) with the WebRTC DLL beside it. The export log has no errors.
+  - New `tools/check_export.gd` checks a build from its own pack.
+  - `display_shot.gd.uid`, missing from Stage 2, is added.
+
+## Verification (Stage 4)
+- `check_export.gd` against the .exe, using Linux Godot with `--main-pack`: 8 of 8 OK. The model library loads from the pack, and the hub, Settings (WINDOW and GRAPHICS), the LOW preset and a 3D raid all come up. Screenshots were taken of each hub page, Settings and the raid. The only errors are the expected missing Linux WebRTC library, no audio device, and the known abort at exit.
+- Presentation pass: the hub pages match the browser (see Stage 1). A raid and the Butcher fight, rendered at the same moment in 3D and 2D, line up: same camera, HUD, positions and night light. The figures stay blocky.
+- Crossplay with the browser (site built into scratch with `dev/build.py`):
+  - `cross_game.js` 43/43: co-op both ways, a Free-for-all hosted by Godot, a Base Battle hosted by the browser. It covers walking, back rolls, walls, raiders, chat and knockdowns.
+  - `peer_cross.js` 102/102.
+- Not done: running the .exe on Windows itself (no Windows machine here).
+
 ## Verification (Stage 3)
 - All seven suites pass. `client_test` has new checks: LOW reaches the 3D view (no shadows, 24 tracers, viewport at 75%), HIGH with render scale 60%, the switch going off to 2D and back on through Settings, and the card's rows.
 - `lobby3d_shot` and `display_shot` pass.
@@ -59,4 +72,4 @@
 - The menus leave the 3D crew loaded during games (from the previous session).
 
 ## Proposed next milestone
-Windows build and integration check: export `Palisade.exe` with `tools/export_windows.sh` and confirm the exported pack loads the art, menus and settings. Then do one broad presentation pass across the hub pages and a raid, plus a browser crossplay room check.
+Your playtest of the Windows build on a real PC. Then performance tuning from what you see: frame rate in busy fights at each quality preset, and the 3D crew left loaded during games.
