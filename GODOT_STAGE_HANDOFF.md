@@ -64,6 +64,15 @@
   - The protocol is unchanged (`yard-30`): guests already sent a unit direction in `dg` and the host already took any direction. An older client still in a cached tab would draw someone's forward roll as a back roll, though they travel the right way.
   - The published browser build at the repo root is not rebuilt (`dev/build.py` is a release step), and the shown version stays v0.11.0.
 
+- **Stage 8: a fresh Windows build with Stages 5–7.** `export/palisade/Palisade.exe` (318 MB, pack embedded) and the WebRTC DLL, exported with `tools/export_windows.sh`. The export log has no errors.
+  - `tools/check_export.gd` now also checks the animated skins' effects, a forward roll while moving, the back roll standing still, and the casino floor, all from the pack.
+  - The build is delivered as `Palisade-windows.zip` (240 MB), attached in the chat, not published anywhere.
+
+## Verification (Stage 8)
+- `check_export.gd` against the new .exe (Linux Godot, `--main-pack`): 12 of 12 OK. The only errors are the expected missing Linux WebRTC library, no audio device, and the known abort at exit.
+- Screenshots from the pack: each hub page, Settings, a raid and the casino floor.
+- Not done: running it on Windows itself.
+
 ## Verification (Stage 7)
 - All seven Godot suites pass. `sim_test` has new checks: moving rolls go 2 tiles the way you move (straight and diagonal), a still roll is the back roll, and a guest infers the direction from travel.
 - `dev/test/back_roll.js` passes against a site built into scratch from `dev/src`. A new check rolls while walking: it goes the way you walk, toward the aim, 2 tiles.
@@ -120,6 +129,4 @@
 - The menus leave the 3D crew loaded during games (from the previous session).
 
 ## Proposed next milestone
-Stage 8: a fresh Windows build with Stages 5–7 (skin effects, the online casino, rolling any way), checked from its own pack as in Stage 4, for your playtest.
-
-Then: performance tuning from what the playtest shows.
+Stage 9: your playtest on Windows, and performance tuning from what it shows (frame times in a full raid and a Black Out push on real hardware, then the 3D quality presets).

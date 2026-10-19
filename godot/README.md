@@ -221,11 +221,12 @@ godot/tools/export_windows.sh /path/to/Godot_v4.7.2     # from Linux, macOS or G
 Ship the .exe and the .dll together. The .exe is not code-signed: Windows SmartScreen warns on first run until it is signed with a certificate.
 
 To check a build, run `tools/check_export.gd` against the .exe; its header has the command. It loads the game from the pack alone and checks:
-- the model library;
+- the model library, and the animated skins' effects;
 - the hub, with its painted background and the 3D player;
 - Settings, with WINDOW and GRAPHICS;
 - a quality preset;
-- a 3D raid.
+- a 3D raid, with a forward roll while moving and the back roll standing still;
+- the casino floor.
 
 ## Not yet
 

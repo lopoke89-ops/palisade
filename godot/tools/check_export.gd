@@ -1,6 +1,7 @@
 extends SceneTree
 ## The exported game, checked from its own pack: the model library, the hub (painted background, the 3D player),
-## Settings (WINDOW and GRAPHICS), a quality preset and a 3D raid all come up with nothing but the pack. Exports leave
+## Settings (WINDOW and GRAPHICS), a quality preset, a 3D raid with the animated skins and both rolls, and the casino
+## all come up with nothing but the pack. Exports leave
 ## tools/ out, so this runs from the folder, against the .exe (WebRTC's Linux library missing is expected):
 ##   xvfb-run -a godot --main-pack export/palisade/Palisade.exe --rendering-driver opengl3 --resolution 1600x900 \
 ##     --script "$PWD/godot/tools/check_export.gd" -- /tmp/pack      (prints RESULT PASS; writes /tmp/pack_<page>.png)
@@ -41,6 +42,13 @@ func _run() -> void:
 	check(not FileAccess.file_exists("res://tests/client_test.gd"), "this is the exported pack (no tests inside)")
 	check(ArtLibrary.get_lib() != null and Lobby3D.available() and View3D.available(), "the model library loads from the pack")
 	check(FileAccess.file_exists("res://palisade_art/catalog.json") and ResourceLoader.exists("res://palisade_art/models/players/soldier.glb") and ResourceLoader.exists("res://palisade_art/models/bosses/butcher.glb"), "catalog, players and bosses are in it")
+	var fx := func(skin: String) -> bool:   # an animated skin's motion on the body (Stage 5)
+		var M := ArtLibrary.get_lib().build("soldier", {"skin": skin, "hat": "class"})
+		var n := ArtLibrary.named(M, "Body") as GeometryInstance3D
+		var on: bool = n != null and n.material_overlay != null
+		M.free()
+		return on
+	check(fx.call("galaxy") and fx.call("holo") and fx.call("gknight") and not fx.call("std"), "the animated skins' effects come from the pack")
 	PalAccount.offline = true
 	var main = load("res://main.tscn").instantiate()
 	root.add_child(main)
@@ -73,5 +81,34 @@ func _run() -> void:
 		await process_frame
 	await _shot(pre + "_raid.png", 4)
 	check(main.v3 != null and main.v3.visible and not main.demo, "a game starts in 3D")
+	var s: Sim = main.sim   # rolls (Stage 7): moving, the way you move, a forward roll; standing still, the back roll
+	for want in [[Vector2(0, 1), "Dodge_Forward_IP"], [Vector2.ZERO, "Dodge_Backward_IP"]]:
+		var p: Dictionary = s.player
+		p.aim = Vector2(1, 0)
+		p.dgCd = 0.0
+		var x0 := Vector2(p.x, p.y)
+		s.move_in = want[0]
+		s.local_roll()
+		var clip := ""
+		for i in 20:
+			await process_frame
+			for k in main.v3.actors.recs:
+				var r: Dictionary = main.v3.actors.recs[k]
+				if k.begins_with("p") and str(r.get("clip", "")).begins_with("Dodge"):
+					clip = r.clip
+		s.move_in = Vector2.ZERO
+		for i in 40:
+			await process_frame
+		var go: Vector2 = (Vector2(p.x, p.y) - x0).normalized()
+		var way: Vector2 = want[0] if want[0] != Vector2.ZERO else -p.aim
+		check(clip == want[1] and go.dot(way) > 0.9, "a roll %s plays %s (%s)" % ["moving south" if want[0] != Vector2.ZERO else "standing still", want[1], clip])
+	main.to_menu()
+	for i in 10:
+		await process_frame
+	main.casino_alone()   # the casino floor (Stage 6 opens it on the relay, which needs an account and the network)
+	for i in 60:
+		await process_frame
+	await _shot(pre + "_casino.png", 4)
+	check(main.sim.casino() and not main.demo, "the casino opens")
 	print("RESULT " + ("PASS" if fails == 0 else "FAIL %d" % fails))
 	quit(1 if fails else 0)
