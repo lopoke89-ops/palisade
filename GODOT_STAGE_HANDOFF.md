@@ -52,6 +52,24 @@
   - The local casino with no room is now `casino_alone()`, used by the offline screenshot tests.
   - Fixed: `Hero2D` drew at font size 0 while the page was still laying out (a logged error).
 
+- **Stage 7: rolling any way, in the browser and in Godot.** Moving, the roll goes the way you're moving (keys, touch stick or controller). Standing still, it is the back roll, straight back from the aim, as before.
+  - Browser (`dev/src`):
+    - `moveIntent()` is shared by walking and `localRoll`.
+    - A guest works out which way someone else rolls from their travel (`rollSeen`), and the 2D tumble turns the way the roll goes.
+    - The binding's label is ROLL.
+  - Godot:
+    - `Sim.move_in` and `local_roll` do the same, with `Sim.roll_seen` on guests.
+    - In 3D, `Dodge_Forward_IP` faces the roll. Within 60° of straight back it stays `Dodge_Backward_IP`, facing the aim.
+    - The help text and binding say ROLL.
+  - The protocol is unchanged (`yard-30`): guests already sent a unit direction in `dg` and the host already took any direction. An older client still in a cached tab would draw someone's forward roll as a back roll, though they travel the right way.
+  - The published browser build at the repo root is not rebuilt (`dev/build.py` is a release step), and the shown version stays v0.11.0.
+
+## Verification (Stage 7)
+- All seven Godot suites pass. `sim_test` has new checks: moving rolls go 2 tiles the way you move (straight and diagonal), a still roll is the back roll, and a guest infers the direction from travel.
+- `dev/test/back_roll.js` passes against a site built into scratch from `dev/src`. A new check rolls while walking: it goes the way you walk, toward the aim, 2 tiles.
+- `cross_game.js` 45/45. A Godot host and a browser guest each roll while moving, sideways to their aim. Each side applies the other's roll, and works out its direction.
+- `shot3d roll` takes a direction. Renders checked: the back roll faces the aim; south and east rolls play the forward roll facing the way they go.
+
 ## Verification (Stage 6)
 - All seven suites pass. `casino_play_shot` passes, and `casino_floor_shot` renders the casino.
 - `relay_cross.js` 67/67, against a local relay (`dev/render/relay.js`, native clients on, as deployed). New part 4: the real game presses ENTER THE CASINO, opens a relay casino and walks in; a browser joins by its code. Both walk, chat crosses, and the game closes it ("The host closed this casino.").
@@ -102,6 +120,6 @@
 - The menus leave the 3D crew loaded during games (from the previous session).
 
 ## Proposed next milestone
-Stage 7: omnidirectional rolling in both the browser and Godot. You roll the way you're looking, and a still roll stays the back roll. It changes the shared sim and the protocol, so both builds move together and crossplay is re-checked.
+Stage 8: a fresh Windows build with Stages 5–7 (skin effects, the online casino, rolling any way), checked from its own pack as in Stage 4, for your playtest.
 
-Then: a fresh Windows build, your playtest and performance tuning.
+Then: performance tuning from what the playtest shows.

@@ -10,7 +10,7 @@ extends Node
 ## main.gd owns the screen: it calls host_frame() after sim.update on the host, guest_frame() instead of sim.update on
 ## a guest, and the send_* functions where a guest's actions would otherwise go straight into the sim.
 
-const PROTO := "yard-30"   # yard-30 (v0.11.0): the back roll ("dg", and the "dg" field on player rows)
+const PROTO := "yard-30"   # yard-30 (v0.11.0): the roll ("dg", and the "dg" field on player rows; any direction)
 const ROOM_PREFIX := "palisade-yard-27-"
 const CODE_CHARS := "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
 const LIMITS := {"name": 12, "chat": 120, "cos": 160, "skills": 160, "targetPad": 100, "moveBurst": 2.0}
@@ -559,7 +559,7 @@ func _host_action(c: Dictionary, t: String, d: Dictionary) -> void:
 		"rl":
 			if p.gun.has("mag"):
 				p.rlReq = true
-		"dg":   # yard-30: a guest's back roll. The host keeps the cooldown and lets the roll's distance through its speed check.
+		"dg":   # yard-30: a guest's roll, any way. The host keeps the cooldown and lets the roll's distance through its speed check.
 			if _fin(d.get("x"), -1.1, 1.1) and _fin(d.get("y"), -1.1, 1.1) and Vector2(d.x, d.y).length() > 0.5 and p.alive and not sim.casino() \
 					and not p.get("seat", 0) and not sim.rolling(p) and not (p.dgCd > 0.35):
 				sim.start_roll(p, d.x, d.y)
@@ -1403,12 +1403,15 @@ func _apply_snap(s: Dictionary) -> void:
 				p.y = v.call(2)
 				p.tp = int(v.call(8))
 		else:
+			var was: float = p.get("dgE", -1.0)
+			var from := Vector2(p.get("tx", p.x), p.get("ty", p.y))
 			p.tx = v.call(1)
 			p.ty = v.call(2)
 			p.aim = Vector2(v.call(3), v.call(4))
 			p.face = p.aim
 			p.tp = int(v.call(8))
 			p.dgE = v.call(17) - 0.01 if v.call(17) > 0 else -1.0
+			Sim.roll_seen(p, was, from)
 		if v.call(5) < p.hp - 0.01:
 			p.flash = 0.1
 		p.hp = v.call(5)

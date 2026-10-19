@@ -4,8 +4,9 @@ extends SceneTree
 ##   xvfb-run -a -s "-screen 0 1920x1080x24" godot --path godot --rendering-driver opengl3 --resolution 1600x900 \
 ##     --script res://tests/shot3d.gd -- <prefix> <scene> [args]
 ## scenes: raid (every raider type on the Yard), boss <key>, river (flood and the Ferryman), quarry, frost, city,
-## base (PvP Base Battle), casino, roll (a soldier mid back roll), tracers, killfx, blitz (a Final Blitz boss fight),
-## push (a crowded Black Out final push). PAL_ONLY=3d or 2d renders just one; PAL_FRAMES=n measures n frames.
+## base (PvP Base Battle), casino, roll (a soldier mid roll: [time dx dy], a back roll by default), tracers, killfx,
+## blitz (a Final Blitz boss fight), push (a crowded Black Out final push). PAL_ONLY=3d or 2d renders just one;
+## PAL_FRAMES=n measures n frames.
 
 var main: Node2D
 var s: Sim
@@ -218,11 +219,12 @@ func _scene(scene: String, a: Array) -> void:
 			main.casino_alone()
 			s = main.sim
 			step(30 * 3)
-		"roll":
+		"roll":   # args: how far in (s), and the roll's direction (a back roll from the aim without one)
 			step(30 * 3)
 			s.player.dgE = float(a[0]) if a.size() > 0 else 0.22
-			s.player.dgX = -s.player.aim.x
-			s.player.dgY = -s.player.aim.y
+			var rd: Vector2 = Vector2(float(a[1]), float(a[2])).normalized() if a.size() > 2 else -s.player.aim
+			s.player.dgX = rd.x
+			s.player.dgY = rd.y
 		"tracers", "killfx":   # a firing line of soldiers in different tracers (args: trail ids) and kill effects
 			step(30 * 3)
 			s.game.wave = 2

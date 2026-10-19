@@ -2,11 +2,12 @@ class_name V3Actors
 extends Node3D
 ## The people in 3D: the soldiers in their class or skin with their headgear and class weapon (ArtLibrary.build),
 ## Delgado, the seven raider types and the bosses, placed from the sim every frame and facing their aim. Their clip is
-## chosen from sim state (blueprint 08: death and downed, then the back roll and action locks, then combat, then
-## walking): idle or aiming, walking/strafing/running by how fast and which way they actually moved, firing (from the
-## sim's muzzle flashes), the Grenadier's shell insert and the Sniper's bolt, throws, the Soldier's rocket, building,
-## gathering, downed and revived, hit, death, and the back roll (Dodge_Backward_IP scrubbed to p.dgE). Bosses play
-## their Tell, Execute and Recover clips from their state (e.st and its timer). Models are pooled by look and reused.
+## chosen from sim state (blueprint 08: death and downed, then the roll and action locks, then combat, then walking):
+## idle or aiming, walking/strafing/running by how fast and which way they actually moved, firing (from the sim's
+## muzzle flashes), the Grenadier's shell insert and the Sniper's bolt, throws, the Soldier's rocket, building,
+## gathering, downed and revived, hit, death, and the roll (Dodge_Forward_IP or Dodge_Backward_IP scrubbed to p.dgE).
+## Bosses play their Tell, Execute and Recover clips from their state (e.st and its timer). Models are pooled by look
+## and reused.
 
 const V3 = preload("res://scripts/view3d/view3d.gd")
 const RAIDERS := ["rifle", "gren", "fire", "breach", "shield", "medic", "spotter"]
@@ -458,7 +459,10 @@ func _player(r: Dictionary, p: Dictionary, dt: float) -> void:
 		if S.has("pos"):
 			pos = Vector2(S.pos[0], S.pos[1])
 	var water := _wading(p.x, p.y)
-	_place(r, pos.x, pos.y, p.aim, dt, -0.08 if water else 0.0)
+	var face: Vector2 = p.aim
+	if sim.rolling(p) and _roll_forward(p):   # a forward roll faces the way it goes
+		face = Vector2(p.dgX, p.dgY)
+	_place(r, pos.x, pos.y, face, dt, -0.08 if water else 0.0)
 	var team_col := ""
 	if sim.pvp() == "base" and Pal.TEAMS.has(str(p.get("team", ""))):
 		team_col = Pal.TEAMS[p.team].col
@@ -531,8 +535,15 @@ func _player(r: Dictionary, p: Dictionary, dt: float) -> void:
 	r.prev = {"since": p.get("sinceShot", 9.0), "bcd": p.get("bcd", 0.0), "downed": p.downed, "alive": p.alive}
 
 
-## the back roll: Dodge_Backward_IP scrubbed to the sim's roll clock, its anticipation, travel and recovery lined up
-## with the sim's (Pal.ROLL go/end/dur against the clip's 0.12 / 0.65 / 0.833 s)
+## a roll within 60° of straight back from the aim is the back roll, facing the aim; any other way is a forward roll,
+## facing where it goes (the library's left and right dodges are sidesteps, not rolls)
+func _roll_forward(p: Dictionary) -> bool:
+	return Vector2(p.dgX, p.dgY).dot(p.aim) > -0.5
+
+
+## the roll: Dodge_Backward_IP or Dodge_Forward_IP scrubbed to the sim's roll clock, its anticipation, travel and
+## recovery lined up with the sim's (Pal.ROLL go/end/dur against both clips' 0.12 / 0.65 / 0.833 s). In-place clips:
+## the sim alone moves the body.
 func _roll(r: Dictionary, p: Dictionary) -> void:
 	var e: float = p.dgE
 	var R: Dictionary = Pal.ROLL
@@ -543,7 +554,7 @@ func _roll(r: Dictionary, p: Dictionary) -> void:
 		t = 0.12 + (e - R.go) / (R.end - R.go) * 0.53
 	else:
 		t = 0.65 + (e - R.end) / (R.dur - R.end) * 0.1833
-	var clip := "Dodge_Backward_IP"
+	var clip := "Dodge_Forward_IP" if _roll_forward(p) else "Dodge_Backward_IP"
 	if r.ap == null or not r.ap.has_animation(clip):
 		return
 	if r.clip != clip:

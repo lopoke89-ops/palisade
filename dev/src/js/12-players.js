@@ -28,15 +28,17 @@ function assist(d){
   return best||d;
 }
 // this phone's thumbs/keys drive this phone's soldier (on every kind of phone)
+// where the player is pushing (keys, the touch stick, the controller), in screen terms: walking, and the roll's direction
+function moveIntent(){let mx=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),my=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
+  if(stickMove.id!==null){mx+=stickMove.vx;my+=stickMove.vy}
+  if(padMode){mx+=pad.mx;my+=pad.my}
+  return [mx,my]}
 function controlLocal(dt){
   const p=player;if(!p||demo)return;p.fireIn=false;if(game.phase==='over')return;
   if(!p.alive){p.dgE=-1;return}
   if(overlayOpen()||chatOpen())return;
   if(p.seat){p.fireIn=false;return}   // v0.10.0: seated at a casino table
-  let mx=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),my=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
-  if(stickMove.id!==null){mx+=stickMove.vx;my+=stickMove.vy}
-  if(padMode){mx+=pad.mx;my+=pad.my}
-  const mag=Math.min(1,Math.hypot(mx,my));
+  const [mx,my]=moveIntent(),mag=Math.min(1,Math.hypot(mx,my));
   p.sprT=Math.max(0,(p.sprT||0)-dt);p.sprCd=Math.max(0,(p.sprCd||0)-dt);const spr=p.sprT>0;
   p.dgCd=Math.max(0,(p.dgCd||0)-dt);const roll=rolling(p);
   if(roll){const e0=p.dgE;p.dgE=Math.min(ROLL.dur,p.dgE+dt);const s=ROLL.dist*(rollPos(p.dgE)-rollPos(e0));

@@ -329,9 +329,9 @@ function drawMound(e){const c=iso(e.x,e.y),sw=e.st===4?1.35+Math.sin(game.time*4
   oval(0,-4*u,9*u,5*u,'#6b5642');g.restore()}
 function itemQM(q){drawPerson(q.x,q.y,Object.assign({aim:q.aim,walk:q.walk,flash:q.flash>0},QM_LOOK))}   // v0.9.9: his name and health are on his nameplate
 function itemQMDown(q){drawDowned(q.x,q.y,QM_LOOK,q.revive/2,'DELGADO · DOWN')}
-// v0.11.0: the back roll: the figure tucks and turns head over heels, away from where it aims
+// v0.11.0: the roll: the figure tucks and turns head over heels, the way it rolls (any way, not only back)
 function rollDraw(o,draw){if(!rolling(o)){draw();return}
-  const [sx,sy]=iso(o.x,o.y),sd=wdirToScreen(o.aim),a=rollPos(o.dgE)*Math.PI*2*(sd.x>=0?-1:1),cy=sy-17*u*FIG/2.2;
+  const [sx,sy]=iso(o.x,o.y),sd=wdirToScreen({x:o.dgX,y:o.dgY}),a=rollPos(o.dgE)*Math.PI*2*(sd.x>=0?1:-1),cy=sy-17*u*FIG/2.2;
   g.save();g.translate(sx,cy);g.rotate(a);g.scale(1,.86);g.translate(-sx,-cy);try{draw()}finally{g.restore()}}
 function itemPlayer(o){
   const p=player,PL=playerLook(o),me=o===p,tag=null;   // v0.9.9: names and health are drawn on the nameplates (16h-nameplates.js)

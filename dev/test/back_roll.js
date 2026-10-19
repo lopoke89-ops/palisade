@@ -1,4 +1,5 @@
-// v0.11.0 (yard-30): the back roll, every class. Solo: V rolls 2 tiles straight back from the aim, the cooldown holds
+// v0.11.0 (yard-30): the roll, every class. Solo: V rolls 2 tiles straight back from the aim when standing still and the
+// way you're moving otherwise, the cooldown holds
 // for 3 s, a wall stops it, a bullet misses during the roll's safe window and hits outside it, and you can't shoot
 // while rolling. Online: a guest's roll travels on the host (the host lets it through its speed check), a second roll
 // inside the cooldown is refused by the host, and the guest sees the host roll. node back_roll.js
@@ -44,6 +45,23 @@ const OPEN = () => { const P = __pal; for (let j = 4; j < P.N - 4; j++) for (let
   out.rightButton = await p.evaluate(() => __pal.player.dgE >= 0);
   assert.ok(out.rightButton, 'the right mouse button rolls');
   await sleep(700);
+  // moving, the roll goes the way you walk, not back from the aim. Aim west (a back roll would go east) and
+  // walk up-left on screen (mostly west on the map): the roll follows the walk, toward the aim
+  await place(); await frames(p, 1);
+  await p.evaluate(() => { const q = __pal.player, s = __pal.scr(q.x - 3, q.y); __pal.setMouse(s[0], s[1], false) }); await frames(p, 2);
+  await p.keyboard.down('a'); await p.keyboard.down('w'); await sleep(200);
+  const m0 = await p.evaluate(() => [__pal.player.x, __pal.player.y]);
+  await p.keyboard.press('v');
+  out.moving = await p.evaluate(() => ({ e: __pal.player.dgE, d: [__pal.player.dgX, __pal.player.dgY], walk: __pal.player.moveDir, aim: __pal.player.aim }));
+  await p.waitForFunction(() => __pal.player.dgE < 0, null, { timeout: 5000 });   // the game clock runs on frames: wait for the landing
+  const m1 = await p.evaluate(() => [__pal.player.x, __pal.player.y]);
+  await p.keyboard.up('w'); await p.keyboard.up('a');
+  const ml = Math.hypot(m1[0] - m0[0], m1[1] - m0[1]), md = [(m1[0] - m0[0]) / ml, (m1[1] - m0[1]) / ml];
+  assert.ok(out.moving.e >= 0, 'V rolls while walking ' + JSON.stringify(out.moving));
+  assert.ok(out.moving.d[0] * out.moving.walk.x + out.moving.d[1] * out.moving.walk.y > .99, 'the roll takes the walking direction ' + JSON.stringify(out.moving));
+  assert.ok(md[0] * out.moving.walk.x + md[1] * out.moving.walk.y > .97 && md[0] * out.moving.aim.x + md[1] * out.moving.aim.y > 0 && ml > 1.9,
+    `and travels that way, toward the aim, not back from it (${ml.toFixed(2)} tiles, ${JSON.stringify(md)})`);
+  await sleep(300);
   // a wall one tile behind stops it, with no catching up
   await place();
   await p.evaluate(() => { const P = __pal, q = P.player, i = Math.floor(q.x) - 1, j = Math.floor(q.y); P.walls[i + j * P.N] = P.makeWallHook(2, false); window.wx = i });

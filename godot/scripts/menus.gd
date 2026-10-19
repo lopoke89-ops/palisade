@@ -837,7 +837,7 @@ func _how_to_play() -> Control:
 	if how_open:
 		var g := UiKit.grid(2, 14)
 		var st: PalSettings = m.settings
-		var keys := "WASD move · mouse aim\nHold click to fire (soldier: bursts) · %s build\n1 2 3 material · %s wall/door\n%s grenade · %s armory at the stake\n%s sprint (quartermaster) · %s rocket (soldier) or stealth (sniper), co-op · %s back roll · %s start raid · Esc pause" % [
+		var keys := "WASD move · mouse aim\nHold click to fire (soldier: bursts) · %s build\n1 2 3 material · %s wall/door\n%s grenade · %s armory at the stake\n%s sprint (quartermaster) · %s rocket (soldier) or stealth (sniper), co-op · %s roll · %s start raid · Esc pause" % [
 			st.keys_label("build"), st.keys_label("piece"), st.keys_label("nade"), st.keys_label("armory"), st.keys_label("sprint"), st.keys_label("special"), st.keys_label("roll"), st.keys_label("start")]
 		var cols := [["TOUCH", "Left thumb: move\nRight thumb: aim, push far to fire\nROCKET / STEALTH: the soldier's and sniper's ability (co-op)\nBUILD: place, upgrade or repair the tile you face. DOOR lets you and Delgado walk through."],
 			["KEYBOARD", keys],

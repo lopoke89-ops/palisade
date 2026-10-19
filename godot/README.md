@@ -38,6 +38,7 @@ Controls (the browser's; every key and controller button can be changed in Setti
 | Grenade | G (at the cursor) | LT |
 | Class ability: Soldier rocket, Sniper stealth | Q | B (the Quartermaster sprints) |
 | Sprint (Quartermaster) | Shift | B |
+| Roll: the way you're moving, or straight back from the aim when standing still | V | RB |
 | Reload (Grenadier) | R | (unset) |
 | Armory, at the stake between raids | E / U | X |
 | Delgado: follow you / defend the stake | H | (unset) |
@@ -202,7 +203,7 @@ The menus, the online lobby and the Locker use the 3D model library (the private
   - The library's 3D lobby environments are not shown: the menus use the painted backgrounds, as in the browser.
 - **In play:** `scripts/view3d/` draws the game in 3D under the 2D HUD (Settings › GRAPHICS › 3D models, on by default; F9 switches it in a game). It only reads the sim, so cross-play is untouched.
   - The camera is orthographic, pitched 30° and turned 45°, so it shows exactly what the 2D projection shows: nameplates, prompts, the crosshair, boss warnings and the night's light pools line up unchanged.
-  - People (`v3_actors.gd`): the soldiers in their outfits, Delgado, the seven raiders and the bosses, pooled, with clips from sim state (walk/strafe/run, firing, shell insert, bolt, throws, the rocket, building, gathering, downed, revive, hit, death, the back roll, and each boss's tell, move and recovery).
+  - People (`v3_actors.gd`): the soldiers in their outfits, Delgado, the seven raiders and the bosses, pooled, with clips from sim state (walk/strafe/run, firing, shell insert, bolt, throws, the rocket, building, gathering, downed, revive, hit, death, the roll (a forward roll the way it goes, or the back roll facing the aim), and each boss's tell, move and recovery).
   - Animated skins: the models are still, so their motion is added. The Galaxy's stars, the Holo's colour bands and the gold skins' glitter are a shader over the body (`shaders/v3/skin_fx.gdshader`, laid on in `ArtLibrary.build`). Outfit auras and glowing ground rings are the 2D's own drawing (`CosFx.paint_aura`, `Wardrobe.ground_glow`) at each person's feet: in a game over the 3D view, and on the menus' stage with the ground part under the crew.
   - The world (`v3_world.gd`, `v3_scenery.gd`): every map's ground and terrain, walls in one MultiMesh, props, the forest and fence, the city and the casino, built from the 2D's own numbers and colours; see-through by the 2D rules.
   - Effects (`v3_fx.gd`): the library's tracer rounds with their profile ribbons, the kill-effect models with the approved motion, particles, fire, things in flight.

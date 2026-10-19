@@ -524,7 +524,7 @@ func do_action(id: String) -> void:
 			_close_armory()
 		return
 	var p: Dictionary = sim.player
-	if id == "roll":   # the back roll: this screen moves its own soldier; a guest tells the host, which keeps the cooldown
+	if id == "roll":   # the roll: this screen moves its own soldier; a guest tells the host, which keeps the cooldown
 		if sim.local_roll() and net.guest():
 			net.send_roll(p.dgX, p.dgY)
 		return
@@ -1334,10 +1334,10 @@ func _draw_scene() -> void:
 						o.nogun = true
 					if p.get("seat", 0):
 						CasinoView.seated(self, p.x, p.y, func(): draw_wardrobe(p.x, p.y, o))
-					elif sim.rolling(p):   # the back roll: tucked, head over heels, away from the aim
+					elif sim.rolling(p):   # the roll: tucked, head over heels, the way it rolls
 						var sc := iso(p.x, p.y)
 						var cy: float = sc.y - 17 * v.u * Figure.FIG / 2.2
-						var a: float = Sim.roll_pos(p.dgE) * TAU * (-1.0 if v.world_dir_to_screen(p.aim).x >= 0 else 1.0)
+						var a: float = Sim.roll_pos(p.dgE) * TAU * (1.0 if v.world_dir_to_screen(Vector2(p.dgX, p.dgY)).x >= 0 else -1.0)
 						cv.draw_set_transform_matrix(Transform2D(0, Vector2(sc.x, cy)) * Transform2D(a, Vector2(1, 0.86), 0, Vector2.ZERO) * Transform2D(0, Vector2(-sc.x, -cy)))
 						draw_wardrobe(p.x, p.y, o)
 						cv.draw_set_transform_matrix(Transform2D.IDENTITY)
