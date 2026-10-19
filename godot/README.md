@@ -12,6 +12,14 @@ It also plays online with the browser (co-op, Base Battle and Free-for-all), has
 
 It opens on the main menu over the demo yard: PLAY, PLAY ONLINE, THE CASINO, FRIENDS, MATCH SETUP (length, map, size, threat, class, modifiers), LOCKER, SKILL TREE, ACCOUNT, INDEX, SETTINGS. Settings and the next game's setup are kept in `user://settings.json`.
 
+Settings › WINDOW has the PC's display settings, which the browser doesn't have:
+- **Display mode:** windowed, fullscreen (borderless) or exclusive fullscreen.
+- **Window size:** 16:9 sizes that fit the screen. The window is centred and can still be resized by hand.
+- **VSync.**
+- **FPS limit:** off, 60, 120, 144 or 240, used while FRAME RATE (the browser's setting) is on AUTO.
+
+The save backup leaves these out, so its code stays the browser's.
+
 ## Run it
 
 1. Install Godot 4.7.x (standard build, not .NET).
@@ -30,6 +38,7 @@ Controls (the browser's; every key and controller button can be changed in Setti
 | Grenade | G (at the cursor) | LT |
 | Class ability: Soldier rocket, Sniper stealth | Q | B (the Quartermaster sprints) |
 | Sprint (Quartermaster) | Shift | B |
+| Roll: the way you're moving, or straight back from the aim when standing still | V | RB |
 | Reload (Grenadier) | R | (unset) |
 | Armory, at the stake between raids | E / U | X |
 | Delgado: follow you / defend the stake | H | (unset) |
@@ -163,16 +172,16 @@ FRIENDS (main menu) needs a signed-in account (not a guest). It uses the same se
 
 ## The casino
 
-THE CASINO (main menu) opens Palisade Falls Casino alone. An online host can also pick the casino as the room's game. The floor is the browser's: seven games, 16 slot cabinets, the Plinko board, dealers, lights and the bar. Nobody fights or builds in there.
+ENTER THE CASINO (TABLES) opens a casino lobby on the casino relay and walks you straight in, as the browser does. Your crew drops in with its `R…` code or an invitation. If you're already hosting a lobby, everyone in it comes too. An online host can also pick the casino as the room's game. The floor is the browser's: seven games, 16 slot cabinets, the Plinko board, dealers, lights and the bar. Nobody fights or builds in there.
 - **Playing:** walk up to a seat and press E (X on a controller) to sit. The table's sheet opens on the right; HIDE puts it away and leaves you seated; STAND UP, Esc or leaving the casino gives the seat back.
 - **Games:** blackjack, hold'em (SLIM sits in), roulette, baccarat, craps, slots and Plinko. They run on the browser's `tables` server, so it holds the shards and decides every result.
   - `scripts/pal_tables.gd` is the browser's table client. Every money move has an operation id that is reused on retries, so a dropped connection never pays twice.
   - `scripts/casino_ui.gd` draws the sheets: bets, chips, cards, dice, the wheel, reels, the Plinko ball, receipts, hand history, house rules and the fair-play seed.
   - CHECK replays a round from its revealed seeds, as the browser does, for every game.
 - **Signing in:** the tables need a signed-in account with an email (not a guest), as in the browser.
-- **Browser casinos:** the desktop game joins a browser-hosted casino by its `R…` code over the casino relay (`scripts/casino_relay.gd`).
+- **The relay:** the desktop game hosts its casino lobbies on the casino relay (`scripts/casino_relay.gd`), and joins browser-hosted ones by their `R…` code. Browsers join the desktop game's casino the same way.
   - The relay lets the desktop game in because it sends no browser Origin (`NATIVE_CLIENTS`, on by default). A relay deployed before that change turns it away, and joining says so.
-  - A casino hosted from the desktop game uses a normal 4-character room, which browsers join as usual.
+  - Someone dropping into a running casino walks in at the entrance, as in the browser.
 - **Music:** the casino has its own shuffled 11-track playlist with crossfades between tracks. Big wins and big losses dip the music under their fanfare.
 
 ## Saves and backup
@@ -180,6 +189,26 @@ THE CASINO (main menu) opens Palisade Falls Casino alone. An online host can als
 - **Best runs:** each length, threat, map, size and modifier set keeps its best run in `user://best.json`. The main menu shows the best for the next game's setup.
 - **Save code:** SETTINGS › SAVE BACKUP copies the browser's own `PALISADE-SAVE-1` code (locker, best runs, settings) and restores from one, so a code from the browser works here and the other way round.
 - **Interrupted runs:** a run in progress is saved as a draft. If the game is closed or crashes, the next start pays what was held.
+
+## The 3D models
+
+The menus, the online lobby and the Locker use the 3D model library (the private repo lopoke89-ops/palisade-3d-model-library).
+- **What's in the game:** `palisade_art/` is the runtime part of the library: its catalog, animation manifest, lobby layouts, weapon profiles and the class, skin, headgear, lobby environment, ring and weapon models. `palisade_art/LIBRARY.txt` names the library commit it came from.
+- **Updating it:** `godot/tools/sync_art.sh /path/to/palisade-3d-model-library` copies a new revision in. Godot then imports the models with the library's settings (60 fps clips, neutral tracks kept, clip names kept, the import script `tools/import/palisade_post_import.gd`). These are set as the scene importer defaults in `project.godot`, so they apply without `.import` files.
+- **Characters:** `scripts/art_library.gd` builds a dressed character from the game's own IDs. It uses the class model for the standard skin and the skin model otherwise, applies the headgear with the library's fit and replacement-head rules, and swaps in the class's weapon (carbine, bolt rifle, pump or SMG) where the skin was posed with another gun.
+- **The stage:** the menus keep the browser's painted lobby background (the equipped one), and `scripts/lobby3d.gd` stands the crew over it in 3D, where the browser paints them.
+  - Each person stands on the browser's stage spot (`Menus.STAGE2D`, a 1000x780 canvas fitted into the page's hero box) at its scale, holding their weapon forward (`Aim_Loop`) and turned as the browser turns them. You turn slowly.
+  - The camera is orthographic and pitched 12.7°, so the pads lie at the browser's flattened ellipse. The page draws the empty spots' "+" and the others' name plates over it (`Menus.Hero2D`, which also paints the 2D figures when the models aren't in a build).
+  - On PLAY and INDEX you stand alone. In an online lobby the whole room stands there, you in front and up to five more. The Locker lifts you to leave room under your feet, as the browser does.
+  - The library's 3D lobby environments are not shown: the menus use the painted backgrounds, as in the browser.
+- **In play:** `scripts/view3d/` draws the game in 3D under the 2D HUD (Settings › GRAPHICS › 3D models, on by default; F9 switches it in a game). It only reads the sim, so cross-play is untouched.
+  - The camera is orthographic, pitched 30° and turned 45°, so it shows exactly what the 2D projection shows: nameplates, prompts, the crosshair, boss warnings and the night's light pools line up unchanged.
+  - People (`v3_actors.gd`): the soldiers in their outfits, Delgado, the seven raiders and the bosses, pooled, with clips from sim state (walk/strafe/run, firing, shell insert, bolt, throws, the rocket, building, gathering, downed, revive, hit, death, the roll (a forward roll the way it goes, or the back roll facing the aim), and each boss's tell, move and recovery).
+  - Animated skins: the models are still, so their motion is added. The Galaxy's stars, the Holo's colour bands and the gold skins' glitter are a shader over the body (`shaders/v3/skin_fx.gdshader`, laid on in `ArtLibrary.build`). Outfit auras and glowing ground rings are the 2D's own drawing (`CosFx.paint_aura`, `Wardrobe.ground_glow`) at each person's feet: in a game over the 3D view, and on the menus' stage with the ground part under the crew.
+  - The world (`v3_world.gd`, `v3_scenery.gd`): every map's ground and terrain, walls in one MultiMesh, props, the forest and fence, the city and the casino, built from the 2D's own numbers and colours; see-through by the 2D rules.
+  - Effects (`v3_fx.gd`): the library's tracer rounds with their profile ribbons, the kill-effect models with the approved motion, particles, fire, things in flight.
+  - Settings › GRAPHICS sets its quality. QUALITY LOW / MEDIUM / HIGH picks a preset of the knobs in `scripts/view3d/quality3d.gd`: shadows, effects density, draw margin, animation rates, MSAA and effect caps. RENDER SCALE (50–100%) draws the 3D smaller and stretches it to fit, leaving the HUD sharp. They are kept in Settings data `gfx3d` and apply at once, in the menus or in a game.
+- **Without the models:** if `palisade_art/` is missing (or `models3d` is off), the menus fall back to the painted backgrounds and the game to the 2D drawing.
 
 ## Windows build
 
@@ -191,12 +220,20 @@ godot/tools/export_windows.sh /path/to/Godot_v4.7.2     # from Linux, macOS or G
 
 Ship the .exe and the .dll together. The .exe is not code-signed: Windows SmartScreen warns on first run until it is signed with a certificate.
 
+To check a build, run `tools/check_export.gd` against the .exe; its header has the command. It loads the game from the pack alone and checks:
+- the model library, and the animated skins' effects;
+- the hub, with its painted background and the 3D player;
+- Settings, with WINDOW and GRAPHICS;
+- a quality preset;
+- a 3D raid, with a forward roll while moving and the back roll standing still;
+- the casino floor.
+
 ## Not yet
 
 - **Steam or Epic:** no store integration (achievements, overlay, friends). That needs the store accounts.
 - **Other platforms:** only Linux and Windows. The WebRTC extension in `addons/webrtc` has no macOS, Android or iOS libraries yet.
 
-Raiders, bosses and Delgado use the browser's flat `drawPerson` figure; players use the shaded wardrobe figure, as in the browser.
+In the 2D drawing (without the models), raiders, bosses and Delgado use the browser's flat `drawPerson` figure; players use the shaded wardrobe figure, as in the browser.
 
 ## Sound
 
@@ -222,6 +259,9 @@ xvfb-run godot --path godot --script res://tests/shot.gd -- /tmp/frost.png map f
 PAL_COS=gsoldier,crown xvfb-run godot --path godot --script res://tests/shot.gd -- /tmp/s.png  # dressed in an outfit
 xvfb-run godot --path godot --script res://tests/cos_shot.gd -- /tmp/cos.png     # tracers and kill effects in play
 xvfb-run godot --path godot --script res://tests/locker_shot.gd -- /tmp/lk      # the Locker and a case opening
+xvfb-run -a godot --path godot --rendering-driver opengl3 --resolution 1600x900 --script res://tests/lobby3d_shot.gd -- /tmp/l3   # the 3D crew: main menu, a room of six, the Locker, a smaller window, each on its browser spot
+xvfb-run -a -s "-screen 0 1920x1080x24" sh -c 'openbox & sleep 1; godot --path godot --rendering-driver opengl3 --script res://tests/display_shot.gd -- /tmp/d'   # Settings › WINDOW on a real window (fullscreen needs a window manager)
+xvfb-run -a godot --path godot --rendering-driver opengl3 --resolution 1600x900 --script res://tests/shot3d.gd -- /tmp/r raid   # the same moment in 3D and in 2D (r_3d.png, r_2d.png), frame times; scenes in the script
 godot --headless --path godot --script res://tests/music_test.gd         # which track each screen and mode plays
 godot --headless --path godot --script res://tests/social_test.gd        # friends, invites, open games (against a stand-in server)
 ```
@@ -233,7 +273,7 @@ Online play and the casino run against local servers, never the live ones:
 | `godot --headless --path godot --script res://tests/net_test.gd` | `node dev/test/peer-server.js` | two Godot games in a room: lobby, start, input, snapshots, building, shopping, chat, leaving |
 | `node godot/tests/cross_game.js` | the peer server and a built site (`dev/build.py`) | Godot and the browser in one game: co-op both ways, a Free-for-all hosted by Godot, a Base Battle hosted by the browser |
 | `godot --headless --path godot --script res://tests/relay_test.gd` | `dev/render` node modules | the casino relay client against the real relay with fake sign-in: joining, resuming, refusals, token refresh, a relay restart |
-| `node godot/tests/relay_cross.js` | the same, and a built site | casinos over the relay with the browser, both ways, and the real game joining a browser casino |
+| `node godot/tests/relay_cross.js` | the same, and a built site | casinos over the relay with the browser, both ways; the real game joining a browser casino; the real game's ENTER THE CASINO with a browser dropping in |
 | `godot --headless --path godot --script res://tests/tables_test.gd` | `dev/test` node modules | every table game against the real `tables` handler on a throwaway Postgres: balances, retries that pay once, CHECK on real and tampered rounds |
 | `xvfb-run godot --path godot --script res://tests/casino_play_shot.gd -- /tmp/c` | the same | the casino floor and a table together: sit, play music, stand up |
 | `xvfb-run godot --path godot --script res://tests/casino_shot.gd -- /tmp/c` | the same | every game's sheet on screen |

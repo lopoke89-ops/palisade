@@ -88,7 +88,8 @@ func _as_host() -> void:
 	var y0: float = g.get("y", 0.0)
 	check(await _wait(func(): return Vector2(g.x - x0, g.y - y0).length() > 0.6, 20), "the browser guest walks; the Godot host sees it (%.2f,%.2f -> %.2f,%.2f)" % [x0, y0, g.x, g.y])
 	_put("moved.txt", "1")
-	# the back roll (yard-30): the browser guest rolls on this host; then this host rolls for the browser to see
+	# the roll (yard-30): the browser guest rolls on this host; then this host rolls for the browser to see, moving east
+	# while it aims south (a moving roll goes the way it moves; a back roll would go north)
 	check(await _wait(func(): return FileAccess.file_exists(dir + "/rollnow.txt"), 20), "the browser is ready to roll")
 	var r0 := Vector2(g.x, g.y)
 	var tp0: int = g.tp
@@ -98,8 +99,9 @@ func _as_host() -> void:
 	var rd := Vector2(g.x, g.y).distance_to(r0)
 	check(rd > 1.2 and rd < 2.3 and g.tp == tp0 and g.dgCd > 0, "it travels on the host without a refused step (%.2f tiles, tp %d -> %d)" % [rd, tp0, g.tp])
 	main.sim.player.aim = Vector2(0, 1)
+	main.sim.move_in = Vector2(1, 0)
 	main.do_action("roll")
-	check(main.sim.rolling(main.sim.player), "the Godot host rolls")
+	check(main.sim.rolling(main.sim.player) and main.sim.player.dgX > 0.99, "the Godot host rolls the way it moves (%.2f, %.2f)" % [main.sim.player.dgX, main.sim.player.dgY])
 	_put("hostrolled.txt", "1")
 	var b0: int = main.sim.game.stats.built
 	check(await _wait(func(): return main.sim.game.stats.built > b0, 20), "the browser guest builds a wall on the host")
@@ -152,11 +154,15 @@ func _as_guest() -> void:
 	check(await _wait(func(): return FileAccess.file_exists(dir + "/hostsaw.txt"), 20), "the browser host saw Godot walk")
 	check(await _wait(func(): return FileAccess.file_exists(dir + "/rollgo.txt"), 20), "the browser host is watching for the roll")
 	s.player.aim = Vector2(1, 0)
+	s.move_in = Vector2(0, 1)   # moving south while aiming east: the roll goes south and the host is told so
 	main.do_action("roll")   # the real action: rolls here and tells the host
-	check(s.rolling(s.player), "Godot rolls")
+	check(s.rolling(s.player) and s.player.dgY > 0.99, "Godot rolls the way it moves")
 	_put("godotrolled.txt", "1")
 	await _wait(func(): return not s.rolling(s.player), 2)
 	check(await _wait(func(): return FileAccess.file_exists(dir + "/hostrolled.txt") and s.rolling(s.players.host), 15), "Godot sees the browser host roll")
+	var h: Dictionary = s.players.host   # it rolled holding D (screen right) while aiming south: Godot reads that off its travel
+	var want: Vector2 = main.v.sdir_to_world(1, 0)
+	check(await _wait(func(): return h.get("rlKnown", false), 3) and Vector2(h.dgX, h.dgY).dot(want) > 0.9, "and draws it the way it went (%.2f, %.2f; %s)" % [h.dgX, h.dgY, want])
 	# build next to us through the real action
 	var built := false
 	for d in [Vector2(0, 1), Vector2(1, 0), Vector2(0, -1), Vector2(-1, 0)]:

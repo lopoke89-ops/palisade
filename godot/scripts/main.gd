@@ -71,6 +71,7 @@ var over_t := 0.0   # the after-action screen comes up a moment after the end
 var arm_sel := 0   # the armory and skill tree rows a key or controller has picked
 var sk_sel := 0
 var fps_label := ""
+var v3: View3D = null   # the 3D view (scripts/view3d): the world drawn with the model library under the 2D HUD
 var fps_n := 0
 var fps_t := 0.0
 
@@ -136,7 +137,7 @@ func _ready() -> void:
 	_resize()
 	v.cam_snap(sim.player.x, sim.player.y, sim.height_at(sim.player.x, sim.player.y))
 	get_viewport().size_changed.connect(_resize)
-	apply_settings()
+	apply_settings()   # and the 3D view (setup_3d)
 	account = PalAccount.new(self)
 	add_child(account)
 	locker.account = account
@@ -162,6 +163,7 @@ func _ready() -> void:
 			if locker != null:
 				locker.shards = n)
 	net.room_closed.connect(func(inc: String): social.unpublish(inc))
+	net.room_opened.connect(_net_room_opened)
 	social.changed.connect(func():
 		if menus.screen == "friends":
 			menus.show_friends()
@@ -176,8 +178,34 @@ func _ready() -> void:
 
 # ---------------------------------------------------------------- the casino
 
-## ENTER THE CASINO alone (online, the room's host picks the casino in the lobby)
+## ENTER THE CASINO (casEnter): open a casino lobby on the relay, so the crew can drop in by its code or an invitation,
+## and walk straight in. Hosting a lobby already: everyone in it comes too. In someone else's room: leave it first.
 func start_casino() -> void:
+	if net.mode == "host" and not net.in_game:
+		net.pick.merge({"mode": "casino", "map": "casino", "pvp": "coop"}, true)
+		net_start()
+		return
+	if net.mode != "solo":
+		menus.online_status("Leave your current crew before opening a casino lobby.")
+		return
+	net.me = net_me()
+	net.pick = {"diff": "normal", "mode": "casino", "pvp": "coop", "map": "casino", "size": "std", "mods": [], "job": ""}
+	net.relay_opts.merge({"token_fn": _relay_token, "uid_fn": func(): return account.uid() if account != null else ""}, false)
+	social.list_game = settings.data.get("listGame", true)
+	net.auto_casino = true
+	menus.online_status("Opening the doors…")
+	net.host_room(true)
+
+
+## the room is open: ENTER THE CASINO goes straight in, no lobby (the browser's autoCasino)
+func _net_room_opened() -> void:
+	if net.auto_casino:
+		net.auto_casino = false
+		net_start()
+
+
+## the casino with nobody else, no room (casSolo): the offline screenshot tests walk in this way
+func casino_alone() -> void:
 	next_opt = {"map": "casino", "size": "std", "mode": "casino", "diff": "normal", "mods": []}
 	next_cls = settings.data.setup.cls
 	demo = false
@@ -449,6 +477,11 @@ func _unhandled_input(e: InputEvent) -> void:
 		return
 	if not (e is InputEventKey and e.pressed and not e.echo):
 		return
+	if e.keycode == KEY_F9:   # graphics: the 3D models on or off (Settings data "models3d"; the settings page can show it)
+		settings.data.models3d = not bool(settings.data.get("models3d", true))
+		settings.save()
+		setup_3d()
+		return
 	if e.keycode == KEY_F8 and OS.is_debug_build():   # developer: bring in the next boss (any boss, any map), editor runs only
 		_dev_boss()
 		return
@@ -491,7 +524,7 @@ func do_action(id: String) -> void:
 			_close_armory()
 		return
 	var p: Dictionary = sim.player
-	if id == "roll":   # the back roll: this screen moves its own soldier; a guest tells the host, which keeps the cooldown
+	if id == "roll":   # the roll: this screen moves its own soldier; a guest tells the host, which keeps the cooldown
 		if sim.local_roll() and net.guest():
 			net.send_roll(p.dgX, p.dgY)
 		return
@@ -612,6 +645,9 @@ func menu_nav(dir: String) -> void:
 	if dir == "back":
 		menus.back()
 		return
+	if dir == "next" or dir == "prev":   # LB / RB: the next or previous page tab
+		menus.page_step(1 if dir == "next" else -1)
+		return
 	if act == "":
 		return
 	var f := get_viewport().gui_get_focus_owner()
@@ -689,31 +725,65 @@ func _demo_game() -> void:
 	v.cam_snap(sim.core.i + 2.5, sim.core.j - 2)
 
 
+## the skill tree is a menu page (menu_pages.gd): from the menus, the pause menu or the after-action screen
 func open_skills() -> void:
-	skills_open = true
-	sk_sel = 0
-	menus.root.visible = false
+	skills_open = false
+	menus.came_from = "main" if demo else ("results" if sim.game.phase == "over" else "pause")
+	menus.show_skills()
 
 
 func _close_skills() -> void:
 	skills_open = false
-	menus.root.visible = true
+	menus.back()
+
+
+## the 3D view on or off (Settings: "models3d"; on by default when the model library is in this build), and its
+## quality knobs (Settings: "gfx3d", see Quality3D). Off, or without the library, the 2D drawing is the world.
+func setup_3d() -> void:
+	Quality3D.load_from(settings.data.get("gfx3d", {}))
+	var want: bool = bool(settings.data.get("models3d", true)) and View3D.available()
+	if want and v3 == null:
+		v3 = View3D.new(self)
+		add_child(v3)
+		ground_key = ""
+	elif not want and v3 != null:
+		v3.queue_free()
+		v3 = null
+		ground_key = ""
+	if v3 != null:
+		Quality3D.apply_viewport(get_viewport())
+	ground.visible = v3 == null
+	front_root.visible = v3 == null
+
+
+var _win_size := ""   # the window size last applied (Settings: winSize), so other settings don't undo a resize by hand
+const _WINDOW_MODE := {"windowed": Window.MODE_WINDOWED, "fullscreen": Window.MODE_FULLSCREEN, "exclusive": Window.MODE_EXCLUSIVE_FULLSCREEN}
 
 
 func apply_settings() -> void:
 	var D: Dictionary = settings.data
+	setup_3d()
 	PalSettings.reduce_motion = D.get("reduceMotion", false)
 	audio.volume = D.volume
 	audio.music_vol = D.music
 	if absf(v.ZOOM - D.zoom) > 0.001:
 		v.ZOOM = D.zoom
 		_resize()
-	Engine.max_fps = 30 if D.fpsMode == "30" else (60 if D.fpsMode == "60" else 0)
+	# FRAME RATE (the browser's) first; on AUTO, this game's FPS LIMIT
+	Engine.max_fps = 30 if D.fpsMode == "30" else (60 if D.fpsMode == "60" else (0 if D.fpsCap == "off" else int(D.fpsCap)))
 	if DisplayServer.get_name() != "headless":
 		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if D.vsync else DisplayServer.VSYNC_DISABLED)
-		var want := DisplayServer.WINDOW_MODE_FULLSCREEN if D.fullscreen else DisplayServer.WINDOW_MODE_WINDOWED
-		if DisplayServer.window_get_mode() != want and (D.fullscreen or DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN):
-			DisplayServer.window_set_mode(want)
+		var w := get_window()
+		var want: Window.Mode = _WINDOW_MODE[D.windowMode]
+		var full := w.mode == Window.MODE_FULLSCREEN or w.mode == Window.MODE_EXCLUSIVE_FULLSCREEN
+		if w.mode != want and (want != Window.MODE_WINDOWED or full):   # a maximized window stays maximized
+			w.mode = want
+			_win_size = ""   # back in a window: its size is applied again
+		if D.windowMode == "windowed" and D.winSize != "" and D.winSize != _win_size:
+			_win_size = D.winSize
+			var sz := PalSettings.size_of(D.winSize)
+			w.size = sz
+			w.position = DisplayServer.screen_get_position(w.current_screen) + (DisplayServer.screen_get_size(w.current_screen) - sz) / 2
 
 
 func _game_opt() -> Dictionary:
@@ -868,7 +938,10 @@ func _process(dt: float) -> void:
 	else:
 		var fol: Dictionary = _cam_target()
 		v.cam_follow(fol.x, fol.y, sh, sim.height_at(fol.x, fol.y))
-	_sync_ground()
+	if v3 != null:
+		v3.frame(dt)
+	else:
+		_sync_ground()
 	_update_light(dt)
 	_update_post(dt)
 	fade_t -= dt
@@ -885,6 +958,8 @@ func _process(dt: float) -> void:
 
 
 func _drain_events() -> void:
+	if v3 != null:
+		v3.events(sim.events)
 	for e in sim.events:
 		match e.k:
 			"sfx":
@@ -1089,7 +1164,11 @@ func mixc(a: String, b: String, t: float) -> Color:
 
 func _draw() -> void:
 	var t_draw := Time.get_ticks_usec()
-	_draw_scene()
+	if v3 != null and v3.visible:
+		v3.paint_labels()   # the world is the 3D view's; its labels and the cosmetic particles draw here
+		_draw_cparts()
+	else:
+		_draw_scene()
 	draw_us = Time.get_ticks_usec() - t_draw
 
 
@@ -1255,10 +1334,10 @@ func _draw_scene() -> void:
 						o.nogun = true
 					if p.get("seat", 0):
 						CasinoView.seated(self, p.x, p.y, func(): draw_wardrobe(p.x, p.y, o))
-					elif sim.rolling(p):   # the back roll: tucked, head over heels, away from the aim
+					elif sim.rolling(p):   # the roll: tucked, head over heels, the way it rolls
 						var sc := iso(p.x, p.y)
 						var cy: float = sc.y - 17 * v.u * Figure.FIG / 2.2
-						var a: float = Sim.roll_pos(p.dgE) * TAU * (-1.0 if v.world_dir_to_screen(p.aim).x >= 0 else 1.0)
+						var a: float = Sim.roll_pos(p.dgE) * TAU * (1.0 if v.world_dir_to_screen(Vector2(p.dgX, p.dgY)).x >= 0 else -1.0)
 						cv.draw_set_transform_matrix(Transform2D(0, Vector2(sc.x, cy)) * Transform2D(a, Vector2(1, 0.86), 0, Vector2.ZERO) * Transform2D(0, Vector2(-sc.x, -cy)))
 						draw_wardrobe(p.x, p.y, o)
 						cv.draw_set_transform_matrix(Transform2D.IDENTITY)
@@ -2324,14 +2403,18 @@ var b_close := Rect2()
 func _arm_buy(key: String) -> void:
 	var p: Dictionary = sim.player
 	var ok: bool
+	if key == "close" or key.begins_with("tab:") or key.begins_with("slot:"):   # the armory's own buttons (ArmoryUI)
+		menus.armory.press(key)
+		return
+	var am := key.substr(5).split(":")   # ammo:<id>[:<slot>]
 	if net.guest():
 		if key.begins_with("ammo:"):
-			net.send_ammo(key.substr(5), 0)
+			net.send_ammo(am[0], int(am[1]) if am.size() > 1 else 0)
 		else:
 			net.send_upgrade(key)
 		return
 	if key.begins_with("ammo:"):
-		ok = sim.buy_ammo(p, key.substr(5))
+		ok = sim.buy_ammo(p, am[0], int(am[1]) if am.size() > 1 else 0)
 	else:
 		ok = sim.buy_upgrade(p, key)
 	if ok:
@@ -2355,60 +2438,10 @@ func _arm_summary(k: String, lv: int) -> String:
 	return out
 
 
+## the armory is drawn by ArmoryUI (armory_ui.gd) over the game; it keeps arm_buttons up to date for the keys and the
+## controller
 func _draw_armory() -> void:
-	arm_buttons.clear()
-	var p: Dictionary = sim.player
-	var gold := c("#e2b436")
-	var paper := c("#e8dcc0")
-	var dim := c("#9a8f7a")
-	cv.draw_rect(Rect2(0, 0, v.W, v.H), Color(0, 0, 0, 0.55))
-	var w := minf(640.0, v.W - 32)
-	var rows: Array = []
-	for U in Sim.UPG:
-		var t: int = p.up[U.k]
-		rows.append({"name": U.name, "lvl": t, "what": _arm_summary(U.k, t), "label": "MAXED" if t >= Sim.ARM_MAX else "%d SAL" % U.cost[t], "dis": t >= Sim.ARM_MAX or p.sal < U.cost[t], "key": U.k})
-	var L: int = sim.game.get("dellLv", 0)
-	rows.append({"name": Sim.DELL_UP.name, "lvl": L, "what": _arm_summary("dell", L), "label": "MAXED" if L >= Sim.ARM_MAX else "%d SAL" % Sim.DELL_UP.cost[L], "dis": L >= Sim.ARM_MAX or p.sal < Sim.DELL_UP.cost[L], "key": "dell"})
-	var full: bool = sim.core.hp >= sim.core.max
-	var cost := sim.core_fix_cost(p)
-	rows.append({"name": "STAKE", "lvl": -1, "what": "%d / %d · +%d health" % [ceili(sim.core.hp), int(sim.core.max), int(Sim.CORE_FIX.hp)], "label": "FULL" if full else "%d SAL" % cost, "dis": full or p.sal < cost, "key": "core"})
-	for A in Sim.AMMO:
-		var eq: bool = p.ammoEq[0] == A.id
-		var ac := 75 if p.ammoEq[0] != "" else 150
-		rows.append({"name": A.name, "lvl": -1, "what": A.what, "label": "EQUIPPED" if eq else "%d SAL" % ac, "dis": eq or p.sal < ac, "key": "ammo:" + A.id, "col": A.col})
-	var rh := 34.0
-	var h := 74.0 + rows.size() * rh + 36
-	var x0 := (v.W - w) / 2
-	var y0 := maxf(10.0, (v.H - h) / 2)
-	cv.draw_rect(Rect2(x0, y0, w, h), c("#16130f"))
-	cv.draw_rect(Rect2(x0, y0, w, h), Color(gold, 0.5), false, 1.5)
-	cv.draw_string(font, Vector2(x0 + 18, y0 + 26), "ARMORY · BETWEEN RAIDS", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, dim)
-	cv.draw_string(font, Vector2(x0 + 18, y0 + 52), "SALVAGE %d" % p.sal, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, gold)
-	cv.draw_string(font, Vector2(x0 + w - 230, y0 + 26), "click or 1-9 · E / Esc closes", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, dim)
-	var y := y0 + 70
-	for n in rows.size():
-		var r: Dictionary = rows[n]
-		if n == 5 or n == 7:
-			cv.draw_line(Vector2(x0 + 12, y + 1), Vector2(x0 + w - 12, y + 1), Color(dim, 0.3), 1.0)
-		var namecol: Color = c(r.col) if r.has("col") else paper
-		cv.draw_string(font, Vector2(x0 + 18, y + 22), ("%d " % (n + 1) if n < 9 else "") + r.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, namecol)
-		if r.lvl >= 0:
-			for k in Sim.ARM_MAX:
-				cv.draw_rect(Rect2(x0 + 190 + k * 11, y + 13, 8, 8), gold if k < r.lvl else Color(dim, 0.35))
-		cv.draw_string(font, Vector2(x0 + (290 if r.lvl >= 0 else 190), y + 22), r.what, HORIZONTAL_ALIGNMENT_LEFT, w - 420 if r.lvl >= 0 else w - 320, 11, dim)
-		var br := Rect2(x0 + w - 116, y + 5, 100, 24)
-		cv.draw_rect(br, Color(gold, 0.12) if not r.dis else Color(0.2, 0.2, 0.2, 0.4))
-		cv.draw_rect(br, Color(gold, 0.8) if not r.dis else Color(dim, 0.4), false, 1.2)
-		var lw := font.get_string_size(r.label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
-		cv.draw_string(font, Vector2(br.position.x + (br.size.x - lw) / 2, y + 22), r.label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, gold if not r.dis else dim)
-		if arm_buttons.size() == arm_sel and inp.mode != "mouse":
-			cv.draw_rect(br.grow(3), c("#f3e9d6"), false, 2.0)
-		arm_buttons.append([br, r.key])
-		y += rh
-	b_close = Rect2(x0 + w / 2 - 60, y + 4, 120, 26)
-	cv.draw_rect(b_close, Color(paper, 0.1))
-	cv.draw_rect(b_close, Color(paper, 0.6), false, 1.2)
-	label("CLOSE", v.W / 2, y + 22, paper, 12)
+	pass
 
 
 func _ring(x: float, y: float, r: float, col: Color, w: float = 2.0) -> void:
@@ -2604,55 +2637,9 @@ func _skills_input(e: InputEvent) -> void:
 			skill_respec()
 
 
+## the skill tree is a menu page now (menu_pages.gd)
 func _draw_skills() -> void:
-	sk_buttons.clear()
-	var gold := c("#e2b436")
-	var paper := c("#e8dcc0")
-	var dim := c("#9a8f7a")
-	cv.draw_rect(Rect2(0, 0, v.W, v.H), Color(0, 0, 0, 0.6))
-	var w := minf(760.0, v.W - 24)
-	var rh := 25.0
-	var rows: Array = PalProfile.SKILLS
-	var h := 84.0 + rows.size() * rh + 40
-	var x0 := (v.W - w) / 2
-	var y0 := maxf(6.0, (v.H - h) / 2)
-	cv.draw_rect(Rect2(x0, y0, w, h), c("#16130f"))
-	cv.draw_rect(Rect2(x0, y0, w, h), Color(gold, 0.5), false, 1.5)
-	cv.draw_string(font, Vector2(x0 + 16, y0 + 24), "SKILL TREE · CHANGES APPLY FROM YOUR NEXT GAME", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, dim)
-	cv.draw_string(font, Vector2(x0 + 16, y0 + 50), "%d SP TO SPEND · %d EARNED IN ALL · NEXT POINT IN %d RAIDS HELD (OR A BOSS)" % [profile.sp, profile.sp_total, 5 - profile.sp_prog], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, gold)
-	var y := y0 + 66
-	var br_last := ""
-	for S in rows:
-		if S.br != br_last:
-			br_last = S.br
-			cv.draw_line(Vector2(x0 + 10, y + 1), Vector2(x0 + w - 10, y + 1), Color(dim, 0.25), 1.0)
-		var lv := profile.level(S.id)
-		var off: bool = S.has("cls") and S.cls != "soldier"
-		var col := Color(paper, 0.45) if off else paper
-		cv.draw_string(font, Vector2(x0 + 16, y + 17), S.br, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, dim)
-		cv.draw_string(font, Vector2(x0 + 112, y + 17), S.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, col)
-		for k in S.max:
-			cv.draw_rect(Rect2(x0 + 268 + k * 10, y + 9, 7, 7), gold if k < lv else Color(dim, 0.35))
-		var what: String = S.what + ("  (other class)" if off else "")
-		cv.draw_string(font, Vector2(x0 + 312, y + 17), what, HORIZONTAL_ALIGNMENT_LEFT, w - 430, 10, dim)
-		var reason := profile.block_reason(S.id)
-		var label_txt: String = ("%d SP" % S.cost[lv]) if reason == "" else ("LOCKED" if reason.begins_with("Needs") else reason)
-		var b := Rect2(x0 + w - 106, y + 2, 92, 20)
-		cv.draw_rect(b, Color(gold, 0.12) if reason == "" else Color(0.2, 0.2, 0.2, 0.4))
-		cv.draw_rect(b, Color(gold, 0.8) if reason == "" else Color(dim, 0.4), false, 1.0)
-		var lw := font.get_string_size(label_txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x
-		cv.draw_string(font, Vector2(b.position.x + (b.size.x - lw) / 2, y + 16), label_txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, gold if reason == "" else dim)
-		if sk_buttons.size() == sk_sel and inp.mode != "mouse":
-			cv.draw_rect(b.grow(3), c("#f3e9d6"), false, 2.0)
-		sk_buttons.append([b, S.id])
-		y += rh
-	sk_reset = Rect2(x0 + 16, y + 8, 150, 24)
-	cv.draw_rect(sk_reset, Color(paper, 0.08))
-	cv.draw_rect(sk_reset, Color(paper, 0.5), false, 1.0)
-	cv.draw_string(font, Vector2(sk_reset.position.x + 14, y + 25), "RESET · 40 SHARDS" if profile.cloud else "RESET ALL POINTS", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, paper)
-	if sk_msg != "":
-		cv.draw_string(font, Vector2(x0 + 180, y + 25), sk_msg, HORIZONTAL_ALIGNMENT_LEFT, w - 420, 11, gold)
-	cv.draw_string(font, Vector2(x0 + w - 220, y + 25), "K / Esc closes", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, dim)
+	pass
 
 
 # ---------------------------------------------------------------- terrain (06b-maps.js, 06d-elevation.js)
@@ -3492,7 +3479,8 @@ func _draw_cparts() -> void:
 	for q in cparts:
 		var g := iso(q.x, q.y)
 		if q.kind.begins_with("finish:"):
-			CosArt.paint_finish(x, q.kind.substr(7), 1.0 - q.life / q.max, u, g.x, g.y - q.z * u)
+			if v3 == null:   # in 3D the kill effect's model is the finisher
+				CosArt.paint_finish(x, q.kind.substr(7), 1.0 - q.life / q.max, u, g.x, g.y - q.z * u)
 			continue
 		if q.kind == "spider":
 			q.top = g.y - v.WH * 2.6
