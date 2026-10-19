@@ -182,7 +182,7 @@ function hostData(peerId,d){
   else if(d.t==='u'){if(typeof d.k==='string'&&(UPG.some(u=>u.k===d.k)||d.k==='core'||d.k==='dell'))buyUpgrade(p,d.k)}
   else if(d.t==='am'){if(typeof d.id==='string'&&AMMO_BY[d.id]&&hostInt(d.slot,0,1))buyAmmo(p,d.id,d.slot)}
   else if(d.t==='rl'){if(p.gun.mag)p.rlReq=true}
-  else if(d.t==='dg'){   // v0.11.0 yard-30: a guest's back roll. The host keeps the cooldown and lets the guest travel the roll's distance on top of its walking pace.
+  else if(d.t==='dg'){   // v0.11.0 yard-30: a guest's roll (any way, not only back). The host keeps the cooldown and lets the guest travel the roll's distance on top of its walking pace.
     if(hostFinite(d.x,-1.1,1.1)&&hostFinite(d.y,-1.1,1.1)&&Math.hypot(d.x,d.y)>.5&&p.alive&&!casino()&&!p.seat&&!rolling(p)&&!(p.dgCd>.35)){startRoll(p,d.x,d.y);c.rollB=ROLL.dist+.15;c.rollUntil=performance.now()+(ROLL.dur+.6)*1000}}
   else if(d.t==='ab'){if(hostFinite(d.x,-HOST_LIMITS.targetPad,N+HOST_LIMITS.targetPad)&&hostFinite(d.y,-HOST_LIMITS.targetPad,N+HOST_LIMITS.targetPad))useAbility(p,d.x,d.y)}
 }
@@ -433,7 +433,7 @@ function applySnap(s){
     p.z=heightAt(v('x'),v('y'));   // v0.9.6.3: worked out here, not sent
     const mine=id===myId;
     if(mine){if(v('tp')!==p.tp){p.x=v('x');p.y=v('y');p.tp=v('tp')}}
-    else{p.tx=v('x');p.ty=v('y');p.aim={x:v('ax'),y:v('ay')};p.tp=v('tp');p.dgE=v('dg')>0?v('dg')-.01:-1}
+    else{const was=p.dgE,ox=p.tx??p.x,oy=p.ty??p.y;p.tx=v('x');p.ty=v('y');p.aim={x:v('ax'),y:v('ay')};p.tp=v('tp');p.dgE=v('dg')>0?v('dg')-.01:-1;rollSeen(p,was,ox,oy)}
     if(v('hp')<p.hp-.01)p.flash=.1;
     p.hp=v('hp');p.alive=!!v('alive');p.downed=!!v('down');p.revive=v('rev');p.rt=v('rt');p.bcd=v('bcd');
     if(v('bolt')>(p.boltF||0)+.05)p.boltF=v('bolt');

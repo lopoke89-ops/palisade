@@ -68,7 +68,8 @@ function localBuild(){
 }
 // quartermaster sprint: 1.4x speed for 2.5 s, no shooting while it lasts, then 6 s to recharge
 const SPRINT={mult:1.4,dur:2.5,cd:6};
-// v0.11.0 (yard-30): the back roll, every class. Straight back from where you aim, 2 tiles in 0.55 s, then 3 s to recharge.
+// v0.11.0 (yard-30): the roll, every class: 2 tiles in 0.55 s, then 3 s to recharge. It goes the way you're
+// moving; standing still, straight back from where you aim (the back roll). The direction travels in 'dg' as before.
 // The travel runs from 0.06 s to 0.45 s (eased); bullets miss you from 0.1 s to 0.4 s (blasts, fire and bosses' moves still hit).
 // Walls stop it (no catching up). It cancels a reload or a burst, and you can't shoot, build or throw while rolling.
 const ROLL={dist:2,dur:.55,cd:3,go:.06,end:.45,safe0:.1,safe1:.4};
@@ -79,8 +80,13 @@ const canRoll=p=>!!p&&p.alive&&!demo&&!casino()&&!p.seat&&!(p.dgCd>0)&&!rolling(
 function startRoll(p,dx,dy){const l=Math.hypot(dx,dy)||1;p.dgX=dx/l;p.dgY=dy/l;p.dgE=0;p.dgCd=ROLL.cd;p.rl=0;p.rlReq=false;p.bLeft=0;sfx('roll',p.x,p.y)}
 // a roll's timers on the host, for everyone but this screen's own soldier (controlLocal moves that one)
 function rollTick(p,dt){p.dgCd=Math.max(0,(p.dgCd||0)-dt);if(!p.alive){p.dgE=-1;return}if(rolling(p)){p.dgE+=dt;if(p.dgE>=ROLL.dur)p.dgE=-1}}
+// A guest isn't told which way someone else rolls (their row has only how far in): it reads it off their travel,
+// from where the roll began, drawing a back roll until they've moved
+function rollSeen(p,was,ox,oy){if(!rolling(p))return;if(!(was>=0)){p.rlFrom=[ox,oy];p.dgX=-p.aim.x;p.dgY=-p.aim.y;p.rlKnown=false}
+  if(!p.rlKnown){const dx=p.tx-p.rlFrom[0],dy=p.ty-p.rlFrom[1],l=Math.hypot(dx,dy);if(l>.2){p.dgX=dx/l;p.dgY=dy/l;p.rlKnown=true}}}
 function localRoll(){const p=player;if(!canRoll(p)||overlayOpen()||chatOpen())return;
-  startRoll(p,-p.aim.x,-p.aim.y);if(NET.mode==='guest')NET.toHost({t:'dg',x:r2(p.dgX),y:r2(p.dgY)})}
+  const [mx,my]=moveIntent(),d=Math.hypot(mx,my)>.12?sdirToWorld(mx,my):{x:-p.aim.x,y:-p.aim.y};
+  startRoll(p,d.x,d.y);if(NET.mode==='guest')NET.toHost({t:'dg',x:r2(p.dgX),y:r2(p.dgY)})}
 function localSprint(){const p=player;if(!p||!p.alive||rolling(p)||!p.C.sprint||demo||(p.sprCd||0)>0)return;const L=(p.perk||PERK0).stride|0;p.sprT=SPRINT.dur+.6*L;p.sprCd=p.sprT+SPRINT.cd-L}   // Long Stride: longer, and back sooner
 // v0.9.3.7 touch aim assist: on a touch screen a grenade or rocket locks onto the nearest raider at least 6 tiles away
 // with nothing solid in between, so the blast can't land on your own walls or crew by accident. Mouse and controller

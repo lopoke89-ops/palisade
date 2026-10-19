@@ -4,7 +4,7 @@
 // Button numbers are the browser's "standard" layout, the same on Xbox, PlayStation and most others.
 const PB={A:0,B:1,X:2,Y:3,LB:4,RB:5,LT:6,RT:7,VIEW:8,MENU:9,LS:10,RS:11,UP:12,DOWN:13,LEFT:14,RIGHT:15,HOME:16};
 // [id, what Settings calls it, default button]. -1 = not on a button until the player puts it on one.
-const PAD_ACTIONS=[['fire','FIRE',PB.RT],['nade','GRENADE',PB.LT],['build','BUILD',PB.A],['special','ABILITY / SPRINT',PB.B],['roll','BACK ROLL',PB.RB],
+const PAD_ACTIONS=[['fire','FIRE',PB.RT],['nade','GRENADE',PB.LT],['build','BUILD',PB.A],['special','ABILITY / SPRINT',PB.B],['roll','ROLL',PB.RB],
   ['armory','ARMORY',PB.X],['piece','WALL / DOOR',PB.Y],['matPrev','MATERIAL BACK',PB.LEFT],['matNext','MATERIAL NEXT',PB.RIGHT],
   ['kit','BUILD KIT',PB.DOWN],['start','START RAID',PB.VIEW],['reload','RELOAD',-1],['delgado','DELGADO ORDERS',-1]];
 const PAD_KEY='palisade.pad.v1';
