@@ -215,7 +215,7 @@ func _scene(scene: String, a: Array) -> void:
 			s.player.aim = Vector2(1, -0.1).normalized()
 			step(10)
 		"casino":
-			main.start_casino()
+			main.casino_alone()
 			s = main.sim
 			step(30 * 3)
 		"roll":

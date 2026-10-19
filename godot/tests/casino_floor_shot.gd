@@ -22,7 +22,7 @@ func _run() -> void:
 		await process_frame
 	main.locker.persist = false
 	main.profile.persist = false
-	main.start_casino()
+	main.casino_alone()
 	var p: Dictionary = main.sim.player
 	p.x = 6.0
 	p.y = 7.0

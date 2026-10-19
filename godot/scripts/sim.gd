@@ -1408,6 +1408,9 @@ func revive_player(p: Dictionary, by = null) -> bool:
 ## respawnAt: next to the stake in co-op; in Base Battle by your own stake; in Free-for-all the arena spot furthest
 ## from everyone still standing
 func respawn_at(p: Dictionary) -> Vector2:
+	if casino():   # one of the casino's entrance spots (CAS.spawn), as someone dropping in walks through the door
+		var sp: Array = CasinoView.SPAWN[floori(rnd() * CasinoView.SPAWN.size())]
+		return Vector2(sp[0], sp[1])
 	if pvp() == "ffa":
 		var S: Array = lay.pspawns
 		var best: Array = S[0]

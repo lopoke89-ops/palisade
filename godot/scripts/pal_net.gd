@@ -31,11 +31,13 @@ signal left(msg: String)   # back to the menu, with why ("" when we chose to)
 signal status(text: String)   # a line for the online page while opening or joining
 signal chat_line(line: Dictionary)   # {id, name, text, col}
 signal room_closed(incarnation: String)   # the host's room is gone: take it off the open games list
+signal room_opened   # the host's room is open (main starts the casino straight away for ENTER THE CASINO)
 
 var sim: Sim
 var peer   # PeerNet (PeerJS), or CasinoRelay for a browser-hosted casino lobby (an R code)
 var relay := false   # this session runs over the casino relay
 var relay_opts := {}   # main fills token_fn and uid_fn for the relay
+var auto_casino := false   # ENTER THE CASINO (NET.autoCasino): the room opens straight into the casino
 var mode := "solo"   # solo, opening, host, joining, guest
 var code := ""
 var my_id := "solo"
@@ -145,6 +147,7 @@ func _new_peer(use_relay: bool = false) -> void:
 	add_child(peer)
 	if use_relay:
 		peer.status.connect(func(t: String): status.emit(t))
+		peer.peer_resumed.connect(_on_peer_resumed)
 	peer.opened.connect(_on_opened)
 	peer.error.connect(_on_error)
 	peer.peer_connected.connect(_on_peer_connected)
@@ -152,15 +155,21 @@ func _new_peer(use_relay: bool = false) -> void:
 	peer.data.connect(_on_data)
 
 
-func host_room() -> void:
+## casino: a player-hosted casino lobby on the relay (rlyEnter('host')): the relay picks the R code
+func host_room(casino: bool = false) -> void:
 	_touch_session()
 	if mode == "opening" or mode == "joining" or is_online():
 		return
 	mode = "opening"
 	status.emit("Opening a room…")
-	_new_peer()
-	code = gen_code()
-	peer.host(code, opts)
+	_new_peer(casino)
+	if casino:
+		var o := relay_opts.duplicate()
+		o.session = session
+		peer.host("", o)
+	else:
+		code = gen_code()
+		peer.host(code, opts)
 
 
 var _invite := ""   # the room incarnation an accepted invitation was for
@@ -195,7 +204,11 @@ func join_room(c: String, invitation: String = "") -> void:
 
 func _on_opened(_id: String) -> void:
 	if mode == "opening":
-		incarnation = PalAccount.new_operation()
+		if relay:   # the relay's code and incarnation name the casino room (R:code:incarnation)
+			code = peer.code
+			incarnation = peer.incarnation
+		else:
+			incarnation = PalAccount.new_operation()
 		mode = "host"
 		my_id = "host"
 		locked = false
@@ -203,7 +216,20 @@ func _on_opened(_id: String) -> void:
 		roster = [{"id": "host", "name": me.name, "cls": me.cls, "cos": me.cos, "team": "a", "sk": me.sk}]
 		status.emit("")
 		broadcast_lobby()
+		room_opened.emit()
 
+
+## host, on the relay: a guest's socket (or ours) came back; it may have missed things, so the next snapshot is a
+## full one in a game, and the lobby otherwise (the browser host sends 'x' and a full snapshot)
+func _on_peer_resumed(_pid: String) -> void:
+	if mode != "host":
+		return
+	if in_game:
+		_wl_sent = PackedByteArray()
+		_pi_sent.clear()
+		_ps_last.clear()
+	else:
+		broadcast_lobby()
 
 func _on_error(type: String, msg: String) -> void:
 	if type == "unavailable-id" and mode == "opening":   # someone has that code: pick another
@@ -238,6 +264,7 @@ func reset() -> void:
 		peer.shutdown()
 		peer.queue_free()
 		peer = null
+	auto_casino = false
 	mode = "solo"
 	in_game = false
 	code = ""

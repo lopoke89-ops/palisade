@@ -2719,6 +2719,8 @@ class Hero2D extends Control:
 		var xf := Lobby3D.canvas_xf(Rect2(Vector2.ZERO, size))
 		var k: float = xf[0]
 		var off: Vector2 = xf[1]
+		if k < 0.05:   # the page is still laying out: no room to draw yet
+			return
 		var t := Time.get_ticks_msec() / 1000.0
 		var me := Lobby3D.me_spot(locker)
 		if figures:

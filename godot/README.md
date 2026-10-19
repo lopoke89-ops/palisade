@@ -171,16 +171,16 @@ FRIENDS (main menu) needs a signed-in account (not a guest). It uses the same se
 
 ## The casino
 
-THE CASINO (main menu) opens Palisade Falls Casino alone. An online host can also pick the casino as the room's game. The floor is the browser's: seven games, 16 slot cabinets, the Plinko board, dealers, lights and the bar. Nobody fights or builds in there.
+ENTER THE CASINO (TABLES) opens a casino lobby on the casino relay and walks you straight in, as the browser does. Your crew drops in with its `R…` code or an invitation. If you're already hosting a lobby, everyone in it comes too. An online host can also pick the casino as the room's game. The floor is the browser's: seven games, 16 slot cabinets, the Plinko board, dealers, lights and the bar. Nobody fights or builds in there.
 - **Playing:** walk up to a seat and press E (X on a controller) to sit. The table's sheet opens on the right; HIDE puts it away and leaves you seated; STAND UP, Esc or leaving the casino gives the seat back.
 - **Games:** blackjack, hold'em (SLIM sits in), roulette, baccarat, craps, slots and Plinko. They run on the browser's `tables` server, so it holds the shards and decides every result.
   - `scripts/pal_tables.gd` is the browser's table client. Every money move has an operation id that is reused on retries, so a dropped connection never pays twice.
   - `scripts/casino_ui.gd` draws the sheets: bets, chips, cards, dice, the wheel, reels, the Plinko ball, receipts, hand history, house rules and the fair-play seed.
   - CHECK replays a round from its revealed seeds, as the browser does, for every game.
 - **Signing in:** the tables need a signed-in account with an email (not a guest), as in the browser.
-- **Browser casinos:** the desktop game joins a browser-hosted casino by its `R…` code over the casino relay (`scripts/casino_relay.gd`).
+- **The relay:** the desktop game hosts its casino lobbies on the casino relay (`scripts/casino_relay.gd`), and joins browser-hosted ones by their `R…` code. Browsers join the desktop game's casino the same way.
   - The relay lets the desktop game in because it sends no browser Origin (`NATIVE_CLIENTS`, on by default). A relay deployed before that change turns it away, and joining says so.
-  - A casino hosted from the desktop game uses a normal 4-character room, which browsers join as usual.
+  - Someone dropping into a running casino walks in at the entrance, as in the browser.
 - **Music:** the casino has its own shuffled 11-track playlist with crossfades between tracks. Big wins and big losses dip the music under their fanfare.
 
 ## Saves and backup
@@ -271,7 +271,7 @@ Online play and the casino run against local servers, never the live ones:
 | `godot --headless --path godot --script res://tests/net_test.gd` | `node dev/test/peer-server.js` | two Godot games in a room: lobby, start, input, snapshots, building, shopping, chat, leaving |
 | `node godot/tests/cross_game.js` | the peer server and a built site (`dev/build.py`) | Godot and the browser in one game: co-op both ways, a Free-for-all hosted by Godot, a Base Battle hosted by the browser |
 | `godot --headless --path godot --script res://tests/relay_test.gd` | `dev/render` node modules | the casino relay client against the real relay with fake sign-in: joining, resuming, refusals, token refresh, a relay restart |
-| `node godot/tests/relay_cross.js` | the same, and a built site | casinos over the relay with the browser, both ways, and the real game joining a browser casino |
+| `node godot/tests/relay_cross.js` | the same, and a built site | casinos over the relay with the browser, both ways; the real game joining a browser casino; the real game's ENTER THE CASINO with a browser dropping in |
 | `godot --headless --path godot --script res://tests/tables_test.gd` | `dev/test` node modules | every table game against the real `tables` handler on a throwaway Postgres: balances, retries that pay once, CHECK on real and tampered rounds |
 | `xvfb-run godot --path godot --script res://tests/casino_play_shot.gd -- /tmp/c` | the same | the casino floor and a table together: sit, play music, stand up |
 | `xvfb-run godot --path godot --script res://tests/casino_shot.gd -- /tmp/c` | the same | every game's sheet on screen |

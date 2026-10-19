@@ -43,6 +43,22 @@
   - On the stage, your aura moves and the others' hold still, as in the browser.
   - Fixed on the way: going into a game and back to the menu crashed once the stage had its aura layer (`menus.close()` freed it).
 
+- **Stage 6: THE CASINO opens an online room.** ENTER THE CASINO now does what the browser's `casEnter` does:
+  - It opens a casino lobby on the relay and walks straight in (`autoCasino`). The crew drops in by the `R…` code or an invitation.
+  - Hosting a lobby already: everyone in it comes too. In someone else's room: "Leave your current crew first".
+  - The button is disabled without an account that can play, as in the browser.
+  - `PalNet.host_room(casino)` hosts on the relay. It takes the relay's code and incarnation (casino room `R:code:incarnation`), and re-sends a full snapshot or the lobby when a guest's socket resumes.
+  - Fixed: someone dropping into a Godot-hosted casino spawned off the map. `respawn_at` lacked the browser's casino branch (`CAS.spawn`); one sim line.
+  - The local casino with no room is now `casino_alone()`, used by the offline screenshot tests.
+  - Fixed: `Hero2D` drew at font size 0 while the page was still laying out (a logged error).
+
+## Verification (Stage 6)
+- All seven suites pass. `casino_play_shot` passes, and `casino_floor_shot` renders the casino.
+- `relay_cross.js` 67/67, against a local relay (`dev/render/relay.js`, native clients on, as deployed). New part 4: the real game presses ENTER THE CASINO, opens a relay casino and walks in; a browser joins by its code. Both walk, chat crosses, and the game closes it ("The host closed this casino.").
+- `cross_game.js` 43/43 (PeerJS crossplay is unchanged).
+- The deployed relay (`palisade-casino-staging.onrender.com/healthz`) reports build `a0fd0ae`, which includes "let in the desktop game". So hosting works against the live relay too (not exercised live).
+- Not specifically tested: going from a hosted lobby into the casino. It is the same start as a host picking the casino in the lobby.
+
 ## Verification (Stage 5)
 - All seven suites pass.
 - `lobby3d_shot` passes, with new checks: the body effects are on Galaxy, Holo and the gold skins, on the body but not the face, and not on a plain skin; the gold Soldier's aura and the Galaxy's glow are painted, with the ground part just under the crew.
@@ -86,8 +102,6 @@
 - The menus leave the 3D crew loaded during games (from the previous session).
 
 ## Proposed next milestone
-Stage 6: THE CASINO opens an online casino room (the relay), as in the browser, instead of a solo room.
+Stage 7: omnidirectional rolling in both the browser and Godot. You roll the way you're looking, and a still roll stays the back roll. It changes the shared sim and the protocol, so both builds move together and crossplay is re-checked.
 
-Queued after it, as you asked:
-- Stage 7: omnidirectional rolling in both the browser and Godot. You roll the way you're looking, and a still roll stays the back roll. It changes the shared sim and the protocol, so both builds move together.
-- Your playtest and performance tuning.
+Then: a fresh Windows build, your playtest and performance tuning.

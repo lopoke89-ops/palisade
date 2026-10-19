@@ -921,9 +921,11 @@ func show_tables() -> void:
 		why = "Sign in to play at the tables."
 	elif A.is_guest():
 		why = "Make an account on the Account page to play at the tables. Guests can't."
+	enter.disabled = why != ""   # as the browser's renderTables: no account, no tables
 	var msg := _l(why, "m4", 12, UiKit.OWARN, 0.0, 1.5, true)
 	msg.visible = why != ""
 	body.add_child(msg)
+	mn._online_msg = msg   # ENTER THE CASINO's progress shows here (tbMsg)
 	body.add_child(UiKit.spacer(4))
 	body.add_child(_l("OR JOIN A FRIEND'S CASINO", "s8", 16, UiKit.OWARN, 0.12))
 	var jr := UiKit.hbox(8)

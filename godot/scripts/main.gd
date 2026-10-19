@@ -163,6 +163,7 @@ func _ready() -> void:
 			if locker != null:
 				locker.shards = n)
 	net.room_closed.connect(func(inc: String): social.unpublish(inc))
+	net.room_opened.connect(_net_room_opened)
 	social.changed.connect(func():
 		if menus.screen == "friends":
 			menus.show_friends()
@@ -177,8 +178,34 @@ func _ready() -> void:
 
 # ---------------------------------------------------------------- the casino
 
-## ENTER THE CASINO alone (online, the room's host picks the casino in the lobby)
+## ENTER THE CASINO (casEnter): open a casino lobby on the relay, so the crew can drop in by its code or an invitation,
+## and walk straight in. Hosting a lobby already: everyone in it comes too. In someone else's room: leave it first.
 func start_casino() -> void:
+	if net.mode == "host" and not net.in_game:
+		net.pick.merge({"mode": "casino", "map": "casino", "pvp": "coop"}, true)
+		net_start()
+		return
+	if net.mode != "solo":
+		menus.online_status("Leave your current crew before opening a casino lobby.")
+		return
+	net.me = net_me()
+	net.pick = {"diff": "normal", "mode": "casino", "pvp": "coop", "map": "casino", "size": "std", "mods": [], "job": ""}
+	net.relay_opts.merge({"token_fn": _relay_token, "uid_fn": func(): return account.uid() if account != null else ""}, false)
+	social.list_game = settings.data.get("listGame", true)
+	net.auto_casino = true
+	menus.online_status("Opening the doors…")
+	net.host_room(true)
+
+
+## the room is open: ENTER THE CASINO goes straight in, no lobby (the browser's autoCasino)
+func _net_room_opened() -> void:
+	if net.auto_casino:
+		net.auto_casino = false
+		net_start()
+
+
+## the casino with nobody else, no room (casSolo): the offline screenshot tests walk in this way
+func casino_alone() -> void:
 	next_opt = {"map": "casino", "size": "std", "mode": "casino", "diff": "normal", "mods": []}
 	next_cls = settings.data.setup.cls
 	demo = false
