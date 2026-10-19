@@ -68,11 +68,11 @@
   - `tools/check_export.gd` now also checks the animated skins' effects, a forward roll while moving, the back roll standing still, and the casino floor, all from the pack.
   - The build is delivered as `Palisade-windows.zip` (240 MB), attached in the chat, not published anywhere.
 
-- **Website v0.11.1 (asked for with Stage 8): built and tested, not published.** The release is two commits on top of `main` (`a0fd0ae`), in the same shape as v0.11.0:
+- **Website v0.11.1 (asked for with Stage 8): published.** `main` was fast-forwarded from `a0fd0ae` to `f13c745`, with your approval. GitHub Pages serves v0.11.1 (cache `palisade-9185e10db3`). The release is two commits, in the same shape as v0.11.0:
   - `8078859`: the Stage 7 browser source, and the footer set to v0.11.1.
   - `f13c745`: the site build (`index.html`, `sw.js`; minified, cache `palisade-9185e10db3`).
   - It carries only the browser files. Merging this branch would also bring the 423 model-library files and Stages 1–6's Godot work onto the public site.
-  - Pushing to `main` was refused by this session's permission check, as a production deploy. The commits exist only in this session's scratch checkout. To redo them: check out `main`, bring in the files above from `f737305`, set the footer, and run `TERSER=… python3 dev/build.py`.
+  - This branch doesn't carry the footer bump or the site build; they're on `main` only.
 - Browser suite on that build: 105/109 on the first run. `back_roll` failed once on its unchanged still-roll check under parallel load, then passed four times. The three `casino_relay_*` tests lacked `dev/render/node_modules` in the scratch checkout and pass with it. So 109/109.
 
 ## Verification (Stage 8)
