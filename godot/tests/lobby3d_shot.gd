@@ -39,6 +39,7 @@ func _run() -> void:
 	main.locker.eq.skin = "std"
 	main.locker.eq.hat = "jackolantern"
 	main.locker.eq.bg = "campfire"
+	main.settings.data.setup.cls = "soldier"   # whatever the machine's own settings say
 	main.menus.show_main()
 	var st: Lobby3D = main.menus.stage
 	check(st != null and st.is_inside_tree() and main.menus.root.get_child(0) is LockerUI.BgView, "the 3D crew stands over the painted background, behind the main menu")
@@ -72,6 +73,18 @@ func _run() -> void:
 	check(ArtLibrary.named(st.slots[1].model, "ClassWeapon") != null, "the sniper in the Sahur skin swapped its carbine for the bolt rifle")
 	check(ArtLibrary.named(st.slots[0].model, "EquippedCosmetic") != null, "the pumpkin head is on")
 	_on_spots(st, main.menus._stage_hero.get_global_rect(), 6)
+	# animated skins: their motion on the body (not the face), their aura and ground glow painted around the model
+	var ov := func(skin: String, slot: String) -> bool:
+		var M := st.lib.build("soldier", {"skin": skin, "hat": "class"})
+		var n := ArtLibrary.named(M, slot) as GeometryInstance3D
+		var on: bool = n != null and n.material_overlay != null
+		M.free()
+		return on
+	check(ov.call("galaxy", "Body") and not ov.call("galaxy", "DefaultFace") and ov.call("holo", "Body") and ov.call("gknight", "Body") and not ov.call("std", "Body"), "Galaxy, Holo and the gold skins move on the body; a plain skin doesn't")
+	st.set_crew("party", [{"name": "Hana", "cls": "soldier", "cos": {"skin": "gsoldier", "hat": "class"}, "ready": true, "slot": 0},
+		{"name": "Gus", "cls": "sniper", "cos": {"skin": "galaxy", "hat": "class"}, "ready": true, "slot": 1}], main.menus._stage_hero.get_global_rect())
+	check(st.slots[0].look.get("aura") == "gsoldier" and st.slots[1].look.get("glow") != null and st.under.get_parent() == main.menus.root and st.under.get_index() == st.get_index() - 1, "the gold Soldier's aura and the Galaxy's glow are painted, the ground part just under the crew")
+	await _shot(pre + "_auras.png")
 	# the Locker
 	main.menus.show_locker()
 	for n in 3:

@@ -153,7 +153,7 @@ func close() -> void:
 	sheet = ""
 	_redo = Callable()
 	for ch in root.get_children():
-		if ch == stage:   # kept (hidden) for the next time the menus open: its models stay loaded
+		if ch == stage or (stage != null and ch == stage.under):   # kept for the next time the menus open: its models stay loaded
 			root.remove_child(ch)
 			continue
 		ch.queue_free()
@@ -162,7 +162,7 @@ func close() -> void:
 func _clear() -> void:
 	for ch in root.get_children():
 		root.remove_child(ch)
-		if ch != stage:
+		if ch != stage and (stage == null or ch != stage.under):
 			ch.queue_free()
 	sheet = ""
 	_sheet_node = null
@@ -178,6 +178,7 @@ func _clear() -> void:
 		if stage == null and Lobby3D.available():
 			stage = Lobby3D.new()
 		if stage != null:
+			root.add_child(stage.under)   # the auras' ground part, under the crew
 			root.add_child(stage)
 
 

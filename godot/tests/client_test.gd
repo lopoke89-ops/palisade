@@ -212,7 +212,7 @@ func _init() -> void:
 	main.to_menu()
 	check(main.demo and main.menus.screen == "main", "MAIN MENU goes back to the demo yard")
 	var bg0 = main.menus.root.get_child(0)
-	check(bg0 is LockerUI.BgView and ((main.menus.root.get_child(1) is Lobby3D) if Lobby3D.available() else true), "outside a game the menus sit on the painted lobby background (the 3D crew over it, when the models are in)")
+	check(bg0 is LockerUI.BgView and (main.menus.root.get_children().any(func(n): return n is Lobby3D) if Lobby3D.available() else true), "outside a game the menus sit on the painted lobby background (the 3D crew over it, when the models are in)")
 	print("accounts (a stand-in server)")
 	print("leaving a run early")
 	main.locker.cloud = {}

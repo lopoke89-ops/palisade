@@ -188,4 +188,26 @@ func build(cls: String, cos: Dictionary, idle_offset: float = 0.0, clip: String 
 			ap.play(clip)
 			ap.seek(fmod(idle_offset, maxf(0.1, ap.current_animation_length)), true)
 	model.set_meta("char_id", cid)
+	_skin_fx(model, str(cos.get("skin", "std")))
 	return model
+
+
+## the skins that move in the browser (o.stars, o.holo, o.glitter): their motion laid over the body (and the Holo's
+## headgear, which is hologram too), not the face or the weapon (shaders/v3/skin_fx.gdshader)
+const SKIN_FX := {"galaxy": 0, "holo": 1, "gclown": 2, "gpolice": 2, "gknight": 2}
+static var _fx_shader: Shader
+
+
+static func _skin_fx(model: Node3D, skin: String) -> void:
+	if not SKIN_FX.has(skin):
+		return
+	if _fx_shader == null:
+		_fx_shader = load("res://shaders/v3/skin_fx.gdshader")
+	var mat := ShaderMaterial.new()
+	mat.shader = _fx_shader
+	mat.set_shader_parameter("kind", SKIN_FX[skin])
+	mat.set_shader_parameter("motion", 0.0 if PalSettings.reduce_motion else 1.0)
+	var slots := ["Body", "DefaultHeadgear"] if skin == "holo" else ["Body"]
+	for n in _all(model):
+		if n is GeometryInstance3D and (String(n.name) in slots or n.get_meta("modular_owner", "") in slots):
+			n.material_overlay = mat

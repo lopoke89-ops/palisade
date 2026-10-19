@@ -36,6 +36,20 @@
   - New `tools/check_export.gd` checks a build from its own pack.
   - `display_shot.gd.uid`, missing from Stage 2, is added.
 
+- **Stage 5: animated skins have their effects.** The 3D models were still and lost the browser's skin effects; they are back in the menus, the Locker and games.
+  - The 30 aura skins have their auras, drawn by the browser's own code at each person's feet.
+  - The eight glow skins (ghost, galaxy, cyber, phantom, storm 1–4) have their glowing ground rings.
+  - Galaxy (stars), Holo (colour bands) and the gold clown, police and knight (glitter) move again, through a shader over the body. Reduce motion holds them still.
+  - On the stage, your aura moves and the others' hold still, as in the browser.
+  - Fixed on the way: going into a game and back to the menu crashed once the stage had its aura layer (`menus.close()` freed it).
+
+## Verification (Stage 5)
+- All seven suites pass.
+- `lobby3d_shot` passes, with new checks: the body effects are on Galaxy, Holo and the gold skins, on the body but not the face, and not on a plain skin; the gold Soldier's aura and the Galaxy's glow are painted, with the ground part just under the crew.
+- It now sets its own class: a crashed `client_test` run had left Sniper in this machine's saved settings.
+- `menus_shot` renders all 22 pages with no script errors or crashes, then the known abort at exit. `display_shot` passes.
+- Side-by-side against the 2D drawing: gold Soldier, Galaxy, Holo, gold Knight, Butcher III and Storm, on the stage and in a 3D raid.
+
 ## Verification (Stage 4)
 - `check_export.gd` against the .exe, using Linux Godot with `--main-pack`: 8 of 8 OK. The model library loads from the pack, and the hub, Settings (WINDOW and GRAPHICS), the LOW preset and a 3D raid all come up. Screenshots were taken of each hub page, Settings and the raid. The only errors are the expected missing Linux WebRTC library, no audio device, and the known abort at exit.
 - Presentation pass: the hub pages match the browser (see Stage 1). A raid and the Butcher fight, rendered at the same moment in 3D and 2D, line up: same camera, HUD, positions and night light. The figures stay blocky.
@@ -72,4 +86,8 @@
 - The menus leave the 3D crew loaded during games (from the previous session).
 
 ## Proposed next milestone
-Your playtest of the Windows build on a real PC. Then performance tuning from what you see: frame rate in busy fights at each quality preset, and the 3D crew left loaded during games.
+Stage 6: THE CASINO opens an online casino room (the relay), as in the browser, instead of a solo room.
+
+Queued after it, as you asked:
+- Stage 7: omnidirectional rolling in both the browser and Godot. You roll the way you're looking, and a still roll stays the back roll. It changes the shared sim and the protocol, so both builds move together.
+- Your playtest and performance tuning.

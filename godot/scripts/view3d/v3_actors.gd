@@ -714,6 +714,17 @@ func _casino_staff(dt: float) -> void:
 func paint_labels() -> void:
 	var m = V.m
 	var u: float = m.v.u
+	for p in sim.players.values():   # outfit auras (16b-auras.js) and glowing ground rings: the models don't carry them, so the 2D's own draw over
+		if p.get("out", false) or not p.alive:
+			continue
+		var o: Dictionary = m.player_look(p)
+		if o.get("aura") or o.get("glow") or o.get("ring"):
+			var sc: Vector2 = m.iso(p.x, p.y)
+			var fa: float = 0.5 if p.stl > 0 else 1.0
+			Wardrobe.ground_glow(m.cv, o, sc.x, sc.y, u * Figure.FIG, fa)
+			if o.get("aura"):
+				CosFx.paint_aura(m.cv, o.aura, sc.x, sc.y, u * Figure.FIG, sim.game.time, fa, "ground")
+				CosFx.paint_aura(m.cv, o.aura, sc.x, sc.y, u * Figure.FIG, sim.game.time, fa, "top")
 	for e in sim.enemies:
 		if e.dead or e.type != "boss":
 			continue

@@ -5,7 +5,9 @@ extends SubViewportContainer
 ## their pads. Each one stands on the browser's stage canvas (19b-social-lobby.js STAGE, Menus.STAGE2D: a 1000x780
 ## canvas fitted into the page's hero box), at its scale, turned as the browser turns them; the camera is
 ## orthographic and pitched so the pads lie at the browser's 0.22 squash. Slot 0 is this screen's player, in front.
-## The empty spots' "+" and the others' name plates are drawn over it by the page (Menus.Hero2D).
+## The empty spots' "+" and the others' name plates are drawn over it by the page (Menus.Hero2D). Outfit auras
+## (16b-auras.js) are the browser's own drawing: their ground part on `under`, which the menus put just below this
+## layer, the rest on `over`, above the models; yours moves, the others' hold still, as in the browser.
 
 const PITCH := 12.7   # degrees down: sin(12.7°) = 0.22, the browser's pad ellipse
 const FIG := 39.2   # the browser's figure is this many canvas units tall per unit of stage scale
@@ -23,7 +25,9 @@ var party_root: Node3D
 var mode := "solo"
 var crew: Array = []   # [{name, cls, cos: Dictionary, ready, slot}] (slot 0 first)
 var hero := Rect2()   # the page's hero box, in this control's coordinates
-var slots: Array = []   # per slot: {node, ring, mats, fill, model, key}
+var slots: Array = []   # per slot: {node, ring, mats, fill, model, key, at, k, look}
+var under := Control.new()
+var over := Control.new()
 var _ref_h := 0.0   # the standard Soldier's height at scale 1: every outfit is scaled by it, not by its own hat
 var _size := Vector2.ZERO
 
@@ -72,6 +76,12 @@ func _init() -> void:
 	world.add_child(rim)
 	party_root = Node3D.new()
 	world.add_child(party_root)
+	for c in [under, over]:
+		c.set_anchors_preset(Control.PRESET_FULL_RECT)
+		c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	under.draw.connect(func(): _paint_auras(under, "ground"))
+	over.draw.connect(func(): _paint_auras(over, "top"))
+	add_child(over)
 
 
 ## who stands on the stage: mode "solo" (this player), "party" (the room, this player in slot 0) or "locker"; box: the
@@ -144,7 +154,7 @@ func _layout() -> void:
 		fm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 		fill.material_override = fm
 		node.add_child(fill)
-		slots.append({"node": node, "ring": ring, "mats": mats, "fill": fill, "model": null, "key": ""})
+		slots.append({"node": node, "ring": ring, "mats": mats, "fill": fill, "model": null, "key": "", "look": {}})
 	for i in slots.size():
 		var S: Dictionary = slots[i]
 		var who: Dictionary = crew[i] if i < crew.size() else {}
@@ -154,6 +164,8 @@ func _layout() -> void:
 		var sp: Array = spots[i]
 		# the feet on the canvas point (the browser paints the figure 4 units up), back rows further from the camera
 		var at := off + Vector2(float(sp[0]), float(sp[1]) - 4.0) * k
+		S.at = at
+		S.k = float(sp[2]) * k
 		S.node.position = cam.project_position(at, 40.0 + (780.0 - float(sp[1])) * 0.05)
 		S.node.rotation.y = 0.0 if i == 0 else [0.62, -0.62, 0.5, -0.5, 0.1][i - 1]   # slot 0 turns in _process
 		var sc := float(sp[2]) * k / ppu   # one canvas unit of this figure, in world units
@@ -168,6 +180,7 @@ func _layout() -> void:
 				S.model.queue_free()
 				S.model = null
 			S.key = key
+			S.look = {} if who.is_empty() else Wardrobe.look_for(who.cos, who.cls)
 			if not who.is_empty():
 				S.model = lib.build(who.cls, who.cos, 0.37 * i, "Aim_Loop")
 				if S.model != null:
@@ -177,6 +190,22 @@ func _layout() -> void:
 		for mat in S.mats:
 			mat.albedo_color = PAD if not who.is_empty() else PAD_EMPTY
 		S.fill.material_override.albedo_color = FILL if not who.is_empty() else FILL_EMPTY
+	under.queue_redraw()
+	over.queue_redraw()
+
+
+## the auras of everyone standing here (this player's moving, as stageMe; the others' held at one moment), and under
+## them the skins' glowing ground rings
+func _paint_auras(ci: CanvasItem, part: String) -> void:
+	var t := Time.get_ticks_msec() / 1000.0
+	for i in slots.size():
+		var S: Dictionary = slots[i]
+		if S.look.is_empty() or not S.node.visible or S.model == null:
+			continue
+		if part == "ground":
+			Wardrobe.ground_glow(ci, S.look, S.at.x, S.at.y, S.k)
+		if S.look.get("aura"):
+			CosFx.paint_aura(ci, S.look.aura, S.at.x, S.at.y, S.k, t if i == 0 and not PalSettings.reduce_motion else 1.3, 1, part)
 
 
 ## the top of a dressed model (its hat included), in world height
@@ -198,3 +227,6 @@ func _process(_dt: float) -> void:
 	if not slots.is_empty():   # this player turns slowly, as in the browser (stageAngle)
 		var t := Time.get_ticks_msec() / 1000.0
 		slots[0].node.rotation.y = 0.35 + (0.0 if PalSettings.reduce_motion else sin(t / 4.5) * 0.09)
+		if slots[0].look.get("aura"):
+			under.queue_redraw()
+			over.queue_redraw()
