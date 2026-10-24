@@ -75,6 +75,16 @@
   - This branch doesn't carry the footer bump or the site build; they're on `main` only.
 - Browser suite on that build: 105/109 on the first run. `back_roll` failed once on its unchanged still-roll check under parallel load, then passed four times. The three `casino_relay_*` tests lacked `dev/render/node_modules` in the scratch checkout and pass with it. So 109/109.
 
+- **Stage 9: playtest results and an in-game HUD plan.**
+  - Your playtest of the Stage 8 build on Windows ran smoothly, so no performance tuning was needed.
+  - Your one complaint was the in-game UI: not as detailed as the browser's. As you asked, it's planned, not changed. `dev/plans/godot-ingame-hud.md` lists every difference and proposes four stages (H1–H4).
+  - No game code changed.
+
+## Verification (Stage 9)
+- The same in-game moments were captured in the browser (built from `dev/src`, Playwright) and in Godot at 1600×900: build phase, raid, boss, armory, skill tree, pause, down, after action, Black Out, Base Battle and Free-for-all. The plan's table comes from comparing them, and from the browser's `hud()` and `style.css`.
+- Already matching: the armory, the pause menu, the skill tree and the after-action screen (ported pages). The gap is the live HUD drawn in `main.gd` `_draw_hud()`, which also uses Godot's default font rather than the browser's stencil and mono fonts.
+- The screenshots stay in this session's scratch, since they show the private 3D art. They aren't committed.
+
 ## Verification (Stage 8)
 - `check_export.gd` against the new .exe (Linux Godot, `--main-pack`): 12 of 12 OK. The only errors are the expected missing Linux WebRTC library, no audio device, and the known abort at exit.
 - Screenshots from the pack: each hub page, Settings, a raid and the casino floor.
@@ -136,4 +146,4 @@
 - The menus leave the 3D crew loaded during games (from the previous session).
 
 ## Proposed next milestone
-Stage 9: your playtest on Windows, and performance tuning from what it shows (frame times in a full raid and a Black Out push on real hardware, then the 3D quality presets).
+Stage 10 (HUD H1): rebuild the HUD's top right as controls in the browser's fonts and styles. That's the phase box (label, clock, raid count), the CORE / STAKE / COMMAND and ENEMY meters, the Delgado chip, salvage, the START button with its key cap, the pause and chat buttons, and the tip box. It's checked box by box against the browser at 1600×900 and 1280×720. Display only: no sim, network or crossplay changes.
