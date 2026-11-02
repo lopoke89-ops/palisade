@@ -92,6 +92,33 @@
   - **Scale:** the HUD keeps CSS pixels up to 1600×900 and scales up past it, so at 1280×720 it is the browser's size, not shrunk.
   - Still painted until H2–H4: the bottom-left panel, banners, boss bar, kill-feed style, chat lines.
 
+- **Stage 11 (HUD H2): the build kit, built as the browser builds it.** The browser's kit column (`#kit`, desktop sizes) replaces the painted bottom-left panel. Every button shows its state and works with mouse and touch:
+  - BUILD ON/OFF.
+  - WALL / DOOR (F).
+  - WOOD / BRICK / METAL: key caps, counts, locked R2/R4, and the picked one's yellow edge.
+  - The yellow PLACE button: what Space does and its cost, or grey with why not.
+  - ARMORY: faint and dashed away from the stake, pulsing when something's affordable.
+  - NADE, SPRINT, ROLL and ROCKET / STEALTH: counts and cooldowns (READY, 3s, GO), fading when empty.
+  - Like the browser, the column widens past its right edge when a button needs more room (the Quartermaster's SPRINT SHIFT READY).
+  - In pad mode the key caps show controller buttons; on touch they hide.
+- **The build-kit switch:** the browser's B / d-pad down, now a Godot action (BUILD KIT) and setting (`build`; the save backup already carried it). Off, Space builds nothing and the ghost hides.
+- **The build ghost** is the browser's in 2D and 3D: a dashed outline, yellow or red, with the piece faint where it would go (a door shows its slab). The floating "PLACE · 4 WOOD" label goes.
+- **Gone with the panel:** the health bar (health is on the nameplates, as in the browser since v0.9.9), the Delgado line (the phase box's button), the AMMO line (the armory shows it) and DROPS.
+- **Touch** uses the kit, as the browser does, so the painted touch buttons that copied it are gone; the thumb sticks stay. A touch on a HUD button isn't a stick.
+
+## Verification (Stage 11)
+- **New test checks:** `tests/hud_shot.gd` now also measures every kit box against the browser's, for build, raid, Black Out, Base Battle, Free-for-all, kit off and a Quartermaster, at 1600×900 and 1280×720. All are within 5 px; the worst is 4.4 px (SALVAGE 40).
+  - Layout uses the browser's exact letter-spacing, and the count text's synthetic bold, even where Godot draws to the whole pixel.
+  - It also presses BRICK, DOOR, WALL, WOOD, PLACE, and BUILD ON/OFF (off, Space builds nothing). It checks that NADE fades and that ROCKET counts the rockets.
+- **Suites:** all seven pass.
+- **Crossplay:** `cross_game.js` 45/45.
+- **Screenshot tests:**
+  - `lobby3d_shot` passes.
+  - `menus_shot` passes, then the known abort at exit.
+  - `shot3d raid` (3D and 2D), `casino_play_shot` and `shot city` render with no script errors.
+- **Compared by eye:** the kit against the browser's for a Soldier and a Quartermaster, and the ghosts in 3D and 2D.
+- **Not done:** a Windows build of this stage.
+
 ## Verification (Stage 10)
 - **New test against the browser:** `tests/hud_shot.gd` measures every box of the phase box and tip against the browser's own (`tests/hud_ref.json`, made by `tests/hud_ref.js` from the built site). It covers build, raid, Black Out, Base Battle and Free-for-all, at 1600×900 and 1280×720.
   - All ten are within 5 px. The largest gap is SALVAGE 40, 4.4 px wider because Godot rounds letter-spacing to whole pixels.
@@ -171,9 +198,10 @@
 - The menus leave the 3D crew loaded during games (from the previous session).
 
 ## Proposed next milestone
-Stage 11 (HUD H2): the build kit. The browser's right-hand column, every button with its state, count and cooldown, and clickable:
-- BUILD ON/OFF, WALL / DOOR, WOOD / BRICK / METAL with key caps and locks;
-- the yellow PLACE button with its cost or why not;
-- ARMORY (pulsing when you can afford something), NADE, ROLL, SPRINT, ROCKET / STEALTH.
+Stage 12 (HUD H3): messages. Each piece is checked against the browser as H1 and H2 were:
+- the key bar along the bottom (your keyboard bindings, or the controller's buttons);
+- the browser's banners with their colours, queue and placement;
+- stacked boss bars with weakness, percent and ENRAGED;
+- the kill feed's style, and the Free-for-all board's place beside it.
 
-It also brings the browser's dashed yellow target outline. The bottom-left panel and the floating PLACE label go. It's checked box by box against the browser, as H1 was.
+Then H4 (Black Out's mini-map frame, the casino, chat, the respawn picker, phone layout), and a Windows build for your playtest.
