@@ -1,6 +1,6 @@
 extends SceneTree
 ## The exported game, checked from its own pack: the model library, the hub (painted background, the 3D player),
-## Settings (WINDOW and GRAPHICS), a quality preset, a 3D raid with the animated skins and both rolls, and the casino
+## Settings (WINDOW and GRAPHICS), a quality preset, a 3D raid with the HUD, the animated skins and both rolls, and the casino
 ## all come up with nothing but the pack. Exports leave
 ## tools/ out, so this runs from the folder, against the .exe (WebRTC's Linux library missing is expected):
 ##   xvfb-run -a godot --main-pack export/palisade/Palisade.exe --rendering-driver opengl3 --resolution 1600x900 \
@@ -81,6 +81,8 @@ func _run() -> void:
 		await process_frame
 	await _shot(pre + "_raid.png", 4)
 	check(main.v3 != null and main.v3.visible and not main.demo, "a game starts in 3D")
+	var h: Hud = main.hud
+	check(h.visible and h.lab.text != "" and h.kit.nade.is_visible_in_tree() and h.keys_c.visible and UiKit.face("s9") != null, "the HUD is up in the browser's look: the phase box, the kit, the key bar, its fonts (%s)" % h.lab.text)
 	var s: Sim = main.sim   # rolls (Stage 7): moving, the way you move, a forward roll; standing still, the back roll
 	for want in [[Vector2(0, 1), "Dodge_Forward_IP"], [Vector2.ZERO, "Dodge_Backward_IP"]]:
 		var p: Dictionary = s.player

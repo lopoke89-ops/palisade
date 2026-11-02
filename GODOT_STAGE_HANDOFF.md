@@ -123,6 +123,34 @@
     - The browser shows no ENRAGED, so Godot doesn't either. The Black Out mini-map steps below them.
   - **Chat:** T opens it online, as in the browser (Enter still does too).
 
+- **Stage 13 (HUD H4): the rest of the HUD, and a Windows build of Stages 10–13.** The painted HUD is gone; all of it is now the browser's.
+  - **Black Out's mini-map** as `boMapDraw` draws it:
+    - POIs lit while held, blinking red under attack, crossed out once lost, the next one pulsing;
+    - bosses, the crew and you;
+    - fading under a banner that covers it and stepping below the boss bars;
+    - the browser's arrow to a POI under attack off screen comes with it.
+  - **The room's chat:**
+    - the log at the bottom left: eight lines, each fading 9 s after it came, all back while typing;
+    - the bar at the top with SEND and the quick lines (NICE, HELP!, ON MY WAY, WALL DOWN, NEED MATS, GG).
+    - Typing no longer walks the soldier: Godot read WASD from the keyboard even while the chat line had it.
+  - **NEXT LIFE AS:** the class for your next life, while down in a Free-for-all (not when the room fixes the class).
+  - **The casino's SIT / PLAY / TABLE button** on touch.
+  - **Downed and spectating:** the browser has no HUD for them beyond the world's DOWN · n label, which Godot already had.
+  - **Not ported: phone sizes.** Godot exports only to Windows, where touch uses the desktop layout (the kit and the phase box's buttons work by touch).
+  - **Removed as unused:** `CityView.minimap` and `CityView.phase_text`.
+  - **Windows build:** `export/palisade/Palisade.exe`, delivered as `Palisade-windows.zip` in the chat. `check_export.gd` gained a check that the HUD comes up in the browser's look from the pack.
+
+## Verification (Stage 13)
+- **New test checks:** `tests/hud_shot.gd` now also measures the chat log line by line, the chat bar and its quick lines, and NEXT LIFE AS against the browser's. It covers fourteen states at two sizes, all within 5 px.
+  - In the chat state the test stands in a room (online, no peer). Its phase label and key bar aren't compared there, since the browser's reference is offline.
+  - Stencil text is measured unhinted (at ten times the size), as the browser lays it out.
+- **Compared by eye:** the mini-map, the chat bar and NEXT LIFE AS against the browser.
+- **Suites:** all seven pass. `tables_test` hit its known intermittent seed check once more (see Stage 12), then passed three times.
+- **Crossplay:** `cross_game.js` 45/45.
+- **Screenshot tests:** `lobby3d_shot`, `menus_shot` (then the known abort), `shot3d raid`, `casino_play_shot` and `shot city` run without script errors.
+- **The Windows build**, checked from its own pack (`check_export.gd`): 13 of 13 OK. The export log has no errors.
+- **Not done:** running it on Windows itself; that's your playtest.
+
 ## Verification (Stage 12)
 - **New test checks:** `tests/hud_shot.gd` now checks the key bar item by item (keys, words and boxes), the banner, the feed lines and the boss bars' box against the browser's. It covers twelve states at 1600×900 and 1280×720: a phase banner with two feed lines, a minor banner, and one, three and four bosses joined the earlier seven. All are within 5 px.
   - Mono text is laid out at the browser's exact 0.6 em a letter.
@@ -229,12 +257,10 @@
 - The menus leave the 3D crew loaded during games (from the previous session).
 
 ## Proposed next milestone
-Stage 13 (HUD H4): the rest of the browser's HUD.
-- Black Out: the mini-map's frame and colours, and its fading under banners.
-- The casino's HUD.
-- The chat log and bar with SEND and the quick lines.
-- The Free-for-all respawn class picker.
-- The down and spectating states.
-- Touch on phone sizes, the browser's non-desktop layout.
+Your playtest of the Stage 13 Windows build. Then, from what it shows, either:
+- performance: O1, the in-game benchmark, then drawing less each frame; see the plan in the chat of Stage 10's turn;
+- or the next gaps you find.
 
-Then a Windows build of Stages 10–13 for your playtest.
+Two small test fixes are worth a stage when convenient:
+- `tables_test`'s seed check fails when the random seed already starts with "f";
+- `shot3d raid` assumes a wall survives random play.
