@@ -1,8 +1,9 @@
 class_name Hud
 extends Control
-## The in-game HUD, built as the browser builds it (page.html #top, #tip; style.css; hud() in 11-hud-chat.js), not
+## The in-game HUD, built as the browser builds it (page.html #top, #tip, #kit; style.css; hud() in 11-hud-chat.js), not
 ## painted: the phase box at the top right (the phase, its clock, the core or stake meters, Delgado's button, salvage,
-## START, the Free-for-all board, pause and chat) and the tip under it. Sizes are the browser's desktop CSS pixels
+## START, the Free-for-all board, pause and chat), the tip under it, and the build kit down the right (BUILD ON/OFF,
+## WALL/DOOR, the materials, PLACE, ARMORY, NADE, SPRINT, ROLL, the class ability), every button pressable. Sizes are the browser's desktop CSS pixels
 ## (body.desk), one CSS pixel to a screen pixel up to 1600x900 and scaled up past it, as a browser on a bigger screen.
 ## The world-anchored parts (nameplates, prompts, the crosshair, floating text) stay painted in main.gd.
 
@@ -40,6 +41,9 @@ var chat_b: Button
 var board: VBoxContainer
 var tip_p: PanelContainer
 var tip_l: Label
+var kit := {}   # the build kit's buttons (#kit): bm, wall, door, c0-c2, build, arm, nade, spr, roll, ab; and pk, its F
+var kit_box := Rect2()   # the kit column, in screen pixels
+var _kcs: Array = []   # [label, background] of every key cap, restyled with the scale
 var _rx := RegEx.new()
 var _fonts := {}
 var _ls := {}
@@ -84,6 +88,52 @@ class Meter extends Control:
 		draw_rect(r.grow(-bw / 2), Hud.RUST if alarm else Hud.LINE, false, bw)
 
 
+## a kit button: the browser's box (background, solid or dashed border, the picked chip's yellow edge) round its own
+## parts, which the kit lays out; it fires as the browser's tapBtn does, on the press
+class KitBtn extends Button:
+	var h: Hud
+	var bg := Color(27 / 255.0, 24 / 255.0, 20 / 255.0, 0.86)
+	var line := Hud.LINE
+	var dashed := false
+	var bar := false   # .chip.sel::before: 3 px of yellow down the left edge
+	var parts := {}
+
+	func _init(hud: Hud, cb: Callable) -> void:
+		h = hud
+		flat = true
+		focus_mode = Control.FOCUS_NONE
+		mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
+		pressed.connect(cb)
+
+	func part(key: String, l: Label) -> Label:
+		parts[key] = l
+		add_child(l)
+		return l
+
+	func look(nbg: Color, nline: Color, ndash: bool = false, nbar: bool = false) -> void:
+		if nbg != bg or nline != line or ndash != dashed or nbar != bar:
+			bg = nbg
+			line = nline
+			dashed = ndash
+			bar = nbar
+			queue_redraw()
+
+	func _draw() -> void:
+		var r := Rect2(Vector2.ZERO, size)
+		draw_rect(r, bg)
+		var bw := maxf(1.0, roundf(h.s))
+		if line.a > 0:
+			if dashed:
+				var q := [Vector2(bw / 2, bw / 2), Vector2(size.x - bw / 2, bw / 2), Vector2(size.x - bw / 2, size.y - bw / 2), Vector2(bw / 2, size.y - bw / 2)]
+				for k in 4:
+					draw_dashed_line(q[k], q[(k + 1) % 4], line, bw, 3 * h.s)
+			else:
+				draw_rect(r.grow(-bw / 2), line, false, bw)
+		if bar:
+			draw_rect(Rect2(0, 0, roundf(3 * h.s), size.y), Hud.WARN)
+
+
 func _init(main) -> void:
 	m = main
 	_rx.compile(TOAST_PHASE)
@@ -119,6 +169,7 @@ func _init(main) -> void:
 	tip_p.add_child(tip_l)
 	for c in [lab, val, note_l, salv, core_m, core2_m, qm_b, skip_b, pause_b, chat_b, board, tip_p]:
 		add_child(c)
+	_make_kit()
 	_restyle()
 
 
@@ -226,6 +277,16 @@ func _restyle() -> void:
 	tb.content_margin_top = roundf(7 * s)
 	tb.content_margin_bottom = roundf(7 * s)
 	tip_p.add_theme_stylebox_override("panel", tb)
+	for b in kit.values():
+		if b is KitBtn:
+			for l in b.parts.values():
+				var st: Array = l.get_meta("st")
+				l.label_settings = ls(st[0], st[1], st[2], st[3], false, st[4])
+			b.queue_redraw()
+	var pst: Array = kit.pk.get_meta("st")
+	kit.pk.label_settings = ls(pst[0], pst[1], pst[2], pst[3], false, pst[4])
+	for k in _kcs:
+		k[0].add_theme_stylebox_override("normal", _sb(k[1], Color(0, 0, 0, 0), 0, 2))
 	_sig = ""
 	_board_rows([])
 
@@ -431,6 +492,8 @@ func _process(_dt: float) -> void:
 		var n: Control = {"core": core_m, "core2": core2_m, "salv": salv, "qm": qm_b, "skip": skip_b, "board": board, "chat": chat_b}[k]
 		n.visible = on[k]
 	_layout()
+	_kit_update(sim, p, pv)
+	_kit_layout()
 
 
 ## the Black Out phase (boHudPhase): [label, value, colour, START shown, START's label]
@@ -498,12 +561,15 @@ func _board_rows(rows: Array) -> void:
 
 # ---------------------------------------------------------------- layout (the desktop grid: body.desk #top .phase)
 
-## a label's natural width in CSS pixels
+## a label's natural width in CSS pixels, as the browser lays it out: the letters, then the letter-spacing exactly
+## (Godot draws it rounded to whole pixels), and for bold (<b>) Chrome's synthetic bold, size/30 a letter wider
 func _w(l: Label) -> float:
 	if l.text == "":
 		return 0.0
-	var st := l.label_settings
-	return st.font.get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, st.font_size).x / s
+	var st: Array = l.get_meta("st")
+	var n := l.text.length()
+	var w: float = UiKit.face(st[0]).get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, l.label_settings.font_size).x / s
+	return w + st[3] * st[1] * n + (st[1] / 30.0 * n if l.get_meta("bold", false) else 0.0)
 
 
 func _btn_w(b: Button, pad: float, bw: float) -> float:
@@ -641,7 +707,299 @@ func has_pointer(pos = null) -> bool:
 	if not visible:
 		return false
 	var mp: Vector2 = get_local_mouse_position() if pos == null else pos
-	for b in [qm_b, skip_b, pause_b, chat_b]:
-		if b.visible and Rect2(b.position, b.size).has_point(mp):
+	for b in [qm_b, skip_b, pause_b, chat_b] + kit.values().filter(func(k): return k is KitBtn):
+		if b.is_visible_in_tree() and Rect2(b.global_position - global_position, b.size).has_point(mp):
 			return true
 	return false
+
+
+# ---------------------------------------------------------------- the build kit (#kit, style.css body.desk sizes)
+
+const KIT_BG := Color(27 / 255.0, 24 / 255.0, 20 / 255.0, 0.86)
+const ACT := {   # the action buttons: border, text and key-cap colour, and the "on" look
+	"nade": {"line": Color("#b0512f"), "col": Color("#e58a64")},
+	"spr": {"line": Color("#6f9a7c"), "col": Color("#9fd6ae"), "on": Color(60 / 255.0, 98 / 255.0, 70 / 255.0, 0.92)},
+	"roll": {"line": Color("#8a8fa8"), "col": Color("#c9cde0"), "on": Color(70 / 255.0, 74 / 255.0, 98 / 255.0, 0.92)},
+	"ab": {"line": Color("#c9a05a"), "col": Color("#f0cf8a"), "on": Color(70 / 255.0, 90 / 255.0, 110 / 255.0, 0.92), "onl": Color("#9fc3e0"), "onc": Color("#cfe6f6")},
+}
+const CHIP_COL := [Color("#c99a5e"), Color("#c46a4c"), Color("#b9c0bf")]
+
+
+## a key cap (.kc): small mono letters on a coloured tab
+func _kc_label(bg: Color, fg: Color) -> Label:
+	var l := label("m6", 10, fg)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_kcs.append([l, bg])
+	return l
+
+
+## a press from the kit counts only while playing, with nothing open over the game (live() in 08-input.js)
+func _live(f: Callable) -> Callable:
+	return func():
+		if m.demo or m.menus.active() or m.armory_open or m.skills_open or m.sim.game.phase == "over":
+			return
+		f.call()
+
+
+func _make_kit() -> void:
+	var act := func(id: String) -> Callable: return _live(func(): m.do_action(id))
+	var bm := KitBtn.new(self, act.call("kit"))
+	bm.part("lab", label("s8", 14, BONE, 0.08))
+	bm.part("kc", _kc_label(BONE, INK))
+	kit.bm = bm
+	for pc in ["wall", "door"]:
+		var b := KitBtn.new(self, _live(func(): m.sim.game.piece = pc))
+		var l := b.part("lab", label("s8", 14, DIM, 0.08))
+		l.text = pc.to_upper()
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		kit[pc] = b
+	kit.pk = _kc_label(BONE, INK)
+	for mi in 3:
+		var b := KitBtn.new(self, act.call("mat%d" % (mi + 1)))
+		var k := b.part("k", label("s9", 18, CHIP_COL[mi], 0.04))
+		k.text = Pal.MAT[mi].name
+		b.part("kc", _kc_label(BONE, INK))
+		var n := b.part("n", label("m4", 11, DIM))
+		n.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		kit["c%d" % mi] = b
+	var bb := KitBtn.new(self, act.call("build"))
+	for pt in [["act", label("s9", 22, INK, 0.05, 1.0)], ["sub", label("m4", 10, INK, 0.0, 1.2)]]:
+		var l: Label = bb.part(pt[0], pt[1])
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	bb.part("kc", _kc_label(INK, WARN))
+	kit.build = bb
+	var arm := KitBtn.new(self, act.call("armory"))
+	var al := arm.part("lab", label("s9", 17, WARN, 0.08))
+	al.text = "ARMORY"
+	arm.part("kc", _kc_label(WARN, INK))
+	kit.arm = arm
+	for k in ["nade", "spr", "roll", "ab"]:
+		var A: Dictionary = ACT[k]
+		var b := KitBtn.new(self, act.call({"nade": "nade", "spr": "sprint", "roll": "roll", "ab": "special"}[k]))
+		var bl := b.part("lab", label("s8", 17, A.col, 0.08))
+		bl.text = {"nade": "NADE", "spr": "SPRINT", "roll": "ROLL", "ab": "ROCKET"}[k]
+		b.part("kc", _kc_label(A.col, INK))
+		var n := b.part("n", label("m6", 12, BONE, 0.08))   # <b>: the button's letter-spacing carries into it
+		n.set_meta("bold", true)
+		n.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		b.line = A.line
+		kit[k] = b
+	for b in kit.values():
+		add_child(b)
+
+
+## the kit's state, as hud() sets it: what each button says, which are picked, empty, on, locked, far or pulsing
+func _kit_update(sim: Sim, p: Dictionary, pv: String) -> void:
+	var g: Dictionary = sim.game
+	var build_on: bool = m.settings.data.get("build", true)
+	var ffa := pv == "ffa"
+	var show_kit := not sim.casino()
+	for b in kit.values():
+		b.visible = show_kit
+	if not show_kit:
+		return
+	var bm: KitBtn = kit.bm
+	bm.visible = not ffa
+	bm.parts.lab.text = "BUILD ON" if build_on else "BUILD OFF"
+	recolor(bm.parts.lab, BONE if build_on else DIM)
+	bm.look(KIT_BG, LINE, not build_on)
+	bm.parts.kc.text = _kc("B", "kit")
+	var kit_on := build_on and not ffa
+	for k in ["wall", "door", "pk", "c0", "c1", "c2", "build"]:
+		kit[k].visible = kit_on
+	kit.pk.text = _kc("F", "piece")
+	for pc in ["wall", "door"]:
+		var sel: bool = g.piece == pc
+		recolor(kit[pc].parts.lab, BONE if sel else DIM)
+		kit[pc].look(KIT_BG, BONE if sel else LINE)
+	for mi in 3:
+		var c: KitBtn = kit["c%d" % mi]
+		var locked := false
+		if mi > 0 and p.mats[mi] == 0:
+			for nd in sim.nodes:
+				if nd.type == mi and nd.locked:
+					locked = true
+					break
+		c.parts.n.text = ("R2" if mi == 1 else "R4") if locked else str(p.mats[mi])
+		c.parts.kc.text = _kc(str(mi + 1), "")
+		var sel: bool = g.sel == mi
+		c.look(Color(58 / 255.0, 50 / 255.0, 40 / 255.0, 0.92) if sel else KIT_BG, BONE if sel else LINE, false, sel)
+		c.modulate.a = 0.45 if locked else 1.0
+	if kit_on:
+		var t := sim.build_target(p, g.sel, g.piece == "door")
+		var bb: KitBtn = kit.build
+		bb.parts.act.text = t.act if t.ok else ("SOLID" if t.act == "SOLID" else "BUILD")
+		bb.parts.sub.text = ("%s · %d" % [Pal.MAT[t.mat].name, t.cost]) if t.ok else t.reason
+		bb.parts.kc.text = _kc("SPACE", "build")
+		var fg := INK if t.ok else BONE
+		recolor(bb.parts.act, fg)
+		recolor(bb.parts.sub, fg)
+		bb.look(WARN if t.ok else Color("#4a4234"), Color(0, 0, 0, 0))
+		_kc_colors(bb.parts.kc, INK if t.ok else BONE, WARN if t.ok else INK)
+	# ARMORY: shown while the shop's open; faint and dashed away from the stake; pulsing when something's affordable
+	var arm: KitBtn = kit.arm
+	arm.visible = sim.shop_open(p)
+	arm.parts.kc.text = _kc("E", "armory")
+	if arm.visible:
+		var near := sim.near_stake(p)
+		var afford := false
+		for U in Sim.UPG:
+			var lv: int = p.up.get(U.k, 0)
+			if lv < Sim.ARM_MAX and p.sal >= U.cost[lv]:
+				afford = true
+		if pv == "":
+			var dl: int = g.get("dellLv", 0)
+			if (dl < Sim.ARM_MAX and p.sal >= Sim.DELL_UP.cost[dl]) or (sim.ammo_mode() and p.sal >= (75 if p.ammoEq.any(func(a): return a != "") else 150)):
+				afford = true
+		var bg := Color(58 / 255.0, 48 / 255.0, 28 / 255.0, 0.92)
+		if near and afford and not PalSettings.reduce_motion:   # @keyframes pulse: 1.2 s, half way rgba(226,180,54,.28)
+			var f := 0.5 - 0.5 * cos(Time.get_ticks_msec() / 1000.0 / 1.2 * TAU)
+			bg = bg.lerp(Color(226 / 255.0, 180 / 255.0, 54 / 255.0, 0.28), f)
+		arm.look(bg, WARN, not near)
+		arm.modulate.a = 1.0 if near else 0.55
+	# NADE, SPRINT, ROLL and the class ability, with their counts and cooldowns
+	var nade: KitBtn = kit.nade
+	nade.parts.n.text = str(p.nades)
+	nade.parts.kc.text = _kc("G", "nade")
+	nade.modulate.a = 0.4 if p.nades <= 0 else 1.0
+	var spr: KitBtn = kit.spr
+	spr.visible = p.C.get("sprint", false)
+	if spr.visible:
+		var on: bool = p.get("sprT", 0.0) > 0
+		var cd: float = p.get("sprCd", 0.0)
+		spr.parts.n.text = "GO" if on else ("%ds" % ceili(cd) if cd > 0 else "READY")
+		spr.parts.kc.text = _kc("SHIFT", "special")
+		spr.look(ACT.spr.on if on else KIT_BG, ACT.spr.line)
+		spr.modulate.a = 0.45 if not on and cd > 0 else 1.0
+	var roll: KitBtn = kit.roll
+	var rolling := sim.rolling(p)
+	var rcd: float = p.get("dgCd", 0.0)
+	roll.parts.n.text = "GO" if rolling else ("%ds" % ceili(rcd) if rcd > 0 else "READY")
+	roll.parts.kc.text = _kc("V", "")
+	roll.look(ACT.roll.on if rolling else KIT_BG, ACT.roll.line)
+	roll.modulate.a = 0.45 if not rolling and rcd > 0 else 1.0
+	var ab: KitBtn = kit.ab
+	ab.visible = pv == "" and p.cls in ["soldier", "sniper"]   # hasAbility: rockets and stealth are co-op only
+	if ab.visible:
+		# the browser's p.ab: rockets left, or stealth's time (hidden) and cooldown; Godot's sim keeps rk, stl and stlCd
+		var snipe: bool = p.cls == "sniper"
+		var stl: float = p.get("stl", 0.0)
+		var scd: float = p.get("stlCd", 0.0)
+		var rk: int = p.get("rk", 0)
+		ab.parts.lab.text = "STEALTH" if snipe else "ROCKET"
+		ab.parts.n.text = (("%ds" % ceili(stl)) if stl > 0 else ("%ds" % ceili(scd) if scd > 0 else "READY")) if snipe else str(maxi(0, rk))
+		ab.parts.kc.text = _kc("Q", "special")
+		var on := snipe and stl > 0
+		ab.look(ACT.ab.on if on else KIT_BG, ACT.ab.onl if on else ACT.ab.line)
+		recolor(ab.parts.lab, ACT.ab.onc if on else ACT.ab.col)
+		ab.modulate.a = 0.45 if ((not on and scd > 0) if snipe else rk <= 0) else 1.0
+
+
+func _kc_colors(l: Label, bg: Color, fg: Color) -> void:
+	for k in _kcs:
+		if k[0] == l and k[1] != bg:
+			k[1] = bg
+			l.add_theme_stylebox_override("normal", _sb(bg, Color(0, 0, 0, 0), 0, 2))
+	recolor(l, fg)
+
+
+## a key cap's width (its text and 4 px either side), 0 when it's hidden
+func _kcw(l: Label) -> float:
+	l.visible = l.text != ""
+	return _w(l) + 8 if l.visible else 0.0
+
+
+## the kit column: 136 px wide, its right edge 24 px in (centred 1632 px on wide screens), its foot 64 px up, the
+## buttons stacked with 7 px between them (6 inside the build kit); a button whose parts need more room widens it
+## (the browser's grid does the same, past the right edge)
+func _kit_layout() -> void:
+	var W := size.x / s
+	var H := size.y / s
+	var order := ["bm", "pieces", "c0", "c1", "c2", "build", "arm", "nade", "spr", "roll", "ab"]
+	var hgt := {"bm": 30.0, "pieces": 32.0, "c0": 40.0, "c1": 40.0, "c2": 40.0, "build": 70.0, "arm": 44.0, "nade": 44.0, "spr": 44.0, "roll": 44.0, "ab": 44.0}
+	# the widest button's own needs
+	var cw := 136.0
+	for k in ["nade", "spr", "roll", "ab"]:
+		var b: KitBtn = kit[k]
+		if b.visible:
+			var kw := _kcw(b.parts.kc)
+			cw = maxf(cw, 11 + _w(b.parts.lab) + (6 if k == "roll" else 0.0) + (kw + 8 + (6 if k == "roll" else 0.0) if kw > 0 else 0.0) + _w(b.parts.n) + 11)
+	for mi in 3:
+		var c: KitBtn = kit["c%d" % mi]
+		if c.visible:
+			var kw := _kcw(c.parts.kc)
+			cw = maxf(cw, 10 + _w(c.parts.k) + (kw + 8 if kw > 0 else 0.0) + _w(c.parts.n) + 10)
+	var x0 := W - maxf(24, (W - 1632) / 2) - 136
+	var shown := order.filter(func(k): return kit.wall.visible if k == "pieces" else kit[k].visible)
+	var total := 0.0
+	for i in shown.size():
+		total += hgt[shown[i]]
+		if i > 0:
+			total += 6.0 if shown[i] in ["c0", "c1", "c2", "build"] else 7.0   # 6 inside the build kit, 7 between
+	var y := H - 64 - total
+	var top := y
+	for i in shown.size():
+		var k: String = shown[i]
+		if i > 0:
+			y += 6.0 if k in ["c0", "c1", "c2", "build"] else 7.0
+		var bh: float = hgt[k]
+		match k:
+			"bm":
+				_place(kit.bm, x0, y, cw, bh)
+				_center_row(kit.bm.parts.lab, kit.bm.parts.kc, cw, bh, 6)
+			"pieces":
+				var pw := (cw - 4) / 2
+				_place(kit.wall, x0, y, pw, bh)
+				_place(kit.door, x0 + pw + 4, y, pw, bh)
+				for pc in ["wall", "door"]:
+					_place(kit[pc].parts.lab, 0, (bh - _lh(kit[pc].parts.lab)) / 2, pw, _lh(kit[pc].parts.lab))
+				var pkw := _kcw(kit.pk)
+				_place(kit.pk, x0 + cw + 4 - pkw, y - 7, pkw, 14)
+			"c0", "c1", "c2":
+				var c: KitBtn = kit[k]
+				_place(c, x0, y, cw, bh)
+				var nw := _w(c.parts.n)
+				_place(c.parts.k, 10, (bh - 22) / 2, _w(c.parts.k), 22)
+				_place(c.parts.n, cw - 10 - nw, (bh - 14) / 2, nw, 14)
+				var kw := _kcw(c.parts.kc)
+				_place(c.parts.kc, cw - 10 - nw - 8 - kw, (bh - 14) / 2, kw, 14)
+			"build":
+				var bb: KitBtn = kit.build
+				_place(bb, x0, y, cw, bh)
+				var kw := _kcw(bb.parts.kc)
+				var ch: float = 22 + 1 + 12 + (1 + 3 + 14 if kw > 0 else 0.0)
+				var cy: float = (bh - ch) / 2
+				_place(bb.parts.act, 6, cy, cw - 12, 22)
+				_place(bb.parts.sub, 6, cy + 23, cw - 12, 12)
+				_place(bb.parts.kc, (cw - kw) / 2, cy + 39, kw, 14)
+			"arm":
+				_place(kit.arm, x0, y, cw, bh)
+				_center_row(kit.arm.parts.lab, kit.arm.parts.kc, cw, bh, 6)
+			_:
+				var b: KitBtn = kit[k]
+				_place(b, x0, y, cw, bh)
+				var lab_l: Label = b.parts.lab
+				var nw := _w(b.parts.n)
+				_place(lab_l, 11, (bh - _lh(lab_l)) / 2, _w(lab_l), _lh(lab_l))
+				_place(b.parts.n, cw - 11 - nw, (bh - 15) / 2, nw, 15)
+				var kw := _kcw(b.parts.kc)
+				_place(b.parts.kc, cw - 11 - nw - 8 - (6 if k == "roll" else 0.0) - kw, (bh - 14) / 2, kw, 14)
+		y += bh
+	kit_box = Rect2(Vector2(x0, top) * s, Vector2(136, y - top) * s)   # #kit itself stays 136 wide; wider buttons overhang it
+
+
+## a label's line height in CSS pixels
+func _lh(l: Label) -> float:
+	var st := l.label_settings
+	return st.font.get_height(st.font_size) / s
+
+
+## a label and its key cap side by side, centred in a button (#bmBtn, #armBtn: flex, centred)
+func _center_row(l: Label, kc: Label, w: float, h: float, gap: float) -> void:
+	var kw := _kcw(kc)
+	var lw := _w(l)
+	var gw := lw + (gap + kw if kw > 0 else 0.0)
+	var x := (w - gw) / 2
+	_place(l, x, (h - _lh(l)) / 2, lw, _lh(l))
+	_place(kc, x + lw + gap, (h - 14) / 2, kw, 14)

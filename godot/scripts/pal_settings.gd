@@ -33,6 +33,7 @@ const ACTIONS := [
 	["reload", "RELOAD", [KEY_R], -1],
 	["armory", "ARMORY", [KEY_E, KEY_U], 2],
 	["piece", "WALL / DOOR", [KEY_F], 3],
+	["kit", "BUILD KIT", [KEY_B], 13],
 	["mat1", "WOOD", [KEY_1], -1],
 	["mat2", "BRICK", [KEY_2], -1],
 	["mat3", "METAL", [KEY_3], -1],
@@ -45,7 +46,7 @@ const ACTIONS := [
 ]
 
 var data := {
-	"volume": 0.8, "music": 0.7, "shake": 1.0, "zoom": 1.0, "msgTime": 1.0, "fpsMode": "auto", "fps": false, "tips": true,
+	"volume": 0.8, "music": 0.7, "shake": 1.0, "zoom": 1.0, "msgTime": 1.0, "fpsMode": "auto", "fps": false, "tips": true, "build": true,
 	"haptics": true, "vsync": true, "reduceMotion": false,
 	"windowMode": "windowed", "winSize": "", "fpsCap": "off",   # the display ("" winSize: the window as it is)
 	"models3d": true,   # graphics: the 3D models (the world drawn with the model library) or the 2D drawing

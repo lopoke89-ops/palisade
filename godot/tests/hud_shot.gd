@@ -1,6 +1,7 @@
 extends SceneTree
-## The HUD's phase box and tip against the browser's own boxes (tests/hud_ref.json, made by tests/hud_ref.js) in the
-## same states: the build phase, a raid, City Black Out, Base Battle and Free-for-all, at 1600x900 and 1280x720.
+## The HUD's phase box, tip and build kit against the browser's own boxes (tests/hud_ref.json, made by
+## tests/hud_ref.js) in the same states: the build phase, a raid, City Black Out, Base Battle, Free-for-all, the kit
+## switched off and a Quartermaster (whose SPRINT widens the kit), at 1600x900 and 1280x720.
 ##   xvfb-run -a godot --path godot --rendering-driver opengl3 --resolution 1600x900 --script res://tests/hud_shot.gd -- /tmp/h
 ## Prints each box's offset from the browser's, OK/FAIL lines, and writes <prefix>_<state>_<width>.png.
 
@@ -30,7 +31,8 @@ func _state(name: String) -> void:
 	main.next_opt = {"map": "yard", "size": "std", "mode": "blackout" if name == "blackout" else "5", "diff": "normal", "mods": []}
 	if name in ["base", "ffa"]:
 		main.next_opt.pvp = name
-	main.next_cls = "soldier"
+	main.next_cls = "quartermaster" if name == "quarter" else "soldier"
+	main.settings.data.build = name != "kitoff"
 	main._restart()
 	var s: Sim = main.sim
 	if name == "raid":
@@ -66,7 +68,7 @@ func _run() -> void:
 	for sz in [Vector2i(1600, 900), Vector2i(1280, 720)]:
 		root.get_window().size = sz
 		await _frames(4)
-		for name in ["build", "raid", "blackout", "base", "ffa"]:
+		for name in ["build", "raid", "blackout", "base", "ffa", "kitoff", "quarter"]:
 			var R: Dictionary = ref["%dx%d/%s" % [sz.x, sz.y, name]]
 			await _state(name)
 			var h: Hud = main.hud
@@ -77,6 +79,22 @@ func _run() -> void:
 			if R.has("map"):
 				got.map = h.bo_map_box()
 				shown.map = true
+			var K: Dictionary = h.kit
+			var pieces := Rect2()
+			if K.wall.is_visible_in_tree():
+				pieces = _r(K.wall).merge(_r(K.door))
+			got.merge({"kit": h.kit_box, "bm": _r(K.bm), "pieces": pieces, "wall": _r(K.wall), "door": _r(K.door), "pk": _r(K.pk), "c0": _r(K.c0),
+				"c1": _r(K.c1), "c2": _r(K.c2), "c0k": _r(K.c0.parts.k), "c0kc": _r(K.c0.parts.kc), "c0n": _r(K.c0.parts.n), "build": _r(K.build),
+				"bact": _r(K.build.parts.act), "bsub": _r(K.build.parts.sub), "bkc": _r(K.build.parts.kc), "arm": _r(K.arm), "armkc": _r(K.arm.parts.kc),
+				"nade": _r(K.nade), "nadekc": _r(K.nade.parts.kc), "naden": _r(K.nade.parts.n), "spr": _r(K.spr), "roll": _r(K.roll),
+				"rollkc": _r(K.roll.parts.kc), "rolln": _r(K.roll.parts.n), "ab": _r(K.ab)})
+			for k in ["bm", "wall", "door", "pk", "c0", "c1", "c2", "build", "arm", "nade", "spr", "roll", "ab"]:
+				shown[k] = (K[k] as Control).is_visible_in_tree()
+			shown.kit = K.nade.is_visible_in_tree()
+			shown.pieces = shown.wall
+			for k in [["c0k", "c0", "k"], ["c0kc", "c0", "kc"], ["c0n", "c0", "n"], ["bact", "build", "act"], ["bsub", "build", "sub"], ["bkc", "build", "kc"],
+					["armkc", "arm", "kc"], ["nadekc", "nade", "kc"], ["naden", "nade", "n"], ["rollkc", "roll", "kc"], ["rolln", "roll", "n"]]:
+				shown[k[0]] = (K[k[1]].parts[k[2]] as Control).is_visible_in_tree()
 			var id := "%d %s" % [sz.x, name]
 			var worst := 0.0
 			var off := []
@@ -119,5 +137,33 @@ func _run() -> void:
 	await _frames(2)
 	check(s.game.phase == "raid", "START RAID starts the raid")
 	check(h.tip == "", "the tip goes when the raid starts")
+	# the kit's buttons do what their keys do
+	await _state("build")
+	s = main.sim
+	s.game.paused = false
+	var K: Dictionary = h.kit
+	K.c1.pressed.emit()
+	K.door.pressed.emit()
+	check(s.game.sel == 1 and s.game.piece == "door", "BRICK and DOOR pick the brick door")
+	K.wall.pressed.emit()
+	K.c0.pressed.emit()
+	var built0: int = s.game.stats.built
+	var t := s.build_target(s.player, 0, false)
+	K.build.pressed.emit()
+	check(not t.ok or s.game.stats.built == built0 + 1, "PLACE builds what it says (%s %s)" % [t.act, t.reason])
+	K.bm.pressed.emit()
+	await _frames(2)
+	check(not main.settings.data.build and not K.c0.is_visible_in_tree() and K.bm.parts.lab.text == "BUILD OFF", "BUILD ON switches the kit off")
+	s.player.bcd = 0.0
+	var built1: int = s.game.stats.built
+	main.do_action("build")
+	check(s.game.stats.built == built1, "and Space builds nothing while it's off")
+	K.bm.pressed.emit()
+	await _frames(2)
+	check(main.settings.data.build and K.c0.is_visible_in_tree(), "BUILD OFF switches it back on")
+	s.player.nades = 0
+	await _frames(2)
+	check(is_equal_approx(K.nade.modulate.a, 0.4), "NADE fades with no grenades left")
+	check(s.player.rk > 0 and K.ab.parts.n.text == str(s.player.rk) and is_equal_approx(K.ab.modulate.a, 1.0), "ROCKET counts the soldier's rockets (%s)" % K.ab.parts.n.text)
 	print("RESULT " + ("PASS" if fails == 0 else "FAIL %d" % fails))
 	quit(1 if fails else 0)

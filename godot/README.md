@@ -35,6 +35,7 @@ Controls (the browser's; every key and controller button can be changed in Setti
 | Build or repair the faced tile | Space | A (hold to keep building) |
 | Material | 1 / 2 / 3 | ◀ / ▶ |
 | Wall or door | F | Y |
+| Build kit on or off (the kit's BUILD ON button; off, Space doesn't build) | B | ▼ |
 | Grenade | G (at the cursor) | LT |
 | Class ability: Soldier rocket, Sniper stealth | Q | B (the Quartermaster sprints) |
 | Sprint (Quartermaster) | Shift | B |
@@ -61,7 +62,7 @@ Each part follows the browser code, with function names kept so the two read sid
 | Sim | `06-world.js`, `09-actions.js`, `10-phases-bosses.js`, `12-players.js`, `14-raiders.js` | `scripts/sim.gd` |
 | Delgado | `13-dell.js`, `13b-commands-recovery.js` | `scripts/sim.gd` |
 | Drawing and HUD | `15-render.js`, `16-characters.js`, `17-scenery.js` | `scripts/main.gd` |
-| The HUD's phase box and tip | `page.html` (`#top`, `#tip`), `style.css`, `11-hud-chat.js` | `scripts/hud.gd` |
+| The HUD's phase box, tip and build kit | `page.html` (`#top`, `#tip`, `#kit`), `style.css`, `11-hud-chat.js` | `scripts/hud.gd` |
 | Maps and the city | `06b-maps.js`, `06d-elevation.js`, `06e-city.js` | `scripts/pal_maps.gd` |
 | Modes and modifiers | `01b-mods-skills.js`, `10b-mods-play.js`, `10c-blitz.js`, `10d-winter-campaign.js`, `10f-blackout.js` | `scripts/sim.gd` |
 | The city's look and the Black Out HUD | `06e-city.js`, `16f-blackout-hud.js` | `scripts/city_view.gd`, `scripts/ground_chunk.gd` |
@@ -263,7 +264,7 @@ xvfb-run godot --path godot --script res://tests/locker_shot.gd -- /tmp/lk      
 xvfb-run -a godot --path godot --rendering-driver opengl3 --resolution 1600x900 --script res://tests/lobby3d_shot.gd -- /tmp/l3   # the 3D crew: main menu, a room of six, the Locker, a smaller window, each on its browser spot
 xvfb-run -a -s "-screen 0 1920x1080x24" sh -c 'openbox & sleep 1; godot --path godot --rendering-driver opengl3 --script res://tests/display_shot.gd -- /tmp/d'   # Settings › WINDOW on a real window (fullscreen needs a window manager)
 xvfb-run -a godot --path godot --rendering-driver opengl3 --resolution 1600x900 --script res://tests/shot3d.gd -- /tmp/r raid   # the same moment in 3D and in 2D (r_3d.png, r_2d.png), frame times; scenes in the script
-xvfb-run -a godot --path godot --rendering-driver opengl3 --resolution 1600x900 --script res://tests/hud_shot.gd -- /tmp/h   # the HUD's phase box and tip against the browser's own boxes (tests/hud_ref.json; tests/hud_ref.js makes it from a served site)
+xvfb-run -a godot --path godot --rendering-driver opengl3 --resolution 1600x900 --script res://tests/hud_shot.gd -- /tmp/h   # the HUD's phase box, tip and build kit against the browser's own boxes (tests/hud_ref.json; tests/hud_ref.js makes it from a served site)
 godot --headless --path godot --script res://tests/music_test.gd         # which track each screen and mode plays
 godot --headless --path godot --script res://tests/social_test.gd        # friends, invites, open games (against a stand-in server)
 ```

@@ -596,28 +596,43 @@ func _face_oval(g: V3Mesh, x: float, z: float, y: float, rx: float, ry: float, c
 func _ghost() -> void:
 	ghost_mesh.clear_surfaces()
 	var p: Dictionary = sim.player
-	if not p.alive or sim.game.phase == "over" or sim.casino() or m.demo:
+	if not p.alive or sim.game.phase == "over" or sim.casino() or m.demo or not m.settings.data.get("build", true) or sim.pvp() == "ffa":
 		return
 	var tg := sim.build_target(p, sim.game.sel, sim.game.piece == "door")
 	if not sim.inb(tg.i, tg.j):
 		return
-	var col := Color(0.56, 0.88, 0.63, 0.28) if tg.ok else Color(0.84, 0.35, 0.23, 0.25)
+	# drawGhost: a dashed outline, yellow or red, and the piece itself, faint, where it would go
 	var y := sim.height_at(tg.i + 0.5, tg.j + 0.5) * V3.TER + 0.012
 	var i: float = tg.i
 	var j: float = tg.j
 	ghost_mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
-	for v in [Vector3(i, y, j), Vector3(i + 1, y, j), Vector3(i + 1, y, j + 1), Vector3(i, y, j), Vector3(i + 1, y, j + 1), Vector3(i, y, j + 1)]:
-		ghost_mesh.surface_set_color(col)
-		ghost_mesh.surface_add_vertex(v)
-	var lc := Color(col, 0.8)
+	if tg.ok and tg.act in ["PLACE", "DOOR"]:
+		var M: Dictionary = Pal.MAT[tg.mat]
+		var top := Color(c(M.top), 0.32)
+		var sl := Color(c(M.l), 0.32)
+		var sr := Color(c(M.r), 0.32)
+		var x0 := i + 0.03
+		var x1 := i + 0.97
+		var z0 := j + 0.03
+		var z1 := j + 0.97
+		var y1 := y + V3.WALL_H
+		for f in [[top, [Vector3(x0, y1, z0), Vector3(x1, y1, z0), Vector3(x1, y1, z1), Vector3(x0, y1, z1)]],
+				[sl, [Vector3(x0, y, z1), Vector3(x1, y, z1), Vector3(x1, y1, z1), Vector3(x0, y1, z1)]], [sr, [Vector3(x1, y, z0), Vector3(x1, y, z1), Vector3(x1, y1, z1), Vector3(x1, y1, z0)]],
+				[sl, [Vector3(x0, y, z0), Vector3(x1, y, z0), Vector3(x1, y1, z0), Vector3(x0, y1, z0)]], [sr, [Vector3(x0, y, z0), Vector3(x0, y, z1), Vector3(x0, y1, z1), Vector3(x0, y1, z0)]]]:
+			var q: Array = f[1]
+			for v in [q[0], q[1], q[2], q[0], q[2], q[3]]:
+				ghost_mesh.surface_set_color(f[0])
+				ghost_mesh.surface_add_vertex(v)
+	var lc := Color(226 / 255.0, 180 / 255.0, 54 / 255.0, 0.9) if tg.ok else Color(200 / 255.0, 80 / 255.0, 60 / 255.0, 0.9)
 	var e := 0.025
 	for s in [[Vector3(i, y, j), Vector3(i + 1, y, j), Vector3(0, 0, e)], [Vector3(i, y, j + 1), Vector3(i + 1, y, j + 1), Vector3(0, 0, -e)], [Vector3(i, y, j), Vector3(i, y, j + 1), Vector3(e, 0, 0)], [Vector3(i + 1, y, j), Vector3(i + 1, y, j + 1), Vector3(-e, 0, 0)]]:
-		var a: Vector3 = s[0]
-		var b: Vector3 = s[1]
 		var d: Vector3 = s[2]
-		for v in [a, b, b + d, a, b + d, a + d]:
-			ghost_mesh.surface_set_color(lc)
-			ghost_mesh.surface_add_vertex(v + Vector3(0, 0.002, 0))
+		for k in 5:   # dashed: five dashes an edge
+			var a: Vector3 = (s[0] as Vector3).lerp(s[1], (k + 0.15) / 5.0)
+			var b: Vector3 = (s[0] as Vector3).lerp(s[1], (k + 0.75) / 5.0)
+			for v in [a, b, b + d, a, b + d, a + d]:
+				ghost_mesh.surface_set_color(lc)
+				ghost_mesh.surface_add_vertex(v + Vector3(0, 0.002, 0))
 	ghost_mesh.surface_end()
 
 

@@ -1,6 +1,6 @@
 # Godot in-game HUD: matching the browser
 
-**Written October 24, 2026 (Stage 9).** H1 is built (Stage 10, November 2, 2026); H2–H4 are not. Each stage needs its own go-ahead.
+**Written October 24, 2026 (Stage 9).** H1 and H2 are built (Stages 10 and 11, November 2, 2026); H3 and H4 are not. Each stage needs its own go-ahead.
 
 ## Why
 
@@ -57,7 +57,7 @@ Each is one milestone: build it, check it against the browser, save it, stop.
   - `hud.gd`, the fonts, and the top-right phase box: label, clock or raiders left, raid count, CORE / STAKE / COMMAND and ENEMY meters with numbers and alarm, the Delgado chip, salvage, START with key cap, the pause and chat buttons.
   - The tip box.
   - The old top bar goes.
-- **H2: the build kit.**
+- **H2: the build kit.** Done (Stage 11).
   - The right-hand column, every button with its state, count and cooldown, clickable: BUILD ON/OFF, WALL / DOOR, materials, PLACE, ARMORY, NADE, ROLL, SPRINT, ROCKET / STEALTH.
   - The dashed target outline.
   - The bottom-left panel and the floating PLACE label go.

@@ -69,6 +69,181 @@
    "w": 430.2,
    "h": 50,
    "text": "Walk next to a wood pile to gather. Delgado is gathering too."
+  },
+  "kit": {
+   "x": 1440,
+   "y": 349,
+   "w": 136,
+   "h": 487,
+   "text": "BUILD ONB\n  \n  WALLDOORF\n  WOOD124\n  BRICK2R2\n  METAL3R4\n  PLACEWOOD · 4SPACE\n  \n  ARMORYE\n  NADEG2\n  SPRINTSHIFTREADY\n  ROLLVREADY\n  ROCKETQ5"
+  },
+  "bm": {
+   "x": 1440,
+   "y": 349,
+   "w": 136,
+   "h": 30,
+   "text": "BUILD ONB"
+  },
+  "pieces": {
+   "x": 1440,
+   "y": 386,
+   "w": 136,
+   "h": 32,
+   "text": "WALLDOORF"
+  },
+  "wall": {
+   "x": 1440,
+   "y": 386,
+   "w": 66,
+   "h": 32,
+   "text": "WALL"
+  },
+  "door": {
+   "x": 1510,
+   "y": 386,
+   "w": 66,
+   "h": 32,
+   "text": "DOOR"
+  },
+  "pk": {
+   "x": 1566,
+   "y": 379,
+   "w": 14,
+   "h": 14,
+   "text": "F"
+  },
+  "c0": {
+   "x": 1440,
+   "y": 424,
+   "w": 136,
+   "h": 40,
+   "text": "WOOD124"
+  },
+  "c1": {
+   "x": 1440,
+   "y": 470,
+   "w": 136,
+   "h": 40,
+   "text": "BRICK2R2"
+  },
+  "c2": {
+   "x": 1440,
+   "y": 516,
+   "w": 136,
+   "h": 40,
+   "text": "METAL3R4"
+  },
+  "c0k": {
+   "x": 1450,
+   "y": 433,
+   "w": 44.1,
+   "h": 22,
+   "text": "WOOD"
+  },
+  "c0kc": {
+   "x": 1530.8,
+   "y": 437,
+   "w": 14,
+   "h": 14,
+   "text": "1"
+  },
+  "c0n": {
+   "x": 1552.8,
+   "y": 437,
+   "w": 13.2,
+   "h": 14,
+   "text": "24"
+  },
+  "build": {
+   "x": 1440,
+   "y": 562,
+   "w": 136,
+   "h": 70,
+   "text": "PLACEWOOD · 4SPACE"
+  },
+  "bact": {
+   "x": 1446,
+   "y": 570.5,
+   "w": 124,
+   "h": 22,
+   "text": "PLACE"
+  },
+  "bsub": {
+   "x": 1446,
+   "y": 593.5,
+   "w": 124,
+   "h": 12,
+   "text": "WOOD · 4"
+  },
+  "bkc": {
+   "x": 1489,
+   "y": 609.5,
+   "w": 38,
+   "h": 14,
+   "text": "SPACE"
+  },
+  "arm": {
+   "x": 1440,
+   "y": 639,
+   "w": 136,
+   "h": 44,
+   "text": "ARMORYE"
+  },
+  "armkc": {
+   "x": 1534.8,
+   "y": 654,
+   "w": 14,
+   "h": 14,
+   "text": "E"
+  },
+  "nade": {
+   "x": 1440,
+   "y": 690,
+   "w": 136,
+   "h": 44,
+   "text": "NADEG2"
+  },
+  "nadekc": {
+   "x": 1534.4,
+   "y": 705,
+   "w": 14,
+   "h": 14,
+   "text": "G"
+  },
+  "naden": {
+   "x": 1556.4,
+   "y": 704.5,
+   "w": 8.6,
+   "h": 15,
+   "text": "2"
+  },
+  "roll": {
+   "x": 1440,
+   "y": 741,
+   "w": 136,
+   "h": 44,
+   "text": "ROLLVREADY"
+  },
+  "rollkc": {
+   "x": 1494.2,
+   "y": 756,
+   "w": 14,
+   "h": 14,
+   "text": "V"
+  },
+  "rolln": {
+   "x": 1522.2,
+   "y": 755.5,
+   "w": 42.8,
+   "h": 15,
+   "text": "READY"
+  },
+  "ab": {
+   "x": 1440,
+   "y": 792,
+   "w": 136,
+   "h": 44,
+   "text": "ROCKETQ5"
   }
  },
  "1600x900/raid": {
@@ -127,6 +302,167 @@
    "w": 80.7,
    "h": 18,
    "text": "SALVAGE 0"
+  },
+  "kit": {
+   "x": 1440,
+   "y": 400,
+   "w": 136,
+   "h": 436,
+   "text": "BUILD ONB\n  \n  WALLDOORF\n  WOOD124\n  BRICK2R2\n  METAL3R4\n  PLACEWOOD · 4SPACE\n  \n  ARMORYE\n  NADEG2\n  SPRINTSHIFTREADY\n  ROLLVREADY\n  ROCKETQ5"
+  },
+  "bm": {
+   "x": 1440,
+   "y": 400,
+   "w": 136,
+   "h": 30,
+   "text": "BUILD ONB"
+  },
+  "pieces": {
+   "x": 1440,
+   "y": 437,
+   "w": 136,
+   "h": 32,
+   "text": "WALLDOORF"
+  },
+  "wall": {
+   "x": 1440,
+   "y": 437,
+   "w": 66,
+   "h": 32,
+   "text": "WALL"
+  },
+  "door": {
+   "x": 1510,
+   "y": 437,
+   "w": 66,
+   "h": 32,
+   "text": "DOOR"
+  },
+  "pk": {
+   "x": 1566,
+   "y": 430,
+   "w": 14,
+   "h": 14,
+   "text": "F"
+  },
+  "c0": {
+   "x": 1440,
+   "y": 475,
+   "w": 136,
+   "h": 40,
+   "text": "WOOD124"
+  },
+  "c1": {
+   "x": 1440,
+   "y": 521,
+   "w": 136,
+   "h": 40,
+   "text": "BRICK2R2"
+  },
+  "c2": {
+   "x": 1440,
+   "y": 567,
+   "w": 136,
+   "h": 40,
+   "text": "METAL3R4"
+  },
+  "c0k": {
+   "x": 1450,
+   "y": 484,
+   "w": 44.1,
+   "h": 22,
+   "text": "WOOD"
+  },
+  "c0kc": {
+   "x": 1530.8,
+   "y": 488,
+   "w": 14,
+   "h": 14,
+   "text": "1"
+  },
+  "c0n": {
+   "x": 1552.8,
+   "y": 488,
+   "w": 13.2,
+   "h": 14,
+   "text": "24"
+  },
+  "build": {
+   "x": 1440,
+   "y": 613,
+   "w": 136,
+   "h": 70,
+   "text": "PLACEWOOD · 4SPACE"
+  },
+  "bact": {
+   "x": 1446,
+   "y": 621.5,
+   "w": 124,
+   "h": 22,
+   "text": "PLACE"
+  },
+  "bsub": {
+   "x": 1446,
+   "y": 644.5,
+   "w": 124,
+   "h": 12,
+   "text": "WOOD · 4"
+  },
+  "bkc": {
+   "x": 1489,
+   "y": 660.5,
+   "w": 38,
+   "h": 14,
+   "text": "SPACE"
+  },
+  "nade": {
+   "x": 1440,
+   "y": 690,
+   "w": 136,
+   "h": 44,
+   "text": "NADEG2"
+  },
+  "nadekc": {
+   "x": 1534.4,
+   "y": 705,
+   "w": 14,
+   "h": 14,
+   "text": "G"
+  },
+  "naden": {
+   "x": 1556.4,
+   "y": 704.5,
+   "w": 8.6,
+   "h": 15,
+   "text": "2"
+  },
+  "roll": {
+   "x": 1440,
+   "y": 741,
+   "w": 136,
+   "h": 44,
+   "text": "ROLLVREADY"
+  },
+  "rollkc": {
+   "x": 1494.2,
+   "y": 756,
+   "w": 14,
+   "h": 14,
+   "text": "V"
+  },
+  "rolln": {
+   "x": 1522.2,
+   "y": 755.5,
+   "w": 42.8,
+   "h": 15,
+   "text": "READY"
+  },
+  "ab": {
+   "x": 1440,
+   "y": 792,
+   "w": 136,
+   "h": 44,
+   "text": "ROCKETQ5"
   }
  },
  "1600x900/blackout": {
@@ -199,6 +535,181 @@
    "w": 430.2,
    "h": 50,
    "text": "Walk next to a wood pile to gather. Delgado is gathering too."
+  },
+  "kit": {
+   "x": 1440,
+   "y": 349,
+   "w": 136,
+   "h": 487,
+   "text": "BUILD ONB\n  \n  WALLDOORF\n  WOOD124\n  BRICK20\n  METAL30\n  PLACEWOOD · 4SPACE\n  \n  ARMORYE\n  NADEG2\n  SPRINTSHIFTREADY\n  ROLLVREADY\n  ROCKETQ5"
+  },
+  "bm": {
+   "x": 1440,
+   "y": 349,
+   "w": 136,
+   "h": 30,
+   "text": "BUILD ONB"
+  },
+  "pieces": {
+   "x": 1440,
+   "y": 386,
+   "w": 136,
+   "h": 32,
+   "text": "WALLDOORF"
+  },
+  "wall": {
+   "x": 1440,
+   "y": 386,
+   "w": 66,
+   "h": 32,
+   "text": "WALL"
+  },
+  "door": {
+   "x": 1510,
+   "y": 386,
+   "w": 66,
+   "h": 32,
+   "text": "DOOR"
+  },
+  "pk": {
+   "x": 1566,
+   "y": 379,
+   "w": 14,
+   "h": 14,
+   "text": "F"
+  },
+  "c0": {
+   "x": 1440,
+   "y": 424,
+   "w": 136,
+   "h": 40,
+   "text": "WOOD124"
+  },
+  "c1": {
+   "x": 1440,
+   "y": 470,
+   "w": 136,
+   "h": 40,
+   "text": "BRICK20"
+  },
+  "c2": {
+   "x": 1440,
+   "y": 516,
+   "w": 136,
+   "h": 40,
+   "text": "METAL30"
+  },
+  "c0k": {
+   "x": 1450,
+   "y": 433,
+   "w": 44.1,
+   "h": 22,
+   "text": "WOOD"
+  },
+  "c0kc": {
+   "x": 1530.8,
+   "y": 437,
+   "w": 14,
+   "h": 14,
+   "text": "1"
+  },
+  "c0n": {
+   "x": 1552.8,
+   "y": 437,
+   "w": 13.2,
+   "h": 14,
+   "text": "24"
+  },
+  "build": {
+   "x": 1440,
+   "y": 562,
+   "w": 136,
+   "h": 70,
+   "text": "PLACEWOOD · 4SPACE"
+  },
+  "bact": {
+   "x": 1446,
+   "y": 570.5,
+   "w": 124,
+   "h": 22,
+   "text": "PLACE"
+  },
+  "bsub": {
+   "x": 1446,
+   "y": 593.5,
+   "w": 124,
+   "h": 12,
+   "text": "WOOD · 4"
+  },
+  "bkc": {
+   "x": 1489,
+   "y": 609.5,
+   "w": 38,
+   "h": 14,
+   "text": "SPACE"
+  },
+  "arm": {
+   "x": 1440,
+   "y": 639,
+   "w": 136,
+   "h": 44,
+   "text": "ARMORYE"
+  },
+  "armkc": {
+   "x": 1534.8,
+   "y": 654,
+   "w": 14,
+   "h": 14,
+   "text": "E"
+  },
+  "nade": {
+   "x": 1440,
+   "y": 690,
+   "w": 136,
+   "h": 44,
+   "text": "NADEG2"
+  },
+  "nadekc": {
+   "x": 1534.4,
+   "y": 705,
+   "w": 14,
+   "h": 14,
+   "text": "G"
+  },
+  "naden": {
+   "x": 1556.4,
+   "y": 704.5,
+   "w": 8.6,
+   "h": 15,
+   "text": "2"
+  },
+  "roll": {
+   "x": 1440,
+   "y": 741,
+   "w": 136,
+   "h": 44,
+   "text": "ROLLVREADY"
+  },
+  "rollkc": {
+   "x": 1494.2,
+   "y": 756,
+   "w": 14,
+   "h": 14,
+   "text": "V"
+  },
+  "rolln": {
+   "x": 1522.2,
+   "y": 755.5,
+   "w": 42.8,
+   "h": 15,
+   "text": "READY"
+  },
+  "ab": {
+   "x": 1440,
+   "y": 792,
+   "w": 136,
+   "h": 44,
+   "text": "ROCKETQ5"
   },
   "map": {
    "x": 1406,
@@ -277,6 +788,174 @@
    "w": 430.2,
    "h": 50,
    "text": "Walk next to a wood pile to gather. Delgado is gathering too."
+  },
+  "kit": {
+   "x": 1440,
+   "y": 400,
+   "w": 136,
+   "h": 436,
+   "text": "BUILD ONB\n  \n  WALLDOORF\n  WOOD124\n  BRICK2R2\n  METAL3R4\n  PLACEWOOD · 4SPACE\n  \n  ARMORYE\n  NADEG2\n  SPRINTSHIFTREADY\n  ROLLVREADY\n  ROCKETQ5"
+  },
+  "bm": {
+   "x": 1440,
+   "y": 400,
+   "w": 136,
+   "h": 30,
+   "text": "BUILD ONB"
+  },
+  "pieces": {
+   "x": 1440,
+   "y": 437,
+   "w": 136,
+   "h": 32,
+   "text": "WALLDOORF"
+  },
+  "wall": {
+   "x": 1440,
+   "y": 437,
+   "w": 66,
+   "h": 32,
+   "text": "WALL"
+  },
+  "door": {
+   "x": 1510,
+   "y": 437,
+   "w": 66,
+   "h": 32,
+   "text": "DOOR"
+  },
+  "pk": {
+   "x": 1566,
+   "y": 430,
+   "w": 14,
+   "h": 14,
+   "text": "F"
+  },
+  "c0": {
+   "x": 1440,
+   "y": 475,
+   "w": 136,
+   "h": 40,
+   "text": "WOOD124"
+  },
+  "c1": {
+   "x": 1440,
+   "y": 521,
+   "w": 136,
+   "h": 40,
+   "text": "BRICK2R2"
+  },
+  "c2": {
+   "x": 1440,
+   "y": 567,
+   "w": 136,
+   "h": 40,
+   "text": "METAL3R4"
+  },
+  "c0k": {
+   "x": 1450,
+   "y": 484,
+   "w": 44.1,
+   "h": 22,
+   "text": "WOOD"
+  },
+  "c0kc": {
+   "x": 1530.8,
+   "y": 488,
+   "w": 14,
+   "h": 14,
+   "text": "1"
+  },
+  "c0n": {
+   "x": 1552.8,
+   "y": 488,
+   "w": 13.2,
+   "h": 14,
+   "text": "24"
+  },
+  "build": {
+   "x": 1440,
+   "y": 613,
+   "w": 136,
+   "h": 70,
+   "text": "PLACEWOOD · 4SPACE"
+  },
+  "bact": {
+   "x": 1446,
+   "y": 621.5,
+   "w": 124,
+   "h": 22,
+   "text": "PLACE"
+  },
+  "bsub": {
+   "x": 1446,
+   "y": 644.5,
+   "w": 124,
+   "h": 12,
+   "text": "WOOD · 4"
+  },
+  "bkc": {
+   "x": 1489,
+   "y": 660.5,
+   "w": 38,
+   "h": 14,
+   "text": "SPACE"
+  },
+  "arm": {
+   "x": 1440,
+   "y": 690,
+   "w": 136,
+   "h": 44,
+   "text": "ARMORYE"
+  },
+  "armkc": {
+   "x": 1534.8,
+   "y": 705,
+   "w": 14,
+   "h": 14,
+   "text": "E"
+  },
+  "nade": {
+   "x": 1440,
+   "y": 741,
+   "w": 136,
+   "h": 44,
+   "text": "NADEG2"
+  },
+  "nadekc": {
+   "x": 1534.4,
+   "y": 756,
+   "w": 14,
+   "h": 14,
+   "text": "G"
+  },
+  "naden": {
+   "x": 1556.4,
+   "y": 755.5,
+   "w": 8.6,
+   "h": 15,
+   "text": "2"
+  },
+  "roll": {
+   "x": 1440,
+   "y": 792,
+   "w": 136,
+   "h": 44,
+   "text": "ROLLVREADY"
+  },
+  "rollkc": {
+   "x": 1494.2,
+   "y": 807,
+   "w": 14,
+   "h": 14,
+   "text": "V"
+  },
+  "rolln": {
+   "x": 1522.2,
+   "y": 806.5,
+   "w": 42.8,
+   "h": 15,
+   "text": "READY"
   }
  },
  "1600x900/ffa": {
@@ -321,6 +1000,451 @@
    "w": 430.2,
    "h": 50,
    "text": "Walk next to a wood pile to gather. Delgado is gathering too."
+  },
+  "kit": {
+   "x": 1440,
+   "y": 741,
+   "w": 136,
+   "h": 95,
+   "text": "BUILD ONB\n  \n  WALLDOORF\n  WOOD124\n  BRICK2R2\n  METAL3R4\n  PLACEWOOD · 4SPACE\n  \n  ARMORYE\n  NADEG2\n  SPRINTSHIFTREADY\n  ROLLVREADY\n  ROCKETQ5"
+  },
+  "nade": {
+   "x": 1440,
+   "y": 741,
+   "w": 136,
+   "h": 44,
+   "text": "NADEG2"
+  },
+  "nadekc": {
+   "x": 1534.4,
+   "y": 756,
+   "w": 14,
+   "h": 14,
+   "text": "G"
+  },
+  "naden": {
+   "x": 1556.4,
+   "y": 755.5,
+   "w": 8.6,
+   "h": 15,
+   "text": "2"
+  },
+  "roll": {
+   "x": 1440,
+   "y": 792,
+   "w": 136,
+   "h": 44,
+   "text": "ROLLVREADY"
+  },
+  "rollkc": {
+   "x": 1494.2,
+   "y": 807,
+   "w": 14,
+   "h": 14,
+   "text": "V"
+  },
+  "rolln": {
+   "x": 1522.2,
+   "y": 806.5,
+   "w": 42.8,
+   "h": 15,
+   "text": "READY"
+  }
+ },
+ "1600x900/kitoff": {
+  "phase": {
+   "x": 1180.2,
+   "y": 12,
+   "w": 395.8,
+   "h": 158,
+   "text": "BUILDII\n    0:40 until raid 1\n    CORE500\n    ENEMY700\n    \n    SALVAGE 0\n    DELGADO · FOLLOW\n    START RAIDENTER"
+  },
+  "lab": {
+   "x": 1459,
+   "y": 12,
+   "w": 77,
+   "h": 32,
+   "text": "BUILD"
+  },
+  "pause": {
+   "x": 1546,
+   "y": 13,
+   "w": 30,
+   "h": 30,
+   "text": "II"
+  },
+  "val": {
+   "x": 1433.2,
+   "y": 46,
+   "w": 142.8,
+   "h": 18,
+   "text": "0:40 until raid 1"
+  },
+  "core": {
+   "x": 1180.2,
+   "y": 52,
+   "w": 234,
+   "h": 19,
+   "text": "CORE500"
+  },
+  "qm": {
+   "x": 1298.2,
+   "y": 75,
+   "w": 116,
+   "h": 24,
+   "text": "DELGADO · FOLLOW"
+  },
+  "salv": {
+   "x": 1495.3,
+   "y": 101,
+   "w": 80.7,
+   "h": 18,
+   "text": "SALVAGE 0"
+  },
+  "skip": {
+   "x": 1428.2,
+   "y": 127,
+   "w": 147.8,
+   "h": 35,
+   "text": "START RAIDENTER"
+  },
+  "kc": {
+   "x": 1525,
+   "y": 137.5,
+   "w": 38,
+   "h": 14,
+   "text": "ENTER"
+  },
+  "tip": {
+   "x": 584.9,
+   "y": 180,
+   "w": 430.2,
+   "h": 50,
+   "text": "Walk next to a wood pile to gather. Delgado is gathering too."
+  },
+  "kit": {
+   "x": 1440,
+   "y": 602,
+   "w": 136,
+   "h": 234,
+   "text": "BUILD OFFB\n  \n  WALLDOORF\n  WOOD124\n  BRICK2R2\n  METAL3R4\n  PLACEWOOD · 4SPACE\n  \n  ARMORYE\n  NADEG2\n  SPRINTSHIFTREADY\n  ROLLVREADY\n  ROCKETQ5"
+  },
+  "bm": {
+   "x": 1440,
+   "y": 602,
+   "w": 136,
+   "h": 30,
+   "text": "BUILD OFFB"
+  },
+  "arm": {
+   "x": 1440,
+   "y": 639,
+   "w": 136,
+   "h": 44,
+   "text": "ARMORYE"
+  },
+  "armkc": {
+   "x": 1534.8,
+   "y": 654,
+   "w": 14,
+   "h": 14,
+   "text": "E"
+  },
+  "nade": {
+   "x": 1440,
+   "y": 690,
+   "w": 136,
+   "h": 44,
+   "text": "NADEG2"
+  },
+  "nadekc": {
+   "x": 1534.4,
+   "y": 705,
+   "w": 14,
+   "h": 14,
+   "text": "G"
+  },
+  "naden": {
+   "x": 1556.4,
+   "y": 704.5,
+   "w": 8.6,
+   "h": 15,
+   "text": "2"
+  },
+  "roll": {
+   "x": 1440,
+   "y": 741,
+   "w": 136,
+   "h": 44,
+   "text": "ROLLVREADY"
+  },
+  "rollkc": {
+   "x": 1494.2,
+   "y": 756,
+   "w": 14,
+   "h": 14,
+   "text": "V"
+  },
+  "rolln": {
+   "x": 1522.2,
+   "y": 755.5,
+   "w": 42.8,
+   "h": 15,
+   "text": "READY"
+  },
+  "ab": {
+   "x": 1440,
+   "y": 792,
+   "w": 136,
+   "h": 44,
+   "text": "ROCKETQ5"
+  }
+ },
+ "1600x900/quarter": {
+  "phase": {
+   "x": 1180.2,
+   "y": 12,
+   "w": 395.8,
+   "h": 158,
+   "text": "BUILDII\n    0:40 until raid 1\n    CORE500\n    ENEMY700\n    \n    SALVAGE 0\n    DELGADO · FOLLOW\n    START RAIDENTER"
+  },
+  "lab": {
+   "x": 1459,
+   "y": 12,
+   "w": 77,
+   "h": 32,
+   "text": "BUILD"
+  },
+  "pause": {
+   "x": 1546,
+   "y": 13,
+   "w": 30,
+   "h": 30,
+   "text": "II"
+  },
+  "val": {
+   "x": 1433.2,
+   "y": 46,
+   "w": 142.8,
+   "h": 18,
+   "text": "0:40 until raid 1"
+  },
+  "core": {
+   "x": 1180.2,
+   "y": 52,
+   "w": 234,
+   "h": 19,
+   "text": "CORE500"
+  },
+  "qm": {
+   "x": 1298.2,
+   "y": 75,
+   "w": 116,
+   "h": 24,
+   "text": "DELGADO · FOLLOW"
+  },
+  "salv": {
+   "x": 1495.3,
+   "y": 101,
+   "w": 80.7,
+   "h": 18,
+   "text": "SALVAGE 0"
+  },
+  "skip": {
+   "x": 1428.2,
+   "y": 127,
+   "w": 147.8,
+   "h": 35,
+   "text": "START RAIDENTER"
+  },
+  "kc": {
+   "x": 1525,
+   "y": 137.5,
+   "w": 38,
+   "h": 14,
+   "text": "ENTER"
+  },
+  "tip": {
+   "x": 584.9,
+   "y": 180,
+   "w": 430.2,
+   "h": 50,
+   "text": "Walk next to a wood pile to gather. Delgado is gathering too."
+  },
+  "kit": {
+   "x": 1440,
+   "y": 349,
+   "w": 136,
+   "h": 487,
+   "text": "BUILD ONB\n  \n  WALLDOORF\n  WOOD124\n  BRICK2R2\n  METAL3R4\n  PLACEWOOD · 4SPACE\n  \n  ARMORYE\n  NADEG2\n  SPRINTSHIFTREADY\n  ROLLVREADY\n  ROCKETQ5"
+  },
+  "bm": {
+   "x": 1440,
+   "y": 349,
+   "w": 160.6,
+   "h": 30,
+   "text": "BUILD ONB"
+  },
+  "pieces": {
+   "x": 1440,
+   "y": 386,
+   "w": 160.6,
+   "h": 32,
+   "text": "WALLDOORF"
+  },
+  "wall": {
+   "x": 1440,
+   "y": 386,
+   "w": 78.3,
+   "h": 32,
+   "text": "WALL"
+  },
+  "door": {
+   "x": 1522.3,
+   "y": 386,
+   "w": 78.3,
+   "h": 32,
+   "text": "DOOR"
+  },
+  "pk": {
+   "x": 1590.6,
+   "y": 379,
+   "w": 14,
+   "h": 14,
+   "text": "F"
+  },
+  "c0": {
+   "x": 1440,
+   "y": 424,
+   "w": 160.6,
+   "h": 40,
+   "text": "WOOD124"
+  },
+  "c1": {
+   "x": 1440,
+   "y": 470,
+   "w": 160.6,
+   "h": 40,
+   "text": "BRICK2R2"
+  },
+  "c2": {
+   "x": 1440,
+   "y": 516,
+   "w": 160.6,
+   "h": 40,
+   "text": "METAL3R4"
+  },
+  "c0k": {
+   "x": 1450,
+   "y": 433,
+   "w": 44.1,
+   "h": 22,
+   "text": "WOOD"
+  },
+  "c0kc": {
+   "x": 1555.4,
+   "y": 437,
+   "w": 14,
+   "h": 14,
+   "text": "1"
+  },
+  "c0n": {
+   "x": 1577.4,
+   "y": 437,
+   "w": 13.2,
+   "h": 14,
+   "text": "24"
+  },
+  "build": {
+   "x": 1440,
+   "y": 562,
+   "w": 160.6,
+   "h": 70,
+   "text": "PLACEWOOD · 4SPACE"
+  },
+  "bact": {
+   "x": 1446,
+   "y": 570.5,
+   "w": 148.6,
+   "h": 22,
+   "text": "PLACE"
+  },
+  "bsub": {
+   "x": 1446,
+   "y": 593.5,
+   "w": 148.6,
+   "h": 12,
+   "text": "WOOD · 4"
+  },
+  "bkc": {
+   "x": 1501.3,
+   "y": 609.5,
+   "w": 38,
+   "h": 14,
+   "text": "SPACE"
+  },
+  "arm": {
+   "x": 1440,
+   "y": 639,
+   "w": 160.6,
+   "h": 44,
+   "text": "ARMORYE"
+  },
+  "armkc": {
+   "x": 1547.1,
+   "y": 654,
+   "w": 14,
+   "h": 14,
+   "text": "E"
+  },
+  "nade": {
+   "x": 1440,
+   "y": 690,
+   "w": 160.6,
+   "h": 44,
+   "text": "NADEG2"
+  },
+  "nadekc": {
+   "x": 1559,
+   "y": 705,
+   "w": 14,
+   "h": 14,
+   "text": "G"
+  },
+  "naden": {
+   "x": 1581,
+   "y": 704.5,
+   "w": 8.6,
+   "h": 15,
+   "text": "2"
+  },
+  "spr": {
+   "x": 1440,
+   "y": 741,
+   "w": 160.6,
+   "h": 44,
+   "text": "SPRINTSHIFTREADY"
+  },
+  "roll": {
+   "x": 1440,
+   "y": 792,
+   "w": 160.6,
+   "h": 44,
+   "text": "ROLLVREADY"
+  },
+  "rollkc": {
+   "x": 1518.8,
+   "y": 807,
+   "w": 14,
+   "h": 14,
+   "text": "V"
+  },
+  "rolln": {
+   "x": 1546.8,
+   "y": 806.5,
+   "w": 42.8,
+   "h": 15,
+   "text": "READY"
   }
  },
  "1280x720/build": {
@@ -393,6 +1517,181 @@
    "w": 430.2,
    "h": 50,
    "text": "Walk next to a wood pile to gather. Delgado is gathering too."
+  },
+  "kit": {
+   "x": 1120,
+   "y": 169,
+   "w": 136,
+   "h": 487,
+   "text": "BUILD ONB\n  \n  WALLDOORF\n  WOOD124\n  BRICK2R2\n  METAL3R4\n  PLACEWOOD · 4SPACE\n  \n  ARMORYE\n  NADEG2\n  SPRINTSHIFTREADY\n  ROLLVREADY\n  ROCKETQ5"
+  },
+  "bm": {
+   "x": 1120,
+   "y": 169,
+   "w": 136,
+   "h": 30,
+   "text": "BUILD ONB"
+  },
+  "pieces": {
+   "x": 1120,
+   "y": 206,
+   "w": 136,
+   "h": 32,
+   "text": "WALLDOORF"
+  },
+  "wall": {
+   "x": 1120,
+   "y": 206,
+   "w": 66,
+   "h": 32,
+   "text": "WALL"
+  },
+  "door": {
+   "x": 1190,
+   "y": 206,
+   "w": 66,
+   "h": 32,
+   "text": "DOOR"
+  },
+  "pk": {
+   "x": 1246,
+   "y": 199,
+   "w": 14,
+   "h": 14,
+   "text": "F"
+  },
+  "c0": {
+   "x": 1120,
+   "y": 244,
+   "w": 136,
+   "h": 40,
+   "text": "WOOD124"
+  },
+  "c1": {
+   "x": 1120,
+   "y": 290,
+   "w": 136,
+   "h": 40,
+   "text": "BRICK2R2"
+  },
+  "c2": {
+   "x": 1120,
+   "y": 336,
+   "w": 136,
+   "h": 40,
+   "text": "METAL3R4"
+  },
+  "c0k": {
+   "x": 1130,
+   "y": 253,
+   "w": 44.1,
+   "h": 22,
+   "text": "WOOD"
+  },
+  "c0kc": {
+   "x": 1210.8,
+   "y": 257,
+   "w": 14,
+   "h": 14,
+   "text": "1"
+  },
+  "c0n": {
+   "x": 1232.8,
+   "y": 257,
+   "w": 13.2,
+   "h": 14,
+   "text": "24"
+  },
+  "build": {
+   "x": 1120,
+   "y": 382,
+   "w": 136,
+   "h": 70,
+   "text": "PLACEWOOD · 4SPACE"
+  },
+  "bact": {
+   "x": 1126,
+   "y": 390.5,
+   "w": 124,
+   "h": 22,
+   "text": "PLACE"
+  },
+  "bsub": {
+   "x": 1126,
+   "y": 413.5,
+   "w": 124,
+   "h": 12,
+   "text": "WOOD · 4"
+  },
+  "bkc": {
+   "x": 1169,
+   "y": 429.5,
+   "w": 38,
+   "h": 14,
+   "text": "SPACE"
+  },
+  "arm": {
+   "x": 1120,
+   "y": 459,
+   "w": 136,
+   "h": 44,
+   "text": "ARMORYE"
+  },
+  "armkc": {
+   "x": 1214.8,
+   "y": 474,
+   "w": 14,
+   "h": 14,
+   "text": "E"
+  },
+  "nade": {
+   "x": 1120,
+   "y": 510,
+   "w": 136,
+   "h": 44,
+   "text": "NADEG2"
+  },
+  "nadekc": {
+   "x": 1214.4,
+   "y": 525,
+   "w": 14,
+   "h": 14,
+   "text": "G"
+  },
+  "naden": {
+   "x": 1236.4,
+   "y": 524.5,
+   "w": 8.6,
+   "h": 15,
+   "text": "2"
+  },
+  "roll": {
+   "x": 1120,
+   "y": 561,
+   "w": 136,
+   "h": 44,
+   "text": "ROLLVREADY"
+  },
+  "rollkc": {
+   "x": 1174.2,
+   "y": 576,
+   "w": 14,
+   "h": 14,
+   "text": "V"
+  },
+  "rolln": {
+   "x": 1202.2,
+   "y": 575.5,
+   "w": 42.8,
+   "h": 15,
+   "text": "READY"
+  },
+  "ab": {
+   "x": 1120,
+   "y": 612,
+   "w": 136,
+   "h": 44,
+   "text": "ROCKETQ5"
   }
  },
  "1280x720/raid": {
@@ -451,6 +1750,167 @@
    "w": 80.7,
    "h": 18,
    "text": "SALVAGE 0"
+  },
+  "kit": {
+   "x": 1120,
+   "y": 220,
+   "w": 136,
+   "h": 436,
+   "text": "BUILD ONB\n  \n  WALLDOORF\n  WOOD124\n  BRICK2R2\n  METAL3R4\n  PLACEWOOD · 4SPACE\n  \n  ARMORYE\n  NADEG2\n  SPRINTSHIFTREADY\n  ROLLVREADY\n  ROCKETQ5"
+  },
+  "bm": {
+   "x": 1120,
+   "y": 220,
+   "w": 136,
+   "h": 30,
+   "text": "BUILD ONB"
+  },
+  "pieces": {
+   "x": 1120,
+   "y": 257,
+   "w": 136,
+   "h": 32,
+   "text": "WALLDOORF"
+  },
+  "wall": {
+   "x": 1120,
+   "y": 257,
+   "w": 66,
+   "h": 32,
+   "text": "WALL"
+  },
+  "door": {
+   "x": 1190,
+   "y": 257,
+   "w": 66,
+   "h": 32,
+   "text": "DOOR"
+  },
+  "pk": {
+   "x": 1246,
+   "y": 250,
+   "w": 14,
+   "h": 14,
+   "text": "F"
+  },
+  "c0": {
+   "x": 1120,
+   "y": 295,
+   "w": 136,
+   "h": 40,
+   "text": "WOOD124"
+  },
+  "c1": {
+   "x": 1120,
+   "y": 341,
+   "w": 136,
+   "h": 40,
+   "text": "BRICK2R2"
+  },
+  "c2": {
+   "x": 1120,
+   "y": 387,
+   "w": 136,
+   "h": 40,
+   "text": "METAL3R4"
+  },
+  "c0k": {
+   "x": 1130,
+   "y": 304,
+   "w": 44.1,
+   "h": 22,
+   "text": "WOOD"
+  },
+  "c0kc": {
+   "x": 1210.8,
+   "y": 308,
+   "w": 14,
+   "h": 14,
+   "text": "1"
+  },
+  "c0n": {
+   "x": 1232.8,
+   "y": 308,
+   "w": 13.2,
+   "h": 14,
+   "text": "24"
+  },
+  "build": {
+   "x": 1120,
+   "y": 433,
+   "w": 136,
+   "h": 70,
+   "text": "PLACEWOOD · 4SPACE"
+  },
+  "bact": {
+   "x": 1126,
+   "y": 441.5,
+   "w": 124,
+   "h": 22,
+   "text": "PLACE"
+  },
+  "bsub": {
+   "x": 1126,
+   "y": 464.5,
+   "w": 124,
+   "h": 12,
+   "text": "WOOD · 4"
+  },
+  "bkc": {
+   "x": 1169,
+   "y": 480.5,
+   "w": 38,
+   "h": 14,
+   "text": "SPACE"
+  },
+  "nade": {
+   "x": 1120,
+   "y": 510,
+   "w": 136,
+   "h": 44,
+   "text": "NADEG2"
+  },
+  "nadekc": {
+   "x": 1214.4,
+   "y": 525,
+   "w": 14,
+   "h": 14,
+   "text": "G"
+  },
+  "naden": {
+   "x": 1236.4,
+   "y": 524.5,
+   "w": 8.6,
+   "h": 15,
+   "text": "2"
+  },
+  "roll": {
+   "x": 1120,
+   "y": 561,
+   "w": 136,
+   "h": 44,
+   "text": "ROLLVREADY"
+  },
+  "rollkc": {
+   "x": 1174.2,
+   "y": 576,
+   "w": 14,
+   "h": 14,
+   "text": "V"
+  },
+  "rolln": {
+   "x": 1202.2,
+   "y": 575.5,
+   "w": 42.8,
+   "h": 15,
+   "text": "READY"
+  },
+  "ab": {
+   "x": 1120,
+   "y": 612,
+   "w": 136,
+   "h": 44,
+   "text": "ROCKETQ5"
   }
  },
  "1280x720/blackout": {
@@ -523,6 +1983,181 @@
    "w": 430.2,
    "h": 50,
    "text": "Walk next to a wood pile to gather. Delgado is gathering too."
+  },
+  "kit": {
+   "x": 1120,
+   "y": 169,
+   "w": 136,
+   "h": 487,
+   "text": "BUILD ONB\n  \n  WALLDOORF\n  WOOD124\n  BRICK20\n  METAL30\n  PLACEWOOD · 4SPACE\n  \n  ARMORYE\n  NADEG2\n  SPRINTSHIFTREADY\n  ROLLVREADY\n  ROCKETQ5"
+  },
+  "bm": {
+   "x": 1120,
+   "y": 169,
+   "w": 136,
+   "h": 30,
+   "text": "BUILD ONB"
+  },
+  "pieces": {
+   "x": 1120,
+   "y": 206,
+   "w": 136,
+   "h": 32,
+   "text": "WALLDOORF"
+  },
+  "wall": {
+   "x": 1120,
+   "y": 206,
+   "w": 66,
+   "h": 32,
+   "text": "WALL"
+  },
+  "door": {
+   "x": 1190,
+   "y": 206,
+   "w": 66,
+   "h": 32,
+   "text": "DOOR"
+  },
+  "pk": {
+   "x": 1246,
+   "y": 199,
+   "w": 14,
+   "h": 14,
+   "text": "F"
+  },
+  "c0": {
+   "x": 1120,
+   "y": 244,
+   "w": 136,
+   "h": 40,
+   "text": "WOOD124"
+  },
+  "c1": {
+   "x": 1120,
+   "y": 290,
+   "w": 136,
+   "h": 40,
+   "text": "BRICK20"
+  },
+  "c2": {
+   "x": 1120,
+   "y": 336,
+   "w": 136,
+   "h": 40,
+   "text": "METAL30"
+  },
+  "c0k": {
+   "x": 1130,
+   "y": 253,
+   "w": 44.1,
+   "h": 22,
+   "text": "WOOD"
+  },
+  "c0kc": {
+   "x": 1210.8,
+   "y": 257,
+   "w": 14,
+   "h": 14,
+   "text": "1"
+  },
+  "c0n": {
+   "x": 1232.8,
+   "y": 257,
+   "w": 13.2,
+   "h": 14,
+   "text": "24"
+  },
+  "build": {
+   "x": 1120,
+   "y": 382,
+   "w": 136,
+   "h": 70,
+   "text": "PLACEWOOD · 4SPACE"
+  },
+  "bact": {
+   "x": 1126,
+   "y": 390.5,
+   "w": 124,
+   "h": 22,
+   "text": "PLACE"
+  },
+  "bsub": {
+   "x": 1126,
+   "y": 413.5,
+   "w": 124,
+   "h": 12,
+   "text": "WOOD · 4"
+  },
+  "bkc": {
+   "x": 1169,
+   "y": 429.5,
+   "w": 38,
+   "h": 14,
+   "text": "SPACE"
+  },
+  "arm": {
+   "x": 1120,
+   "y": 459,
+   "w": 136,
+   "h": 44,
+   "text": "ARMORYE"
+  },
+  "armkc": {
+   "x": 1214.8,
+   "y": 474,
+   "w": 14,
+   "h": 14,
+   "text": "E"
+  },
+  "nade": {
+   "x": 1120,
+   "y": 510,
+   "w": 136,
+   "h": 44,
+   "text": "NADEG2"
+  },
+  "nadekc": {
+   "x": 1214.4,
+   "y": 525,
+   "w": 14,
+   "h": 14,
+   "text": "G"
+  },
+  "naden": {
+   "x": 1236.4,
+   "y": 524.5,
+   "w": 8.6,
+   "h": 15,
+   "text": "2"
+  },
+  "roll": {
+   "x": 1120,
+   "y": 561,
+   "w": 136,
+   "h": 44,
+   "text": "ROLLVREADY"
+  },
+  "rollkc": {
+   "x": 1174.2,
+   "y": 576,
+   "w": 14,
+   "h": 14,
+   "text": "V"
+  },
+  "rolln": {
+   "x": 1202.2,
+   "y": 575.5,
+   "w": 42.8,
+   "h": 15,
+   "text": "READY"
+  },
+  "ab": {
+   "x": 1120,
+   "y": 612,
+   "w": 136,
+   "h": 44,
+   "text": "ROCKETQ5"
   },
   "map": {
    "x": 1086,
@@ -601,6 +2236,174 @@
    "w": 430.2,
    "h": 50,
    "text": "Walk next to a wood pile to gather. Delgado is gathering too."
+  },
+  "kit": {
+   "x": 1120,
+   "y": 220,
+   "w": 136,
+   "h": 436,
+   "text": "BUILD ONB\n  \n  WALLDOORF\n  WOOD124\n  BRICK2R2\n  METAL3R4\n  PLACEWOOD · 4SPACE\n  \n  ARMORYE\n  NADEG2\n  SPRINTSHIFTREADY\n  ROLLVREADY\n  ROCKETQ5"
+  },
+  "bm": {
+   "x": 1120,
+   "y": 220,
+   "w": 136,
+   "h": 30,
+   "text": "BUILD ONB"
+  },
+  "pieces": {
+   "x": 1120,
+   "y": 257,
+   "w": 136,
+   "h": 32,
+   "text": "WALLDOORF"
+  },
+  "wall": {
+   "x": 1120,
+   "y": 257,
+   "w": 66,
+   "h": 32,
+   "text": "WALL"
+  },
+  "door": {
+   "x": 1190,
+   "y": 257,
+   "w": 66,
+   "h": 32,
+   "text": "DOOR"
+  },
+  "pk": {
+   "x": 1246,
+   "y": 250,
+   "w": 14,
+   "h": 14,
+   "text": "F"
+  },
+  "c0": {
+   "x": 1120,
+   "y": 295,
+   "w": 136,
+   "h": 40,
+   "text": "WOOD124"
+  },
+  "c1": {
+   "x": 1120,
+   "y": 341,
+   "w": 136,
+   "h": 40,
+   "text": "BRICK2R2"
+  },
+  "c2": {
+   "x": 1120,
+   "y": 387,
+   "w": 136,
+   "h": 40,
+   "text": "METAL3R4"
+  },
+  "c0k": {
+   "x": 1130,
+   "y": 304,
+   "w": 44.1,
+   "h": 22,
+   "text": "WOOD"
+  },
+  "c0kc": {
+   "x": 1210.8,
+   "y": 308,
+   "w": 14,
+   "h": 14,
+   "text": "1"
+  },
+  "c0n": {
+   "x": 1232.8,
+   "y": 308,
+   "w": 13.2,
+   "h": 14,
+   "text": "24"
+  },
+  "build": {
+   "x": 1120,
+   "y": 433,
+   "w": 136,
+   "h": 70,
+   "text": "PLACEWOOD · 4SPACE"
+  },
+  "bact": {
+   "x": 1126,
+   "y": 441.5,
+   "w": 124,
+   "h": 22,
+   "text": "PLACE"
+  },
+  "bsub": {
+   "x": 1126,
+   "y": 464.5,
+   "w": 124,
+   "h": 12,
+   "text": "WOOD · 4"
+  },
+  "bkc": {
+   "x": 1169,
+   "y": 480.5,
+   "w": 38,
+   "h": 14,
+   "text": "SPACE"
+  },
+  "arm": {
+   "x": 1120,
+   "y": 510,
+   "w": 136,
+   "h": 44,
+   "text": "ARMORYE"
+  },
+  "armkc": {
+   "x": 1214.8,
+   "y": 525,
+   "w": 14,
+   "h": 14,
+   "text": "E"
+  },
+  "nade": {
+   "x": 1120,
+   "y": 561,
+   "w": 136,
+   "h": 44,
+   "text": "NADEG2"
+  },
+  "nadekc": {
+   "x": 1214.4,
+   "y": 576,
+   "w": 14,
+   "h": 14,
+   "text": "G"
+  },
+  "naden": {
+   "x": 1236.4,
+   "y": 575.5,
+   "w": 8.6,
+   "h": 15,
+   "text": "2"
+  },
+  "roll": {
+   "x": 1120,
+   "y": 612,
+   "w": 136,
+   "h": 44,
+   "text": "ROLLVREADY"
+  },
+  "rollkc": {
+   "x": 1174.2,
+   "y": 627,
+   "w": 14,
+   "h": 14,
+   "text": "V"
+  },
+  "rolln": {
+   "x": 1202.2,
+   "y": 626.5,
+   "w": 42.8,
+   "h": 15,
+   "text": "READY"
   }
  },
  "1280x720/ffa": {
@@ -645,6 +2448,451 @@
    "w": 430.2,
    "h": 50,
    "text": "Walk next to a wood pile to gather. Delgado is gathering too."
+  },
+  "kit": {
+   "x": 1120,
+   "y": 561,
+   "w": 136,
+   "h": 95,
+   "text": "BUILD ONB\n  \n  WALLDOORF\n  WOOD124\n  BRICK2R2\n  METAL3R4\n  PLACEWOOD · 4SPACE\n  \n  ARMORYE\n  NADEG2\n  SPRINTSHIFTREADY\n  ROLLVREADY\n  ROCKETQ5"
+  },
+  "nade": {
+   "x": 1120,
+   "y": 561,
+   "w": 136,
+   "h": 44,
+   "text": "NADEG2"
+  },
+  "nadekc": {
+   "x": 1214.4,
+   "y": 576,
+   "w": 14,
+   "h": 14,
+   "text": "G"
+  },
+  "naden": {
+   "x": 1236.4,
+   "y": 575.5,
+   "w": 8.6,
+   "h": 15,
+   "text": "2"
+  },
+  "roll": {
+   "x": 1120,
+   "y": 612,
+   "w": 136,
+   "h": 44,
+   "text": "ROLLVREADY"
+  },
+  "rollkc": {
+   "x": 1174.2,
+   "y": 627,
+   "w": 14,
+   "h": 14,
+   "text": "V"
+  },
+  "rolln": {
+   "x": 1202.2,
+   "y": 626.5,
+   "w": 42.8,
+   "h": 15,
+   "text": "READY"
+  }
+ },
+ "1280x720/kitoff": {
+  "phase": {
+   "x": 860.2,
+   "y": 12,
+   "w": 395.8,
+   "h": 158,
+   "text": "BUILDII\n    0:40 until raid 1\n    CORE500\n    ENEMY700\n    \n    SALVAGE 0\n    DELGADO · FOLLOW\n    START RAIDENTER"
+  },
+  "lab": {
+   "x": 1139,
+   "y": 12,
+   "w": 77,
+   "h": 32,
+   "text": "BUILD"
+  },
+  "pause": {
+   "x": 1226,
+   "y": 13,
+   "w": 30,
+   "h": 30,
+   "text": "II"
+  },
+  "val": {
+   "x": 1113.2,
+   "y": 46,
+   "w": 142.8,
+   "h": 18,
+   "text": "0:40 until raid 1"
+  },
+  "core": {
+   "x": 860.2,
+   "y": 52,
+   "w": 234,
+   "h": 19,
+   "text": "CORE500"
+  },
+  "qm": {
+   "x": 978.2,
+   "y": 75,
+   "w": 116,
+   "h": 24,
+   "text": "DELGADO · FOLLOW"
+  },
+  "salv": {
+   "x": 1175.3,
+   "y": 101,
+   "w": 80.7,
+   "h": 18,
+   "text": "SALVAGE 0"
+  },
+  "skip": {
+   "x": 1108.2,
+   "y": 127,
+   "w": 147.8,
+   "h": 35,
+   "text": "START RAIDENTER"
+  },
+  "kc": {
+   "x": 1205,
+   "y": 137.5,
+   "w": 38,
+   "h": 14,
+   "text": "ENTER"
+  },
+  "tip": {
+   "x": 424.9,
+   "y": 180,
+   "w": 430.2,
+   "h": 50,
+   "text": "Walk next to a wood pile to gather. Delgado is gathering too."
+  },
+  "kit": {
+   "x": 1120,
+   "y": 422,
+   "w": 136,
+   "h": 234,
+   "text": "BUILD OFFB\n  \n  WALLDOORF\n  WOOD124\n  BRICK2R2\n  METAL3R4\n  PLACEWOOD · 4SPACE\n  \n  ARMORYE\n  NADEG2\n  SPRINTSHIFTREADY\n  ROLLVREADY\n  ROCKETQ5"
+  },
+  "bm": {
+   "x": 1120,
+   "y": 422,
+   "w": 136,
+   "h": 30,
+   "text": "BUILD OFFB"
+  },
+  "arm": {
+   "x": 1120,
+   "y": 459,
+   "w": 136,
+   "h": 44,
+   "text": "ARMORYE"
+  },
+  "armkc": {
+   "x": 1214.8,
+   "y": 474,
+   "w": 14,
+   "h": 14,
+   "text": "E"
+  },
+  "nade": {
+   "x": 1120,
+   "y": 510,
+   "w": 136,
+   "h": 44,
+   "text": "NADEG2"
+  },
+  "nadekc": {
+   "x": 1214.4,
+   "y": 525,
+   "w": 14,
+   "h": 14,
+   "text": "G"
+  },
+  "naden": {
+   "x": 1236.4,
+   "y": 524.5,
+   "w": 8.6,
+   "h": 15,
+   "text": "2"
+  },
+  "roll": {
+   "x": 1120,
+   "y": 561,
+   "w": 136,
+   "h": 44,
+   "text": "ROLLVREADY"
+  },
+  "rollkc": {
+   "x": 1174.2,
+   "y": 576,
+   "w": 14,
+   "h": 14,
+   "text": "V"
+  },
+  "rolln": {
+   "x": 1202.2,
+   "y": 575.5,
+   "w": 42.8,
+   "h": 15,
+   "text": "READY"
+  },
+  "ab": {
+   "x": 1120,
+   "y": 612,
+   "w": 136,
+   "h": 44,
+   "text": "ROCKETQ5"
+  }
+ },
+ "1280x720/quarter": {
+  "phase": {
+   "x": 860.2,
+   "y": 12,
+   "w": 395.8,
+   "h": 158,
+   "text": "BUILDII\n    0:40 until raid 1\n    CORE500\n    ENEMY700\n    \n    SALVAGE 0\n    DELGADO · FOLLOW\n    START RAIDENTER"
+  },
+  "lab": {
+   "x": 1139,
+   "y": 12,
+   "w": 77,
+   "h": 32,
+   "text": "BUILD"
+  },
+  "pause": {
+   "x": 1226,
+   "y": 13,
+   "w": 30,
+   "h": 30,
+   "text": "II"
+  },
+  "val": {
+   "x": 1113.2,
+   "y": 46,
+   "w": 142.8,
+   "h": 18,
+   "text": "0:40 until raid 1"
+  },
+  "core": {
+   "x": 860.2,
+   "y": 52,
+   "w": 234,
+   "h": 19,
+   "text": "CORE500"
+  },
+  "qm": {
+   "x": 978.2,
+   "y": 75,
+   "w": 116,
+   "h": 24,
+   "text": "DELGADO · FOLLOW"
+  },
+  "salv": {
+   "x": 1175.3,
+   "y": 101,
+   "w": 80.7,
+   "h": 18,
+   "text": "SALVAGE 0"
+  },
+  "skip": {
+   "x": 1108.2,
+   "y": 127,
+   "w": 147.8,
+   "h": 35,
+   "text": "START RAIDENTER"
+  },
+  "kc": {
+   "x": 1205,
+   "y": 137.5,
+   "w": 38,
+   "h": 14,
+   "text": "ENTER"
+  },
+  "tip": {
+   "x": 424.9,
+   "y": 180,
+   "w": 430.2,
+   "h": 50,
+   "text": "Walk next to a wood pile to gather. Delgado is gathering too."
+  },
+  "kit": {
+   "x": 1120,
+   "y": 169,
+   "w": 136,
+   "h": 487,
+   "text": "BUILD ONB\n  \n  WALLDOORF\n  WOOD124\n  BRICK2R2\n  METAL3R4\n  PLACEWOOD · 4SPACE\n  \n  ARMORYE\n  NADEG2\n  SPRINTSHIFTREADY\n  ROLLVREADY\n  ROCKETQ5"
+  },
+  "bm": {
+   "x": 1120,
+   "y": 169,
+   "w": 160.6,
+   "h": 30,
+   "text": "BUILD ONB"
+  },
+  "pieces": {
+   "x": 1120,
+   "y": 206,
+   "w": 160.6,
+   "h": 32,
+   "text": "WALLDOORF"
+  },
+  "wall": {
+   "x": 1120,
+   "y": 206,
+   "w": 78.3,
+   "h": 32,
+   "text": "WALL"
+  },
+  "door": {
+   "x": 1202.3,
+   "y": 206,
+   "w": 78.3,
+   "h": 32,
+   "text": "DOOR"
+  },
+  "pk": {
+   "x": 1270.6,
+   "y": 199,
+   "w": 14,
+   "h": 14,
+   "text": "F"
+  },
+  "c0": {
+   "x": 1120,
+   "y": 244,
+   "w": 160.6,
+   "h": 40,
+   "text": "WOOD124"
+  },
+  "c1": {
+   "x": 1120,
+   "y": 290,
+   "w": 160.6,
+   "h": 40,
+   "text": "BRICK2R2"
+  },
+  "c2": {
+   "x": 1120,
+   "y": 336,
+   "w": 160.6,
+   "h": 40,
+   "text": "METAL3R4"
+  },
+  "c0k": {
+   "x": 1130,
+   "y": 253,
+   "w": 44.1,
+   "h": 22,
+   "text": "WOOD"
+  },
+  "c0kc": {
+   "x": 1235.4,
+   "y": 257,
+   "w": 14,
+   "h": 14,
+   "text": "1"
+  },
+  "c0n": {
+   "x": 1257.4,
+   "y": 257,
+   "w": 13.2,
+   "h": 14,
+   "text": "24"
+  },
+  "build": {
+   "x": 1120,
+   "y": 382,
+   "w": 160.6,
+   "h": 70,
+   "text": "PLACEWOOD · 4SPACE"
+  },
+  "bact": {
+   "x": 1126,
+   "y": 390.5,
+   "w": 148.6,
+   "h": 22,
+   "text": "PLACE"
+  },
+  "bsub": {
+   "x": 1126,
+   "y": 413.5,
+   "w": 148.6,
+   "h": 12,
+   "text": "WOOD · 4"
+  },
+  "bkc": {
+   "x": 1181.3,
+   "y": 429.5,
+   "w": 38,
+   "h": 14,
+   "text": "SPACE"
+  },
+  "arm": {
+   "x": 1120,
+   "y": 459,
+   "w": 160.6,
+   "h": 44,
+   "text": "ARMORYE"
+  },
+  "armkc": {
+   "x": 1227.1,
+   "y": 474,
+   "w": 14,
+   "h": 14,
+   "text": "E"
+  },
+  "nade": {
+   "x": 1120,
+   "y": 510,
+   "w": 160.6,
+   "h": 44,
+   "text": "NADEG2"
+  },
+  "nadekc": {
+   "x": 1239,
+   "y": 525,
+   "w": 14,
+   "h": 14,
+   "text": "G"
+  },
+  "naden": {
+   "x": 1261,
+   "y": 524.5,
+   "w": 8.6,
+   "h": 15,
+   "text": "2"
+  },
+  "spr": {
+   "x": 1120,
+   "y": 561,
+   "w": 160.6,
+   "h": 44,
+   "text": "SPRINTSHIFTREADY"
+  },
+  "roll": {
+   "x": 1120,
+   "y": 612,
+   "w": 160.6,
+   "h": 44,
+   "text": "ROLLVREADY"
+  },
+  "rollkc": {
+   "x": 1198.8,
+   "y": 627,
+   "w": 14,
+   "h": 14,
+   "text": "V"
+  },
+  "rolln": {
+   "x": 1226.8,
+   "y": 626.5,
+   "w": 42.8,
+   "h": 15,
+   "text": "READY"
   }
  }
 }

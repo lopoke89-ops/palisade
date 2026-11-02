@@ -574,7 +574,12 @@ func do_action(id: String) -> void:
 				return
 	match id:
 		"build":
-			sim.local_build()
+			if settings.data.get("build", true) and sim.pvp() != "ffa":
+				sim.local_build()
+		"kit":   # toggleBuild (08-input.js): the build kit on or off, kept in Settings
+			if sim.pvp() != "ffa":
+				settings.data.build = not settings.data.get("build", true)
+				settings.save()
 		"mat1", "mat2", "mat3":
 			sim.game.sel = int(id.substr(3)) - 1
 		"matPrev":
@@ -1552,40 +1557,14 @@ func _paint_panels(layer: CanvasItem) -> void:
 	cv = self
 
 
-## touch: the two thumb sticks while held, and the buttons (BUILD, GRENADE, the ability or SPRINT, ARMORY, the
-## materials, WALL/DOOR)
+## touch: the two thumb sticks while held (the buttons are the HUD's kit and phase box, as in the browser)
 func _draw_touch() -> void:
-	var W := v.W
-	var H := v.H
-	var p: Dictionary = sim.player
-	var g: Dictionary = sim.game
 	for s in [inp.stick_move, inp.stick_aim]:
 		if s.id >= 0:
 			cv.draw_arc(s.o, PalInput.SR, 0, TAU, 40, Color(220 / 255.0, 210 / 255.0, 186 / 255.0, 0.35), 2)
 			cv.draw_arc(s.o, PalInput.SR * 0.5, 0, TAU, 32, Color(226 / 255.0, 180 / 255.0, 54 / 255.0, 0.25), 2)
 			var hot: bool = s == inp.stick_aim and s.mag > 0.5
 			cv.draw_circle(s.o + s.v * PalInput.SR, 20, Color(226 / 255.0, 180 / 255.0, 54 / 255.0, 0.8) if hot else Color(220 / 255.0, 210 / 255.0, 186 / 255.0, 0.55))
-	var btn := func(r: Rect2, id: String, text: String, on: bool = false) -> void:
-		cv.draw_rect(r, Color(226 / 255.0, 180 / 255.0, 54 / 255.0, 0.85) if on else Color(14 / 255.0, 12 / 255.0, 10 / 255.0, 0.7))
-		cv.draw_rect(r, Color(226 / 255.0, 180 / 255.0, 54 / 255.0, 0.7), false, 1.5)
-		var fs := 12
-		var tw := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
-		cv.draw_string(font, Vector2(r.position.x + r.size.x / 2 - tw / 2, r.position.y + r.size.y / 2 + 4), text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, c("#17140f") if on else c("#e8dcc0"))
-		inp.buttons.append([r, id])
-	var bx := W - 96
-	btn.call(Rect2(bx, H - 250, 84, 64), "build", "BUILD")
-	btn.call(Rect2(bx - 92, H - 210, 84, 48), "nade", "GRENADE %d" % p.nades)
-	var ab := "ROCKET %d" % p.rk if p.cls == "soldier" else ("STEALTH" if p.cls == "sniper" else ("SPRINT" if p.cls == "quartermaster" else ""))
-	if ab != "":
-		btn.call(Rect2(bx - 92, H - 270, 84, 48), "special", ab)
-	if not sim.casino():
-		btn.call(Rect2(bx - 92, H - 154, 84, 48), "roll", "ROLL" if p.dgCd <= 0 else "ROLL %ds" % ceili(p.dgCd), sim.rolling(p))
-	if sim.can_shop(p):
-		btn.call(Rect2(bx, H - 320, 84, 48), "armory", "ARMORY")
-	for k in 3:
-		btn.call(Rect2(W / 2 - 150 + k * 76, H - 56, 70, 44), "mat%d" % (k + 1), Pal.MAT[k].name, g.sel == k)
-	btn.call(Rect2(W / 2 + 84, H - 56, 70, 44), "piece", g.piece.to_upper())
-	# PAUSE and START are the HUD's own buttons (scripts/hud.gd), as in the browser
 
 
 ## drawTracer: the standard tracer, a tapered streak with a hot core that fades toward its tail; raiders' rounds are a
@@ -2019,16 +1998,28 @@ func _draw_stake(which = null) -> void:
 
 func _draw_ghost() -> void:
 	var p: Dictionary = sim.player
-	if not p.alive or sim.game.phase == "over" or sim.casino():
+	if not p.alive or sim.game.phase == "over" or sim.casino() or not settings.data.get("build", true) or sim.pvp() == "ffa":
 		return
 	var t := sim.build_target(p, sim.game.sel, sim.game.piece == "door")
 	if not sim.inb(t.i, t.j):
 		return
-	var col := Color(0.56, 0.88, 0.63, 0.28) if t.ok else Color(0.84, 0.35, 0.23, 0.25)
-	quad(iso(t.i, t.j), iso(t.i + 1, t.j), iso(t.i + 1, t.j + 1), iso(t.i, t.j + 1), col)
-	var line := Color(col, 0.8)
-	var pts := PackedVector2Array([iso(t.i, t.j), iso(t.i + 1, t.j), iso(t.i + 1, t.j + 1), iso(t.i, t.j + 1), iso(t.i, t.j)])
-	cv.draw_polyline(pts, line, maxf(1.0, v.u))
+	# drawGhost (16-characters.js): a dashed outline, yellow or red, and the piece itself, faint, where it would go
+	var u := v.u
+	if t.ok and t.act in ["PLACE", "DOOR"]:
+		var M: Dictionary = Pal.MAT[t.mat]
+		var a := 0.32
+		var r := box_r(t.i + 0.03, t.j + 0.03, t.i + 0.97, t.j + 0.97, 0, v.WH, Color(c(M.top), a), Color(c(M.l), a), Color(c(M.r), a))
+		if t.get("door", false):
+			for pq in [[r.D, r.C], [r.C, r.B]]:
+				var da: Vector2 = pq[0].lerp(pq[1], 0.3)
+				var db: Vector2 = pq[0].lerp(pq[1], 0.7)
+				quad(da, db, up(db, v.WH * 0.82), up(da, v.WH * 0.82), Color(c("#1d150e"), a))
+				var hd := up(pq[0].lerp(pq[1], 0.62), v.WH * 0.42)
+				cv.draw_rect(Rect2(hd.x - u, hd.y - u, 2 * u, 2 * u), Color(c("#e2b436"), a))
+	var col := Color(226 / 255.0, 180 / 255.0, 54 / 255.0, 0.9) if t.ok else Color(200 / 255.0, 80 / 255.0, 60 / 255.0, 0.9)
+	var pts := [iso(t.i, t.j), iso(t.i + 1, t.j), iso(t.i + 1, t.j + 1), iso(t.i, t.j + 1)]
+	for k in 4:
+		cv.draw_dashed_line(pts[k], pts[(k + 1) % 4], col, 1.5 * u, 3.5 * u)
 
 
 ## The browser's LOOK table (16-characters.js) for raiders, and QM_LOOK for Delgado
@@ -2133,8 +2124,6 @@ func _draw_ammo_status(e: Dictionary) -> void:
 # ---------------------------------------------------------------- HUD
 
 func _draw_hud() -> void:
-	var g: Dictionary = sim.game
-	var p: Dictionary = sim.player
 	var W := v.W
 	var H := v.H
 	# the kill feed (top right) and the room's chat (bottom left), online
@@ -2167,50 +2156,8 @@ func _draw_hud() -> void:
 		CityView.minimap(self, city_map, mb.position.x, mb.position.y, mb.size.x)
 	if sim.casino():   # no kit, no building, no Delgado in here
 		return
-	# bottom-left: health, materials, grenades
-	var y0 := H - 74
-	cv.draw_rect(Rect2(10, y0 - 8, 330, 72), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.72))
-	cv.draw_string(font, Vector2(20, y0 + 10), p.C.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, dim)
-	cv.draw_rect(Rect2(86, y0, 150, 10), Color(0, 0, 0, 0.6))
-	cv.draw_rect(Rect2(86, y0, 150 * maxf(0, p.hp / p.max), 10), c("#8fe0a0") if p.hp / p.max > 0.35 else c("#d65a3a"))
-	var kit := "NADES %d" % p.nades
-	match p.cls:
-		"soldier":
-			kit += " · RKT %d" % p.rk
-		"sniper":
-			kit += (" · HIDDEN %ds" % ceili(p.stl)) if p.stl > 0 else (" · STEALTH %ds" % ceili(p.stlCd) if p.stlCd > 0 else " · STEALTH (Q)")
-		"grenadier":
-			kit += " · SHELLS %d/%d" % [p.ammo, p.gun.mag]
-		"quartermaster":
-			kit += " · SPRINT %ds" % ceili(p.sprCd) if p.sprCd > 0 else " · SPRINT (SHIFT)"
-	cv.draw_string(font, Vector2(246, y0 + 10), kit, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, paper)
-	if p.ammoEq[0] != "":
-		for A in Sim.AMMO:
-			if A.id == p.ammoEq[0]:
-				cv.draw_string(font, Vector2(20, y0 - 44), "AMMO · " + A.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, c(A.col))
+	# health is on the nameplates and the kit is the HUD's (scripts/hud.gd), as in the browser
 	_draw_boss_bar()
-	for m in 3:
-		var x := 20 + m * 100
-		var sel: bool = g.sel == m
-		var col := c(Pal.MAT[m].top)
-		if sel:
-			cv.draw_rect(Rect2(x - 4, y0 + 18, 94, 26), Color(col, 0.25))
-			cv.draw_rect(Rect2(x - 4, y0 + 18, 94, 26), col, false, 1.5)
-		cv.draw_rect(Rect2(x, y0 + 24, 12, 12), col)
-		cv.draw_string(font, Vector2(x + 18, y0 + 36), "%d %s %d" % [m + 1, Pal.MAT[m].name, p.mats[m]], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, paper if sel else dim)
-	cv.draw_string(font, Vector2(20, y0 + 58), "PIECE: %s (F)   SALVAGE %d   DROPS %d" % [g.piece.to_upper(), p.sal, p.kills], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, dim)
-	var q: Dictionary = sim.qm
-	if not q.get("gone", false):   # On Your Own: no Delgado line
-		var qtxt: String = ("DELGADO · %s · %s   (H)" % ["FOLLOW" if q.mode == "follow" else "DEFEND", q.status]) if q.alive else "DELGADO IS DOWN · stand over him"
-		cv.draw_rect(Rect2(10, y0 - 34, 330, 22), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.72))
-		cv.draw_string(font, Vector2(20, y0 - 18), qtxt, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, c("#a9bccb") if q.alive else c("#d65a3a"))
-	# what SPACE would do
-	if p.alive and g.phase != "over":
-		var t := sim.build_target(p, g.sel, g.piece == "door")
-		var tc := iso(t.i + 0.5, t.j + 0.5)
-		var msg: String = ("%s · %d %s" % [t.act, t.cost, Pal.MAT[t.mat].name]) if t.ok else t.reason
-		if msg != "":
-			label(msg, tc.x, tc.y - v.WH * 1.4, c("#8fe0a0") if t.ok else c("#d65a3a"), 10)
 	# toast
 	for tt in ([] if menus.active() else toasts):
 		var a: float = clampf(tt.t / 0.6, 0, 1)
