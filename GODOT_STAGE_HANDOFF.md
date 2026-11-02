@@ -106,6 +106,37 @@
 - **Gone with the panel:** the health bar (health is on the nameplates, as in the browser since v0.9.9), the Delgado line (the phase box's button), the AMMO line (the armory shows it) and DROPS.
 - **Touch** uses the kit, as the browser does, so the painted touch buttons that copied it are gone; the thumb sticks stay. A touch on a HUD button isn't a stick.
 
+- **Stage 12 (HUD H3): the key bar, banners, kill feed and boss bars, as the browser's.**
+  - **Key bar** (`#keys`): every key this soldier has right now, in key caps, wrapping and centred along the bottom. With a controller, the controller's buttons (`padBar`), following your button changes. Hidden on touch and in the casino.
+  - **Banner** (`#toast`):
+    - The browser's queue: phase messages before minor ones, three waiting at most.
+    - Times of 4.5 s / 3 s × MESSAGE TIME.
+    - The coloured bands: orange for threats, green for good news, red for bad.
+    - Placement: the top row left of the phase box, at most 640 wide, below the boss bars where they'd meet.
+    - Its small text balanced on at most two lines, a fade, and a click to dismiss. Its title stays under the clock.
+    - Every banner in Godot goes through it now.
+  - **Kill feed** (`#feed`): the browser's tags (stencil, a coloured edge, fading out). They sit inside the phase box, so they widen and lengthen it as in the browser (the tip and the mini-map move with it). In Black Out they sit beside the mini-map.
+  - **Boss bars** (painted, as the browser paints them on its canvas):
+    - one bar a boss, with WEAK: (in ammo mode) and the percentage;
+    - slim rows for three;
+    - one shared bar and the nearest boss for four or more.
+    - The browser shows no ENRAGED, so Godot doesn't either. The Black Out mini-map steps below them.
+  - **Chat:** T opens it online, as in the browser (Enter still does too).
+
+## Verification (Stage 12)
+- **New test checks:** `tests/hud_shot.gd` now checks the key bar item by item (keys, words and boxes), the banner, the feed lines and the boss bars' box against the browser's. It covers twelve states at 1600×900 and 1280×720: a phase banner with two feed lines, a minor banner, and one, three and four bosses joined the earlier seven. All are within 5 px.
+  - Mono text is laid out at the browser's exact 0.6 em a letter.
+  - It also checks the banner queue (a phase message jumps the minor ones), a click dismissing a banner, and the controller's buttons in the key bar and on the kit.
+- **Compared by eye** against the browser: the banner, the feed in the phase box, the key bar and a boss bar.
+- **Suites:** all seven pass.
+  - `tables_test` failed once on "CHECK fails when the seed doesn't match its fingerprint", then passed twice. The test swaps the seed's first character for "f", which changes nothing when it already starts with "f" (about 1 run in 16). Not this stage's, not fixed here.
+- **Crossplay:** `cross_game.js` 45/45.
+- **Screenshot tests:**
+  - `lobby3d_shot` passes, and `menus_shot` passes (then the known abort).
+  - `casino_play_shot` and `shot city` render without errors.
+  - `shot3d raid` errored 2 runs in 5. The same happens on the Stage 11 commit (1 in 4): its scene assumes a wall survives 22 s of random play. Not this stage's, not fixed here.
+- **Not done:** a Windows build of this stage.
+
 ## Verification (Stage 11)
 - **New test checks:** `tests/hud_shot.gd` now also measures every kit box against the browser's, for build, raid, Black Out, Base Battle, Free-for-all, kit off and a Quartermaster, at 1600×900 and 1280×720. All are within 5 px; the worst is 4.4 px (SALVAGE 40).
   - Layout uses the browser's exact letter-spacing, and the count text's synthetic bold, even where Godot draws to the whole pixel.
@@ -198,10 +229,12 @@
 - The menus leave the 3D crew loaded during games (from the previous session).
 
 ## Proposed next milestone
-Stage 12 (HUD H3): messages. Each piece is checked against the browser as H1 and H2 were:
-- the key bar along the bottom (your keyboard bindings, or the controller's buttons);
-- the browser's banners with their colours, queue and placement;
-- stacked boss bars with weakness, percent and ENRAGED;
-- the kill feed's style, and the Free-for-all board's place beside it.
+Stage 13 (HUD H4): the rest of the browser's HUD.
+- Black Out: the mini-map's frame and colours, and its fading under banners.
+- The casino's HUD.
+- The chat log and bar with SEND and the quick lines.
+- The Free-for-all respawn class picker.
+- The down and spectating states.
+- Touch on phone sizes, the browser's non-desktop layout.
 
-Then H4 (Black Out's mini-map frame, the casino, chat, the respawn picker, phone layout), and a Windows build for your playtest.
+Then a Windows build of Stages 10–13 for your playtest.
