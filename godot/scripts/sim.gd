@@ -402,39 +402,6 @@ func compute_flow() -> void:
 	poi_flows.clear()
 
 
-func _heap_push(h: Array, item: Array) -> void:
-	h.append(item)
-	var c := h.size() - 1
-	while c > 0:
-		var p := (c - 1) >> 1
-		if h[p][0] <= item[0]:
-			break
-		h[c] = h[p]
-		c = p
-	h[c] = item
-
-
-func _heap_pop(h: Array) -> Array:
-	var top: Array = h[0]
-	var last: Array = h.pop_back()
-	if h.is_empty():
-		return top
-	var c := 0
-	var n := h.size()
-	while true:
-		var m := c * 2 + 1
-		if m >= n:
-			break
-		if m + 1 < n and h[m + 1][0] < h[m][0]:
-			m += 1
-		if h[m][0] >= last[0]:
-			break
-		h[c] = h[m]
-		c = m
-	h[c] = last
-	return top
-
-
 func mark_flow() -> void:
 	if not flow_dirty:
 		flow_dirty = true
@@ -6344,30 +6311,76 @@ func city_aim_end() -> void:
 	core_k = _aim_save[2]
 
 
+const _FLOW_DI := [1, -1, 0, 0]   # Pal.D4, split for flow_to's inner loop
+const _FLOW_DJ := [0, 0, 1, -1]
+
+
+## Dijkstra from goal over enter_cost. Black Out's 64x64 rebuilds two of these in one step, so it stays lean: every
+## tile's cost is read once, height_link is only asked on Frost (elsewhere any in-bounds step links), and the heap is two
+## packed arrays rather than a small Array per entry (any pop order gives the same field: the costs are never negative).
 func flow_to(goal: int, out: PackedFloat64Array) -> void:
 	var n := N * N
 	out.fill(1e9)
+	var cost := PackedFloat64Array()
+	cost.resize(n)
+	for k in n:
+		cost[k] = enter_cost(k)
+	var frost := is_frost()
 	var done := PackedByteArray()
 	done.resize(n)
 	out[goal] = 0.0
-	var heap: Array = [[0.0, goal]]
-	while not heap.is_empty():
-		var top: Array = _heap_pop(heap)
-		var bv: float = top[0]
-		var uk: int = top[1]
-		if done[uk] or bv > out[uk]:
+	var hv := PackedFloat64Array()   # the heap: distances and tiles side by side (at most one push per link, plus the goal)
+	var hk := PackedInt32Array()
+	hv.resize(4 * n + 1)
+	hk.resize(4 * n + 1)
+	hv[0] = 0.0
+	hk[0] = goal
+	var hn := 1
+	while hn > 0:
+		var bv: float = hv[0]
+		var uk: int = hk[0]
+		hn -= 1
+		if hn > 0:   # the last entry sinks from the top
+			var lv: float = hv[hn]
+			var lk: int = hk[hn]
+			var c := 0
+			while true:
+				var m := c * 2 + 1
+				if m >= hn:
+					break
+				if m + 1 < hn and hv[m + 1] < hv[m]:
+					m += 1
+				if hv[m] >= lv:
+					break
+				hv[c] = hv[m]
+				hk[c] = hk[m]
+				c = m
+			hv[c] = lv
+			hk[c] = lk
+		if done[uk] != 0 or bv > out[uk]:
 			continue
 		done[uk] = 1
 		var ui := uk % N
 		var uj := uk / N
-		var c := enter_cost(uk)
-		for d in Pal.D4:
-			var i: int = ui + d[0]
-			var j: int = uj + d[1]
-			if not height_link(ui, uj, i, j):
+		var nv: float = bv + cost[uk]
+		for q in 4:
+			var i: int = ui + _FLOW_DI[q]
+			var j: int = uj + _FLOW_DJ[q]
+			if i < 0 or j < 0 or i >= N or j >= N:
 				continue
-			var k := idx(i, j)
-			var nv := bv + c
+			if frost and not height_link(ui, uj, i, j):
+				continue
+			var k := j * N + i
 			if nv < out[k]:
 				out[k] = nv
-				_heap_push(heap, [nv, k])
+				var c := hn   # rises from the bottom
+				hn += 1
+				while c > 0:
+					var p := (c - 1) >> 1
+					if hv[p] <= nv:
+						break
+					hv[c] = hv[p]
+					hk[c] = hk[p]
+					c = p
+				hv[c] = nv
+				hk[c] = k
