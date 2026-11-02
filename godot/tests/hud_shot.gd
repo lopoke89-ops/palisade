@@ -1,7 +1,8 @@
 extends SceneTree
-## The HUD's phase box, tip and build kit against the browser's own boxes (tests/hud_ref.json, made by
-## tests/hud_ref.js) in the same states: the build phase, a raid, City Black Out, Base Battle, Free-for-all, the kit
-## switched off and a Quartermaster (whose SPRINT widens the kit), at 1600x900 and 1280x720.
+## The HUD against the browser's own boxes (tests/hud_ref.json, made by tests/hud_ref.js): the phase box, the tip, the
+## build kit, the key bar item by item, the banner, the kill feed and the boss bars' box, in the same states: the build
+## phase, a raid, City Black Out, Base Battle, Free-for-all, the kit switched off, a Quartermaster (whose SPRINT widens
+## the kit), a phase banner with two feed lines, a minor banner, and one, three and four bosses; at 1600x900 and 1280x720.
 ##   xvfb-run -a godot --path godot --rendering-driver opengl3 --resolution 1600x900 --script res://tests/hud_shot.gd -- /tmp/h
 ## Prints each box's offset from the browser's, OK/FAIL lines, and writes <prefix>_<state>_<width>.png.
 
@@ -35,7 +36,7 @@ func _state(name: String) -> void:
 	main.settings.data.build = name != "kitoff"
 	main._restart()
 	var s: Sim = main.sim
-	if name == "raid":
+	if name in ["raid", "minor", "boss1", "boss3", "boss4"]:
 		s.start_raid()
 		main.hud.note = "RAID 1 OF 5"
 	for i in 3:   # a moment of play: Black Out's starting purse
@@ -43,9 +44,35 @@ func _state(name: String) -> void:
 	if name == "base":   # the browser's reference forces Base Battle onto a co-op start: no starting salvage, the co-op tip
 		s.player.sal = 0
 		main.hud.tip = "Walk next to a wood pile to gather. Delgado is gathering too."
-	main.toasts.clear()
+	main.hud.toast_clear()
+	main.feed.clear()
+	for k in {"boss1": ["butcher"], "boss3": ["butcher", "demolisher", "storm"], "boss4": ["butcher", "demolisher", "storm", "butcher"]}.get(name, []):
+		s.spawn_boss(k)
+	if name in ["raid", "boss1", "boss3", "boss4"]:
+		main.hud.note = "RAID 1 OF 5"
+	if name == "msg":
+		for f in [["Rab took down a raider", "#e8c7a0"], ["Delgado dropped a breacher", "#a9bccb"]]:
+			main.feed.push_front({"text": f[0], "col": f[1], "t": 5.7})
+		main.hud.toast("RAID 1 OF 5", "3 riflemen coming over the east fence.")
+	if name == "minor":
+		main.hud.toast("ARMORY", "Walk back to the stake to spend salvage.")
 	s.game.paused = true
 	await _frames(4)
+	if not name in ["msg", "minor"]:   # the game's own banners (a raid's, a boss's), which the browser's reference clears
+		main.hud.toast_clear()
+		if name in ["raid", "boss1", "boss3", "boss4"]:
+			main.hud.note = "RAID 1 OF 5"
+		await _frames(2)
+
+
+## an item's offset from the browser's (CSS pixels, scaled by k for screen pixels), noted when it's over the tolerance
+static func _off(off: Array, k: String, g: Rect2, b: Dictionary, sc: float) -> void:
+	var d := [g.position.x - b.x, g.position.y - b.y, g.size.x - b.w, g.size.y - b.h]
+	var mx := 0.0
+	for v in d:
+		mx = maxf(mx, absf(v))
+	if mx > TOL:
+		off.append("%s %.1f: %+.1f %+.1f %+.1f %+.1f" % [k, mx, d[0], d[1], d[2], d[3]])
 
 
 ## a control's box on screen
@@ -68,7 +95,7 @@ func _run() -> void:
 	for sz in [Vector2i(1600, 900), Vector2i(1280, 720)]:
 		root.get_window().size = sz
 		await _frames(4)
-		for name in ["build", "raid", "blackout", "base", "ffa", "kitoff", "quarter"]:
+		for name in ["build", "raid", "blackout", "base", "ffa", "kitoff", "quarter", "msg", "minor", "boss1", "boss3", "boss4"]:
 			var R: Dictionary = ref["%dx%d/%s" % [sz.x, sz.y, name]]
 			await _state(name)
 			var h: Hud = main.hud
@@ -95,6 +122,15 @@ func _run() -> void:
 			for k in [["c0k", "c0", "k"], ["c0kc", "c0", "kc"], ["c0n", "c0", "n"], ["bact", "build", "act"], ["bsub", "build", "sub"], ["bkc", "build", "kc"],
 					["armkc", "arm", "kc"], ["nadekc", "nade", "kc"], ["naden", "nade", "n"], ["rollkc", "roll", "kc"], ["rolln", "roll", "n"]]:
 				shown[k[0]] = (K[k[1]].parts[k[2]] as Control).is_visible_in_tree()
+			got.keys = Rect2(h.keys_rect.position * h.s, h.keys_rect.size * h.s)
+			shown.keys = h.keys_c.visible
+			got.toast = _r(h.toast_p)
+			shown.toast = h.toast_p.visible and h.toast_cur != null
+			got.small = _r(h.toast_small)
+			shown.small = shown.toast and h.toast_small.visible
+			var bb := h.boss_box()
+			got.bb = Rect2(bb.position * h.s, bb.size * h.s)
+			shown.bb = bb.size.x > 0
 			var id := "%d %s" % [sz.x, name]
 			var worst := 0.0
 			var off := []
@@ -113,6 +149,19 @@ func _run() -> void:
 				worst = maxf(worst, m)
 				if m > TOL:
 					off.append("%s %+.1f %+.1f %+.1f %+.1f" % [k, d[0], d[1], d[2], d[3]])
+			# the key bar item by item, and the kill feed line by line
+			var kbs: Array = R.get("kbs", [])
+			check(kbs.size() == h.keys_boxes.size() and range(kbs.size()).all(func(i): return kbs[i].text == h.keys_boxes[i].it[0] + h.keys_boxes[i].it[1]),
+				"%s: the key bar has the browser's keys (%s)" % [id, " · ".join(h.keys_boxes.map(func(k): return k.it[0] + " " + k.it[1]))])
+			for i in mini(kbs.size(), h.keys_boxes.size()):
+				_off(off, "kb%d" % i, h.keys_boxes[i].r, kbs[i], 1.0)
+			var feeds: Array = R.get("feeds", [])
+			var fl := h.feed_ls.filter(func(l): return l.visible)
+			check(feeds.size() == fl.size(), "%s: %d feed lines (the browser: %d)" % [id, fl.size(), feeds.size()])
+			for i in mini(feeds.size(), fl.size()):
+				_off(off, "feed%d" % i, Rect2(fl[i].global_position / h.s, fl[i].size / h.s), feeds[i], 1.0)
+			for o in off:
+				worst = maxf(worst, float(o.get_slice(" ", 1)))
 			check(off.is_empty(), "%s: every box within %d px of the browser's (worst %.1f)%s" % [id, int(TOL), worst, "" if off.is_empty() else ": " + ", ".join(off)])
 			var digits := RegEx.create_from_string("[0-9]")
 			for k in [["lab", h.lab.text], ["val", h.val.text], ["salv", h.salv.text]]:
@@ -165,5 +214,22 @@ func _run() -> void:
 	await _frames(2)
 	check(is_equal_approx(K.nade.modulate.a, 0.4), "NADE fades with no grenades left")
 	check(s.player.rk > 0 and K.ab.parts.n.text == str(s.player.rk) and is_equal_approx(K.ab.modulate.a, 1.0), "ROCKET counts the soldier's rockets (%s)" % K.ab.parts.n.text)
+	# the banner's queue: a phase message goes before the minor ones waiting, and a click dismisses the one up
+	h.toast_clear()
+	h.toast("ARMORY", "one")
+	h.toast("ARMORY", "two")
+	h.toast("RAID 2 OF 5", "three")
+	check(h.toast_cur.small == "one" and h.toast_q.size() == 2 and h.toast_q[0].big == "RAID 2 OF 5", "a phase message jumps the minor ones waiting")
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	h.toast_p.gui_input.emit(click)
+	await _frames(2)
+	check(h.toast_cur != null and h.toast_cur.big == "RAID 2 OF 5" and h.note == "RAID 2 OF 5", "a click dismisses the banner; the next one comes up and its title stays under the clock")
+	# with a controller: the key bar and the key caps show its buttons
+	main.inp.mode = "pad"
+	await _frames(2)
+	check(h.keys_boxes.size() > 0 and h.keys_boxes[0].it[0] == "LS" and K.build.parts.kc.text == PalSettings.glyph(main.settings.data.pad.get("build", -1)), "a controller's buttons in the key bar and on the kit (%s, %s)" % [h.keys_boxes[0].it[0] if h.keys_boxes.size() > 0 else "-", K.build.parts.kc.text])
+	main.inp.mode = "mouse"
 	print("RESULT " + ("PASS" if fails == 0 else "FAIL %d" % fails))
 	quit(1 if fails else 0)

@@ -1,6 +1,6 @@
 # Godot in-game HUD: matching the browser
 
-**Written October 24, 2026 (Stage 9).** H1 and H2 are built (Stages 10 and 11, November 2, 2026); H3 and H4 are not. Each stage needs its own go-ahead.
+**Written October 24, 2026 (Stage 9).** H1–H3 are built (Stages 10–12, November 2, 2026); H4 is not. Each stage needs its own go-ahead.
 
 ## Why
 
@@ -61,7 +61,7 @@ Each is one milestone: build it, check it against the browser, save it, stop.
   - The right-hand column, every button with its state, count and cooldown, clickable: BUILD ON/OFF, WALL / DOOR, materials, PLACE, ARMORY, NADE, ROLL, SPRINT, ROCKET / STEALTH.
   - The dashed target outline.
   - The bottom-left panel and the floating PLACE label go.
-- **H3: messages.**
+- **H3: messages.** Done (Stage 12). The browser's boss bars have no ENRAGED, so Godot's doesn't either.
   - The key bar (keyboard bindings, and controller buttons in pad mode).
   - The browser's banners with their colours, queue and placement.
   - Stacked boss bars with weakness, percent and ENRAGED.

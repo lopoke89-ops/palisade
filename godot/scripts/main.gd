@@ -30,7 +30,6 @@ var slashes: Array = []
 var armory_open := false
 var arm_buttons: Array = []   # [Rect2, key] drawn this frame, clicked in _unhandled_input
 var floats: Array = []
-var toasts: Array = []
 var shake := 0.0
 var shake_t := 0.0
 var font: Font
@@ -180,7 +179,7 @@ func _ready() -> void:
 	await account.boot()
 	var R := locker.recover_draft()   # a run cut short last time pays now
 	if R.has("text"):
-		toasts = [{"title": "RUN SAVED", "body": "Your last run ended early. " + R.text, "t": 8.0}]
+		hud.toast("RUN SAVED", "Your last run ended early. " + R.text)
 
 
 # ---------------------------------------------------------------- the casino
@@ -255,7 +254,7 @@ func cas_sit() -> void:
 	if casino_ui != null:
 		casino_ui.open(sn.code, cas_room())
 	else:
-		toasts = [{"title": "TABLES", "body": "The tables aren't in this build yet.", "t": 3.0}]
+		hud.toast("TABLES", "The tables aren't in this build yet.")
 
 
 ## casStand: off the seat, and the server gives the seat (and the shards on it) back
@@ -336,7 +335,7 @@ func _after_start() -> void:
 	armory_open = false
 	floats.clear()
 	hud.reset()
-	toasts.clear()
+	hud.toast_clear()
 	over_t = 0.0
 	v.cam_snap(sim.player.x, sim.player.y)
 
@@ -421,7 +420,7 @@ func _on_claim_done(_c: Dictionary, R, big: String) -> void:
 		last_reward = {"kind": "run", "cases": {}, "shards": 0, "sp": 0, "unlocked": [], "text": R}
 		menus.show_results()
 		return
-	toasts = [{"title": big, "body": R.text if R is Dictionary else R, "t": 4.5 * settings.data.msgTime}]
+	hud.toast(big, R.text if R is Dictionary else R)
 
 
 func _notification(what: int) -> void:
@@ -454,7 +453,7 @@ func _resize() -> void:
 func _unhandled_input(e: InputEvent) -> void:
 	if e is InputEventKey and e.pressed and not e.echo and menus.bind_key(e):
 		return
-	if e is InputEventKey and e.pressed and not e.echo and e.keycode == KEY_ENTER and net.is_online() and net.in_game and not menus.active() and not demo:
+	if e is InputEventKey and e.pressed and not e.echo and e.keycode in [KEY_ENTER, KEY_T] and net.is_online() and net.in_game and not menus.active() and not demo:   # T as in the browser
 		_open_chat()
 		get_viewport().set_input_as_handled()
 		return
@@ -706,7 +705,7 @@ func leave_run() -> void:
 	run_sp = 0
 	var R := locker.pay_run(sim, true)
 	if locker.cloud.is_empty() and R.has("text"):
-		toasts = [{"title": "RUN SAVED", "body": R.text, "t": 6.0}]
+		hud.toast("RUN SAVED", R.text)
 
 
 func to_menu() -> void:
@@ -731,7 +730,7 @@ func _demo_game() -> void:
 	parts.clear()
 	cparts.clear()
 	floats.clear()
-	toasts.clear()
+	hud.toast_clear()
 	city_map = null
 	v.cam_snap(sim.core.i + 2.5, sim.core.j - 2)
 
@@ -817,7 +816,6 @@ func _restart() -> void:
 	slashes.clear()
 	armory_open = false
 	floats.clear()
-	toasts.clear()
 	hud.reset()
 	v.cam_snap(sim.player.x, sim.player.y)
 
@@ -984,8 +982,7 @@ func _drain_events() -> void:
 				floats.append({"x": e.x, "y": e.y, "text": e.text, "col": Color.html(e.col), "t": 1.4})
 			"toast":
 				if not demo:
-					toasts = [{"title": e.title, "body": e.body, "t": 4.5 * settings.data.msgTime}]
-					hud.toasted(e.title)
+					hud.toast(e.title, e.body)
 			"killfx":
 				kill_fx(e.x, e.y, e.fx, e.get("quiet", false))
 			"flash":
@@ -1010,8 +1007,7 @@ func _drain_events() -> void:
 						audio.play(e.name)
 			"toast_to":
 				if e.id == sim.player.id:
-					toasts = [{"title": e.title, "body": e.body, "t": 4.5 * settings.data.msgTime}]
-					hud.toasted(e.title)
+					hud.toast(e.title, e.body)
 			"feed":
 				feed.push_front({"text": e.text, "col": e.col, "t": 5.7})
 				if feed.size() > 4:
@@ -1129,9 +1125,6 @@ func _update_fx(dt: float) -> void:
 	for f in floats:
 		f.t -= dt
 	floats = floats.filter(func(f): return f.t > 0)
-	for t in toasts:
-		t.t -= dt
-	toasts = toasts.filter(func(t): return t.t > 0)
 
 
 # ---------------------------------------------------------------- drawing helpers (15-render.js)
@@ -2126,19 +2119,7 @@ func _draw_ammo_status(e: Dictionary) -> void:
 func _draw_hud() -> void:
 	var W := v.W
 	var H := v.H
-	# the kill feed (top right) and the room's chat (bottom left), online
-	for i in feed.size():
-		var f: Dictionary = feed[i]
-		var fc := c(f.col)
-		fc.a = clampf(f.t / 0.7, 0.0, 1.0)
-		var fw := font.get_string_size(f.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
-		var fr := hud.box.end.x
-		var fy := hud.box.end.y + 6
-		if sim.map_id == "city":
-			var mb := hud.bo_map_box()
-			fr = mb.position.x - 8
-			fy = mb.position.y
-		cv.draw_string(font, Vector2(fr - fw, fy + 12 + i * 17), f.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, fc)
+	# the room's chat (bottom left), online; the kill feed is the HUD's
 	if net.is_online() and net.in_game:
 		var now := Time.get_ticks_msec()
 		var lines: Array = net.chat.filter(func(l): return now - l.get("at", now) < 9000 or (chat_box != null and chat_box.visible))
@@ -2146,8 +2127,6 @@ func _draw_hud() -> void:
 		for i in lines.size():
 			var l: Dictionary = lines[i]
 			cv.draw_string(font, Vector2(14, H - 140 - (lines.size() - 1 - i) * 17), "%s: %s" % [str(l.name).to_upper(), l.text], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, c(l.col))
-	var gold := c("#e2b436")
-	var paper := c("#e8dcc0")
 	var dim := c("#9a8f7a")
 	if sim.map_id == "city":   # the mini-map, under the phase box (boMapBox)
 		if city_map == null:
@@ -2156,13 +2135,7 @@ func _draw_hud() -> void:
 		CityView.minimap(self, city_map, mb.position.x, mb.position.y, mb.size.x)
 	if sim.casino():   # no kit, no building, no Delgado in here
 		return
-	# health is on the nameplates and the kit is the HUD's (scripts/hud.gd), as in the browser
-	_draw_boss_bar()
-	# toast
-	for tt in ([] if menus.active() else toasts):
-		var a: float = clampf(tt.t / 0.6, 0, 1)
-		label(tt.title, W / 2, 78, Color(gold, a), 22)
-		label(tt.body, W / 2, 102, Color(paper, a), 13)
+	# health is on the nameplates; the kit, the banners, the kill feed and the boss bars are the HUD's (scripts/hud.gd)
 	if settings.data.fps:
 		cv.draw_string(font, Vector2(W - 70, H - 10), fps_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, dim)
 
@@ -2230,19 +2203,6 @@ func _draw_boss_fx() -> void:
 				cv.draw_dashed_line(b0 - Vector2(0, ch), q - Vector2(0, ch), col, 1.4 * u, 6 * u)
 
 
-func _draw_boss_bar() -> void:
-	for e in sim.enemies:
-		if e.type != "boss":
-			continue
-		var B: Dictionary = Sim.boss_def(e.boss)
-		var w := minf(420.0, v.W - 40)
-		var x := (v.W - w) / 2
-		cv.draw_rect(Rect2(x - 2, 114, w + 4, 26), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.8))
-		cv.draw_rect(Rect2(x, 128, w * maxf(0, e.hp / e.max), 9), c(B.col))
-		label(B.name + (" · ENRAGED" if e.get("rage", false) else ""), v.W / 2, 125, c(B.col), 12)
-		return
-
-
 # ---------------------------------------------------------------- armory (20-locker-ui.js)
 
 func _try_armory() -> void:
@@ -2250,7 +2210,7 @@ func _try_armory() -> void:
 	if not sim.shop_open(p):
 		return
 	if not sim.near_stake(p):
-		toasts = [{"title": "ARMORY", "body": "Walk back to the stake to spend salvage.", "t": 3.0}]
+		hud.toast("ARMORY", "Walk back to the stake to spend salvage.")
 		return
 	armory_open = true
 	sim.game.paused = not net.is_online()

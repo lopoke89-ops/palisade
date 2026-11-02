@@ -3,7 +3,9 @@ extends Control
 ## The in-game HUD, built as the browser builds it (page.html #top, #tip, #kit; style.css; hud() in 11-hud-chat.js), not
 ## painted: the phase box at the top right (the phase, its clock, the core or stake meters, Delgado's button, salvage,
 ## START, the Free-for-all board, pause and chat), the tip under it, and the build kit down the right (BUILD ON/OFF,
-## WALL/DOOR, the materials, PLACE, ARMORY, NADE, SPRINT, ROLL, the class ability), every button pressable. Sizes are the browser's desktop CSS pixels
+## WALL/DOOR, the materials, PLACE, ARMORY, NADE, SPRINT, ROLL, the class ability), every button pressable; and the
+## messages: the banner (#toast) with its queue, the kill feed (#feed), the key bar (#keys, or the controller's buttons)
+## and the boss bars, which the browser paints on its canvas (drawBossBars) and this paints too. Sizes are the browser's desktop CSS pixels
 ## (body.desk), one CSS pixel to a screen pixel up to 1600x900 and scaled up past it, as a browser on a bigger screen.
 ## The world-anchored parts (nameplates, prompts, the crosshair, floating text) stay painted in main.gd.
 
@@ -44,6 +46,19 @@ var tip_l: Label
 var kit := {}   # the build kit's buttons (#kit): bm, wall, door, c0-c2, build, arm, nade, spr, roll, ab; and pk, its F
 var kit_box := Rect2()   # the kit column, in screen pixels
 var _kcs: Array = []   # [label, background] of every key cap, restyled with the scale
+var toast_q: Array = []   # TOAST_Q: waiting messages {big, small, kind}
+var toast_cur = null   # the message up now
+var toast_t := 0.0   # its time left
+var toast_a := 0.0   # its opacity (0.25 s in and out)
+var toast_p: PanelContainer
+var toast_big: Label
+var toast_small: Label
+var feed_ls: Array = []   # the kill feed's four lines
+var keys_c: Control   # the key bar, painted (its items are only text)
+var keys_items: Array = []   # [[key, what], ...]
+var keys_rect := Rect2()   # CSS pixels
+var keys_boxes: Array = []   # each item's box (CSS pixels, on screen) and its [key, what]
+var boss_c: Control   # the boss bars, painted under everything else
 var _rx := RegEx.new()
 var _fonts := {}
 var _ls := {}
@@ -170,6 +185,7 @@ func _init(main) -> void:
 	for c in [lab, val, note_l, salv, core_m, core2_m, qm_b, skip_b, pause_b, chat_b, board, tip_p]:
 		add_child(c)
 	_make_kit()
+	_make_messages()
 	_restyle()
 
 
@@ -287,6 +303,11 @@ func _restyle() -> void:
 	kit.pk.label_settings = ls(pst[0], pst[1], pst[2], pst[3], false, pst[4])
 	for k in _kcs:
 		k[0].add_theme_stylebox_override("normal", _sb(k[1], Color(0, 0, 0, 0), 0, 2))
+	for l in [toast_big, toast_small] + feed_ls:
+		var mst: Array = l.get_meta("st")
+		l.label_settings = ls(mst[0], mst[1], mst[2], mst[3], l == toast_big, mst[4])
+	if toast_cur != null:
+		_toast_style()
 	_sig = ""
 	_board_rows([])
 
@@ -305,7 +326,7 @@ func _draw_chat_icon() -> void:
 
 ## a new game: the browser's toastClear and the opening tip (newGame in 04-state-armory.js)
 func reset() -> void:
-	note = ""
+	toast_clear()
 	tip_stage = 0
 	var sim: Sim = m.sim
 	var pv := sim.pvp()
@@ -327,12 +348,6 @@ func reset() -> void:
 
 func set_tip(t: String) -> void:
 	tip = t if m.settings.data.get("tips", true) else ""
-
-
-## a message banner went up: phase messages (not the minor ones) stay as the line under the clock
-func toasted(title: String) -> void:
-	if _rx.search(title.to_upper()) != null:
-		note = title
 
 
 func _touch() -> bool:
@@ -365,10 +380,11 @@ static func clock(t: float) -> String:
 
 # ---------------------------------------------------------------- every frame (hud() in 11-hud-chat.js)
 
-func _process(_dt: float) -> void:
+func _process(dt: float) -> void:
 	visible = not m.demo
 	if not visible:
 		return
+	_toast_tick(dt)
 	position = Vector2.ZERO   # a Control under the game's Node2D: it takes the window's size itself
 	size = get_viewport_rect().size
 	var ns := maxf(1.0, minf(size.x / 1600.0, size.y / 900.0))
@@ -455,6 +471,7 @@ func _process(_dt: float) -> void:
 	recolor(lab, lc)
 	val.text = vt
 	note_l.text = note
+	note_l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS if _w(note_l) > 240 else TextServer.OVERRUN_NO_TRIMMING   # max-width 240, ellipsis
 	salv.text = "SALVAGE %d" % int(p.sal)
 	skip_l.text = skip
 	skip_kc.text = _kc("ENTER", "start")
@@ -491,9 +508,13 @@ func _process(_dt: float) -> void:
 	for k in on:
 		var n: Control = {"core": core_m, "core2": core2_m, "salv": salv, "qm": qm_b, "skip": skip_b, "board": board, "chat": chat_b}[k]
 		n.visible = on[k]
+	_feed_update()
 	_layout()
 	_kit_update(sim, p, pv)
 	_kit_layout()
+	_keys_update(sim, p, pv)
+	_toast_place()
+	boss_c.queue_redraw()
 
 
 ## the Black Out phase (boHudPhase): [label, value, colour, START shown, START's label]
@@ -568,7 +589,7 @@ func _w(l: Label) -> float:
 		return 0.0
 	var st: Array = l.get_meta("st")
 	var n := l.text.length()
-	var w: float = UiKit.face(st[0]).get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, l.label_settings.font_size).x / s
+	var w: float = _mono_w(l.text, st[1]) if str(st[0]).begins_with("m") else UiKit.face(st[0]).get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, l.label_settings.font_size).x / s
 	return w + st[3] * st[1] * n + (st[1] / 30.0 * n if l.get_meta("bold", false) else 0.0)
 
 
@@ -594,7 +615,12 @@ func _layout() -> void:
 	var board_w := 0.0
 	if board.visible:
 		board_w = maxf(150, board.get_combined_minimum_size().x / s)
-	var c2 := maxf(maxf(_w(val), minf(240, _w(note_l))), maxf(_w(salv) if salv.visible else 0.0, maxf(skip_w, board_w)))
+	var feed_w := 0.0
+	if not m.sim.blackout():
+		for l in feed_ls:
+			if l.visible:
+				feed_w = maxf(feed_w, _w(l) + 17)
+	var c2 := maxf(maxf(maxf(_w(val), minf(240, _w(note_l))), feed_w), maxf(_w(salv) if salv.visible else 0.0, maxf(skip_w, board_w)))
 	# column 1 (left): the meters and Delgado's button
 	var qm_w := _btn_w(qm_b, 8, 2) if qm_b.visible else 0.0
 	var c1 := maxf(234.0 if (core_m.visible or core2_m.visible) else 0.0, qm_w)
@@ -649,8 +675,17 @@ func _layout() -> void:
 		var bh := board.get_combined_minimum_size().y / s
 		_place(board, R - board_w, y, board_w, bh)
 		y += bh + 2
-	if not m.sim.blackout():
-		y += 6   # #feed's margin (an empty feed still adds its row; Black Out moves the feed beside the mini-map)
+	if not m.sim.blackout():   # the kill feed: its row under the rest (6 px down; an empty one still keeps the 6)
+		y += 6
+		var n := 0
+		for l in feed_ls:
+			if l.visible:
+				var fw := _w(l) + 17
+				_place(l, R - fw, y, fw, 22)
+				y += 22 + 3
+				n += 1
+		if n > 0:
+			y -= 3
 	var bw := maxf(row_w, c1 + gap + c2)
 	box = Rect2((R - bw) * s, top * s, bw * s, (y - top) * s)
 	# the tip: centred, 10 px under the box. Its box is the text's own width, at most 48 characters; the lines inside
@@ -695,11 +730,16 @@ static func _wrap(text: String, f: Font, fz: int, w: float) -> Array:
 	return out
 
 
-## the Black Out mini-map's box (boMapBox, desktop): under the phase box and its note line, right-aligned
+## the Black Out mini-map's box (boMapBox, desktop): under the phase box and its note line, right-aligned; it steps
+## below the boss bars while they'd cover it. The kill feed sits beside it there.
 func bo_map_box() -> Rect2:
 	var w := roundf(minf(170, size.x / s * 0.3))
 	var y := box.end.y / s + 10 + 8
-	return Rect2(Vector2(box.end.x / s - w, roundf(y)) * s, Vector2(w, roundf(w / 2)) * s)
+	var b := Rect2(Vector2(box.end.x / s - w, roundf(y)), Vector2(w, roundf(w / 2)))
+	var bb := boss_box()
+	if bb.size.x > 0 and bb.intersects(b):
+		b.position.y = roundf(bb.end.y + 6)
+	return Rect2(b.position * s, b.size * s)
 
 
 ## the mouse (or a finger, at pos) is on one of the HUD's buttons: a click there isn't a shot, a touch there isn't a stick
@@ -707,7 +747,7 @@ func has_pointer(pos = null) -> bool:
 	if not visible:
 		return false
 	var mp: Vector2 = get_local_mouse_position() if pos == null else pos
-	for b in [qm_b, skip_b, pause_b, chat_b] + kit.values().filter(func(k): return k is KitBtn):
+	for b in [qm_b, skip_b, pause_b, chat_b, toast_p] + kit.values().filter(func(k): return k is KitBtn):
 		if b.is_visible_in_tree() and Rect2(b.global_position - global_position, b.size).has_point(mp):
 			return true
 	return false
@@ -1003,3 +1043,425 @@ func _center_row(l: Label, kc: Label, w: float, h: float, gap: float) -> void:
 	var x := (w - gw) / 2
 	_place(l, x, (h - _lh(l)) / 2, lw, _lh(l))
 	_place(kc, x + lw + gap, (h - 14) / 2, kw, 14)
+
+
+# ---------------------------------------------------------------- messages: the banner, the kill feed, the key bar, the boss bars
+
+func _make_messages() -> void:
+	boss_c = Control.new()
+	boss_c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	boss_c.set_anchors_preset(Control.PRESET_FULL_RECT)
+	boss_c.draw.connect(_draw_boss_bars)
+	add_child(boss_c)
+	move_child(boss_c, 0)   # the browser paints them on its canvas, under the HUD
+	for i in 4:
+		var l := label("s8", 15, BONE, 0.06)
+		l.visible = false
+		feed_ls.append(l)
+		add_child(l)
+	keys_c = Control.new()
+	keys_c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	keys_c.draw.connect(_draw_keys)
+	add_child(keys_c)
+	toast_p = PanelContainer.new()
+	toast_p.mouse_filter = Control.MOUSE_FILTER_STOP
+	toast_p.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	toast_p.gui_input.connect(func(e: InputEvent):   # tap the message to dismiss it
+		if e is InputEventMouseButton and e.pressed and toast_cur != null:
+			toast_t = 0.0
+			accept_event())
+	var vb := VBoxContainer.new()
+	vb.add_theme_constant_override("separation", 0)
+	vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	toast_big = label("s9", 28, BONE, 0.06, 1.0)
+	toast_big.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	toast_small = label("m4", 14, BONE, 0.0, 1.25)
+	toast_small.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	toast_small.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	vb.add_child(toast_big)
+	vb.add_child(toast_small)
+	toast_p.add_child(vb)
+	toast_p.visible = false
+	add_child(toast_p)
+
+
+## a message (toast() in 11-hud-chat.js): phase messages go before the minor ones still waiting; at most three wait
+func toast(big: String, small: String = "") -> void:
+	if m.demo:
+		return
+	var b := big.to_upper()
+	var kind := "minor"
+	if _rx.search(b) != null:
+		kind = "bad" if RegEx.create_from_string("LOST|FELL|LEFT BEHIND|POWER IS OUT").search(b) != null else ("good" if RegEx.create_from_string("HELD|BROKEN|IS DOWN|EVACUATED").search(b) != null else "threat")
+	var msg := {"big": big, "small": small, "kind": kind}
+	if toast_cur == null:
+		_toast_show(msg)
+		return
+	if kind != "minor":
+		var i := -1
+		for k in toast_q.size():
+			if toast_q[k].kind == "minor":
+				i = k
+				break
+		if i >= 0:
+			toast_q.insert(i, msg)
+		else:
+			toast_q.append(msg)
+	else:
+		toast_q.append(msg)
+	while toast_q.size() > 3:
+		var i := -1
+		for k in toast_q.size():
+			if toast_q[k].kind == "minor":
+				i = k
+				break
+		if i < 0:
+			break
+		toast_q.remove_at(i)
+
+
+func toast_clear() -> void:
+	toast_q.clear()
+	toast_cur = null
+	toast_t = 0.0
+	toast_a = 0.0
+	toast_p.visible = false
+	note = ""
+
+
+func _toast_show(msg: Dictionary) -> void:
+	toast_cur = msg
+	toast_t = (3.0 if msg.kind == "minor" else 4.5) * float(m.settings.data.get("msgTime", 1.0))
+	if msg.kind != "minor":
+		note = msg.big
+	_toast_style()
+
+
+func _toast_style() -> void:
+	var msg: Dictionary = toast_cur
+	var b := _sb(Color(10 / 255.0, 9 / 255.0, 7 / 255.0, 0.82), Color(0, 0, 0, 0), 0, 3)
+	var bw := 0 if msg.kind == "minor" else int(maxf(1.0, roundf(3 * s)))
+	if bw > 0:
+		b.border_color = {"threat": Color("#ff8a3a"), "good": Color("#8fe0a0"), "bad": Color("#e8573a")}[msg.kind]
+		b.border_width_top = bw
+		b.border_width_bottom = bw
+	b.content_margin_left = roundf(12 * s)
+	b.content_margin_right = roundf(12 * s)
+	b.content_margin_top = roundf(6 * s) + bw
+	b.content_margin_bottom = roundf(7 * s) + bw
+	toast_p.add_theme_stylebox_override("panel", b)
+	toast_big.text = msg.big
+
+
+func _toast_tick(dt: float) -> void:
+	if toast_cur != null:
+		toast_t -= dt
+		if toast_t <= 0:
+			toast_cur = null
+			if not toast_q.is_empty():
+				_toast_show(toast_q.pop_front())
+	toast_a = clampf(toast_a + (dt if toast_cur != null else -dt) / 0.25, 0.0, 1.0)
+
+
+## where the banner goes (toastPlace): on a wide screen the top row left of the phase box, at most 640 wide and
+## centred in it; below the boss bars wherever they'd overlap
+func _toast_place() -> void:
+	toast_p.visible = toast_a > 0 and (toast_cur != null or toast_p.visible)
+	if not toast_p.visible:
+		return
+	toast_p.modulate.a = toast_a
+	var W := size.x / s
+	var H := size.y / s
+	var ph := Rect2(box.position / s, box.size / s)
+	var land := H <= 500 and W > H
+	var left := 12.0
+	var right := W - 12
+	var top := maxf(ph.end.y, (tip_p.position.y + tip_p.size.y) / s if tip_p.visible else 0.0) + 8
+	if not land and ph.position.x > 360:
+		left = 16
+		right = ph.position.x - 16
+		top = 12
+	elif land:
+		left = 16
+		right = (bo_map_box().position.x / s if m.sim.blackout() else ph.position.x) - 8
+		top = 12
+	var w := minf(640, maxf(200, right - left))
+	var x := roundf(left + (right - left - w) / 2)
+	# the message: its small line at most 62 characters wide, two lines at most, balanced
+	if toast_cur != null:
+		var sm: String = toast_cur.small
+		toast_small.visible = sm != ""
+		if sm != "":
+			var st := toast_small.label_settings
+			var f: Font = st.font
+			var mw := minf(62 * f.get_char_size(ord("0"), st.font_size).x, (w - 24) * s)
+			var lines := _wrap(sm, f, st.font_size, mw)
+			var lo := mw / 4
+			var hi := mw
+			while hi - lo > 1:
+				var mid := (lo + hi) / 2
+				if _wrap(sm, f, st.font_size, mid).size() > lines.size():
+					lo = mid
+				else:
+					hi = mid
+			lines = _wrap(sm, f, st.font_size, hi)
+			if lines.size() > 2:   # -webkit-line-clamp: 2
+				lines = [lines[0], lines[1].substr(0, maxi(0, lines[1].length() - 1)) + "…"]
+			toast_small.text = "\n".join(lines)
+			toast_small.custom_minimum_size = Vector2(ceilf(mw), 0)
+		(toast_p.get_child(0) as VBoxContainer).add_theme_constant_override("separation", roundi(4 * s))   # small's margin-top
+	var hh := toast_p.get_combined_minimum_size().y / s
+	var bb := boss_box()
+	if bb.size.x > 0 and bb.position.x < x + w and bb.end.x > x and top < bb.end.y and top + hh > bb.position.y:
+		top = bb.end.y + 6
+	toast_p.position = Vector2(x, roundf(top)) * s
+	toast_p.size = Vector2(w * s, 0)
+	toast_p.reset_size()
+	toast_p.size.x = w * s
+
+
+## the banner's box (toastRect), in CSS pixels; empty when none is up
+func toast_box() -> Rect2:
+	return Rect2(toast_p.position / s, toast_p.size / s) if toast_p.visible and toast_cur != null else Rect2()
+
+
+# the kill feed (#feed span): the newest first, four at most, each fading out in its last 0.6 s
+func _feed_update() -> void:
+	var F: Array = m.feed
+	var bo: bool = m.sim.blackout()
+	for i in feed_ls.size():
+		var l: Label = feed_ls[i]
+		l.visible = i < F.size()
+		if not l.visible:
+			continue
+		var f: Dictionary = F[i]
+		var col: Color = Color(f.col) if f.col is String else f.col
+		l.text = f.text
+		recolor(l, col)
+		var sb := _sb(Color(14 / 255.0, 12 / 255.0, 10 / 255.0, 0.72))
+		sb.border_color = col
+		sb.border_width_right = int(maxf(1.0, roundf(3 * s)))
+		sb.content_margin_left = roundf(7 * s)
+		sb.content_margin_right = roundf(7 * s) + sb.border_width_right
+		sb.content_margin_top = roundf(2 * s)
+		sb.content_margin_bottom = roundf(2 * s)
+		l.add_theme_stylebox_override("normal", sb)
+		l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		l.modulate.a = clampf((f.t - 0.1) / 0.6, 0.0, 1.0)
+	if bo:   # Black Out: beside the mini-map, its top lines up with the map's
+		var mb := bo_map_box()
+		var y := mb.position.y / s
+		for l in feed_ls:
+			if l.visible:
+				var fw := _w(l) + 17
+				_place(l, mb.position.x / s - 8 - fw, y, fw, 22)
+				y += 25
+
+
+# ---- the key bar (keyBar / padBar): every key this soldier has right now, in key caps, centred along the bottom
+
+func _keys_update(sim: Sim, p: Dictionary, pv: String) -> void:
+	var on := not _touch() and not sim.casino()
+	keys_c.visible = on
+	if not on:
+		return
+	var a: Array = []
+	var build_on: bool = m.settings.data.get("build", true)
+	var start: bool = sim.game.phase == "build" and not m.net.guest()
+	if m.inp.mode == "pad":
+		var P := func(id: String) -> String: return _pad(id)
+		a = [[PalSettings.glyph(PalSettings.PB.LS, m.inp.pad_kind), "move"], [PalSettings.glyph(PalSettings.PB.RS, m.inp.pad_kind), "aim"], [P.call("fire"), "fire"], [P.call("nade"), "grenade"], [P.call("roll"), "roll"]]
+		if _has_ability(p, pv):
+			a.append([P.call("special"), "stealth" if p.cls == "sniper" else "rocket"])
+		elif p.C.get("sprint", false):
+			a.append([P.call("special"), "sprint"])
+		if pv != "ffa" and build_on:
+			a += [[P.call("build"), "build"], [P.call("matPrev") + " " + P.call("matNext"), "material"], [P.call("piece"), "door"]]
+		if pv != "ffa":
+			a.append([P.call("kit"), "build kit"])
+		if sim.shop_open(p):
+			a.append([P.call("armory"), "armory"])
+		if start:
+			a.append([P.call("start"), "start battle" if pv != "" else "start raid"])
+		a.append([PalSettings.glyph(PalSettings.PB.MENU, m.inp.pad_kind), "pause"])
+		a = a.filter(func(k): return k[0] != "—")
+	else:
+		var G: Dictionary = p.gun
+		a = [["WASD", "move"], ["MOUSE", "aim, click or hold to fire" if G.has("clickCd") else ("aim, hold to fire bursts" if G.get("burst", false) else "aim, hold to fire")], ["G", "grenade"], ["V", "roll"]]
+		if p.C.get("sprint", false):
+			a.append(["SHIFT", "sprint"])
+		if G.has("mag"):
+			a.append(["R", "reload"])
+		if pv != "ffa" and build_on:
+			a += [["SPACE", "build"], ["1 2 3", "material"], ["F", "door"]]
+		if pv != "ffa":
+			a.append(["B", "build kit"])
+		if sim.shop_open(p):
+			a.append(["E", "armory"])
+		if start:
+			a.append(["ENTER", "start battle" if pv != "" else "start raid"])
+		if m.net.is_online():
+			a.append(["T", "chat"])
+		a.append(["ESC", "pause"])
+		if _has_ability(p, pv):
+			a.insert(3, ["Q", "stealth" if p.cls == "sniper" else "rocket"])
+	keys_items = a
+	# the box: as wide as its items, at most the window less 360 (plus 12 padding and a border each side); the items
+	# wrap as inline blocks, each line centred, 26 px a line; its foot 14 px up, centred across
+	var W := size.x / s
+	var H := size.y / s
+	var maxw := W - 360
+	var lines: Array = [[]]
+	var lw := 0.0
+	var widest := 0.0
+	for it in a:
+		var iw := _key_w(it) + 14
+		if lw > 0 and lw + iw > maxw:
+			lines.append([])
+			lw = 0.0
+		lines[-1].append(it)
+		lw += iw
+		widest = maxf(widest, lw)
+	var total := 0.0
+	for it in a:
+		total += _key_w(it) + 14
+	var cw := minf(total, maxw)   # width: max-content, up to max-width (a wrapped bar is the full max-width)
+	var h := lines.size() * 26 + 12 + 2
+	keys_rect = Rect2(roundf((W - cw - 26) / 2), H - 14 - h, cw + 26, h)
+	keys_boxes.clear()
+	for li in lines.size():
+		var lw2 := 0.0
+		for it in lines[li]:
+			lw2 += _key_w(it) + 14
+		var x := keys_rect.position.x + 13 + (cw - lw2) / 2
+		for it in lines[li]:
+			keys_boxes.append({"r": Rect2(x, keys_rect.position.y + 7 + li * 26, _key_w(it), 26), "it": it})
+			x += _key_w(it) + 14
+	keys_c.position = keys_rect.position * s
+	keys_c.size = keys_rect.size * s
+	keys_c.queue_redraw()
+
+
+func _has_ability(p: Dictionary, pv: String) -> bool:
+	return pv == "" and p.cls in ["soldier", "sniper"]
+
+
+## IBM Plex Mono is monospaced: every letter 0.6 em, as the browser lays it out (Godot's hinting rounds each advance)
+static func _mono_w(t: String, size: float) -> float:
+	return t.length() * 0.6 * size
+
+
+## one key-bar item's width: the key cap (its text and 5 px either side), 5 px, the words
+func _key_w(it: Array) -> float:
+	return _mono_w(it[0], 11) + 10 + 5 + _mono_w(it[1], 13)
+
+
+func _draw_keys() -> void:
+	var r := Rect2(Vector2.ZERO, keys_c.size)
+	keys_c.draw_rect(r, Color(14 / 255.0, 12 / 255.0, 10 / 255.0, 0.78))
+	var bw := maxf(1.0, roundf(s))
+	keys_c.draw_rect(r.grow(-bw / 2), LINE, false, bw)
+	var fk := UiKit.face("m6")
+	var fw := UiKit.face("m4")
+	var zk := roundi(11 * s)
+	var zw := roundi(13 * s)
+	for kb in keys_boxes:
+		var r0: Rect2 = kb.r
+		var it: Array = kb.it
+		var x: float = r0.position.x - keys_rect.position.x
+		var y: float = r0.position.y - keys_rect.position.y
+		var kw: float = _mono_w(it[0], 11) + 10
+		keys_c.draw_style_box(_sb(BONE, Color(0, 0, 0, 0), 0, 2), Rect2(Vector2(x, y + 5) * s, Vector2(kw, 16) * s))
+		keys_c.draw_string(fk, Vector2((x + 5) * s, (y + 13) * s + (fk.get_ascent(zk) - fk.get_descent(zk)) / 2), it[0], HORIZONTAL_ALIGNMENT_LEFT, -1, zk, INK)
+		keys_c.draw_string(fw, Vector2((x + kw + 5) * s, (y + 13) * s + (fw.get_ascent(zw) - fw.get_descent(zw)) / 2), it[1], HORIZONTAL_ALIGNMENT_LEFT, -1, zw, BONE)
+
+
+# ---- the boss bars (drawBossBars, drawBossCombined in 16-characters.js): centred under the tip; one bar a boss,
+# slim rows for three, one shared bar (and the nearest) for four or more
+
+func _bosses() -> Array:
+	if m.demo or m.sim.pvp() != "":
+		return []
+	return m.sim.enemies.filter(func(e): return e.type == "boss")
+
+
+func _boss_y() -> float:
+	var tip_b := (tip_p.position.y + tip_p.size.y) / s if tip_p.visible else 0.0
+	var W := size.x / s
+	return maxf((box.end.y / s + 10) if W < 700 else 120.0, tip_b + 10)
+
+
+## the bars' box (bossBarsBox), CSS pixels; empty with no boss up
+func boss_box() -> Rect2:
+	var n := _bosses().size()
+	if n == 0:
+		return Rect2()
+	var W := size.x / s
+	var y := _boss_y()
+	var w := minf(440, W - 48)
+	var h := 40.0 if n >= 4 else (23.0 * n if n > 2 else 32.0 * n)
+	return Rect2((W - w) / 2 - 3, y - 3, w + 6, h)
+
+
+func _draw_boss_bars() -> void:
+	var list := _bosses()
+	if list.is_empty():
+		return
+	var W := size.x / s
+	var w := minf(440, W - 48)
+	var x := (W - w) / 2
+	var y := _boss_y()
+	var st := UiKit.face("s8")
+	var mo := UiKit.face("m6")
+	var txt := func(f: Font, t: String, px: float, py: float, sz: float, col: Color, right: bool = false) -> void:
+		var z := roundi(sz * s)
+		var tw := f.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, z).x
+		boss_c.draw_string(f, Vector2(px * s - (tw if right else 0.0), py * s), t, HORIZONTAL_ALIGNMENT_LEFT, -1, z, col)
+	var bar := func(px: float, py: float, bw: float, bh: float, f: float, col: Color, flash: bool) -> void:
+		boss_c.draw_rect(Rect2(Vector2(px, py) * s, Vector2(bw, bh) * s), Color("#2a2520"))
+		boss_c.draw_rect(Rect2(Vector2(px, py) * s, Vector2(bw * f, bh) * s), col)
+		if flash:
+			boss_c.draw_rect(Rect2(Vector2(px, py) * s, Vector2(bw * f, bh) * s), Color(1, 1, 1, 0.5))
+	if list.size() >= 4:   # drawBossCombined: the summed health, and the nearest one
+		var hp := 0.0
+		var mx := 0.0
+		var me: Dictionary = m.sim.player
+		var near: Dictionary = list[0]
+		for e in list:
+			hp += maxf(0, e.hp)
+			mx += e.max
+			if Vector2(e.x - me.x, e.y - me.y).length() < Vector2(near.x - me.x, near.y - me.y).length():
+				near = e
+		var f := hp / mx if mx > 0 else 0.0
+		var B := Sim.boss_def(near.boss)
+		var nf := maxf(0, near.hp / near.max)
+		boss_c.draw_rect(Rect2(Vector2(x - 3, y - 3) * s, Vector2(w + 6, 40) * s), Color(12 / 255.0, 10 / 255.0, 8 / 255.0, 0.8))
+		txt.call(st, "%s · %d BOSSES" % ["FINAL PUSH" if m.sim.blackout() else "GAUNTLET", list.size()], x + 2, y + 9, 12, Color("#d8fff3"))
+		txt.call(mo, "%d%%" % ceili(f * 100), x + w - 2, y + 9, 10, BONE, true)
+		bar.call(x, y + 13, w, 6, f, Color("#9cebdc"), false)
+		txt.call(st, "NEAREST · " + B.name, x + 2, y + 29, 10, Color(B.col))
+		txt.call(mo, "%d%%" % ceili(nf * 100), x + w - 2, y + 29, 9, BONE, true)
+		bar.call(x, y + 32, w, 3, nf, Color(B.col), near.get("flash", 0.0) > 0)
+		return
+	var slim := list.size() > 2
+	for e in list:
+		var B := Sim.boss_def(e.boss)
+		var f := maxf(0, e.hp / e.max)
+		var col := Color(B.col)
+		if slim:   # three at once: slim rows
+			boss_c.draw_rect(Rect2(Vector2(x - 3, y - 3) * s, Vector2(w + 6, 20) * s), Color(12 / 255.0, 10 / 255.0, 8 / 255.0, 0.78))
+			txt.call(st, B.name, x + 2, y + 8, 11, col)
+			txt.call(mo, "%d%%" % ceili(f * 100), x + w - 2, y + 8, 9, BONE, true)
+			bar.call(x, y + 11, w, 4, f, col, e.get("flash", 0.0) > 0)
+			y += 23
+			continue
+		boss_c.draw_rect(Rect2(Vector2(x - 3, y - 3) * s, Vector2(w + 6, 26) * s), Color(12 / 255.0, 10 / 255.0, 8 / 255.0, 0.8))
+		txt.call(st, B.name, x + 2, y + 10, 13, col)
+		txt.call(mo, "%d%%" % ceili(f * 100), x + w - 2, y + 10, 11, BONE, true)
+		var wk: String = Sim.BOSS_WEAK.get(e.boss, Sim.BOSS_WEAK2.get(e.boss, ""))
+		if m.sim.ammo_mode() and wk != "" and w > 300:
+			for A in Sim.AMMO:
+				if A.id == wk:
+					txt.call(mo, "WEAK: " + A.name, x + w - 44, y + 10, 9, Color(A.col), true)
+		bar.call(x, y + 14, w, 6, f, col, e.get("flash", 0.0) > 0)
+		y += 32

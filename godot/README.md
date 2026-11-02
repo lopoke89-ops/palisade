@@ -62,7 +62,7 @@ Each part follows the browser code, with function names kept so the two read sid
 | Sim | `06-world.js`, `09-actions.js`, `10-phases-bosses.js`, `12-players.js`, `14-raiders.js` | `scripts/sim.gd` |
 | Delgado | `13-dell.js`, `13b-commands-recovery.js` | `scripts/sim.gd` |
 | Drawing and HUD | `15-render.js`, `16-characters.js`, `17-scenery.js` | `scripts/main.gd` |
-| The HUD's phase box, tip and build kit | `page.html` (`#top`, `#tip`, `#kit`), `style.css`, `11-hud-chat.js` | `scripts/hud.gd` |
+| The HUD: phase box, tip, build kit, key bar, banners, kill feed, boss bars | `page.html` (`#top`, `#tip`, `#kit`, `#keys`, `#toast`, `#feed`), `style.css`, `11-hud-chat.js`, `16-characters.js` (`drawBossBars`) | `scripts/hud.gd` |
 | Maps and the city | `06b-maps.js`, `06d-elevation.js`, `06e-city.js` | `scripts/pal_maps.gd` |
 | Modes and modifiers | `01b-mods-skills.js`, `10b-mods-play.js`, `10c-blitz.js`, `10d-winter-campaign.js`, `10f-blackout.js` | `scripts/sim.gd` |
 | The city's look and the Black Out HUD | `06e-city.js`, `16f-blackout-hud.js` | `scripts/city_view.gd`, `scripts/ground_chunk.gd` |
@@ -160,7 +160,7 @@ PLAY ONLINE (main menu) hosts a room or joins one by its 4-character code. Rooms
 - **Protocol:** `scripts/pal_net.gd` is protocol `yard-29`, word for word. The host runs the sim; guests send input and get snapshots, wall diffs and events.
   - Up to 6 players, as in the browser. The lobby picks the game, map, size, threat, modifiers, the job, and locks the room.
   - Everyone readies up and keeps their class, outfit and skills (checked against their account).
-  - Chat (Enter), a kill feed, nameplates and edge arrows for players off screen, and a spectator camera while down.
+  - Chat (T or Enter), a kill feed, nameplates and edge arrows for players off screen, and a spectator camera while down.
   - A guest whose game restarts gets back in within an hour with the same kit.
 - **PvP:** Base Battle (two teams, two stakes, a truce to build, then a storm) and Free-for-all, on their own maps, with the browser's PvP rewards.
 - **Rewards:** online runs pay out as solo runs do. Leaving early pays what was held up to then.
@@ -264,7 +264,7 @@ xvfb-run godot --path godot --script res://tests/locker_shot.gd -- /tmp/lk      
 xvfb-run -a godot --path godot --rendering-driver opengl3 --resolution 1600x900 --script res://tests/lobby3d_shot.gd -- /tmp/l3   # the 3D crew: main menu, a room of six, the Locker, a smaller window, each on its browser spot
 xvfb-run -a -s "-screen 0 1920x1080x24" sh -c 'openbox & sleep 1; godot --path godot --rendering-driver opengl3 --script res://tests/display_shot.gd -- /tmp/d'   # Settings › WINDOW on a real window (fullscreen needs a window manager)
 xvfb-run -a godot --path godot --rendering-driver opengl3 --resolution 1600x900 --script res://tests/shot3d.gd -- /tmp/r raid   # the same moment in 3D and in 2D (r_3d.png, r_2d.png), frame times; scenes in the script
-xvfb-run -a godot --path godot --rendering-driver opengl3 --resolution 1600x900 --script res://tests/hud_shot.gd -- /tmp/h   # the HUD's phase box, tip and build kit against the browser's own boxes (tests/hud_ref.json; tests/hud_ref.js makes it from a served site)
+xvfb-run -a godot --path godot --rendering-driver opengl3 --resolution 1600x900 --script res://tests/hud_shot.gd -- /tmp/h   # the whole HUD (phase box, tip, kit, key bar, banners, kill feed, boss bars) against the browser's own boxes (tests/hud_ref.json; tests/hud_ref.js makes it from a served site)
 godot --headless --path godot --script res://tests/music_test.gd         # which track each screen and mode plays
 godot --headless --path godot --script res://tests/social_test.gd        # friends, invites, open games (against a stand-in server)
 ```
