@@ -2,7 +2,8 @@ extends SceneTree
 ## The HUD against the browser's own boxes (tests/hud_ref.json, made by tests/hud_ref.js): the phase box, the tip, the
 ## build kit, the key bar item by item, the banner, the kill feed and the boss bars' box, in the same states: the build
 ## phase, a raid, City Black Out, Base Battle, Free-for-all, the kit switched off, a Quartermaster (whose SPRINT widens
-## the kit), a phase banner with two feed lines, a minor banner, and one, three and four bosses; at 1600x900 and 1280x720.
+## the kit), a phase banner with two feed lines, a minor banner, one, three and four bosses, the room's chat open with
+## two lines, and down in a Free-for-all (NEXT LIFE AS); at 1600x900 and 1280x720.
 ##   xvfb-run -a godot --path godot --rendering-driver opengl3 --resolution 1600x900 --script res://tests/hud_shot.gd -- /tmp/h
 ## Prints each box's offset from the browser's, OK/FAIL lines, and writes <prefix>_<state>_<width>.png.
 
@@ -30,13 +31,18 @@ func _init() -> void:
 
 func _state(name: String) -> void:
 	main.next_opt = {"map": "yard", "size": "std", "mode": "blackout" if name == "blackout" else "5", "diff": "normal", "mods": []}
-	if name in ["base", "ffa"]:
-		main.next_opt.pvp = name
+	if name in ["base", "ffa", "dead"]:
+		main.next_opt.pvp = "ffa" if name == "dead" else name
 	main.next_cls = "quartermaster" if name == "quarter" else "soldier"
 	main.settings.data.build = name != "kitoff"
 	main._restart()
 	var s: Sim = main.sim
-	if name in ["raid", "minor", "boss1", "boss3", "boss4"]:
+	if main.net.mode == "host" and main.net.peer == null:   # the chat state's stand-in room ends with it
+		main.net.mode = "solo"
+		main.net.in_game = false
+		main.net.chat.clear()
+		main.hud.close_chat()
+	if name in ["raid", "minor", "boss1", "boss3", "boss4", "chat"]:
 		s.start_raid()
 		main.hud.note = "RAID 1 OF 5"
 	for i in 3:   # a moment of play: Black Out's starting purse
@@ -60,9 +66,21 @@ func _state(name: String) -> void:
 	await _frames(4)
 	if not name in ["msg", "minor"]:   # the game's own banners (a raid's, a boss's), which the browser's reference clears
 		main.hud.toast_clear()
-		if name in ["raid", "boss1", "boss3", "boss4"]:
+		if name in ["raid", "boss1", "boss3", "boss4", "chat"]:
 			main.hud.note = "RAID 1 OF 5"
 		await _frames(2)
+	if name == "chat":   # a room for the chat (no peer: nothing is sent), its two lines, and the bar open
+		main.net.mode = "host"
+		main.net.in_game = true
+		var now := Time.get_ticks_msec()
+		main.net.chat.append({"id": main.net.my_id, "name": "You", "text": "on my way", "col": "#e2b436", "at": now})
+		main.net.chat.append({"id": "rab", "name": "Rab", "text": "need mats at the west wall, bring brick if you have any left over from the last raid please", "col": "#8fd0ff", "at": now})
+		main.hud.open_chat()
+		await _frames(3)
+	if name == "dead":
+		s.player.alive = false
+		s.player.hp = 0.0
+		await _frames(3)
 
 
 ## an item's offset from the browser's (CSS pixels, scaled by k for screen pixels), noted when it's over the tolerance
@@ -95,7 +113,7 @@ func _run() -> void:
 	for sz in [Vector2i(1600, 900), Vector2i(1280, 720)]:
 		root.get_window().size = sz
 		await _frames(4)
-		for name in ["build", "raid", "blackout", "base", "ffa", "kitoff", "quarter", "msg", "minor", "boss1", "boss3", "boss4"]:
+		for name in ["build", "raid", "blackout", "base", "ffa", "kitoff", "quarter", "msg", "minor", "boss1", "boss3", "boss4", "chat", "dead"]:
 			var R: Dictionary = ref["%dx%d/%s" % [sz.x, sz.y, name]]
 			await _state(name)
 			var h: Hud = main.hud
@@ -128,6 +146,17 @@ func _run() -> void:
 			shown.toast = h.toast_p.visible and h.toast_cur != null
 			got.small = _r(h.toast_small)
 			shown.small = shown.toast and h.toast_small.visible
+			var cl := h.chat_ls.filter(func(l): return l.visible)
+			got.chat = Rect2() if cl.is_empty() else cl.map(func(l): return _r(l)).reduce(func(a, b): return a.merge(b))
+			shown.chat = not cl.is_empty()
+			got.bar = _r(h.chat_bar)
+			shown.bar = h.chat_bar.visible
+			got.input = _r(h.chat_in)
+			shown.input = h.chat_bar.visible
+			got.send = _r(h.chat_in.get_parent().get_child(1))
+			shown.send = h.chat_bar.visible
+			got.rj = _r(h.rj_p)
+			shown.rj = h.rj_p.visible
 			var bb := h.boss_box()
 			got.bb = Rect2(bb.position * h.s, bb.size * h.s)
 			shown.bb = bb.size.x > 0
@@ -151,10 +180,22 @@ func _run() -> void:
 					off.append("%s %+.1f %+.1f %+.1f %+.1f" % [k, d[0], d[1], d[2], d[3]])
 			# the key bar item by item, and the kill feed line by line
 			var kbs: Array = R.get("kbs", [])
+			if name == "chat":   # the stand-in room is online (the chat button, T chat); the browser's reference isn't
+				kbs = []
+				h.keys_boxes.clear()
+				off = off.filter(func(o): return not (o.begins_with("lab ") or o.begins_with("keys ")))
+				worst = 0.0   # counted again below from what's left
 			check(kbs.size() == h.keys_boxes.size() and range(kbs.size()).all(func(i): return kbs[i].text == h.keys_boxes[i].it[0] + h.keys_boxes[i].it[1]),
 				"%s: the key bar has the browser's keys (%s)" % [id, " · ".join(h.keys_boxes.map(func(k): return k.it[0] + " " + k.it[1]))])
 			for i in mini(kbs.size(), h.keys_boxes.size()):
 				_off(off, "kb%d" % i, h.keys_boxes[i].r, kbs[i], 1.0)
+			for lst in [["chatli", cl.map(func(l): return _r(l))], ["quick", (h.chat_bar.get_child(0).get_child(1) as Control).get_children().map(func(b): return _r(b)) if h.chat_bar.visible else []],
+					["rjb", h.rj_b.values().map(func(b): return _r(b)) if h.rj_p.visible else []]]:
+				var want: Array = R.get(lst[0], [])
+				check(want.size() == lst[1].size(), "%s: %d %s (the browser: %d)" % [id, lst[1].size(), lst[0], want.size()])
+				for i in mini(want.size(), lst[1].size()):
+					var g: Rect2 = lst[1][i]
+					_off(off, "%s%d" % [lst[0], i], Rect2(g.position / h.s, g.size / h.s), want[i], 1.0)
 			var feeds: Array = R.get("feeds", [])
 			var fl := h.feed_ls.filter(func(l): return l.visible)
 			check(feeds.size() == fl.size(), "%s: %d feed lines (the browser: %d)" % [id, fl.size(), feeds.size()])

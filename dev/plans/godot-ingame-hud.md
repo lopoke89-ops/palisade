@@ -1,6 +1,6 @@
 # Godot in-game HUD: matching the browser
 
-**Written October 24, 2026 (Stage 9).** H1–H3 are built (Stages 10–12, November 2, 2026); H4 is not. Each stage needs its own go-ahead.
+**Written October 24, 2026 (Stage 9).** All four are built (Stages 10–13, November 2, 2026). Each stage needs its own go-ahead.
 
 ## Why
 
@@ -67,7 +67,7 @@ Each is one milestone: build it, check it against the browser, save it, stop.
   - Stacked boss bars with weakness, percent and ENRAGED.
   - The kill feed's style.
   - The Free-for-all board.
-- **H4: modes and touch.**
+- **H4: modes and touch.** Done (Stage 13), except phone sizes: Godot exports only to Windows, where touch uses the desktop layout.
   - Black Out (phase stages, framed mini-map, fading).
   - Final Blitz, Gauntlet and evac labels; the casino's HUD (`casHud`).
   - The respawn class picker; the chat log and bar with quick lines; down and spectating states.

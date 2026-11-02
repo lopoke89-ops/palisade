@@ -5,7 +5,9 @@ extends Control
 ## START, the Free-for-all board, pause and chat), the tip under it, and the build kit down the right (BUILD ON/OFF,
 ## WALL/DOOR, the materials, PLACE, ARMORY, NADE, SPRINT, ROLL, the class ability), every button pressable; and the
 ## messages: the banner (#toast) with its queue, the kill feed (#feed), the key bar (#keys, or the controller's buttons)
-## and the boss bars, which the browser paints on its canvas (drawBossBars) and this paints too. Sizes are the browser's desktop CSS pixels
+## and the boss bars, which the browser paints on its canvas (drawBossBars) and this paints too; and the rest: the
+## Black Out mini-map (boMapDraw) and its arrow to a POI under attack, the room's chat (#chat, #chatBar), the
+## Free-for-all respawn picker (#respawnJobs) and the casino's SIT button on touch (#casSitBtn). Sizes are the browser's desktop CSS pixels
 ## (body.desk), one CSS pixel to a screen pixel up to 1600x900 and scaled up past it, as a browser on a bigger screen.
 ## The world-anchored parts (nameplates, prompts, the crosshair, floating text) stay painted in main.gd.
 
@@ -59,6 +61,15 @@ var keys_items: Array = []   # [[key, what], ...]
 var keys_rect := Rect2()   # CSS pixels
 var keys_boxes: Array = []   # each item's box (CSS pixels, on screen) and its [key, what]
 var boss_c: Control   # the boss bars, painted under everything else
+var map_c: Control   # the Black Out mini-map and the arrow to a POI under attack, painted
+var bo_fade := 1.0   # BO_FADE: the mini-map fades out under a banner that covers it
+var arrow_c: Control   # the arrow to a POI under attack off screen (it doesn't fade with the map)
+var chat_ls: Array = []   # the chat log's eight lines (#chatLog li)
+var chat_bar: PanelContainer   # #chatBar: the line, SEND and the quick lines
+var chat_in: LineEdit
+var rj_p: PanelContainer   # #respawnJobs: NEXT LIFE AS
+var rj_b: Dictionary = {}   # class -> its button
+var sit_b: Button   # #casSitBtn
 var _rx := RegEx.new()
 var _fonts := {}
 var _ls := {}
@@ -186,6 +197,7 @@ func _init(main) -> void:
 		add_child(c)
 	_make_kit()
 	_make_messages()
+	_make_rest()
 	_restyle()
 
 
@@ -308,6 +320,7 @@ func _restyle() -> void:
 		l.label_settings = ls(mst[0], mst[1], mst[2], mst[3], l == toast_big, mst[4])
 	if toast_cur != null:
 		_toast_style()
+	_rest_style()
 	_sig = ""
 	_board_rows([])
 
@@ -515,6 +528,7 @@ func _process(dt: float) -> void:
 	_keys_update(sim, p, pv)
 	_toast_place()
 	boss_c.queue_redraw()
+	_rest_update(dt)
 
 
 ## the Black Out phase (boHudPhase): [label, value, colour, START shown, START's label]
@@ -589,7 +603,7 @@ func _w(l: Label) -> float:
 		return 0.0
 	var st: Array = l.get_meta("st")
 	var n := l.text.length()
-	var w: float = _mono_w(l.text, st[1]) if str(st[0]).begins_with("m") else UiKit.face(st[0]).get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, l.label_settings.font_size).x / s
+	var w: float = _mono_w(l.text, st[1]) if str(st[0]).begins_with("m") else _text_w(st[0], l.text, st[1])
 	return w + st[3] * st[1] * n + (st[1] / 30.0 * n if l.get_meta("bold", false) else 0.0)
 
 
@@ -747,7 +761,7 @@ func has_pointer(pos = null) -> bool:
 	if not visible:
 		return false
 	var mp: Vector2 = get_local_mouse_position() if pos == null else pos
-	for b in [qm_b, skip_b, pause_b, chat_b, toast_p] + kit.values().filter(func(k): return k is KitBtn):
+	for b in [qm_b, skip_b, pause_b, chat_b, toast_p, chat_bar, rj_p, sit_b] + kit.values().filter(func(k): return k is KitBtn):
 		if b.is_visible_in_tree() and Rect2(b.global_position - global_position, b.size).has_point(mp):
 			return true
 	return false
@@ -1346,6 +1360,12 @@ func _has_ability(p: Dictionary, pv: String) -> bool:
 	return pv == "" and p.cls in ["soldier", "sniper"]
 
 
+## a text's width in CSS pixels as the browser lays it out: measured ten times the size, since at small sizes Godot's
+## hinting rounds every letter's advance
+static func _text_w(f: String, t: String, size: float) -> float:
+	return UiKit.face(f).get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, roundi(size * 10)).x / 10.0
+
+
 ## IBM Plex Mono is monospaced: every letter 0.6 em, as the browser lays it out (Godot's hinting rounds each advance)
 static func _mono_w(t: String, size: float) -> float:
 	return t.length() * 0.6 * size
@@ -1465,3 +1485,400 @@ func _draw_boss_bars() -> void:
 					txt.call(mo, "WEAK: " + A.name, x + w - 44, y + 10, 9, Color(A.col), true)
 		bar.call(x, y + 14, w, 6, f, col, e.get("flash", 0.0) > 0)
 		y += 32
+
+
+# ---------------------------------------------------------------- the rest: the mini-map, chat, NEXT LIFE AS, SIT
+
+const QUICK := ["NICE", "HELP!", "ON MY WAY", "WALL DOWN", "NEED MATS", "GG"]
+
+
+func _make_rest() -> void:
+	map_c = Control.new()
+	map_c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	map_c.set_anchors_preset(Control.PRESET_FULL_RECT)
+	map_c.draw.connect(_draw_bo)
+	add_child(map_c)
+	move_child(map_c, 1)
+	arrow_c = Control.new()
+	arrow_c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	arrow_c.set_anchors_preset(Control.PRESET_FULL_RECT)
+	arrow_c.draw.connect(_draw_poi_arrow)
+	add_child(arrow_c)
+	move_child(arrow_c, 2)
+	for i in 8:
+		var r := RichTextLabel.new()
+		r.fit_content = true
+		r.scroll_active = false
+		r.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		r.visible = false
+		chat_ls.append(r)
+		add_child(r)
+	chat_bar = PanelContainer.new()
+	chat_bar.visible = false
+	var vb := VBoxContainer.new()
+	var row := HBoxContainer.new()
+	chat_in = LineEdit.new()
+	chat_in.max_length = 120
+	chat_in.placeholder_text = "Say something · Enter sends · Esc closes"
+	chat_in.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	chat_in.text_submitted.connect(func(t: String): _send_chat(t))
+	chat_in.gui_input.connect(func(ev: InputEvent):
+		if ev is InputEventKey and ev.pressed and ev.keycode == KEY_ESCAPE:
+			close_chat()
+			chat_in.accept_event())
+	var send := Button.new()
+	send.text = "SEND"
+	send.focus_mode = Control.FOCUS_NONE
+	send.pressed.connect(func(): _send_chat(chat_in.text))
+	send.set_meta("kind", "send")
+	row.add_child(chat_in)
+	row.add_child(send)
+	var quick := HFlowContainer.new()
+	for q in QUICK:
+		var b := Button.new()
+		b.text = q
+		b.focus_mode = Control.FOCUS_NONE
+		b.set_meta("kind", "quick")
+		b.pressed.connect(func(): _send_chat(q))
+		quick.add_child(b)
+	vb.add_child(row)
+	vb.add_child(quick)
+	chat_bar.add_child(vb)
+	add_child(chat_bar)
+	rj_p = PanelContainer.new()
+	rj_p.visible = false
+	var rv := VBoxContainer.new()
+	var rl := label("s8", 12, DIM, 0.14)
+	rl.text = "NEXT LIFE AS"
+	rl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	rl.set_meta("rj", true)
+	var seg := PanelContainer.new()
+	var hb := HBoxContainer.new()
+	for cl in ["soldier", "sniper", "grenadier", "quartermaster"]:
+		var b := Button.new()
+		b.text = cl.to_upper()
+		b.focus_mode = Control.FOCUS_NONE
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		b.size_flags_stretch_ratio = 1.0
+		b.clip_text = true
+		b.pressed.connect(func(): _next_job(cl))
+		rj_b[cl] = b
+		hb.add_child(b)
+	seg.add_child(hb)
+	rv.add_child(rl)
+	rv.add_child(seg)
+	rj_p.add_child(rv)
+	add_child(rj_p)
+	sit_b = Button.new()
+	sit_b.focus_mode = Control.FOCUS_NONE
+	sit_b.visible = false
+	sit_b.pressed.connect(func(): m.cas_sit())
+	add_child(sit_b)
+
+
+func _rest_style() -> void:
+	for r in chat_ls:
+		r.add_theme_font_override("normal_font", font("m4", 13))
+		r.add_theme_font_size_override("normal_font_size", roundi(13 * s))
+		r.add_theme_constant_override("line_separation", roundi(17.55 * s - UiKit.face("m4").get_height(roundi(13 * s))))
+	var bar := _sb(Color(14 / 255.0, 12 / 255.0, 10 / 255.0, 0.92), WARN, 1)
+	for k in ["left", "right", "top", "bottom"]:
+		bar.set("content_margin_" + k, roundf(8 * s) + bar.border_width_left)
+	chat_bar.add_theme_stylebox_override("panel", bar)
+	var vb: VBoxContainer = chat_bar.get_child(0)
+	vb.add_theme_constant_override("separation", roundi(6 * s))
+	var row: HBoxContainer = vb.get_child(0)
+	row.add_theme_constant_override("separation", roundi(6 * s))
+	var flow: HFlowContainer = vb.get_child(1)
+	flow.add_theme_constant_override("h_separation", roundi(5 * s))
+	flow.add_theme_constant_override("v_separation", roundi(5 * s))
+	var ib := _sb(Color("#0c0b09"), LINE, 1)
+	ib.content_margin_left = roundf(10 * s) + ib.border_width_left
+	ib.content_margin_right = roundf(10 * s) + ib.border_width_left
+	for st in ["normal", "focus", "read_only"]:
+		chat_in.add_theme_stylebox_override(st, ib)
+	chat_in.add_theme_font_override("font", font("m6", 16))
+	chat_in.add_theme_font_size_override("font_size", roundi(16 * s))
+	chat_in.add_theme_color_override("font_color", BONE)
+	chat_in.add_theme_color_override("font_placeholder_color", DIM)
+	chat_in.custom_minimum_size.y = 40 * s
+	for b in row.get_children() + flow.get_children():
+		if not b is Button:
+			continue
+		if b.get_meta("kind") == "send":   # .go
+			_style_btn(b, WARN, Color(0, 0, 0, 0), 0, "s9", 16, INK, 0.1, 0, WARN.lightened(0.12))
+			b.custom_minimum_size = Vector2(0, 40 * s)
+			for st in ["normal", "hover", "pressed", "focus", "disabled"]:
+				var sb: StyleBoxFlat = b.get_theme_stylebox(st)
+				sb.content_margin_left = roundf(14 * s)
+				sb.content_margin_right = roundf(14 * s)
+		else:
+			_style_btn(b, Color(27 / 255.0, 24 / 255.0, 20 / 255.0, 0.9), LINE, 1, "s8", 13, BONE, 0.06, 0, Color(BTNBG.lightened(0.15), 0.9))
+			# the browser's width (its letter-spacing exactly; Godot's rounds up a pixel a letter), the text centred in it
+			b.add_theme_font_override("font", font("s8", 13))   # drawn without the rounded-up spacing, so it fits the browser's box
+			b.clip_text = true
+			b.custom_minimum_size = Vector2((_text_w("s8", b.text, 13) + 0.06 * 13 * b.text.length() + 20) * s, 30 * s)
+			for st in ["normal", "hover", "pressed", "focus", "disabled"]:
+				var sb: StyleBoxFlat = b.get_theme_stylebox(st)
+				sb.content_margin_left = roundf(9 * s) + sb.border_width_left
+				sb.content_margin_right = roundf(9 * s) + sb.border_width_left
+	var rp := _sb(Color(12 / 255.0, 11 / 255.0, 9 / 255.0, 0.88), LINE, 1)
+	rp.content_margin_left = roundf(12 * s) + rp.border_width_left
+	rp.content_margin_right = roundf(12 * s) + rp.border_width_left
+	rp.content_margin_top = roundf(10 * s) + rp.border_width_top
+	rp.content_margin_bottom = roundf(10 * s) + rp.border_width_top
+	rj_p.add_theme_stylebox_override("panel", rp)
+	var rv: VBoxContainer = rj_p.get_child(0)
+	rv.add_theme_constant_override("separation", roundi(6 * s))
+	var rl: Label = rv.get_child(0)
+	var rst: Array = rl.get_meta("st")
+	rl.label_settings = ls(rst[0], rst[1], rst[2], rst[3], false, rst[4])
+	var seg: PanelContainer = rv.get_child(1)
+	seg.add_theme_stylebox_override("panel", _sb(Color(0, 0, 0, 0), LINE, 1))
+	(seg.get_child(0) as HBoxContainer).add_theme_constant_override("separation", 0)
+	_style_btn(sit_b, Color("#d6aa46"), Color(0, 0, 0, 0), 0, "s9", 22, INK, 0.1, 0, Color("#d6aa46").lightened(0.1))
+	sit_b.custom_minimum_size = Vector2(140, 54) * s
+	_sel_jobs("")
+
+
+## the respawn picker's buttons: the picked one bone, the rest outlined (.seg)
+func _sel_jobs(want: String) -> void:
+	var first := true
+	for cl in rj_b:
+		var b: Button = rj_b[cl]
+		var on: bool = cl == want
+		var sb := _sb(BONE if on else Color(0, 0, 0, 0))
+		if not first:   # border-left between them
+			sb.border_color = LINE
+			sb.border_width_left = int(maxf(1.0, roundf(s)))
+		first = false
+		for st in ["normal", "hover", "pressed", "focus", "disabled"]:
+			b.add_theme_stylebox_override(st, sb)
+		b.add_theme_font_override("font", font("s8", 12, 0.06))
+		b.add_theme_font_size_override("font_size", roundi(12 * s))
+		for st in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color", "font_hover_pressed_color"]:
+			b.add_theme_color_override(st, INK if on else DIM)
+		b.custom_minimum_size = Vector2(0, 40 * s)
+		b.set_meta("on", on)
+
+
+## nextJob: the class for the next life in a Free-for-all (the host keeps it; a guest asks the host)
+func _next_job(cls: String) -> void:
+	var p: Dictionary = m.sim.player
+	if m.sim.pvp() != "ffa":
+		return
+	if m.net.guest():
+		m.net.send_next_class(cls)
+	else:
+		p.nextCls = "" if cls == p.cls else cls
+	p.nextShow = cls
+
+
+func open_chat() -> void:
+	if not m.net.is_online() or m.demo:
+		return
+	chat_bar.visible = true
+	chat_in.text = ""
+	chat_in.grab_focus()
+	chat_seen = m.net.chat.size()
+
+
+func close_chat() -> void:
+	chat_bar.visible = false
+	chat_in.release_focus()
+
+
+func toggle_chat() -> void:
+	if chat_bar.visible:
+		close_chat()
+	else:
+		open_chat()
+
+
+func _send_chat(t: String) -> void:
+	var text := t.strip_edges()
+	if text != "" and m.net.is_online():
+		m.net.send_chat(text.substr(0, 120))
+	close_chat()
+
+
+func _rest_update(_dt: float) -> void:
+	var W := size.x / s
+	var H := size.y / s
+	var sim: Sim = m.sim
+	var p: Dictionary = sim.player
+	var city: bool = sim.map_id == "city" and sim.game.phase != "over"
+	if city:
+		var M := Rect2(bo_map_box().position / s, bo_map_box().size / s)
+		var tb := toast_box()
+		var hit := tb.size.x > 0 and tb.intersects(M)
+		bo_fade = clampf(bo_fade + (-1.0 if hit else 1.0) * _dt * 7.2, 0.0, 1.0)   # 0.12 a frame at 60
+		map_c.modulate.a = bo_fade
+	map_c.visible = city
+	arrow_c.visible = city
+	map_c.queue_redraw()
+	arrow_c.queue_redraw()
+	# the chat log: bottom left, 380 wide, eight lines at most, each fading out 9 s after it came (all back while typing)
+	var online: bool = m.net.is_online() and m.net.in_game
+	var lines: Array = m.net.chat.slice(maxi(0, m.net.chat.size() - 8)) if online else []
+	var x0 := maxf(24, (W - 1632) / 2)
+	var cw := minf(380, W * 0.58)
+	var now := Time.get_ticks_msec()
+	var y := H - 64
+	for i in range(chat_ls.size() - 1, -1, -1):
+		var r: RichTextLabel = chat_ls[i]
+		var k := i - (chat_ls.size() - lines.size())
+		r.visible = k >= 0
+		if not r.visible:
+			continue
+		var l: Dictionary = lines[k]
+		var col: Color = Color(l.col) if l.col is String else l.col
+		var key := "%s|%s|%s|%s" % [l.id, l.name, l.text, s]
+		if r.get_meta("key", "") != key:
+			r.set_meta("key", key)
+			r.clear()
+			r.push_font(font("s8", 13, 0.05), roundi(13 * s))
+			r.push_color(col)
+			r.add_text(("YOU" if l.id == m.net.my_id else str(l.name).to_upper()) + " ")
+			r.pop()
+			r.pop()
+			r.push_color(BONE)
+			r.add_text(str(l.text))
+			r.pop()
+			var sb := _sb(Color(14 / 255.0, 12 / 255.0, 10 / 255.0, 0.72))
+			sb.border_color = col
+			sb.border_width_left = int(maxf(1.0, roundf(3 * s)))
+			sb.content_margin_left = roundf(8 * s) + sb.border_width_left
+			sb.content_margin_right = roundf(8 * s)
+			sb.content_margin_top = roundf(3 * s)
+			sb.content_margin_bottom = roundf(3 * s)
+			r.add_theme_stylebox_override("normal", sb)
+		r.size = Vector2(cw * s, 0)
+		r.reset_size()
+		r.size.x = cw * s
+		var hh: float = r.get_combined_minimum_size().y / s
+		y -= hh
+		r.position = Vector2(x0, y) * s
+		y -= 3
+		var old: bool = now - int(l.get("at", now)) > 9000 and not chat_bar.visible
+		r.modulate.a = move_toward(r.modulate.a, 0.0 if old else 1.0, _dt / 0.8)
+	# the chat bar: top centre, 560 wide
+	if chat_bar.visible:
+		if not online:
+			close_chat()
+		var bw := minf(560, W - 24) + 18
+		chat_bar.size = Vector2(bw * s, 0)
+		chat_bar.reset_size()
+		chat_bar.size.x = bw * s
+		chat_bar.position = Vector2(roundf((W - bw) / 2), 12) * s
+	# NEXT LIFE AS: down in a Free-for-all where the class isn't fixed
+	var rj: bool = sim.pvp() == "ffa" and sim.game.get("job", "") == "" and not p.alive and sim.game.phase != "over"
+	rj_p.visible = rj
+	if rj:
+		var want: String = str(p.get("nextShow", "")) if p.get("nextShow", "") != "" else (p.nextCls if p.get("nextCls", "") != "" else p.cls)
+		if not rj_b[want].get_meta("on", false):
+			_sel_jobs(want)
+		var rw := minf(520, W - 24) + 26
+		rj_p.size = Vector2(rw * s, 0)
+		rj_p.reset_size()
+		rj_p.size.x = rw * s
+		rj_p.position = Vector2(roundf((W - rw) / 2), H - 22) * s - Vector2(0, rj_p.size.y)
+	# SIT / PLAY / TABLE: the casino's seat button, on touch
+	var sit := ""
+	if sim.casino() and _touch() and p.alive:
+		if p.get("seat", 0):
+			if m.casino_ui != null and not m.casino_ui.is_open():
+				sit = "MACHINE" if p.seat > 100 else "TABLE"
+		else:
+			var sn := CasinoView.seat_near(sim, p, m.casino_ui)
+			if not sn.is_empty():
+				sit = "PLAY" if sn.has("m") else "SIT"
+	sit_b.visible = sit != ""
+	if sit_b.visible:
+		sit_b.text = sit
+		sit_b.reset_size()
+		sit_b.position = Vector2(roundf((W * s - sit_b.size.x) / 2), (H - 120) * s - sit_b.size.y)
+
+
+## the Black Out mini-map (boMapDraw: POIs lit while held, red while attacked, dark once lost, the next one pulsing;
+## bosses, the crew and you), fading under a banner that covers it; and the arrow to a POI under attack off screen
+func _draw_bo() -> void:
+	var sim: Sim = m.sim
+	if sim.map_id != "city" or sim.game.phase == "over" or m.demo:
+		return
+	var M := Rect2(bo_map_box().position / s, bo_map_box().size / s)
+	var t: float = sim.game.time
+	var c := map_c
+	if bo_fade > 0:
+		var n: int = sim.N
+		var k := M.size.x / (2.0 * n)
+		var P := func(i: float, j: float) -> Vector2: return Vector2(M.position.x + (i - j) * k + M.size.x / 2, M.position.y + (i + j) * k * 0.5) * s
+		if m.city_map == null:
+			m.city_map = CityView.map_image(sim)
+		c.draw_set_transform_matrix(Transform2D(Vector2(k, k * 0.5) * s, Vector2(-k, k * 0.5) * s, (M.position + Vector2(M.size.x / 2, 0)) * s))
+		c.draw_texture(m.city_map, Vector2.ZERO)
+		c.draw_set_transform_matrix(Transform2D.IDENTITY)
+		var edge := PackedVector2Array([P.call(0, 0), P.call(n, 0), P.call(n, n), P.call(0, n), P.call(0, 0)])
+		c.draw_polyline(edge, Color(226 / 255.0, 180 / 255.0, 54 / 255.0, 0.35), maxf(1.0, s))
+		var blink := sin(t * 8) > 0
+		for co in sim.cores:
+			var q: Vector2 = P.call(co.i + 0.5, co.j + 0.5)
+			if not co.has("poi"):
+				var r := 4 * s
+				c.draw_rect(Rect2(q - Vector2(r, r), Vector2(r, r) * 2), WARN)
+				continue
+			var r: float = (3.4 if co.poi.get("major", false) else 2.6) * s
+			var col := Color("#3a3a3a") if co.lost else (Color("#ff4a3a") if blink else Color("#8a2a20")) if co.get("attack", false) else Color("#ffd88a")
+			c.draw_circle(q, r, col)
+			if co.lost:
+				c.draw_line(q - Vector2(r, r), q + Vector2(r, r), Color("#777777"), maxf(1.0, s))
+				c.draw_line(q + Vector2(r, -r), q + Vector2(-r, r), Color("#777777"), maxf(1.0, s))
+			if co.get("next", false) and not co.get("attack", false):
+				c.draw_arc(q, r + 3 * s, 0, TAU, 24, Color(1, 120 / 255.0, 80 / 255.0, 0.5 + 0.5 * sin(t * 6)), 1.5 * s)
+		for e in sim.enemies:
+			if e.type == "boss":
+				var q: Vector2 = P.call(e.x, e.y)
+				var z := (5.0 if e.boss == "destroyer" else 3.5) * s
+				c.draw_colored_polygon(PackedVector2Array([q + Vector2(0, -z), q + Vector2(z, 0), q + Vector2(0, z), q + Vector2(-z, 0)]), Color("#ff6a2a") if e.boss == "destroyer" else Color("#ff3a2a"))
+		for o in sim.players.values():
+			if not is_same(o, sim.player) and (o.alive or o.get("downed", false)):
+				c.draw_circle(P.call(o.x, o.y), 2 * s, Color("#8fd0ff") if o.alive else Color("#d65a3a"))
+		var me: Vector2 = P.call(sim.player.x, sim.player.y)
+		c.draw_circle(me, 2.6 * s + 1, Color.BLACK)
+		c.draw_circle(me, 2.6 * s, Color.WHITE)
+
+
+## a POI under attack off screen: a pulsing arrow at the edge, and its name
+func _draw_poi_arrow() -> void:
+	var sim: Sim = m.sim
+	if sim.map_id != "city" or sim.game.phase == "over" or m.demo:
+		return
+	var t: float = sim.game.time
+	var c := arrow_c
+	for co in sim.cores:
+		if not (co.get("attack", false) and co.has("poi")):
+			continue
+		var q: Vector2 = m.iso(co.i + 0.5, co.j + 0.5)
+		var Wp := size.x
+		var Hp := size.y
+		var top := 110.0 * s
+		if q.x > 20 and q.x < Wp - 20 and q.y > top and q.y < Hp - 20:
+			break
+		var ex := clampf(q.x, 26, Wp - 26)
+		var ey := clampf(q.y, top + 14, Hp - 26)
+		var a := atan2(q.y - Hp / 2, q.x - Wp / 2)
+		var pz := (0.8 + 0.2 * sin(t * 6)) * 1.9
+		var xf := Transform2D(a, Vector2(ex, ey)).scaled_local(Vector2(pz, pz))
+		var arrow := PackedVector2Array()
+		for v in [Vector2(9, 0), Vector2(-5, -7), Vector2(-2, 0), Vector2(-5, 7)]:
+			arrow.append(xf * v)
+		c.draw_colored_polygon(arrow, Color("#ff5a3a"))
+		arrow.append(arrow[0])
+		c.draw_polyline(arrow, Color(12 / 255.0, 10 / 255.0, 8 / 255.0, 0.8), 1.5)
+		var f := font("s8", 10 * m.v.u / s)
+		var z := roundi(10 * m.v.u)
+		var nm: String = co.poi.name
+		var w := f.get_string_size(nm, HORIZONTAL_ALIGNMENT_LEFT, -1, z).x
+		c.draw_string(f, Vector2(ex - w / 2, ey + (-20.0 if ey > Hp / 2 else 24.0)), nm, HORIZONTAL_ALIGNMENT_LEFT, -1, z, Color("#ff8a6a"))
+		break

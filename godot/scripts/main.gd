@@ -109,6 +109,7 @@ func _ready() -> void:
 	add_child(ui_layer)
 	hud = Hud.new(self)
 	add_child(hud)
+	chat_box = hud.chat_bar
 	panel_layer = PaintLayer.new()
 	panel_layer.painter = _paint_panels
 	add_child(panel_layer)
@@ -829,7 +830,7 @@ func _mouse_world() -> Vector2:
 ## this frame's controls (controlLocal): keys and the left stick or left thumb move; the mouse, the right stick or the
 ## right thumb aim (sticks get the browser's aim assist); the left button, right trigger or a hard right thumb fire
 func _controls() -> Dictionary:
-	if demo or menus.active() or armory_open or skills_open:
+	if demo or menus.active() or armory_open or skills_open or (chat_box != null and chat_box.visible):   # typing isn't walking
 		return {}
 	var mx := (1.0 if Input.is_action_pressed("pal_right") else 0.0) - (1.0 if Input.is_action_pressed("pal_left") else 0.0)
 	var my := (1.0 if Input.is_action_pressed("pal_down") else 0.0) - (1.0 if Input.is_action_pressed("pal_up") else 0.0)
@@ -1037,43 +1038,17 @@ func _emit(x: float, y: float, kind: String, mat: int) -> void:
 		"life": life, "max": life, "col": Color.html(cols[randi() % cols.size()]), "kind": kind, "s": 1.6 if kind == "chunk" else 1.0})
 
 
-var chat_box: LineEdit
+var chat_box: Control   # the HUD's chat bar (Hud.chat_bar)
 
 
 ## the HUD's chat button
 func toggle_chat() -> void:
-	if chat_box != null and chat_box.visible:
-		chat_box.visible = false
-		chat_box.release_focus()
-	else:
-		_open_chat()
+	hud.toggle_chat()
 
 
-## online text chat in a match: Enter opens the line, Enter sends it, Esc closes it
+## online text chat in a match: T or Enter opens the bar, Enter sends, Esc closes (the HUD's #chatBar)
 func _open_chat() -> void:
-	if chat_box == null:
-		chat_box = LineEdit.new()
-		chat_box.max_length = 120
-		chat_box.placeholder_text = "Say something to the room"
-		var layer := CanvasLayer.new()
-		layer.layer = 5
-		add_child(layer)
-		layer.add_child(chat_box)
-		chat_box.text_submitted.connect(func(t: String):
-			if t.strip_edges() != "":
-				net.send_chat(t)
-			chat_box.text = ""
-			chat_box.visible = false
-			chat_box.release_focus())
-		chat_box.gui_input.connect(func(ev: InputEvent):
-			if ev is InputEventKey and ev.pressed and ev.keycode == KEY_ESCAPE:
-				chat_box.visible = false
-				chat_box.release_focus()
-				chat_box.accept_event())
-	chat_box.position = Vector2(14, v.H - 130)
-	chat_box.size = Vector2(minf(420, v.W - 28), 30)
-	chat_box.visible = true
-	chat_box.grab_focus()
+	hud.open_chat()
 
 
 func _update_fx(dt: float) -> void:
@@ -2119,20 +2094,8 @@ func _draw_ammo_status(e: Dictionary) -> void:
 func _draw_hud() -> void:
 	var W := v.W
 	var H := v.H
-	# the room's chat (bottom left), online; the kill feed is the HUD's
-	if net.is_online() and net.in_game:
-		var now := Time.get_ticks_msec()
-		var lines: Array = net.chat.filter(func(l): return now - l.get("at", now) < 9000 or (chat_box != null and chat_box.visible))
-		lines = lines.slice(maxi(0, lines.size() - 5))
-		for i in lines.size():
-			var l: Dictionary = lines[i]
-			cv.draw_string(font, Vector2(14, H - 140 - (lines.size() - 1 - i) * 17), "%s: %s" % [str(l.name).to_upper(), l.text], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, c(l.col))
+	# the chat, the kill feed and the Black Out mini-map are the HUD's (scripts/hud.gd)
 	var dim := c("#9a8f7a")
-	if sim.map_id == "city":   # the mini-map, under the phase box (boMapBox)
-		if city_map == null:
-			city_map = CityView.map_image(sim)
-		var mb := hud.bo_map_box()
-		CityView.minimap(self, city_map, mb.position.x, mb.position.y, mb.size.x)
 	if sim.casino():   # no kit, no building, no Delgado in here
 		return
 	# health is on the nameplates; the kit, the banners, the kill feed and the boss bars are the HUD's (scripts/hud.gd)
