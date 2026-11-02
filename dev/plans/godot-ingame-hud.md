@@ -1,6 +1,6 @@
 # Godot in-game HUD: matching the browser
 
-**Written October 24, 2026 (Stage 9).** Nothing here is built yet. This is the plan; each stage below needs its own go-ahead.
+**Written October 24, 2026 (Stage 9).** H1 is built (Stage 10, November 2, 2026); H2–H4 are not. Each stage needs its own go-ahead.
 
 ## Why
 
@@ -53,7 +53,7 @@ Already the same: nameplates with health over heads, the E ARMORY prompt, the cr
 
 Each is one milestone: build it, check it against the browser, save it, stop.
 
-- **H1: foundation and the phase box.**
+- **H1: foundation and the phase box.** Done (Stage 10): `scripts/hud.gd`, checked by `tests/hud_shot.gd`.
   - `hud.gd`, the fonts, and the top-right phase box: label, clock or raiders left, raid count, CORE / STAKE / COMMAND and ENEMY meters with numbers and alarm, the Delgado chip, salvage, START with key cap, the pause and chat buttons.
   - The tip box.
   - The old top bar goes.
@@ -78,4 +78,4 @@ H1 and H2 together fix most of what you'll notice. H3 and H4 finish it.
 ## Open questions
 
 - Pause menu: keep Godot's extra RESTART / SKILL TREE / INDEX, or match the browser (and add FRIENDS)?
-- Godot's opening GOOD LUCK message: keep it, or use the browser's tip box only?
+- ~~Godot's opening GOOD LUCK message~~: gone in H1. The browser's tip box replaces it, with the same tips at the same moments.

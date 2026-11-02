@@ -52,7 +52,9 @@ var light_rect: ColorRect   # night: a shade with holes round every light
 var post_rect: ColorRect   # storm tint, vignette, low-health edge
 var fx_layer: PaintLayer   # boss warnings and the evac ring, over the night
 var glow_layer: PaintLayer   # muzzle flashes and lamp glows, added on
-var ui_layer: PaintLayer   # nameplates, prompts, crosshair, floating text and the HUD
+var ui_layer: PaintLayer   # nameplates, prompts, crosshair, floating text and what's left of the painted HUD
+var hud: Hud   # the HUD built as the browser builds it (scripts/hud.gd): the phase box and the tip
+var panel_layer: PaintLayer   # the armory and the skill tree, over the HUD
 var wx_a := 0.0   # the storm fading in and out
 var glow_tex: GradientTexture2D
 var settings := PalSettings.new()
@@ -106,6 +108,11 @@ func _ready() -> void:
 	ui_layer = PaintLayer.new()
 	ui_layer.painter = _paint_ui
 	add_child(ui_layer)
+	hud = Hud.new(self)
+	add_child(hud)
+	panel_layer = PaintLayer.new()
+	panel_layer.painter = _paint_panels
+	add_child(panel_layer)
 	var gr := Gradient.new()
 	gr.set_color(0, Color(1, 210 / 255.0, 130 / 255.0, 0.55))
 	gr.set_color(1, Color(1, 150 / 255.0, 60 / 255.0, 0))
@@ -328,6 +335,7 @@ func _after_start() -> void:
 	feed.clear()
 	armory_open = false
 	floats.clear()
+	hud.reset()
 	toasts.clear()
 	over_t = 0.0
 	v.cam_snap(sim.player.x, sim.player.y)
@@ -679,8 +687,6 @@ func start_game() -> void:
 	skills_open = false
 	_restart()
 	over_t = 0.0
-	if settings.data.tips:
-		toasts = [{"title": "GOOD LUCK", "body": "Gather wood (walk into a pile), %s to build, %s grenade, %s armory at the stake, %s to start the raid early." % [settings.keys_label("build"), settings.keys_label("nade"), settings.keys_label("armory"), settings.keys_label("start")], "t": 7.0 * settings.data.msgTime}]
 
 
 ## leaveRun: leaving a run still going pays what's held so far (an early leave); the casino stands you up
@@ -807,6 +813,7 @@ func _restart() -> void:
 	armory_open = false
 	floats.clear()
 	toasts.clear()
+	hud.reset()
 	v.cam_snap(sim.player.x, sim.player.y)
 
 
@@ -848,7 +855,7 @@ func _controls() -> Dictionary:
 		var w := _mouse_world()
 		var d := Vector2(w.x - p.x, w.y - p.y)
 		aim = d.normalized() if d.length() > 0 else Vector2(1, 0)
-		fire = Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+		fire = Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and not hud.has_pointer()
 	return {"move": mv, "aim": aim, "fire": fire, "pulls": mouse_pulls, "auto": inp.mode == "touch" or (inp.mode == "mouse" and not mouse_seen)}
 
 
@@ -952,6 +959,7 @@ func _process(dt: float) -> void:
 	fx_layer.queue_redraw()
 	glow_layer.queue_redraw()
 	ui_layer.queue_redraw()
+	panel_layer.queue_redraw()
 	var want := Input.MOUSE_MODE_HIDDEN if not demo and not menus.active() and inp.mode == "mouse" and sim.game.phase != "over" and not sim.game.paused and not armory_open and not skills_open and sim.player.alive else Input.MOUSE_MODE_VISIBLE
 	if Input.mouse_mode != want and DisplayServer.get_name() != "headless":
 		Input.mouse_mode = want
@@ -972,6 +980,7 @@ func _drain_events() -> void:
 			"toast":
 				if not demo:
 					toasts = [{"title": e.title, "body": e.body, "t": 4.5 * settings.data.msgTime}]
+					hud.toasted(e.title)
 			"killfx":
 				kill_fx(e.x, e.y, e.fx, e.get("quiet", false))
 			"flash":
@@ -997,6 +1006,7 @@ func _drain_events() -> void:
 			"toast_to":
 				if e.id == sim.player.id:
 					toasts = [{"title": e.title, "body": e.body, "t": 4.5 * settings.data.msgTime}]
+					hud.toasted(e.title)
 			"feed":
 				feed.push_front({"text": e.text, "col": e.col, "t": 5.7})
 				if feed.size() > 4:
@@ -1027,6 +1037,15 @@ func _emit(x: float, y: float, kind: String, mat: int) -> void:
 
 
 var chat_box: LineEdit
+
+
+## the HUD's chat button
+func toggle_chat() -> void:
+	if chat_box != null and chat_box.visible:
+		chat_box.visible = false
+		chat_box.release_focus()
+	else:
+		_open_chat()
 
 
 ## online text chat in a match: Enter opens the line, Enter sends it, Esc closes it
@@ -1521,8 +1540,20 @@ func _paint_ui(layer: CanvasItem) -> void:
 	cv = self
 
 
+## the armory and the skill tree: over the HUD, as the browser's overlays are
+func _paint_panels(layer: CanvasItem) -> void:
+	if demo:
+		return
+	cv = layer
+	if armory_open:
+		_draw_armory()
+	elif skills_open:
+		_draw_skills()
+	cv = self
+
+
 ## touch: the two thumb sticks while held, and the buttons (BUILD, GRENADE, the ability or SPRINT, ARMORY, the
-## materials, WALL/DOOR, START, PAUSE)
+## materials, WALL/DOOR)
 func _draw_touch() -> void:
 	var W := v.W
 	var H := v.H
@@ -1554,9 +1585,7 @@ func _draw_touch() -> void:
 	for k in 3:
 		btn.call(Rect2(W / 2 - 150 + k * 76, H - 56, 70, 44), "mat%d" % (k + 1), Pal.MAT[k].name, g.sel == k)
 	btn.call(Rect2(W / 2 + 84, H - 56, 70, 44), "piece", g.piece.to_upper())
-	btn.call(Rect2(W - 64, 42, 52, 40), "pause", "II")
-	if g.phase == "build" or (g.get("bo") != null and g.bo.stage == "ready"):
-		btn.call(Rect2(W / 2 - 70, 40, 140, 36), "start", "READY" if g.phase == "raid" else "START NOW")
+	# PAUSE and START are the HUD's own buttons (scripts/hud.gd), as in the browser
 
 
 ## drawTracer: the standard tracer, a tapered streak with a hot core that fades toward its tail; raiders' rounds are a
@@ -2114,7 +2143,13 @@ func _draw_hud() -> void:
 		var fc := c(f.col)
 		fc.a = clampf(f.t / 0.7, 0.0, 1.0)
 		var fw := font.get_string_size(f.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
-		cv.draw_string(font, Vector2(W - 14 - fw, 56 + i * 17), f.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, fc)
+		var fr := hud.box.end.x
+		var fy := hud.box.end.y + 6
+		if sim.map_id == "city":
+			var mb := hud.bo_map_box()
+			fr = mb.position.x - 8
+			fy = mb.position.y
+		cv.draw_string(font, Vector2(fr - fw, fy + 12 + i * 17), f.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, fc)
 	if net.is_online() and net.in_game:
 		var now := Time.get_ticks_msec()
 		var lines: Array = net.chat.filter(func(l): return now - l.get("at", now) < 9000 or (chat_box != null and chat_box.visible))
@@ -2125,61 +2160,11 @@ func _draw_hud() -> void:
 	var gold := c("#e2b436")
 	var paper := c("#e8dcc0")
 	var dim := c("#9a8f7a")
-	# top bar: phase, clock, stake
-	cv.draw_rect(Rect2(0, 0, W, 34), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.72))
-	var phase_txt: String
-	var clock := func(t: float) -> String:
-		var sec := maxi(0, ceili(t))
-		return "%d:%02d" % [sec / 60, sec % 60]
-	if sim.casino():
-		phase_txt = "PALISADE FALLS CASINO · %s◆ %d%s" % [("ROOM %s · " % net.code) if net.is_online() and net.code != "" else "", locker.shards if locker != null else 0, " · seated" if p.get("seat", 0) else ""]
-	elif sim.pvp() == "base" and g.phase != "over":
-		var mine := 0
-		var theirs := 0
-		for o in sim.players.values():
-			if o.team == p.team:
-				mine += o.kills
-			else:
-				theirs += o.kills
-		var other := "b" if p.team == "a" else "a"
-		phase_txt = ("TRUCE · %s until the battle%s" % [clock.call(g.timer), "   (ENTER: start the battle)" if not net.guest() else ""]) if g.phase == "build" else "BATTLE · %s %d · %s %d drops" % [Pal.TEAMS[p.team].name, mine, Pal.TEAMS[other].name, theirs]
-	elif sim.pvp() == "ffa" and g.phase != "over":
-		var rank: Array = sim.players.values()
-		rank.sort_custom(func(a, b): return a.kills > b.kills or (a.kills == b.kills and a.deaths < b.deaths))
-		phase_txt = "FREE-FOR-ALL · %s left · first to %d   %s" % [clock.call(g.timer), g.goal, "  ".join(rank.slice(0, 6).map(func(o): return "%s %d" % ["YOU" if is_same(o, p) else str(o.name).to_upper(), o.kills]))]
-	elif sim.blackout() and g.phase != "over":
-		phase_txt = CityView.phase_text(sim)
-	elif g.phase == "build" and sim.campaign():
-		phase_txt = "CH %d · BUILD · %s · %s IN %ds   (ENTER: start now)" % [g.chapter + 1, sim.map_def.name, "FINAL EVACUATION" if g.wave == 12 else "RAID %d/3" % (g.wave % 3 + 1), ceili(g.timer)]
-	elif g.phase == "build":
-		phase_txt = "BUILD · RAID %d IN %ds   (ENTER: start now)" % [g.wave + 1, ceili(g.timer)]
-	elif g.phase == "raid":
-		phase_txt = "%s · %d RAIDERS LEFT" % [sim.raid_name(g.wave), sim.enemies.size() + g.queue.size()]
-		if g.get("fb") != null:
-			var ft: float = g.fb.t
-			var fbn := "MAP EVAC" if g.fb.get("mapEvac", false) else ("GAUNTLET · WAVE %d/6" % g.fb.wave if g.fb.get("gauntlet", false) else "FINAL BLITZ")
-			phase_txt = "%s · %d:%02d · %s" % [fbn, floori(ft / 60), floori(fmod(ft, 60)), "GET TO THE EVAC" if g.fb.evac != null else "%d BOSSES UP" % sim.live_bosses()]
-	else:
-		phase_txt = "GAME OVER"
-	cv.draw_string(font, Vector2(14, 22), phase_txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, paper)
-	var bw := 220.0
-	var bx := W - bw - 16
-	if sim.pvp() != "ffa" and not sim.casino():
-		cv.draw_string(font, Vector2(bx - 80, 22), "COMMAND" if sim.map_id == "city" else ("STAKES" if sim.pvp() == "base" else "STAKE"), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, dim)
-	if sim.map_id == "city":
+	if sim.map_id == "city":   # the mini-map, under the phase box (boMapBox)
 		if city_map == null:
 			city_map = CityView.map_image(sim)
-		CityView.minimap(self, city_map, W - 186, 44, 170)
-	if sim.pvp() == "base":   # yours over theirs, in the sides' colours
-		var mc: Dictionary = sim.stake_of(p)
-		var ec: Dictionary = sim.cores[1 if p.team == "a" else 0]
-		cv.draw_rect(Rect2(bx, 6, bw, 9), Color(0, 0, 0, 0.6))
-		cv.draw_rect(Rect2(bx, 6, bw * maxf(0, mc.hp / mc.max), 9), c(Pal.TEAMS[mc.team].col))
-		cv.draw_rect(Rect2(bx, 19, bw, 9), Color(0, 0, 0, 0.6))
-		cv.draw_rect(Rect2(bx, 19, bw * maxf(0, ec.hp / ec.max), 9), c(Pal.TEAMS[ec.team].col))
-	elif sim.pvp() == "" and not sim.casino():
-		cv.draw_rect(Rect2(bx, 11, bw, 12), Color(0, 0, 0, 0.6))
-		cv.draw_rect(Rect2(bx, 11, bw * maxf(0, sim.core.hp / sim.core.max), 12), gold)
+		var mb := hud.bo_map_box()
+		CityView.minimap(self, city_map, mb.position.x, mb.position.y, mb.size.x)
 	if sim.casino():   # no kit, no building, no Delgado in here
 		return
 	# bottom-left: health, materials, grenades
@@ -2231,10 +2216,6 @@ func _draw_hud() -> void:
 		var a: float = clampf(tt.t / 0.6, 0, 1)
 		label(tt.title, W / 2, 78, Color(gold, a), 22)
 		label(tt.body, W / 2, 102, Color(paper, a), 13)
-	if armory_open:
-		_draw_armory()
-	elif skills_open:
-		_draw_skills()
 	if settings.data.fps:
 		cv.draw_string(font, Vector2(W - 70, H - 10), fps_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, dim)
 

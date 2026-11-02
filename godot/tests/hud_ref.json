@@ -1,0 +1,650 @@
+{
+ "1600x900/build": {
+  "phase": {
+   "x": 1180.2,
+   "y": 12,
+   "w": 395.8,
+   "h": 158,
+   "text": "BUILDII\n    0:40 until raid 1\n    CORE500\n    ENEMY700\n    \n    SALVAGE 0\n    DELGADO · FOLLOW\n    START RAIDENTER"
+  },
+  "lab": {
+   "x": 1459,
+   "y": 12,
+   "w": 77,
+   "h": 32,
+   "text": "BUILD"
+  },
+  "pause": {
+   "x": 1546,
+   "y": 13,
+   "w": 30,
+   "h": 30,
+   "text": "II"
+  },
+  "val": {
+   "x": 1433.2,
+   "y": 46,
+   "w": 142.8,
+   "h": 18,
+   "text": "0:40 until raid 1"
+  },
+  "core": {
+   "x": 1180.2,
+   "y": 52,
+   "w": 234,
+   "h": 19,
+   "text": "CORE500"
+  },
+  "qm": {
+   "x": 1298.2,
+   "y": 75,
+   "w": 116,
+   "h": 24,
+   "text": "DELGADO · FOLLOW"
+  },
+  "salv": {
+   "x": 1495.3,
+   "y": 101,
+   "w": 80.7,
+   "h": 18,
+   "text": "SALVAGE 0"
+  },
+  "skip": {
+   "x": 1428.2,
+   "y": 127,
+   "w": 147.8,
+   "h": 35,
+   "text": "START RAIDENTER"
+  },
+  "kc": {
+   "x": 1525,
+   "y": 137.5,
+   "w": 38,
+   "h": 14,
+   "text": "ENTER"
+  },
+  "tip": {
+   "x": 584.9,
+   "y": 180,
+   "w": 430.2,
+   "h": 50,
+   "text": "Walk next to a wood pile to gather. Delgado is gathering too."
+  }
+ },
+ "1600x900/raid": {
+  "phase": {
+   "x": 1210.4,
+   "y": 12,
+   "w": 365.6,
+   "h": 115,
+   "text": "RAID 1/5II\n    3 raiders left\n    CORE500\n    ENEMY700\n    RAID 1 OF 5\n    SALVAGE 0\n    DELGADO · FOLLOW\n    START RAIDENTER"
+  },
+  "lab": {
+   "x": 1420.7,
+   "y": 12,
+   "w": 115.3,
+   "h": 32,
+   "text": "RAID 1/5"
+  },
+  "pause": {
+   "x": 1546,
+   "y": 13,
+   "w": 30,
+   "h": 30,
+   "text": "II"
+  },
+  "val": {
+   "x": 1458.4,
+   "y": 46,
+   "w": 117.6,
+   "h": 18,
+   "text": "3 raiders left"
+  },
+  "core": {
+   "x": 1210.4,
+   "y": 52,
+   "w": 234,
+   "h": 19,
+   "text": "CORE500"
+  },
+  "qm": {
+   "x": 1328.4,
+   "y": 75,
+   "w": 116,
+   "h": 24,
+   "text": "DELGADO · FOLLOW"
+  },
+  "note": {
+   "x": 1503.4,
+   "y": 77,
+   "w": 72.6,
+   "h": 14.8,
+   "text": "RAID 1 OF 5"
+  },
+  "salv": {
+   "x": 1495.3,
+   "y": 101,
+   "w": 80.7,
+   "h": 18,
+   "text": "SALVAGE 0"
+  }
+ },
+ "1600x900/blackout": {
+  "phase": {
+   "x": 1168.4,
+   "y": 12,
+   "w": 407.6,
+   "h": 150,
+   "text": "GATHERII\n    0:45 · first attack\n    COMMAND500\n    ENEMY700\n    \n    SALVAGE 40\n    DELGADO · FOLLOW\n    START NOWENTER"
+  },
+  "lab": {
+   "x": 1437.1,
+   "y": 12,
+   "w": 98.9,
+   "h": 32,
+   "text": "GATHER"
+  },
+  "pause": {
+   "x": 1546,
+   "y": 13,
+   "w": 30,
+   "h": 30,
+   "text": "II"
+  },
+  "val": {
+   "x": 1416.4,
+   "y": 46,
+   "w": 159.6,
+   "h": 18,
+   "text": "0:45 · first attack"
+  },
+  "core": {
+   "x": 1168.4,
+   "y": 52,
+   "w": 234,
+   "h": 19,
+   "text": "COMMAND500"
+  },
+  "qm": {
+   "x": 1286.4,
+   "y": 75,
+   "w": 116,
+   "h": 24,
+   "text": "DELGADO · FOLLOW"
+  },
+  "salv": {
+   "x": 1486.4,
+   "y": 101,
+   "w": 89.6,
+   "h": 18,
+   "text": "SALVAGE 40"
+  },
+  "skip": {
+   "x": 1427.8,
+   "y": 127,
+   "w": 148.2,
+   "h": 35,
+   "text": "START NOWENTER"
+  },
+  "kc": {
+   "x": 1525,
+   "y": 137.5,
+   "w": 38,
+   "h": 14,
+   "text": "ENTER"
+  },
+  "tip": {
+   "x": 584.9,
+   "y": 172,
+   "w": 430.2,
+   "h": 50,
+   "text": "Walk next to a wood pile to gather. Delgado is gathering too."
+  },
+  "map": {
+   "x": 1406,
+   "y": 180,
+   "w": 170,
+   "h": 85
+  }
+ },
+ "1600x900/base": {
+  "phase": {
+   "x": 1151.6,
+   "y": 12,
+   "w": 424.4,
+   "h": 157,
+   "text": "TRUCEII\n    0:40 until the battle\n    STAKE500\n    ENEMY700\n    \n    SALVAGE 0\n    DELGADO · FOLLOW\n    START BATTLEENTER"
+  },
+  "lab": {
+   "x": 1453,
+   "y": 12,
+   "w": 83,
+   "h": 32,
+   "text": "TRUCE"
+  },
+  "pause": {
+   "x": 1546,
+   "y": 13,
+   "w": 30,
+   "h": 30,
+   "text": "II"
+  },
+  "val": {
+   "x": 1399.6,
+   "y": 46,
+   "w": 176.4,
+   "h": 18,
+   "text": "0:40 until the battle"
+  },
+  "core": {
+   "x": 1151.6,
+   "y": 52,
+   "w": 234,
+   "h": 19,
+   "text": "STAKE500"
+  },
+  "core2": {
+   "x": 1151.6,
+   "y": 77,
+   "w": 234,
+   "h": 19,
+   "text": "ENEMY700"
+  },
+  "salv": {
+   "x": 1495.3,
+   "y": 100,
+   "w": 80.7,
+   "h": 18,
+   "text": "SALVAGE 0"
+  },
+  "skip": {
+   "x": 1412.1,
+   "y": 126,
+   "w": 163.9,
+   "h": 35,
+   "text": "START BATTLEENTER"
+  },
+  "kc": {
+   "x": 1525,
+   "y": 136.5,
+   "w": 38,
+   "h": 14,
+   "text": "ENTER"
+  },
+  "tip": {
+   "x": 584.9,
+   "y": 179,
+   "w": 430.2,
+   "h": 50,
+   "text": "Walk next to a wood pile to gather. Delgado is gathering too."
+  }
+ },
+ "1600x900/ffa": {
+  "phase": {
+   "x": 1343.9,
+   "y": 12,
+   "w": 232.1,
+   "h": 109.8,
+   "text": "FREE-FOR-ALLII\n    0:40 left · first to 15\n    CORE500\n    ENEMY700\n    \n    SALVAGE 0\n    DELGADO · FOLLOW\n    START RAIDENTER\n    YOU0"
+  },
+  "lab": {
+   "x": 1343.9,
+   "y": 12,
+   "w": 192.1,
+   "h": 32,
+   "text": "FREE-FOR-ALL"
+  },
+  "pause": {
+   "x": 1546,
+   "y": 13,
+   "w": 30,
+   "h": 30,
+   "text": "II"
+  },
+  "val": {
+   "x": 1382.8,
+   "y": 46,
+   "w": 193.2,
+   "h": 18,
+   "text": "0:40 left · first to 15"
+  },
+  "board": {
+   "x": 1426,
+   "y": 90.8,
+   "w": 150,
+   "h": 23,
+   "text": "YOU0"
+  },
+  "tip": {
+   "x": 584.9,
+   "y": 132,
+   "w": 430.2,
+   "h": 50,
+   "text": "Walk next to a wood pile to gather. Delgado is gathering too."
+  }
+ },
+ "1280x720/build": {
+  "phase": {
+   "x": 860.2,
+   "y": 12,
+   "w": 395.8,
+   "h": 158,
+   "text": "BUILDII\n    0:40 until raid 1\n    CORE500\n    ENEMY700\n    \n    SALVAGE 0\n    DELGADO · FOLLOW\n    START RAIDENTER"
+  },
+  "lab": {
+   "x": 1139,
+   "y": 12,
+   "w": 77,
+   "h": 32,
+   "text": "BUILD"
+  },
+  "pause": {
+   "x": 1226,
+   "y": 13,
+   "w": 30,
+   "h": 30,
+   "text": "II"
+  },
+  "val": {
+   "x": 1113.2,
+   "y": 46,
+   "w": 142.8,
+   "h": 18,
+   "text": "0:40 until raid 1"
+  },
+  "core": {
+   "x": 860.2,
+   "y": 52,
+   "w": 234,
+   "h": 19,
+   "text": "CORE500"
+  },
+  "qm": {
+   "x": 978.2,
+   "y": 75,
+   "w": 116,
+   "h": 24,
+   "text": "DELGADO · FOLLOW"
+  },
+  "salv": {
+   "x": 1175.3,
+   "y": 101,
+   "w": 80.7,
+   "h": 18,
+   "text": "SALVAGE 0"
+  },
+  "skip": {
+   "x": 1108.2,
+   "y": 127,
+   "w": 147.8,
+   "h": 35,
+   "text": "START RAIDENTER"
+  },
+  "kc": {
+   "x": 1205,
+   "y": 137.5,
+   "w": 38,
+   "h": 14,
+   "text": "ENTER"
+  },
+  "tip": {
+   "x": 424.9,
+   "y": 180,
+   "w": 430.2,
+   "h": 50,
+   "text": "Walk next to a wood pile to gather. Delgado is gathering too."
+  }
+ },
+ "1280x720/raid": {
+  "phase": {
+   "x": 890.4,
+   "y": 12,
+   "w": 365.6,
+   "h": 115,
+   "text": "RAID 1/5II\n    3 raiders left\n    CORE500\n    ENEMY700\n    RAID 1 OF 5\n    SALVAGE 0\n    DELGADO · FOLLOW\n    START RAIDENTER"
+  },
+  "lab": {
+   "x": 1100.7,
+   "y": 12,
+   "w": 115.3,
+   "h": 32,
+   "text": "RAID 1/5"
+  },
+  "pause": {
+   "x": 1226,
+   "y": 13,
+   "w": 30,
+   "h": 30,
+   "text": "II"
+  },
+  "val": {
+   "x": 1138.4,
+   "y": 46,
+   "w": 117.6,
+   "h": 18,
+   "text": "3 raiders left"
+  },
+  "core": {
+   "x": 890.4,
+   "y": 52,
+   "w": 234,
+   "h": 19,
+   "text": "CORE500"
+  },
+  "qm": {
+   "x": 1008.4,
+   "y": 75,
+   "w": 116,
+   "h": 24,
+   "text": "DELGADO · FOLLOW"
+  },
+  "note": {
+   "x": 1183.4,
+   "y": 77,
+   "w": 72.6,
+   "h": 14.8,
+   "text": "RAID 1 OF 5"
+  },
+  "salv": {
+   "x": 1175.3,
+   "y": 101,
+   "w": 80.7,
+   "h": 18,
+   "text": "SALVAGE 0"
+  }
+ },
+ "1280x720/blackout": {
+  "phase": {
+   "x": 848.4,
+   "y": 12,
+   "w": 407.6,
+   "h": 150,
+   "text": "GATHERII\n    0:45 · first attack\n    COMMAND500\n    ENEMY700\n    \n    SALVAGE 40\n    DELGADO · FOLLOW\n    START NOWENTER"
+  },
+  "lab": {
+   "x": 1117.1,
+   "y": 12,
+   "w": 98.9,
+   "h": 32,
+   "text": "GATHER"
+  },
+  "pause": {
+   "x": 1226,
+   "y": 13,
+   "w": 30,
+   "h": 30,
+   "text": "II"
+  },
+  "val": {
+   "x": 1096.4,
+   "y": 46,
+   "w": 159.6,
+   "h": 18,
+   "text": "0:45 · first attack"
+  },
+  "core": {
+   "x": 848.4,
+   "y": 52,
+   "w": 234,
+   "h": 19,
+   "text": "COMMAND500"
+  },
+  "qm": {
+   "x": 966.4,
+   "y": 75,
+   "w": 116,
+   "h": 24,
+   "text": "DELGADO · FOLLOW"
+  },
+  "salv": {
+   "x": 1166.4,
+   "y": 101,
+   "w": 89.6,
+   "h": 18,
+   "text": "SALVAGE 40"
+  },
+  "skip": {
+   "x": 1107.8,
+   "y": 127,
+   "w": 148.2,
+   "h": 35,
+   "text": "START NOWENTER"
+  },
+  "kc": {
+   "x": 1205,
+   "y": 137.5,
+   "w": 38,
+   "h": 14,
+   "text": "ENTER"
+  },
+  "tip": {
+   "x": 424.9,
+   "y": 172,
+   "w": 430.2,
+   "h": 50,
+   "text": "Walk next to a wood pile to gather. Delgado is gathering too."
+  },
+  "map": {
+   "x": 1086,
+   "y": 180,
+   "w": 170,
+   "h": 85
+  }
+ },
+ "1280x720/base": {
+  "phase": {
+   "x": 831.6,
+   "y": 12,
+   "w": 424.4,
+   "h": 157,
+   "text": "TRUCEII\n    0:40 until the battle\n    STAKE500\n    ENEMY700\n    \n    SALVAGE 0\n    DELGADO · FOLLOW\n    START BATTLEENTER"
+  },
+  "lab": {
+   "x": 1133,
+   "y": 12,
+   "w": 83,
+   "h": 32,
+   "text": "TRUCE"
+  },
+  "pause": {
+   "x": 1226,
+   "y": 13,
+   "w": 30,
+   "h": 30,
+   "text": "II"
+  },
+  "val": {
+   "x": 1079.6,
+   "y": 46,
+   "w": 176.4,
+   "h": 18,
+   "text": "0:40 until the battle"
+  },
+  "core": {
+   "x": 831.6,
+   "y": 52,
+   "w": 234,
+   "h": 19,
+   "text": "STAKE500"
+  },
+  "core2": {
+   "x": 831.6,
+   "y": 77,
+   "w": 234,
+   "h": 19,
+   "text": "ENEMY700"
+  },
+  "salv": {
+   "x": 1175.3,
+   "y": 100,
+   "w": 80.7,
+   "h": 18,
+   "text": "SALVAGE 0"
+  },
+  "skip": {
+   "x": 1092.1,
+   "y": 126,
+   "w": 163.9,
+   "h": 35,
+   "text": "START BATTLEENTER"
+  },
+  "kc": {
+   "x": 1205,
+   "y": 136.5,
+   "w": 38,
+   "h": 14,
+   "text": "ENTER"
+  },
+  "tip": {
+   "x": 424.9,
+   "y": 179,
+   "w": 430.2,
+   "h": 50,
+   "text": "Walk next to a wood pile to gather. Delgado is gathering too."
+  }
+ },
+ "1280x720/ffa": {
+  "phase": {
+   "x": 1023.9,
+   "y": 12,
+   "w": 232.1,
+   "h": 109.8,
+   "text": "FREE-FOR-ALLII\n    0:40 left · first to 15\n    CORE500\n    ENEMY700\n    \n    SALVAGE 0\n    DELGADO · FOLLOW\n    START RAIDENTER\n    YOU0"
+  },
+  "lab": {
+   "x": 1023.9,
+   "y": 12,
+   "w": 192.1,
+   "h": 32,
+   "text": "FREE-FOR-ALL"
+  },
+  "pause": {
+   "x": 1226,
+   "y": 13,
+   "w": 30,
+   "h": 30,
+   "text": "II"
+  },
+  "val": {
+   "x": 1062.8,
+   "y": 46,
+   "w": 193.2,
+   "h": 18,
+   "text": "0:40 left · first to 15"
+  },
+  "board": {
+   "x": 1106,
+   "y": 90.8,
+   "w": 150,
+   "h": 23,
+   "text": "YOU0"
+  },
+  "tip": {
+   "x": 424.9,
+   "y": 132,
+   "w": 430.2,
+   "h": 50,
+   "text": "Walk next to a wood pile to gather. Delgado is gathering too."
+  }
+ }
+}

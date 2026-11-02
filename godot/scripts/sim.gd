@@ -252,7 +252,7 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 	var timer: float = 1e9 if mode == "casino" else Pal.PVP.truce if pvp == "base" else (Pal.PVP.ffaTime if pvp == "ffa" else (BO.gather if mode == "blackout" else 40.0 + Df.build))
 	game = {"phase": "raid" if pvp == "ffa" else "build", "timer": timer, "pvp": pvp, "goal": Pal.PVP.ffaGoal, "winner": "", "sd": false, "wxT": 0.0, "job": job,
 		"gid": str(opt.get("gid", new_gid())).substr(0, 40), "prepEpoch": 0, "bo": null, "dark": false, "wave": 0, "waves": waves, "mode": mode, "queue": [], "spawnT": 0.0, "spawnGap": 1.1,
-		"time": 0.0, "sel": 0, "piece": "wall", "won": false, "paused": false, "bosses": 0, "fb": null, "wx": 0, "wxHit": 0.0,
+		"time": 0.0, "sel": 0, "piece": "wall", "gathered": 0, "won": false, "paused": false, "bosses": 0, "fb": null, "wx": 0, "wxHit": 0.0,
 		"flood": {"t": 0.0, "warned": false}, "end_reason": "", "dellLv": 0, "chapter": 0, "diff": diff, "map": map_id, "size": opt.get("size", "std"),
 		"stats": {"built": 0, "lost": 0, "dropped": 0, "revives": 0, "repairs": 0},
 		"bossLog": [], "sbN": 0, "sbLog": [], "fbLog": []}
@@ -1371,6 +1371,8 @@ func sim_player(p: Dictionary, dt: float) -> void:
 			p.mats[nd.type] += y
 			if nd.type == 0:
 				nd.amt -= y
+				if p.id == my_id:
+					game.gathered += 1   # this screen's wood gathers (the HUD's tips)
 			p.gt += Pal.RATE[nd.type] * p.C.get("gather", 1.0) * p.perk.gather
 			personal(p, "gather")
 			emit(nd.i + 0.5, nd.j + 0.5, "splinter" if nd.type == 0 else ("dust" if nd.type == 1 else "spark"), 1, nd.type)
