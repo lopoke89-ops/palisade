@@ -37,6 +37,7 @@ var lobs: Array = []
 var sacks: Array = []
 var flow_dirty := false
 var flow_t := 0.0
+var poi_due := false   # the POI fields are a step behind the stake's and get rebuilt next step (see compute_flow)
 var next_id := 1
 var bullet_seq := 0
 var game := {}
@@ -396,10 +397,15 @@ func enter_cost(k: int) -> float:
 	return base + (2.4 if t == PalMaps.T_WATER else (1.1 if t == PalMaps.T_LOW and flood_on else 0.0))
 
 
-## the stake's flow field (Black Out's POI fields are rebuilt on demand after)
-func compute_flow() -> void:
+## the stake's flow field (Black Out's POI fields are rebuilt on demand after). poi_later, for the rebuilds in play:
+## the POI fields keep last step's for one step, so a 64x64 step doesn't build the stake's and a POI's together
+func compute_flow(poi_later: bool = false) -> void:
 	flow_to(core_k, dist)
-	poi_flows.clear()
+	if poi_later:
+		poi_due = not poi_flows.is_empty()
+	else:
+		poi_flows.clear()
+		poi_due = false
 
 
 func mark_flow() -> void:
@@ -1024,10 +1030,13 @@ func update(dt: float, ctl: Dictionary = {}) -> void:
 				return
 			if not campaign_advance():
 				start_build(24.0 + Df.build)
+	if poi_due:   # a step after the stake's rebuild (never the same step: mark_flow waits 0.3 s)
+		poi_due = false
+		poi_flows.clear()
 	if flow_dirty:
 		flow_t -= dt
 		if flow_t <= 0:
-			compute_flow()
+			compute_flow(true)
 			flow_dirty = false
 	control_local(dt, ctl)
 	for p in players.values():
