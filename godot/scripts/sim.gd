@@ -1810,19 +1810,36 @@ func update_enemies(dt: float) -> void:
 		_enemy_tick(e, dt)
 		if aimed:
 			city_aim_end()
-	for a in enemies.size():
-		for b in range(a + 1, enemies.size()):
+	# raiders closer than half a tile push apart. Every pair is looked at, in order (a push moves them for the pairs
+	# after), so the positions sit in packed arrays for the pass and pairs half a tile apart on either axis are passed
+	# over before any lookups: most pairs, in a crowd of 50 there are 1225
+	var n := enemies.size()
+	var xs := PackedFloat64Array()
+	var ys := PackedFloat64Array()
+	xs.resize(n)
+	ys.resize(n)
+	for a in n:
+		xs[a] = enemies[a].x
+		ys[a] = enemies[a].y
+	for a in n:
+		for b in range(a + 1, n):
+			var dx: float = xs[b] - xs[a]
+			var dy: float = ys[b] - ys[a]
+			if dx >= 0.5 or dx <= -0.5 or dy >= 0.5 or dy <= -0.5:
+				continue
 			var A: Dictionary = enemies[a]
 			var B: Dictionary = enemies[b]
 			if A.get("burrow", false) or B.get("burrow", false) or A.get("raft", false) or B.get("raft", false):
 				continue
-			var dx: float = B.x - A.x
-			var dy: float = B.y - A.y
 			var d := Vector2(dx, dy).length()
 			if d < 0.5 and d > 0.001:
 				var push := (0.5 - d) * 0.5
 				move_ent(A, -dx / d * push, -dy / d * push, false)
 				move_ent(B, dx / d * push, dy / d * push, false)
+				xs[a] = A.x
+				ys[a] = A.y
+				xs[b] = B.x
+				ys[b] = B.y
 	enemies = enemies.filter(func(e): return not e.dead)
 
 
