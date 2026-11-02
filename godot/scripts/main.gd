@@ -2707,6 +2707,7 @@ func _update_light(dt: float) -> void:
 				hole.call(co.i + 0.5, co.j + 0.5, WH, TW2 * 3, 0.85)
 		for e in sim.enemies:
 			hole.call(e.x, e.y, WH * 0.5, TW2 * 0.9, 0.45)
+		_vis_bounds()   # vb is otherwise last frame's (set while drawing), past the walls for a frame when a smaller map starts
 		for j in range(vb[2], vb[3] + 1):
 			for i in range(vb[0], vb[1] + 1):
 				var w = sim.walls[j * sim.N + i]
