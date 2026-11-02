@@ -1,0 +1,964 @@
+{
+  "layouts": {
+    "00 - Peach Wire - multiplayer 1 player": {
+      "mode": "multi",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "camera": {
+        "position": [
+          0,
+          -14,
+          4.099999904632568
+        ],
+        "rotation": [
+          1.3491395711898804,
+          0,
+          0
+        ],
+        "lens": 52,
+        "shift_x": -0.09322916716337204,
+        "shift_y": 0.09984462708234787,
+        "projection": [
+          2.8888888359069824,
+          0,
+          0,
+          0,
+          0,
+          5.135802745819092,
+          0,
+          0,
+          -0.18645833432674408,
+          0.35500308871269226,
+          -1.0006669759750366,
+          -1,
+          0,
+          0,
+          -0.2000666856765747,
+          0
+        ]
+      },
+      "slots": [
+        {
+          "slot": 0,
+          "position": [
+            -8.010233187860649e-8,
+            0,
+            0
+          ],
+          "scale": 1.0606571806574505,
+          "ring_radius": 0.7768099361620818,
+          "screen_uv": [
+            0.5932291666666667,
+            0.15990265906932577
+          ],
+          "ring_state": "occupied"
+        },
+        {
+          "slot": 1,
+          "position": [
+            -1.361483097076416,
+            1.1989727020263672,
+            0
+          ],
+          "scale": 0.7458391211628611,
+          "ring_radius": 0.4242381087398171,
+          "screen_uv": [
+            0.46819577991452993,
+            0.21502849002849
+          ],
+          "ring_state": "empty"
+        },
+        {
+          "slot": 2,
+          "position": [
+            1.4268343448638916,
+            1.1989727020263672,
+            0
+          ],
+          "scale": 0.7458391211628611,
+          "ring_radius": 0.42423795897142363,
+          "screen_uv": [
+            0.724264155982906,
+            0.21502849002849
+          ],
+          "ring_state": "empty"
+        },
+        {
+          "slot": 3,
+          "position": [
+            -2.3925325870513916,
+            2.268280029296875,
+            0
+          ],
+          "scale": 0.7164360846468367,
+          "ring_radius": 0.4082402595569756,
+          "screen_uv": [
+            0.3871741452991453,
+            0.2577065527065526
+          ],
+          "ring_state": "empty"
+        },
+        {
+          "slot": 4,
+          "position": [
+            2.427375078201294,
+            2.268280029296875,
+            0
+          ],
+          "scale": 0.7164360846468367,
+          "ring_radius": 0.4082404838937893,
+          "screen_uv": [
+            0.8022849893162394,
+            0.2577065527065526
+          ],
+          "ring_state": "empty"
+        },
+        {
+          "slot": 5,
+          "position": [
+            -0.6492169499397278,
+            3.3811492919921875,
+            0
+          ],
+          "scale": 0.6998237071446206,
+          "ring_radius": 0.3994228225029143,
+          "screen_uv": [
+            0.5407151442307693,
+            0.2968281101614434
+          ],
+          "ring_state": "empty"
+        }
+      ]
+    },
+    "01 - Peach Wire - full party": {
+      "mode": "multi",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "camera": {
+        "position": [
+          0,
+          -14,
+          4.099999904632568
+        ],
+        "rotation": [
+          1.3491395711898804,
+          0,
+          0
+        ],
+        "lens": 52,
+        "shift_x": -0.09322916716337204,
+        "shift_y": 0.09984462708234787,
+        "projection": [
+          2.8888888359069824,
+          0,
+          0,
+          0,
+          0,
+          5.135802745819092,
+          0,
+          0,
+          -0.18645833432674408,
+          0.35500308871269226,
+          -1.0006669759750366,
+          -1,
+          0,
+          0,
+          -0.2000666856765747,
+          0
+        ]
+      },
+      "slots": [
+        {
+          "slot": 0,
+          "position": [
+            -8.010233187860649e-8,
+            0,
+            0
+          ],
+          "scale": 1.0606571806574505,
+          "ring_radius": 0.7768099361620818,
+          "screen_uv": [
+            0.5932291666666667,
+            0.15990265906932577
+          ],
+          "ring_state": "occupied"
+        },
+        {
+          "slot": 1,
+          "position": [
+            -1.361483097076416,
+            1.1989727020263672,
+            0
+          ],
+          "scale": 0.7458391211628611,
+          "ring_radius": 0.4242381087398171,
+          "screen_uv": [
+            0.46819577991452993,
+            0.21502849002849
+          ],
+          "ring_state": "occupied"
+        },
+        {
+          "slot": 2,
+          "position": [
+            1.4268343448638916,
+            1.1989727020263672,
+            0
+          ],
+          "scale": 0.7458391211628611,
+          "ring_radius": 0.42423795897142363,
+          "screen_uv": [
+            0.724264155982906,
+            0.21502849002849
+          ],
+          "ring_state": "occupied"
+        },
+        {
+          "slot": 3,
+          "position": [
+            -2.3925325870513916,
+            2.268280029296875,
+            0
+          ],
+          "scale": 0.7164360846468367,
+          "ring_radius": 0.4082402595569756,
+          "screen_uv": [
+            0.3871741452991453,
+            0.2577065527065526
+          ],
+          "ring_state": "occupied"
+        },
+        {
+          "slot": 4,
+          "position": [
+            2.427375078201294,
+            2.268280029296875,
+            0
+          ],
+          "scale": 0.7164360846468367,
+          "ring_radius": 0.4082404838937893,
+          "screen_uv": [
+            0.8022849893162394,
+            0.2577065527065526
+          ],
+          "ring_state": "occupied"
+        },
+        {
+          "slot": 5,
+          "position": [
+            -0.6492169499397278,
+            3.3811492919921875,
+            0
+          ],
+          "scale": 0.6998237071446206,
+          "ring_radius": 0.3994228225029143,
+          "screen_uv": [
+            0.5407151442307693,
+            0.2968281101614434
+          ],
+          "ring_state": "occupied"
+        }
+      ]
+    },
+    "02 - Peach Wire - solo": {
+      "mode": "solo",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "camera": {
+        "position": [
+          0,
+          -14,
+          4.099999904632568
+        ],
+        "rotation": [
+          1.3491395711898804,
+          0,
+          0
+        ],
+        "lens": 52,
+        "shift_x": -0.0052083334885537624,
+        "shift_y": 0.09648570418357849,
+        "projection": [
+          2.8888890743255615,
+          0,
+          0,
+          0,
+          0,
+          5.135802745819092,
+          0,
+          0,
+          -0.010416653007268906,
+          0.34306031465530396,
+          -1.0006669759750366,
+          -1,
+          0,
+          0,
+          -0.2000666856765747,
+          0
+        ]
+      },
+      "slots": [
+        {
+          "slot": 0,
+          "position": [
+            4.8499465776785655e-8,
+            0,
+            0
+          ],
+          "scale": 0.9477091896054028,
+          "ring_radius": 0.6940886881542484,
+          "screen_uv": [
+            0.5052083333333334,
+            0.16587407407407406
+          ],
+          "ring_state": "occupied"
+        }
+      ]
+    },
+    "03 - Peach Wire - locker": {
+      "mode": "locker",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "camera": {
+        "position": [
+          0,
+          -14,
+          4.099999904632568
+        ],
+        "rotation": [
+          1.3491395711898804,
+          0,
+          0
+        ],
+        "lens": 52,
+        "shift_x": 0.0625,
+        "shift_y": 0.03096633218228817,
+        "projection": [
+          2.8888890743255615,
+          0,
+          0,
+          0,
+          0,
+          5.135802745819092,
+          0,
+          0,
+          0.125,
+          0.11010254174470901,
+          -1.0006669759750366,
+          -1,
+          0,
+          0,
+          -0.2000666856765747,
+          0
+        ]
+      },
+      "slots": [
+        {
+          "slot": 0,
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "scale": 0.7488890238707144,
+          "ring_radius": 0.5484758963243233,
+          "screen_uv": [
+            0.4375,
+            0.282352962962963
+          ],
+          "ring_state": "occupied"
+        }
+      ]
+    },
+    "04 - Peach Wire - mobile party": {
+      "mode": "multi",
+      "viewport": [
+        390,
+        844
+      ],
+      "camera": {
+        "position": [
+          0,
+          -14,
+          4.099999904632568
+        ],
+        "rotation": [
+          1.3491395711898804,
+          0,
+          0
+        ],
+        "lens": 52,
+        "shift_x": 0,
+        "shift_y": -0.10600084811449051,
+        "projection": [
+          6.251851558685303,
+          0,
+          0,
+          0,
+          0,
+          2.8888885974884033,
+          0,
+          0,
+          0,
+          -0.2120017111301422,
+          -1.0006669759750366,
+          -1,
+          0,
+          0,
+          -0.2000666856765747,
+          0
+        ]
+      },
+      "slots": [
+        {
+          "slot": 0,
+          "position": [
+            0,
+            -1.7952690124511719,
+            0
+          ],
+          "scale": 0.7031572351061373,
+          "ring_radius": 0.5129301605521254,
+          "screen_uv": [
+            0.5,
+            0.457521327014218
+          ],
+          "ring_state": "occupied"
+        },
+        {
+          "slot": 1,
+          "position": [
+            -1.3607072830200195,
+            -1.6495342254638672,
+            0
+          ],
+          "scale": 0.5357668869718516,
+          "ring_radius": 0.30285456497803803,
+          "screen_uv": [
+            0.17153846153846156,
+            0.46272511848341236
+          ],
+          "ring_state": "occupied"
+        },
+        {
+          "slot": 2,
+          "position": [
+            1.2688676118850708,
+            -1.7952690124511719,
+            0
+          ],
+          "scale": 0.5300947408125135,
+          "ring_radius": 0.2995297355692995,
+          "screen_uv": [
+            0.8096923076923076,
+            0.457521327014218
+          ],
+          "ring_state": "occupied"
+        },
+        {
+          "slot": 3,
+          "position": [
+            -0.909619927406311,
+            0.007963180541992188,
+            0
+          ],
+          "scale": 0.4978108885484654,
+          "ring_radius": 0.28250697110266376,
+          "screen_uv": [
+            0.3048,
+            0.5147630331753554
+          ],
+          "ring_state": "occupied"
+        },
+        {
+          "slot": 4,
+          "position": [
+            0.8378775715827942,
+            0.13330364227294922,
+            0
+          ],
+          "scale": 0.5018588793860329,
+          "ring_radius": 0.28487831904272043,
+          "screen_uv": [
+            0.6783076923076922,
+            0.5182322274881517
+          ],
+          "ring_state": "occupied"
+        },
+        {
+          "slot": 5,
+          "position": [
+            2.0012407302856445,
+            0.9669952392578125,
+            0
+          ],
+          "scale": 0.45102501734828043,
+          "ring_radius": 0.2564379948277008,
+          "screen_uv": [
+            0.9035384615384615,
+            0.5399146919431279
+          ],
+          "ring_state": "occupied"
+        }
+      ]
+    },
+    "05 - Peach Wire - mobile solo": {
+      "mode": "solo",
+      "viewport": [
+        390,
+        844
+      ],
+      "camera": {
+        "position": [
+          0,
+          -14,
+          4.099999904632568
+        ],
+        "rotation": [
+          1.3491395711898804,
+          0,
+          0
+        ],
+        "lens": 52,
+        "shift_x": 0,
+        "shift_y": -0.10600084811449051,
+        "projection": [
+          6.251851558685303,
+          0,
+          0,
+          0,
+          0,
+          2.8888885974884033,
+          0,
+          0,
+          0,
+          -0.2120017111301422,
+          -1.0006669759750366,
+          -1,
+          0,
+          0,
+          -0.2000666856765747,
+          0
+        ]
+      },
+      "slots": [
+        {
+          "slot": 0,
+          "position": [
+            0,
+            -1.7952690124511719,
+            0
+          ],
+          "scale": 0.7031572351061373,
+          "ring_radius": 0.5129301605521254,
+          "screen_uv": [
+            0.5,
+            0.457521327014218
+          ],
+          "ring_state": "occupied"
+        }
+      ]
+    }
+  },
+  "environments": [
+    {
+      "id": "bg:arcade",
+      "file": "models/backgrounds/arcade.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:aurora",
+      "file": "models/backgrounds/aurora.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:aurorafrostpeak",
+      "file": "models/backgrounds/aurorafrostpeak.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:bloodmoon",
+      "file": "models/backgrounds/bloodmoon.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:campfire",
+      "file": "models/backgrounds/campfire.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:crimson",
+      "file": "models/backgrounds/crimson.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:crowncity",
+      "file": "models/backgrounds/crowncity.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:dawn",
+      "file": "models/backgrounds/dawn.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:dogtags",
+      "file": "models/backgrounds/dogtags.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:emberfield",
+      "file": "models/backgrounds/emberfield.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:eventhorizon",
+      "file": "models/backgrounds/eventhorizon.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:f_ace",
+      "file": "models/backgrounds/f_ace.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:f_agender",
+      "file": "models/backgrounds/f_agender.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:f_argentina",
+      "file": "models/backgrounds/f_argentina.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:f_aro",
+      "file": "models/backgrounds/f_aro.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:f_bi",
+      "file": "models/backgrounds/f_bi.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:f_brazil",
+      "file": "models/backgrounds/f_brazil.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:f_canada",
+      "file": "models/backgrounds/f_canada.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:f_fluid",
+      "file": "models/backgrounds/f_fluid.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:f_france",
+      "file": "models/backgrounds/f_france.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:f_gay",
+      "file": "models/backgrounds/f_gay.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:f_germany",
+      "file": "models/backgrounds/f_germany.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:f_india",
+      "file": "models/backgrounds/f_india.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:f_intersex",
+      "file": "models/backgrounds/f_intersex.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:f_ireland",
+      "file": "models/backgrounds/f_ireland.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:f_israel",
+      "file": "models/backgrounds/f_israel.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:f_italy",
+      "file": "models/backgrounds/f_italy.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:f_japan",
+      "file": "models/backgrounds/f_japan.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:f_lesbian",
+      "file": "models/backgrounds/f_lesbian.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:f_mexico",
+      "file": "models/backgrounds/f_mexico.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:f_nkorea",
+      "file": "models/backgrounds/f_nkorea.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:f_nonbinary",
+      "file": "models/backgrounds/f_nonbinary.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:f_pan",
+      "file": "models/backgrounds/f_pan.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:f_philippines",
+      "file": "models/backgrounds/f_philippines.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:f_pride",
+      "file": "models/backgrounds/f_pride.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:f_progress",
+      "file": "models/backgrounds/f_progress.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:f_puertorico",
+      "file": "models/backgrounds/f_puertorico.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:f_russia",
+      "file": "models/backgrounds/f_russia.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:f_skorea",
+      "file": "models/backgrounds/f_skorea.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:f_spain",
+      "file": "models/backgrounds/f_spain.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:f_trans",
+      "file": "models/backgrounds/f_trans.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:f_uk",
+      "file": "models/backgrounds/f_uk.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:f_usa",
+      "file": "models/backgrounds/f_usa.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:fieldmap",
+      "file": "models/backgrounds/fieldmap.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:fiestastrip",
+      "file": "models/backgrounds/fiestastrip.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:frozenriver",
+      "file": "models/backgrounds/frozenriver.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:goldaurora",
+      "file": "models/backgrounds/goldaurora.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:goldrush",
+      "file": "models/backgrounds/goldrush.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:graveyard",
+      "file": "models/backgrounds/graveyard.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:harvestmoon",
+      "file": "models/backgrounds/harvestmoon.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:hauntedfog",
+      "file": "models/backgrounds/hauntedfog.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:hellgate",
+      "file": "models/backgrounds/hellgate.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:lagoonwaves",
+      "file": "models/backgrounds/lagoonwaves.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:lakeblocks",
+      "file": "models/backgrounds/lakeblocks.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:lanternoutpost",
+      "file": "models/backgrounds/lanternoutpost.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:midnightevac",
+      "file": "models/backgrounds/midnightevac.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:nebula",
+      "file": "models/backgrounds/nebula.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:neongrid",
+      "file": "models/backgrounds/neongrid.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:neonpulse",
+      "file": "models/backgrounds/neonpulse.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:nightwatch",
+      "file": "models/backgrounds/nightwatch.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:oaknight",
+      "file": "models/backgrounds/oaknight.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:peachwire",
+      "file": "models/backgrounds/peachwire.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:sandbags",
+      "file": "models/backgrounds/sandbags.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:scorched",
+      "file": "models/backgrounds/scorched.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:searchlight",
+      "file": "models/backgrounds/searchlight.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:skistation",
+      "file": "models/backgrounds/skistation.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:skyline",
+      "file": "models/backgrounds/skyline.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:snowquarry",
+      "file": "models/backgrounds/snowquarry.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:summitcommand",
+      "file": "models/backgrounds/summitcommand.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:sunsetfade",
+      "file": "models/backgrounds/sunsetfade.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:viceblock",
+      "file": "models/backgrounds/viceblock.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:voltgrid",
+      "file": "models/backgrounds/voltgrid.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:watchtower",
+      "file": "models/backgrounds/watchtower.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:whiteouttower",
+      "file": "models/backgrounds/whiteouttower.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:winterdepot",
+      "file": "models/backgrounds/winterdepot.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:witchbrew",
+      "file": "models/backgrounds/witchbrew.glb",
+      "source_animated": false
+    },
+    {
+      "id": "bg:yardneon",
+      "file": "models/backgrounds/yardneon.glb",
+      "source_animated": true
+    },
+    {
+      "id": "bg:yulehangar",
+      "file": "models/backgrounds/yulehangar.glb",
+      "source_animated": true
+    }
+  ],
+  "coordinate_note": "Layouts are original Blender-space camera and slot data, with Z up. GLB import converts models to Y up. Convert layout transforms consistently before applying them in an engine."
+}

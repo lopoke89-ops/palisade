@@ -26,6 +26,7 @@ var poi_flows := {}   # Black Out: each POI's own flow field, built when a raide
 var _aim_save: Array = []
 var core_k := 0
 var player := {}   # the soldier on this screen
+var move_in := Vector2.ZERO   # where this screen's soldier is being pushed (control_local's move): the roll goes that way
 var players := {}   # every soldier in the match, by id ('solo' offline; 'host', 'g1'... online), in roster order
 var my_id := "solo"
 var guest := false   # a guest's screen: the host runs the match, this sim only mirrors it
@@ -251,7 +252,7 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 	var timer: float = 1e9 if mode == "casino" else Pal.PVP.truce if pvp == "base" else (Pal.PVP.ffaTime if pvp == "ffa" else (BO.gather if mode == "blackout" else 40.0 + Df.build))
 	game = {"phase": "raid" if pvp == "ffa" else "build", "timer": timer, "pvp": pvp, "goal": Pal.PVP.ffaGoal, "winner": "", "sd": false, "wxT": 0.0, "job": job,
 		"gid": str(opt.get("gid", new_gid())).substr(0, 40), "prepEpoch": 0, "bo": null, "dark": false, "wave": 0, "waves": waves, "mode": mode, "queue": [], "spawnT": 0.0, "spawnGap": 1.1,
-		"time": 0.0, "sel": 0, "piece": "wall", "won": false, "paused": false, "bosses": 0, "fb": null, "wx": 0, "wxHit": 0.0,
+		"time": 0.0, "sel": 0, "piece": "wall", "gathered": 0, "won": false, "paused": false, "bosses": 0, "fb": null, "wx": 0, "wxHit": 0.0,
 		"flood": {"t": 0.0, "warned": false}, "end_reason": "", "dellLv": 0, "chapter": 0, "diff": diff, "map": map_id, "size": opt.get("size", "std"),
 		"stats": {"built": 0, "lost": 0, "dropped": 0, "revives": 0, "repairs": 0},
 		"bossLog": [], "sbN": 0, "sbLog": [], "fbLog": []}
@@ -1161,13 +1162,14 @@ func control_local(dt: float, ctl: Dictionary) -> void:
 	if p.get("seat", 0):   # seated at a casino table: the sheet has the controls
 		return
 	var mv: Vector2 = ctl.get("move", Vector2.ZERO)
+	move_in = mv
 	var mag := minf(1.0, mv.length())
 	p.sprT = maxf(0.0, p.sprT - dt)
 	p.sprCd = maxf(0.0, p.sprCd - dt)
 	var spr: bool = p.sprT > 0
 	p.dgCd = maxf(0.0, p.dgCd - dt)
 	var roll := rolling(p)
-	if roll:   # the back roll moves this screen's soldier; walking waits until it lands
+	if roll:   # the roll moves this screen's soldier; walking waits until it lands
 		var e0: float = p.dgE
 		p.dgE = minf(Pal.ROLL.dur, p.dgE + dt)
 		var s: float = Pal.ROLL.dist * (roll_pos(p.dgE) - roll_pos(e0))
@@ -1369,6 +1371,8 @@ func sim_player(p: Dictionary, dt: float) -> void:
 			p.mats[nd.type] += y
 			if nd.type == 0:
 				nd.amt -= y
+				if p.id == my_id:
+					game.gathered += 1   # this screen's wood gathers (the HUD's tips)
 			p.gt += Pal.RATE[nd.type] * p.C.get("gather", 1.0) * p.perk.gather
 			personal(p, "gather")
 			emit(nd.i + 0.5, nd.j + 0.5, "splinter" if nd.type == 0 else ("dust" if nd.type == 1 else "spark"), 1, nd.type)
@@ -1408,6 +1412,9 @@ func revive_player(p: Dictionary, by = null) -> bool:
 ## respawnAt: next to the stake in co-op; in Base Battle by your own stake; in Free-for-all the arena spot furthest
 ## from everyone still standing
 func respawn_at(p: Dictionary) -> Vector2:
+	if casino():   # one of the casino's entrance spots (CAS.spawn), as someone dropping in walks through the door
+		var sp: Array = CasinoView.SPAWN[floori(rnd() * CasinoView.SPAWN.size())]
+		return Vector2(sp[0], sp[1])
 	if pvp() == "ffa":
 		var S: Array = lay.pspawns
 		var best: Array = S[0]
@@ -4613,7 +4620,7 @@ func local_sprint() -> void:
 	p.sprCd = p.sprT + Pal.SPRINT.cd - L
 
 
-# ---------------------------------------------------------------- the back roll (09-actions.js)
+# ---------------------------------------------------------------- the roll (09-actions.js)
 
 static func roll_pos(e: float) -> float:
 	var x := clampf((e - Pal.ROLL.go) / (Pal.ROLL.end - Pal.ROLL.go), 0.0, 1.0)
@@ -4657,13 +4664,34 @@ func roll_tick(p: Dictionary, dt: float) -> void:
 			p.dgE = -1.0
 
 
-## V, the right mouse button, RB, the ROLL button: straight back from the aim. True if it rolled.
+## V, the right mouse button, RB, the ROLL button: the way the soldier is moving; standing still, straight back from the
+## aim (the back roll). True if it rolled.
 func local_roll() -> bool:
 	var p := player
 	if not can_roll(p):
 		return false
-	start_roll(p, -p.aim.x, -p.aim.y)
+	var d: Vector2 = move_in if move_in.length() > 0.12 else -p.aim
+	start_roll(p, d.x, d.y)
 	return true
+
+
+## a guest isn't told which way someone else rolls (their row has only how far in): read it off their travel from where
+## the roll began, drawing a back roll until they've moved (rollSeen)
+static func roll_seen(p: Dictionary, was: float, from: Vector2) -> void:
+	if not (p.get("dgE", -1.0) >= 0 and p.dgE < Pal.ROLL.dur):
+		return
+	if not (was >= 0):
+		p.rlFrom = from
+		p.dgX = -p.aim.x
+		p.dgY = -p.aim.y
+		p.rlKnown = false
+	if not p.get("rlKnown", true):
+		var d: Vector2 = Vector2(p.tx, p.ty) - p.rlFrom
+		if d.length() > 0.2:
+			d = d.normalized()
+			p.dgX = d.x
+			p.dgY = d.y
+			p.rlKnown = true
 
 
 func local_reload() -> void:

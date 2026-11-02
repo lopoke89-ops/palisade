@@ -227,6 +227,8 @@ func handle(e: InputEvent) -> bool:
 	if e is InputEventScreenTouch:
 		set_mode("touch")
 		if e.pressed:
+			if m.hud.has_pointer(e.position):
+				return false   # the HUD's buttons take it (as a mouse click)
 			for b in buttons:
 				if b[0].has_point(e.position):
 					held_btn[e.index] = b[1]

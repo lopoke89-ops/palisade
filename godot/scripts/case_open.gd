@@ -26,12 +26,13 @@ var last_tick := -1
 var boomed := false
 var bits: Array = []
 var eye: Label
+var tap_l: Label
 var name_l: Label
 var sub_l: Label
 var list: VBoxContainer
-var skip_b: Button
-var equip_b: Button
-var done_b: Button
+var skip_b: UiKit.Btn
+var equip_b: UiKit.Btn
+var done_b: UiKit.Btn
 
 
 func _init(locker_ui, case_id: String, res: Array) -> void:
@@ -51,45 +52,52 @@ func _C() -> Dictionary:
 
 
 func _ready() -> void:
+	top_level = true   # over the whole screen, not just the Locker's columns
+	set_anchors_preset(Control.PRESET_TOP_LEFT)
+	position = Vector2.ZERO
+	size = get_viewport().get_visible_rect().size
+	get_viewport().size_changed.connect(func(): size = get_viewport().get_visible_rect().size)
 	var dim := ColorRect.new()
-	dim.color = Color(0.03, 0.025, 0.02, 0.86)
+	dim.color = Color(12 / 255.0, 11 / 255.0, 9 / 255.0, 0.8)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(dim)
 	var cc := CenterContainer.new()
 	cc.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(cc)
-	var col := VBoxContainer.new()
+	var col := UiKit.vbox(16)
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
-	col.add_theme_constant_override("separation", 10)
+	col.custom_minimum_size.x = minf(UiKit.px(420), size.x - UiKit.px(32))
 	cc.add_child(col)
-	eye = ui._lbl(_C().name, 16, Color(_C().col))
-	eye.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	eye = UiKit.lbl(_C().name, "s8", 13, Color(_C().col), 0.22)
 	col.add_child(eye)
-	var W: float = m.v.W
-	var sc := minf(1.0, maxf(320, roundf(W * 0.92)) / 480)
+	var sc: float = col.custom_minimum_size.x / 480
 	stage = Control.new()
 	stage.custom_minimum_size = Vector2(480, 300) * sc
 	stage.draw.connect(_draw_intro)
 	col.add_child(stage)
-	reels = VBoxContainer.new()
-	reels.add_theme_constant_override("separation", 6)
+	tap_l = UiKit.lbl("TAP TO SKIP", "m4", 9, UiKit.ODIM, 0.14)
+	tap_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(tap_l)
+	stage.gui_input.connect(func(e): if e is InputEventMouseButton and e.pressed: reveal())
+	reels = UiKit.vbox(6)
 	reels.visible = false
 	col.add_child(reels)
-	name_l = ui._lbl("", 26, ui.GOLD)
+	var res := UiKit.vbox(4)
+	name_l = UiKit.lbl("", "s9", 28, UiKit.OBONE, 0.04)
 	name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	col.add_child(name_l)
-	sub_l = ui._lbl("", 14, ui.DIM)
+	res.add_child(name_l)
+	sub_l = UiKit.lbl("", "m4", 12, UiKit.ODIM, 0.0, 1.5, true)
 	sub_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	col.add_child(sub_l)
-	list = VBoxContainer.new()
+	res.add_child(sub_l)
+	col.add_child(res)
+	list = UiKit.vbox(5)
 	col.add_child(list)
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 8)
-	col.add_child(row)
-	skip_b = m.menus._button("SKIP ANIMATION", func(): reveal(), row)
-	equip_b = m.menus._button("EQUIP", func(): _equip_close(), row)
-	done_b = m.menus._button("DONE", func(): close(), row)
+	skip_b = UiKit.btn("SKIP ANIMATION", "oghost", 16, func(): reveal(), {"h": 46})
+	col.add_child(skip_b)
+	equip_b = UiKit.btn("EQUIP IT", "ogo", 22, func(): _equip_close(), {"h": 56})
+	col.add_child(equip_b)
+	done_b = UiKit.btn("DONE", "oghost", 16, func(): close(), {"h": 46})
+	col.add_child(done_b)
 	equip_b.visible = false
 	done_b.visible = false
 	t0 = _now()
@@ -124,7 +132,7 @@ func _process(_dt: float) -> void:
 		for s in strips:
 			s.position.x = -target * y
 		var width: float = strips[0].get_parent().size.x
-		var idx := floori((target * y + width / 2) / TW)
+		var idx := floori((target * y + width / 2) / (UiKit.px(TW) * (0.55 if results.size() == 5 else 1.0)))
 		if idx != last_idx:
 			last_idx = idx
 			var it: Dictionary = results[0].it if idx == win_i else (fillers[idx] if idx >= 0 and idx < fillers.size() else {})
@@ -185,30 +193,37 @@ func _draw_intro() -> void:
 
 func _tile(it: Dictionary) -> Control:
 	var R: Dictionary = PalLocker.catalog().RAR[it.r]
+	var rc := Color(R.col)
 	var pc := PanelContainer.new()
-	pc.custom_minimum_size = Vector2(TW - 6, 104)
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(14 / 255.0, 12 / 255.0, 10 / 255.0, 0.95)
-	sb.border_color = Color(R.col)
-	sb.set_border_width_all(1)
-	sb.border_width_bottom = 4
-	sb.set_content_margin_all(3)
-	pc.add_theme_stylebox_override("panel", sb)
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 1)
-	v.alignment = BoxContainer.ALIGNMENT_CENTER
+	pc.custom_minimum_size = Vector2(UiKit.px(88), UiKit.px(98))
+	var st := UiKit.sb(Color(27 / 255.0, 24 / 255.0, 20 / 255.0, 0.85), UiKit.OLINE, [1, 1, 4, 1], [4, 4, 4, 4])
+	st.border_color = UiKit.OLINE
+	pc.add_theme_stylebox_override("panel", st)
+	pc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var v := UiKit.vbox(3)
 	pc.add_child(v)
-	var ic := LockerUI.Icon.new(it, 52, ui.L.eq.duplicate(), ui.cls())
+	var ic := LockerUI.Icon.new(it, UiKit.px(52), ui.L.eq.duplicate(), ui.cls())
 	ic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(ic)
-	var b: Label = ui._lbl(it.name, 10, ui.PAPER)
+	var b := UiKit.lbl(it.name, "s8", 12, UiKit.OBONE, 0.0)
 	b.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	b.clip_text = true
-	b.custom_minimum_size = Vector2(TW - 14, 0)
+	b.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	b.custom_minimum_size.x = UiKit.px(78)
 	v.add_child(b)
-	var r: Label = ui._lbl(R.n, 9, Color(R.col))
+	var r := UiKit.lbl(R.n, "m6", 9.5, rc, 0.06)
 	r.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(r)
+	var bar := ColorRect.new()
+	bar.color = rc
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var holder := Control.new()
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.add_child(bar)
+	pc.add_child(holder)
+	pc.resized.connect(func():
+		bar.position = Vector2(-st.content_margin_left - UiKit.bw(1), pc.size.y - st.content_margin_top - UiKit.bw(4))
+		bar.size = Vector2(pc.size.x, UiKit.bw(4)))
 	return pc
 
 
@@ -223,25 +238,32 @@ func _start_reels() -> void:
 	fillers = []
 	for i in count:
 		fillers.append(ui.L.roll_case(id))
-	var width := minf(m.v.W - 40, 760.0)
+	tap_l.visible = false
+	var width: float = minf(UiKit.px(420), size.x - UiKit.px(32))
+	var tw := UiKit.px(TW)
+	var hh := UiKit.px(112 if not batch else 64)
 	for r in results:
-		var clip := Control.new()
+		var clip := Panel.new()
+		clip.add_theme_stylebox_override("panel", UiKit.sb(Color("#0c0b09"), UiKit.OLINE, 1))
 		clip.clip_contents = true
-		clip.custom_minimum_size = Vector2(width, 108)
+		clip.custom_minimum_size = Vector2(width, hh)
 		reels.add_child(clip)
 		var strip := Control.new()
 		clip.add_child(strip)
 		for i in count:
 			var tl := _tile(r.it if i == win_i else fillers[i])
-			tl.position = Vector2(i * TW, 2)
+			tl.position = Vector2(i * tw + UiKit.px(6), UiKit.px(6))
+			if batch:
+				tl.scale = Vector2.ONE * 0.55
+				tl.position = Vector2(i * tw * 0.55 + UiKit.px(3), UiKit.px(3))
 			strip.add_child(tl)
 		var mark := ColorRect.new()   # the line the winner stops under
-		mark.color = Color("#e2b436")
-		mark.size = Vector2(2, 108)
-		mark.position = Vector2(width / 2 - 1, 0)
+		mark.color = UiKit.OWARN
+		mark.size = Vector2(UiKit.bw(2), hh)
+		mark.position = Vector2(width / 2 - UiKit.bw(1), 0)
 		clip.add_child(mark)
 		strips.append(strip)
-	target = win_i * TW + 44 - width / 2
+	target = (win_i * tw + UiKit.px(6) + UiKit.px(44)) * (0.55 if batch else 1.0) - width / 2
 
 
 ## the account's server answered with what the cases gave
@@ -255,6 +277,7 @@ func set_results(res: Array) -> void:
 func fail(err: String, uncertain: bool) -> void:
 	phase = "failed"
 	stage.visible = false
+	tap_l.visible = false
 	eye.text = "OPENING SAVED" if uncertain else "NOT OPENED"
 	sub_l.text = err
 	skip_b.visible = false
@@ -280,28 +303,34 @@ func reveal() -> void:
 		var res: Dictionary = results[0]
 		var it: Dictionary = res.it
 		name_l.text = it.name
-		name_l.add_theme_color_override("font_color", Color(RAR[it.r].col))
+		name_l.label_settings = UiKit.ls("s9", 28, Color(RAR[it.r].col), 0.04)
 		sub_l.text = "%s %s%s" % [RAR[it.r].n, PalLocker.CATN[it.cat], (" · already owned, +%d shards" % res.shards) if res.dup else " · new"]
 		equip_b.visible = _can_equip(res)
 	else:
 		reels.visible = false   # five rows of results take the reels' place
 		for res in results:
 			var it: Dictionary = res.it
-			var row := HBoxContainer.new()
-			row.add_theme_constant_override("separation", 10)
-			list.add_child(row)
-			var b: Label = ui._lbl(it.name, 15, Color(RAR[it.r].col))
-			b.custom_minimum_size = Vector2(220, 0)
-			row.add_child(b)
-			row.add_child(ui._lbl(RAR[it.r].n + ((" · DUPLICATE · +%d SHARDS" % res.shards) if res.dup else " · NEW"), 12, ui.DIM))
+			var row := UiKit.hbox(8)   # .caseResultRow
+			var rv := UiKit.vbox(3)
+			rv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			rv.add_child(UiKit.lbl(it.name, "s9", 15, Color(RAR[it.r].col)))
+			rv.add_child(UiKit.lbl(RAR[it.r].n + ((" · DUPLICATE · +%d SHARDS" % res.shards) if res.dup else " · NEW"), "m4", 10, UiKit.ODIM))
+			row.add_child(rv)
+			var rw := UiKit.vbox(0)
+			rw.add_child(row)
+			rw.add_child(UiKit.spacer(4))
+			rw.add_child(UiKit.rule(UiKit.OLINE))
+			list.add_child(rw)
 			if _can_equip(res):
-				var e: Button = m.menus._button("EQUIP", func(): pass, row)
+				var e := UiKit.btn("EQUIP", "oghost", 14, Callable(), {"h": 44})
+				e.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+				row.add_child(e)
 				e.pressed.connect(func():
 					ui.L.equip(it.id)
 					if not ui.L.cloud.is_empty():
 						ui.L.account.equip(it.id)
 					e.disabled = true
-					e.text = "EQUIPPED")
+					e.label.text = "EQUIPPED")
 	var best: Dictionary = results[0].it
 	for res in results:
 		if int(RAR[res.it.r].sh) > int(RAR[best.r].sh):

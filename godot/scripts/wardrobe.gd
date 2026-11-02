@@ -1738,6 +1738,36 @@ static func _col(h: String, a: float = 1.0) -> Color:
 	return k
 
 
+## a skin's glowing ground ring (o.glow / o.ring, as bake() lays it under the figure) on its own, for the 3D models,
+## which don't carry it: centred on the feet at (x, y), k pixels a model unit
+static func ground_glow(ci: CanvasItem, o: Dictionary, x: float, y: float, k: float, alpha: float = 1.0) -> void:
+	var ground = o.get("ring") if o.get("ring") else o.get("glow")
+	if not ground:
+		return
+	var rgb := Color.html(ground)
+	var stops := [[0.0, 0.04], [3.0, 0.04], [11.64, 0.23], [21.0, 0.0]]
+	var at := func(a: float, r: float) -> Vector2: return Vector2(x + cos(a) * r * k, y - k + sin(a) * r * 0.4 * k)
+	for s in 3:
+		var r0: float = stops[s][0]
+		var r1: float = stops[s + 1][0]
+		var c0 := Color(rgb, stops[s][1] * alpha)
+		var c1 := Color(rgb, stops[s + 1][1] * alpha)
+		for i in 28:
+			var a0 := TAU * i / 28
+			var a1 := TAU * (i + 1) / 28
+			ci.draw_polygon(PackedVector2Array([at.call(a0, r0), at.call(a0, r1), at.call(a1, r1), at.call(a1, r0)]), PackedColorArray([c0, c1, c1, c0]))
+	for rg in [[o.get("glow"), 12.0, 4.7], [o.get("ring"), 11.0, 4.5]]:
+		if not rg[0]:
+			continue
+		var col := Color.html(rg[0])
+		var pts := PackedVector2Array()
+		for i in 49:
+			var a := TAU * i / 48
+			pts.append(Vector2(x + cos(a) * rg[1] * k, y - k + sin(a) * rg[2] * k))
+		for w in [[4.5, Color(col, 0.16 * alpha)], [2.5, Color(col, 0.55 * alpha)], [1.1, Color(col, 0.95 * alpha)], [0.28, Color(Color("#f4fff4"), 0.85 * alpha)]]:
+			ci.draw_polyline(pts, w[1], maxf(1.0, w[0] * k), true)
+
+
 ## the built faces as one mesh, in model units with the feet at the origin
 func bake() -> ArrayMesh:
 	_vx = PackedVector2Array()

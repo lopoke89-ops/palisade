@@ -69,7 +69,7 @@ func _run() -> void:
 	check(main.casino_ui != null, "the game has the table sheets")
 	main.casino_ui.persist_seed = false
 	main.casino_ui.sync_locker = false
-	main.start_casino()
+	main.casino_alone()
 	var s: Sim = main.sim
 	check(s.casino() and not main.demo, "THE CASINO opens")
 	var q := CasinoView.seat_of(31)   # roulette, seat 1

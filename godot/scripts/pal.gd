@@ -32,7 +32,8 @@ const CLASSES: Dictionary = {
 }
 const CLASS_IDS: Array = ["soldier", "sniper", "grenadier", "quartermaster"]
 const SPRINT: Dictionary = {"mult": 1.4, "dur": 2.5, "cd": 6.0}
-## the back roll (v0.11.0, yard-30), every class: straight back from the aim, 2 tiles in 0.55 s, 3 s to recharge.
+## the roll (v0.11.0, yard-30), every class: 2 tiles in 0.55 s, 3 s to recharge; the way you're moving, or straight back
+## from the aim when standing still.
 ## Travel runs from 0.06 s to 0.45 s (eased); bullets miss from 0.1 s to 0.4 s (blasts, fire and boss moves still hit).
 const ROLL: Dictionary = {"dist": 2.0, "dur": 0.55, "cd": 3.0, "go": 0.06, "end": 0.45, "safe0": 0.1, "safe1": 0.4}
 const STEALTH: Dictionary = {"dur": 12.0, "cd": 30.0}

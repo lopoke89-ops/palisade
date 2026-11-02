@@ -1,7 +1,8 @@
 class_name CityView
 extends RefCounted
 ## City Black Out's look (dev/src/js/06e-city.js and 16f-blackout-hud.js): the ground, ruined buildings, the eight POI
-## structures, streetlamps and the mini-map. Everything draws through the main node `m` during its _draw.
+## structures, streetlamps and the mini-map's picture (the HUD draws the mini-map). Everything draws through the main
+## node `m` during its _draw.
 
 const WALL := [["#3e4246", "#303438", "#26292c"], ["#4b4239", "#3b342d", "#2e2924"], ["#4a4744", "#3a3735", "#2d2b29"]]
 
@@ -240,60 +241,3 @@ static func map_image(sim: Sim) -> ImageTexture:
 			elif t == PalMaps.T_RUBBLE:
 				img.set_pixel(i, j, Color.html("#3a342c"))
 	return ImageTexture.create_from_image(img)
-
-
-## the mini-map: the city in the same diamond the screen shows, the POIs by state, raiders and you
-static func minimap(m, tex: ImageTexture, x: float, y: float, w: float) -> void:
-	var sim: Sim = m.sim
-	var n: int = sim.N
-	var k := w / (2.0 * n)
-	var P := func(i: float, j: float) -> Vector2: return Vector2(x + (i - j) * k + w / 2, y + (i + j) * k * 0.5)
-	# the map texture through the iso transform: x' = (i - j) k, y' = (i + j) k/2
-	m.cv.draw_set_transform_matrix(Transform2D(Vector2(k, k * 0.5), Vector2(-k, k * 0.5), Vector2(x + w / 2, y)))
-	m.cv.draw_texture(tex, Vector2.ZERO)
-	m.cv.draw_set_transform_matrix(Transform2D.IDENTITY)
-	var pulse := 0.5 + 0.5 * sin(sim.game.time * 6)
-	for c in sim.cores:
-		var q: Vector2 = P.call(c.i + 0.5, c.j + 0.5)
-		var col: Color
-		if not c.has("poi"):
-			col = Color.html("#e2b436")
-		elif c.lost:
-			col = Color.html("#5a4038")
-		elif c.get("attack", false):
-			col = Color.html("#ff5a3a").lerp(Color.WHITE, pulse * 0.4)
-		elif c.get("next", false):
-			col = Color.html("#ffb03a")
-		else:
-			col = Color.html("#8fe0a0")
-		m.cv.draw_rect(Rect2(q.x - 3, q.y - 2, 6, 4), col)
-	for e in sim.enemies:
-		if not e.dead:
-			var q: Vector2 = P.call(e.x, e.y)
-			m.cv.draw_rect(Rect2(q.x - (2 if e.type == "boss" else 1), q.y - 1, 4 if e.type == "boss" else 2, 2), Color.html("#ff4a3a"))
-	var pq: Vector2 = P.call(sim.player.x, sim.player.y)
-	m.cv.draw_circle(pq, 2.5, Color.html("#ffffff"))
-
-
-static func phase_text(sim: Sim) -> String:
-	var B = sim.game.get("bo")
-	var clock := func(t: float) -> String:
-		var s := maxi(0, ceili(t))
-		return "%d:%02d" % [s / 60, s % 60]
-	var nxt = null
-	for c in sim.cores:
-		if c.has("poi") and c.get("next", false):
-			nxt = c
-	if sim.game.phase == "build":
-		return "GATHER · %s · %s   (ENTER: start now)" % [clock.call(sim.game.timer), ("first: " + nxt.poi.name) if nxt != null else "first attack"]
-	if B == null:
-		return ""
-	if B.stage == "ready":
-		return "READY UP · %s   (ENTER: ready)" % clock.call(B.t)
-	if B.stage == "attack" and B.cur != null:
-		return "POI ATTACK · %s · %s" % [sim.cores[B.cur.ci].poi.name, clock.call(Sim.BO.cap - B.t)]
-	if B.stage == "push" or (B.stage == "done" and B.push != null):
-		var F: Dictionary = B.push
-		return "FINAL PUSH · %s · %s" % [clock.call(F.t), "THE DESTROYER" if F.dest else "boss %d/6" % mini(6, F.n)]
-	var held := sim.cores.filter(func(c): return c.has("poi") and not c.lost).size()
-	return "QUIET · %s · %s" % [clock.call(B.t), ("next: " + nxt.poi.name) if nxt != null else "%d/8 held" % held]

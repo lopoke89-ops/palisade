@@ -30,7 +30,6 @@ var slashes: Array = []
 var armory_open := false
 var arm_buttons: Array = []   # [Rect2, key] drawn this frame, clicked in _unhandled_input
 var floats: Array = []
-var toasts: Array = []
 var shake := 0.0
 var shake_t := 0.0
 var font: Font
@@ -52,7 +51,9 @@ var light_rect: ColorRect   # night: a shade with holes round every light
 var post_rect: ColorRect   # storm tint, vignette, low-health edge
 var fx_layer: PaintLayer   # boss warnings and the evac ring, over the night
 var glow_layer: PaintLayer   # muzzle flashes and lamp glows, added on
-var ui_layer: PaintLayer   # nameplates, prompts, crosshair, floating text and the HUD
+var ui_layer: PaintLayer   # nameplates, prompts, crosshair, floating text and what's left of the painted HUD
+var hud: Hud   # the HUD built as the browser builds it (scripts/hud.gd): the phase box and the tip
+var panel_layer: PaintLayer   # the armory and the skill tree, over the HUD
 var wx_a := 0.0   # the storm fading in and out
 var glow_tex: GradientTexture2D
 var settings := PalSettings.new()
@@ -71,6 +72,7 @@ var over_t := 0.0   # the after-action screen comes up a moment after the end
 var arm_sel := 0   # the armory and skill tree rows a key or controller has picked
 var sk_sel := 0
 var fps_label := ""
+var v3: View3D = null   # the 3D view (scripts/view3d): the world drawn with the model library under the 2D HUD
 var fps_n := 0
 var fps_t := 0.0
 
@@ -105,6 +107,12 @@ func _ready() -> void:
 	ui_layer = PaintLayer.new()
 	ui_layer.painter = _paint_ui
 	add_child(ui_layer)
+	hud = Hud.new(self)
+	add_child(hud)
+	chat_box = hud.chat_bar
+	panel_layer = PaintLayer.new()
+	panel_layer.painter = _paint_panels
+	add_child(panel_layer)
 	var gr := Gradient.new()
 	gr.set_color(0, Color(1, 210 / 255.0, 130 / 255.0, 0.55))
 	gr.set_color(1, Color(1, 150 / 255.0, 60 / 255.0, 0))
@@ -136,7 +144,7 @@ func _ready() -> void:
 	_resize()
 	v.cam_snap(sim.player.x, sim.player.y, sim.height_at(sim.player.x, sim.player.y))
 	get_viewport().size_changed.connect(_resize)
-	apply_settings()
+	apply_settings()   # and the 3D view (setup_3d)
 	account = PalAccount.new(self)
 	add_child(account)
 	locker.account = account
@@ -162,6 +170,7 @@ func _ready() -> void:
 			if locker != null:
 				locker.shards = n)
 	net.room_closed.connect(func(inc: String): social.unpublish(inc))
+	net.room_opened.connect(_net_room_opened)
 	social.changed.connect(func():
 		if menus.screen == "friends":
 			menus.show_friends()
@@ -171,13 +180,39 @@ func _ready() -> void:
 	await account.boot()
 	var R := locker.recover_draft()   # a run cut short last time pays now
 	if R.has("text"):
-		toasts = [{"title": "RUN SAVED", "body": "Your last run ended early. " + R.text, "t": 8.0}]
+		hud.toast("RUN SAVED", "Your last run ended early. " + R.text)
 
 
 # ---------------------------------------------------------------- the casino
 
-## ENTER THE CASINO alone (online, the room's host picks the casino in the lobby)
+## ENTER THE CASINO (casEnter): open a casino lobby on the relay, so the crew can drop in by its code or an invitation,
+## and walk straight in. Hosting a lobby already: everyone in it comes too. In someone else's room: leave it first.
 func start_casino() -> void:
+	if net.mode == "host" and not net.in_game:
+		net.pick.merge({"mode": "casino", "map": "casino", "pvp": "coop"}, true)
+		net_start()
+		return
+	if net.mode != "solo":
+		menus.online_status("Leave your current crew before opening a casino lobby.")
+		return
+	net.me = net_me()
+	net.pick = {"diff": "normal", "mode": "casino", "pvp": "coop", "map": "casino", "size": "std", "mods": [], "job": ""}
+	net.relay_opts.merge({"token_fn": _relay_token, "uid_fn": func(): return account.uid() if account != null else ""}, false)
+	social.list_game = settings.data.get("listGame", true)
+	net.auto_casino = true
+	menus.online_status("Opening the doors…")
+	net.host_room(true)
+
+
+## the room is open: ENTER THE CASINO goes straight in, no lobby (the browser's autoCasino)
+func _net_room_opened() -> void:
+	if net.auto_casino:
+		net.auto_casino = false
+		net_start()
+
+
+## the casino with nobody else, no room (casSolo): the offline screenshot tests walk in this way
+func casino_alone() -> void:
 	next_opt = {"map": "casino", "size": "std", "mode": "casino", "diff": "normal", "mods": []}
 	next_cls = settings.data.setup.cls
 	demo = false
@@ -220,7 +255,7 @@ func cas_sit() -> void:
 	if casino_ui != null:
 		casino_ui.open(sn.code, cas_room())
 	else:
-		toasts = [{"title": "TABLES", "body": "The tables aren't in this build yet.", "t": 3.0}]
+		hud.toast("TABLES", "The tables aren't in this build yet.")
 
 
 ## casStand: off the seat, and the server gives the seat (and the shards on it) back
@@ -300,7 +335,8 @@ func _after_start() -> void:
 	feed.clear()
 	armory_open = false
 	floats.clear()
-	toasts.clear()
+	hud.reset()
+	hud.toast_clear()
 	over_t = 0.0
 	v.cam_snap(sim.player.x, sim.player.y)
 
@@ -385,7 +421,7 @@ func _on_claim_done(_c: Dictionary, R, big: String) -> void:
 		last_reward = {"kind": "run", "cases": {}, "shards": 0, "sp": 0, "unlocked": [], "text": R}
 		menus.show_results()
 		return
-	toasts = [{"title": big, "body": R.text if R is Dictionary else R, "t": 4.5 * settings.data.msgTime}]
+	hud.toast(big, R.text if R is Dictionary else R)
 
 
 func _notification(what: int) -> void:
@@ -418,7 +454,7 @@ func _resize() -> void:
 func _unhandled_input(e: InputEvent) -> void:
 	if e is InputEventKey and e.pressed and not e.echo and menus.bind_key(e):
 		return
-	if e is InputEventKey and e.pressed and not e.echo and e.keycode == KEY_ENTER and net.is_online() and net.in_game and not menus.active() and not demo:
+	if e is InputEventKey and e.pressed and not e.echo and e.keycode in [KEY_ENTER, KEY_T] and net.is_online() and net.in_game and not menus.active() and not demo:   # T as in the browser
 		_open_chat()
 		get_viewport().set_input_as_handled()
 		return
@@ -448,6 +484,11 @@ func _unhandled_input(e: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 		return
 	if not (e is InputEventKey and e.pressed and not e.echo):
+		return
+	if e.keycode == KEY_F9:   # graphics: the 3D models on or off (Settings data "models3d"; the settings page can show it)
+		settings.data.models3d = not bool(settings.data.get("models3d", true))
+		settings.save()
+		setup_3d()
 		return
 	if e.keycode == KEY_F8 and OS.is_debug_build():   # developer: bring in the next boss (any boss, any map), editor runs only
 		_dev_boss()
@@ -491,7 +532,7 @@ func do_action(id: String) -> void:
 			_close_armory()
 		return
 	var p: Dictionary = sim.player
-	if id == "roll":   # the back roll: this screen moves its own soldier; a guest tells the host, which keeps the cooldown
+	if id == "roll":   # the roll: this screen moves its own soldier; a guest tells the host, which keeps the cooldown
 		if sim.local_roll() and net.guest():
 			net.send_roll(p.dgX, p.dgY)
 		return
@@ -533,7 +574,12 @@ func do_action(id: String) -> void:
 				return
 	match id:
 		"build":
-			sim.local_build()
+			if settings.data.get("build", true) and sim.pvp() != "ffa":
+				sim.local_build()
+		"kit":   # toggleBuild (08-input.js): the build kit on or off, kept in Settings
+			if sim.pvp() != "ffa":
+				settings.data.build = not settings.data.get("build", true)
+				settings.save()
 		"mat1", "mat2", "mat3":
 			sim.game.sel = int(id.substr(3)) - 1
 		"matPrev":
@@ -612,6 +658,9 @@ func menu_nav(dir: String) -> void:
 	if dir == "back":
 		menus.back()
 		return
+	if dir == "next" or dir == "prev":   # LB / RB: the next or previous page tab
+		menus.page_step(1 if dir == "next" else -1)
+		return
 	if act == "":
 		return
 	var f := get_viewport().gui_get_focus_owner()
@@ -643,8 +692,6 @@ func start_game() -> void:
 	skills_open = false
 	_restart()
 	over_t = 0.0
-	if settings.data.tips:
-		toasts = [{"title": "GOOD LUCK", "body": "Gather wood (walk into a pile), %s to build, %s grenade, %s armory at the stake, %s to start the raid early." % [settings.keys_label("build"), settings.keys_label("nade"), settings.keys_label("armory"), settings.keys_label("start")], "t": 7.0 * settings.data.msgTime}]
 
 
 ## leaveRun: leaving a run still going pays what's held so far (an early leave); the casino stands you up
@@ -659,7 +706,7 @@ func leave_run() -> void:
 	run_sp = 0
 	var R := locker.pay_run(sim, true)
 	if locker.cloud.is_empty() and R.has("text"):
-		toasts = [{"title": "RUN SAVED", "body": R.text, "t": 6.0}]
+		hud.toast("RUN SAVED", R.text)
 
 
 func to_menu() -> void:
@@ -684,36 +731,70 @@ func _demo_game() -> void:
 	parts.clear()
 	cparts.clear()
 	floats.clear()
-	toasts.clear()
+	hud.toast_clear()
 	city_map = null
 	v.cam_snap(sim.core.i + 2.5, sim.core.j - 2)
 
 
+## the skill tree is a menu page (menu_pages.gd): from the menus, the pause menu or the after-action screen
 func open_skills() -> void:
-	skills_open = true
-	sk_sel = 0
-	menus.root.visible = false
+	skills_open = false
+	menus.came_from = "main" if demo else ("results" if sim.game.phase == "over" else "pause")
+	menus.show_skills()
 
 
 func _close_skills() -> void:
 	skills_open = false
-	menus.root.visible = true
+	menus.back()
+
+
+## the 3D view on or off (Settings: "models3d"; on by default when the model library is in this build), and its
+## quality knobs (Settings: "gfx3d", see Quality3D). Off, or without the library, the 2D drawing is the world.
+func setup_3d() -> void:
+	Quality3D.load_from(settings.data.get("gfx3d", {}))
+	var want: bool = bool(settings.data.get("models3d", true)) and View3D.available()
+	if want and v3 == null:
+		v3 = View3D.new(self)
+		add_child(v3)
+		ground_key = ""
+	elif not want and v3 != null:
+		v3.queue_free()
+		v3 = null
+		ground_key = ""
+	if v3 != null:
+		Quality3D.apply_viewport(get_viewport())
+	ground.visible = v3 == null
+	front_root.visible = v3 == null
+
+
+var _win_size := ""   # the window size last applied (Settings: winSize), so other settings don't undo a resize by hand
+const _WINDOW_MODE := {"windowed": Window.MODE_WINDOWED, "fullscreen": Window.MODE_FULLSCREEN, "exclusive": Window.MODE_EXCLUSIVE_FULLSCREEN}
 
 
 func apply_settings() -> void:
 	var D: Dictionary = settings.data
+	setup_3d()
 	PalSettings.reduce_motion = D.get("reduceMotion", false)
 	audio.volume = D.volume
 	audio.music_vol = D.music
 	if absf(v.ZOOM - D.zoom) > 0.001:
 		v.ZOOM = D.zoom
 		_resize()
-	Engine.max_fps = 30 if D.fpsMode == "30" else (60 if D.fpsMode == "60" else 0)
+	# FRAME RATE (the browser's) first; on AUTO, this game's FPS LIMIT
+	Engine.max_fps = 30 if D.fpsMode == "30" else (60 if D.fpsMode == "60" else (0 if D.fpsCap == "off" else int(D.fpsCap)))
 	if DisplayServer.get_name() != "headless":
 		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if D.vsync else DisplayServer.VSYNC_DISABLED)
-		var want := DisplayServer.WINDOW_MODE_FULLSCREEN if D.fullscreen else DisplayServer.WINDOW_MODE_WINDOWED
-		if DisplayServer.window_get_mode() != want and (D.fullscreen or DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN):
-			DisplayServer.window_set_mode(want)
+		var w := get_window()
+		var want: Window.Mode = _WINDOW_MODE[D.windowMode]
+		var full := w.mode == Window.MODE_FULLSCREEN or w.mode == Window.MODE_EXCLUSIVE_FULLSCREEN
+		if w.mode != want and (want != Window.MODE_WINDOWED or full):   # a maximized window stays maximized
+			w.mode = want
+			_win_size = ""   # back in a window: its size is applied again
+		if D.windowMode == "windowed" and D.winSize != "" and D.winSize != _win_size:
+			_win_size = D.winSize
+			var sz := PalSettings.size_of(D.winSize)
+			w.size = sz
+			w.position = DisplayServer.screen_get_position(w.current_screen) + (DisplayServer.screen_get_size(w.current_screen) - sz) / 2
 
 
 func _game_opt() -> Dictionary:
@@ -736,7 +817,7 @@ func _restart() -> void:
 	slashes.clear()
 	armory_open = false
 	floats.clear()
-	toasts.clear()
+	hud.reset()
 	v.cam_snap(sim.player.x, sim.player.y)
 
 
@@ -749,7 +830,7 @@ func _mouse_world() -> Vector2:
 ## this frame's controls (controlLocal): keys and the left stick or left thumb move; the mouse, the right stick or the
 ## right thumb aim (sticks get the browser's aim assist); the left button, right trigger or a hard right thumb fire
 func _controls() -> Dictionary:
-	if demo or menus.active() or armory_open or skills_open:
+	if demo or menus.active() or armory_open or skills_open or (chat_box != null and chat_box.visible):   # typing isn't walking
 		return {}
 	var mx := (1.0 if Input.is_action_pressed("pal_right") else 0.0) - (1.0 if Input.is_action_pressed("pal_left") else 0.0)
 	var my := (1.0 if Input.is_action_pressed("pal_down") else 0.0) - (1.0 if Input.is_action_pressed("pal_up") else 0.0)
@@ -778,7 +859,7 @@ func _controls() -> Dictionary:
 		var w := _mouse_world()
 		var d := Vector2(w.x - p.x, w.y - p.y)
 		aim = d.normalized() if d.length() > 0 else Vector2(1, 0)
-		fire = Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+		fire = Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and not hud.has_pointer()
 	return {"move": mv, "aim": aim, "fire": fire, "pulls": mouse_pulls, "auto": inp.mode == "touch" or (inp.mode == "mouse" and not mouse_seen)}
 
 
@@ -868,7 +949,10 @@ func _process(dt: float) -> void:
 	else:
 		var fol: Dictionary = _cam_target()
 		v.cam_follow(fol.x, fol.y, sh, sim.height_at(fol.x, fol.y))
-	_sync_ground()
+	if v3 != null:
+		v3.frame(dt)
+	else:
+		_sync_ground()
 	_update_light(dt)
 	_update_post(dt)
 	fade_t -= dt
@@ -879,12 +963,15 @@ func _process(dt: float) -> void:
 	fx_layer.queue_redraw()
 	glow_layer.queue_redraw()
 	ui_layer.queue_redraw()
+	panel_layer.queue_redraw()
 	var want := Input.MOUSE_MODE_HIDDEN if not demo and not menus.active() and inp.mode == "mouse" and sim.game.phase != "over" and not sim.game.paused and not armory_open and not skills_open and sim.player.alive else Input.MOUSE_MODE_VISIBLE
 	if Input.mouse_mode != want and DisplayServer.get_name() != "headless":
 		Input.mouse_mode = want
 
 
 func _drain_events() -> void:
+	if v3 != null:
+		v3.events(sim.events)
 	for e in sim.events:
 		match e.k:
 			"sfx":
@@ -896,7 +983,7 @@ func _drain_events() -> void:
 				floats.append({"x": e.x, "y": e.y, "text": e.text, "col": Color.html(e.col), "t": 1.4})
 			"toast":
 				if not demo:
-					toasts = [{"title": e.title, "body": e.body, "t": 4.5 * settings.data.msgTime}]
+					hud.toast(e.title, e.body)
 			"killfx":
 				kill_fx(e.x, e.y, e.fx, e.get("quiet", false))
 			"flash":
@@ -921,7 +1008,7 @@ func _drain_events() -> void:
 						audio.play(e.name)
 			"toast_to":
 				if e.id == sim.player.id:
-					toasts = [{"title": e.title, "body": e.body, "t": 4.5 * settings.data.msgTime}]
+					hud.toast(e.title, e.body)
 			"feed":
 				feed.push_front({"text": e.text, "col": e.col, "t": 5.7})
 				if feed.size() > 4:
@@ -951,34 +1038,17 @@ func _emit(x: float, y: float, kind: String, mat: int) -> void:
 		"life": life, "max": life, "col": Color.html(cols[randi() % cols.size()]), "kind": kind, "s": 1.6 if kind == "chunk" else 1.0})
 
 
-var chat_box: LineEdit
+var chat_box: Control   # the HUD's chat bar (Hud.chat_bar)
 
 
-## online text chat in a match: Enter opens the line, Enter sends it, Esc closes it
+## the HUD's chat button
+func toggle_chat() -> void:
+	hud.toggle_chat()
+
+
+## online text chat in a match: T or Enter opens the bar, Enter sends, Esc closes (the HUD's #chatBar)
 func _open_chat() -> void:
-	if chat_box == null:
-		chat_box = LineEdit.new()
-		chat_box.max_length = 120
-		chat_box.placeholder_text = "Say something to the room"
-		var layer := CanvasLayer.new()
-		layer.layer = 5
-		add_child(layer)
-		layer.add_child(chat_box)
-		chat_box.text_submitted.connect(func(t: String):
-			if t.strip_edges() != "":
-				net.send_chat(t)
-			chat_box.text = ""
-			chat_box.visible = false
-			chat_box.release_focus())
-		chat_box.gui_input.connect(func(ev: InputEvent):
-			if ev is InputEventKey and ev.pressed and ev.keycode == KEY_ESCAPE:
-				chat_box.visible = false
-				chat_box.release_focus()
-				chat_box.accept_event())
-	chat_box.position = Vector2(14, v.H - 130)
-	chat_box.size = Vector2(minf(420, v.W - 28), 30)
-	chat_box.visible = true
-	chat_box.grab_focus()
+	hud.open_chat()
 
 
 func _update_fx(dt: float) -> void:
@@ -1030,9 +1100,6 @@ func _update_fx(dt: float) -> void:
 	for f in floats:
 		f.t -= dt
 	floats = floats.filter(func(f): return f.t > 0)
-	for t in toasts:
-		t.t -= dt
-	toasts = toasts.filter(func(t): return t.t > 0)
 
 
 # ---------------------------------------------------------------- drawing helpers (15-render.js)
@@ -1089,7 +1156,11 @@ func mixc(a: String, b: String, t: float) -> Color:
 
 func _draw() -> void:
 	var t_draw := Time.get_ticks_usec()
-	_draw_scene()
+	if v3 != null and v3.visible:
+		v3.paint_labels()   # the world is the 3D view's; its labels and the cosmetic particles draw here
+		_draw_cparts()
+	else:
+		_draw_scene()
 	draw_us = Time.get_ticks_usec() - t_draw
 
 
@@ -1255,10 +1326,10 @@ func _draw_scene() -> void:
 						o.nogun = true
 					if p.get("seat", 0):
 						CasinoView.seated(self, p.x, p.y, func(): draw_wardrobe(p.x, p.y, o))
-					elif sim.rolling(p):   # the back roll: tucked, head over heels, away from the aim
+					elif sim.rolling(p):   # the roll: tucked, head over heels, the way it rolls
 						var sc := iso(p.x, p.y)
 						var cy: float = sc.y - 17 * v.u * Figure.FIG / 2.2
-						var a: float = Sim.roll_pos(p.dgE) * TAU * (-1.0 if v.world_dir_to_screen(p.aim).x >= 0 else 1.0)
+						var a: float = Sim.roll_pos(p.dgE) * TAU * (1.0 if v.world_dir_to_screen(Vector2(p.dgX, p.dgY)).x >= 0 else -1.0)
 						cv.draw_set_transform_matrix(Transform2D(0, Vector2(sc.x, cy)) * Transform2D(a, Vector2(1, 0.86), 0, Vector2.ZERO) * Transform2D(0, Vector2(-sc.x, -cy)))
 						draw_wardrobe(p.x, p.y, o)
 						cv.draw_set_transform_matrix(Transform2D.IDENTITY)
@@ -1442,42 +1513,26 @@ func _paint_ui(layer: CanvasItem) -> void:
 	cv = self
 
 
-## touch: the two thumb sticks while held, and the buttons (BUILD, GRENADE, the ability or SPRINT, ARMORY, the
-## materials, WALL/DOOR, START, PAUSE)
+## the armory and the skill tree: over the HUD, as the browser's overlays are
+func _paint_panels(layer: CanvasItem) -> void:
+	if demo:
+		return
+	cv = layer
+	if armory_open:
+		_draw_armory()
+	elif skills_open:
+		_draw_skills()
+	cv = self
+
+
+## touch: the two thumb sticks while held (the buttons are the HUD's kit and phase box, as in the browser)
 func _draw_touch() -> void:
-	var W := v.W
-	var H := v.H
-	var p: Dictionary = sim.player
-	var g: Dictionary = sim.game
 	for s in [inp.stick_move, inp.stick_aim]:
 		if s.id >= 0:
 			cv.draw_arc(s.o, PalInput.SR, 0, TAU, 40, Color(220 / 255.0, 210 / 255.0, 186 / 255.0, 0.35), 2)
 			cv.draw_arc(s.o, PalInput.SR * 0.5, 0, TAU, 32, Color(226 / 255.0, 180 / 255.0, 54 / 255.0, 0.25), 2)
 			var hot: bool = s == inp.stick_aim and s.mag > 0.5
 			cv.draw_circle(s.o + s.v * PalInput.SR, 20, Color(226 / 255.0, 180 / 255.0, 54 / 255.0, 0.8) if hot else Color(220 / 255.0, 210 / 255.0, 186 / 255.0, 0.55))
-	var btn := func(r: Rect2, id: String, text: String, on: bool = false) -> void:
-		cv.draw_rect(r, Color(226 / 255.0, 180 / 255.0, 54 / 255.0, 0.85) if on else Color(14 / 255.0, 12 / 255.0, 10 / 255.0, 0.7))
-		cv.draw_rect(r, Color(226 / 255.0, 180 / 255.0, 54 / 255.0, 0.7), false, 1.5)
-		var fs := 12
-		var tw := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
-		cv.draw_string(font, Vector2(r.position.x + r.size.x / 2 - tw / 2, r.position.y + r.size.y / 2 + 4), text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, c("#17140f") if on else c("#e8dcc0"))
-		inp.buttons.append([r, id])
-	var bx := W - 96
-	btn.call(Rect2(bx, H - 250, 84, 64), "build", "BUILD")
-	btn.call(Rect2(bx - 92, H - 210, 84, 48), "nade", "GRENADE %d" % p.nades)
-	var ab := "ROCKET %d" % p.rk if p.cls == "soldier" else ("STEALTH" if p.cls == "sniper" else ("SPRINT" if p.cls == "quartermaster" else ""))
-	if ab != "":
-		btn.call(Rect2(bx - 92, H - 270, 84, 48), "special", ab)
-	if not sim.casino():
-		btn.call(Rect2(bx - 92, H - 154, 84, 48), "roll", "ROLL" if p.dgCd <= 0 else "ROLL %ds" % ceili(p.dgCd), sim.rolling(p))
-	if sim.can_shop(p):
-		btn.call(Rect2(bx, H - 320, 84, 48), "armory", "ARMORY")
-	for k in 3:
-		btn.call(Rect2(W / 2 - 150 + k * 76, H - 56, 70, 44), "mat%d" % (k + 1), Pal.MAT[k].name, g.sel == k)
-	btn.call(Rect2(W / 2 + 84, H - 56, 70, 44), "piece", g.piece.to_upper())
-	btn.call(Rect2(W - 64, 42, 52, 40), "pause", "II")
-	if g.phase == "build" or (g.get("bo") != null and g.bo.stage == "ready"):
-		btn.call(Rect2(W / 2 - 70, 40, 140, 36), "start", "READY" if g.phase == "raid" else "START NOW")
 
 
 ## drawTracer: the standard tracer, a tapered streak with a hot core that fades toward its tail; raiders' rounds are a
@@ -1911,16 +1966,28 @@ func _draw_stake(which = null) -> void:
 
 func _draw_ghost() -> void:
 	var p: Dictionary = sim.player
-	if not p.alive or sim.game.phase == "over" or sim.casino():
+	if not p.alive or sim.game.phase == "over" or sim.casino() or not settings.data.get("build", true) or sim.pvp() == "ffa":
 		return
 	var t := sim.build_target(p, sim.game.sel, sim.game.piece == "door")
 	if not sim.inb(t.i, t.j):
 		return
-	var col := Color(0.56, 0.88, 0.63, 0.28) if t.ok else Color(0.84, 0.35, 0.23, 0.25)
-	quad(iso(t.i, t.j), iso(t.i + 1, t.j), iso(t.i + 1, t.j + 1), iso(t.i, t.j + 1), col)
-	var line := Color(col, 0.8)
-	var pts := PackedVector2Array([iso(t.i, t.j), iso(t.i + 1, t.j), iso(t.i + 1, t.j + 1), iso(t.i, t.j + 1), iso(t.i, t.j)])
-	cv.draw_polyline(pts, line, maxf(1.0, v.u))
+	# drawGhost (16-characters.js): a dashed outline, yellow or red, and the piece itself, faint, where it would go
+	var u := v.u
+	if t.ok and t.act in ["PLACE", "DOOR"]:
+		var M: Dictionary = Pal.MAT[t.mat]
+		var a := 0.32
+		var r := box_r(t.i + 0.03, t.j + 0.03, t.i + 0.97, t.j + 0.97, 0, v.WH, Color(c(M.top), a), Color(c(M.l), a), Color(c(M.r), a))
+		if t.get("door", false):
+			for pq in [[r.D, r.C], [r.C, r.B]]:
+				var da: Vector2 = pq[0].lerp(pq[1], 0.3)
+				var db: Vector2 = pq[0].lerp(pq[1], 0.7)
+				quad(da, db, up(db, v.WH * 0.82), up(da, v.WH * 0.82), Color(c("#1d150e"), a))
+				var hd := up(pq[0].lerp(pq[1], 0.62), v.WH * 0.42)
+				cv.draw_rect(Rect2(hd.x - u, hd.y - u, 2 * u, 2 * u), Color(c("#e2b436"), a))
+	var col := Color(226 / 255.0, 180 / 255.0, 54 / 255.0, 0.9) if t.ok else Color(200 / 255.0, 80 / 255.0, 60 / 255.0, 0.9)
+	var pts := [iso(t.i, t.j), iso(t.i + 1, t.j), iso(t.i + 1, t.j + 1), iso(t.i, t.j + 1)]
+	for k in 4:
+		cv.draw_dashed_line(pts[k], pts[(k + 1) % 4], col, 1.5 * u, 3.5 * u)
 
 
 ## The browser's LOOK table (16-characters.js) for raiders, and QM_LOOK for Delgado
@@ -2025,137 +2092,13 @@ func _draw_ammo_status(e: Dictionary) -> void:
 # ---------------------------------------------------------------- HUD
 
 func _draw_hud() -> void:
-	var g: Dictionary = sim.game
-	var p: Dictionary = sim.player
 	var W := v.W
 	var H := v.H
-	# the kill feed (top right) and the room's chat (bottom left), online
-	for i in feed.size():
-		var f: Dictionary = feed[i]
-		var fc := c(f.col)
-		fc.a = clampf(f.t / 0.7, 0.0, 1.0)
-		var fw := font.get_string_size(f.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
-		cv.draw_string(font, Vector2(W - 14 - fw, 56 + i * 17), f.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, fc)
-	if net.is_online() and net.in_game:
-		var now := Time.get_ticks_msec()
-		var lines: Array = net.chat.filter(func(l): return now - l.get("at", now) < 9000 or (chat_box != null and chat_box.visible))
-		lines = lines.slice(maxi(0, lines.size() - 5))
-		for i in lines.size():
-			var l: Dictionary = lines[i]
-			cv.draw_string(font, Vector2(14, H - 140 - (lines.size() - 1 - i) * 17), "%s: %s" % [str(l.name).to_upper(), l.text], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, c(l.col))
-	var gold := c("#e2b436")
-	var paper := c("#e8dcc0")
+	# the chat, the kill feed and the Black Out mini-map are the HUD's (scripts/hud.gd)
 	var dim := c("#9a8f7a")
-	# top bar: phase, clock, stake
-	cv.draw_rect(Rect2(0, 0, W, 34), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.72))
-	var phase_txt: String
-	var clock := func(t: float) -> String:
-		var sec := maxi(0, ceili(t))
-		return "%d:%02d" % [sec / 60, sec % 60]
-	if sim.casino():
-		phase_txt = "PALISADE FALLS CASINO · %s◆ %d%s" % [("ROOM %s · " % net.code) if net.is_online() and net.code != "" else "", locker.shards if locker != null else 0, " · seated" if p.get("seat", 0) else ""]
-	elif sim.pvp() == "base" and g.phase != "over":
-		var mine := 0
-		var theirs := 0
-		for o in sim.players.values():
-			if o.team == p.team:
-				mine += o.kills
-			else:
-				theirs += o.kills
-		var other := "b" if p.team == "a" else "a"
-		phase_txt = ("TRUCE · %s until the battle%s" % [clock.call(g.timer), "   (ENTER: start the battle)" if not net.guest() else ""]) if g.phase == "build" else "BATTLE · %s %d · %s %d drops" % [Pal.TEAMS[p.team].name, mine, Pal.TEAMS[other].name, theirs]
-	elif sim.pvp() == "ffa" and g.phase != "over":
-		var rank: Array = sim.players.values()
-		rank.sort_custom(func(a, b): return a.kills > b.kills or (a.kills == b.kills and a.deaths < b.deaths))
-		phase_txt = "FREE-FOR-ALL · %s left · first to %d   %s" % [clock.call(g.timer), g.goal, "  ".join(rank.slice(0, 6).map(func(o): return "%s %d" % ["YOU" if is_same(o, p) else str(o.name).to_upper(), o.kills]))]
-	elif sim.blackout() and g.phase != "over":
-		phase_txt = CityView.phase_text(sim)
-	elif g.phase == "build" and sim.campaign():
-		phase_txt = "CH %d · BUILD · %s · %s IN %ds   (ENTER: start now)" % [g.chapter + 1, sim.map_def.name, "FINAL EVACUATION" if g.wave == 12 else "RAID %d/3" % (g.wave % 3 + 1), ceili(g.timer)]
-	elif g.phase == "build":
-		phase_txt = "BUILD · RAID %d IN %ds   (ENTER: start now)" % [g.wave + 1, ceili(g.timer)]
-	elif g.phase == "raid":
-		phase_txt = "%s · %d RAIDERS LEFT" % [sim.raid_name(g.wave), sim.enemies.size() + g.queue.size()]
-		if g.get("fb") != null:
-			var ft: float = g.fb.t
-			var fbn := "MAP EVAC" if g.fb.get("mapEvac", false) else ("GAUNTLET · WAVE %d/6" % g.fb.wave if g.fb.get("gauntlet", false) else "FINAL BLITZ")
-			phase_txt = "%s · %d:%02d · %s" % [fbn, floori(ft / 60), floori(fmod(ft, 60)), "GET TO THE EVAC" if g.fb.evac != null else "%d BOSSES UP" % sim.live_bosses()]
-	else:
-		phase_txt = "GAME OVER"
-	cv.draw_string(font, Vector2(14, 22), phase_txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, paper)
-	var bw := 220.0
-	var bx := W - bw - 16
-	if sim.pvp() != "ffa" and not sim.casino():
-		cv.draw_string(font, Vector2(bx - 80, 22), "COMMAND" if sim.map_id == "city" else ("STAKES" if sim.pvp() == "base" else "STAKE"), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, dim)
-	if sim.map_id == "city":
-		if city_map == null:
-			city_map = CityView.map_image(sim)
-		CityView.minimap(self, city_map, W - 186, 44, 170)
-	if sim.pvp() == "base":   # yours over theirs, in the sides' colours
-		var mc: Dictionary = sim.stake_of(p)
-		var ec: Dictionary = sim.cores[1 if p.team == "a" else 0]
-		cv.draw_rect(Rect2(bx, 6, bw, 9), Color(0, 0, 0, 0.6))
-		cv.draw_rect(Rect2(bx, 6, bw * maxf(0, mc.hp / mc.max), 9), c(Pal.TEAMS[mc.team].col))
-		cv.draw_rect(Rect2(bx, 19, bw, 9), Color(0, 0, 0, 0.6))
-		cv.draw_rect(Rect2(bx, 19, bw * maxf(0, ec.hp / ec.max), 9), c(Pal.TEAMS[ec.team].col))
-	elif sim.pvp() == "" and not sim.casino():
-		cv.draw_rect(Rect2(bx, 11, bw, 12), Color(0, 0, 0, 0.6))
-		cv.draw_rect(Rect2(bx, 11, bw * maxf(0, sim.core.hp / sim.core.max), 12), gold)
 	if sim.casino():   # no kit, no building, no Delgado in here
 		return
-	# bottom-left: health, materials, grenades
-	var y0 := H - 74
-	cv.draw_rect(Rect2(10, y0 - 8, 330, 72), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.72))
-	cv.draw_string(font, Vector2(20, y0 + 10), p.C.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, dim)
-	cv.draw_rect(Rect2(86, y0, 150, 10), Color(0, 0, 0, 0.6))
-	cv.draw_rect(Rect2(86, y0, 150 * maxf(0, p.hp / p.max), 10), c("#8fe0a0") if p.hp / p.max > 0.35 else c("#d65a3a"))
-	var kit := "NADES %d" % p.nades
-	match p.cls:
-		"soldier":
-			kit += " · RKT %d" % p.rk
-		"sniper":
-			kit += (" · HIDDEN %ds" % ceili(p.stl)) if p.stl > 0 else (" · STEALTH %ds" % ceili(p.stlCd) if p.stlCd > 0 else " · STEALTH (Q)")
-		"grenadier":
-			kit += " · SHELLS %d/%d" % [p.ammo, p.gun.mag]
-		"quartermaster":
-			kit += " · SPRINT %ds" % ceili(p.sprCd) if p.sprCd > 0 else " · SPRINT (SHIFT)"
-	cv.draw_string(font, Vector2(246, y0 + 10), kit, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, paper)
-	if p.ammoEq[0] != "":
-		for A in Sim.AMMO:
-			if A.id == p.ammoEq[0]:
-				cv.draw_string(font, Vector2(20, y0 - 44), "AMMO · " + A.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, c(A.col))
-	_draw_boss_bar()
-	for m in 3:
-		var x := 20 + m * 100
-		var sel: bool = g.sel == m
-		var col := c(Pal.MAT[m].top)
-		if sel:
-			cv.draw_rect(Rect2(x - 4, y0 + 18, 94, 26), Color(col, 0.25))
-			cv.draw_rect(Rect2(x - 4, y0 + 18, 94, 26), col, false, 1.5)
-		cv.draw_rect(Rect2(x, y0 + 24, 12, 12), col)
-		cv.draw_string(font, Vector2(x + 18, y0 + 36), "%d %s %d" % [m + 1, Pal.MAT[m].name, p.mats[m]], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, paper if sel else dim)
-	cv.draw_string(font, Vector2(20, y0 + 58), "PIECE: %s (F)   SALVAGE %d   DROPS %d" % [g.piece.to_upper(), p.sal, p.kills], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, dim)
-	var q: Dictionary = sim.qm
-	if not q.get("gone", false):   # On Your Own: no Delgado line
-		var qtxt: String = ("DELGADO · %s · %s   (H)" % ["FOLLOW" if q.mode == "follow" else "DEFEND", q.status]) if q.alive else "DELGADO IS DOWN · stand over him"
-		cv.draw_rect(Rect2(10, y0 - 34, 330, 22), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.72))
-		cv.draw_string(font, Vector2(20, y0 - 18), qtxt, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, c("#a9bccb") if q.alive else c("#d65a3a"))
-	# what SPACE would do
-	if p.alive and g.phase != "over":
-		var t := sim.build_target(p, g.sel, g.piece == "door")
-		var tc := iso(t.i + 0.5, t.j + 0.5)
-		var msg: String = ("%s · %d %s" % [t.act, t.cost, Pal.MAT[t.mat].name]) if t.ok else t.reason
-		if msg != "":
-			label(msg, tc.x, tc.y - v.WH * 1.4, c("#8fe0a0") if t.ok else c("#d65a3a"), 10)
-	# toast
-	for tt in ([] if menus.active() else toasts):
-		var a: float = clampf(tt.t / 0.6, 0, 1)
-		label(tt.title, W / 2, 78, Color(gold, a), 22)
-		label(tt.body, W / 2, 102, Color(paper, a), 13)
-	if armory_open:
-		_draw_armory()
-	elif skills_open:
-		_draw_skills()
+	# health is on the nameplates; the kit, the banners, the kill feed and the boss bars are the HUD's (scripts/hud.gd)
 	if settings.data.fps:
 		cv.draw_string(font, Vector2(W - 70, H - 10), fps_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, dim)
 
@@ -2223,19 +2166,6 @@ func _draw_boss_fx() -> void:
 				cv.draw_dashed_line(b0 - Vector2(0, ch), q - Vector2(0, ch), col, 1.4 * u, 6 * u)
 
 
-func _draw_boss_bar() -> void:
-	for e in sim.enemies:
-		if e.type != "boss":
-			continue
-		var B: Dictionary = Sim.boss_def(e.boss)
-		var w := minf(420.0, v.W - 40)
-		var x := (v.W - w) / 2
-		cv.draw_rect(Rect2(x - 2, 114, w + 4, 26), Color(10 / 255.0, 8 / 255.0, 6 / 255.0, 0.8))
-		cv.draw_rect(Rect2(x, 128, w * maxf(0, e.hp / e.max), 9), c(B.col))
-		label(B.name + (" · ENRAGED" if e.get("rage", false) else ""), v.W / 2, 125, c(B.col), 12)
-		return
-
-
 # ---------------------------------------------------------------- armory (20-locker-ui.js)
 
 func _try_armory() -> void:
@@ -2243,7 +2173,7 @@ func _try_armory() -> void:
 	if not sim.shop_open(p):
 		return
 	if not sim.near_stake(p):
-		toasts = [{"title": "ARMORY", "body": "Walk back to the stake to spend salvage.", "t": 3.0}]
+		hud.toast("ARMORY", "Walk back to the stake to spend salvage.")
 		return
 	armory_open = true
 	sim.game.paused = not net.is_online()
@@ -2324,14 +2254,18 @@ var b_close := Rect2()
 func _arm_buy(key: String) -> void:
 	var p: Dictionary = sim.player
 	var ok: bool
+	if key == "close" or key.begins_with("tab:") or key.begins_with("slot:"):   # the armory's own buttons (ArmoryUI)
+		menus.armory.press(key)
+		return
+	var am := key.substr(5).split(":")   # ammo:<id>[:<slot>]
 	if net.guest():
 		if key.begins_with("ammo:"):
-			net.send_ammo(key.substr(5), 0)
+			net.send_ammo(am[0], int(am[1]) if am.size() > 1 else 0)
 		else:
 			net.send_upgrade(key)
 		return
 	if key.begins_with("ammo:"):
-		ok = sim.buy_ammo(p, key.substr(5))
+		ok = sim.buy_ammo(p, am[0], int(am[1]) if am.size() > 1 else 0)
 	else:
 		ok = sim.buy_upgrade(p, key)
 	if ok:
@@ -2355,60 +2289,10 @@ func _arm_summary(k: String, lv: int) -> String:
 	return out
 
 
+## the armory is drawn by ArmoryUI (armory_ui.gd) over the game; it keeps arm_buttons up to date for the keys and the
+## controller
 func _draw_armory() -> void:
-	arm_buttons.clear()
-	var p: Dictionary = sim.player
-	var gold := c("#e2b436")
-	var paper := c("#e8dcc0")
-	var dim := c("#9a8f7a")
-	cv.draw_rect(Rect2(0, 0, v.W, v.H), Color(0, 0, 0, 0.55))
-	var w := minf(640.0, v.W - 32)
-	var rows: Array = []
-	for U in Sim.UPG:
-		var t: int = p.up[U.k]
-		rows.append({"name": U.name, "lvl": t, "what": _arm_summary(U.k, t), "label": "MAXED" if t >= Sim.ARM_MAX else "%d SAL" % U.cost[t], "dis": t >= Sim.ARM_MAX or p.sal < U.cost[t], "key": U.k})
-	var L: int = sim.game.get("dellLv", 0)
-	rows.append({"name": Sim.DELL_UP.name, "lvl": L, "what": _arm_summary("dell", L), "label": "MAXED" if L >= Sim.ARM_MAX else "%d SAL" % Sim.DELL_UP.cost[L], "dis": L >= Sim.ARM_MAX or p.sal < Sim.DELL_UP.cost[L], "key": "dell"})
-	var full: bool = sim.core.hp >= sim.core.max
-	var cost := sim.core_fix_cost(p)
-	rows.append({"name": "STAKE", "lvl": -1, "what": "%d / %d · +%d health" % [ceili(sim.core.hp), int(sim.core.max), int(Sim.CORE_FIX.hp)], "label": "FULL" if full else "%d SAL" % cost, "dis": full or p.sal < cost, "key": "core"})
-	for A in Sim.AMMO:
-		var eq: bool = p.ammoEq[0] == A.id
-		var ac := 75 if p.ammoEq[0] != "" else 150
-		rows.append({"name": A.name, "lvl": -1, "what": A.what, "label": "EQUIPPED" if eq else "%d SAL" % ac, "dis": eq or p.sal < ac, "key": "ammo:" + A.id, "col": A.col})
-	var rh := 34.0
-	var h := 74.0 + rows.size() * rh + 36
-	var x0 := (v.W - w) / 2
-	var y0 := maxf(10.0, (v.H - h) / 2)
-	cv.draw_rect(Rect2(x0, y0, w, h), c("#16130f"))
-	cv.draw_rect(Rect2(x0, y0, w, h), Color(gold, 0.5), false, 1.5)
-	cv.draw_string(font, Vector2(x0 + 18, y0 + 26), "ARMORY · BETWEEN RAIDS", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, dim)
-	cv.draw_string(font, Vector2(x0 + 18, y0 + 52), "SALVAGE %d" % p.sal, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, gold)
-	cv.draw_string(font, Vector2(x0 + w - 230, y0 + 26), "click or 1-9 · E / Esc closes", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, dim)
-	var y := y0 + 70
-	for n in rows.size():
-		var r: Dictionary = rows[n]
-		if n == 5 or n == 7:
-			cv.draw_line(Vector2(x0 + 12, y + 1), Vector2(x0 + w - 12, y + 1), Color(dim, 0.3), 1.0)
-		var namecol: Color = c(r.col) if r.has("col") else paper
-		cv.draw_string(font, Vector2(x0 + 18, y + 22), ("%d " % (n + 1) if n < 9 else "") + r.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, namecol)
-		if r.lvl >= 0:
-			for k in Sim.ARM_MAX:
-				cv.draw_rect(Rect2(x0 + 190 + k * 11, y + 13, 8, 8), gold if k < r.lvl else Color(dim, 0.35))
-		cv.draw_string(font, Vector2(x0 + (290 if r.lvl >= 0 else 190), y + 22), r.what, HORIZONTAL_ALIGNMENT_LEFT, w - 420 if r.lvl >= 0 else w - 320, 11, dim)
-		var br := Rect2(x0 + w - 116, y + 5, 100, 24)
-		cv.draw_rect(br, Color(gold, 0.12) if not r.dis else Color(0.2, 0.2, 0.2, 0.4))
-		cv.draw_rect(br, Color(gold, 0.8) if not r.dis else Color(dim, 0.4), false, 1.2)
-		var lw := font.get_string_size(r.label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
-		cv.draw_string(font, Vector2(br.position.x + (br.size.x - lw) / 2, y + 22), r.label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, gold if not r.dis else dim)
-		if arm_buttons.size() == arm_sel and inp.mode != "mouse":
-			cv.draw_rect(br.grow(3), c("#f3e9d6"), false, 2.0)
-		arm_buttons.append([br, r.key])
-		y += rh
-	b_close = Rect2(x0 + w / 2 - 60, y + 4, 120, 26)
-	cv.draw_rect(b_close, Color(paper, 0.1))
-	cv.draw_rect(b_close, Color(paper, 0.6), false, 1.2)
-	label("CLOSE", v.W / 2, y + 22, paper, 12)
+	pass
 
 
 func _ring(x: float, y: float, r: float, col: Color, w: float = 2.0) -> void:
@@ -2604,55 +2488,9 @@ func _skills_input(e: InputEvent) -> void:
 			skill_respec()
 
 
+## the skill tree is a menu page now (menu_pages.gd)
 func _draw_skills() -> void:
-	sk_buttons.clear()
-	var gold := c("#e2b436")
-	var paper := c("#e8dcc0")
-	var dim := c("#9a8f7a")
-	cv.draw_rect(Rect2(0, 0, v.W, v.H), Color(0, 0, 0, 0.6))
-	var w := minf(760.0, v.W - 24)
-	var rh := 25.0
-	var rows: Array = PalProfile.SKILLS
-	var h := 84.0 + rows.size() * rh + 40
-	var x0 := (v.W - w) / 2
-	var y0 := maxf(6.0, (v.H - h) / 2)
-	cv.draw_rect(Rect2(x0, y0, w, h), c("#16130f"))
-	cv.draw_rect(Rect2(x0, y0, w, h), Color(gold, 0.5), false, 1.5)
-	cv.draw_string(font, Vector2(x0 + 16, y0 + 24), "SKILL TREE · CHANGES APPLY FROM YOUR NEXT GAME", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, dim)
-	cv.draw_string(font, Vector2(x0 + 16, y0 + 50), "%d SP TO SPEND · %d EARNED IN ALL · NEXT POINT IN %d RAIDS HELD (OR A BOSS)" % [profile.sp, profile.sp_total, 5 - profile.sp_prog], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, gold)
-	var y := y0 + 66
-	var br_last := ""
-	for S in rows:
-		if S.br != br_last:
-			br_last = S.br
-			cv.draw_line(Vector2(x0 + 10, y + 1), Vector2(x0 + w - 10, y + 1), Color(dim, 0.25), 1.0)
-		var lv := profile.level(S.id)
-		var off: bool = S.has("cls") and S.cls != "soldier"
-		var col := Color(paper, 0.45) if off else paper
-		cv.draw_string(font, Vector2(x0 + 16, y + 17), S.br, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, dim)
-		cv.draw_string(font, Vector2(x0 + 112, y + 17), S.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, col)
-		for k in S.max:
-			cv.draw_rect(Rect2(x0 + 268 + k * 10, y + 9, 7, 7), gold if k < lv else Color(dim, 0.35))
-		var what: String = S.what + ("  (other class)" if off else "")
-		cv.draw_string(font, Vector2(x0 + 312, y + 17), what, HORIZONTAL_ALIGNMENT_LEFT, w - 430, 10, dim)
-		var reason := profile.block_reason(S.id)
-		var label_txt: String = ("%d SP" % S.cost[lv]) if reason == "" else ("LOCKED" if reason.begins_with("Needs") else reason)
-		var b := Rect2(x0 + w - 106, y + 2, 92, 20)
-		cv.draw_rect(b, Color(gold, 0.12) if reason == "" else Color(0.2, 0.2, 0.2, 0.4))
-		cv.draw_rect(b, Color(gold, 0.8) if reason == "" else Color(dim, 0.4), false, 1.0)
-		var lw := font.get_string_size(label_txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x
-		cv.draw_string(font, Vector2(b.position.x + (b.size.x - lw) / 2, y + 16), label_txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, gold if reason == "" else dim)
-		if sk_buttons.size() == sk_sel and inp.mode != "mouse":
-			cv.draw_rect(b.grow(3), c("#f3e9d6"), false, 2.0)
-		sk_buttons.append([b, S.id])
-		y += rh
-	sk_reset = Rect2(x0 + 16, y + 8, 150, 24)
-	cv.draw_rect(sk_reset, Color(paper, 0.08))
-	cv.draw_rect(sk_reset, Color(paper, 0.5), false, 1.0)
-	cv.draw_string(font, Vector2(sk_reset.position.x + 14, y + 25), "RESET · 40 SHARDS" if profile.cloud else "RESET ALL POINTS", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, paper)
-	if sk_msg != "":
-		cv.draw_string(font, Vector2(x0 + 180, y + 25), sk_msg, HORIZONTAL_ALIGNMENT_LEFT, w - 420, 11, gold)
-	cv.draw_string(font, Vector2(x0 + w - 220, y + 25), "K / Esc closes", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, dim)
+	pass
 
 
 # ---------------------------------------------------------------- terrain (06b-maps.js, 06d-elevation.js)
@@ -3492,7 +3330,8 @@ func _draw_cparts() -> void:
 	for q in cparts:
 		var g := iso(q.x, q.y)
 		if q.kind.begins_with("finish:"):
-			CosArt.paint_finish(x, q.kind.substr(7), 1.0 - q.life / q.max, u, g.x, g.y - q.z * u)
+			if v3 == null:   # in 3D the kill effect's model is the finisher
+				CosArt.paint_finish(x, q.kind.substr(7), 1.0 - q.life / q.max, u, g.x, g.y - q.z * u)
 			continue
 		if q.kind == "spider":
 			q.top = g.y - v.WH * 2.6

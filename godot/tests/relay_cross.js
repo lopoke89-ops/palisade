@@ -8,6 +8,8 @@
 // 2: Godot hosts, browsers join: chat both ways, the browser's socket drops and resumes (Godot sends relayResume),
 //    Godot's socket drops (the browser shows the host away, then back), lock, remove + ban, the host leaves.
 // 3: the browser opens the casino, the real game (main.tscn through PalNet, tests/relay_game_driver.gd) joins and walks.
+// 4: the real game presses ENTER THE CASINO (tests/relay_host_driver.gd): it opens a casino on the relay and walks in;
+//    a browser joins by the code, both walk and chat, the game closes it.
 const path = require('path'), fs = require('fs'), http = require('http'), os = require('os');
 const { spawn } = require('child_process');
 const { chromium } = require('../../dev/test/node_modules/playwright');
@@ -27,7 +29,7 @@ const until = async (f, ms) => { const end = Date.now() + ms; while (Date.now() 
 let fails = 0, passes = 0;
 const check = (ok, what) => { console.log((ok ? 'PASS ' : 'FAIL ') + what); ok ? passes++ : fails++ };
 
-const users = Array.from({ length: 6 }, (_, i) => ({ id: `b0000000-0000-4000-8000-${String(i + 1).padStart(12, '0')}`, name: 'Relay' + i }));
+const users = Array.from({ length: 8 }, (_, i) => ({ id: `b0000000-0000-4000-8000-${String(i + 1).padStart(12, '0')}`, name: 'Relay' + i }));
 const tok = u => 'x.' + Buffer.from(JSON.stringify({ sub: u.id, exp: Math.floor(Date.now() / 1000) + 3600, name: u.name })).toString('base64url') + '.y';
 
 function serve(dir) {
@@ -136,6 +138,38 @@ async function gameJoins(b, port, fx, url) {
   await H.ctx.close();
 }
 
+async function gameHosts(b, port, fx, url) {
+  console.log('4: the real game presses ENTER THE CASINO, a browser joins');
+  const errs = [], dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rlyh-'));
+  const p = spawn(GODOT, ['--headless', '--path', ROOT, '--script', 'res://tests/relay_host_driver.gd', '--', url, tok(users[6]), dir], { stdio: ['ignore', 'pipe', 'pipe'] });
+  let out = '', exit = null;
+  p.stdout.on('data', d => { out += d }); p.stderr.on('data', d => { out += d }); p.on('exit', c => { exit = c });
+  const code = await until(() => fs.existsSync(dir + '/code.txt') && fs.readFileSync(dir + '/code.txt', 'utf8'), 30000);
+  check(/^R[A-Z2-9]{5}$/.test(code || ''), "the game's casino has a relay code: " + code);
+  const G = await page(b, port, url, users[7], errs, 'guest');
+  await G.evaluate(code => __pal.rlyEnter('guest', code), code);
+  check(!!await until(() => G.evaluate(() => __pal.RLY.connected && __pal.NET.mode === 'guest' && __pal.NET.inGame), 20000), "the browser joins the game's casino and is on the floor");
+  check(await G.evaluate(() => __pal.casRoom().startsWith('R:')), `in the game's casino room: ${await G.evaluate(() => __pal.casRoom())}`);
+  await until(() => fs.existsSync(dir + '/watching.txt'), 20000);
+  await G.keyboard.down('KeyD'); await sleep(1400); await G.keyboard.up('KeyD');
+  const hostAt = () => G.evaluate(() => { const q = __pal.players.get('host'); return q ? [q.x, q.y] : [0, 0] });
+  const h0 = await hostAt();
+  fs.writeFileSync(dir + '/go.txt', '1');   // the game walks once the browser has its place
+  const moved = async () => { const h = await hostAt(); return Math.hypot(h[0] - h0[0], h[1] - h0[1]) > 0.5 };
+  check(!!await until(() => fs.existsSync(dir + '/walked.txt'), 20000) && !!await until(moved, 5000), 'the game walks; the browser sees its host move');
+  await G.evaluate(() => __pal.NET.toHost({ t: 'c', m: 'hi from the browser' }));
+  await sleep(1500);
+  fs.writeFileSync(dir + '/done.txt', '1');
+  check(!!await until(() => G.evaluate(() => !__pal.RLY.active), 15000), 'the game closes its casino and the browser leaves it');
+  check(/closed this casino/.test(await status(G)), `with the browser's words: "${await status(G)}"`);
+  await until(() => exit !== null, 15000); if (exit === null) p.kill();
+  for (const l of out.split('\n').filter(l => /^(OK|FAIL) /.test(l))) check(l.startsWith('OK '), 'game: ' + l.slice(l.indexOf(' ') + 1));
+  check(exit === 0, `the game driver passes (exit ${exit})`);
+  if (exit !== 0) console.log(out.split('\n').slice(-30).join('\n'));
+  check(errs.length === 0, `no page errors ${errs.length ? JSON.stringify(errs) : ''}`);
+  await G.ctx.close();
+}
+
 async function godotHosts(b, port, fx, url) {
   console.log('2: Godot hosts, browsers join');
   const errs = [];
@@ -199,6 +233,7 @@ async function godotHosts(b, port, fx, url) {
     await browserHosts(b, port, fx, url);
     await godotHosts(b, port, fx, url);
     await gameJoins(b, port, fx, url);
+    await gameHosts(b, port, fx, url);
     check(fx.upgrades.some(u => u.origin === `http://127.0.0.1:${port}`) && fx.upgrades.some(u => u.origin === null), 'the browser sent its Origin; Godot sent none');
   } catch (e) { console.log('FAIL exception ' + (e.stack || e)); fails++ }
   await b.close(); web.close(); await fx.stop();

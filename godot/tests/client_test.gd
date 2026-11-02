@@ -15,6 +15,16 @@ func _find(n: Node, cls: String) -> Node:
 	return null
 
 
+func _locker_ui(n: Node) -> LockerUI:   # the Locker sits inside the menu shell's body
+	for ch in n.get_children():
+		if ch is LockerUI:
+			return ch
+		var r := _locker_ui(ch)
+		if r != null:
+			return r
+	return null
+
+
 func check(cond: bool, what: String) -> void:
 	print(("  ok   " if cond else "  FAIL ") + what)
 	if not cond:
@@ -34,6 +44,27 @@ func _init() -> void:
 	ev.pressed = true
 	check(InputMap.has_action("pal_build") and ev.is_action_pressed("pal_build"), "keys go into the InputMap as pal_ actions")
 	check(PalSettings.glyph(7, "ps") == "R2" and PalSettings.glyph(0, "xbox") == "A", "button names follow the controller in hand")
+	print("display settings")
+	var disp := func(d: Dictionary) -> PalSettings:
+		var f := FileAccess.open(PalSettings.PATH, FileAccess.WRITE)
+		f.store_string(JSON.stringify(d))
+		f.close()
+		var s2 := PalSettings.new()
+		s2.load_file()
+		return s2
+	var d1: PalSettings = disp.call({"fullscreen": true, "fpsCap": "144", "winSize": "1600x900", "vsync": false})
+	check(d1.data.windowMode == "fullscreen" and d1.data.fpsCap == "144" and d1.data.winSize == "1600x900" and not d1.data.vsync, "the old Fullscreen switch carries over; FPS limit, window size and VSync load")
+	var d2: PalSettings = disp.call({"fullscreen": true, "windowMode": "windowed", "fpsCap": "77", "winSize": "999x1"})
+	check(d2.data.windowMode == "windowed" and d2.data.fpsCap == "off" and d2.data.winSize == "", "an explicit window mode wins; unknown limits and sizes fall back")
+	check(PalSettings.sizes_for(Vector2i(1920, 1080)) == ["1280x720", "1600x900", "1920x1080"] and PalSettings.sizes_for(Vector2i(1366, 768)) == ["1280x720"], "window sizes offered are the ones that fit the screen")
+	var cfg := _backup_cfg(d1)
+	check(cfg.has("fpsMode") and not (cfg.has("windowMode") or cfg.has("winSize") or cfg.has("fpsCap") or cfg.has("vsync")), "the save backup leaves the display settings out (the browser has none)")
+	if keep != "":
+		var f0 := FileAccess.open(PalSettings.PATH, FileAccess.WRITE)
+		f0.store_string(keep)
+		f0.close()
+	else:
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(PalSettings.PATH))
 	print("locker: the browser's run payouts (tests/locker_ref.json, from tools/locker_ref.js)")
 	var ref: Array = JSON.parse_string(FileAccess.get_file_as_string("res://tests/locker_ref.json"))
 	for r in ref:
@@ -76,6 +107,45 @@ func _init() -> void:
 		await process_frame
 	main.locker.cloud = {}   # whatever the PC's own locker is, the tests play it as a local one
 	main.profile.cloud = false
+	var D: Dictionary = main.settings.data
+	var fm: String = D.fpsMode
+	var fc: String = D.fpsCap
+	D.fpsMode = "auto"
+	D.fpsCap = "144"
+	main.apply_settings()
+	var cap_auto := Engine.max_fps
+	D.fpsMode = "30"
+	main.apply_settings()
+	check(cap_auto == 144 and Engine.max_fps == 30, "FPS LIMIT caps the frame rate on AUTO; FRAME RATE 30 wins over it (%d, %d)" % [cap_auto, Engine.max_fps])
+	D.fpsMode = fm
+	D.fpsCap = fc
+	main.apply_settings()
+	print("graphics")
+	var g0 = D.gfx3d.duplicate()
+	var m0: bool = D.get("models3d", true)
+	if View3D.available():
+		D.models3d = true
+		D.gfx3d = Quality3D.preset("low")
+		main.apply_settings()
+		check(main.v3 != null and Quality3D.shadows == 0 and Quality3D.max_tracers == 24 and is_equal_approx(main.get_viewport().scaling_3d_scale, 0.75), "QUALITY LOW reaches the 3D view: no shadows, fewer tracers, drawn at 75%")
+		D.gfx3d = Quality3D.preset("high")
+		D.gfx3d.render_scale = 0.6
+		main.apply_settings()
+		check(Quality3D.shadows == 2 and is_equal_approx(main.get_viewport().scaling_3d_scale, 0.6), "HIGH with RENDER SCALE 60%")
+		D.models3d = false
+		main.apply_settings()
+		var off: bool = main.v3 == null and main.ground.visible
+		D.models3d = true
+		main.apply_settings()
+		check(off and main.v3 != null and not main.ground.visible, "the 3D models switch off to the 2D drawing and back on from Settings")
+		main.menus.pages.show_settings()
+		await process_frame
+		var gl := _find_text(main.menus.root, "QUALITY") != null and _find_text(main.menus.root, "RENDER SCALE") != null and _find_text(main.menus.root, "HIGH") != null
+		check(gl, "Settings shows the GRAPHICS card: the switch, QUALITY and RENDER SCALE")
+		main.menus.show_main()
+	D.gfx3d = g0
+	D.models3d = m0
+	main.apply_settings()
 	print("menus")
 	check(main.demo and main.menus.screen == "main", "it opens on the main menu over the demo yard")
 	check(main._controls().is_empty(), "nobody plays the demo")
@@ -141,7 +211,8 @@ func _init() -> void:
 	check(_find(main.menus.root, "HFlowContainer") != null, "the rewards come as cards")
 	main.to_menu()
 	check(main.demo and main.menus.screen == "main", "MAIN MENU goes back to the demo yard")
-	check(main.menus.root.get_child(0) is LockerUI.BgView, "outside a game the menus sit on the lobby background")
+	var bg0 = main.menus.root.get_child(0)
+	check(bg0 is LockerUI.BgView and (main.menus.root.get_children().any(func(n): return n is Lobby3D) if Lobby3D.available() else true), "outside a game the menus sit on the painted lobby background (the 3D crew over it, when the models are in)")
 	print("accounts (a stand-in server)")
 	print("leaving a run early")
 	main.locker.cloud = {}
@@ -166,7 +237,7 @@ func _init() -> void:
 	main.profile.sp = 5
 	main.menus.show_locker()
 	await process_frame
-	var ui: LockerUI = main.menus.root.get_children().filter(func(n): return n is LockerUI)[0]
+	var ui: LockerUI = _locker_ui(main.menus.root)
 	check(main.menus.screen == "locker" and ui.tiles.size() > 0, "the Locker opens on its tiles (%d)" % ui.tiles.size())
 	var before := L.owned.size() + L.shards
 	ui.open_cases("supply", 1)
@@ -176,7 +247,7 @@ func _init() -> void:
 	check(ov.phase == "reveal" and ov.done_b.visible, "SKIP goes straight to what it gave")
 	ov.close()
 	await process_frame
-	ui = main.menus.root.get_children().filter(func(n): return n is LockerUI)[0]
+	ui = _locker_ui(main.menus.root)
 	var halloween := L.case_count("halloween")
 	ui._render_boxes()
 	check(L.buy_case("halloween") and L.case_count("halloween") == halloween + 1 and L.shards == 18, "BUY trades 12 shards for a Halloween Case")
@@ -330,3 +401,25 @@ func _accounts(main) -> void:
 	main.profile.from_cloud({})
 	main.profile.cloud = false
 	main.sim.game.phase = "build"
+
+
+## the settings part of an exported save, decoded (TAG.body.crc)
+func _backup_cfg(st: PalSettings) -> Dictionary:
+	var prof := PalProfile.new()
+	prof.persist = false
+	var L := PalLocker.new(prof)
+	L.persist = false
+	var code := PalSaves.export_code(L, st)
+	var body: String = code.split(".")[1]
+	return JSON.parse_string(Marshalls.base64_to_utf8(body)).get("cfg", {})
+
+
+## a label or button showing exactly this text
+func _find_text(n: Node, t: String) -> Node:
+	if (n is Label and n.text == t) or (n is UiKit.Btn and n.text == t):
+		return n
+	for c in n.get_children():
+		var r := _find_text(c, t)
+		if r != null:
+			return r
+	return null
