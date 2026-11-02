@@ -80,6 +80,31 @@
   - Your one complaint was the in-game UI: not as detailed as the browser's. As you asked, it's planned, not changed. `dev/plans/godot-ingame-hud.md` lists every difference and proposes four stages (H1–H4).
   - No game code changed.
 
+- **Stage 10 (HUD H1): the phase box and tip, built as the browser builds them.** `scripts/hud.gd` replaces the painted top bar with controls in the browser's fonts, sizes and colours (`#top .phase`, `#tip`, `style.css` desktop rules):
+  - **Phase box:** the label (BUILD, RAID 1/5 in rust, EVACUATE in green), its clock, and the round-message line.
+  - **Meters:** CORE / STAKE / COMMAND and ENEMY, turning rust under 30% or when hit.
+  - **Controls:** the grey DELGADO · FOLLOW button, SALVAGE, and START RAID / START NOW / START BATTLE / READY with its key cap (controller buttons in pad mode). The pause and chat buttons are there; the chat button lights for unread lines.
+  - **Free-for-all:** the board.
+  - **Modes:** the casino, Black Out, Final Blitz, Gauntlet and campaign texts are ported from `hud()` / `boHudPhase` / `casHud`.
+  - **Buttons:** they work with the mouse and touch. A click on one isn't a shot, and a touch on one doesn't start a stick. Touch's own painted PAUSE and START are gone.
+  - **Tip box:** it replaces the GOOD LUCK banner, with the browser's tips at the browser's moments: the opening tip, then after 4 wood gathers, then after 3 builds, gone when the raid starts. Its lines are balanced as `text-wrap: balance` does. The sim gained `game.gathered`, the browser's counter, display only.
+  - **Layers:** the armory and the skill tree paint on a new layer over the HUD, as the browser's overlays do. The Black Out mini-map and the kill feed sit under the phase box (`boMapBox`).
+  - **Scale:** the HUD keeps CSS pixels up to 1600×900 and scales up past it, so at 1280×720 it is the browser's size, not shrunk.
+  - Still painted until H2–H4: the bottom-left panel, banners, boss bar, kill-feed style, chat lines.
+
+## Verification (Stage 10)
+- **New test against the browser:** `tests/hud_shot.gd` measures every box of the phase box and tip against the browser's own (`tests/hud_ref.json`, made by `tests/hud_ref.js` from the built site). It covers build, raid, Black Out, Base Battle and Free-for-all, at 1600×900 and 1280×720.
+  - All ten are within 5 px. The largest gap is SALVAGE 40, 4.4 px wider because Godot rounds letter-spacing to whole pixels.
+  - It also checks the labels' texts, the core alarm, Delgado's button and START.
+- **Suites:** all seven pass.
+- **Crossplay:** `cross_game.js` 45/45.
+- **Screenshot tests:**
+  - `lobby3d_shot` passes.
+  - `menus_shot` passes, then the known abort at exit.
+  - `shot3d raid`, `casino_play_shot` and `shot city` render with no script errors.
+- **Compared by eye** against the browser: build, raid and Black Out side by side, plus Base Battle, Free-for-all, the casino, a Black Out attack and the armory over the HUD.
+- **Not done:** a Windows build of this stage.
+
 ## Verification (Stage 9)
 - The same in-game moments were captured in the browser (built from `dev/src`, Playwright) and in Godot at 1600×900: build phase, raid, boss, armory, skill tree, pause, down, after action, Black Out, Base Battle and Free-for-all. The plan's table comes from comparing them, and from the browser's `hud()` and `style.css`.
 - Already matching: the armory, the pause menu, the skill tree and the after-action screen (ported pages). The gap is the live HUD drawn in `main.gd` `_draw_hud()`, which also uses Godot's default font rather than the browser's stencil and mono fonts.
@@ -146,4 +171,9 @@
 - The menus leave the 3D crew loaded during games (from the previous session).
 
 ## Proposed next milestone
-Stage 10 (HUD H1): rebuild the HUD's top right as controls in the browser's fonts and styles. That's the phase box (label, clock, raid count), the CORE / STAKE / COMMAND and ENEMY meters, the Delgado chip, salvage, the START button with its key cap, the pause and chat buttons, and the tip box. It's checked box by box against the browser at 1600×900 and 1280×720. Display only: no sim, network or crossplay changes.
+Stage 11 (HUD H2): the build kit. The browser's right-hand column, every button with its state, count and cooldown, and clickable:
+- BUILD ON/OFF, WALL / DOOR, WOOD / BRICK / METAL with key caps and locks;
+- the yellow PLACE button with its cost or why not;
+- ARMORY (pulsing when you can afford something), NADE, ROLL, SPRINT, ROCKET / STEALTH.
+
+It also brings the browser's dashed yellow target outline. The bottom-left panel and the floating PLACE label go. It's checked box by box against the browser, as H1 was.
