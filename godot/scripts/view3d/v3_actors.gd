@@ -48,6 +48,10 @@ var ring_scene: PackedScene
 var frame_n := 0
 var time := 0.0
 var anim_us := 0   # the last frame's animation updates (the profile the screenshot test prints)
+var merges := {}   # model key -> [pieces' signature, ArrayMesh, Skin]: one merged body per look, shared by its copies
+## slots shown and hidden in play (lib.show_slot below) and the props switched in hand (_arm, _prop): never merged
+const LIVE_SLOTS := ["Weapon", "Equipment_ArmL", "Equipment_Back"]
+const LIVE_PROPS := ["HandR", "frag", "molotov", "rocket", "ClassWeapon"]
 
 
 func _init(view) -> void:
@@ -111,6 +115,7 @@ func _take(mkey: String, build: Callable) -> Node3D:
 	var model: Node3D = build.call()
 	if model == null:
 		return null
+	_merge(model, mkey)
 	var pivot := Node3D.new()
 	pivot.name = mkey.replace(":", "_").replace("|", "_")
 	pivot.scale = Vector3.ONE * V3.CHAR
@@ -124,6 +129,116 @@ func _take(mkey: String, build: Callable) -> Node3D:
 	pivot.set_meta("info", info)
 	add_child(pivot)
 	return pivot
+
+
+## The body's skinned pieces as one mesh, a surface per material, their Skins joined: the Compatibility renderer pays
+## per skinned mesh (a raider is ~6), so a push of 40 drew 230 of them and now 40. Only pieces straight under the
+## skeleton, shown, at its origin, plain (no overlay, fade, range or blend shapes) and outside LIVE_SLOTS / LIVE_PROPS;
+## the rest stay as built. The merged mesh has no LODs, so its shadow is cast by the full mesh, not a coarser LOD.
+func _merge(model: Node3D, mkey: String) -> void:
+	var skel: Skeleton3D = null
+	for n in ArtLibrary._all(model):
+		if n is Skeleton3D:
+			skel = n
+			break
+	if skel == null:
+		return
+	var pieces: Array = []
+	for n in skel.get_children():
+		if n is MeshInstance3D and _mergeable(n, skel) and (pieces.is_empty() or n.cast_shadow == pieces[0].cast_shadow):
+			pieces.append(n)
+	if pieces.size() < 2:
+		return
+	var sig := ""
+	for p in pieces:
+		sig += "%d:%d|" % [p.mesh.get_instance_id(), p.skin.get_instance_id()]
+		for si in p.mesh.get_surface_count():
+			var mat: Material = p.get_active_material(si)
+			sig += "%d," % (mat.get_instance_id() if mat != null else 0)
+	var M: Array = merges.get(mkey, [])
+	if M.is_empty() or M[0] != sig:
+		M = [sig] + _joined(pieces)
+		merges[mkey] = M
+	var body := MeshInstance3D.new()
+	body.name = "MergedBody"
+	body.mesh = M[1]
+	body.skin = M[2]
+	body.cast_shadow = pieces[0].cast_shadow
+	skel.add_child(body)
+	body.skeleton = NodePath("..")
+	for p in pieces:
+		skel.remove_child(p)
+		p.free()
+
+
+func _mergeable(n: MeshInstance3D, skel: Skeleton3D) -> bool:
+	if not n.visible or n.get_child_count() > 0 or n.skin == null or not (n.mesh is ArrayMesh):
+		return false
+	if n.mesh.get_blend_shape_count() > 0 or n.material_overlay != null or n.transparency != 0.0 or n.visibility_range_end != 0.0:
+		return false
+	if n.get_node_or_null(n.skeleton) != skel or not n.transform.is_equal_approx(Transform3D.IDENTITY):
+		return false
+	var nm := String(n.name)
+	if nm in LIVE_PROPS:
+		return false
+	for slot in LIVE_SLOTS:   # as lib.show_slot matches them
+		if nm == slot or nm.begins_with("Fur_" + slot + "_") or n.get_meta("modular_owner", "") == slot:
+			return false
+	return true
+
+
+## [ArrayMesh, Skin] from the pieces: their binds one after another (each piece's bone indices moved past the binds
+## before it) and their surfaces gathered by material and vertex format, indices moved past the vertices before
+func _joined(pieces: Array) -> Array:
+	var skin := Skin.new()
+	var groups := {}
+	var order: Array = []
+	for p in pieces:
+		var mi: MeshInstance3D = p
+		var boff := skin.get_bind_count()
+		for bi in mi.skin.get_bind_count():
+			var bn: StringName = mi.skin.get_bind_name(bi)
+			if bn != &"":
+				skin.add_named_bind(bn, mi.skin.get_bind_pose(bi))
+			else:
+				skin.add_bind(mi.skin.get_bind_bone(bi), mi.skin.get_bind_pose(bi))
+		for si in mi.mesh.get_surface_count():
+			var mat: Material = mi.get_active_material(si)
+			var fmt: int = mi.mesh.surface_get_format(si) & (Mesh.ARRAY_FORMAT_VERTEX | Mesh.ARRAY_FORMAT_NORMAL | Mesh.ARRAY_FORMAT_TANGENT
+				| Mesh.ARRAY_FORMAT_COLOR | Mesh.ARRAY_FORMAT_TEX_UV | Mesh.ARRAY_FORMAT_TEX_UV2 | Mesh.ARRAY_FORMAT_BONES
+				| Mesh.ARRAY_FORMAT_WEIGHTS | Mesh.ARRAY_FLAG_USE_8_BONE_WEIGHTS)
+			var gk := "%d|%d" % [mat.get_instance_id() if mat != null else 0, fmt]
+			if not groups.has(gk):
+				groups[gk] = {"mat": mat, "fmt": fmt, "parts": []}
+				order.append(gk)
+			groups[gk].parts.append([mi.mesh.surface_get_arrays(si), boff])
+	var am := ArrayMesh.new()
+	for gk in order:
+		var G: Dictionary = groups[gk]
+		var out := []
+		out.resize(Mesh.ARRAY_MAX)
+		var nv := 0
+		for part in G.parts:
+			var arr: Array = part[0]
+			var vc: int = (arr[Mesh.ARRAY_VERTEX] as PackedVector3Array).size()
+			for k in Mesh.ARRAY_MAX:
+				if k == Mesh.ARRAY_INDEX or arr[k] == null:
+					continue
+				var src = arr[k]
+				if k == Mesh.ARRAY_BONES:
+					var b: PackedInt32Array = (src as PackedInt32Array).duplicate()
+					for q in b.size():
+						b[q] += part[1]
+					src = b
+				out[k] = src.duplicate() if out[k] == null else out[k] + src
+			var ind: PackedInt32Array = PackedInt32Array(range(vc)) if arr[Mesh.ARRAY_INDEX] == null else (arr[Mesh.ARRAY_INDEX] as PackedInt32Array).duplicate()
+			for q in ind.size():
+				ind[q] += nv
+			out[Mesh.ARRAY_INDEX] = ind if out[Mesh.ARRAY_INDEX] == null else out[Mesh.ARRAY_INDEX] + ind
+			nv += vc
+		am.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, out, [], {}, G.fmt & Mesh.ARRAY_FLAG_USE_8_BONE_WEIGHTS)
+		am.surface_set_material(am.get_surface_count() - 1, G.mat)
+	return [am, skin]
 
 
 func _park(n: Node3D, mkey: String) -> void:
