@@ -158,6 +158,7 @@ func _merge(model: Node3D, mkey: String) -> void:
 	var M: Array = merges.get(mkey, [])
 	if M.is_empty() or M[0] != sig:
 		M = [sig] + _joined(pieces)
+		M[1] = _layered(M[1])
 		merges[mkey] = M
 	var body := MeshInstance3D.new()
 	body.name = "MergedBody"
@@ -185,6 +186,149 @@ func _mergeable(n: MeshInstance3D, skel: Skeleton3D) -> bool:
 		if nm == slot or nm.begins_with("Fur_" + slot + "_") or n.get_meta("modular_owner", "") == slot:
 			return false
 	return true
+
+
+## The merged body's surfaces drawn over texture arrays: the surfaces whose standard materials compile to the same
+## shader (most of a look's 5-11; they differ in textures, metallic, roughness, normal depth, emission) become one
+## surface, each vertex carrying its material's layer in UV2.x, under one ShaderMaterial that is BaseMaterial3D's shader
+## for these settings reading each value from its layer. The textures tile (UVs run past 0..1), which an array layer
+## does as the texture did; an atlas tile couldn't. A push draws ~400 fewer surfaces. Colours go in as the material
+## holds them: the Compatibility renderer doesn't convert source_color to linear.
+func _layered(am: ArrayMesh) -> ArrayMesh:
+	var groups := {}
+	var order: Array = []
+	for si in am.get_surface_count():
+		var m = am.surface_get_material(si)
+		var gk := "keep%d" % si
+		if m is BaseMaterial3D and am.surface_get_format(si) & Mesh.ARRAY_FORMAT_TEX_UV2 == 0:
+			gk = _layer_key(m)
+		if not groups.has(gk):
+			groups[gk] = []
+			order.append(gk)
+		groups[gk].append(si)
+	var out := ArrayMesh.new()
+	for gk in order:
+		var sis: Array = groups[gk]
+		if sis.size() < 2 or sis.size() > LAYERS:
+			for si in sis:
+				out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, am.surface_get_arrays(si), [], {}, am.surface_get_format(si) & Mesh.ARRAY_FLAG_USE_8_BONE_WEIGHTS)
+				out.surface_set_material(out.get_surface_count() - 1, am.surface_get_material(si))
+			continue
+		var m0: BaseMaterial3D = am.surface_get_material(sis[0])
+		var alb: Array = []
+		var nrm: Array = []
+		var P := {"albedo_l": [], "metallic_l": PackedFloat32Array(), "roughness_l": PackedFloat32Array(), "specular_l": PackedFloat32Array(),
+			"normal_scale_l": PackedFloat32Array(), "emission_l": [], "emission_energy_l": PackedFloat32Array()}
+		var layer_of := {}
+		var acc := []
+		acc.resize(Mesh.ARRAY_MAX)
+		var nv := 0
+		for si in sis:
+			var m: BaseMaterial3D = am.surface_get_material(si)
+			if not layer_of.has(m):
+				layer_of[m] = alb.size()
+				alb.append(_layer_img(m.albedo_texture, Color.WHITE, null if alb.is_empty() else alb[0]))
+				if m.normal_enabled:
+					nrm.append(_layer_img(m.normal_texture, Color(0.5, 0.5, 1.0), null if nrm.is_empty() else nrm[0]))
+				P.albedo_l.append(m.albedo_color)
+				P.metallic_l.append(m.metallic)
+				P.roughness_l.append(m.roughness)
+				P.specular_l.append(m.metallic_specular)
+				P.normal_scale_l.append(m.normal_scale)
+				P.emission_l.append(m.emission if m.emission_enabled else Color(0, 0, 0, 0))
+				P.emission_energy_l.append(m.emission_energy_multiplier if m.emission_enabled else 0.0)
+			var arr := am.surface_get_arrays(si)
+			var vc: int = (arr[Mesh.ARRAY_VERTEX] as PackedVector3Array).size()
+			var uv2 := PackedVector2Array()
+			uv2.resize(vc)
+			uv2.fill(Vector2(layer_of[m], 0))
+			arr[Mesh.ARRAY_TEX_UV2] = uv2
+			for k in Mesh.ARRAY_MAX:
+				if k == Mesh.ARRAY_INDEX or arr[k] == null:
+					continue
+				acc[k] = arr[k].duplicate() if acc[k] == null else acc[k] + arr[k]
+			var ind: PackedInt32Array = PackedInt32Array(range(vc)) if arr[Mesh.ARRAY_INDEX] == null else (arr[Mesh.ARRAY_INDEX] as PackedInt32Array).duplicate()
+			for q in ind.size():
+				ind[q] += nv
+			acc[Mesh.ARRAY_INDEX] = ind if acc[Mesh.ARRAY_INDEX] == null else acc[Mesh.ARRAY_INDEX] + ind
+			nv += vc
+		var sm := ShaderMaterial.new()
+		sm.shader = _layer_shader(m0.normal_enabled, m0.cull_mode)
+		var ta := Texture2DArray.new()
+		ta.create_from_images(alb)
+		sm.set_shader_parameter("texture_albedo", ta)
+		if m0.normal_enabled:
+			var tn := Texture2DArray.new()
+			tn.create_from_images(nrm)
+			sm.set_shader_parameter("texture_normal", tn)
+		for k in P:
+			var v = P[k]
+			while v.size() < LAYERS:
+				v.append(Color(0, 0, 0, 0) if v is Array else 0.0)
+			sm.set_shader_parameter(k, v)
+		out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, acc, [], {}, am.surface_get_format(sis[0]) & Mesh.ARRAY_FLAG_USE_8_BONE_WEIGHTS)
+		out.surface_set_material(out.get_surface_count() - 1, sm)
+	return out
+
+
+## materials that compile to the same shader: everything but the per-layer values alike
+func _layer_key(m: BaseMaterial3D) -> String:
+	return "%d|%d|%d|%d|%d|%d|%d|%d|%s|%s|%d|%d|%d|%d|%d|%d" % [int(m.normal_enabled), m.cull_mode, m.transparency, m.shading_mode,
+		m.diffuse_mode, m.specular_mode, int(m.vertex_color_use_as_albedo), int(m.vertex_color_is_srgb), str(m.uv1_scale), str(m.uv1_offset),
+		m.texture_filter, int(m.uv1_triplanar), int(m.rim_enabled), int(m.ao_enabled), int(m.metallic_texture != null or m.roughness_texture != null or m.emission_texture != null), int(m.emission_operator)]
+
+
+## a layer's image: the texture's, or one colour where the material has none (what its shader samples then), made to
+## match the first layer's size and format, which an array needs
+func _layer_img(t: Texture2D, fill: Color, like: Image) -> Image:
+	var im: Image
+	if t != null:
+		im = t.get_image()
+	else:
+		im = Image.create(256 if like == null else like.get_width(), 256 if like == null else like.get_height(), false, Image.FORMAT_RGB8)
+		im.fill(fill)
+	if like != null and (im.get_format() != like.get_format() or im.get_size() != like.get_size() or im.has_mipmaps() != like.has_mipmaps()):
+		im = im.duplicate()
+		if im.is_compressed():
+			im.decompress()
+		im.convert(like.get_format())
+		im.resize(like.get_width(), like.get_height())
+		if like.has_mipmaps():
+			im.generate_mipmaps()
+		else:
+			im.clear_mipmaps()
+	return im
+
+
+const LAYERS := 16
+static var layer_shaders := {}   # "normal|cull" -> Shader
+
+
+## BaseMaterial3D's shader (base_material_3d.cpp) for what these materials turn on, each value from the layer's slot
+func _layer_shader(normal: bool, cull: int) -> Shader:
+	var k := "%s|%d" % [normal, cull]
+	if layer_shaders.has(k):
+		return layer_shaders[k]
+	var c := "shader_type spatial;\nrender_mode blend_mix, depth_draw_opaque, %s, diffuse_burley, specular_schlick_ggx;\n" % ["cull_back", "cull_front", "cull_disabled"][cull]
+	c += "uniform sampler2DArray texture_albedo : source_color, filter_linear_mipmap, repeat_enable;\n"
+	if normal:
+		c += "uniform sampler2DArray texture_normal : hint_normal, filter_linear_mipmap, repeat_enable;\n"
+	for u in ["vec4 albedo_l", "float metallic_l", "float roughness_l", "float specular_l", "float normal_scale_l", "vec4 emission_l", "float emission_energy_l"]:
+		c += "uniform %s[%d];\n" % [u, LAYERS]
+	c += "varying flat int layer;\nvoid vertex() {\n\tlayer = int(UV2.x + 0.5);\n}\n"
+	c += "void fragment() {\n\tvec2 base_uv = UV;\n"
+	c += "\tvec4 albedo_tex = texture(texture_albedo, vec3(base_uv, float(layer)));\n\talbedo_tex *= COLOR;\n"
+	c += "\tALBEDO = albedo_l[layer].rgb * albedo_tex.rgb;\n"
+	c += "\tfloat metallic_tex = dot(vec4(1.0), vec4(1.0, 0.0, 0.0, 0.0));\n\tMETALLIC = metallic_tex * metallic_l[layer];\n"
+	c += "\tSPECULAR = specular_l[layer];\n"
+	c += "\tfloat roughness_tex = dot(vec4(1.0), vec4(1.0, 0.0, 0.0, 0.0));\n\tROUGHNESS = roughness_tex * roughness_l[layer];\n"
+	if normal:
+		c += "\tNORMAL_MAP = texture(texture_normal, vec3(base_uv, float(layer))).rgb;\n\tNORMAL_MAP_DEPTH = normal_scale_l[layer];\n"
+	c += "\tEMISSION = (emission_l[layer].rgb + vec3(0.0)) * emission_energy_l[layer];\n}\n"
+	var sh := Shader.new()
+	sh.code = c
+	layer_shaders[k] = sh
+	return sh
 
 
 ## [ArrayMesh, Skin] from the pieces: their binds one after another (each piece's bone indices moved past the binds
