@@ -414,16 +414,52 @@ func mark_flow() -> void:
 		flow_t = 0.3
 
 
+## every raider asks this every step (look_ahead up to 8 times more), so off Frost it reads the tables itself: there
+## height_link is only the bounds, and the cost is enter_cost's rules inlined (keep the two in step), the same sums
 func best_step(ti: int, tj: int) -> int:
 	var best := -1
 	var bv := 1e9
-	for d in Pal.D4:
-		var i: int = ti + d[0]
-		var j: int = tj + d[1]
-		if not height_link(ti, tj, i, j):
+	if is_frost():
+		for d in Pal.D4:
+			var i: int = ti + d[0]
+			var j: int = tj + d[1]
+			if not height_link(ti, tj, i, j):
+				continue
+			var k := idx(i, j)
+			var v := dist[k] + enter_cost(k)
+			if v < bv:
+				bv = v
+				best = k
+		return best
+	if ti < 0 or tj < 0 or ti >= N or tj >= N:
+		return -1
+	for q in 4:
+		var i: int = ti + _FLOW_DI[q]
+		var j: int = tj + _FLOW_DJ[q]
+		if i < 0 or j < 0 or i >= N or j >= N:
 			continue
-		var k := idx(i, j)
-		var v := dist[k] + enter_cost(k)
+		var k := j * N + i
+		var c: float
+		if k == core_k:
+			c = 0.0
+		elif core_ks.has(k):
+			c = 1e6
+		else:
+			var t: int = terr[k]
+			if t == PalMaps.T_PIT or t == PalMaps.T_ROCK or t == PalMaps.T_DRUM or t == PalMaps.T_BLDG:   # terr_solid
+				c = 1e6
+			else:
+				var w = walls[k]
+				if w != null:
+					c = 1.0 + w.hp / 8.0
+				else:
+					var n = node_ix.get(k)
+					if n != null and n.solid:
+						c = 1e6
+					else:
+						var base := 1.4 if debris[k] != 0 else (0.75 if t == PalMaps.T_ROAD else (1.25 if t == PalMaps.T_RUBBLE else 1.0))
+						c = base + (2.4 if t == PalMaps.T_WATER else (1.1 if t == PalMaps.T_LOW and flood_on else 0.0))
+		var v := dist[k] + c
 		if v < bv:
 			bv = v
 			best = k
@@ -449,13 +485,25 @@ func solid_tile(i: int, j: int, team = false) -> bool:
 func collides(x: float, y: float, r: float, team = false) -> bool:
 	if x - r < 0 or y - r < 0 or x + r > N or y + r > N:
 		return true
-	if height_collision(x, y, r):
+	if is_frost() and height_collision(x, y, r):   # (it is false everywhere else)
 		return true
 	if team is String and game.get("pvp", "") == "base" and game.phase == "build" and (x - y > -0.35 if team == "a" else x - y < 0.35):
 		return true   # the truce line
+	# solid_tile for each tile under the circle, inlined: every move asks this twice
 	for i in range(floori(x - r), floori(x + r) + 1):
 		for j in range(floori(y - r), floori(y + r) + 1):
-			if solid_tile(i, j, team):
+			if i < 0 or j < 0 or i >= N or j >= N:
+				return true
+			var k := j * N + i
+			if core_ks.has(k) or PalMaps.terr_solid(terr[k]):
+				return true
+			var w = walls[k]
+			if w != null:
+				if not (team is String and w.door and w.get("tm", "") == team or team is bool and team and w.door):
+					return true
+				continue
+			var n = node_ix.get(k)
+			if n != null and n.solid:
 				return true
 	return false
 
@@ -1986,9 +2034,10 @@ func _enemy_tick(e: Dictionary, dt: float) -> void:
 			e.ab -= dt
 			var buddy = null
 			var bb := 1e9
+			var flat := not is_frost()   # d2 without its calls: hdist is the plain distance off Frost
 			for o in enemies:
 				if not is_same(o, e) and not o.dead and o.type != "medic":
-					var d := d2(o, e)
+					var d := Vector2(e.x - o.x, e.y - o.y).length() if flat else d2(o, e)
 					if d < bb:
 						bb = d
 						buddy = o
@@ -4817,6 +4866,7 @@ func travel_clear(x: float, y: float, tx: float, ty: float, team = false, r: flo
 	var n := maxi(1, ceili(d / 0.1))
 	var px := x
 	var py := y
+	var frost := is_frost()
 	for s in range(1, n + 1):
 		var nx := x + (tx - x) * s / n
 		var ny := y + (ty - y) * s / n
@@ -4826,7 +4876,10 @@ func travel_clear(x: float, y: float, tx: float, ty: float, team = false, r: flo
 		var j := floori(py)
 		var ni := floori(nx)
 		var nj := floori(ny)
-		if i != ni and j != nj:
+		if not frost:   # height_link off Frost is only the bounds
+			if (i != ni or j != nj) and not (inb(i, j) and inb(ni, nj) and inb(ni, j)):
+				return false
+		elif i != ni and j != nj:
 			if not height_link(i, j, ni, j) or not height_link(ni, j, ni, nj):
 				return false
 		elif (i != ni or j != nj) and not height_link(i, j, ni, nj):
