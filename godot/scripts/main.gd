@@ -2708,12 +2708,16 @@ func _update_light(dt: float) -> void:
 		for e in sim.enemies:
 			hole.call(e.x, e.y, WH * 0.5, TW2 * 0.9, 0.45)
 		_vis_bounds()   # vb is otherwise last frame's (set while drawing), past the walls for a frame when a smaller map starts
+		var N: int = sim.N
+		var walls: Array = sim.walls
+		var quarry: bool = sim.map_id == "quarry"
 		for j in range(vb[2], vb[3] + 1):
+			var row := j * N
 			for i in range(vb[0], vb[1] + 1):
-				var w = sim.walls[j * sim.N + i]
+				var w = walls[row + i]
 				if w != null and w.get("fire", 0.0) > 0:
 					hole.call(i + 0.5, j + 0.5, WH, TW2 * 2, 0.8)
-				if sim.map_id == "quarry" and sim.terr[j * sim.N + i] == PalMaps.T_DRUM:
+				if quarry and sim.terr[row + i] == PalMaps.T_DRUM:
 					hole.call(i + 0.5, j + 0.5, WH, TW2 * (2.6 + 0.12 * sin(g.time * 7 + j * sim.N + i)), 0.9)
 		for n in sim.nodes:
 			if n.type == 1 and not n.locked:

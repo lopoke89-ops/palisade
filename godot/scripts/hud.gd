@@ -60,6 +60,9 @@ var keys_c: Control   # the key bar, painted (its items are only text)
 var keys_items: Array = []   # [[key, what], ...]
 var keys_rect := Rect2()   # CSS pixels
 var keys_boxes: Array = []   # each item's box (CSS pixels, on screen) and its [key, what]
+var keys_at := Vector3()   # the window (CSS pixels) and the scale the key bar was laid out for
+var key_sb: StyleBoxFlat   # the key caps' box, made at key_sb_s
+var key_sb_s := 0.0
 var boss_c: Control   # the boss bars, painted under everything else
 var map_c: Control   # the Black Out mini-map and the arrow to a POI under attack, painted
 var bo_fade := 1.0   # BO_FADE: the mini-map fades out under a banner that covers it
@@ -1319,11 +1322,15 @@ func _keys_update(sim: Sim, p: Dictionary, pv: String) -> void:
 		a.append(["ESC", "pause"])
 		if _has_ability(p, pv):
 			a.insert(3, ["Q", "stealth" if p.cls == "sniper" else "rocket"])
-	keys_items = a
-	# the box: as wide as its items, at most the window less 360 (plus 12 padding and a border each side); the items
-	# wrap as inline blocks, each line centred, 26 px a line; its foot 14 px up, centred across
 	var W := size.x / s
 	var H := size.y / s
+	# the same items in the same window: the bar as laid out and drawn last frame
+	if a == keys_items and Vector3(W, H, s) == keys_at:
+		return
+	keys_items = a
+	keys_at = Vector3(W, H, s)
+	# the box: as wide as its items, at most the window less 360 (plus 12 padding and a border each side); the items
+	# wrap as inline blocks, each line centred, 26 px a line; its foot 14 px up, centred across
 	var maxw := W - 360
 	var lines: Array = [[]]
 	var lw := 0.0
@@ -1385,13 +1392,16 @@ func _draw_keys() -> void:
 	var fw := UiKit.face("m4")
 	var zk := roundi(11 * s)
 	var zw := roundi(13 * s)
+	if key_sb == null or key_sb_s != s:
+		key_sb = _sb(BONE, Color(0, 0, 0, 0), 0, 2)
+		key_sb_s = s
 	for kb in keys_boxes:
 		var r0: Rect2 = kb.r
 		var it: Array = kb.it
 		var x: float = r0.position.x - keys_rect.position.x
 		var y: float = r0.position.y - keys_rect.position.y
 		var kw: float = _mono_w(it[0], 11) + 10
-		keys_c.draw_style_box(_sb(BONE, Color(0, 0, 0, 0), 0, 2), Rect2(Vector2(x, y + 5) * s, Vector2(kw, 16) * s))
+		keys_c.draw_style_box(key_sb, Rect2(Vector2(x, y + 5) * s, Vector2(kw, 16) * s))
 		keys_c.draw_string(fk, Vector2((x + 5) * s, (y + 13) * s + (fk.get_ascent(zk) - fk.get_descent(zk)) / 2), it[0], HORIZONTAL_ALIGNMENT_LEFT, -1, zk, INK)
 		keys_c.draw_string(fw, Vector2((x + kw + 5) * s, (y + 13) * s + (fw.get_ascent(zw) - fw.get_descent(zw)) / 2), it[1], HORIZONTAL_ALIGNMENT_LEFT, -1, zw, BONE)
 
@@ -1710,7 +1720,8 @@ func _rest_update(_dt: float) -> void:
 	var p: Dictionary = sim.player
 	var city: bool = sim.map_id == "city" and sim.game.phase != "over"
 	if city:
-		var M := Rect2(bo_map_box().position / s, bo_map_box().size / s)
+		var mb := bo_map_box()
+		var M := Rect2(mb.position / s, mb.size / s)
 		var tb := toast_box()
 		var hit := tb.size.x > 0 and tb.intersects(M)
 		bo_fade = clampf(bo_fade + (-1.0 if hit else 1.0) * _dt * 7.2, 0.0, 1.0)   # 0.12 a frame at 60
@@ -1801,13 +1812,25 @@ func _rest_update(_dt: float) -> void:
 		sit_b.position = Vector2(roundf((W * s - sit_b.size.x) / 2), (H - 120) * s - sit_b.size.y)
 
 
+const MAP_LOST := Color("#3a3a3a")   # the mini-map's marks: a POI lost, under attack (blinking), standing
+const MAP_HIT := Color("#ff4a3a")
+const MAP_HIT_DIM := Color("#8a2a20")
+const MAP_POI := Color("#ffd88a")
+const MAP_CROSS := Color("#777777")
+const MAP_DESTROYER := Color("#ff6a2a")   # a boss (the Destroyer bigger and redder-orange), a crewmate, one down
+const MAP_BOSS := Color("#ff3a2a")
+const MAP_MATE := Color("#8fd0ff")
+const MAP_DOWN := Color("#d65a3a")
+
+
 ## the Black Out mini-map (boMapDraw: POIs lit while held, red while attacked, dark once lost, the next one pulsing;
 ## bosses, the crew and you), fading under a banner that covers it; and the arrow to a POI under attack off screen
 func _draw_bo() -> void:
 	var sim: Sim = m.sim
 	if sim.map_id != "city" or sim.game.phase == "over" or m.demo:
 		return
-	var M := Rect2(bo_map_box().position / s, bo_map_box().size / s)
+	var mb := bo_map_box()
+	var M := Rect2(mb.position / s, mb.size / s)
 	var t: float = sim.game.time
 	var c := map_c
 	if bo_fade > 0:
@@ -1829,21 +1852,21 @@ func _draw_bo() -> void:
 				c.draw_rect(Rect2(q - Vector2(r, r), Vector2(r, r) * 2), WARN)
 				continue
 			var r: float = (3.4 if co.poi.get("major", false) else 2.6) * s
-			var col := Color("#3a3a3a") if co.lost else (Color("#ff4a3a") if blink else Color("#8a2a20")) if co.get("attack", false) else Color("#ffd88a")
+			var col := MAP_LOST if co.lost else (MAP_HIT if blink else MAP_HIT_DIM) if co.get("attack", false) else MAP_POI
 			c.draw_circle(q, r, col)
 			if co.lost:
-				c.draw_line(q - Vector2(r, r), q + Vector2(r, r), Color("#777777"), maxf(1.0, s))
-				c.draw_line(q + Vector2(r, -r), q + Vector2(-r, r), Color("#777777"), maxf(1.0, s))
+				c.draw_line(q - Vector2(r, r), q + Vector2(r, r), MAP_CROSS, maxf(1.0, s))
+				c.draw_line(q + Vector2(r, -r), q + Vector2(-r, r), MAP_CROSS, maxf(1.0, s))
 			if co.get("next", false) and not co.get("attack", false):
 				c.draw_arc(q, r + 3 * s, 0, TAU, 24, Color(1, 120 / 255.0, 80 / 255.0, 0.5 + 0.5 * sin(t * 6)), 1.5 * s)
 		for e in sim.enemies:
 			if e.type == "boss":
 				var q: Vector2 = P.call(e.x, e.y)
 				var z := (5.0 if e.boss == "destroyer" else 3.5) * s
-				c.draw_colored_polygon(PackedVector2Array([q + Vector2(0, -z), q + Vector2(z, 0), q + Vector2(0, z), q + Vector2(-z, 0)]), Color("#ff6a2a") if e.boss == "destroyer" else Color("#ff3a2a"))
+				c.draw_colored_polygon(PackedVector2Array([q + Vector2(0, -z), q + Vector2(z, 0), q + Vector2(0, z), q + Vector2(-z, 0)]), MAP_DESTROYER if e.boss == "destroyer" else MAP_BOSS)
 		for o in sim.players.values():
 			if not is_same(o, sim.player) and (o.alive or o.get("downed", false)):
-				c.draw_circle(P.call(o.x, o.y), 2 * s, Color("#8fd0ff") if o.alive else Color("#d65a3a"))
+				c.draw_circle(P.call(o.x, o.y), 2 * s, MAP_MATE if o.alive else MAP_DOWN)
 		var me: Vector2 = P.call(sim.player.x, sim.player.y)
 		c.draw_circle(me, 2.6 * s + 1, Color.BLACK)
 		c.draw_circle(me, 2.6 * s, Color.WHITE)
