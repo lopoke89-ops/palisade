@@ -34,11 +34,13 @@ var wall_mm: MultiMesh
 var wall_mi: MultiMeshInstance3D
 var props_root: Node3D
 var props := {}   # prop id -> {mi, skey, seen}
+var node_look := {}   # tile -> [type, layers, locked, prop id] a resource node's prop was last set to (_props)
 var cache := {}   # look key -> ArrayMesh
 var debris_mi: MeshInstance3D
 var debris_sig := PackedInt32Array()
 var ghost: MeshInstance3D
 var ghost_mesh: ImmediateMesh
+var ghost_key: Array = []   # what the ghost mesh was built for (_ghost)
 var ghost_mat: StandardMaterial3D
 var flood_mi: MeshInstance3D
 var flood_lv := 0.0
@@ -164,6 +166,7 @@ func frame(dt: float) -> void:
 		for k in props.keys():
 			props[k].mi.queue_free()
 		props.clear()
+		node_look.clear()
 		cache.clear()
 		scenery.build_map(map_root)
 	var tk := "%s|%d|%d" % [mk, sim.terr_log.size(), sim.terr.size()]
@@ -414,6 +417,9 @@ func _walls() -> void:
 	burning.clear()
 	var WH := V3.WALL_H
 	for j in range(vis[2], vis[3] + 1):
+		var row := sim.walls.slice(j * N + vis[0], j * N + vis[1] + 1)
+		if row.count(null) == row.size():   # no walls in this row on screen (one engine call, not a tile at a time)
+			continue
 		for i in range(vis[0], vis[1] + 1):
 			var w = sim.walls[j * N + i]
 			if w == null:
@@ -501,8 +507,17 @@ func _props() -> void:
 		if not _tile_on(n.i, n.j):
 			continue
 		var layers := ceili(n.amt / 16.0) if n.type == 0 else 0
+		var tk: int = n.j * sim.N + n.i
+		var was = node_look.get(tk)
+		if was != null and was[0] == n.type and was[1] == layers and was[2] == n.locked and props.has(was[3]):
+			var P: Dictionary = props[was[3]]   # the same look as last time: what _prop does then, without its keys
+			P.seen = frame_n
+			P.mi.visible = true
+			continue
 		var sk := "n|%d|%d|%d|%d|%d" % [n.i, n.j, n.type, layers, 1 if n.locked else 0]
-		_prop("n%d_%d" % [n.i, n.j], sk, _node.bind(n, layers))
+		var id := "n%d_%d" % [n.i, n.j]
+		_prop(id, sk, _node.bind(n, layers))
+		node_look[tk] = [n.type, layers, n.locked, id]
 	if sim.pvp() == "base":
 		for co in sim.cores:
 			_stake_prop(co)
@@ -594,15 +609,22 @@ func _face_oval(g: V3Mesh, x: float, z: float, y: float, rx: float, ry: float, c
 # ---------------------------------------------------------------- the build ghost
 
 func _ghost() -> void:
-	ghost_mesh.clear_surfaces()
 	var p: Dictionary = sim.player
-	if not p.alive or sim.game.phase == "over" or sim.casino() or m.demo or not m.settings.data.get("build", true) or sim.pvp() == "ffa":
+	var tg := {}
+	if not (not p.alive or sim.game.phase == "over" or sim.casino() or m.demo or not m.settings.data.get("build", true) or sim.pvp() == "ffa"):
+		tg = sim.build_target(p, sim.game.sel, sim.game.piece == "door")
+	var y := 0.0
+	var key: Array = []   # all the mesh depends on, empty when there's no ghost; rebuilt only when it changes
+	if not tg.is_empty() and sim.inb(tg.i, tg.j):
+		y = sim.height_at(tg.i + 0.5, tg.j + 0.5) * V3.TER + 0.012
+		key = [tg.i, tg.j, tg.ok, tg.act, tg.mat, y]
+	if key == ghost_key:
 		return
-	var tg := sim.build_target(p, sim.game.sel, sim.game.piece == "door")
-	if not sim.inb(tg.i, tg.j):
+	ghost_key = key
+	ghost_mesh.clear_surfaces()
+	if key.is_empty():
 		return
 	# drawGhost: a dashed outline, yellow or red, and the piece itself, faint, where it would go
-	var y := sim.height_at(tg.i + 0.5, tg.j + 0.5) * V3.TER + 0.012
 	var i: float = tg.i
 	var j: float = tg.j
 	ghost_mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)

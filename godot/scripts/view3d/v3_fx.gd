@@ -197,7 +197,20 @@ func _commit_imm(im: ArrayMesh, v: Array) -> void:
 
 ## a camera-facing quad of size s at p into one of the particle MultiMeshes
 func _q(buf: PackedFloat32Array, p: Vector3, s: float, col: Color) -> void:
-	buf.append_array([s, 0.0, 0.0, p.x, 0.0, s, 0.0, p.y, 0.0, 0.0, s, p.z, col.r, col.g, col.b, col.a])
+	# [s, 0, 0, x,  0, s, 0, y,  0, 0, s, z,  r, g, b, a], written in place (resize zeroes the rest): an Array
+	# literal to append costs twice as much
+	var o := buf.size()
+	buf.resize(o + 16)
+	buf[o] = s
+	buf[o + 3] = p.x
+	buf[o + 5] = s
+	buf[o + 7] = p.y
+	buf[o + 10] = s
+	buf[o + 11] = p.z
+	buf[o + 12] = col.r
+	buf[o + 13] = col.g
+	buf[o + 14] = col.b
+	buf[o + 15] = col.a
 
 
 func _tri(v: Array, a: Vector3, b: Vector3, c: Vector3, ca: Color, cb: Color, cc: Color) -> void:
@@ -661,28 +674,49 @@ func _kills(dt: float) -> void:
 # ---------------------------------------------------------------- on the ground
 
 ## a ring on the ground: centre, height, radius and half-width in tiles (from a table of unit circle points)
+## (the ring's triangles are made once round the origin per size and moved into place in one engine call)
 func _ring(x: float, y: float, gy: float, r: float, w: float, col: Color, n: int = 36, v: Array = []) -> void:
 	var tv: Array = dec_v if v.is_empty() else v
-	var c: PackedVector2Array = _circle(n)
-	var vs: PackedVector3Array = tv[0]
 	var r0 := r - w
 	var r1 := r + w
-	for i in n:
-		var c0 := c[i]
-		var c1 := c[i + 1]
-		var a := Vector3(x + c0.x * r0, gy, y + c0.y * r0)
-		var b := Vector3(x + c1.x * r0, gy, y + c1.y * r0)
-		var d := Vector3(x + c1.x * r1, gy, y + c1.y * r1)
-		var e := Vector3(x + c0.x * r1, gy, y + c0.y * r1)
-		vs.append_array([a, b, d, a, d, e])
-	tv[0] = vs   # packed arrays are copied on write: put it back
+	var key := [r0, r1, n]
+	var sh = _rings.get(key)
+	if sh == null:
+		if _rings.size() >= 64:   # the growing rings (main.rings) are a new size every frame: keep it small
+			_rings.clear()
+		var c: PackedVector2Array = _circle(n)
+		sh = PackedVector3Array()
+		for i in n:
+			var c0 := c[i]
+			var c1 := c[i + 1]
+			var a := Vector3(c0.x * r0, 0.0, c0.y * r0)
+			var b := Vector3(c1.x * r0, 0.0, c1.y * r0)
+			var d := Vector3(c1.x * r1, 0.0, c1.y * r1)
+			var e := Vector3(c0.x * r1, 0.0, c0.y * r1)
+			sh.append_array([a, b, d, a, d, e])
+		_rings[key] = sh
+	_put(tv, Transform3D(Basis(), Vector3(x, gy, y)) * sh, col)
+
+
+## triangles of one colour onto a [verts, cols] batch (each array is taken out while it grows, so the batch's copy
+## doesn't make it copy itself on write)
+func _put(tv: Array, verts: PackedVector3Array, col: Color) -> void:
+	var vs: PackedVector3Array = tv[0]
+	tv[0] = PackedVector3Array()
+	vs.append_array(verts)
+	tv[0] = vs
 	var cs := PackedColorArray()
-	cs.resize(n * 6)
+	cs.resize(verts.size())
 	cs.fill(col)
-	tv[1].append_array(cs)
+	var all: PackedColorArray = tv[1]
+	tv[1] = PackedColorArray()
+	all.append_array(cs)
+	tv[1] = all
 
 
 var _circles := {}
+var _rings := {}   # [r0, r1, n] -> a ring's triangles round the origin (_ring)
+var _fans := {}   # n -> a disc's triangles round the origin, radius 1 (_disc scales them)
 
 
 func _circle(n: int) -> PackedVector2Array:
@@ -695,17 +729,15 @@ func _circle(n: int) -> PackedVector2Array:
 
 
 func _disc(x: float, y: float, gy: float, r: float, col: Color, n: int = 24, rz: float = -1.0) -> void:
-	var ctr := Vector3(x, gy, y)
 	var ry := r if rz < 0 else rz
-	var c: PackedVector2Array = _circle(n)
-	var vs: PackedVector3Array = dec_v[0]
-	for i in n:
-		vs.append_array([ctr, Vector3(x + c[i].x * r, gy, y + c[i].y * ry), Vector3(x + c[i + 1].x * r, gy, y + c[i + 1].y * ry)])
-	dec_v[0] = vs
-	var cs := PackedColorArray()
-	cs.resize(n * 3)
-	cs.fill(col)
-	dec_v[1].append_array(cs)
+	var fan = _fans.get(n)
+	if fan == null:
+		var c: PackedVector2Array = _circle(n)
+		fan = PackedVector3Array()
+		for i in n:
+			fan.append_array([Vector3.ZERO, Vector3(c[i].x, 0.0, c[i].y), Vector3(c[i + 1].x, 0.0, c[i + 1].y)])
+		_fans[n] = fan
+	_put(dec_v, Transform3D(Basis.from_scale(Vector3(r, 1.0, ry)), Vector3(x, gy, y)) * fan, col)
 
 
 func _gy(x: float, y: float) -> float:

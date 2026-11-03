@@ -334,12 +334,16 @@ func _prop(r: Dictionary, wanted: String) -> Node3D:
 
 # ---------------------------------------------------------------- records
 
-func _rec(key: String, model: Array, kind: String) -> Dictionary:
+## model: [key, build] (_player_model), or a library id, whose builder (_id_model) is made only for a new record
+func _rec(key: String, model, kind: String) -> Dictionary:
+	var mk: String = model if model is String else model[0]
 	var r: Dictionary = recs.get(key, {})
-	if not r.is_empty() and r.mkey != model[0]:   # changed class or outfit
+	if not r.is_empty() and r.mkey != mk:   # changed class or outfit
 		_release(r)
 		r = {}
 	if r.is_empty():
+		if model is String:
+			model = _id_model(model)
 		var n := _take(model[0], model[1])
 		if n == null:
 			return {}
@@ -386,7 +390,7 @@ func frame(dt: float) -> void:
 			_player(r, p, dt)
 	var q: Dictionary = sim.qm
 	if not q.get("gone", false) and not q.is_empty() and lib.has("npc:delgado"):
-		var r := _rec("qm", _id_model("npc:delgado"), "qm")
+		var r := _rec("qm", "npc:delgado", "qm")
 		if not r.is_empty():
 			_delgado(r, q, dt)
 	if sim.casino():
@@ -397,7 +401,7 @@ func frame(dt: float) -> void:
 		var cid: String = "enemy:" + (str(e.boss) if e.type == "boss" else str(e.type))
 		if not lib.has(cid):
 			cid = "enemy:rifle"
-		var r := _rec("e:" + str(e.id), _id_model(cid), "boss" if e.type == "boss" else "enemy")
+		var r := _rec("e:" + str(e.id), cid, "boss" if e.type == "boss" else "enemy")
 		if not r.is_empty():
 			_enemy(r, e, dt)
 	for k in recs.keys():
@@ -827,7 +831,7 @@ func _casino_staff(dt: float) -> void:
 		var cid: String = STAFF.get(q[1], "npc:delgado")
 		if not lib.has(cid):
 			cid = "npc:delgado"
-		var r := _rec(q[0], _id_model(cid), "staff")
+		var r := _rec(q[0], cid, "staff")
 		if r.is_empty():
 			continue
 		_place(r, q[2], q[3], q[4], dt, -0.12 if q[5] else 0.0)
