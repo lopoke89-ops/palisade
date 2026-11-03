@@ -38,6 +38,7 @@ var sacks: Array = []
 var flow_dirty := false
 var flow_t := 0.0
 var poi_due := false   # the POI fields are a step behind the stake's and get rebuilt next step (see compute_flow)
+var flow_jobs: Array = []   # Black Out: the fields a rebuild put on workers (FlowJob, the stake's first), taken next step
 var next_id := 1
 var bullet_seq := 0
 var game := {}
@@ -398,14 +399,71 @@ func enter_cost(k: int) -> float:
 
 
 ## the stake's flow field (Black Out's POI fields are rebuilt on demand after). poi_later, for the rebuilds in play:
-## the POI fields keep last step's for one step, so a 64x64 step doesn't build the stake's and a POI's together
+## the POI fields keep last step's for one step, so a 64x64 step doesn't build the stake's and a POI's together. On a
+## map this big (Black Out's 64x64) the rebuilds in play go to workers instead: the stake's field and every POI field a
+## raider has asked for, from this step's costs, all taken at the start of the next step (flow_wait), whatever the
+## workers' speed, so the raiders steer by them a step later every time.
 func compute_flow(poi_later: bool = false) -> void:
+	flow_wait(false)
+	if poi_later and N >= FLOW_ASYNC_N and not is_frost():
+		var cost := _flow_costs()
+		var goals := [[-1, core_k]]
+		for ci in poi_flows:
+			if not cores[ci].get("lost", false):
+				goals.append([ci, idx(cores[ci].i, cores[ci].j)])
+		for g in goals:
+			var J := FlowJob.new()
+			J.ci = g[0]
+			J.goal = g[1]
+			J.side = N
+			J.cost = cost.duplicate()
+			J.cost[J.goal] = 0.0   # enter_cost's core_k
+			J.task = WorkerThreadPool.add_task(J.run, true, "flow field")
+			flow_jobs.append(J)
+		poi_due = false
+		return
 	flow_to(core_k, dist)
 	if poi_later:
 		poi_due = not poi_flows.is_empty()
 	else:
 		poi_flows.clear()
 		poi_due = false
+
+
+const FLOW_ASYNC_N := 48   # maps this big (Black Out's 64x64) rebuild their fields in play on workers (compute_flow)
+
+
+## a field on a worker: its goal and costs, read on the main thread; the field, once run
+class FlowJob extends RefCounted:
+	var ci := -1   # the POI (its index in cores), or -1 for the stake's field
+	var goal := 0
+	var side := 0
+	var cost := PackedFloat64Array()
+	var out := PackedFloat64Array()
+	var task := -1
+
+	func run() -> void:
+		out.resize(side * side)
+		Sim._flow_field(goal, side, cost, PackedByteArray(), out)
+
+
+## the fields compute_flow put on workers, waited for: with keep (the next step) they replace the stake's field and the
+## POI fields they were built for; without (a rebuild in place of them, a new map, the sim going) they're dropped
+func flow_wait(keep: bool) -> void:
+	for J in flow_jobs:
+		WorkerThreadPool.wait_for_task_completion(J.task)
+		if keep:
+			if J.ci < 0:
+				dist = J.out
+			else:
+				poi_flows[J.ci] = J.out
+	flow_jobs.clear()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PREDELETE:   # a worker may still be filling a field (no calls of its own here: it's going)
+		for J in flow_jobs:
+			WorkerThreadPool.wait_for_task_completion(J.task)
 
 
 func mark_flow() -> void:
@@ -1078,6 +1136,8 @@ func update(dt: float, ctl: Dictionary = {}) -> void:
 				return
 			if not campaign_advance():
 				start_build(24.0 + Df.build)
+	if not flow_jobs.is_empty():   # the fields last step's rebuild put on workers (compute_flow)
+		flow_wait(true)
 	if poi_due:   # a step after the stake's rebuild (never the same step: mark_flow waits 0.3 s)
 		poi_due = false
 		poi_flows.clear()
@@ -6394,17 +6454,60 @@ const _FLOW_DI := [1, -1, 0, 0]   # Pal.D4, split for flow_to's inner loop
 const _FLOW_DJ := [0, 0, 1, -1]
 
 
-## Dijkstra from goal over enter_cost. Black Out's 64x64 rebuilds two of these in one step, so it stays lean: every
-## tile's cost is read once, height_link is only asked on Frost (elsewhere any in-bounds step links), and the heap is two
+## Dijkstra from goal over enter_cost. Black Out's 64x64 rebuilds these in play, so it stays lean: every tile's cost is
+## read once (_flow_costs), height_link is only asked on Frost (elsewhere any in-bounds step links), and the heap is two
 ## packed arrays rather than a small Array per entry (any pop order gives the same field: the costs are never negative).
 func flow_to(goal: int, out: PackedFloat64Array) -> void:
+	var cost := _flow_costs()
+	cost[goal] = 0.0   # enter_cost's core_k
+	_flow_field(goal, N, cost, _flow_links(), out)
+
+
+## every tile's enter_cost with every stake solid (flow_to opens its goal): enter_cost's rules inlined, as in best_step
+## (keep the three in step)
+func _flow_costs() -> PackedFloat64Array:
 	var n := N * N
-	out.fill(1e9)
 	var cost := PackedFloat64Array()
 	cost.resize(n)
 	for k in n:
-		cost[k] = enter_cost(k)
-	var frost := is_frost()
+		var t: int = terr[k]
+		if t == PalMaps.T_PIT or t == PalMaps.T_ROCK or t == PalMaps.T_DRUM or t == PalMaps.T_BLDG:   # terr_solid
+			cost[k] = 1e6
+			continue
+		var w = walls[k]
+		if w != null:
+			cost[k] = 1.0 + w.hp / 8.0
+			continue
+		var nd = node_ix.get(k)
+		if nd != null and nd.solid:
+			cost[k] = 1e6
+			continue
+		var base := 1.4 if debris[k] != 0 else (0.75 if t == PalMaps.T_ROAD else (1.25 if t == PalMaps.T_RUBBLE else 1.0))
+		cost[k] = base + (2.4 if t == PalMaps.T_WATER else (1.1 if t == PalMaps.T_LOW and flood_on else 0.0))
+	for k in core_ks:
+		cost[k] = 1e6
+	return cost
+
+
+## on Frost, which of each tile's four steps (_FLOW_DI/_FLOW_DJ) height_link allows (1); elsewhere empty: any in-bounds
+## step links
+func _flow_links() -> PackedByteArray:
+	var links := PackedByteArray()
+	if not is_frost():
+		return links
+	links.resize(4 * N * N)
+	for k in N * N:
+		for q in 4:
+			if height_link(k % N, k / N, k % N + _FLOW_DI[q], k / N + _FLOW_DJ[q]):
+				links[4 * k + q] = 1
+	return links
+
+
+## the Dijkstra itself, on its arguments only (no Sim state), so a worker can run it (compute_flow)
+static func _flow_field(goal: int, side: int, cost: PackedFloat64Array, links: PackedByteArray, out: PackedFloat64Array) -> void:
+	var n := side * side
+	out.fill(1e9)
+	var frost := not links.is_empty()
 	var done := PackedByteArray()
 	done.resize(n)
 	out[goal] = 0.0
@@ -6439,17 +6542,17 @@ func flow_to(goal: int, out: PackedFloat64Array) -> void:
 		if done[uk] != 0 or bv > out[uk]:
 			continue
 		done[uk] = 1
-		var ui := uk % N
-		var uj := uk / N
+		var ui := uk % side
+		var uj := uk / side
 		var nv: float = bv + cost[uk]
 		for q in 4:
 			var i: int = ui + _FLOW_DI[q]
 			var j: int = uj + _FLOW_DJ[q]
-			if i < 0 or j < 0 or i >= N or j >= N:
+			if i < 0 or j < 0 or i >= side or j >= side:
 				continue
-			if frost and not height_link(ui, uj, i, j):
+			if frost and links[4 * uk + q] == 0:
 				continue
-			var k := j * N + i
+			var k := j * side + i
 			if nv < out[k]:
 				out[k] = nv
 				var c := hn   # rises from the bottom
