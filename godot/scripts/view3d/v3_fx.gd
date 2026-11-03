@@ -663,7 +663,7 @@ func _kills(dt: float) -> void:
 					rot.z = drift * sin(q * 2.4) * 0.35
 			part.position = pos
 			part.rotation = rot
-			part.transparency = 1.0 - fade
+			V3Actors.fade(part, fade)
 		# the halo and the ground ring
 		var hc := Color(0.53, 0.88, 0.92, exp(-age * 4) * birth * 0.85 * fade)
 		_q(buf_add, node.position, (2 + age * 2) * 0.55, hc)

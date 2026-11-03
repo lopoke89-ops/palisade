@@ -254,6 +254,7 @@ func _layered(am: ArrayMesh) -> ArrayMesh:
 			nv += vc
 		var sm := ShaderMaterial.new()
 		sm.shader = _layer_shader(m0.normal_enabled, m0.cull_mode)
+		sm.set_meta("layer", [m0.normal_enabled, m0.cull_mode])   # for its faded copy (fade)
 		var ta := Texture2DArray.new()
 		ta.create_from_images(alb)
 		sm.set_shader_parameter("texture_albedo", ta)
@@ -304,12 +305,15 @@ const LAYERS := 16
 static var layer_shaders := {}   # "normal|cull" -> Shader
 
 
-## BaseMaterial3D's shader (base_material_3d.cpp) for what these materials turn on, each value from the layer's slot
-func _layer_shader(normal: bool, cull: int) -> Shader:
-	var k := "%s|%d" % [normal, cull]
+## BaseMaterial3D's shader (base_material_3d.cpp) for what these materials turn on, each value from the layer's slot;
+## faded: its alpha-with-depth-pre-pass form, the whole surface at the fade uniform (fade)
+static func _layer_shader(normal: bool, cull: int, faded: bool = false) -> Shader:
+	var k := "%s|%d|%s" % [normal, cull, faded]
 	if layer_shaders.has(k):
 		return layer_shaders[k]
-	var c := "shader_type spatial;\nrender_mode blend_mix, depth_draw_opaque, %s, diffuse_burley, specular_schlick_ggx;\n" % ["cull_back", "cull_front", "cull_disabled"][cull]
+	var c := "shader_type spatial;\nrender_mode blend_mix, %s, %s, diffuse_burley, specular_schlick_ggx;\n" % ["depth_prepass_alpha" if faded else "depth_draw_opaque", ["cull_back", "cull_front", "cull_disabled"][cull]]
+	if faded:
+		c += "uniform float fade = 1.0;\n"
 	c += "uniform sampler2DArray texture_albedo : source_color, filter_linear_mipmap, repeat_enable;\n"
 	if normal:
 		c += "uniform sampler2DArray texture_normal : hint_normal, filter_linear_mipmap, repeat_enable;\n"
@@ -324,11 +328,69 @@ func _layer_shader(normal: bool, cull: int) -> Shader:
 	c += "\tfloat roughness_tex = dot(vec4(1.0), vec4(1.0, 0.0, 0.0, 0.0));\n\tROUGHNESS = roughness_tex * roughness_l[layer];\n"
 	if normal:
 		c += "\tNORMAL_MAP = texture(texture_normal, vec3(base_uv, float(layer))).rgb;\n\tNORMAL_MAP_DEPTH = normal_scale_l[layer];\n"
-	c += "\tEMISSION = (emission_l[layer].rgb + vec3(0.0)) * emission_energy_l[layer];\n}\n"
+	c += "\tEMISSION = (emission_l[layer].rgb + vec3(0.0)) * emission_energy_l[layer];\n"
+	if faded:
+		c += "\tALPHA = albedo_l[layer].a * albedo_tex.a * fade;\n"
+	c += "}\n"
 	var sh := Shader.new()
 	sh.code = c
 	layer_shaders[k] = sh
 	return sh
+
+
+## GeometryInstance3D.transparency does nothing in the Compatibility renderer (a lone cube at 0.5 draws as at 0), so a
+## fade gives each surface a see-through copy of its material, made the first time this instance fades and kept for
+## the next, and puts the instance's own materials back when the fade ends. With a depth pre-pass, so a faded body
+## reads as one figure rather than showing its insides. Surfaces of other material kinds are left as they are.
+static func fade(g: GeometryInstance3D, alpha: float) -> void:
+	var mi := g as MeshInstance3D
+	if mi == null or mi.mesh == null:
+		return
+	var F: Dictionary = mi.get_meta("fade", {})
+	if alpha >= 0.999:
+		if F.get("on", false):
+			if F.over != null:
+				mi.material_override = F.base_over
+			else:
+				for si in F.surf.size():
+					mi.set_surface_override_material(si, F.base_surf[si])
+			F.on = false
+		return
+	if F.is_empty() or F.mesh != mi.mesh:
+		F = {"mesh": mi.mesh, "on": false, "base_over": mi.material_override, "over": null, "surf": [], "base_surf": []}
+		if mi.material_override != null:
+			F.over = _faded(mi.material_override)
+		else:
+			for si in mi.mesh.get_surface_count():
+				F.base_surf.append(mi.get_surface_override_material(si))
+				F.surf.append(_faded(mi.get_active_material(si)))
+		mi.set_meta("fade", F)
+	if not F.on:
+		if F.over != null:
+			mi.material_override = F.over
+		else:
+			for si in F.surf.size():
+				if F.surf[si] != null:
+					mi.set_surface_override_material(si, F.surf[si])
+		F.on = true
+	for m in ([F.over] if F.over != null else F.surf):
+		if m is BaseMaterial3D:
+			m.albedo_color.a = m.get_meta("a0") * alpha
+		elif m is ShaderMaterial:
+			m.set_shader_parameter("fade", alpha)
+
+
+static func _faded(m: Material) -> Material:
+	if m is BaseMaterial3D:
+		var c: BaseMaterial3D = m.duplicate()
+		c.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_DEPTH_PRE_PASS
+		c.set_meta("a0", (m as BaseMaterial3D).albedo_color.a)
+		return c
+	if m is ShaderMaterial and m.has_meta("layer"):
+		var c: ShaderMaterial = m.duplicate()
+		c.shader = _layer_shader(m.get_meta("layer")[0], m.get_meta("layer")[1], true)
+		return c
+	return null
 
 
 ## [ArrayMesh, Skin] from the pieces: their binds one after another (each piece's bone indices moved past the binds
@@ -391,7 +453,7 @@ func _park(n: Node3D, mkey: String) -> void:
 	n.visible = false
 	var info: Dictionary = n.get_meta("info")
 	for g in info.geoms:
-		g.transparency = 0.0
+		fade(g, 1.0)
 	if info.has("ring"):
 		info.ring.visible = false
 	if not pool.has(mkey):
@@ -565,7 +627,7 @@ func frame(dt: float) -> void:
 		if c.t > 1.3:
 			var a := clampf((c.t - 1.3) / 0.5, 0, 1)
 			for g in c.node.get_meta("info").geoms:
-				g.transparency = a
+				fade(g, 1.0 - a)
 		if c.t > 1.8:
 			_park(c.node, c.mkey)
 			corpses.remove_at(i)
@@ -675,7 +737,7 @@ func _once_on(r: Dictionary) -> bool:
 
 
 ## hit: the body kicks (a short swell; an overlay pass reads as see-through in the Compatibility renderer); faded
-## (stealth, a body going) through the instances' transparency
+## (stealth) through see-through copies of its materials (fade)
 func _flash(r: Dictionary, on: bool, alpha: float = 1.0) -> void:
 	var k := 1.0 + (0.06 if on else 0.0)
 	r.node.scale = Vector3.ONE * V3.CHAR * k
@@ -683,7 +745,7 @@ func _flash(r: Dictionary, on: bool, alpha: float = 1.0) -> void:
 		return
 	r.alpha = alpha
 	for g in r.info.geoms:
-		g.transparency = 1.0 - alpha
+		fade(g, alpha)
 
 
 ## a slim ring under a soldier in their team colour (PvP) or slot colour (the online crew)
