@@ -91,7 +91,7 @@ function musicCrossfade(k,token){
   musicStart(k,token,{t,d});
 }
 function musicTick(){
-  if(!AC)return;
+  if(!AC)return;usAmbience();   // THE UNDERSTRIP: Area 67's hum (10k)
   if(!mus.bus){mus.bus=AC.createGain();mus.lp=AC.createBiquadFilter();mus.lp.type='lowpass';mus.lp.frequency.value=20000;mus.lp.Q.value=.7;mus.bus.connect(mus.lp);mus.lp.connect(master)}
   // v0.10.8: the music dips under a big win's fanfare (mus.duck: until when), then comes back over about a second
   const now=AC.currentTime,bv=.5*cfg.music,G=mus.bus.gain,dk=now<mus.duck;

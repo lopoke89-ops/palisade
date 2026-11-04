@@ -147,6 +147,7 @@ function explode(x,y,R=1.65,power=1,own=null,raid=false){if(!raid&&typeof minesN
 let kickX=0,kickY=0,shakeT=0;
 function addShake(x,y,a){
   rec(['k',r2(x),r2(y),a]);
+  if(game&&game.us&&reduceMotion())a*=.35;   // THE UNDERSTRIP: Reduce Motion softens the bosses' stage changes and the doors
   const d=player?Math.hypot(x-player.x,y-player.y):6;const s=a*cfg.shake/(1+d*.35);shake=Math.min(12,shake+s);
   if(a>=10&&d<5&&!demo)buzz(35);
 }

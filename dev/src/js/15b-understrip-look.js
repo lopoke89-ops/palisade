@@ -84,7 +84,7 @@ function usLights(hole,at){const L=game.lay,U=game.us,t=game.time;let c;
   const dark=usBossNow()==='visitor'&&U.bossStage>0&&!U.bossDown;   // the Visitor's field fails: the room's own lights go out
   if(!dark)L.lamps.forEach((p,n)=>{const on=usLampOn(n);if(!on)return;c=at(p[0],p[1],WH*.6);hole(c[0],c[1],TW2*2.8*(.7+.3*on),.75*on)});
   for(const q of L.tanks||[]){c=at(q[0],q[1],WH*.6);hole(c[0],c[1],TW2*1.2,dark?.25:.4)}   // the tanks' glow
-  if(!dark)L.neon.forEach((p,n)=>{const fl=.45+.35*Math.max(0,Math.sin(t*2.3+n)*Math.sin(t*5.7+n*3));c=at(p[0],p[1],WH*.4);hole(c[0],c[1],TW2*1.9,fl)});
+  if(!dark)L.neon.forEach((p,n)=>{const fl=reduceMotion()?.6:.45+.35*Math.max(0,Math.sin(t*2.3+n)*Math.sin(t*5.7+n*3));c=at(p[0],p[1],WH*.4);hole(c[0],c[1],TW2*1.9,fl)});
   L.shrines.forEach((s,n)=>{if(s.arena&&!U.bossDown)return;c=at(s.x,s.y,WH*.6);hole(c[0],c[1],TW2*(U.lit&(1<<n)?2.8:1.6),.8)});
   for(const m of L.merchants){c=at(m.x,m.y,WH*.6);hole(c[0],c[1],TW2*2.2,.75)}
   if(usKind(U.level)!=='boss'||U.bossDown){c=at(L.exit[0],L.exit[1]);hole(c[0],c[1],TW2*2,.7)}
@@ -92,3 +92,9 @@ function usLights(hole,at){const L=game.lay,U=game.us,t=game.time;let c;
   for(const d of U.drops){c=at(d.x,d.y);hole(c[0],c[1],TW2*.9,.5)}
   for(const e of enemies)if(e.type==='boss'){c=at(e.x,e.y,WH*.6);hole(c[0],c[1],TW2*1.4,.55)}   // a boss you can always find
 }
+// Settings › DUNGEON BRIGHTNESS on its top step (work order 12): every raider is marked above the darkness, as telegraphs are,
+// so nothing in the room needs your light to be seen. A thin ring at the feet and a dot over the head, shape not colour alone.
+function usBrightMarks(){if((cfg.usBright|0)<US.darkL.length-1)return 0;let n=0;
+  for(const e of enemies){if(e.dead)continue;const c=iso(e.x,e.y);if(c[0]<-20||c[0]>W+20||c[1]<-40||c[1]>H+20)continue;n++;
+    g.strokeStyle=e.type==='boss'?'rgba(255,214,90,.75)':'rgba(255,120,90,.6)';g.lineWidth=1.3*u;g.beginPath();g.ellipse(c[0],c[1],TW2*.42,TH2*.42,0,0,Math.PI*2);g.stroke();
+    g.fillStyle=g.strokeStyle;g.beginPath();g.moveTo(c[0],c[1]-WH*1.55);g.lineTo(c[0]-2.5*u,c[1]-WH*1.55-4*u);g.lineTo(c[0]+2.5*u,c[1]-WH*1.55-4*u);g.closePath();g.fill()}return n}

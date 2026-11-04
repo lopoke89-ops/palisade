@@ -6,7 +6,7 @@
 THE UNDERSTRIP's case, items, claims and rooms. **Not applied: Big U asked to hold it.** Everything another agent needs to
 apply, verify and roll it back (including a decision on when the import fix goes live) is in
 [`supabase/PENDING_DEPLOY_v012_understrip.md`](supabase/PENDING_DEPLOY_v012_understrip.md). The mode itself is on branch
-`claude/nifty-lamport-jdl74i` (M0-M3 done; not merged).
+`claude/nifty-lamport-jdl74i` (M0-M4 done; not merged).
 
 ## v0.10.9: a wider casino panel on desktop (October 11)
 

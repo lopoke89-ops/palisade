@@ -156,6 +156,7 @@ understrip_m3          understrip bosses
 understrip_squad       serial understrip net
 understrip_server      node understrip server
 understrip_case        understrip cosmetics
+understrip_m4          understrip hud
 
 # Windows-only extras from the old run_targeted.ps1 groups; not in the default run (they were never in run_all.sh).
 # Run them with @extra.

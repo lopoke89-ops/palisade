@@ -508,7 +508,7 @@ function replayFx(list){
   }}finally{replaying=false}
 }
 function guestUpdate(dt){
-  game.time+=dt;if(game.phase==='raid'&&$('tipText').textContent&&!game.pvp)setTip('');for(const c of cores)c.flash=Math.max(0,c.flash-dt);
+  game.time+=dt;if(game.phase==='raid'&&$('tipText').textContent&&!game.pvp&&!game.us)setTip('');   // THE UNDERSTRIP times its own tipsfor(const c of cores)c.flash=Math.max(0,c.flash-dt);
   const k=1-Math.exp(-dt*14);
   const smooth=e=>{if(e.tx===undefined)return;const dx=e.tx-e.x,dy=e.ty-e.y,d=Math.hypot(dx,dy);
     if(d>3){e.x=e.tx;e.y=e.ty}else{e.x+=dx*k;e.y+=dy*k;e.walk=(e.walk||0)+d*k*3}};

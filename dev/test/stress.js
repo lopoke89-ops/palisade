@@ -3,12 +3,15 @@
 //   A. Endless raid 20 against a walled base (solo)
 //   B. a 6-player crew (5 bots firing at the nearest raider) in a boss raid
 //   C. a long Endless session: 30 simulated minutes, checking memory and list sizes as it goes
+//   E. THE UNDERSTRIP's finale with 4 players: the Visitor's stage 2 in the dark, its drone swarm out (work order 11)
+//   F. THE UNDERSTRIP: an Area 67 level with every raider hunting and an alarm's drones, 2 players (the phone target)
+// CASES=A,B,D node stress.js  runs only those (the default is all)
 // Reports update (simulation) and render time per frame, and, with PROFILE=1, the functions using the most time.
 const { chromium } = require('playwright');
 const page = process.argv[2] || 'debug.html';
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--disable-gpu', '--disable-accelerated-2d-canvas', '--enable-precise-memory-info', '--js-flags=--expose-gc'] });
-  const out = { page };
+  const out = { page }, want = k => !process.env.CASES || process.env.CASES.split(',').includes(k);
   const open = async () => {
     const p = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, hasTouch: true, isMobile: true });
     await p.goto(`http://localhost:${process.env.PORT || 8080}/${page}?debug=1`); await p.waitForTimeout(900);
@@ -43,7 +46,7 @@ const page = process.argv[2] || 'debug.html';
       return { stages: st, update_med: q(up, .5), update_p90: q(up, .9), update_max: q(up, .99), render_med: rn.length ? q(rn, .5) : null, render_p90: rn.length ? q(rn, .9) : null } };
   };
   // A. Endless raid 20, walled base
-  {
+  if (want('A')) {
     const p = await open(); await p.evaluate(setup);
     out.A_endless20 = await prof(p, () => { const P = __pal; __wallUp(); __immortal(); P.player.x = P.core.i + .5; P.player.y = P.core.j + 2.5;
       P.game.wave = 19; P.startRaid(); for (let i = 0; i < 900; i++) P.update(1 / 60); __immortal();
@@ -51,7 +54,7 @@ const page = process.argv[2] || 'debug.html';
     await p.close();
   }
   // B. 6 players + boss raid
-  {
+  if (want('B')) {
     const p = await open(); await p.evaluate(setup);
     out.B_six_boss = await prof(p, () => { const P = __pal; __wallUp();
       const cls = ['sniper', 'grenadier', 'quartermaster', 'soldier', 'sniper'];
@@ -61,7 +64,7 @@ const page = process.argv[2] || 'debug.html';
     await p.close();
   }
   // D. 6 players in Endless raid 20 (the biggest crowds the game makes)
-  {
+  if (want('D')) {
     const p = await open(); await p.evaluate(setup);
     out.D_six_endless20 = await prof(p, () => { const P = __pal; __wallUp();
       const cls = ['sniper', 'grenadier', 'quartermaster', 'soldier', 'sniper'];
@@ -70,8 +73,35 @@ const page = process.argv[2] || 'debug.html';
       const r = __time(240, true); r.enemies = P.enemies.filter(e => !e.dead).length; r.peakEnemies = peak; r.parts = P.parts.length; r.bullets = P.bullets.length; return r });
     await p.close();
   }
+  // E and F. THE UNDERSTRIP (bots shoot the nearest raider; the boss's own moves run as they would)
+  const usOpen = async () => {
+    const p = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, hasTouch: true, isMobile: true });
+    await p.goto(`http://localhost:${process.env.PORT || 8080}/${page}?debug=1`); await p.waitForTimeout(900);
+    await p.evaluate(async () => { const P = __pal; P.pick.mode = 'understrip'; P.showPage('solo'); document.getElementById('startBtn').click(); await new Promise(z => setTimeout(z, 400)) });
+    await p.evaluate(setup);
+    await p.evaluate(() => { window.usBots = n => { const P = __pal, cls = ['sniper', 'grenadier', 'quartermaster']; for (let i = 0; i < n; i++) { const q = P.makePlayer('bot' + i, 'Bot' + i, cls[i % 3], i + 1, '', ''); P.players.set('bot' + i, q); P.usRefit(q) } } });
+    return p };
+  if (want('E')) {
+    const p = await usOpen();
+    out.E_understrip_finale4 = await prof(p, () => { const P = __pal; P.game.paused = false; usBots(3); P.usChangeLevel(9); __immortal();
+      const A = P.game.lay.arena; let n = 0; for (const q of P.players.values()) { q.x = A.x + A.w / 2 - 1 + n++ * .7; q.y = A.y + A.h - 3; q.tp++ }
+      for (let i = 0; i < 400; i++) { __immortal(); P.update(1 / 60) }
+      const B = P.enemies.find(e => e.type === 'boss'); if (B) P.hurtEnemy(B, B.hp - B.max * .45, P.player.id);
+      for (let i = 0; i < 1500; i++) { __immortal(); __bots(); P.update(1 / 60); const V = P.enemies.find(e => e.type === 'boss'); if (V) V.hp = Math.max(V.hp, V.max * .2) }
+      const r = __time(240, true); r.enemies = P.enemies.filter(e => !e.dead).length; r.drones = P.enemies.filter(e => e.type === 'drone' && !e.dead).length; r.stage = P.game.us.bossStage; r.bfx = (P.game.us.bfx || []).length; r.parts = P.parts.length; r.bullets = P.bullets.length; r.players = P.players.size; return r });
+    await p.close();
+  }
+  if (want('F')) {
+    const p = await usOpen();
+    out.F_understrip_area67_2 = await prof(p, () => { const P = __pal; P.game.paused = false; usBots(1); P.usChangeLevel(6); __immortal();
+      for (const e of P.enemies) if (e.us) { e.us.st = 'hunt'; e.us.t = 0 }
+      const q = P.game.lay.us.rooms.find(o => o.role === 'room'); if (q) P.usDronePack(q.x + q.w / 2, q.y + q.h / 2, 6);
+      for (let i = 0; i < 900; i++) { __immortal(); __bots(); P.update(1 / 60) }
+      const r = __time(240, true); r.enemies = P.enemies.filter(e => !e.dead).length; r.drones = P.enemies.filter(e => e.type === 'drone' && !e.dead).length; r.parts = P.parts.length; r.bullets = P.bullets.length; return r });
+    await p.close();
+  }
   // C. long Endless: 30 simulated minutes (update only, a rendered frame every simulated second), memory every 5 minutes
-  {
+  if (want('C')) {
     const p = await open(); await p.evaluate(setup);
     const cdp = await p.context().newCDPSession(p);
     await p.evaluate(() => { __wallUp(); __immortal(); __pal.player.x = __pal.core.i + .5; __pal.player.y = __pal.core.j + 2.5 });

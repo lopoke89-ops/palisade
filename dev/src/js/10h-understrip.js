@@ -11,7 +11,8 @@ const US={rollCd:2,levels:10,   // rollCd: D5, the roll comes back in 2 s in thi
   lives:3,regionLives:1,juice:3,juiceMax:6,drink:.8,heal:.45,drinkSlow:.4,exitR:1.6,exitHold:3,lift:5,wipe:2.6,bleed:20,
   restR:1.4,merchR:1.7,chestR:1.1,doorR:1.5,pickR:.85,restClear:8,
   sight:7.5,hear:3.2,shotHear:8,alertR:6,ambushR:2.6,regroupHp:.3,regroupT:4,maxAlive:40,
-  flood:{first:[50,80],every:[75,115],warn:5,len:18},darkL:[.93,.86,.78,.66],zoom:.87};
+  regionHp:[1,1.2,1.4],squadHp:.12,   // M4: raiders are tougher deeper down, and for a bigger squad (bosses have their own +35% a player)
+  flood:{first:[50,80],every:[75,115],warn:5,len:18},darkL:[.93,.86,.76,.58],zoom:.87};
 const US_MUFFLE=650;   // Hz: the casino's music heard through concrete (region 1; work order 4.3)
 // the run: [region, level kind, boss]. Region 3 ends with the Gatekeeper's level, then the finale's (the Visitor)
 const US_PLAN=[[1,'normal',''],[1,'normal',''],[1,'boss','pitboss'],[2,'normal',''],[2,'normal',''],[2,'boss','custodian'],
@@ -26,6 +27,7 @@ const US_RUN={seed:0,level:0};
 let US_CUR=null;   // the generated level for US_RUN, and what usLay made of it
 const usKind=lv=>(US_PLAN[lv]||US_PLAN[0])[1];
 const usBossOf=lv=>(US_PLAN[lv]||US_PLAN[0])[2];
+const usRaiderHp=()=>US.regionHp[(US_PLAN[game.us.level]||US_PLAN[0])[0]-1]*(1+US.squadHp*Math.max(0,players.size-1));
 const usBossNow=()=>game&&game.us?usBossOf(game.us.level):'';
 // a level's place in its region (the seed is the run's, the region's and that place, so region 1 is as it was in M1)
 const usInRegion=lv=>lv-US_PLAN.findIndex(q=>q[0]===US_PLAN[lv][0]);
@@ -395,7 +397,7 @@ function usCardHud(){const U=game.us,C=$('usCard');if(!C)return;const on=U.lift>
   txt($('usCardEy'),'THE LIFT · GOING DOWN');txt($('usCardT'),`${US_NAMES[lv]} · CLEARED`);
   const S=$('usCardS');S.textContent='';for(const[a,v]of[['RAIDERS',kills],['FOUND',found|0],['TIME',`${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`],['LIVES',Math.max(0,U.lives)]]){const sp=document.createElement('span');const em=document.createElement('em');em.textContent=v;sp.append(em,a);S.append(sp)}
   txt($('usCardN'),newReg?`${US_REG[US_PLAN[lv][0]].name} cleared · +1 life · next: ${US_NAMES[next]} · the Lift Merchant rides down with you.`:'Next: '+US_NAMES[next]+' · the Lift Merchant is at the bottom.')}
-function usKitHud(p){const k=$('usKit');if(!k)return;usWeaponHud(p);usCardHud();
+function usKitHud(p){const k=$('usKit');if(!k)return;usWeaponHud(p);usCardHud();usTipsTick(p);
   txt($('usDrinkN'),p.ujT>0?'…':`${p.uj|0}`);cls($('usDrink'),'empty',!(p.uj>0));cls($('usDrink'),'on',p.ujT>0);
   const bar=p.uSel==='bar',n=p.ui?p.ui[p.uSel]|0:0;txt($('usItemLab'),bar?'BARRICADE':'FLARE');txt($('usItemN'),String(n));cls($('usUse'),'empty',!n);
   txt($('usOtherN'),String(p.ui?(bar?p.ui.flare:p.ui.bar)|0:0));txt($('usOtherLab'),bar?'FLARE':'BARRICADE')}
@@ -423,3 +425,21 @@ function usOver(){const U=game.us,win=!!game.won,me=player;sfx(win?'win':'lose',
   $('againBtn').hidden=NET.mode==='guest';$('overWait').hidden=NET.mode!=='guest';
   setTimeout(()=>{if(game.phase==='over')$('over').hidden=false},900)}
 const usMerchName=p=>{const m=p&&game.lay?usMerchantAt(p):-1;return m>=0?US_MERCH[game.lay.merchants[m].kind].name:'THE TUNNEL TRADER'};
+// ---------- first-time help (work order 12): one line, once per device, the first time each thing is near ----------
+// Tap or click the line to skip it; it goes by itself after a few seconds. The Tips setting turns all of them off.
+const US_TIPS={shrine:()=>ctl('NEON SHRINE: tap ARMORY to rest. Juice refills, everyone gets up, and you come back here. Raiders return too.','NEON SHRINE: E rests. Juice refills, everyone gets up, and you come back here. Raiders return too.',`NEON SHRINE: ${padKey('armory')} rests. Juice refills, everyone gets up, and you come back here. Raiders return too.`),
+  merchant:()=>ctl('A MERCHANT: tap ARMORY to trade, for salvage only.','A MERCHANT: E to trade, for salvage only. The Shrine Keeper and the Lift Merchant sell upgrades.',`A MERCHANT: ${padKey('armory')} to trade, for salvage only.`),
+  gate:()=>'THE BOSS GATE: it seals 4 seconds after the first of you steps through. Rest at the shrine first.',
+  salvage:()=>'YOUR SALVAGE stays where you fell. Walk over it to take it back; fall again first and it\'s gone.'};
+const US_TIP_KEY='palisade.usTips.v1';let usTipSeen=null,usTipUntil=0,usTipOn='';
+function usTipsLoad(){if(usTipSeen)return usTipSeen;try{usTipSeen=new Set(JSON.parse(localStorage.getItem(US_TIP_KEY)||'[]'))}catch(e){usTipSeen=new Set()}return usTipSeen}
+function usTip(id){const S=usTipsLoad();if(S.has(id)||cfg.tips===false)return false;S.add(id);try{localStorage.setItem(US_TIP_KEY,JSON.stringify([...S]))}catch(e){}
+  usTipOn=id;usTipUntil=game.time+9;setTip(US_TIPS[id]());return true}
+function usTipsTick(p){if(!p||!game.lay||demo)return;const L=game.lay,U=game.us,near=(x,y,r)=>Math.hypot(x-p.x,y-p.y)<r;
+  if(usTipOn&&game.time>usTipUntil){usTipOn='';setTip('')}
+  if(!usTipOn&&$('tipText').textContent&&game.time>14)setTip('');   // the opening line goes once you're moving
+  if(usTipOn||!p.alive)return;
+  const S=usTipsLoad();   // the first unseen one that's here now
+  for(const [id,here]of[['shrine',()=>L.shrines.some(s=>!s.arena&&near(s.x,s.y,6))],['merchant',()=>L.merchants.some(m=>near(m.x,m.y,5.5))],
+    ['gate',()=>L.gate&&L.gate.length&&L.gate.some(([x,y])=>near(x+.5,y+.5,7))],['salvage',()=>U.drops.some(d=>d.id===p.id)]])if(!S.has(id)&&here()&&usTip(id))break}
+function usTipSkip(){if(!understrip())return;usTipOn='';setTip('')}

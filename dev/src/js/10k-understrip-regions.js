@@ -66,8 +66,8 @@ function usShove(a,D){const xs=D.tiles.map(t=>t[0]),ys=D.tiles.map(t=>t[1]),hori
 function usBlastOpenAll(){const U=game.us;if(!U||!U.blast)return;U.blast.forEach((s,n)=>{if(s)usBlastSet(n,0)})}
 
 // ---------- Area 67: containment alarms and the drones ----------
-ETYPES.drone={hp:10,speed:3.4};ECODE.push('drone');BOUNTY.drone=2;   // network codes only grow at the end
-const US_DRONE={touch:4,cd:.6,r:.55,light:2,pack:[3,6],alive:12,alarm:3};
+ETYPES.drone={hp:10,speed:2.6};ECODE.push('drone');BOUNTY.drone=2;   // network codes only grow at the end
+const US_DRONE={touch:4,cd:.6,r:.55,light:2,litSpeed:.5,pack:[4,6],alive:12,alarm:3};   // tables/enemies.csv
 const usRoomAt=(x,y)=>{const R=game.lay.us.rooms;for(let n=0;n<R.length;n++){const q=R[n];if(x>=q.x&&x<q.x+q.w&&y>=q.y&&y<q.y+q.h)return n}return -1};
 // usAlert: the first raider to start hunting in a room of region 3 trips its alarm (once a room until the next rest)
 function usAlarm(e){if(usRegion()!==3||NET.mode==='guest'||!e.us||e.type==='drone')return;const U=game.us;if(!U.alarms)usHazStart(U);const n=usRoomAt(e.us.home[0],e.us.home[1]);
@@ -82,7 +82,8 @@ function usDroneTick(e,dt){e.cd=Math.max(-1,e.cd-dt);e.flash=Math.max(0,e.flash-
   let f=null,bd=1e9;for(const a of allies())if(a.alive){const d=Math.hypot(a.x-e.x,a.y-e.y);if(d<bd){bd=d;f=a}}if(!f)return;
   let tx=f.x,ty=f.y;if(bd>1.2&&!losClear(e.x,e.y,f.x,f.y)){const F=US_FLOW.get(f.id);if(F&&F.k>=0){const i=e.x|0,j=e.y|0;let b=F.f[idx(i,j)],bi=i,bj=j;
     for(const[a,c]of[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]){const I=i+a,J=j+c;if(!inb(I,J)||solidTile(I,J))continue;const v=F.f[idx(I,J)];if(v<b){b=v;bi=I;bj=J}}tx=bi+.5;ty=bj+.5}}
-  const dx=tx-e.x,dy=ty-e.y,l=Math.hypot(dx,dy)||1,s=Math.min(l,e.speed*dt*((game.Df&&game.Df.speed)||1));e.aim={x:dx/l,y:dy/l};moveEnt(e,dx/l*s,dy/l*s,false);
+  e.litT=(e.litT||0)-dt;if(e.litT<=0){e.litT=.2;e.lit=usLitAt(e.x,e.y)}   // in your light: half speed (checked five times a second)
+  const dx=tx-e.x,dy=ty-e.y,l=Math.hypot(dx,dy)||1,s=Math.min(l,e.speed*dt*((game.Df&&game.Df.speed)||1)*(e.lit?US_DRONE.litSpeed:1));e.aim={x:dx/l,y:dy/l};moveEnt(e,dx/l*s,dy/l*s,false);
   if(bd<US_DRONE.r+.2&&e.cd<=0){e.cd=US_DRONE.cd;hurtAlly(f,US_DRONE.touch*game.Df.dmg);sfx('hit2',e.x,e.y)}}
 // is this spot in someone's light (a cone, a flare, a lamp)? Drones there take double damage
 function usLitAt(x,y){const L=game.lay,U=game.us;
@@ -125,9 +126,17 @@ function usDrawCloud(v,s){const t=game.time;for(const k of v.cloud){if((k*7)%3)c
 function usDrawBlastWarn(d){for(const[x,y]of d.tiles){const c=iso(x+.5,y+.5);g.fillStyle=`rgba(255,170,40,${.25+.25*Math.sin(game.time*14)})`;g.beginPath();g.ellipse(c[0],c[1],TW2*.45,TH2*.45,0,0,Math.PI*2);g.fill()}
   const c=iso(d.cx,d.cy);label('DOOR',c[0],c[1]-WH*1.6,'#ffb02a',10)}
 // lamps by region: Shelter 7's tubes flicker on timers; Area 67's lab lights fail more on its second level
-function usLampOn(n){const R=usRegion(),T=game.lay.lampT&&game.lay.lampT[n];if(R===1||!T)return 1;const t=(game.time+T.ph)%(T.on+T.off);
+function usLampOn(n){const R=usRegion(),T=game.lay.lampT&&game.lay.lampT[n];if(R===1||!T)return 1;if(reduceMotion())return R===3&&game.us.level-US_PLAN.findIndex(q=>q[0]===3)>=1?.7:1;const t=(game.time+T.ph)%(T.on+T.off);   // Reduce Motion: steady light
   if(R===2)return t<T.on?1:t<T.on+.12?.3:0;const lvl=game.us.level-US_PLAN.findIndex(q=>q[0]===3);return lvl>=1&&t>T.on*.6?(Math.sin(t*37)>0?.5:0):1}
 // the darkness's tint: Shelter 7 olive (red when the Custodian cracks), Area 67 cold blue (black when the Visitor's field fails)
 function usDarkTint(){const R=usReg(),U=game.us,b=usBossNow();let d=R.dark;
   if(b==='custodian'&&U.bossStage>0&&!U.bossDown)d={r:40,g:2,b:2};
   return{L:usDarkL()+(b==='visitor'&&U.bossStage>0&&!U.bossDown?.04:0),r:d.r,g:d.g,b:d.b,warm:0}}
+// ---------- Area 67's hum (work order 4.3: the music cuts out, only ambience plays) ----------
+// Two low sines a fifth apart, the upper one drifting, on the music volume; it fades with the boss tracks and off the mode.
+let US_AMB=null;
+function usAmbience(){if(!AC)return;const now=AC.currentTime,on=understrip()&&!document.hidden&&cfg.music>0&&usRegion()===3&&!usMusicRoute()&&game.phase!=='over',want=on?.05*cfg.music:0;
+  if(!US_AMB){if(!on)return;const g=AC.createGain();g.gain.value=0;g.connect(master);const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=320;lp.connect(g);
+    const a=AC.createOscillator(),b=AC.createOscillator(),l=AC.createOscillator(),lg=AC.createGain();a.frequency.value=55;b.frequency.value=82.6;b.type='triangle';l.frequency.value=.13;lg.gain.value=1.6;
+    l.connect(lg);lg.connect(b.frequency);a.connect(lp);b.connect(lp);a.start();b.start();l.start();US_AMB={g,want:-1}}
+  if(Math.abs(US_AMB.want-want)>.001){US_AMB.want=want;US_AMB.g.gain.setTargetAtTime(want,now,want?1.2:.4)}}

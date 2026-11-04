@@ -35,7 +35,7 @@ button:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
 #skipBtn{pointer-events:auto;margin-top:6px;background:transparent;border:1px solid var(--warn);color:var(--warn);
   font-family:var(--stencil);font-weight:800;letter-spacing:.1em;font-size:13px;padding:5px 10px}
 #tip{position:fixed;left:16px;right:16px;top:calc(env(safe-area-inset-top,0px) + 86px);text-align:center;pointer-events:none;font-size:12px}
-#tip span{background:rgba(20,18,16,.78);border-left:3px solid var(--warn);padding:5px 9px;display:inline-block;max-width:36ch;text-wrap:balance;text-shadow:0 1px 0 #000}
+#tip.skip{pointer-events:auto;cursor:pointer}#tip span{background:rgba(20,18,16,.78);border-left:3px solid var(--warn);padding:5px 9px;display:inline-block;max-width:36ch;text-wrap:balance;text-shadow:0 1px 0 #000}
 #toast{position:fixed;left:16px;right:16px;top:36%;text-align:center;pointer-events:none;
   font-family:var(--stencil);font-weight:900;font-size:clamp(24px,7vw,40px);letter-spacing:.06em;
   color:var(--bone);text-shadow:0 2px 0 #000,0 0 18px rgba(0,0,0,.8);opacity:0;transition:opacity .25s}

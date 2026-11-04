@@ -44,7 +44,9 @@ for r in ci:
     check(re.fullmatch(r'(skin|hat|trail|fx|bg):[a-z0-9]+', r['id']) is not None, f"{r['id']}: ids are cat:lowercase")
     check(r['id'] not in have_id, f"{r['id']} already exists in the catalogue")
     check((r['cat'], r['name'].lower()) not in have_name, f"{r['id']}: '{r['name']}' is already a {r['cat']}'s name")
-check(case['id'] not in re.findall(r'^\s*([a-z]+):\{name:', src('18-cosmetics.js').split('const CASES={')[1].split('};')[0], re.M), 'the case id is taken')
+cases_js = src('18-cosmetics.js').split('const CASES={')[1].split('};')[0]
+own = re.search(case['id'] + r":\{name:'([^']+)'", cases_js)   # since M3 the case is in the game: its own entry is fine, another case's isn't
+check(case['id'] not in re.findall(r'^\s*([a-z]+):\{name:', cases_js, re.M) or (own and own.group(1) == case['name']), 'the case id is taken')
 
 # derived numbers
 def dps(w):

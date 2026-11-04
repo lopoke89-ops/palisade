@@ -96,7 +96,8 @@ function openChat(){
 function closeChat(){$('chatBar').hidden=true;$('chat').classList.remove('open');$('chatIn').blur()}
 function clearChat(){chatLines.length=0;$('chatLog').textContent='';$('lChatLog').textContent='';chatRate.clear();closeChat()}
 // v0.9.3.9: Settings > Show tips during games. Tips are the how-to hints; toasts (bosses, rewards, IS BACK) always show.
-function setTip(t){const show=!!t&&cfg.tips!==false;$('tip').hidden=!show;$('tipText').textContent=show?t:''}
+function setTip(t){const show=!!t&&cfg.tips!==false;$('tip').hidden=!show;$('tipText').textContent=show?t:'';$('tip').classList.toggle('skip',show&&understrip())}
+$('tip').addEventListener('click',()=>usTipSkip());   // THE UNDERSTRIP's tips are skippable
 const txt=(el,v)=>{if(el._v!==v){el._v=v;el.textContent=v}};
 const cls=(el,c,on)=>{if(el.classList.contains(c)!==on)el.classList.toggle(c,on)};
 const hid=(el,on)=>{on=!!on;if(el.hidden!==on)el.hidden=on};   // re-setting hidden counts as a page change and restyles every frame

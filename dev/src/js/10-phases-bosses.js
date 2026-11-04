@@ -263,7 +263,7 @@ function spawnEnemy(type){
   const t=spawnTile();if(!t)return;spawnEnemyAt(type,t[0]+.5,t[1]+.5);
 }
 function spawnEnemyAt(type,x,y){
-  const T=ETYPES[type]||ETYPES.rifle,s=(1+(game.mode==='endless'?.045:game.mode==='blitz'?.085:.07)*(game.wave-1))*game.Df.hp*mapHp();
+  const T=ETYPES[type]||ETYPES.rifle,s=(1+(game.mode==='endless'?.045:game.mode==='blitz'?.085:.07)*(game.wave-1))*game.Df.hp*mapHp()*(game.us?usRaiderHp():1);   // THE UNDERSTRIP: by region and squad (10h)
   const e={id:nextId++,type,x,y,hp:T.hp*s,max:T.hp*s,cd:1+rnd(),walk:rnd()*6,aim:{x:-1,y:0},flash:0,speed:T.speed,scanT:0,foe:null,planted:false};
   if(type==='medic')e.ab=1.5;if(type==='spotter'){e.st=0;e.stT=0;e.stM=1;e.lx=x;e.ly=y}
   if(type==='shield')Object.assign(e,{shieldHitsMax:RIOT_SHIELD_HITS,shieldHitsLeft:RIOT_SHIELD_HITS,shieldBroken:false});
