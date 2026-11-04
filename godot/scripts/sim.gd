@@ -1167,7 +1167,7 @@ func control_local(dt: float, ctl: Dictionary) -> void:
 	var spr: bool = p.sprT > 0
 	p.dgCd = maxf(0.0, p.dgCd - dt)
 	var roll := rolling(p)
-	if roll:   # the back roll moves this screen's soldier; walking waits until it lands
+	if roll:   # the roll moves this screen's soldier; walking waits until it lands
 		var e0: float = p.dgE
 		p.dgE = minf(Pal.ROLL.dur, p.dgE + dt)
 		var s: float = Pal.ROLL.dist * (roll_pos(p.dgE) - roll_pos(e0))
@@ -4613,7 +4613,7 @@ func local_sprint() -> void:
 	p.sprCd = p.sprT + Pal.SPRINT.cd - L
 
 
-# ---------------------------------------------------------------- the back roll (09-actions.js)
+# ---------------------------------------------------------------- the roll (09-actions.js)
 
 static func roll_pos(e: float) -> float:
 	var x := clampf((e - Pal.ROLL.go) / (Pal.ROLL.end - Pal.ROLL.go), 0.0, 1.0)
@@ -4657,13 +4657,35 @@ func roll_tick(p: Dictionary, dt: float) -> void:
 			p.dgE = -1.0
 
 
-## V, the right mouse button, RB, the ROLL button: straight back from the aim. True if it rolled.
-func local_roll() -> bool:
+## V, the right mouse button, RB, the ROLL button (v0.11.1): the way you're moving (move: the world direction you push,
+## zero when standing still); standing still, straight back from the aim (the back roll). True if it rolled.
+func local_roll(move: Vector2 = Vector2.ZERO) -> bool:
 	var p := player
 	if not can_roll(p):
 		return false
-	start_roll(p, -p.aim.x, -p.aim.y)
+	var d: Vector2 = move if move.length() > 0 else Vector2(-p.aim.x, -p.aim.y)
+	start_roll(p, d.x, d.y)
 	return true
+
+
+## v0.11.1: a guest isn't told which way someone else rolls (their row has only how far in): it reads it off their
+## travel, from where the roll began, drawing a back roll until they've moved (rollSeen)
+func roll_seen(p: Dictionary, was: float, ox: float, oy: float) -> void:
+	if not rolling(p):
+		return
+	if not (was >= 0):
+		p.rlFrom = Vector2(ox, oy)
+		p.dgX = -p.aim.x
+		p.dgY = -p.aim.y
+		p.rlKnown = false
+	if not p.get("rlKnown", false):
+		var from: Vector2 = p.get("rlFrom", Vector2(ox, oy))
+		var d: Vector2 = Vector2(p.tx, p.ty) - from
+		var l: float = d.length()
+		if l > 0.2:
+			p.dgX = d.x / l
+			p.dgY = d.y / l
+			p.rlKnown = true
 
 
 func local_reload() -> void:

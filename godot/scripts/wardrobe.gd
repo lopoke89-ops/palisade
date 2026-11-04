@@ -356,6 +356,8 @@ func build(look: Dictionary, angle: float, t: float, scale: float, walking) -> v
 		var ankle: Vector3 = L.ankle
 		var knee: Vector3 = L.knee
 		var hip: Vector3 = L.hip
+		if o.get("usModel") and UsModels.leg(self, L, side):   # v0.12 THE UNDERSTRIP CASE: the skin's own model
+			continue
 		if o.get("sahur"):
 			column(x, 1.5 + lift, 1.05 + z, 3.4, 2.2, 5.3, "#9a6033", 0.85, 0.4)
 			beam(ankle, knee, 0.95, B, 1.05, 0.3)
@@ -416,6 +418,8 @@ func build(look: Dictionary, angle: float, t: float, scale: float, walking) -> v
 		var AC: String = skin if o.get("jersey") else B
 		beam(sh, el, 1.1 if o.get("sahur") else aw, AC, 1.0 if o.get("sahur") else aw * 0.85)
 		beam(el, ha, 1.0 if o.get("sahur") else aw * 0.82, AC, 0.9 if o.get("sahur") else aw * 0.71)
+		if o.get("usModel"):
+			UsModels.arm(self, sh, el, ha, sh == shL)
 		if o.get("reaper"):
 			beam(sh, el, 2.7, B, 2.5, 0.4)
 			beam(el, ha + (el - ha) * 0.3, 2.5, B, 2.6, 0.4)
@@ -479,7 +483,9 @@ func _gun(W: Dictionary, gunX: float, gunY: float, gunZ: float, gl: float, kick:
 
 
 func _torso() -> void:
-	if o.get("sahur"):   # one continuous wooden silhouette, kept inside the pose frame
+	if o.get("usModel") and UsModels.body(self):   # v0.12
+		pass
+	elif o.get("sahur"):   # one continuous wooden silhouette, kept inside the pose frame
 		column(0, 24.7 + bob, 0, 9.5, 22.6, 7.6, B, 0.98, 0.5)
 		for q in [[-2.6, 24, 8], [1.7, 20.4, 9], [-0.3, 28, 5], [3.3, 27, 10]]:
 			beam(Vector3(q[0], q[1] - q[2] / 2.0 + bob, 3.84), Vector3(q[0] + 0.25, q[1] + q[2] / 2.0 + bob, 3.84), 0.09, "#8b552f", 0.07, 0.03)
@@ -642,7 +648,7 @@ func _bone(th: float, y: float, ln: float, w: float = 0.42) -> void:
 func _head(W: Dictionary) -> void:
 	# opaque face pieces replace facial detail; eyes and nose behind them would break through when the head turns
 	var face_covered: bool = o.get("hood") or o.get("sheet") or o.get("pumpkin") or o.get("glitchm") or o.get("mask") or o.get("visor") or o.get("hockey") or o.get("sack") or o.get("facewrap") or o.get("khelm") or o.get("bomb") or o.get("clownface") or o.get("hybridHat") == "skullhelm"
-	if not o.get("pumpkin") and not o.get("sheet") and not o.get("sahur") and not o.get("winterModel"):
+	if not o.get("pumpkin") and not o.get("sheet") and not o.get("sahur") and not o.get("winterModel") and not o.get("usHead"):   # special heads replace the ordinary ears and face
 		column(0, 30.1 + bob, 0.2, 7.2, 6.4, 6.3, skin, 1.13, 0.6)
 		column(-4.05, 30.5 + bob, 0.15, 1.15, 2.25, 2, skin, 1, 0.3)
 		column(4.05, 30.5 + bob, 0.15, 1.15, 2.25, 2, skin, 1, 0.3)
@@ -663,10 +669,14 @@ func _head(W: Dictionary) -> void:
 	# Sahur's log reaches y=36: its worn headgear moves to that crown
 	sahur_lift = (0.0 if o.get("visor") else ((5.0 if o.get("downed") else 1.5) if o.get("headband") else (0.0 if o.get("halo") else 3.5))) if o.get("sahur") else 0.0
 	solid_hat = true if o.get("phantom") else false
+	if o.get("usModel"):
+		UsModels.head(self)
 	if o.get("winterModel"):
 		_winter_model_head()
 	elif o.get("winterHat"):
 		_winter_hat()
+	elif o.get("usHat"):   # v0.12 THE UNDERSTRIP CASE headgear
+		UsModels.hat(self, o.usHat)
 	elif o.get("hybridHat") and not o.get("sheet"):
 		_hybrid_hat()
 	elif o.get("pumpkin"):
@@ -1580,6 +1590,12 @@ static func look_for(cos: Dictionary, cls: String, slot: int = -1) -> Dictionary
 	if S.has("winterModel"):
 		o.winterModel = S.winterModel
 		o.aura = S.get("aura")
+	if S.has("usModel"):   # v0.12: a skin on its own model
+		o.usModel = S.usModel
+		if S.get("usHead"):
+			o.usHead = true
+		if S.has("aura"):
+			o.aura = S.aura
 	var C: String = CLASS_NAMES.get(cls, "SOLDIER")
 	if C == "SNIPER":
 		o.gl = 19
@@ -1614,6 +1630,8 @@ static func look_for(cos: Dictionary, cls: String, slot: int = -1) -> Dictionary
 		o.halloweenHat = H
 	elif H in HYBRID_HATS:
 		o.hybridHat = H
+	elif H in UsModels.HATS:   # v0.12
+		o.usHat = H
 	else:
 		o.helmet = S.hat
 	var strip_hats := func() -> void:
@@ -1635,6 +1653,10 @@ static func look_for(cos: Dictionary, cls: String, slot: int = -1) -> Dictionary
 		o.mark = SLOTCOL[slot % 6]
 	if S.has("winterModel"):
 		strip_hats.call()
+	if S.has("usModel") and H == "class":   # the model's own hat or head, or its own hair
+		strip_hats.call()
+		if S.has("headwear"):
+			o.usHair = true
 	return o
 
 

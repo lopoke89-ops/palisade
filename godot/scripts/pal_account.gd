@@ -556,7 +556,8 @@ static func new_operation() -> String:
 	return "%s-%s-%s-%s-%s" % [h.substr(0, 8), h.substr(8, 4), h.substr(12, 4), h.substr(16, 4), h.substr(20, 12)]
 
 
-## open_cases_v0964 (catalog 4); a server without it answers 404 and the catalog-3 opener runs.
+## open_cases_v0964 (catalog 4), or open_cases_v012 for the UNDERSTRIP CASE (catalog 6); a server without v0964 answers 404 and
+## the catalog-3 opener runs.
 ## {ok, results: [{it, dup, shards, box}], err, uncertain}. Uncertain: the opening is kept to resume.
 func open_cases(id: String, n: int, resume: Dictionary = {}) -> Dictionary:
 	var p := resume
@@ -565,8 +566,9 @@ func open_cases(id: String, n: int, resume: Dictionary = {}) -> Dictionary:
 		if persist:
 			_write(OPEN_PATH, p)
 	var args := {"p_case": p.case, "p_quantity": p.quantity, "p_operation": p.operation}
-	var r := await rpc_call("open_cases_v0964", args)
-	if r.status == 404 and p.case != "hybrid":
+	# v0.12: the UNDERSTRIP CASE (catalog 6) opens through open_cases_v012 only; every other case as before
+	var r := await rpc_call("open_cases_v012" if p.case == "understrip" else "open_cases_v0964", args)
+	if r.status == 404 and p.case != "hybrid" and p.case != "understrip":
 		r = await rpc_call("open_cases_v0962", args)
 	if not r.ok:
 		var unsure: bool = not r.status or r.status >= 500 or r.status == 401

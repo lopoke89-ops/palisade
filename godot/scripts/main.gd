@@ -491,8 +491,9 @@ func do_action(id: String) -> void:
 			_close_armory()
 		return
 	var p: Dictionary = sim.player
-	if id == "roll":   # the back roll: this screen moves its own soldier; a guest tells the host, which keeps the cooldown
-		if sim.local_roll() and net.guest():
+	if id == "roll":   # the roll (v0.11.1: the way you're moving): this screen moves its own soldier; a guest tells the host, which keeps the cooldown
+		var m := _move_intent()
+		if sim.local_roll(v.sdir_to_world(m.x, m.y).normalized() if m.length() > 0.12 else Vector2.ZERO) and net.guest():
 			net.send_roll(p.dgX, p.dgY)
 		return
 	if sim.rolling(p) and id in ["build", "nade", "special", "sprint"]:
@@ -748,9 +749,8 @@ func _mouse_world() -> Vector2:
 
 ## this frame's controls (controlLocal): keys and the left stick or left thumb move; the mouse, the right stick or the
 ## right thumb aim (sticks get the browser's aim assist); the left button, right trigger or a hard right thumb fire
-func _controls() -> Dictionary:
-	if demo or menus.active() or armory_open or skills_open:
-		return {}
+## where the player is pushing (keys, the touch stick, the controller), in screen terms: walking, and the roll's direction
+func _move_intent() -> Vector2:
 	var mx := (1.0 if Input.is_action_pressed("pal_right") else 0.0) - (1.0 if Input.is_action_pressed("pal_left") else 0.0)
 	var my := (1.0 if Input.is_action_pressed("pal_down") else 0.0) - (1.0 if Input.is_action_pressed("pal_up") else 0.0)
 	var sm: Dictionary = inp.stick_move
@@ -760,6 +760,15 @@ func _controls() -> Dictionary:
 	if inp.mode == "pad":
 		mx += inp.mv.x
 		my += inp.mv.y
+	return Vector2(mx, my)
+
+
+func _controls() -> Dictionary:
+	if demo or menus.active() or armory_open or skills_open:
+		return {}
+	var mi := _move_intent()
+	var mx := mi.x
+	var my := mi.y
 	var mag := minf(1.0, Vector2(mx, my).length())
 	var mv := v.sdir_to_world(mx, my) * mag
 	var aim := Vector2.ZERO
@@ -1255,10 +1264,10 @@ func _draw_scene() -> void:
 						o.nogun = true
 					if p.get("seat", 0):
 						CasinoView.seated(self, p.x, p.y, func(): draw_wardrobe(p.x, p.y, o))
-					elif sim.rolling(p):   # the back roll: tucked, head over heels, away from the aim
+					elif sim.rolling(p):   # the roll: tucked, head over heels, the way it rolls (v0.11.1: any way, not only back)
 						var sc := iso(p.x, p.y)
 						var cy: float = sc.y - 17 * v.u * Figure.FIG / 2.2
-						var a: float = Sim.roll_pos(p.dgE) * TAU * (-1.0 if v.world_dir_to_screen(p.aim).x >= 0 else 1.0)
+						var a: float = Sim.roll_pos(p.dgE) * TAU * (1.0 if v.world_dir_to_screen(Vector2(p.dgX, p.dgY)).x >= 0 else -1.0)
 						cv.draw_set_transform_matrix(Transform2D(0, Vector2(sc.x, cy)) * Transform2D(a, Vector2(1, 0.86), 0, Vector2.ZERO) * Transform2D(0, Vector2(-sc.x, -cy)))
 						draw_wardrobe(p.x, p.y, o)
 						cv.draw_set_transform_matrix(Transform2D.IDENTITY)

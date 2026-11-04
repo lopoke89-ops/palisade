@@ -1042,7 +1042,7 @@ func _pvp() -> void:
 	check(cp.players.g1.sal == cp.players.host.sal and cp.players.host.sal >= 9, "raid pay for everyone")
 
 
-## the back roll (v0.11.0, yard-30), the browser's numbers: 2 tiles straight back from the aim in 0.55 s, 3 s cooldown,
+## the roll (v0.11.0, yard-30; v0.11.1 the way you move), the browser's numbers: 2 tiles straight back from the aim in 0.55 s, 3 s cooldown,
 ## walls stop it, bullets miss from 0.1 s to 0.4 s, no shooting while rolling (dev/test/back_roll.js is the browser's check)
 func _roll() -> void:
 	print("the back roll")
@@ -1091,6 +1091,26 @@ func _roll() -> void:
 	check(p.dgCd == 0.0 and s.local_roll(), "after 3 s it rolls again")
 	# the curve: eased travel between 0.06 s and 0.45 s
 	check(Sim.roll_pos(0.06) == 0.0 and Sim.roll_pos(0.45) == 1.0 and absf(Sim.roll_pos(0.255) - 0.5) < 1e-9, "travel eases from 0.06 s to 0.45 s")
+	# v0.11.1: moving, the roll goes the way you push, whatever the aim
+	place.call()
+	s.control_local(1.0 / 60.0, {"aim": aim})
+	x0 = Vector2(p.x, p.y)
+	var push := Vector2(0, 1)
+	check(s.local_roll(push) and is_equal_approx(p.dgX, 0.0) and is_equal_approx(p.dgY, 1.0), "moving, the roll goes the way you push")
+	for f in 45:
+		if not s.rolling(p):
+			break
+		s.control_local(1.0 / 60.0, {"aim": aim})
+	moved = Vector2(p.x, p.y) - x0
+	check(absf(moved.length() - 2.0) < 0.06 and moved.normalized().dot(push) > 0.98, "2 tiles the way you push (%.3f, %.2f)" % [moved.length(), moved.normalized().dot(push)])
+	# a guest reads another player's roll off their travel: a back roll until they've moved
+	var o := {"aim": Vector2(1, 0), "tx": 5.0, "ty": 5.0, "dgE": 0.05, "dgX": 0.0, "dgY": 0.0}
+	s.roll_seen(o, -1.0, 5.0, 5.0)
+	check(is_equal_approx(o.dgX, -1.0) and not o.rlKnown, "another's roll is drawn as a back roll until they've moved")
+	o.tx = 5.0
+	o.ty = 5.5
+	s.roll_seen(o, 0.05, 5.0, 5.0)
+	check(o.rlKnown and is_equal_approx(o.dgY, 1.0), "then the way they're going")
 	# a wall one tile behind stops it, with no catching up
 	place.call()
 	var wi := floori(p.x) - 1

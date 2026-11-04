@@ -532,7 +532,7 @@ func _host_action(c: Dictionary, t: String, d: Dictionary) -> void:
 		"rl":
 			if p.gun.has("mag"):
 				p.rlReq = true
-		"dg":   # yard-30: a guest's back roll. The host keeps the cooldown and lets the roll's distance through its speed check.
+		"dg":   # yard-30: a guest's roll (v0.11.1: any way, not only back). The host keeps the cooldown and lets the roll's distance through its speed check.
 			if _fin(d.get("x"), -1.1, 1.1) and _fin(d.get("y"), -1.1, 1.1) and Vector2(d.x, d.y).length() > 0.5 and p.alive and not sim.casino() \
 					and not p.get("seat", 0) and not sim.rolling(p) and not (p.dgCd > 0.35):
 				sim.start_roll(p, d.x, d.y)
@@ -990,7 +990,7 @@ func _apply_wall_diff(d: Array) -> void:
 func _pl_state(p: Dictionary) -> Array:
 	return [p.id, r2(p.x), r2(p.y), r2(p.aim.x), r2(p.aim.y), ceili(p.hp), 1 if p.alive else 0, int(p.ammo) if p.gun.has("mag") else -1, int(p.tp),
 		1 if p.downed else 0, r2(p.revive), r2(minf(p.rt, 1e6)), r2(maxf(0.0, p.bcd)), r2(p.bolt / p.boltT) if p.bolt > 0 and p.boltT > 0 else 0, 1 if p.rl > 0 else 0,
-		r2(p.stun), r2(p.get("ev", 0.0)), r2(p.dgE) + 0.01 if sim.rolling(p) else 0]   # dg (yard-30): how far into a back roll, +0.01
+		r2(p.stun), r2(p.get("ev", 0.0)), r2(p.dgE) + 0.01 if sim.rolling(p) else 0]   # dg (yard-30): how far into a roll, +0.01
 
 
 static func _ch_evac_bits(p: Dictionary) -> int:
@@ -1376,12 +1376,16 @@ func _apply_snap(s: Dictionary) -> void:
 				p.y = v.call(2)
 				p.tp = int(v.call(8))
 		else:
+			var was: float = p.dgE
+			var ox: float = p.get("tx", p.x)
+			var oy: float = p.get("ty", p.y)
 			p.tx = v.call(1)
 			p.ty = v.call(2)
 			p.aim = Vector2(v.call(3), v.call(4))
 			p.face = p.aim
 			p.tp = int(v.call(8))
 			p.dgE = v.call(17) - 0.01 if v.call(17) > 0 else -1.0
+			sim.roll_seen(p, was, ox, oy)   # v0.11.1: which way they roll, read off their travel
 		if v.call(5) < p.hp - 0.01:
 			p.flash = 0.1
 		p.hp = v.call(5)

@@ -350,6 +350,9 @@ static func _scene(x: Ctx2D, id: String, w: float, h: float, t: float) -> void:
 	if HYBRID.has(id):
 		hybrid(x, w, h, t, HYBRID.keys().find(id), HYBRID[id], true)
 		return
+	if id in UsScenes.IDS:   # v0.12 THE UNDERSTRIP CASE
+		UsScenes.draw(x, id, w, h, t, not PalSettings.reduce_motion)
+		return
 	match id:
 		"campfire":
 			layer(x, "campfire", w, h, func():

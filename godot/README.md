@@ -1,6 +1,9 @@
 # Palisade: Godot client
 
-The Godot 4.7 port of the browser game, built against v0.10.9 (`4c26769`, protocol `yard-29`).
+The Godot 4.7 port of the browser game, built against v0.10.9 (`4c26769`, protocol `yard-29`), with v0.11.0's roll
+(protocol `yard-30`), v0.11.1's roll the way you move, and v0.12's UNDERSTRIP CASE (its 30 items in the Locker and in
+play, opened through `open_cases_v012`). THE UNDERSTRIP mode itself is not ported yet: the plan is
+`dev/plans/understrip-godot-port.md`.
 The plan is in `dev/plans/godot-conversion-blueprint.md`. It plays every solo co-op game the browser has:
 - all four classes;
 - 5 raids, 10 raids, Endless, Blitzkrieg Rush, Operation Whiteout and City Black Out;
@@ -62,10 +65,11 @@ Each part follows the browser code, with function names kept so the two read sid
 | Sound and music | `03-audio.js` | `scripts/pal_audio.gd`, `tools/render_sfx.gd`, `tools/convert_music.sh` |
 | Cosmetics catalog, locker, rewards, cases | `18-cosmetics.js`, `18a`/`18e` catalogs, `16d`/`16e` data | `data/cosmetics.json` (made by `tools/cos_extract.js`), `scripts/pal_locker.gd` |
 | The shaded wardrobe figure and outfit looks | `16-characters.js` (`paintWardrobeCharacter`, `buildLook`) | `scripts/wardrobe.gd` |
+| THE UNDERSTRIP CASE's ten skin models and five hats | `16i-understrip-models.js` | `scripts/us_models.gd` (through the wardrobe's hooks) |
 | Outfit auras | `16b-auras.js` | `scripts/cos_fx.gd` |
 | A canvas 2D context for the cosmetic art | (the browser's canvas) | `scripts/ctx2d.gd` |
-| Tracers, kill finishers, cosmetic particles | `20a-cosmetic-art.js`, `20b-winter-effects.js`, `20c-hybrid-effects.js`, `20-locker-ui.js` (`killFx`) | `scripts/cos_art.gd`, `scripts/main.gd` |
-| Lobby backgrounds | `18b-backgrounds.js`, `18c-background-depth.js`, `18d-winter-scenes.js`, `18f-hybrid-scenes.js` | `scripts/backgrounds.gd` |
+| Tracers, kill finishers, cosmetic particles | `20a-cosmetic-art.js`, `20b-winter-effects.js`, `20c-hybrid-effects.js`, `20d-understrip-effects.js`, `20-locker-ui.js` (`killFx`) | `scripts/cos_art.gd`, `scripts/main.gd` |
+| Lobby backgrounds | `18b-backgrounds.js`, `18c-background-depth.js`, `18d-winter-scenes.js`, `18f-hybrid-scenes.js`, `18h-understrip-scenes.js` | `scripts/backgrounds.gd`, `scripts/us_scenes.gd` |
 | Locker screen, case openings, reward cards | `20-locker-ui.js`, `20b-case-openings.js` | `scripts/locker_ui.gd`, `scripts/case_open.gd`, `scripts/menus.gd` |
 
 What `sim.gd` covers:
