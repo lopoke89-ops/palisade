@@ -6,7 +6,35 @@
 THE UNDERSTRIP's case, items, claims and rooms. **Not applied: Big U asked to hold it.** Everything another agent needs to
 apply, verify and roll it back (including a decision on when the import fix goes live) is in
 [`supabase/PENDING_DEPLOY_v012_understrip.md`](supabase/PENDING_DEPLOY_v012_understrip.md). The mode itself is on branch
-`claude/nifty-lamport-jdl74i` (M0-M4 done; not merged).
+`claude/nifty-lamport-jdl74i` (M0-M5 built; not merged).
+
+## v0.12.0: THE UNDERSTRIP (built November 4; not released)
+
+**Not live.** Built on branch `claude/nifty-lamport-jdl74i` from `main` at v0.11.1 (`f13c745`); merging to `main`, which
+publishes the site, waits for Big U's go. Protocol **`yard-31`**.
+
+A co-op dungeon crawl under the Strip, from the [work order](plans/understrip-work-order.md) (decisions D1-D17, milestones
+M0-M5; reports in `evidence/2026-11-04-understrip-m0` to `-m5`):
+- **The run:** ten seeded levels in three regions (the Flood Tunnels, Shelter 7, Area 67) and a finale; levels spliced from
+  hand-made room kits (`data/understrip/rooms-r1..3.json`, generator spec in `plans/understrip-generator.md`). No stake,
+  no building, no passive healing: Lucky Juice, Neon Shrines (rest, refill, come back here), shared lives (+1 a region),
+  salvage left where you fall. Darkness, light cones, region hazards, raiders who wait, hunt and regroup, elites, drones.
+- **Four two-stage bosses:** the Pit Boss, the Custodian, the Gatekeeper (and its pilot), the Visitor (and its blackout).
+- **Weapons and loot:** a second weapon slot on every input, nine weapons, five tiers, mods and signatures, 20 perks,
+  7 relics, chests and four merchants (the Tunnel Trader, the Shrine Keeper, the Lift Merchant, the Collector).
+- **The UNDERSTRIP CASE:** 30 items, ten skins each on its own model; a case a region cleared and one for finishing.
+- **Accessibility:** a dungeon brightness setting (its top step marks every raider), shape-coded telegraphs, Reduce Motion,
+  first-time tips; Area 67's hum where the music cuts out.
+- **Compatibility:** `yard-31` only adds fields. A `yard-30` copy (an old tab, the desktop game) is refused only by an
+  UNDERSTRIP room and plays every other mode with a `yard-31` host; the casino relay is still told `yard-30`.
+- **Server:** needs `supabase/migrations/20261104200000_v012_understrip.sql` for accounts to earn and open the case (until
+  then their UNDERSTRIP results wait in the claim queue). It also carries the `import_local_save` security fix. **Not
+  applied**: see the pending section above.
+- **Tests:** suite 117 of 120 (the three casino relay tests fail on `main` too), ten four-player runs of the whole descent
+  10 of 10, new tests `understrip_roomkit`, `understrip_gen`, `understrip_run`, `understrip_network`, `understrip_loot`,
+  `understrip_m2`, `understrip_m3`, `understrip_squad`, `understrip_server`, `understrip_case`, `understrip_m4`. Release
+  evidence, bench numbers and screens: [`evidence/2026-11-04-understrip-m5`](evidence/2026-11-04-understrip-m5/README.md).
+- **Not in this release:** the Godot desktop game has no UNDERSTRIP yet (work order 15: the port sweep comes later).
 
 ## v0.10.9: a wider casino panel on desktop (October 11)
 

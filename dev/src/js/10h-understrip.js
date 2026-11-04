@@ -38,7 +38,7 @@ const usCell=c=>c==='#'||c==='%'?T_CONC:c==='t'?T_TANK:c==='o'?T_JUNK:c===','?T_
 // the map entry (not in MAP_IDS: the mode chooses it)
 MAPS.understrip={name:'THE FLOOD TUNNELS',short:'Tunnels',under:true,night:true,hp:1/1.1,   // hp: cancels the big-map +10% (mapHp), so the tables' health is what you fight
   col:'#7cff6b',from:'out of the dark',bosses:['pitboss','custodian','gatekeeper','visitor'],
-  blurb:'Flood tunnels under the Strip. Find the lift down.',lay(){return usLay()}};
+  blurb:'Under the Strip: the flood tunnels, Shelter 7, Area 67. Find the lift down.',lay(){return usLay()}};
 let US_EDGE=new Uint8Array(0);   // tunnel wall tiles that face open ground (the only ones drawn standing)
 function usLay(){
   const L=usLevel(),T=L.T,at=(x,y)=>[x+.5,y+.5];
