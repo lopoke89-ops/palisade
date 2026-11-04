@@ -1,0 +1,9 @@
+key,value,notes
+id,understrip,
+name,UNDERSTRIP CASE,D1
+col,#7cff6b,alien green
+weights,"c:40 r:32 e:18 l:8 g:2",D7
+cost,15,shards (D7)
+drops,one each per region boss killed; one more for finishing the run,
+run_shards,2 per region cleared (at most 6),"D7; paid on success or failure, through the existing reward path"
+how,"Dropped by the bosses beneath the Strip. Finish the descent for a bonus case. Or 15 shards.",

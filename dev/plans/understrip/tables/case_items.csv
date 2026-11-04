@@ -1,0 +1,31 @@
+id,cat,name,rarity,theme,legal (section 3),note
+skin:pitboss,skin,The Pit Boss,r,vegas,ok,
+skin:shelterdweller,skin,Shelter Dweller,r,shelter,our own brand (D4: olive and orange; DCDA patch),
+skin:gunslinger,skin,The Gunslinger,r,western,ok,hat is part of the model
+skin:highroller,skin,High Roller,e,vegas,ok,
+skin:generalissimo,skin,El Generalissimo,e,vegas,invented medals and flag only,
+skin:sheriff,skin,The Sheriff,e,western,ok,hat is part of the model
+skin:stripking,skin,King of the Strip,l,vegas,highest risk: never the name or face,
+skin:custodian,skin,The Custodian,l,shelter,ok,
+skin:cardsharp,skin,The Card Sharp,l,western,ok,
+skin:visitor,skin,The Visitor,g,alien,ok,also a guaranteed drop on first finale kill
+hat:tinfoil,hat,Tinfoil Hat,c,alien,ok,
+hat:eyeshade,hat,Dealer's Eyeshade,c,vegas,ok,renamed from 'Dealer's visor': hat:visor is the Cyber Visor
+hat:antennae,hat,Antenna Headband,r,alien,ok,
+hat:plumecrest,hat,Showgirl Plume Crest,e,vegas,ok,
+hat:neonhalo,hat,Neon Halo,l,vegas,ok,hat:halo is taken: key neonhalo
+trail:chips,trail,Poker Chips,c,vegas,ok,
+trail:neontube,trail,Neon Tube,r,vegas,ok,renamed from 'Neon strip': trail:pink is already called Neon
+trail:jackpotcoins,trail,Jackpot Coins,r,vegas,ok,
+trail:tractorbeam,trail,Tractor Beam,e,alien,ok,
+trail:saucerbolt,trail,Saucer Bolt,e,alien,ok,renamed from 'Plasma bolt': trail:plasma exists
+fx:bust,fx,Bust,c,vegas,ok,
+fx:plumes,fx,Showgirl Plumes,r,vegas,ok,renamed from 'Showgirl confetti': fx:confetti exists
+fx:jackpot,fx,Jackpot!,e,vegas,generic 7s; no real slot brand,
+fx:dissolved,fx,Dissolved,l,alien,ok,
+fx:abducted,fx,Abducted,g,alien,ok,the showpiece
+bg:floodtunnels,bg,The Flood Tunnels,c,vegas,no people shown living in the tunnels,animated: drips
+bg:vaultdoor,bg,Casino Vault Door,r,vegas,ok,animated: light through the door
+bg:area67,bg,Area 67 Fence at Dusk,r,alien,no real insignia or seals,animated: searchlights; a hovering light
+bg:stripnight,bg,The Strip at Night,e,vegas,generic retro neon; not the real sign,animated: neon
+bg:specimenhall,bg,Specimen Hall,e,alien,ok,animated: tanks glow

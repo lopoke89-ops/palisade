@@ -1,0 +1,6 @@
+source,count,contents (weights),region1_rarity,region2_rarity,region3_rarity,salvage
+chest,3-5 a level (side branches),"consumable 45; salvage 25; weapon 20; perk 10","c:55 r:30 e:12 l:3","c:40 r:35 e:18 l:7","c:25 r:35 e:27 l:13",15-30 when it's salvage
+elite,1 a room cluster,"consumable 50; weapon 30; perk 20","r:65 e:30 l:5","r:50 e:38 l:12","r:35 e:45 l:20",20 bounty to the killer
+boss,one each per player,"weapon 50; perk 35; relic 15 (rare or better)","r:60 e:32 l:8","r:40 e:42 l:18","r:20 e:45 l:35",40 to the killer; 15 to everyone else (BOSSES bounty)
+boss signature,once per player per run,the boss's own drop (see bosses),,,,
+raider,every kill,salvage only,,,,BOUNTY: 4-7 by type

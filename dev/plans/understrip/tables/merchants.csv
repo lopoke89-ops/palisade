@@ -1,0 +1,5 @@
+id,name,where,per_level,stock,sells,rarity_weights,price_x,notes
+m_trader,THE TUNNEL TRADER,random side-branch alcove,1-2,4-6,2 consumables always; the rest weapons of its region or consumables; at most one +1 healing capacity,"c:55 r:32 e:13",1.0,a casino cashier who never came back up
+m_keeper,THE SHRINE KEEPER,some Neon Shrines (half of them; always the one before a boss),0-1,4,the armory's UPG lines (same costs) and healing perks,"r:60 e:35 l:5",1.0,a cleaning robot that kept working
+m_collector,THE COLLECTOR,guarded side branch (1 level in 3),0-1,3-4,legendary weapons and perks; one relic; gold only here,"l:85 g:15",1.0,a stranger in a tuxedo who doesn't age
+m_lift,THE LIFT MERCHANT,the lift between levels,1,4,a small pick of everything,"c:45 r:35 e:17 l:3",1.15,rides the freight lift with you

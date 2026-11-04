@@ -1,0 +1,10 @@
+id,region,name,slot_note,dmg,pellets,cd,spread,range,speed,pierce,mag,reload,reserve,special,signature (legendary and gold)
+w_sawnoff,1,SAWN-OFF,two barrels then a reload,10,9,0.22,0.34,4.2,22,0,2,1.5,24,falloff: full damage to 2 tiles; half by 4.2,BOTH BARRELS: hold fire to empty both at once (18 pellets)
+w_taser,1,SECURITY TASER,a casino guard's dart gun,18,1,0.55,0.03,4,30,0,8,1.8,40,stuns raiders 0.5 s (elites 0.25 s; bosses slowed 40% for 1 s); jumps to one more raider within 2 tiles at half damage,ARC: jumps to three more
+w_nailgun,1,NAIL GUN,a site tool,11,1,0.11,0.07,8,18,1,30,2.2,150,nails pin a raider for 0.2 s on a wall hit,RIVETS: every 5th nail deals triple
+w_smg,2,SHELTER SMG,1950s submachine gun,8,1,0.075,0.14,9,23,0,32,2.0,192,,DRUM MAG: 64 rounds
+w_flare,2,FLARE LAUNCHER,lights a room,15,1,1.4,0.02,12,12,0,1,1.4,8,burns 6 HP/s for 4 s; where it lands is lit (radius 5) for 10 s,STARBURST: three flares in a fan
+w_riot,2,RIOT SHOTGUN,shelter guard issue,10,7,0.65,0.2,6,24,0,6,2.4,48,knocks raiders back 0.4 tiles,SLUG: one 70-damage slug that pierces 3
+w_laser,3,LAB LASER,instant beam,14,1,0.28,0,12,0,0,10,2.0,120,hitscan; bounces off walls twice; 10 shots then a 2 s cool-down (the reload),PRISM: splits into three on the first bounce
+w_alien,3,ALIEN PISTOL,charges while held,12,1,0.1,0.02,12,30,0,6,1.8,60,hold to charge for up to 1.2 s: 12 to 64 damage; full charge pierces 3,OVERCHARGE: full charge in 0.7 s
+w_antigrav,3,ANTI-GRAV LAUNCHER,arcing grenade,22,1,1.6,0.05,9,10,0,4,2.5,16,blast radius 1.6; lifts raiders for 2 s (helpless; +25% damage taken); bosses stagger 0.5 s,WELL: the blast pulls raiders in for 1 s first
