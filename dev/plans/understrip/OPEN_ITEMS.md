@@ -61,8 +61,8 @@ the branch was made, so it merges without conflicts. See section 1 for what work
   - which skins wear other hats (the four with an open head);
   - resting reviving players who bled out;
   - M2's readings of the Marked Deck and Comp'd Room.
-- **The M0 sign-off boxes** in [`README.md`](README.md) are still unticked on paper. The user signed off every director
-  approval in this session; tick them, or have the director go through them.
+- **The M0 sign-off boxes** in [`README.md`](README.md): all ticked November 4, 2026 (King of the Strip and D9-D17 too).
+  One change came out of it: the run's rewards scale with depth (README, Sign-off). That needs a new migration.
 
 ## 6. Engineering follow-ups
 - **Stress case B on real hardware.** On this machine `stress.js` case B (six players, a boss raid) ran 7-11% slower

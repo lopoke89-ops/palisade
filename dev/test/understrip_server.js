@@ -4,11 +4,12 @@
 //    stats changes nothing but the free item and its equipment; a second import is refused.
 // 2. The UNDERSTRIP CASE: its weights and cost, its 30 items in their tiers (case_items.csv), every weighted tier stocked;
 //    open_cases_v012 opens one and awards one of its items; older catalogs never see them.
-// 3. UNDERSTRIP claims (cv:6): a won run pays 4 cases, 6 shards and 3 skill points; a run split by a rejoin pays the same in
+// 3. UNDERSTRIP claims (cv:6), with v0.12.3's scaling (20261104230000): regions pay 1, 3 and 6, the win 10 more, so a won
+//    run pays 20 cases, 20 shards and 10 skill points; a run split by a rejoin pays the same in
 //    total; a failed run pays by depth; claims replayed or too fast, and cv:5 claims of the mode, pay nothing extra.
 // 4. room_register and lobbies accept the mode; other modes' claims are unchanged.
 const {PGlite}=require('@electric-sql/pglite'),{base,U}=require('./winter-db'),fs=require('node:fs'),assert=require('node:assert/strict');
-const dir=__dirname+'/../supabase/migrations',read=n=>fs.readFileSync(dir+'/'+n,'utf8'),MIG='20261104200000_v012_understrip.sql';
+const dir=__dirname+'/../supabase/migrations',read=n=>fs.readFileSync(dir+'/'+n,'utf8'),MIG='20261104200000_v012_understrip.sql',MIG3='20261104230000_v0123_understrip_scaling_rewards.sql';
 const csv=fs.readFileSync(__dirname+'/../plans/understrip/tables/case_items.csv','utf8').trim().split('\n').slice(1).map(l=>l.split(','));
 (async()=>{const db=new PGlite(),checks=[],ok=(n,b)=>{assert.ok(b,n);checks.push(n)};
  await db.exec(base);await db.exec(read('20260930075446_palisade_v0938_all_boss_milestones.sql'));await db.exec(read('20260930141401_palisade_v0940_blitz.sql'));
@@ -25,7 +26,7 @@ const csv=fs.readFileSync(__dirname+'/../plans/understrip/tables/case_items.csv'
  await db.exec(imp);
  await db.exec(`insert into cosmetics values('hat:cap','hat','cap','Cap','c','free',null,null,0),('skin:nightshift2','skin','nightshift2','Night','r','unlock','{"bo_pois":10}',null,5) on conflict do nothing`);
  const claimBefore=(await db.query(`select pg_get_functiondef('public.claim_match_reward(jsonb)'::regprocedure) d`)).rows[0].d;
- await db.exec(read(MIG));await db.exec(read(MIG));ok('the migration applies twice',true);
+ await db.exec(read(MIG));await db.exec(read(MIG));await db.exec(read(MIG3));await db.exec(read(MIG3));await db.exec(read(MIG));ok('the migrations apply twice, in either order after the first',true);
  await db.exec('grant select,insert,update,delete on all tables in schema public to authenticated;grant usage on schema private to authenticated;grant execute on all functions in schema private to authenticated;grant execute on all functions in schema public to authenticated');
  const as=async uid=>db.exec(`reset role;set role authenticated;select set_config('request.jwt.claim.sub','${uid}',false)`);
  const reset=async()=>db.exec(`reset role;delete from private.reward_receipts;delete from match_results;delete from private.case_openings;delete from lockers;delete from player_stats;insert into lockers(user_id,eq) values('${U}','{"skin":"std","hat":"class","trail":"std","fx":"none"}');insert into player_stats(user_id) values('${U}') on conflict do nothing;insert into profiles(id) values('${U}') on conflict do nothing`);
@@ -57,20 +58,20 @@ const csv=fs.readFileSync(__dirname+'/../plans/understrip/tables/case_items.csv'
  const claim=async p=>{await as(U);return(await db.query('select public.claim_match_reward($1::jsonb) r',[JSON.stringify(p)])).rows[0].r};
  const run=(o)=>({kind:'run',mode:'understrip',cv:6,diff:'normal',game_id:'u1',duration_s:2700,raid_from:0,raid_to:10,held:10,kills:120,map:'understrip',cls:'soldier',size:'std',salvage:0,mods:[],win:true,boss_keys:[],claim_id:'c1',...o});
  await reset();let r=await claim(run({}));let L=await locker();
- ok('a won run: 4 UNDERSTRIP CASES',L.bag.understrip===4&&r.us_cases===4&&r.cases.understrip===4);
- ok('a won run: 6 shards for the three regions',r.boss_shards===6&&L.shards>=6);ok('a won run: 3 regions, a skill point each (and the raids)',r.us_regions===3&&r.skill_points>=3);
+ ok('a won run: 20 UNDERSTRIP CASES (1+3+6, and 10 for the win)',L.bag.understrip===20&&r.us_cases===20&&r.cases.understrip===20);
+ ok('a won run: 20 shards for the three regions (2+6+12)',r.boss_shards===20&&L.shards>=20);ok('a won run: 3 regions, 10 skill points for them (and the raids)',r.us_regions===3&&r.skill_points>=10);
  ok('a won run: the ladder counts',L.st.us_regions===3&&L.st.us_wins===1);
- const again=await claim(run({}));ok('the same claim again is the first answer',again.retry===true&&(await locker()).bag.understrip===4);
+ const again=await claim(run({}));ok('the same claim again is the first answer',again.retry===true&&(await locker()).bag.understrip===20);
  // split by a rejoin: 0-4, then 4-10 in the same game
  await reset();await claim(run({raid_to:4,held:4,win:false,duration_s:1000,claim_id:'s1'}));await db.exec(`reset role;update match_results set created_at=now()-interval '1 minute'`);
  r=await claim(run({raid_from:4,raid_to:10,held:6,duration_s:1800,claim_id:'s2'}));L=await locker();
- ok('a split run pays the same: 4 cases, 6 region shards',L.bag.understrip===4&&L.st.us_regions===3);
+ ok('a split run pays the same: 20 cases (1, then 3+6+10)',L.bag.understrip===20&&L.st.us_regions===3);
  // failed at level 7: two regions
  await reset();r=await claim(run({raid_to:7,held:7,win:false,duration_s:1500,claim_id:'f1'}));L=await locker();
- ok('a failed run pays by depth: 2 cases, 4 shards',L.bag.understrip===2&&r.boss_shards===4&&!L.st.us_wins);
+ ok('a failed run pays by depth: 4 cases (1+3), 8 shards',L.bag.understrip===4&&r.boss_shards===8&&!L.st.us_wins);
  // too fast
  await reset();let fast=false;try{await claim(run({duration_s:300,claim_id:'q1'}))}catch(e){fast=/add up/.test(e.message)}ok('ten levels in five minutes is refused',fast);
- await reset();r=await claim(run({duration_s:700,claim_id:'q2'}));L=await locker();ok('a win under 15 minutes isn\'t a win (3 region cases, no 4th)',L.bag.understrip===3&&!L.st.us_wins);
+ await reset();r=await claim(run({duration_s:700,claim_id:'q2'}));L=await locker();ok('a win under 15 minutes isn\'t a win (10 region cases, not the 10 for the win)',L.bag.understrip===10&&!L.st.us_wins);
  await reset();let cv5=false;try{await claim(run({cv:5,claim_id:'v5'}))}catch(e){cv5=/Unknown mode/.test(e.message)}ok('an older client (cv:5) can\'t claim the mode',cv5);
  // other modes: the function's text only grew by the understrip lines
  const claimAfter=(await db.query(`select pg_get_functiondef('public.claim_match_reward(jsonb)'::regprocedure) d`)).rows[0].d;

@@ -25,7 +25,7 @@ const CASES={
     how:'One for everyone after any co-op win. Or 12 shards.'},
   // v0.12 THE UNDERSTRIP: ten skins on their own models, five each of headgear, tracers, kill effects and backgrounds
   understrip:{name:'UNDERSTRIP CASE',short:'Understrip Cases',col:'#7cff6b',weights:{c:40,r:32,e:18,l:8,g:2},cost:15,
-    how:'Dropped by the bosses beneath the Strip: one for each region you clear. Finish the descent for a bonus case. Or 15 shards.'}
+    how:'Dropped by the bosses beneath the Strip, more the deeper you go: 1 for region 1, 3 for region 2, 6 for region 3. Finish the descent for 10 more. Or 15 shards.'}
 };
 const CASE_IDS=Object.keys(CASES),pvpCase=m=>CASE_IDS.find(id=>CASES[id].drop&&CASES[id].drop[m]),bossCase=()=>CASE_IDS.find(id=>CASES[id].drop&&CASES[id].drop.boss),winCase=()=>CASE_IDS.find(id=>CASES[id].drop&&CASES[id].drop.win);
 const SKINS={
@@ -495,6 +495,7 @@ function lockerReward(held,win,kills,left=false){
   return localRun(claim,shards);
 }
 // this browser's own locker (no account): the same rules as the server, minus skill points
+const US_PAY=[1,3,6],US_WINPAY=10;   // v0.12.3: what each UNDERSTRIP region pays (cases, skill points; shards twice that), and the finish (cases)
 function localRun(c,shards){
   const st=locker.st,held=c.raid_to,from=c.raid_from,mine=c.held,BO=c.mode==='blackout',US1=c.mode==='understrip',keys=BO||US1?[]:c.boss_keys||[],sb=BO||US1?0:c.shard_bosses|0,BZ=['blitz','campaign'].includes(c.mode);
   const b0={bag:{...locker.bag},cases:locker.cases,shards:locker.shards|0};   // v0.9.4.0: what this run adds, for the reward cards and halving
@@ -506,13 +507,13 @@ function localRun(c,shards){
   locker.prog+=Math.floor((BO?bo.pois:mine)*(100+pct)/100);locker.cases+=Math.floor(locker.prog/3);locker.prog%=3;
   if(BO){locker.cases+=bo.cases;locker.shards+=bo.shards}   // v0.9.7: majors held, the win, the Destroyer
   else if(won)locker.cases+=waves>=10?2:1;
-  const usr=US1?[1,2,3].filter(r=>from<3*r&&held>=3*r).length:0;   // v0.12 THE UNDERSTRIP (the server's rule): a case, 2 shards and a skill point a region cleared, a case for the finish
-  if(US1){caseAdd('understrip',usr+(won?1:0));locker.shards+=2*usr;st.us_regions=(st.us_regions|0)+usr;if(won)st.us_wins=(st.us_wins|0)+1}
+  const usR=US1?[1,2,3].filter(r=>from<3*r&&held>=3*r):[],usr=usR.length,usm=usR.reduce((a,r)=>a+US_PAY[r-1],0);   // v0.12.3 THE UNDERSTRIP (the server's rule): regions 1, 2 and 3 pay 1, 3 and 6 cases and skill points, twice that in shards; the finish 10 cases
+  if(US1){caseAdd('understrip',usm+(won?US_WINPAY:0));locker.shards+=2*usm;st.us_regions=(st.us_regions|0)+usr;if(won)st.us_wins=(st.us_wins|0)+1}
   if(c.mode==='endless')locker.cases+=Math.floor(mine/5);
   for(const id in drops)caseAdd(id,drops[id]);
   addMilestones(st,keys,held,from,mine,c.cls,c.map,waves,c.size);
   // v0.9.3.9: no-account players earn skill points by the server's rule (1 per 5 raids held, 1 per boss) for the case trade
-  let spGain=Math.floor(((locker.spProg|0)+mine)/5)+bossCounted(keys,held,from,waves,c.size).length+sb+(BO?bo.sp:0)+usr;locker.spProg=((locker.spProg|0)+mine)%5;
+  let spGain=Math.floor(((locker.spProg|0)+mine)/5)+bossCounted(keys,held,from,waves,c.size).length+sb+(BO?bo.sp:0)+usm;locker.spProg=((locker.spProg|0)+mine)%5;
   for(const k of(c.sb_keys||[]).slice(0,sb))if(BOSSES[k]){const b='boss_'+k;st[b]=(st[b]|0)+1}   // v0.9.3.8: every boss kill counts
   let fshards=0;
   if(BZ){   // v0.9.4.0: Final Blitz bosses (2 Blitzkrieg Cases, 15-30 shards and a skill point each), the evacuation bonus, then halving
@@ -537,7 +538,7 @@ function localRun(c,shards){
   const cases={supply:locker.cases-b0.cases};for(const id in locker.bag){const d=(locker.bag[id]|0)-(b0.bag[id]|0);if(d>0)cases[id]=d}
   const got=checkUnlocks();saveLocker();
   const allShards=locker.shards-b0.shards;
-  return mkReward('run',{cases,shards:allShards,us:US1,bossShards:Math.min(allShards,bshards+fshards+(BO?bo.shards:0)+2*usr),sp:spGain,unlocked:got.map(c=>c.id),left:BZ&&c.evac==='left',blitzShards:BZ||BO,pois:BO?bo.pois:undefined});
+  return mkReward('run',{cases,shards:allShards,us:US1,bossShards:Math.min(allShards,bshards+fshards+(BO?bo.shards:0)+2*usm),sp:spGain,unlocked:got.map(c=>c.id),left:BZ&&c.evac==='left',blitzShards:BZ||BO,pois:BO?bo.pois:undefined});
 }
 // v0.9.3.6: a co-op/Endless run in progress is written down every few seconds. If the page reloads, the app is
 // killed or the phone dies mid-run, the next start pays what was held (as an early leave) instead of losing it.

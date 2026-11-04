@@ -39,7 +39,7 @@
   - ✖ never the name "Elvis", his face or likeness, song titles or lyrics, or "TCB" lightning bolts.
   - ✖ no quiff-and-lip sneer combination that reads as one real person; the face stays the base figure's.
   - ✔ a generic lounge-singer impersonator.
-  - The director signs this one off separately.
+  - The director signs this one off separately. **Signed off November 4, 2026, as built.**
 
 ### 4. EL GENERALISSIMO · epic · Vegas
 - **Silhouette:** a peaked cap, epaulettes, a sash across the chest.
@@ -161,7 +161,7 @@ Names that clashed with the catalogue are renamed here and in `tables/case_items
 Every item stays within the existing per-effect drawing budget (`caseperf.js`); the animated backgrounds follow the four animated winter scenes' budget.
 
 ## For the director
-- [ ] Each skin's board, against section 3 (King of the Strip signed off on its own).
-- [ ] The three region boards.
-- [ ] The renamed items (Dealer's Eyeshade, Neon Halo's key, Neon Tube, Saucer Bolt, Showgirl Plumes).
-- [ ] Tier changes from the work order's 9.3 table: two hats are common (Tinfoil, Eyeshade), because a case with no common items breaks its odds (see the README).
+- [x] Each skin's board, against section 3 (King of the Strip signed off on its own).
+- [x] The three region boards.
+- [x] The renamed items (Dealer's Eyeshade, Neon Halo's key, Neon Tube, Saucer Bolt, Showgirl Plumes).
+- [x] Tier changes from the work order's 9.3 table: two hats are common (Tinfoil, Eyeshade), because a case with no common items breaks its odds (see the README).
