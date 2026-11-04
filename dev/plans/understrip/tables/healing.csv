@@ -1,0 +1,8 @@
+id,what,value,notes
+h_charges,healing charges at the start,3,refilled at every shrine
+h_cap,capacity,max 6,+1 from House Edge or the Shrine Keeper
+h_cap_price,+1 capacity at the Shrine Keeper,90 / 150 / 220 salvage,the 4th / 5th / 6th charge
+h_heal,one charge heals,45% of max HP,applied when the drink finishes
+h_time,drinking takes,0.8 s,you walk at 40% speed; a hit doesn't cancel it
+h_regen,passive regen,OFF,decided at M0: no out-of-fight healing in this mode; the SECOND WIND skill does nothing here (its PLAY card says so)
+h_qm,Quartermaster revive,unchanged,walking over a downed teammate gets them up at 60%

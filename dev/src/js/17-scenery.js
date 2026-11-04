@@ -5,7 +5,7 @@ const BAND=7;
 const treesBack=[],treesFront=[];
 // the trees (or, in the quarry, boulders and dead trees) round the outside; each map and size has its own
 function genForest(){
-  treesBack.length=0;treesFront.length=0;const m=MAP||MAPS.yard,Q=m===MAPS.quarry;if(m.casino)return;   // v0.10.0: indoors
+  treesBack.length=0;treesFront.length=0;const m=MAP||MAPS.yard,Q=m===MAPS.quarry;if(m.casino||m.under)return;   // v0.10.0: indoors
   for(let j=-BAND;j<N+BAND;j++)for(let i=-BAND;i<N+BAND;i++){
     if(i>=0&&j>=0&&i<N&&j<N)continue;
     if(m.outWater&&m.outWater(i,j,MAPO))continue;   // the river runs on past the fence
@@ -75,9 +75,9 @@ function drawEdge(side,s){
 }
 function paintBack(){
   const m=MAP||MAPS.yard,Q=m===MAPS.quarry;
-  quad(iso(-BAND-6,-BAND-6),iso(N+BAND+6,-BAND-6),iso(N+BAND+6,N+BAND+6),iso(-BAND-6,N+BAND+6),m.casino?'#0a0608':Q?'#161412':'#151a12');
+  quad(iso(-BAND-6,-BAND-6),iso(N+BAND+6,-BAND-6),iso(N+BAND+6,N+BAND+6),iso(-BAND-6,N+BAND+6),m.casino?'#0a0608':m.under?'#070807':Q?'#161412':'#151a12');
   forTiles(-BAND,N+BAND,paintRange(-BAND,N+BAND,TH2),(i,j)=>{
-    if(i>=0&&j>=0&&i<N&&j<N||m.casino)return;   // the casino's outside is dark
+    if(i>=0&&j>=0&&i<N&&j<N||m.casino||m.under)return;   // the casino's outside is dark
     if(PAINT_RECT&&!tileVis(i,j,TH2))return;
     const dx=i<0?-i:(i>=N?i-N+1:0),dy=j<0?-j:(j>=N?j-N+1:0),d=Math.max(dx,dy),h=hash(i+400,j+77);
     if(m.outWater&&m.outWater(i,j,MAPO)){quad(iso(i,j),iso(i+1,j),iso(i+1,j+1),iso(i,j+1),h<.5?'#1d3848':'#1b3544');return}
@@ -95,8 +95,8 @@ function paintBack(){
     if(!groundDetail(i,j,h)&&h>.86&&!Q){const c=iso(i+.5,j+.5);oval(c[0]+(h-.9)*40*u,c[1],6*u,2.5*u,'rgba(84,104,64,.35)')}
   });
   g.strokeStyle='rgba(0,0,0,.22)';g.lineWidth=1;g.beginPath();
-  if(m!==MAPS.frost)for(let s=0;s<=N;s++){let a=iso(s,0),b=iso(s,N);g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);a=iso(0,s);b=iso(N,s);g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1])}g.stroke();
-  if(m.casino)paintCasinoWalls();else for(let s=0;s<N;s++){drawEdge('n',s);drawEdge('w',s)}
+  if(m!==MAPS.frost&&!m.under)for(let s=0;s<=N;s++){let a=iso(s,0),b=iso(s,N);g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);a=iso(0,s);b=iso(N,s);g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1])}g.stroke();
+  if(m.casino)paintCasinoWalls();else if(!m.under)for(let s=0;s<N;s++){drawEdge('n',s);drawEdge('w',s)}
   if(m===MAPS.frost)frostScenery();
   if(m.city)paintCityBuildings();   // v0.9.7: buildings are part of the painted city; only the ones in front of someone are redrawn live
 }
@@ -104,7 +104,7 @@ function paintBack(){
 // tree is redrawn in the cached image, never the whole thing (a full redraw was the hitch).
 function paintFront(){
   let n=0;   // what landed in the chunk being painted (0: the chunk is empty)
-  if(!(MAP&&MAP.casino))for(let s=0;s<N;s++){if(!PAINT_RECT||tileVis(s,N-1,WH*2)||tileVis(N-1,s,WH*2))n++;drawEdge('s',s);drawEdge('e',s)}
+  if(!(MAP&&(MAP.casino||MAP.under)))for(let s=0;s<N;s++){if(!PAINT_RECT||tileVis(s,N-1,WH*2)||tileVis(N-1,s,WH*2))n++;drawEdge('s',s);drawEdge('e',s)}
   for(const t of treesFront){if(PAINT_RECT){const b=treeBox(t);if(!paintVis(b[0],b[1],b[2],b[3]))continue}n++;drawTree(t,t.a)}
   return n;
 }
@@ -251,7 +251,8 @@ function drawLighting(){
   const hole=(x,y,r,s)=>{const c=holeDot(r*sc);lg.globalAlpha=Math.min(1,s);lg.drawImage(c,Math.round(x*sc)-(c.width>>1),Math.round(y*sc)-(c.width>>1))};
   const at=(x,y,z=0)=>{const c=iso(x,y);return[c[0],c[1]-z]};
   if(light.L>.25){
-    let c=at(player.x,player.y,WH*.5);if(!demo)hole(c[0],c[1],TW2*3.4,.95);
+    let c;if(MAP&&MAP.under){usLights(hole,at)}else{   // THE UNDERSTRIP: cones and the level's own lights (15b)
+    c=at(player.x,player.y,WH*.5);if(!demo)hole(c[0],c[1],TW2*3.4,.95);
     if(!demo)for(const o of players.values())if(o!==player&&o.alive){c=at(o.x,o.y,WH*.5);hole(c[0],c[1],TW2*2.2,.8)}
     if(qm.alive){c=at(qm.x,qm.y,WH*.5);hole(c[0],c[1],TW2*1.8,.7)}
     if(MAP&&MAP.casino)casinoLights(hole,at);
@@ -261,7 +262,7 @@ function drawLighting(){
     for(const kiln of nodes)if(kiln.type===1&&!kiln.locked){c=at(kiln.i+.5,kiln.j+.5,WH*.3);hole(c[0],c[1],TW2*1.6,.6)}
     if(MAP===MAPS.quarry)for(let k=0;k<N*N;k++)if(terr[k]===T_DRUM){c=at(k%N+.5,((k/N)|0)+.5,WH);hole(c[0],c[1],TW2*(2.6+.12*Math.sin(game.time*7+k)),.9)}   // oil drums light the pit
     for(const ch of charges){c=at(ch.x,ch.y);hole(c[0],c[1],TW2*.7,.7)}
-  }
+  }}
   for(const f of flashes){const c=flashPoint(f),a=f.life/f.max;hole(c[0],c[1],TW2*(f.muzzle?2:4.5)*f.r*.6,a)}
   lg.globalAlpha=1;lg.setTransform(sc,0,0,sc,0,0);g.drawImage(lc,0,0,W,H);
 }
@@ -303,10 +304,12 @@ const ECOL={rifle:'#d65a3a',gren:'#e2b436',breach:'#ff8a5a',shield:'#9aa4ae',med
 function itemEnemy(e){
   if(e.type==='boss'){const B=BOSSES[e.boss];if(!B)return;const I=bossInfo(e.boss);
     if(e.burrow||(e.boss==='foreman'&&(e.st===2||e.st===4))){drawMound(e);return}
+    if(B.us&&usDrawBoss(e))return;   // THE UNDERSTRIP: the deeper bosses' own models
     const rf=B.raft&&e.raft!==false;if(rf)drawRaft(e);const kb=bossBase(e.boss);
     drawPerson(e.x,e.y,Object.assign({aim:e.aim,walk:rf?0:e.walk,flash:e.flash>0,hp:e.hp/e.max,big:B.big||1.45,tag:I.name,tagCol:I.col,winterSt:e.st,swing:kb==='butcher'&&e.st<5?e.st|0:e.boss==='bluebutcher'&&e.st===5?1:0},I.look));
     if(e.boss==='bulldozer'&&e.st===6)drawDazed(e);if(e.boss==='destroyer')drawDestroyerKit(e);drawAmmoStatus(e);return}
-  drawPerson(e.x,e.y,Object.assign({aim:e.aim,walk:e.walk,flash:e.flash>0,hp:e.hp/e.max},LOOK[e.type]||LOOK.rifle,{satchel:e.type==='breach'&&!e.planted},e.type==='shield'?{big:1.1,shieldWear:1-(e.shieldHitsLeft??RIOT_SHIELD_HITS)/(e.shieldHitsMax||RIOT_SHIELD_HITS),...(e.shieldBroken?{weapon:'pistol'}:{})}:null));
+  if(e.type==='drone'){usDrawDrone(e);return}   // THE UNDERSTRIP: Area 67's drones; its raiders dress for their region
+  drawPerson(e.x,e.y,Object.assign({aim:e.aim,walk:e.walk,flash:e.flash>0,hp:e.hp/e.max},game.us?usLook(e.type,LOOK[e.type]||LOOK.rifle):LOOK[e.type]||LOOK.rifle,{satchel:e.type==='breach'&&!e.planted},e.type==='shield'?{big:1.1,shieldWear:1-(e.shieldHitsLeft??RIOT_SHIELD_HITS)/(e.shieldHitsMax||RIOT_SHIELD_HITS),...(e.shieldBroken?{weapon:'pistol'}:{})}:null));
   drawAmmoStatus(e);
   if(e.type==='medic'&&game.phase==='raid'){const c=iso(e.x,e.y);g.strokeStyle='rgba(143,224,160,.35)';g.lineWidth=1.2*u;g.beginPath();g.ellipse(c[0],c[1],TW2*2.6,TH2*2.6,0,0,Math.PI*2);g.stroke()}   // his healing reach
 }
@@ -376,7 +379,7 @@ function render(dt){
   fadeT-=dt;if(fadeT<=0){fadeT=.1;updateFades()}
   let fx=p.x,fy=p.y,cxF=W<760?.4:.5,cyF=.52; // keep the east approach clear of the kit column on phones
   if(casino()&&TB.sheet){cxF=W>700?(W-CAS_SHEET_SIZE.w-10)/W/2:.5;if(W<=700)cyF=(H-CAS_SHEET_SIZE.h)/H*.62}
-  if(p.out&&!demo){const s=spectateTarget(p);fx=s.x;fy=s.y}   // v0.9.4.0: out of the Final Blitz, you watch your crew
+  if((p.out||p.usDead)&&!demo){const s=spectateTarget(p);fx=s.x;fy=s.y}   // v0.9.4.0: out of the Final Blitz, you watch your crew
   if(demo){const t=game.time*.07;fx=core.i+2.5+Math.cos(t)*2.5;fy=core.j-2+Math.sin(t)*2;cxF=.5;cyF=W>700?.5:.3}
   const tx=W*cxF-(fx-fy)*TW2,ty=H*cyF-(fx+fy)*TH2+heightAt(fx,fy)*heightPx();
   camSX+=(tx-camSX)*.14;camSY+=(ty-camSY)*.14;
@@ -394,19 +397,20 @@ function render(dt){
     if(MAP===MAPS.frost&&heights[k]&&!connectors[k]&&((j+1<N&&heights[k]>heights[k+N]+(connectors[k+N]?1:0))||(i+1<N&&heights[k]>heights[k+1])))ritem(i+j+2,itemFrostCliff,k);
     if(walls[k]){const dd=i+j+1-pd,lat=(i-j)-pl;ritem(i+j+1,itemWall,k,dd>0&&dd<3.2&&Math.abs(lat)<1.7)}
     else if(debris[k])ritem(i+j+.2,itemDebris,k);
-    {const t=terr[k];if(t===T_ROCK||t===T_DRUM)ritem(i+j+1,itemTerr,k)}   // rock and oil drums (city buildings: cityOccluders)
+    {const t=terr[k];if(t===T_ROCK||t===T_DRUM)ritem(i+j+1,itemTerr,k);else if(t>=T_CONC&&t<=T_TANK&&(t!==T_CONC||US_EDGE[k])){const dd=i+j+1-pd,lat=(i-j)-pl;ritem(i+j+1,itemUsWall,k,dd>0&&dd<3.6&&Math.abs(lat)<2)}}   // rock and oil drums (city buildings: cityOccluders)
   }
   if(MAP&&MAP.city)cityOccluders();
   for(const n of nodes)ritem(n.i+n.j+1,drawNode,n);
   for(const c of cores)ritem(c.i+c.j+1,c.poi?drawPoi:drawStake,c);
   if(MAP&&MAP.city)cityLampItems();
+  if(MAP&&MAP.under)usItems();
   if(MAP&&MAP.casino)casinoItems();
   for(const s of sacks)ritem(s.x+s.y,itemSack,s);
   for(const c of charges)ritem(c.x+c.y,itemCharge,c);
   for(const e of enemies)ritem(e.x+e.y,itemEnemy,e);
   if(qm.alive)ritem(qm.x+qm.y,itemQM,qm);else if(!qm.gone)ritem(qm.x+qm.y,itemQMDown,qm);
   if(!demo)for(const o of players.values())if(o.alive||o.downed)ritem(o.x+o.y,itemPlayer,o);
-  if(playing()&&p.alive&&cfg.build&&game.pvp!=='ffa'&&!casino()){const t=buildTarget(p,game.sel,game.piece==='door');ritem(t.i+t.j+1.05,drawGhost,t)}
+  if(playing()&&p.alive&&cfg.build&&game.pvp!=='ffa'&&!casino()&&!understrip()){const t=buildTarget(p,game.sel,game.piece==='door');ritem(t.i+t.j+1.05,drawGhost,t)}
   const O=RI.o;O.length=RI.n;for(let k=0;k<RI.n;k++)O[k]=k;O.sort(byDepth);
   for(let q=0;q<RI.n;q++){const k=O[q];RI.f[k](RI.a[k],RI.b[k])}
   RI.a.fill(null,0,RI.n);PM('bullets');
@@ -437,7 +441,8 @@ function render(dt){
   PM('ui');if(playing()&&!overlayOpen())drawPrompts(p);if(game.fb&&!demo)drawEvacHud();if(!demo&&MAP&&MAP.city)drawBlackoutHud();
   if(playing()&&p.alive&&!overlayOpen()&&!casino()){drawCrosshair(p);drawShells(p)}
   const top=110;
-  for(const e of game.pvp&&!demo?foes():enemies){const c=iso(e.x,e.y);if(c[0]>14&&c[0]<W-14&&c[1]>top&&c[1]<H-14)continue;
+  if(game.us&&!demo){usPips(p);usEliteFx()}
+  for(const e of game.pvp&&!demo?foes():enemies){if(e.us&&e.us.st!=='hunt'&&e.type!=='boss')continue;const c=iso(e.x,e.y);if(c[0]>14&&c[0]<W-14&&c[1]>top&&c[1]<H-14)continue;   // THE UNDERSTRIP: no arrows to raiders still waiting in the dark
     const ex=clamp(c[0],18,W-18),ey=clamp(c[1],top+8,H-18),a=Math.atan2(c[1]-H/2,c[0]-W/2);
     g.save();g.translate(ex,ey);g.rotate(a);if(e.type==='boss')g.scale(1.6,1.6);g.fillStyle=game.pvp?teamCol(e):e.type==='boss'?bossInfo(e.boss).col||'#ff4a3a':ECOL[e.type]||'#ff8a5a';g.beginPath();g.moveTo(8,0);g.lineTo(-5,-6);g.lineTo(-5,6);g.closePath();g.fill();g.restore()}
   if(!demo&&!game.pvp)drawBossBars(top);

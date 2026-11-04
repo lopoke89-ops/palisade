@@ -10,6 +10,7 @@
 06d-elevation.js   Frostpeak standard/XL, height traversal, range, projection and frost fields
 06e-city.js   v0.9.7 the ruined city: layout, roads, buildings, POI structures, streetlamps, city lights
 06f-casino.js   v0.10.0 THE PALISADE FALLS CASINO: layout, floor, walls, tables, dealers, slots, neon, seats
+06g-understrip.js   v0.12 THE UNDERSTRIP: the seeded level generator (room kits from dev/data/understrip, inlined by build.py)
 07-effects.js   particles and floating text
 08-input.js   keyboard, mouse, touch sticks and buttons
 08b-pad.js   controller: the button table, play, menu highlight, button changes, rumble
@@ -20,12 +21,17 @@
 10d-winter-campaign.js   Whiteout chapters, continuity, winter bosses and terrain-clipped warnings
 10f-blackout.js   v0.9.7 City Black Out: gathering, POI attacks, perks, the final push, raider targeting per POI
 10g-destroyer.js   v0.9.7 THE SUPREME DESTROYER: five attacks with warnings, poison gas and mines (in fires), his kit
+10h-understrip.js   v0.12 THE UNDERSTRIP: the mode (levels, shrines, Lucky Juice, shared lives, dropped salvage, the Tunnel Trader, raiders in the tunnels, the network)
+10i-understrip-bosses.js   v0.12 THE UNDERSTRIP: the two-stage bosses (the Pit Boss)
+10j-understrip-loot.js   v0.12 THE UNDERSTRIP: second weapons, loot on the floor, perks, relics, elites
+10k-understrip-regions.js   v0.12 THE UNDERSTRIP: Shelter 7 and Area 67 (hazards, alarms, drones, how each region looks)
 11-hud-chat.js   best record, HUD, text chat
 12-players.js   main update, player control and simulation (triggers, bursts, gathering)
 13-dell.js   Delgado, the quartermaster AI and shotgun
 13b-commands-recovery.js   host command modes, safe perimeter jobs and terminal crew recovery
 14-raiders.js   raider AI, bullets, walls, fires
 15-render.js   world rendering, walls, tiles, lighting
+15b-understrip-look.js   v0.12 THE UNDERSTRIP: tunnel walls, the light cones, shrines, the lift, flares
 16-characters.js   characters, kit and boss effects
 16b-auras.js   moving effects on Legendary and Gold milestone outfits, drawn over the cached figure
 16c-blitz-fx.js   Blitz boss effects, particles, extracted players and spectator camera
@@ -36,6 +42,8 @@
 18b-backgrounds.js   lobby backgrounds (free, milestone and case)
 18c-background-depth.js   cached scenic finishing layers; per-ID art rollback
 18d-winter-scenes.js   ten winter background painters, four with bounded animation
+18g-understrip-catalog.js   v0.12 THE UNDERSTRIP CASE: catalog registration
+18h-understrip-scenes.js   v0.12 THE UNDERSTRIP CASE: the five lobby backgrounds
 19-accounts.js   accounts, cloud locker, claims, open games list
 19b-social-lobby.js   account identity, saved players and multiplayer character stage
 19c-home.js   PLAY summary rows, side cards and picker overlays
@@ -44,9 +52,11 @@
 20a-cosmetic-art.js (shared tracer and kill effect painters)
 20b-case-openings.js   Atomic single/batch rewards, durable receipts and shared reel sessions.
 20b-winter-effects.js   shared winter snowflake and six kill effect painters
+20d-understrip-effects.js   v0.12 THE UNDERSTRIP CASE: kill effects and tracer marks
 21-online.js   online co-op and PvP networking
 21a-casino-relay.js   player-hosted casino connections through Render
 16h-nameplates.js   v0.9.9 health above heads, teammate edge arrows, low-health edge
+16i-understrip-models.js   v0.12 THE UNDERSTRIP CASE: the 30 items and the ten skins' own models (wardrobe hooks)
 21b-tables.js   v0.9.8 the Tables (blackjack and hold'em for shards; the server deals)
 21c-casino-games.js   v0.10.3 baccarat, craps, slots and Plinko sheets; the result review and receipt every game shares; LAST RESULT
 22-loop-menus.js   main loop, menus, install prompt, debug hooks

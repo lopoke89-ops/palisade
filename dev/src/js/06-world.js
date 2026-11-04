@@ -82,6 +82,7 @@ function hurtPlayer(p,d,own){
   d*=(p.perk||PERK0).vest;if(game.pvp&&hasMod('glass'))d*=1.5;   // Kevlar; Glass Cannon hits harder
   p.hp-=d;p.hurt=0;p.flash=.1;personal(p,'hurt');emit(p.x,p.y,16*u,'blood');
   if(p.hp<=0&&game.pvp){pvpDown(p,own);return}
+  if(p.hp<=0&&understrip()){usDowned(p);return}
   if(p.hp<=0){
     const help=anyUp(p),last=hasMod('laststand')&&game.phase==='raid';p.dgE=-1;p.alive=false;p.downed=true;p.hp=0;p.revive=0;p.rt=last?1e6:help?10:4;
     if(p.id===myId)buzz(80);
@@ -118,8 +119,10 @@ function hurtQM(d){
   if(q.hp<=0){q.alive=false;q.hp=0;q.revive=0;flt(q.x,q.y,'DELGADO IS DOWN','#d65a3a');toastAll('DELGADO IS DOWN','Stand over him to get him back up.')}
 }
 function hurtEnemy(e,d,own,quiet=false){
+  if(e.inv>0){if(!quiet)e.flash=.04;return}   // THE UNDERSTRIP: a boss changing stage can't be hurt
+  if(e.type==='drone')d*=usDroneMul(e);   // THE UNDERSTRIP: drones die fast in the light
   e.hp-=d;if(!quiet){e.flash=.08;emit(e.x,e.y,15*u,'blood')}
-  if(e.hp<=0&&!e.dead){e.dead=true;game.stats.dropped++;sfx('drop',e.x,e.y);for(let n=0;n<6;n++)emit(e.x,e.y,10*u,'blood');
+  if(e.hp<=0&&!e.dead){e.dead=true;game.stats.dropped++;if(e.us&&game.us)usEnemyDied(e,own);sfx('drop',e.x,e.y);for(let n=0;n<6;n++)emit(e.x,e.y,10*u,'blood');
     if(e.type==='boss'){if(!demo)bossDown(e,own);const p=own&&own!=='dell'?players.get(own):null;if(p){p.kills++;killFx(e.x,e.y,p.cos.fx)}}else award(own,e)}
 }
 function hurtStake(c,d){if(!c||c.lost)return;c.hp-=d;c.flash=.12;sfx('core',c.i+.5,c.j+.5);emit(c.i+.5,c.j+.5,WH*.8,'spark')}
@@ -144,6 +147,7 @@ function explode(x,y,R=1.65,power=1,own=null,raid=false){if(!raid&&typeof minesN
 let kickX=0,kickY=0,shakeT=0;
 function addShake(x,y,a){
   rec(['k',r2(x),r2(y),a]);
+  if(game&&game.us&&reduceMotion())a*=.35;   // THE UNDERSTRIP: Reduce Motion softens the bosses' stage changes and the doors
   const d=player?Math.hypot(x-player.x,y-player.y):6;const s=a*cfg.shake/(1+d*.35);shake=Math.min(12,shake+s);
   if(a>=10&&d<5&&!demo)buzz(35);
 }

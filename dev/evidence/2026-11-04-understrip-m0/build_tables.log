@@ -1,0 +1,11 @@
+OK build_tables: 126 rows in 13 tables; dev/plans/understrip/understrip-tables.xlsx
+  w_sawnoff    burst  409  sustained   93
+  w_taser      burst   33  sustained   23
+  w_nailgun    burst  100  sustained   60
+  w_smg        burst  107  sustained   58
+  w_flare      burst   11  sustained    5
+  w_riot       burst  108  sustained   67
+  w_laser      burst   50  sustained   29
+  w_alien      burst   49  sustained   40
+  w_antigrav   burst   14  sustained   10
+  case each-item %: {'c': 8.0, 'r': 3.56, 'e': 2.0, 'l': 1.6, 'g': 1.0}  winter: {'c': 9.0, 'r': 3.56, 'e': 1.78, 'l': 0.86, 'g': 0.14}

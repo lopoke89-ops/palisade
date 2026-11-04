@@ -22,7 +22,10 @@ const CASES={
     how:'Blitzkrieg Rush only: two for everyone each time a Blitzkrieg boss goes down, and one more for making the evacuation. Or 14 shards.'},
   // v0.9.6.4: Hybrid Theory. Jerseys on their own body, headgear, kill effects and neon block-city backgrounds
   hybrid:{name:'HYBRID THEORY CASE',short:'Hybrid Theory Cases',col:'#c1d32f',weights:{c:46,r:30,e:16,l:7,g:1},cost:12,
-    how:'One for everyone after any co-op win. Or 12 shards.'}
+    how:'One for everyone after any co-op win. Or 12 shards.'},
+  // v0.12 THE UNDERSTRIP: ten skins on their own models, five each of headgear, tracers, kill effects and backgrounds
+  understrip:{name:'UNDERSTRIP CASE',short:'Understrip Cases',col:'#7cff6b',weights:{c:40,r:32,e:18,l:8,g:2},cost:15,
+    how:'Dropped by the bosses beneath the Strip: one for each region you clear. Finish the descent for a bonus case. Or 15 shards.'}
 };
 const CASE_IDS=Object.keys(CASES),pvpCase=m=>CASE_IDS.find(id=>CASES[id].drop&&CASES[id].drop[m]),bossCase=()=>CASE_IDS.find(id=>CASES[id].drop&&CASES[id].drop.boss),winCase=()=>CASE_IDS.find(id=>CASES[id].drop&&CASES[id].drop.win);
 const SKINS={
@@ -118,11 +121,12 @@ const SKIN_FX=['neon','dots','ruff','badge','plate','stars','holo','spots','fros
   'apron','facewrap','coat','cape','lining','collar','reflect','waders','charges','medals','ghillie','sheet','stitches','clownface','hockey','sack','patches','straws','medal','aura','sahur','demon','jersey','jtrim'];
 const HALLOWEEN_HATS={gravecap:true,stemband:true,batcirclet:true,bonewrap:true,webpin:true,skullseal:true};
 const SAHUR_HATS=new Set(['crown','tophat','visor','headband','pcap','halo','witch','devilhorns']);
-registerWinterLooks();registerHybridLooks();
+registerWinterLooks();registerHybridLooks();registerUnderstripLooks();
 // Class Issue preserves the skin's own appearance. Unknown or special heads block added headwear.
 function headwearAllowed(skin,hat){
   const S=SKINS[skin];if(!S)return false;if(hat==='class')return true;
   if(S.winterModel)return false;
+  if(S.usModel)return usHatsOk(S.usModel,hat);   // v0.12: open heads wear any hat; the rest wear their own
   if(S.sheet)return hat==='halo'||hat==='dunce';   // v0.9.6.4: the Dunce Cone sits on the sheet too
   if(S.sahur)return SAHUR_HATS.has(hat);
   return !(S.demon||S.reaper||S.wraps||S.sack||S.hockey||S.clownface||S.ghillie||S.facewrap||S.headwear&&Object.keys(S.headwear).length);
@@ -201,7 +205,7 @@ Object.assign(TRAILS,{
   tealwake:{c:'#5af0ff',w:1.1,len:1.9,glow:'rgba(90,240,255,.25)',pk:'tealdust',pr:.6,snd:'ts_aurora'},
   hellchain:{bands:['#ffd060','#ff4a0a','#3a0a04','#ff4a0a','#3a0a04'],w:1.8,len:1.9,glow:'rgba(255,74,10,.32)',pk:'flame',pr:.5,chain:true,snd:'ts_solar'},
   sigil:{grad:['#fff0b0','#ff3a0a'],w:1.9,len:2.1,glow:'rgba(255,58,10,.38)',pk:'rune',pr:.95,head:'#fff8d0',snd:'ts_void'}});
-registerWinterTrails();
+registerWinterTrails();registerUnderstripTrails();
 TRAILS.streetlight={c:'#ffc860',w:1.3,len:1.7,glow:'rgba(255,200,96,.35)',pk:'ember',pr:.3,snd:'ts_solar'};   // v0.9.7 the BLACK OUT ladder (last, so older tracers keep their numbers)
 const TRAIL_IDS=Object.keys(TRAILS),ENEMY_TR={c:'rgba(255,140,90,.95)'};
 function nextTracerColor(from){
@@ -305,7 +309,7 @@ for(const L of LADDERS)L.items.forEach(([cat,key,name],i)=>cat!=='bg'&&COS.push(
   need:{[ladderSt(L,i)]:L.steps[i]},how:L.hows?L.hows[i]:L.how(L.steps[i]),price:null,ladder:L.id}));
 // the Flag Case's tracers (its backgrounds are added with the other backgrounds)
 for(const[id,name,r]of FLAGS)COS.push({id:'trail:f_'+id,cat:'trail',key:'f_'+id,name:name+' Flag',r,src:'case',box:'flags',need:null,how:'Found in '+CASES.flags.short,price:null});
-registerWinterCosmetics();registerHybridCosmetics();
+registerWinterCosmetics();registerHybridCosmetics();registerUnderstripCosmetics();
 const COSBY=Object.fromEntries(COS.map(c=>[c.id,c]));
 const CATN={skin:'SKIN',hat:'HEADGEAR',trail:'TRACER',fx:'KILL FX'};
 const DEFAULT_COS={skin:'std',hat:'class',trail:'std',fx:'none'};
@@ -450,10 +454,10 @@ function rewardText(R){
     if(R.left)bits.push('Left behind: half your cases and shards');
     if(R.cases.supply>0)bits.push(`+${pl(R.cases.supply,'supply case')}`);
     for(const id in R.cases)if(id!=='supply'&&R.cases[id]>0&&CASES[id])bits.push(`+${R.cases[id]} ${CASES[id].name.toLowerCase()}${R.cases[id]>1?'s':''} ${CASES[id].drop&&CASES[id].drop.win?'for the win':'from bosses'}`);
-    if(R.bossShards>0)bits.push(`+${pl(R.bossShards,'shard')} from ${R.pois!==undefined?'the win and the Destroyer':R.blitzShards?'bosses and the evac':'in-between bosses'}`);
+    if(R.bossShards>0)bits.push(`+${pl(R.bossShards,'shard')} ${R.us?'for the regions cleared':'from '+(R.pois!==undefined?'the win and the Destroyer':R.blitzShards?'bosses and the evac':'in-between bosses')}`);
     if(R.shards-(R.bossShards|0)>0)bits.push(`+${pl(R.shards-(R.bossShards|0),'shard')} from leftover salvage`);
     if(R.sp>0)bits.push(`+${pl(R.sp,'skill point')}`);
-    bits.push(R.pois!==undefined?`${pl(R.pois,'point')} held · ${pl(R.toNext,'more point')} to the next supply case`:`${pl(R.toNext,'more raid')} to the next supply case`);
+    bits.push(R.pois!==undefined?`${pl(R.pois,'point')} held · ${pl(R.toNext,'more point')} to the next supply case`:`${pl(R.toNext,R.us?'more level':'more raid')} to the next supply case`);
   }else{if(R.missCase&&CASES[R.missCase])bits.push(`No ${CASES[R.missCase].name.toLowerCase()} this time (${Math.round((R.chance||0)*100)}% chance)`);
     for(const id in R.cases)if(R.cases[id]>0&&CASES[id])bits.push(`+${R.cases[id]} ${CASES[id].name}`)}
   if(R.unlocked.length)bits.push('Unlocked '+R.unlocked.map(id=>(COSBY[id]||{name:id}).name).join(', '));
@@ -475,6 +479,7 @@ function runClaim(held,win,kills,left=false){
     upgrades:(player?player.upS:'')+':'+(game.dellLv|0),mods:game.mods||[],map:game.map,cls:player?player.cls:pick.cls,end_reason:game.endReason||''};
   if(blitz()){claim.fb_keys=fbKeys;claim.evac=res}
   claim.cv=4;   // v0.9.6.4 claims: the server applies chapter evacs, the gauntlet payouts and the Hybrid Theory drop only to these
+  if(understrip()){claim.cv=6;claim.boss_keys=[];claim.bosses=0;claim.sb_keys=[];claim.shard_bosses=0;claim.map='understrip'}   // v0.12 THE UNDERSTRIP: levels finished; the server counts the regions
   if(blackout()){claim.cv=5;claim.boss_keys=[];claim.pois_held=boPoisMine();claim.pois_major=boMajorsMine();claim.destroyer=!!(game.bo&&game.bo.destroyer)}   // v0.9.7 City Black Out
   if(campaign())claim.g_cleared=gauntletCleared();
   if(campaign())claim.ch_evac=[0,1,2].map(i=>{const r=player&&player.chEvac?player.chEvac[i]:undefined;return r===undefined||r===null?null:!!r});
@@ -491,9 +496,9 @@ function lockerReward(held,win,kills,left=false){
 }
 // this browser's own locker (no account): the same rules as the server, minus skill points
 function localRun(c,shards){
-  const st=locker.st,held=c.raid_to,from=c.raid_from,mine=c.held,BO=c.mode==='blackout',keys=BO?[]:c.boss_keys||[],sb=BO?0:c.shard_bosses|0,BZ=['blitz','campaign'].includes(c.mode);
+  const st=locker.st,held=c.raid_to,from=c.raid_from,mine=c.held,BO=c.mode==='blackout',US1=c.mode==='understrip',keys=BO||US1?[]:c.boss_keys||[],sb=BO||US1?0:c.shard_bosses|0,BZ=['blitz','campaign'].includes(c.mode);
   const b0={bag:{...locker.bag},cases:locker.cases,shards:locker.shards|0};   // v0.9.4.0: what this run adds, for the reward cards and halving
-  const waves=c.mode==='endless'?Infinity:c.mode==='campaign'?CAMPAIGN.waves:BZ?BLITZ.waves:BO?9:+c.mode,pct=modBonus(c.mods||[],c.mode==='blitz'?'blitz':''),bo=BO?boLocalPay(c,st):null,won=BO?bo.won:c.win&&from*2<=waves&&(!BZ||c.evac==='evac');
+  const waves=c.mode==='endless'?Infinity:c.mode==='campaign'?CAMPAIGN.waves:BZ?BLITZ.waves:BO?9:US1?US.levels:+c.mode,pct=modBonus(c.mods||[],c.mode==='blitz'?'blitz':''),bo=BO?boLocalPay(c,st):null,won=BO?bo.won:c.win&&from*2<=waves&&(!BZ||c.evac==='evac')&&!(US1&&(c.duration_s|0)<900);
   const drops=bossDrops(keys,held,from,waves,c.size),bshards=sb*(15+Math.floor(rnd()*16));
   locker.shards=(locker.shards|0)+shards+bshards;
   st.raids+=mine;st.drops+=c.kills|0;if(won){st.wins++;if(c.diff==='hard')st.hardWins++}
@@ -501,11 +506,13 @@ function localRun(c,shards){
   locker.prog+=Math.floor((BO?bo.pois:mine)*(100+pct)/100);locker.cases+=Math.floor(locker.prog/3);locker.prog%=3;
   if(BO){locker.cases+=bo.cases;locker.shards+=bo.shards}   // v0.9.7: majors held, the win, the Destroyer
   else if(won)locker.cases+=waves>=10?2:1;
+  const usr=US1?[1,2,3].filter(r=>from<3*r&&held>=3*r).length:0;   // v0.12 THE UNDERSTRIP (the server's rule): a case, 2 shards and a skill point a region cleared, a case for the finish
+  if(US1){caseAdd('understrip',usr+(won?1:0));locker.shards+=2*usr;st.us_regions=(st.us_regions|0)+usr;if(won)st.us_wins=(st.us_wins|0)+1}
   if(c.mode==='endless')locker.cases+=Math.floor(mine/5);
   for(const id in drops)caseAdd(id,drops[id]);
   addMilestones(st,keys,held,from,mine,c.cls,c.map,waves,c.size);
   // v0.9.3.9: no-account players earn skill points by the server's rule (1 per 5 raids held, 1 per boss) for the case trade
-  let spGain=Math.floor(((locker.spProg|0)+mine)/5)+bossCounted(keys,held,from,waves,c.size).length+sb+(BO?bo.sp:0);locker.spProg=((locker.spProg|0)+mine)%5;
+  let spGain=Math.floor(((locker.spProg|0)+mine)/5)+bossCounted(keys,held,from,waves,c.size).length+sb+(BO?bo.sp:0)+usr;locker.spProg=((locker.spProg|0)+mine)%5;
   for(const k of(c.sb_keys||[]).slice(0,sb))if(BOSSES[k]){const b='boss_'+k;st[b]=(st[b]|0)+1}   // v0.9.3.8: every boss kill counts
   let fshards=0;
   if(BZ){   // v0.9.4.0: Final Blitz bosses (2 Blitzkrieg Cases, 15-30 shards and a skill point each), the evacuation bonus, then halving
@@ -530,12 +537,12 @@ function localRun(c,shards){
   const cases={supply:locker.cases-b0.cases};for(const id in locker.bag){const d=(locker.bag[id]|0)-(b0.bag[id]|0);if(d>0)cases[id]=d}
   const got=checkUnlocks();saveLocker();
   const allShards=locker.shards-b0.shards;
-  return mkReward('run',{cases,shards:allShards,bossShards:Math.min(allShards,bshards+fshards+(BO?bo.shards:0)),sp:spGain,unlocked:got.map(c=>c.id),left:BZ&&c.evac==='left',blitzShards:BZ||BO,pois:BO?bo.pois:undefined});
+  return mkReward('run',{cases,shards:allShards,us:US1,bossShards:Math.min(allShards,bshards+fshards+(BO?bo.shards:0)+2*usr),sp:spGain,unlocked:got.map(c=>c.id),left:BZ&&c.evac==='left',blitzShards:BZ||BO,pois:BO?bo.pois:undefined});
 }
 // v0.9.3.6: a co-op/Endless run in progress is written down every few seconds. If the page reloads, the app is
 // killed or the phone dies mid-run, the next start pays what was held (as an early leave) instead of losing it.
 const DRAFT_KEY='palisade.runDraft.v1';
-function runHeldNow(){return blackout()?boStages():game.phase==='build'?game.wave:Math.max(0,game.wave-1)}
+function runHeldNow(){return understrip()?game.us.log.length:blackout()?boStages():game.phase==='build'?game.wave:Math.max(0,game.wave-1)}
 function runDraftDue(){
   if(demo||!running()||game.pvp||game.phase==='over'||game.rewarded||!player||casino())return false;
   const held=runHeldNow();
@@ -579,7 +586,7 @@ function claimReward(c,j){
   else if(j.case_id)cases[j.case_id]=j.cases_granted|0;
   const prog=(j.locker&&j.locker.prog)|0,ids=Array.isArray(j.unlocked_ids)?j.unlocked_ids:(j.unlocked||[]).map(n=>(COS.find(x=>x.name===n)||{id:n}).id);
   const R={kind:c.kind,cases,shards:j.shards|0,unlocked:ids,prog,toNext:j.to_next!==undefined?j.to_next|0:3-prog,cloud:true,chance:j.chance||0,missCase:c.kind==='match'&&!(j.cases_granted>0)?j.case_id:'',
-    bossShards:j.boss_shards|0,sp:j.skill_points|0,spToNext:j.sp_to_next|0,left:!!j.left_behind,blitzShards:['blitz','campaign'].includes(c.mode)};
+    bossShards:j.boss_shards|0,us:c.mode==='understrip',sp:j.skill_points|0,spToNext:j.sp_to_next|0,left:!!j.left_behind,blitzShards:['blitz','campaign'].includes(c.mode)};
   R.text=rewardText(R);return R;
 }
 const claimText=(c,j)=>claimReward(c,j).text;

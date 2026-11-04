@@ -263,7 +263,7 @@ function spawnEnemy(type){
   const t=spawnTile();if(!t)return;spawnEnemyAt(type,t[0]+.5,t[1]+.5);
 }
 function spawnEnemyAt(type,x,y){
-  const T=ETYPES[type]||ETYPES.rifle,s=(1+(game.mode==='endless'?.045:game.mode==='blitz'?.085:.07)*(game.wave-1))*game.Df.hp*mapHp();
+  const T=ETYPES[type]||ETYPES.rifle,s=(1+(game.mode==='endless'?.045:game.mode==='blitz'?.085:.07)*(game.wave-1))*game.Df.hp*mapHp()*(game.us?usRaiderHp():1);   // THE UNDERSTRIP: by region and squad (10h)
   const e={id:nextId++,type,x,y,hp:T.hp*s,max:T.hp*s,cd:1+rnd(),walk:rnd()*6,aim:{x:-1,y:0},flash:0,speed:T.speed,scanT:0,foe:null,planted:false};
   if(type==='medic')e.ab=1.5;if(type==='spotter'){e.st=0;e.stT=0;e.stM=1;e.lx=x;e.ly=y}
   if(type==='shield')Object.assign(e,{shieldHitsMax:RIOT_SHIELD_HITS,shieldHitsLeft:RIOT_SHIELD_HITS,shieldBroken:false});
@@ -299,7 +299,7 @@ function showPvpOver(){
   $('againBtn').hidden=NET.mode==='guest';$('overWait').hidden=NET.mode!=='guest';
   setTimeout(()=>{if(game.phase==='over')$('over').hidden=false},900);
 }
-function showOver(){closeGameSettings(false);
+function showOver(){closeGameSettings(false);if(understrip()){usOver();return}
   if(game.pvp){showPvpOver();return}
   setStats(COOP_STATS.map(t=>[t,0]));
   const win=!!game.won;sfx(win?'win':'lose',undefined,undefined,true);
@@ -328,7 +328,7 @@ function togglePause(){
   if(NET.mode==='solo')game.paused=open;
   $('pause').hidden=!open;$('pauseJobs').hidden=game.pvp!=='ffa';if(game.pvp==='ffa')syncJobPick();
   if(open)renderPauseCrew();
-  $('pauseEyebrow').textContent=NET.mode!=='solo'?(game.pvp?'THE FIGHT DOESN’T PAUSE':'THE RAID DOESN’T PAUSE ONLINE'):`PAUSED · ${game.phase==='build'?'BUILD PHASE':raidName(game.wave)}`;
+  $('pauseEyebrow').textContent=NET.mode!=='solo'?(game.pvp?'THE FIGHT DOESN’T PAUSE':'THE RAID DOESN’T PAUSE ONLINE'):`PAUSED · ${understrip()?US_NAMES[game.us.level]:game.phase==='build'?'BUILD PHASE':raidName(game.wave)}`;
   $('pFriendsBtn').hidden=!socialAccount();renderFriendBadge();
   for(const s of[stickMove,stickAim]){s.id=null;s.vx=s.vy=s.mag=0}mouse.down=false;
 }

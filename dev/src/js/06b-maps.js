@@ -9,8 +9,8 @@ const T_GROUND=0,T_WATER=1,T_BRIDGE=2,T_LOW=3,T_CRACK=4,T_PIT=5,T_ROCK=6,T_DRUM=
 const SIZES={std:16,xl:24};
 let terr=new Uint8Array(N*N),terrLog=[],floodOn=false,floodLv=0,MAP=null,MAPO={ox:0,oy:0,xl:false};   // terrLog: tiles changed since the start (host sends it)
 const tAt=(i,j)=>inb(i,j)?terr[idx(i,j)]:T_GROUND;
-const terrSolid=t=>t===T_PIT||t===T_ROCK||t===T_DRUM||t===T_BLDG;
-const terrShot=t=>t===T_ROCK||t===T_BLDG;   // what stops a bullet and blocks sight: rock outcrops only (v0.9.1: oil drums don't; a pit doesn't)
+const terrSolid=t=>t===T_PIT||t===T_ROCK||t===T_DRUM||t===T_BLDG||t===T_CONC||t===T_SHUT||t===T_JUNK||t===T_TANK;
+const terrShot=t=>t===T_ROCK||t===T_BLDG||t===T_CONC||t===T_SHUT||t===T_TANK;   // tunnel walls and shut doors too; dumped junk is cover you shoot over   // what stops a bullet and blocks sight: rock outcrops only (v0.9.1: oil drums don't; a pit doesn't)
 const wetT=t=>t===T_WATER||(t===T_LOW&&floodOn);
 // how fast you move on this spot (1 = normal)
 function slowAt(x,y){const t=tAt(Math.floor(x),Math.floor(y)),s=(t===T_WATER?.5:t===T_LOW&&floodOn?.62:t===T_ROAD?CITY.roadSpeed:t===T_RUBBLE?CITY.rubbleSpeed:1)*stormSlow(),f=frostSlow(x,y);return f<1?Math.max(.5,s*f):s}
@@ -105,11 +105,12 @@ const scrap=([i,j],unlock)=>({i,j,type:2,locked:unlock>0,unlock,solid:true});
 function edgeTiles(side,a,b){const out=[];for(let s=Math.max(0,a);s<Math.min(N,b);s++)out.push(side==='e'?[N-1,s]:[s,0]);return out}
 // fills terrain and returns the layout for newGame; sets N for the size
 function layMap(id,size,pvp){
-  const n=pvp||id==='casino'?16:id==='city'?CITY_N:SIZES[size]||16;   // v0.9.7: City Black Out has its own size
+  const n=pvp||id==='casino'?16:id==='city'?CITY_N:id==='understrip'?usLevel().T:SIZES[size]||16;   // v0.9.7: City Black Out has its own size
   if(n!==N){N=n}
   terr=new Uint8Array(N*N);heights=new Uint8Array(N*N);connectors=new Uint8Array(N*N);frostFields=[];terrLog=[];floodOn=false;floodLv=0;
   if(pvp){MAP=MAPS[id]||MAPS.yard;MAPO={ox:0,oy:0,xl:false,pvp};return layPvp(MAP===MAPS[id]?id:'yard',pvp)}   // v0.9.1: PvP plays on every map
   MAP=MAPS[id]||MAPS.yard;
+  if(id==='understrip'){MAP=MAPS.understrip;MAPO={ox:0,oy:0,xl:true,pvp:''};return MAP.lay(MAPO)}   // THE UNDERSTRIP: the level from the run's seed
   if(id==='casino'){MAP=MAPS.casino;MAPO={ox:0,oy:0,xl:false,pvp:''};return MAP.lay(MAPO)}   // v0.10.0
   if(id==='city'){MAP=MAPS.city;MAPO={ox:0,oy:0,xl:true,pvp:''};const L=MAP.lay(MAPO);for(const[i,j]of[L.core,...L.pois.map(p=>[p.i,p.j]),...L.nodes.map(n=>[n.i,n.j]),...L.ruins.flatMap(r=>r[0])])terr[idx(i,j)]=T_GROUND;return L}
   const o={ox:N>16?2:0,oy:N>16?N-16-2:0,xl:N>16,pvp:''};   // XL: the 16×16 layout moves in a little from the south-west corner
@@ -169,6 +170,7 @@ function floodVisual(dt){floodLv+=((floodOn?1:0)-floodLv)*Math.min(1,dt*1.2)}
 function groundCol(i,j,h){
   const t=terr[idx(i,j)],m=MAP||MAPS.yard;
   if(m.city)return cityGroundCol(i,j,h);
+  if(m.under)return usGroundCol(i,j,h);
   if(m.casino)return casinoGroundCol(i,j,h);
   if(t===T_WATER||t===T_BRIDGE)return h<.33?'#1d3848':h<.66?'#1f3b4c':'#1b3544';
   if(m===MAPS.river)return t===T_LOW?(h<.5?'#343423':'#2f3021'):h<.2?'#35402a':h<.75?'#303a26':'#2b3322';
@@ -179,6 +181,7 @@ function groundCol(i,j,h){
 function groundDetail(i,j,h){
   if(MAP&&MAP.city)return cityGroundDetail(i,j,h);
   if(MAP&&MAP.casino)return casinoGroundDetail(i,j,h);
+  if(MAP&&MAP.under)return usGroundDetail(i,j,h);
   const t=terr[idx(i,j)];
   if(t===T_WATER||t===T_BRIDGE){
     // a soft bank line where water meets land

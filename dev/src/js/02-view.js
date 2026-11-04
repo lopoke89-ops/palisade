@@ -17,14 +17,14 @@ function resize(){
   cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);lc.width=Math.round(W*DPR*LQ);lc.height=Math.round(H*DPR*LQ);
   g.setTransform(DPR,0,0,DPR,0,0);lg.setTransform(DPR*LQ,0,0,DPR*LQ,0,0);
   // scale snaps to 5% steps so small height changes (iOS toolbars) don't force a rebuild of the scenery
-  const S=Math.round(clamp(Math.min(W,H*1.15)/560,.72,1.35)*ZOOM*20)/20,old=u;TW2=40*S;TH2=TW2/2;WH=TH2*1.7;u=TW2/32;   // v0.9.7.1: × the desktop zoom
+  const S=Math.round(clamp(Math.min(W,H*1.15)/560,.72,1.35)*ZOOM*MODE_ZOOM*20)/20,old=u;TW2=40*S;TH2=TW2/2;WH=TH2*1.7;u=TW2/32;   // v0.9.7.1: × the desktop zoom
   const dprChanged=DPR!==resize.dpr;resize.dpr=DPR;
   return u!==old||dprChanged;
 }
 let resizeT=0;
 // v0.9.7.1 zoom (desktops only; phones keep the screen-sized view): 70%-140% of the normal tile size. The scenery
 // rebuilds once, a moment after the slider or the wheel stops, not on every step.
-let ZOOM=1,zoomT=0;const ZOOM_MIN=.7,ZOOM_MAX=1.4;
+let ZOOM=1,zoomT=0,MODE_ZOOM=1;const ZOOM_MIN=.7,ZOOM_MAX=1.4;
 function setZoom(z){const v=DESK?clamp(+z||1,ZOOM_MIN,ZOOM_MAX):1;if(v===ZOOM)return;ZOOM=v;clearTimeout(zoomT);zoomT=setTimeout(()=>{if(resize()){caches=null;resize.zooms=(resize.zooms|0)+1}},140)}
 addEventListener('resize',()=>{clearTimeout(resizeT);resizeT=setTimeout(()=>{if(resize())caches=null;vignette=null;vignetteDemo=null},100)});resize();
 let heightPreview=false;

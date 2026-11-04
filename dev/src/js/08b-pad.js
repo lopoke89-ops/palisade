@@ -70,7 +70,8 @@ function gamePad(cur,hit,now){
   if(hit(M.special)){if(hasAbility(player))localAbility();else localSprint()}   // the phone's button next to the grenade
   if(hit(M.roll))localRoll();
   if(hit(M.armory))tryArmory();
-  if(hit(M.piece))game.piece=game.piece==='wall'?'door':'wall';
+  if(hit(M.piece)){if(understrip())usItemSwap();else game.piece=game.piece==='wall'?'door':'wall'}
+  if(understrip()&&(hit(M.matPrev)||hit(M.matNext)))localSwap();   // the d-pad's material buttons swap guns in the tunnels
   if(hit(M.matPrev))game.sel=(game.sel+2)%3;
   if(hit(M.matNext))game.sel=(game.sel+1)%3;
   if(hit(M.kit))toggleBuild();

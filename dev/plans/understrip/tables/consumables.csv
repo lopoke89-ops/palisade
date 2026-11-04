@@ -1,0 +1,9 @@
+id,name,effect,carry_max,price_salvage,where
+c_barricade,BARRICADE,a one-tile barricade in front of you (120 HP; wood rules),2,25,Tunnel Trader; chest
+c_flare,ROAD FLARE,thrown: lights radius 4 for 15 s,3,12,Tunnel Trader; chest
+c_nade,GRENADE,+1 grenade (your class's kind),class max,15,Tunnel Trader; chest
+c_juice,SPARE JUICE,refills one healing charge (not above capacity),1,40,Tunnel Trader; Lift Merchant
+c_ration,FIELD RATION,heals 30% of max HP over 4 s (a heal: Cursed Chip halves it),2,20,chest; Lift Merchant
+c_smoke,SMOKE CAN,raiders within 3 tiles lose track of you for 4 s,2,18,Tunnel Trader; chest
+c_noise,NOISEMAKER,thrown: raiders within 8 tiles go to it for 6 s,2,15,chest
+c_ammo,AMMO BOX,fills the second weapon's reserve,1,30,Tunnel Trader; Lift Merchant

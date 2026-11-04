@@ -69,6 +69,7 @@ function qmCommandJob(){
  return{name:'hold',goal:k=>Math.max(Math.abs(k%N-core.i),Math.abs(((k/N)|0)-core.j))<=2&&!solidTile(k%N,(k/N)|0,true),hold:true};
 }
 function checkDeadEnd(){
+ if(understrip())return false;   // the tunnels have their own (usTick: the squad falls, a life goes)
  if(demo||NET.mode==='guest'||game.pvp||game.phase!=='raid')return false;
  const crew=[...players.values()].filter(p=>!p.out);if(!crew.length)return false;
  if(crew.some(p=>p.alive||p.downed&&Number.isFinite(p.rt)&&p.rt<100000))return false;
