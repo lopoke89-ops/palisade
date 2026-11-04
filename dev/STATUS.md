@@ -1,5 +1,13 @@
 # PALISADE project status
 
+## Pending server work: THE UNDERSTRIP migration (not applied)
+
+`dev/supabase/migrations/20261104200000_v012_understrip.sql` closes the October 10 audit's `import_local_save` hole and adds
+THE UNDERSTRIP's case, items, claims and rooms. **Not applied: Big U asked to hold it.** Everything another agent needs to
+apply, verify and roll it back (including a decision on when the import fix goes live) is in
+[`supabase/PENDING_DEPLOY_v012_understrip.md`](supabase/PENDING_DEPLOY_v012_understrip.md). The mode itself is on branch
+`claude/nifty-lamport-jdl74i` (M0-M3 done; not merged).
+
 ## v0.10.9: a wider casino panel on desktop (October 11)
 
 - **Casino table panel:** 40% of the screen width on desktop (`max(360px,40vw)`, was 32vw), so the cards, chips and buttons have more room. The camera already centres the player in the space left beside the panel. Phones (700px and under) keep their bottom sheet. `casino_map`, `tables_ui` and `casino_games_ui` pass at desktop, landscape and portrait sizes.
