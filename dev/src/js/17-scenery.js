@@ -407,7 +407,10 @@ function render(dt){
   if(MAP&&MAP.casino)casinoItems();
   for(const s of sacks)ritem(s.x+s.y,itemSack,s);
   for(const c of charges)ritem(c.x+c.y,itemCharge,c);
-  for(const e of enemies)ritem(e.x+e.y,itemEnemy,e);
+  // v0.12.2: on big maps a raider off the screen isn't queued (THE UNDERSTRIP's levels keep 10-30 alive and show 0-3; drawing
+  // the rest was most of a frame's drawing). The margin is the walls' and covers the widest thing itemEnemy draws round a
+  // raider (a medic's 2.6-tile reach). Bosses are always drawn.
+  for(const e of enemies){if(big&&e.type!=='boss'){const s=iso(e.x,e.y);if(s[0]<-3*TW2||s[0]>W+3*TW2||s[1]<-TH2*3||s[1]>H+WH*4)continue}ritem(e.x+e.y,itemEnemy,e)}
   if(qm.alive)ritem(qm.x+qm.y,itemQM,qm);else if(!qm.gone)ritem(qm.x+qm.y,itemQMDown,qm);
   if(!demo)for(const o of players.values())if(o.alive||o.downed)ritem(o.x+o.y,itemPlayer,o);
   if(playing()&&p.alive&&cfg.build&&game.pvp!=='ffa'&&!casino()&&!understrip()){const t=buildTarget(p,game.sel,game.piece==='door');ritem(t.i+t.j+1.05,drawGhost,t)}
