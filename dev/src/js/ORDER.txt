@@ -10,6 +10,7 @@
 06d-elevation.js   Frostpeak standard/XL, height traversal, range, projection and frost fields
 06e-city.js   v0.9.7 the ruined city: layout, roads, buildings, POI structures, streetlamps, city lights
 06f-casino.js   v0.10.0 THE PALISADE FALLS CASINO: layout, floor, walls, tables, dealers, slots, neon, seats
+06g-understrip.js   v0.12 THE UNDERSTRIP: the seeded level generator (room kits from dev/data/understrip, inlined by build.py)
 07-effects.js   particles and floating text
 08-input.js   keyboard, mouse, touch sticks and buttons
 08b-pad.js   controller: the button table, play, menu highlight, button changes, rumble

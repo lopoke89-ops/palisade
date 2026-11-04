@@ -9,6 +9,11 @@ os.makedirs(SITE,exist_ok=True)
 import sys;sys.path.insert(0,DEV)
 from assemble import assemble
 src=assemble(f'{DEV}/src')
+# THE UNDERSTRIP's room kits are data (dev/data/understrip/rooms-r<N>.json, read by the browser and the Godot port alike): inline them
+for _kit in sorted(f for f in os.listdir(f'{DEV}/data/understrip') if f.startswith('rooms-r') and f.endswith('.json')):
+    _mark=f"/*@@US_KIT_R{_kit[7:-5]}@@*/null"
+    assert _mark in src,f'{_kit} has no {_mark} in the game script'
+    src=src.replace(_mark,json.dumps(json.load(open(f'{DEV}/data/understrip/{_kit}',encoding='utf-8')),separators=(',',':')),1)
 relay_config=json.load(open(os.environ.get('PALISADE_RELAY_CONFIG') or f'{DEV}/render/client.json',encoding='utf-8'))
 src=src.replace('(()=>{','(()=>{\nglobalThis.PALISADE_RELAY='+json.dumps(relay_config,separators=(',',':'))+';\n',1)
 head='''<!doctype html>
