@@ -120,6 +120,7 @@ function hurtQM(d){
 }
 function hurtEnemy(e,d,own,quiet=false){
   if(e.inv>0){if(!quiet)e.flash=.04;return}   // THE UNDERSTRIP: a boss changing stage can't be hurt
+  if(e.type==='drone')d*=usDroneMul(e);   // THE UNDERSTRIP: drones die fast in the light
   e.hp-=d;if(!quiet){e.flash=.08;emit(e.x,e.y,15*u,'blood')}
   if(e.hp<=0&&!e.dead){e.dead=true;game.stats.dropped++;if(e.us&&game.us)usEnemyDied(e,own);sfx('drop',e.x,e.y);for(let n=0;n<6;n++)emit(e.x,e.y,10*u,'blood');
     if(e.type==='boss'){if(!demo)bossDown(e,own);const p=own&&own!=='dell'?players.get(own):null;if(p){p.kills++;killFx(e.x,e.y,p.cos.fx)}}else award(own,e)}

@@ -116,11 +116,16 @@ const usZapFx=(x0,y0,x1,y1)=>{if(typeof chains!=='undefined')chains.push({x0,y0,
 function usDropLoot(x,y,l){const U=game.us;U.lootN=(U.lootN|0)+1;U.loot.push({n:U.lootN,x,y,...l});sfx('restock',x,y)}
 const usLootAt=p=>game.us&&game.us.loot?game.us.loot.find(l=>Math.hypot(l.x-p.x,l.y-p.y)<1):null;
 function usTakeLoot(p,n){const U=game.us,i=U.loot.findIndex(l=>l.n===n);if(i<0||!p.alive)return false;const l=U.loot[i];if(Math.hypot(l.x-p.x,l.y-p.y)>1.2)return false;
-  if(l.kind==='weapon'){const old=usGiveWeapon(p,l.w);U.loot.splice(i,1);if(old)usDropLoot(p.x+.3,p.y+.3,{kind:'weapon',w:{id:old.id,r:old.r,mods:old.mods}})}
-  else if(l.kind==='perk'){if(usHas(p,l.k))return false;p.uPerks=(p.uPerks||[]).concat([l.k]);U.loot.splice(i,1);usRefit(p)}
-  else if(l.kind==='relic'){const old=p.uRelic;p.uRelic=l.k;U.loot.splice(i,1);if(old)usDropLoot(p.x+.3,p.y+.3,{kind:'relic',k:old});usRefit(p)}
-  else if(l.kind==='consumable'){const I=US_ITEMS[l.k];if(l.k==='c_nade'){if(p.nades>=p.maxN)return false;p.nades++}else if(l.k==='c_juice'){if(p.uj>=p.ujm)return false;p.uj++}else{const k=l.k==='c_bar'?'bar':'flare';if(p.ui[k]>=I.max)return false;p.ui[k]++}U.loot.splice(i,1)}
-  else{p.sal+=l.sal;U.loot.splice(i,1)}
+  if(!usApplyLoot(p,l,()=>U.loot.splice(i,1)))return false;U.stats.found=(U.stats.found|0)+1;return true}
+// a pickup (or a purchase) into the player's kit: what it replaces goes on the floor. gone(): take it off the floor first
+function usCanApply(p,l){if(l.kind==='perk')return!usHas(p,l.k);if(l.kind!=='consumable')return true;const I=US_ITEMS[l.k];
+  return l.k==='c_nade'?p.nades<p.maxN:l.k==='c_juice'?p.uj<p.ujm:(p.ui[l.k==='c_bar'?'bar':'flare']|0)<I.max}
+function usApplyLoot(p,l,gone){if(!usCanApply(p,l))return false;if(gone)gone();
+  if(l.kind==='weapon'){const old=usGiveWeapon(p,l.w);if(old)usDropLoot(p.x+.3,p.y+.3,{kind:'weapon',w:{id:old.id,r:old.r,mods:old.mods}})}
+  else if(l.kind==='perk'){p.uPerks=(p.uPerks||[]).concat([l.k]);usRefit(p)}
+  else if(l.kind==='relic'){const old=p.uRelic;p.uRelic=l.k;if(old&&old!==l.k)usDropLoot(p.x+.3,p.y+.3,{kind:'relic',k:old});usRefit(p)}
+  else if(l.kind==='consumable'){if(l.k==='c_nade')p.nades++;else if(l.k==='c_juice')p.uj++;else p.ui[l.k==='c_bar'?'bar':'flare']++}
+  else p.sal+=l.sal;
   const lb=usLootLabel(l);toastTo(p,lb.name,lb.line);personal(p,'restock');return true}
 
 // ---------- elites: one a room cluster, a name tag, x2.5 health and a trick ----------
@@ -163,7 +168,10 @@ function usKitFrom(p,s){if(typeof s!=='string'||s===p.uKitS)return;p.uKitS=s;con
   p.wSel=sel==='1'&&p.w2?1:0;p.uPerks=(perks||'').split('+').filter(k=>US_PERKS[k]||US_SIG_PERKS[k]);p.uRelic=US_RELICS[relic]?relic:'';usRefit(p)}
 // a boss's own drop (work order 8.2): the Pit Boss's tie-pin
 const US_SIG_PERKS={p_tiepin:{name:'THE PIT BOSS\'S TIE-PIN',r:'l',what:'+1 salvage a kill (on top of Pickpocket)'}};
-const US_SIG={pitboss:{kind:'perk',k:'p_tiepin'}};
+// the bosses' own drops (work order 8.2-8.5): the tie-pin, an epic flare launcher, a legendary anti-grav launcher, the Visitor's
+// Eye (the Visitor's skin comes from the case, 9.2)
+const US_SIG={pitboss:{kind:'perk',k:'p_tiepin'},custodian:{kind:'weapon',w:{id:'w_flare',r:'e',mods:['m_dmg','m_reload']}},
+  gatekeeper:{kind:'weapon',w:{id:'w_antigrav',r:'l',mods:['m_dmg','m_mag']}},visitor:{kind:'relic',k:'x_eye'}};
 const US_PERKS_ALL=Object.assign({},US_PERKS,US_SIG_PERKS);
 const usBountyPlus=(p,e)=>(usHas(p,'p_pocket')?1:0)+(usHas(p,'p_tiepin')?1:0);
 const usMoveMul=(p,s)=>(usHas(p,'p_footing')?1-(1-s)/2:s)*(usRelic(p,'x_lead')?.85:1);
@@ -171,11 +179,11 @@ const usConeMul=p=>(usHas(p,'p_owl')?1.4:1)*(usRelic(p,'x_lens')?.6:1)*(usRelic(
 const usHealMulK=p=>(usHas(p,'p_gulp')?1.25:1)*(usRelic(p,'x_chip')?.5:1)*(usRelic(p,'x_hand')?.7:1);
 // a tunnel raider down (hurtEnemy): elites stay down past a rest and drop loot
 function usEnemyDied(e,own){const U=game.us;if(!U||NET.mode==='guest')return;
-  if(e.elite){U.eliteDown=U.eliteDown||[];U.eliteDown.push(e.us.sid);const r=usRng(usHash(U.seed,U.level,4000+e.us.sid));usDropLoot(e.x,e.y,usRollLoot(r,'elite',1));
+  if(e.elite){U.eliteDown=U.eliteDown||[];U.eliteDown.push(e.us.sid);const r=usRng(usHash(U.seed,U.level,4000+e.us.sid));usDropLoot(e.x,e.y,usRollLoot(r,'elite',US_PLAN[U.level][0]));
     const p=own&&players.get(own);if(p){p.sal+=US_LOOT.elite.bounty;flt(e.x,e.y-.4,`+${US_LOOT.elite.bounty} ELITE`,'#e2b436')}}}
 // a boss down: one rare-or-better drop for each of you, and the boss's own (the first time each of you beats him this run)
-function usBossLoot(x,y,key){const U=game.us;let n=0;for(const p of players.values()){const r=usRng(usHash(U.seed,U.level,7000+n));usDropLoot(x+(n%3-1)*.8,y+Math.floor(n/3)*.8,{...usRollLoot(r,'boss',1),for:p.id});n++}
-  const S=US_SIG[key];if(S)usDropLoot(x,y+1.2,{...S})}
+function usBossLoot(x,y,key){const U=game.us;let n=0;for(const p of players.values()){const r=usRng(usHash(U.seed,U.level,7000+n));usDropLoot(x+(n%3-1)*.8,y+Math.floor(n/3)*.8,{...usRollLoot(r,'boss',US_PLAN[U.level][0]),for:p.id});n++}
+  const S=US_SIG[key];if(S)usDropLoot(x,y+1.2,JSON.parse(JSON.stringify(S)))}
 // edge markers: Light Sleeper (unseen raiders within 8), Card Counter (chests, merchants), the Visitor's Eye (raiders within 6, through walls)
 function usPips(p){if(!p||!p.alive)return;const pip=(x,y,col,far)=>{const c=iso(x,y);const on=c[0]>14&&c[0]<W-14&&c[1]>110&&c[1]<H-14;
     if(on){if(!far){g.strokeStyle=col;g.lineWidth=1.5*u;g.beginPath();g.ellipse(c[0],c[1]-WH*.5,TW2*.5,TH2*.5,0,0,Math.PI*2);g.stroke()}return}

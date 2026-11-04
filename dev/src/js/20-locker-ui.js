@@ -374,9 +374,9 @@ $('overRewards').addEventListener('click',()=>$('overRewards').classList.add('sk
 let armSig='',armTab='upgrades',armSlot=0;
 function tryArmory(){if(understrip()){usInteract(player,true);return}if(casino()){if(player.seat)tbSheet(true);else casSit();return}   // v0.10.0: the action button sits you down in the casino
   const p=player;if(p&&p.alive&&game.phase==='build'&&lockdown()){toast('ARMORY','Lockdown: the armory stays shut until the run is over.');return}if(!shopOpen(p))return;if(!nearStake(p)){toast('ARMORY',game.pvp?'Walk back to your stake to spend salvage.':'Walk back to the stake to spend salvage.');return}openArmory()}
-function openArmory(){$('armClose').textContent=understrip()?'BACK TO THE TUNNELS':'BACK TO THE FENCE';$('armEyebrow').textContent=understrip()?'THE TUNNEL TRADER · SALVAGE ONLY':game.pvp?'ARMORY · AT YOUR STAKE':'ARMORY · BETWEEN RAIDS';$('armory').hidden=false;if(NET.mode==='solo')game.paused=true;freeSticks();renderArmory();if(padMode)navFocus($('armRows').querySelector('button:not(:disabled)')||$('armClose'))}
+function openArmory(){$('armClose').textContent=understrip()?'BACK TO THE TUNNELS':'BACK TO THE FENCE';$('armEyebrow').textContent=understrip()?usMerchName(player)+' · SALVAGE ONLY':game.pvp?'ARMORY · AT YOUR STAKE':'ARMORY · BETWEEN RAIDS';$('armory').hidden=false;if(NET.mode==='solo')game.paused=true;freeSticks();renderArmory();if(padMode)navFocus($('armRows').querySelector('button:not(:disabled)')||$('armClose'))}
 function closeArmory(){if($('armory').hidden)return;$('armory').hidden=true;if(NET.mode==='solo'&&$('pause').hidden)game.paused=false}
-const armorySig=p=>p.sal+'|'+upStr(p)+'|'+p.ammoEq.join(',')+'|'+p.sk+'|'+p.cls+'|'+canShop(p)+'|'+(game.dellLv|0)+'|'+(cores[0]?Math.ceil(cores[0].hp):'')+(game.us?'|'+JSON.stringify(game.us.left)+usPlayerBits(p)+'|'+p.nades:'');
+const armorySig=p=>p.sal+'|'+upStr(p)+'|'+p.ammoEq.join(',')+'|'+p.sk+'|'+p.cls+'|'+canShop(p)+'|'+(game.dellLv|0)+'|'+(cores[0]?Math.ceil(cores[0].hp):'')+(game.us?'|'+JSON.stringify(game.us.left)+JSON.stringify(game.us.got)+usPlayerBits(p)+'|'+p.nades+'|'+(p.uPerks||[]).length+(p.w2?p.w2.id+p.w2.r:''):'');
 function renderArmory(){
   const p=player;if(!p)return;armSig=armorySig(p);$('armSal').textContent=p.sal|0;
   const box=$('armRows');box.textContent='';
@@ -399,6 +399,7 @@ function renderArmory(){
       const slot=armSlot;btn.addEventListener('click',()=>{initAudio();if(NET.mode==='guest'){NET.toHost({t:'am',id:A.id,slot});btn.disabled=true}else if(buyAmmo(p,A.id,slot))renderArmory()});
       row.append(b,btn,i);box.append(row)}return;
   }
+  if(understrip()&&!usUpgradesHere(p)){usTradeRows(box,p);return}   // THE UNDERSTRIP: only the Shrine Keeper and the Lift Merchant sell upgrades
   for(const U of UPG){
     const t=p.up[U.k],row=document.createElement('div');row.className='arow';
     const b=document.createElement('b');b.textContent=U.name;const level=document.createElement('small');level.textContent=`${t}/${ARM_MAX}`;b.append(level);

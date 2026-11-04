@@ -90,7 +90,8 @@ const canShop=p=>shopOpen(p)&&(understrip()?usMerchantAt(p)>=0:nearStake(p)||bla
 function buyUpgrade(p,k){
   if(k==='core')return repairCore(p);
   if(k==='dell')return buyDell(p);
-  const U=UPG.find(x=>x.k===k);if(!U||!canShop(p))return false;const t=p.up[k];if(t>=ARM_MAX||p.sal<U.cost[t])return false;
+  const U=UPG.find(x=>x.k===k);if(!U||!canShop(p)||understrip()&&!usUpgradesHere(p))return false;const t=p.up[k];   // THE UNDERSTRIP: only the Shrine Keeper and the Lift Merchant sell upgrades
+  if(t>=ARM_MAX||p.sal<U.cost[t])return false;
   p.sal-=U.cost[t];p.up[k]=t+1;p.upS=upStr(p);refit(p);if(k==='n')p.nades=Math.max(p.nades,p.maxN);
   personal(p,'restock');return true;
 }

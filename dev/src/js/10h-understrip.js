@@ -1,31 +1,40 @@
 /* ================= THE UNDERSTRIP: the mode (dev/plans/understrip-work-order.md) ================= */
-// A co-op crawl under the Strip. Region 1 (M1): two levels and the Pit Boss's level, each built by usGenerate (06g) from the
-// run's seed. No stake, no build phase, no gathering, no Delgado, no healing out of a fight: healing comes from Lucky Juice
+// A co-op crawl under the Strip: three regions (the Flood Tunnels, Shelter 7, Area 67), two levels and a boss's level in each,
+// then the finale (US_PLAN), each built by usGenerate (06g) from the run's seed and its region's room kit. No stake, no build phase, no gathering, no Delgado, no healing out of a fight: healing comes from Lucky Juice
 // (charges refilled at Neon Shrines). Resting at a shrine sets where the squad comes back and brings the level's raiders
 // back. A squad that's all down loses one of its shared lives and starts again at the last shrine; salvage you carried is
 // left where you fell, for you to pick up (die again first and it's gone). Everyone alive in the lift's ring for 3 s goes down
 // to the next level. The host runs all of it; guests build the same level from the same seed and read the rest from the
 // snapshot (s.us).
 const understrip=()=>!!game&&game.mode==='understrip'&&!game.pvp;
-const US={rollCd:2,levels:3,   // rollCd: D5, the roll comes back in 2 s in this mode (3 s elsewhere; invulnerability unchanged)
+const US={rollCd:2,levels:10,   // rollCd: D5, the roll comes back in 2 s in this mode (3 s elsewhere; invulnerability unchanged)
   lives:3,regionLives:1,juice:3,juiceMax:6,drink:.8,heal:.45,drinkSlow:.4,exitR:1.6,exitHold:3,lift:5,wipe:2.6,bleed:20,
   restR:1.4,merchR:1.7,chestR:1.1,doorR:1.5,pickR:.85,restClear:8,
   sight:7.5,hear:3.2,shotHear:8,alertR:6,ambushR:2.6,regroupHp:.3,regroupT:4,maxAlive:40,
   flood:{first:[50,80],every:[75,115],warn:5,len:18},darkL:[.93,.86,.78,.66],zoom:.87};
 const US_MUFFLE=650;   // Hz: the casino's music heard through concrete (region 1; work order 4.3)
-const US_NAMES=['THE FLOOD TUNNELS · 1','THE FLOOD TUNNELS · 2','THE COUNT ROOM'];
-const T_CONC=12,T_SHUT=13,T_JUNK=14;   // tunnel wall (solid, stops shots and sight), a shut door (the same until it opens), dumped junk (solid, bullets pass)
+// the run: [region, level kind, boss]. Region 3 ends with the Gatekeeper's level, then the finale's (the Visitor)
+const US_PLAN=[[1,'normal',''],[1,'normal',''],[1,'boss','pitboss'],[2,'normal',''],[2,'normal',''],[2,'boss','custodian'],
+  [3,'normal',''],[3,'normal',''],[3,'boss','gatekeeper'],[3,'boss','visitor']];
+const US_NAMES=['THE FLOOD TUNNELS · 1','THE FLOOD TUNNELS · 2','THE COUNT ROOM','SHELTER 7 · 1','SHELTER 7 · 2','THE MAIN HALL',
+  'AREA 67 · 1','AREA 67 · 2','THE LOADING BAY','THE CONTAINMENT HALL'];
+const US_SHORT=['TUNNELS 1','TUNNELS 2','COUNT ROOM','SHELTER 1','SHELTER 2','MAIN HALL','AREA 67 · 1','AREA 67 · 2','LOADING BAY','CONTAINMENT'];
+const T_CONC=12,T_SHUT=13,T_JUNK=14,T_TANK=15;   // tunnel wall (solid, stops shots and sight), a shut door (the same until it opens), dumped junk (solid, bullets pass), a specimen tank (a wall that glows)
 // the run being played (set before newGame by the host's start, a guest's start message, and each level change)
 const US_RUN={seed:0,level:0};
 let US_CUR=null;   // the generated level for US_RUN, and what usLay made of it
-const usKind=lv=>lv>=US.levels-1?'boss':'normal';
+const usKind=lv=>(US_PLAN[lv]||US_PLAN[0])[1];
+const usBossOf=lv=>(US_PLAN[lv]||US_PLAN[0])[2];
+const usBossNow=()=>game&&game.us?usBossOf(game.us.level):'';
+// a level's place in its region (the seed is the run's, the region's and that place, so region 1 is as it was in M1)
+const usInRegion=lv=>lv-US_PLAN.findIndex(q=>q[0]===US_PLAN[lv][0]);
 function usLevel(){const key=US_RUN.seed+'|'+US_RUN.level;if(US_CUR&&US_CUR.key===key)return US_CUR.L;
-  const kit=US_KITS[1],seed=usLevelSeed(US_RUN.seed,1,US_RUN.level+1),L=usGenerate(kit,seed,usKind(US_RUN.level));
+  const lv=US_RUN.level,reg=US_PLAN[lv][0],kit=US_KITS[reg],seed=usLevelSeed(US_RUN.seed,reg,usInRegion(lv)+1),L=usGenerate(kit,seed,usKind(lv),usBossOf(lv));
   if(!L.ok)throw new Error('THE UNDERSTRIP: no level for seed '+seed);US_CUR={key,L};return L}
-const usCell=c=>c==='#'||c==='%'?T_CONC:c==='o'?T_JUNK:c===','?T_LOW:c==='~'?T_WATER:c==='='?T_BRIDGE:c==='K'?T_SHUT:T_GROUND;
+const usCell=c=>c==='#'||c==='%'?T_CONC:c==='t'?T_TANK:c==='o'?T_JUNK:c===','?T_LOW:c==='~'?T_WATER:c==='='?T_BRIDGE:c==='K'?T_SHUT:T_GROUND;
 // the map entry (not in MAP_IDS: the mode chooses it)
 MAPS.understrip={name:'THE FLOOD TUNNELS',short:'Tunnels',under:true,night:true,hp:1/1.1,   // hp: cancels the big-map +10% (mapHp), so the tables' health is what you fight
-  col:'#7cff6b',from:'out of the dark',bosses:['pitboss'],
+  col:'#7cff6b',from:'out of the dark',bosses:['pitboss','custodian','gatekeeper','visitor'],
   blurb:'Flood tunnels under the Strip. Find the lift down.',lay(){return usLay()}};
 let US_EDGE=new Uint8Array(0);   // tunnel wall tiles that face open ground (the only ones drawn standing)
 function usLay(){
@@ -39,16 +48,34 @@ function usLay(){
   const doors=L.rooms.filter(q=>q.role==='shortcut').map(q=>({tiles:(M.K||[]).filter(([x,y])=>x>=q.x&&x<q.x+q.w&&y>=q.y&&y<q.y+q.h),side:q.opensFrom}));
   const arena=L.rooms.find(q=>q.role==='boss_arena'),inArena=p=>arena&&p[0]>=arena.x&&p[0]<arena.x+arena.w&&p[1]>=arena.y&&p[1]<arena.y+arena.h;
   const shrines=(M.S||[]).map(p=>({x:p[0]+.5,y:p[1]+.5,arena:!!inArena(p)}));
-  const merchants=(M.M||[]).map((p,n)=>({x:p[0]+.5,y:p[1]+.5,stock:usStock(usRng(usHash(L.seed,500+n)))}));
-  const chests=(M.C||[]).map((p,n)=>{const rr=usRng(usHash(L.seed,900+n));return{x:p[0]+.5,y:p[1]+.5,sal:15+Math.floor(rr()*16),item:rr()<.45?usPick(rr,['c_nade','c_flare','c_bar']):''}});
+  const reg=US_PLAN[US_RUN.level][0],R=US_REG[reg];MAPS.understrip.name=R.name;MAPS.understrip.short=R.short;
+  const merchants=(M.M||[]).map((p,n)=>({x:p[0]+.5,y:p[1]+.5,kind:'trader',stock:usStock(usRng(usHash(L.seed,500+n)),reg)}));
+  // the other three (work order 7.1): the Lift Merchant where the lift lands (from the second level on), the Shrine Keeper by
+  // the breather's shrine, and the Collector in one level of each region, at the end of a branch, guarded
+  const floorIn=(q,ok)=>{const f=[];for(let y=q.y+1;y<q.y+q.h-1;y++)for(let x=q.x+1;x<q.x+q.w-1;x++)if(L.tiles[y][x]==='.'&&ok(x,y))f.push([x,y]);return f};
+  const nearest=(f,x0,y0)=>f.sort((a,b)=>Math.hypot(a[0]-x0,a[1]-y0)-Math.hypot(b[0]-x0,b[1]-y0)||a[1]-b[1]||a[0]-b[0])[0];
+  if(US_RUN.level>0){const q=L.rooms.find(o=>o.role==='entrance'),f=q&&floorIn(q,(x,y)=>M.P.every(P=>Math.hypot(P[0]-x,P[1]-y)>=1.9)),t=f&&nearest(f,q.x+q.w/2,q.y+q.h/2);
+    if(t)merchants.push({x:t[0]+.5,y:t[1]+.5,kind:'lift',stock:usLiftStock(usRng(usHash(L.seed,560)),reg)})}
+  {const q=L.rooms.find(o=>o.role==='breather'),S=q&&(M.S||[]).find(([x,y])=>x>=q.x&&x<q.x+q.w&&y>=q.y&&y<q.y+q.h);
+    const f=S&&floorIn(q,(x,y)=>{const d=Math.hypot(S[0]-x,S[1]-y);return d>=3&&d<=4.2}),t=f&&f.length&&nearest(f,S[0]+3,S[1]);
+    if(t)merchants.push({x:t[0]+.5,y:t[1]+.5,kind:'keeper',stock:[]})}
+  let coll=null;
+  if(usInRegion(US_RUN.level)===usHash(US_RUN.seed,reg,33)%3){const rc=usRng(usHash(L.seed,570)),caches=L.rooms.filter(o=>o.role==='cache'&&o.tag==='branch');
+    if(caches.length){const q=usPick(rc,caches),C=(M.C||[]).find(([x,y])=>x>=q.x&&x<q.x+q.w&&y>=q.y&&y<q.y+q.h);
+      if(C){coll={q,C};merchants.push({x:C[0]+.5,y:C[1]+.5,kind:'collector',stock:usCollectorStock(rc,reg)})}}}
+  const chests=(M.C||[]).filter(p=>!coll||p!==coll.C).map((p,n)=>{const rr=usRng(usHash(L.seed,900+n));return{x:p[0]+.5,y:p[1]+.5,sal:15+Math.floor(rr()*16),item:rr()<.45?usPick(rr,['c_nade','c_flare','c_bar']):''}});
   const lay={under:true,us:L,core:M.P[0],starts:M.P.map(p=>at(p[0],p[1])),nodes:[],ruins:[],spawns:[{w:1,tiles:M.P.slice()}],bossAt:(M.B||[]).slice(),
     lamps:(M.L||[]).map(p=>at(p[0],p[1])),neon:(M.n||[]).map(p=>at(p[0],p[1])),exit:at(M.E[0][0],M.E[0][1]),shrines,merchants,chests,doors,
-    gate:(M.G||[]).slice(),arena,raiders:usPopulate(L,r)};
+    gate:(M.G||[]).slice(),arena,raiders:usPopulate(L,r,reg)};
+  // the Collector's guards: a shieldbearer (an elite) and a rifleman, in his room
+  if(coll){const f=floorIn(coll.q,(x,y)=>Math.hypot(x-coll.C[0],y-coll.C[1])>=1.5).sort((a,b)=>a[1]-b[1]||a[0]-b[0]);
+    [['shield',1],['rifle',0]].forEach(([type,el],k)=>{const t=f[(k*5+3)%Math.max(1,f.length)];if(t)lay.raiders.push({id:8000+k,type,x:t[0]+.5,y:t[1]+.5,amb:0,elite:el})})}
+  usHazLay(L,lay);
   return lay;
 }
 // who waits where: decided by the level's seed, so every phone agrees (the host spawns them)
 const US_MIX=[['rifle',48],['shield',12],['gren',12],['breach',9],['medic',7],['fire',7],['spotter',5]];
-function usPopulate(L,r){
+function usPopulate(L,r,reg=1){
   const out=[],T=L.T,taken=new Set();let id=0;
   const floor=q=>{const f=[];for(let y=q.y+1;y<q.y+q.h-1;y++)for(let x=q.x+1;x<q.x+q.w-1;x++){const c=L.tiles[y][x];if(c==='.'||c===',')f.push([x,y])}return f};
   const type=()=>usWeighted(r,US_MIX,m=>m[1])[0];
@@ -61,6 +88,8 @@ function usPopulate(L,r){
     const first=out.length;for(let k=0;k<n&&f.length;k++){const p=f.splice(Math.floor(r()*f.length),1)[0];taken.add(p[1]*T+p[0]);out.push({id:id++,type:type(),x:p[0]+.5,y:p[1]+.5,amb:0})}
     // one elite a room cluster (M2): a shieldbearer who charges, or a spotter who calls a mortar
     if(q.role==='room'&&out.length-first>=2&&r()<.6){const c=out.slice(first).find(s=>s.type==='shield'||s.type==='spotter')||out[first];if(c.type!=='shield'&&c.type!=='spotter')c.type=r()<.6?'shield':'spotter';c.elite=1}
+    // Area 67: a drone pack waits in some rooms (the alarms bring more)
+    if(reg===3&&q.role==='room'&&r()<.4)for(let k=0;k<3&&f.length;k++){const p=f.splice(Math.floor(r()*f.length),1)[0];taken.add(p[1]*T+p[0]);out.push({id:id++,type:'drone',x:p[0]+.5,y:p[1]+.5,amb:0})}
   }
   return out.slice(0,US.maxAlive);
 }
@@ -71,7 +100,8 @@ function usBegin(L,opt){
   game.phase='raid';game.timer=0;game.wave=1;game.waves=US.levels;game.queue=[];
   game.us={seed:US_RUN.seed,level:US_RUN.level,lives:opt.usLives??US.lives,exitT:0,lift:0,wipe:0,gate:0,flood:usFirstFlood(),floodT:0,
     rest:{x:L.starts[0][0],y:L.starts[0][1],ix:-1},lit:0,opened:0,chests:0,drops:[],flares:[],loot:[],eliteDown:[],left:L.merchants.map(m=>m.stock.map(s=>s.n)),
-    stats:{kills:0,time:0,levelStart:0,falls:0,rests:0},log:[],alerted:new Set()};
+    stats:{kills:0,time:0,levelStart:0,falls:0,rests:0,found:0,foundAt:0},log:[],alerted:new Set(),got:L.merchants.map(m=>m.stock.map(()=>0))};
+  usHazStart(game.us);
   for(const p of players.values()){usKitOut(p,true);usRefit(p)}
   if(NET.mode!=='guest')usSpawnRaiders();
   MODE_ZOOM=1.15;setTimeout(()=>{if(resize())caches=null},0);   // 15% closer in (02-view)
@@ -79,8 +109,12 @@ function usBegin(L,opt){
 }
 const usFirstFlood=()=>US.flood.first[0]+rnd()*(US.flood.first[1]-US.flood.first[0]);
 function usKitOut(p,fresh){if(fresh||p.uj===undefined){p.uj=US.juice;p.ujm=US.juice;p.ujT=0;p.ui={bar:0,flare:0};p.uSel='bar';p.w2=null;p.wSel=0;p.uPerks=[];p.uRelic='';p.breakUsed=false;p.ripT=0}}
-function usToast(first){const U=game.us,boss=usKind(U.level)==='boss';
-  toastAll(US_NAMES[U.level]||'THE UNDERSTRIP',boss?'The Pit Boss waits past the gate. Rest at the shrine before you go through.':first?'Find the freight lift down. Neon Shrines refill your Lucky Juice; raiders come back when you rest.':'Deeper. Find the next lift.')}
+const US_INTRO={1:'Find the freight lift down. Neon Shrines refill your Lucky Juice; raiders come back when you rest.',
+  2:'Shelter 7: gas vents hiss before they leak, and the yellow floor is radiation. The Desert Civil Defence Authority still guards it.',
+  3:'Area 67: acid burns, shots slow over the blue floor, and alarms bring drones. Drones die fast in your light.'};
+const US_WAITS={pitboss:'The Pit Boss',custodian:'The Custodian',gatekeeper:'The Gatekeeper',visitor:'The Visitor'};
+function usToast(first){const U=game.us,boss=usBossOf(U.level),reg=US_PLAN[U.level][0],newReg=first||U.level>0&&US_PLAN[U.level-1][0]!==reg;
+  toastAll(US_NAMES[U.level]||'THE UNDERSTRIP',boss?`${US_WAITS[boss]} waits past the gate. Rest at the shrine before you go through.`:newReg?US_INTRO[reg]:'Deeper. Find the next lift.')}
 function usSpawnRaiders(){
   enemies=enemies.filter(e=>!e.us);   // gone, not killed: nobody is paid for them
   const L=game.lay,U=game.us,down=new Set((U&&U.eliteDown)||[]);for(const s of L.raiders){if(s.elite&&down.has(s.id))continue;const e=spawnEnemyAt(s.type,s.x,s.y);if(!e)continue;e.us={home:[s.x,s.y],st:s.amb?'ambush':'idle',sid:s.id,t:0,look:rnd()*6.28};
@@ -95,7 +129,7 @@ function usChangeLevel(lv,guest=false){
   let n=0;for(const p of players.values()){const s=L.starts[n++%L.starts.length];p.x=s[0];p.y=s[1];p.z=0;p.tp++;p.tx=p.x;p.ty=p.y;
     if(!p.alive){p.hp=p.max*(p.usDead?1:.25);p.alive=true;p.downed=false;p.usDead=false}p.ujT=0}
   Object.assign(U,{level:lv,exitT:0,lift:0,wipe:0,gate:0,flood:usFirstFlood(),floodT:0,rest:{x:L.starts[0][0],y:L.starts[0][1],ix:-1},lit:0,opened:0,chests:0,drops:[],flares:[],loot:[],eliteDown:[],
-    left:L.merchants.map(m=>m.stock.map(s=>s.n))});U.alerted=new Set();
+    left:L.merchants.map(m=>m.stock.map(s=>s.n)),got:L.merchants.map(m=>m.stock.map(()=>0)),bossSpawned:false,bossDown:false,bossStage:0,floodOn:false,floodWarned:false});U.alerted=new Set();usHazStart(U);
   US_FLOW.clear();caches=null;TERR_SPR.clear();computeFlow();flowDirty=false;NET.wlSent=null;NET.piSent=null;
   if(!guest){usSpawnRaiders();usToast(false)}
 }
@@ -103,7 +137,7 @@ function usChangeLevel(lv,guest=false){
 function usTick(dt){
   const U=game.us;U.stats.time+=dt;
   if(U.lift>0){U.lift-=dt;if(U.lift<=0)usChangeLevel(U.level+1);return true}   // in the lift: the world waits
-  usFloodTick(dt);usFlowTick();usSteps(dt);
+  if(US_PLAN[U.level][0]===1)usFloodTick(dt);usHazTick(dt);usFlowTick();usSteps(dt);   // flash floods are region 1's
   for(const f of U.flares)f.t-=dt;U.flares=U.flares.filter(f=>f.t>0);
   for(const p of players.values()){usChargeTick(p,dt);if(p.ripT>0)p.ripT-=dt;if(p.compM!==undefined&&usMerchantAt(p)!==p.compM){const i=(p.uPerks||[]).indexOf('p_comped');if(i>=0)p.uPerks.splice(i,1);delete p.compM}}
   const crew=[...players.values()];
@@ -114,7 +148,7 @@ function usTick(dt){
   // chests open when you walk up to them
   game.lay.chests.forEach((c,n)=>{if(U.chests&(1<<n))return;for(const p of crew)if(p.alive&&Math.hypot(c.x-p.x,c.y-p.y)<US.chestR){U.chests|=1<<n;usOpenChest(p,c);break}});
   // the boss gate seals once someone is through
-  if(game.lay.arena){usGateTick(dt);usBossTick()}
+  if(game.lay.arena){usGateTick(dt);usBossTick(dt)}
   // everyone down: the tunnels take the squad back to the last shrine (or end the run)
   if(!crew.some(p=>p.alive)){U.wipe+=dt;if(U.wipe>=US.wipe)usWipe();return false}U.wipe=0;
   // the lift: everyone standing in the ring for 3 s
@@ -125,10 +159,12 @@ function usTick(dt){
 }
 function usLevelDone(){const U=game.us;U.exitT=0;
   const kills=[...players.values()].reduce((a,p)=>a+(p.kills|0),0)-(U.stats.killsAt|0);U.stats.killsAt=(U.stats.killsAt|0)+kills;
-  const t=U.stats.time-U.stats.levelStart;U.stats.levelStart=U.stats.time;U.log.push([U.level,kills,Math.round(t)]);
+  const t=U.stats.time-U.stats.levelStart,found=U.stats.found-U.stats.foundAt;U.stats.levelStart=U.stats.time;U.stats.foundAt=U.stats.found;U.log.push([U.level,kills,Math.round(t),found]);
   if(U.level>=US.levels-1){usFinish(true);return}
   U.lift=US.lift;sfx('horn');
-  toastAll(`${US_NAMES[U.level]} · CLEARED`,`${kills} raiders dropped · ${Math.floor(t/60)}:${String(Math.round(t)%60).padStart(2,'0')} · the lift goes down.`);
+  // a region cleared: one more shared life (work order 5.4)
+  const regionDone=US_PLAN[U.level+1][0]!==US_PLAN[U.level][0];if(regionDone){U.lives+=US.regionLives;U.regions=(U.regions|0)+1}
+  toastAll(`${US_NAMES[U.level]} · CLEARED`,`${kills} raiders dropped · ${found} found · ${Math.floor(t/60)}:${String(Math.round(t)%60).padStart(2,'0')}${regionDone?' · +1 LIFE':''} · the lift goes down.`);
   for(const p of players.values())if(!p.alive){p.alive=true;p.downed=false;p.usDead=false;p.hp=p.max*.25}   // the downed come along at 25%; the dead at the next start
 }
 function usFinish(win){const U=game.us;U.done=win?1:2;endGame(win,win?'understrip':'understrip-lost')}
@@ -192,7 +228,7 @@ function usInteract(p,local){
 }
 function usRest(p,s){const U=game.us,S=game.lay.shrines[s];
   if(enemies.some(e=>!e.dead&&Math.hypot(e.x-S.x,e.y-S.y)<US.restClear&&(e.type==='boss'||e.us&&e.us.st==='hunt'))){toastTo(p,'NEON SHRINE','Raiders are too close to rest.');return}
-  U.rest={x:S.x,y:S.y,ix:s};U.lit|=1<<s;U.stats.rests++;
+  U.rest={x:S.x,y:S.y,ix:s};U.lit|=1<<s;U.stats.rests++;U.alarmed=[];U.alarms=[];
   for(const o of players.values()){if(!o.alive){o.alive=true;o.downed=false;o.usDead=false;o.x=S.x+(rnd()-.5);o.y=S.y+.6;o.tp++}o.hp=o.max;o.uj=o.ujm;o.ujT=0;o.revive=0;if(o.w2){o.w2.res=usReserveMax(o.w2,o);if(o.wSel===1)o.ammo=o.gun.mag;else o.w2.ammo=usWeaponGun(o.w2,o).mag}}
   usSpawnRaiders();sfx('revive',S.x,S.y);for(let n=0;n<10;n++)emit(S.x,S.y,WH*(.4+n*.06),'heal');
   toastAll('NEON SHRINE','Rested: Lucky Juice refilled, everyone back on their feet, and this is where you come back. The raiders are back too.')}
@@ -200,17 +236,36 @@ function usDoor(p,d){const U=game.us,D=game.lay.doors[d],cx=D.tiles.reduce((a,t)
   if((p.x-cx)*s[0]+(p.y-cy)*s[1]<=0){toastTo(p,'SERVICE DOOR','Rusted shut. It won\'t budge from this side.');return}
   U.opened|=1<<d;for(const[x,y]of D.tiles)setTerr(idx(x,y),T_GROUND);sfx('collapse',cx,cy);addShake(cx,cy,3);
   toastAll('SHORTCUT','The service door is open: a quicker way back from the shrine.')}
-function usOpenChest(p,c){const n=game.lay.chests.indexOf(c);usDropLoot(c.x,c.y+.6,usRollLoot(usRng(usHash(game.lay.us.seed,950+n)),'chest',1));sfx('gather',c.x,c.y);return;
-  if(c.item){const k=c.item==='c_nade'?'nade':c.item==='c_flare'?'flare':'bar';if(k==='nade')p.nades=Math.min(p.maxN,p.nades+1);else p.ui[k]=Math.min(US_ITEMS[c.item].max,p.ui[k]+1);flt(c.x,c.y-.6,`+1 ${US_ITEMS[c.item].name}`,'#c8c3b8')}}
+function usOpenChest(p,c){const n=game.lay.chests.indexOf(c);usDropLoot(c.x,c.y+.6,usRollLoot(usRng(usHash(game.lay.us.seed,950+n)),'chest',US_PLAN[game.us.level][0]));sfx('gather',c.x,c.y)}
 
-// ---------- the Tunnel Trader (dev/plans/understrip/tables/consumables.csv; the full table lands in M2) ----------
+// ---------- the merchants (work order 7.1; dev/plans/understrip/tables/consumables.csv and the loot tables) ----------
+// The Tunnel Trader sells consumables (stock runs out, for the squad) and common or rare weapons; the Shrine Keeper the
+// armory's upgrades; the Collector epic-and-up weapons (the only gold anywhere), perks and a relic; the Lift Merchant a little
+// of everything, upgrades too. Weapons, perks and relics are per player: each of you can buy each one once.
+const US_MERCH={trader:{name:'THE TUNNEL TRADER',line:'A casino cashier who never came back up. Stock runs out.',col:'#c78bff'},
+  keeper:{name:'THE SHRINE KEEPER',line:'A cleaning robot that kept working after everyone left. Upgrades.',col:'#7cd8ff',up:true},
+  collector:{name:'THE COLLECTOR',line:'A stranger in a tuxedo who doesn\'t age. Only the good stuff.',col:'#e2b436'},
+  lift:{name:'THE LIFT MERCHANT',line:'He rides the freight lift with you. A little of everything.',col:'#7cff6b',up:true}};
+const US_GEAR_PRICE={perk:{c:40,r:70,e:110,l:160,g:240},relic:180};
+const usGearPrice=l=>l.kind==='weapon'?US_TIER[l.w.r].price:l.kind==='perk'?US_GEAR_PRICE.perk[(US_PERKS[l.k]||{r:'r'}).r]:US_GEAR_PRICE.relic;
+const usGear=l=>({gear:l,n:1,price:usGearPrice(l)});
+function usPerkOf(r,reg,rars){const pool=US_PERK_IDS.filter(k=>!(US_PERKS[k].from>reg)),near=pool.filter(k=>rars.includes(US_PERKS[k].r));return{kind:'perk',k:usPick(r,near.length?near:pool)}}
+function usLiftStock(r,reg){return[{k:r()<.5?'c_nade':'c_juice',n:1,price:0},usGear({kind:'weapon',w:usRollWeapon(r,reg,usPick(r,['c','r','r','e']))}),usGear(usPerkOf(r,reg,['c','r']))].map(S=>S.gear?S:{...S,price:US_ITEMS[S.k].price})}
+function usCollectorStock(r,reg){const out=[];for(let k=0;k<2;k++)out.push(usGear({kind:'weapon',w:usRollWeapon(r,reg,r()<.2?'g':r()<.55?'l':'e')}));
+  const nP=1+Math.floor(r()*2),seen=[];for(let k=0;k<nP;k++){const P=usPerkOf(r,reg,['e','l']);if(!seen.includes(P.k)){seen.push(P.k);out.push(usGear(P))}}
+  const rel=US_RELIC_IDS.filter(k=>!(US_RELICS[k].from>reg)&&k!=='x_eye');out.push(usGear({kind:'relic',k:usPick(r,rel)}));return out}
+const usUpgradesHere=p=>{const m=usMerchantAt(p);return m>=0&&!!US_MERCH[game.lay.merchants[m].kind].up};
 const US_ITEMS={c_nade:{name:'GRENADE',what:'+1 grenade',price:15,max:9},c_juice:{name:'SPARE JUICE',what:'Refills one Lucky Juice charge',price:40,max:9},
   c_bar:{name:'BARRICADE',what:'A one-tile barricade (120 HP). SPACE places it',price:25,max:2},c_flare:{name:'ROAD FLARE',what:'Lights 4 tiles round for 15 s. Select with F, SPACE throws',price:12,max:3}};
-function usStock(r){const out=[{k:'c_nade',n:2+Math.floor(r()*3)},{k:'c_juice',n:1}];for(const k of usShuffle(r,['c_bar','c_flare']))if(r()<.8)out.push({k,n:1+Math.floor(r()*2)});return out.map(s=>({...s,price:US_ITEMS[s.k].price}))}
+function usStock(r,reg=1){const out=[{k:'c_nade',n:2+Math.floor(r()*3)},{k:'c_juice',n:1}];for(const k of usShuffle(r,['c_bar','c_flare']))if(r()<.8)out.push({k,n:1+Math.floor(r()*2)});
+  const st=out.map(s=>({...s,price:US_ITEMS[s.k].price})),nW=1+(r()<.5?1:0);for(let k=0;k<nW;k++)st.push(usGear({kind:'weapon',w:usRollWeapon(r,reg,r()<.35?'r':'c')}));return st}
 const usNearMerchant=p=>!!p&&!!game.lay&&!!game.lay.merchants&&game.lay.merchants.findIndex(q=>Math.hypot(q.x-p.x,q.y-p.y)<US.merchR);
 function usMerchantAt(p){return game.lay&&game.lay.merchants?game.lay.merchants.findIndex(q=>Math.hypot(q.x-p.x,q.y-p.y)<US.merchR):-1}
 const usPrice=(p,S)=>Math.round(S.price*(usRelic(p,'x_deck')?1.25:1)*(usHas(p,'p_comped')?.75:1));
-function usBuy(p,m,si){const L=game.lay,U=game.us;if(!p||!p.alive||usMerchantAt(p)!==m)return false;const S=L.merchants[m].stock[si],deck=usRelic(p,'x_deck'),price=S?usPrice(p,S):0;if(!S||!(U.left[m][si]>0||deck)||p.sal<price)return false;
+function usBuy(p,m,si){const L=game.lay,U=game.us;if(!p||!p.alive||usMerchantAt(p)!==m)return false;const S=L.merchants[m].stock[si],deck=usRelic(p,'x_deck'),price=S?usPrice(p,S):0;if(!S)return false;
+  if(S.gear){const bit=1<<(p.slot|0);if(U.got[m][si]&bit||p.sal<price||!usCanApply(p,S.gear))return false;
+    usApplyLoot(p,JSON.parse(JSON.stringify(S.gear)));U.got[m][si]|=bit;p.sal-=price;if(usHas(p,'p_comped'))p.compM=m;return true}
+  if(!(U.left[m][si]>0||deck)||p.sal<price)return false;
   const I=US_ITEMS[S.k];
   if(S.k==='c_nade'){if(p.nades>=p.maxN)return false;p.nades++}
   else if(S.k==='c_juice'){if(p.uj>=p.ujm)return false;p.uj++}
@@ -218,9 +273,9 @@ function usBuy(p,m,si){const L=game.lay,U=game.us;if(!p||!p.alive||usMerchantAt(
   p.sal-=price;if(!deck)U.left[m][si]--;if(usHas(p,'p_comped'))p.compM=m;personal(p,'restock');return true}
 
 // the trader's rows on the armory screen (renderArmory): what's left, what it costs, what it does
-function usTradeRows(box,p){const m=usMerchantAt(p),L=game.lay,U=game.us;if(m<0)return;
-  const h=document.createElement('div');h.className='arow usHead';const hb=document.createElement('b');hb.textContent='THE TUNNEL TRADER';const hi=document.createElement('i');hi.textContent='A casino cashier who never came back up. Stock runs out.';h.append(hb,hi);box.append(h);
-  L.merchants[m].stock.forEach((S,si)=>{const I=US_ITEMS[S.k],left=U.left[m][si]|0,row=document.createElement('div');row.className='arow';
+function usTradeRows(box,p){const m=usMerchantAt(p),L=game.lay,U=game.us;if(m<0)return;const MM=US_MERCH[L.merchants[m].kind];
+  const h=document.createElement('div');h.className='arow usHead';const hb=document.createElement('b');hb.textContent=MM.name;const hi=document.createElement('i');hi.textContent=MM.line;h.append(hb,hi);box.append(h);
+  L.merchants[m].stock.forEach((S,si)=>{if(S.gear){usGearRow(box,p,m,si,S);return}const I=US_ITEMS[S.k],left=U.left[m][si]|0,row=document.createElement('div');row.className='arow';
     const full=S.k==='c_nade'?p.nades>=p.maxN:S.k==='c_juice'?p.uj>=p.ujm:(p.ui[S.k==='c_bar'?'bar':'flare']|0)>=I.max;
     const b=document.createElement('b');b.textContent=I.name;const sm=document.createElement('small');sm.textContent=`${left} LEFT`;b.append(sm);
     const i=document.createElement('i');i.textContent=I.what;
@@ -228,6 +283,14 @@ function usTradeRows(box,p){const m=usMerchantAt(p),L=game.lay,U=game.us;if(m<0)
     btn.setAttribute('aria-label',`${I.name}, ${I.what}, ${left} left, ${btn.textContent}`);
     btn.addEventListener('click',()=>{initAudio();if(NET.mode==='guest'){NET.toHost({t:'ub',m,s:si});btn.disabled=true}else if(usBuy(p,m,si))renderArmory()});
     const pips=document.createElement('div');pips.className='pips';row.append(b,btn,pips,i);box.append(row)})}
+// a weapon, perk or relic for sale: its name in its rarity's colour and what it does, as it would show on the floor
+function usGearRow(box,p,m,si,S){const U=game.us,lb=usLootLabel(S.gear),own=!!(U.got[m]&&U.got[m][si]&(1<<(p.slot|0))),price=usPrice(p,S),row=document.createElement('div');row.className='arow usGear';
+  const b=document.createElement('b');b.textContent=lb.name;b.style.color=lb.col;const sm=document.createElement('small');sm.textContent=S.gear.kind.toUpperCase();b.append(sm);
+  const i=document.createElement('i');i.textContent=lb.line||'';
+  const btn=document.createElement('button');btn.type='button';btn.dataset.usBuy=si;const can=usCanApply(p,S.gear);btn.textContent=own?'BOUGHT':!can?'HAVE IT':price+' SAL';btn.disabled=own||!can||p.sal<price||!canShop(p);
+  btn.setAttribute('aria-label',`${lb.name}, ${lb.line||''}, ${btn.textContent}`);
+  btn.addEventListener('click',()=>{initAudio();if(NET.mode==='guest'){NET.toHost({t:'ub',m,s:si});btn.disabled=true}else if(usBuy(p,m,si))renderArmory()});
+  const pips=document.createElement('div');pips.className='pips';row.append(b,btn,pips,i);box.append(row)}
 
 // ---------- raiders in the tunnels ----------
 // idle and ambushing raiders wait where they were put; noise, sight or a hit sets them hunting the nearest of you, on that
@@ -240,7 +303,7 @@ function usFlowTick(){let n=0;for(const p of players.values()){if(!p.alive)conti
 // footsteps: hunting raiders on the move are heard, through walls, before they're seen (sfx muffles what's behind walls)
 function usSteps(dt){let n=0;for(const e of enemies){if(!e.us||e.us.st!=='hunt'||e.dead)continue;const S=e.us;S.stepT=(S.stepT||0)-dt;
   if(S.stepT<=0&&n<3&&e.walk!==S.lastWalk){S.stepT=.42+rnd()*.12;S.lastWalk=e.walk;n++;sfx('step',e.x,e.y)}}}
-function usAlert(e,why){if(!e.us||e.us.st==='hunt')return;e.us.st='hunt';e.us.t=0;sfx('mark',e.x,e.y);
+function usAlert(e,why){if(!e.us||e.us.st==='hunt')return;e.us.st='hunt';e.us.t=0;sfx('mark',e.x,e.y);usAlarm(e);
   for(const o of enemies)if(o!==e&&o.us&&o.us.st!=='hunt'&&!o.dead&&Math.hypot(o.x-e.x,o.y-e.y)<US.alertR&&losClear(o.x,o.y,e.x,e.y)){o.us.st='hunt';o.us.t=0}}
 // shots fired: raiders who hear them start hunting (called from shoot via usNoise)
 function usNoise(x,y,r){if(!understrip())return;for(const e of enemies)if(e.us&&e.us.st==='idle'&&!e.dead&&Math.hypot(e.x-x,e.y-y)<r)usAlert(e,'noise')}
@@ -281,17 +344,32 @@ function usFloodTick(dt){const U=game.us;if(U.gate===2)return;   // the arena ke
   if(!U.floodOn&&U.flood<=0){U.floodOn=true;U.flood=US.flood.len;floodOn=true;markFlow()}
   else if(U.floodOn&&U.flood<=0){U.floodOn=false;U.floodWarned=false;U.flood=US.flood.every[0]+rnd()*(US.flood.every[1]-US.flood.every[0]);floodOn=false;markFlow();toastAll('THE WATER DROPS','')}}
 
+// ---------- the music (03-audio's route; work order 4.3) ----------
+// Region 1 hears the casino through concrete, region 2 deeper still with a reverb tail, region 3 nothing but its hum.
+// Each boss fight has a raid track; the finale the finale's.
+const US_BOSS_TRACK={pitboss:'express',custodian:'attitude',gatekeeper:'cool',visitor:'finale'};
+function usMusicRoute(){const U=game.us;if(!U)return{k:'casino',token:'casino:'+game.gid};const b=usBossOf(U.level);
+  if(b&&U.gate>0&&!U.bossDown)return{k:US_BOSS_TRACK[b],token:'usboss:'+game.gid+':'+U.level};
+  if(!US_REG[US_PLAN[U.level][0]].music)return null;return{k:'casino',token:'casino:'+game.gid}}
+
 // ---------- the network (yard-31) ----------
 const usPlayerBits=p=>(p.uj|0)|((p.ujm|0)<<3)|(((p.ui&&p.ui.bar)|0)<<6)|(((p.ui&&p.ui.flare)|0)<<8)|((p.ujT>0?1:0)<<10)|((p.usDead?1:0)<<11)|((p.uSel==='flare'?1:0)<<12);
 function usReadBits(p,v){if(!Number.isInteger(v))return;p.uj=v&7;p.ujm=(v>>3)&7;p.ui={bar:(v>>6)&3,flare:(v>>8)&3};const drinking=(v>>10)&1;if(!drinking)p.ujT=0;else if(!(p.ujT>0))p.ujT=US.drink;p.usDead=!!((v>>11)&1);if(p!==player)p.uSel=(v>>12)&1?'flare':'bar'}
 function usSnap(){const U=game.us;return[U.level,U.lives,r2(U.exitT),r2(U.lift),r2(U.wipe),U.gate|0,U.lit|0,U.opened|0,U.chests|0,U.floodOn?1:0,U.bossDown?1:0,U.rest.ix,
-  U.drops.map(d=>[d.slot,r2(d.x),r2(d.y),d.sal]),U.flares.map(f=>[r2(f.x),r2(f.y),r2(f.t),f.r||4]),U.left,U.done|0,U.bossStage|0,(U.loot||[]).map(l=>[l.n,r2(l.x),r2(l.y),l.kind,l.kind==='weapon'?[l.w.id,l.w.r,l.w.mods]:l.kind==='salvage'?l.sal:l.k])]}
+  U.drops.map(d=>[d.slot,r2(d.x),r2(d.y),d.sal]),U.flares.map(f=>[r2(f.x),r2(f.y),r2(f.t),f.r||4]),U.left,U.done|0,U.bossStage|0,(U.loot||[]).map(l=>[l.n,r2(l.x),r2(l.y),l.kind,l.kind==='weapon'?[l.w.id,l.w.r,l.w.mods]:l.kind==='salvage'?l.sal:l.k]),
+  U.got,(U.vents||[]).map(v=>v.s),U.blast||[],U.log[U.log.length-1]||null,U.regions|0,
+  (U.bfx||[]).map(f=>[f.k,r2(f.x),r2(f.y),r2(f.a||0),r2(f.r||0),r2(f.t),r2(f.T),r2(f.warn||0),r2(f.x1||0),r2(f.y1||0),r2(f.half||0),f.tank?1:0])]}
 function usApplySnap(a){const U=game.us;if(!U||!Array.isArray(a))return;
   if(a[0]!==U.level&&Number.isInteger(a[0])&&a[0]>U.level&&a[0]<US.levels)usChangeLevel(a[0],true);
   [,U.lives,U.exitT,U.lift,U.wipe,U.gate,U.lit,U.opened,U.chests]=a;U.floodOn=!!a[9];floodOn=U.floodOn;U.bossDown=!!a[10];U.rest={...U.rest,ix:a[11]};
   const slot=s=>[...players.values()].find(p=>(p.slot|0)===s);
   U.drops=(a[12]||[]).map(([s,x,y,sal])=>({id:(slot(s)||{}).id,slot:s,x,y,sal}));U.flares=(a[13]||[]).map(([x,y,t,r])=>({x,y,t,r}));if(Array.isArray(a[14]))U.left=a[14];U.done=a[15]|0;U.bossStage=a[16]|0;
-  U.loot=(a[17]||[]).map(([n,x,y,kind,v])=>kind==='weapon'?{n,x,y,kind,w:{id:v[0],r:v[1],mods:v[2]||[]}}:kind==='salvage'?{n,x,y,kind,sal:v}:{n,x,y,kind,k:v}).filter(l=>l.kind!=='weapon'||US_WEAPONS[l.w.id])}
+  U.loot=(a[17]||[]).map(([n,x,y,kind,v])=>kind==='weapon'?{n,x,y,kind,w:{id:v[0],r:v[1],mods:v[2]||[]}}:kind==='salvage'?{n,x,y,kind,sal:v}:{n,x,y,kind,k:v}).filter(l=>l.kind!=='weapon'||US_WEAPONS[l.w.id]);
+  if(Array.isArray(a[18]))U.got=a[18];
+  if(Array.isArray(a[19])){if(!U.vents)usHazStart(U);a[19].forEach((v,n)=>{if(U.vents[n])U.vents[n].s=v|0})}
+  if(Array.isArray(a[20])){if(!U.blast)usHazStart(U);a[20].forEach((v,n)=>usBlastSet(n,v|0))}
+  if(Array.isArray(a[21])&&!(U.log.length&&U.log[U.log.length-1][0]===a[21][0]))U.log.push(a[21]);U.regions=a[22]|0;
+  if(Array.isArray(a[23]))U.bfx=a[23].map(([k,x,y,A,r,t,T,warn,x1,y1,half,tank])=>({k,x,y,a:A,r,t,T,warn,x1,y1,half,tank:!!tank,went:t>=warn}))}
 function usHostData(p,d){
   if(d.t==='uw'){if(d.to===0||d.to===1)usSwap(p,d.to)}
   else if(d.t==='ut'){if(hostInt(d.n,0,1e6))usTakeLoot(p,d.n)}
@@ -304,13 +382,19 @@ function usHostData(p,d){
 // ---------- the HUD ----------
 function usHudPhase(lab,host){const U=game.us,p=player,clock=t=>{const s=Math.max(0,Math.ceil(t));return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`};
   const boss=usKind(U.level)==='boss';
-  txt(lab,W<700?(boss?'COUNT ROOM':`TUNNELS ${U.level+1}`):US_NAMES[U.level]);cls(lab,'raid',boss&&U.gate>0&&!U.bossDown);cls(lab,'evac',U.exitT>0||U.lift>0);
+  txt(lab,W<700?US_SHORT[U.level]:US_NAMES[U.level]);cls(lab,'raid',boss&&U.gate>0&&!U.bossDown);cls(lab,'evac',U.exitT>0||U.lift>0);
   const lives=`${Math.max(0,U.lives)} ${U.lives===1?'LIFE':'LIVES'}`;
-  txt($('phaseVal'),U.lift>0?`the lift · ${Math.ceil(U.lift)}s`:U.wipe>0?'the tunnels take you…':U.exitT>0?`${lives} · in the lift ${Math.ceil(US.exitHold-U.exitT)}…`:boss&&!U.bossDown?`${lives} · ${U.gate?'the Pit Boss':'past the gate'}`:`${lives} · find the lift`);
+  txt($('phaseVal'),U.lift>0?`the lift · ${Math.ceil(U.lift)}s`:U.wipe>0?'the tunnels take you…':U.exitT>0?`${lives} · in the lift ${Math.ceil(US.exitHold-U.exitT)}…`:boss&&!U.bossDown?`${lives} · ${U.gate?US_WAITS[usBossOf(U.level)]:'past the gate'}`:`${lives} · find the lift`);
   $('skipBtn').hidden=true;
   // the core meter carries Lucky Juice here
   txt($('coreL'),'JUICE');$('coreF').style.transform=`scaleX(${p.ujm?Math.max(0,p.uj/p.ujm):0})`;txt($('coreN'),`${p.uj|0}/${p.ujm|0}`);cls($('coreM'),'alarm',!(p.uj>0));$('coreF').style.background='#7cff6b'}
-function usKitHud(p){const k=$('usKit');if(!k)return;usWeaponHud(p);
+// the results card while the lift goes down (work order 5.3): the level's kills, what was found, the time, and what's next
+function usCardHud(){const U=game.us,C=$('usCard');if(!C)return;const on=U.lift>0&&U.log.length>0;if(C.hidden===!on&&!on)return;C.hidden=!on;if(!on)return;
+  const [lv,kills,t,found]=U.log[U.log.length-1],next=lv+1,newReg=US_PLAN[next]&&US_PLAN[next][0]!==US_PLAN[lv][0],key=lv+'|'+(U.lives|0);if(C.dataset.k===key)return;C.dataset.k=key;
+  txt($('usCardEy'),'THE LIFT · GOING DOWN');txt($('usCardT'),`${US_NAMES[lv]} · CLEARED`);
+  const S=$('usCardS');S.textContent='';for(const[a,v]of[['RAIDERS',kills],['FOUND',found|0],['TIME',`${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`],['LIVES',Math.max(0,U.lives)]]){const sp=document.createElement('span');const em=document.createElement('em');em.textContent=v;sp.append(em,a);S.append(sp)}
+  txt($('usCardN'),newReg?`${US_REG[US_PLAN[next][0]].name} next · +1 life for the region · the Lift Merchant rides down with you.`:'Next: '+US_NAMES[next]+' · the Lift Merchant is at the bottom.')}
+function usKitHud(p){const k=$('usKit');if(!k)return;usWeaponHud(p);usCardHud();
   txt($('usDrinkN'),p.ujT>0?'…':`${p.uj|0}`);cls($('usDrink'),'empty',!(p.uj>0));cls($('usDrink'),'on',p.ujT>0);
   const bar=p.uSel==='bar',n=p.ui?p.ui[p.uSel]|0:0;txt($('usItemLab'),bar?'BARRICADE':'FLARE');txt($('usItemN'),String(n));cls($('usUse'),'empty',!n);
   txt($('usOtherN'),String(p.ui?(bar?p.ui.flare:p.ui.bar)|0:0));txt($('usOtherLab'),bar?'FLARE':'BARRICADE')}
@@ -321,17 +405,19 @@ function usUseHere(p){if(!p||!p.alive||!game.lay)return'';const L=game.lay,U=gam
 // the floating prompts near a shrine, a merchant, a shortcut door and the lift (drawPrompts)
 function usPrompts(p){if(!p.alive)return;const L=game.lay,U=game.us,E=ctl;if(usLootPrompt(p))return;
   const near=(q,r)=>Math.hypot(q.x-p.x,q.y-p.y)<r,say=(x,y,t,col)=>{const c=iso(x,y);label(t,c[0],c[1]-WH*1.9,col||'#e8e2d0',11)};
-  if(usMerchantAt(p)>=0){const m=L.merchants[usMerchantAt(p)];say(m.x,m.y,E('TAP ARMORY · THE TUNNEL TRADER','E · THE TUNNEL TRADER',`${padKey('armory')} · THE TUNNEL TRADER`),'#c78bff');return}
+  if(usMerchantAt(p)>=0){const m=L.merchants[usMerchantAt(p)],MM=US_MERCH[m.kind];say(m.x,m.y,E('TAP ARMORY · '+MM.name,'E · '+MM.name,`${padKey('armory')} · ${MM.name}`),MM.col);return}
   L.shrines.forEach((s,n)=>{if(near(s,US.restR+.4)&&(!s.arena||U.bossDown))say(s.x,s.y,U.rest.ix===n?E('TAP ARMORY · REST AGAIN','E · REST AGAIN',`${padKey('armory')} · REST AGAIN`):E('TAP ARMORY · REST AT THE SHRINE','E · REST AT THE SHRINE',`${padKey('armory')} · REST AT THE SHRINE`),'#ff5ad8')});
   L.doors.forEach((d,n)=>{if(U.opened&(1<<n))return;const t=d.tiles[0];if(Math.hypot(t[0]+.5-p.x,t[1]+.5-p.y)<US.doorR+.5)say(t[0]+.5,t[1]+.5,E('TAP ARMORY · SERVICE DOOR','E · SERVICE DOOR',`${padKey('armory')} · SERVICE DOOR`),'#ff9a3a')});
   for(const d of U.drops)if(d.id===p.id){const c=iso(d.x,d.y);label('YOUR SALVAGE · '+d.sal,c[0],c[1]-WH*1.2,'#e2b436',10)}
   const ex=L.exit;if(Math.hypot(ex[0]-p.x,ex[1]-p.y)<4)say(ex[0],ex[1],usKind(U.level)==='boss'&&!U.bossDown?'THE LIFT · DEAD':'THE LIFT · EVERYONE IN THE RING','#7cff6b')}
 // the run's end screen (showOver hands over to this)
 function usOver(){const U=game.us,win=!!game.won,me=player;sfx(win?'win':'lose',undefined,undefined,true);
-  $('overTitle').textContent=win?'OUT OF THE COUNT ROOM':'THE TUNNELS KEPT YOU';$('overTitle').className=win?'':'lost';
-  $('overEyebrow').textContent=`THE UNDERSTRIP · REGION 1 · ${players.size} ${players.size===1?'PLAYER':'PLAYERS'} · ${DIFF[pick.diff]?DIFF[pick.diff].name:''}`;
-  $('overLede').textContent=win?'The Pit Boss is down and the way deeper is open. Shelter 7 is next (coming in M3).':`You reached ${US_NAMES[U.level]}. Rest at every shrine you find; it's where you come back.`;
-  const t=Math.round(U.stats.time);setStats([['Deepest',`${U.level+1} of ${US.levels}`],['Raiders dropped',me.kills|0],['Times the squad fell',U.stats.falls],['Shrine rests',U.stats.rests],['Time',`${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`],['Lives left',Math.max(0,U.lives)]]);
+  const reg=US_PLAN[U.level][0];
+  $('overTitle').textContent=win?'OUT OF AREA 67':'THE UNDERSTRIP KEPT YOU';$('overTitle').className=win?'':'lost';
+  $('overEyebrow').textContent=`THE UNDERSTRIP · ${win?'THE WHOLE DESCENT':US_REG[reg].name} · ${players.size} ${players.size===1?'PLAYER':'PLAYERS'} · ${DIFF[pick.diff]?DIFF[pick.diff].name:''}`;
+  $('overLede').textContent=win?'The Visitor is down and the field is dark for good. You walked out from under the Strip.':`You reached ${US_NAMES[U.level]}${U.regions?`, ${U.regions} ${U.regions===1?'region':'regions'} cleared`:''}. Rest at every shrine you find; it's where you come back.`;
+  const t=Math.round(U.stats.time);setStats([['Deepest',`${U.level+1} of ${US.levels}`],['Regions cleared',`${U.regions|0} of 3`],['Raiders dropped',me.kills|0],['Times the squad fell',U.stats.falls],['Shrine rests',U.stats.rests],['Time',`${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`],['Lives left',Math.max(0,U.lives)]]);
   $('overLoot').hidden=true;if(typeof showRewards==='function')showRewards(null);game.rewarded=true;
   $('againBtn').hidden=NET.mode==='guest';$('overWait').hidden=NET.mode!=='guest';
   setTimeout(()=>{if(game.phase==='over')$('over').hidden=false},900)}
+const usMerchName=p=>{const m=p&&game.lay?usMerchantAt(p):-1;return m>=0?US_MERCH[game.lay.merchants[m].kind].name:'THE TUNNEL TRADER'};

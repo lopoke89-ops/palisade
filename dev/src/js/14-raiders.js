@@ -23,7 +23,7 @@ const seen=a=>a.alive&&!(a.stl>0);
 function updateEnemies(dt){
   const Df=game.Df,NM=hasMod('nightmare'),BZ=hasMod('berserk'),EL=hasMod('elite');for(const a of allies())if(a.markT>0)a.markT-=dt;
   for(const e of enemies){if(e.us&&!e.dead&&usIdle(e,dt))continue;const aimed=cityAim(e)||usAim(e);try{   // THE UNDERSTRIP: waiting raiders, and hunters on their quarry's flow field   // v0.9.7: a POI attacker treats his POI as the core
-    if(e.dead)continue;const boss=e.type==='boss',hurry=NM&&!boss?1.18:1;
+    if(e.dead)continue;if(e.type==='drone'){usDroneTick(e,dt);continue}const boss=e.type==='boss',hurry=NM&&!boss?1.18:1;   // THE UNDERSTRIP: Area 67's drones fly their own way
     if(e.burnT>0){const tick=Math.min(dt,e.burnT);e.burnT=Math.max(0,e.burnT-dt);hurtEnemy(e,10*tick,e.burnOwn,true);if(e.dead)continue}
     if(e.slowT>0){e.slowT=Math.max(0,e.slowT-dt);if(!e.slowT)e.slowPct=0}
     if(e.stunT>0){e.stunT-=dt;continue}   // THE UNDERSTRIP: stunned (the taser, a nail, lifted)
@@ -119,7 +119,7 @@ function ammoHit(e,b){
   }
 }
 function updateBullets(dt){
-  for(const b of bullets){
+  const dt0=dt;for(const b of bullets){dt=game.us?dt0*usGravAt(b.x,b.y):dt0;   // THE UNDERSTRIP: shots slow over Area 67's low-gravity floor
     const sp=Math.hypot(b.vx,b.vy),steps=Math.ceil(sp*dt/.15);
     for(let s=0;s<steps&&!b.dead;s++){
       b.x+=b.vx*dt/steps;b.y+=b.vy*dt/steps;b.dist+=sp*dt/steps;
@@ -141,7 +141,7 @@ function updateBullets(dt){
       if(game.pvp){for(const o of players.values())if(o.alive&&!(o.prot>0)&&!rollSafe(o)&&o.id!==b.own&&(game.pvp==='ffa'||o.team!==b.pt)&&Math.hypot(o.x-b.x,o.y-b.y)<.3){hurtPlayer(o,bdmg(b)*(b.heavy?PVP.snipe:PVP.dmg),b.own);feelHit(b.own,b.heavy);b.dead=true;break}}
       else if(b.team===0){for(const e of enemies)if(!e.dead&&!e.burrow&&bulletAtActor(b,e)&&Math.hypot(e.x-b.x,e.y-b.y)<(e.big?.55:.34)){
           // a shieldbearer's shield covers his front (about 130°): the round sparks off it
-          let shield=1;if(e.type==='shield'&&!e.shieldBroken){const l=Math.hypot(b.vx,b.vy)||1;if(-(b.vx*e.aim.x+b.vy*e.aim.y)/l>.42){shieldBulletHit(e,b);const ap=b.ammo&&b.ammo.find(x=>x[0]==='ap');if(!ap){hitFx(b.x,b.y,2);sfx('shieldhit',b.x,b.y);if(!b.pel||!b.felt){b.felt=1;feelHit(b.own,false)}b.dead=true;break}shield=[.5,.6,.7,.85,1][ap[1]]||.5}}
+          let shield=1;if(e.type==='shield'&&!e.shieldBroken||(e.ub&1)){const l=Math.hypot(b.vx,b.vy)||1;if(-(b.vx*e.aim.x+b.vy*e.aim.y)/l>.42){if(e.type==='shield')shieldBulletHit(e,b);const ap=b.ammo&&b.ammo.find(x=>x[0]==='ap');if(!ap){hitFx(b.x,b.y,2);sfx('shieldhit',b.x,b.y);if(!b.pel||!b.felt){b.felt=1;feelHit(b.own,false)}b.dead=true;break}shield=[.5,.6,.7,.85,1][ap[1]]||.5}}
           hurtEnemy(e,bdmg(b)*shield*bossWeak(e,b),b.own);ammoHit(e,b);if(game.us)usBulletHit(e,b);if(!b.pel||!b.felt){b.felt=1;feelHit(b.own,b.heavy)}b.dead=true;break}}
       else{if(game.us)for(const a of players.values())if(a.alive&&rollSafe(a)&&usHas(a,'p_riposte')&&Math.hypot(a.x-b.x,a.y-b.y)<.45)a.ripT=2;   // THE UNDERSTRIP: Riposte
         for(const a of allies())if(a.alive&&!rollSafe(a)&&bulletAtActor(b,a)&&Math.hypot(a.x-b.x,a.y-b.y)<.3){hurtAlly(a,b.dmg*(a===qm?.7:1));b.dead=true;break}}
@@ -152,7 +152,7 @@ function updateBullets(dt){
 }
 // Compact in place: no replacement array on every simulation tick.
 function compactBullets(){let n=0;for(let i=0;i<bullets.length;i++)if(!bullets[i].dead)bullets[n++]=bullets[i];bullets.length=n}
-function updateLobs(dt){for(const l of lobs){l.t+=dt;if(l.t>=l.T){l.dead=true;if(l.k===1)bottleLand(l);else if(l.k===2)slabLand(l);else if(l.k===4)napalmLand(l);else if(l.k===3||l.k===5)explode(l.x1,l.y1,l.R,l.power,null,true);else{explode(l.x1,l.y1,l.R,l.power,l.own);if(l.own)molotovAt(l)}}}lobs=lobs.filter(l=>!l.dead)}
+function updateLobs(dt){for(const l of lobs){l.t+=game.us?dt*usGravAt(l.x0+(l.x1-l.x0)*l.t/l.T,l.y0+(l.y1-l.y0)*l.t/l.T):dt;if(l.t>=l.T){l.dead=true;if(l.k===1)bottleLand(l);else if(l.k===2)slabLand(l);else if(l.k===4)napalmLand(l);else if(l.k===3||l.k===5)explode(l.x1,l.y1,l.R,l.power,null,true);else{explode(l.x1,l.y1,l.R,l.power,l.own);if(l.own)molotovAt(l)}}}lobs=lobs.filter(l=>!l.dead)}
 // a firebrand's bottle: burning ground for 5 s (it hurts people standing in it) and any wood within a tile catches
 // Firestorm: the patch burns 8 s instead of 5 and is half again as wide, and catches wood further out
 function bottleLand(l){
@@ -199,7 +199,7 @@ function updateParticles(dt){
   if(running())localAmbience(dt);
   // time of day: overcast → golden hour → night
   const tod=game.pvp?(hasMod('nightmare')?2:0):todStage(game.phase==='raid'?game.wave:game.wave+.5);
-  const T=MAP&&MAP.under?{L:usDarkL(),r:3,g:5,b:7,warm:0}:MAP&&MAP.casino?{L:.6,r:22,g:6,b:20,warm:.02}:tod===2?{L:isCity()&&game.dark?.8:.7,r:5,g:8,b:22,warm:0}:tod===1?{L:.2,r:60,g:30,b:10,warm:.07}:{L:.12,r:28,g:34,b:44,warm:0};
+  const T=MAP&&MAP.under?usDarkTint():MAP&&MAP.casino?{L:.6,r:22,g:6,b:20,warm:.02}:tod===2?{L:isCity()&&game.dark?.8:.7,r:5,g:8,b:22,warm:0}:tod===1?{L:.2,r:60,g:30,b:10,warm:.07}:{L:.12,r:28,g:34,b:44,warm:0};
   const k=Math.min(1,dt*.8);for(const key of['L','r','g','b','warm'])light[key]+=(T[key]-light[key])*k;
 }
 

@@ -326,7 +326,7 @@ const PL_INFO=[['id',p=>p.id],['name',p=>p.name],['cls',p=>p.cls],['slot',p=>p.s
 // enemies: the boss-only fields sit last and trailing zeros are dropped, so a plain raider sends 7 numbers, not 12
 const EN_STATE=[['id',e=>e.id],['type',e=>ECODE.indexOf(e.type==='boss'?'boss:'+e.boss:e.type)],['x',e=>r2(e.x)],['y',e=>r2(e.y)],['ax',e=>r2(e.aim.x)],['ay',e=>r2(e.aim.y)],
   ['hp',e=>r2(e.hp/e.max)],['plant',e=>e.planted?1:0],['st',e=>e.st||0],['stF',e=>e.st?r2(Math.max(0,e.stT/e.stM)):0],['lx',e=>r2(e.lx||0)],['ly',e=>r2(e.ly||0)],
-  ['burn',e=>r2(e.burnT||0)],['slow',e=>r2(e.slowT||0)],['slowPct',e=>r2(e.slowPct||0)],['shieldLeft',e=>e.shieldHitsLeft||0],['shieldMax',e=>e.shieldHitsMax||0],['shieldBroken',e=>e.shieldBroken?1:0],['el',e=>e.elite==='charger'?1:e.elite==='caller'?2:0],['est',e=>e.est|0]];   // el, est (yard-31): an UNDERSTRIP elite and its trick's state
+  ['burn',e=>r2(e.burnT||0)],['slow',e=>r2(e.slowT||0)],['slowPct',e=>r2(e.slowPct||0)],['shieldLeft',e=>e.shieldHitsLeft||0],['shieldMax',e=>e.shieldHitsMax||0],['shieldBroken',e=>e.shieldBroken?1:0],['el',e=>e.elite==='charger'?1:e.elite==='caller'?2:0],['est',e=>e.est|0],['ub',e=>e.ub|0]];   // el, est (yard-31): an UNDERSTRIP elite and its trick's state; ub: a boss's extra state (the Gatekeeper's shield wall 1, its pilot 2)
 const fieldIdx=L=>Object.fromEntries(L.map((f,i)=>[f[0],i])),PS=fieldIdx(PL_STATE),PI=fieldIdx(PL_INFO),PW=fieldIdx(PL_SLOW);
 const packRow=(L,x)=>L.map(f=>f[1](x)),packTrim=(L,x)=>{const r=packRow(L,x);while(r.length>1&&r[r.length-1]===0)r.pop();return r},PE=fieldIdx(EN_STATE);
 // player info that changed since it was last sent (all of it after a reset: game start, someone dropping in)
@@ -458,7 +458,7 @@ function applySnap(s){
     if(!e)e={id,x:v('x'),y:v('y'),walk:rnd()*6,flash:0,max:1,hp:1};
     if(v('hp')<e.hp-.001)e.flash=.08;
     const c=ECODE[v('type')]||'rifle',bk=c.startsWith('boss:')?c.slice(5):'';
-    Object.assign(e,{type:bk?'boss':c,boss:bk||undefined,big:!!bk,raft:!!(BOSSES[bk]&&BOSSES[bk].raft)&&waterK(idx(clamp(Math.floor(v('x')),0,N-1),clamp(Math.floor(v('y')),0,N-1))),burrow:bk==='foreman'&&(v('st')===2||v('st')===4),tx:v('x'),ty:v('y'),aim:{x:v('ax'),y:v('ay')},hp:v('hp'),max:1,planted:!!v('plant'),st:v('st'),stF:v('stF'),lx:v('lx'),ly:v('ly'),burnT:v('burn'),slowT:v('slow'),slowPct:v('slowPct'),z:heightAt(v('x'),v('y')),shieldHitsLeft:v('shieldLeft'),shieldHitsMax:v('shieldMax'),shieldBroken:!!v('shieldBroken'),elite:v('el')===1?'charger':v('el')===2?'caller':undefined,est:v('est')});enemies.push(e)}
+    Object.assign(e,{type:bk?'boss':c,boss:bk||undefined,big:!!bk,raft:!!(BOSSES[bk]&&BOSSES[bk].raft)&&waterK(idx(clamp(Math.floor(v('x')),0,N-1),clamp(Math.floor(v('y')),0,N-1))),burrow:bk==='foreman'&&(v('st')===2||v('st')===4),tx:v('x'),ty:v('y'),aim:{x:v('ax'),y:v('ay')},hp:v('hp'),max:1,planted:!!v('plant'),st:v('st'),stF:v('stF'),lx:v('lx'),ly:v('ly'),burnT:v('burn'),slowT:v('slow'),slowPct:v('slowPct'),z:heightAt(v('x'),v('y')),shieldHitsLeft:v('shieldLeft'),shieldHitsMax:v('shieldMax'),shieldBroken:!!v('shieldBroken'),elite:v('el')===1?'charger':v('el')===2?'caller':undefined,est:v('est'),ub:v('ub'),pilot:!!(v('ub')&2)});enemies.push(e)}
   frostFields=(s.ice||[]).map(f=>({x:f[0],y:f[1],t:f[2],z:f[3],r:.72,k:idx(Math.floor(f[0]),Math.floor(f[1]))}));
   rockets=[];for(let o=0;o<(s.rk||[]).length;o+=4)rockets.push({x:s.rk[o],y:s.rk[o+1],vx:s.rk[o+2],vy:s.rk[o+3]});
   fires=[];for(let o=0;o<(s.fz||[]).length;o+=5)fires.push({x:s.fz[o],y:s.fz[o+1],t:s.fz[o+2],r:s.fz[o+3],nap:s.fz[o+4]|0,max:4});
@@ -515,7 +515,7 @@ function guestUpdate(dt){
   for(const p of players.values()){if(p!==player)smooth(p);p.flash=Math.max(0,(p.flash||0)-dt);if(p.boltF>0)p.boltF=Math.max(0,p.boltF-dt*1.9);if(p.stun>0)p.stun=Math.max(0,p.stun-dt);if(p!==player&&rolling(p)){p.dgE+=dt;if(p.dgE>=ROLL.dur)p.dgE=-1}}
   smooth(qm);qm.flash=Math.max(0,qm.flash-dt);
   for(const e of enemies){smooth(e);e.flash=Math.max(0,e.flash-dt);e.burnT=Math.max(0,(e.burnT||0)-dt);e.slowT=Math.max(0,(e.slowT||0)-dt)}
-  for(const b of bullets){b.x+=b.vx*dt;b.y+=b.vy*dt;b.dist=(b.dist||0)+Math.hypot(b.vx,b.vy)*dt;if(b.left!==undefined){b.left-=Math.hypot(b.vx,b.vy)*dt;if(b.left<=0||!inb(b.x|0,b.y|0))b.dead=true}}
+  for(const b of bullets){const gv=game.us?usGravAt(b.x,b.y):1;b.x+=b.vx*dt*gv;b.y+=b.vy*dt*gv;b.dist=(b.dist||0)+Math.hypot(b.vx,b.vy)*dt;if(b.left!==undefined){b.left-=Math.hypot(b.vx,b.vy)*dt;if(b.left<=0||!inb(b.x|0,b.y|0))b.dead=true}}
   compactBullets();
   for(const l of lobs)l.t=Math.min(l.T,l.t+dt);
   for(const r of arcs){r.x+=r.vx*dt;r.y+=r.vy*dt}if(game.fb&&!game.fb.done&&game.phase==='raid')game.fb.t=Math.max(0,game.fb.t-dt);   // v0.9.4.0

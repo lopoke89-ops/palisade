@@ -304,10 +304,12 @@ const ECOL={rifle:'#d65a3a',gren:'#e2b436',breach:'#ff8a5a',shield:'#9aa4ae',med
 function itemEnemy(e){
   if(e.type==='boss'){const B=BOSSES[e.boss];if(!B)return;const I=bossInfo(e.boss);
     if(e.burrow||(e.boss==='foreman'&&(e.st===2||e.st===4))){drawMound(e);return}
+    if(B.us&&usDrawBoss(e))return;   // THE UNDERSTRIP: the deeper bosses' own models
     const rf=B.raft&&e.raft!==false;if(rf)drawRaft(e);const kb=bossBase(e.boss);
     drawPerson(e.x,e.y,Object.assign({aim:e.aim,walk:rf?0:e.walk,flash:e.flash>0,hp:e.hp/e.max,big:B.big||1.45,tag:I.name,tagCol:I.col,winterSt:e.st,swing:kb==='butcher'&&e.st<5?e.st|0:e.boss==='bluebutcher'&&e.st===5?1:0},I.look));
     if(e.boss==='bulldozer'&&e.st===6)drawDazed(e);if(e.boss==='destroyer')drawDestroyerKit(e);drawAmmoStatus(e);return}
-  drawPerson(e.x,e.y,Object.assign({aim:e.aim,walk:e.walk,flash:e.flash>0,hp:e.hp/e.max},LOOK[e.type]||LOOK.rifle,{satchel:e.type==='breach'&&!e.planted},e.type==='shield'?{big:1.1,shieldWear:1-(e.shieldHitsLeft??RIOT_SHIELD_HITS)/(e.shieldHitsMax||RIOT_SHIELD_HITS),...(e.shieldBroken?{weapon:'pistol'}:{})}:null));
+  if(e.type==='drone'){usDrawDrone(e);return}   // THE UNDERSTRIP: Area 67's drones; its raiders dress for their region
+  drawPerson(e.x,e.y,Object.assign({aim:e.aim,walk:e.walk,flash:e.flash>0,hp:e.hp/e.max},game.us?usLook(e.type,LOOK[e.type]||LOOK.rifle):LOOK[e.type]||LOOK.rifle,{satchel:e.type==='breach'&&!e.planted},e.type==='shield'?{big:1.1,shieldWear:1-(e.shieldHitsLeft??RIOT_SHIELD_HITS)/(e.shieldHitsMax||RIOT_SHIELD_HITS),...(e.shieldBroken?{weapon:'pistol'}:{})}:null));
   drawAmmoStatus(e);
   if(e.type==='medic'&&game.phase==='raid'){const c=iso(e.x,e.y);g.strokeStyle='rgba(143,224,160,.35)';g.lineWidth=1.2*u;g.beginPath();g.ellipse(c[0],c[1],TW2*2.6,TH2*2.6,0,0,Math.PI*2);g.stroke()}   // his healing reach
 }
@@ -395,7 +397,7 @@ function render(dt){
     if(MAP===MAPS.frost&&heights[k]&&!connectors[k]&&((j+1<N&&heights[k]>heights[k+N]+(connectors[k+N]?1:0))||(i+1<N&&heights[k]>heights[k+1])))ritem(i+j+2,itemFrostCliff,k);
     if(walls[k]){const dd=i+j+1-pd,lat=(i-j)-pl;ritem(i+j+1,itemWall,k,dd>0&&dd<3.2&&Math.abs(lat)<1.7)}
     else if(debris[k])ritem(i+j+.2,itemDebris,k);
-    {const t=terr[k];if(t===T_ROCK||t===T_DRUM)ritem(i+j+1,itemTerr,k);else if(t>=T_CONC&&t<=T_JUNK&&(t!==T_CONC||US_EDGE[k])){const dd=i+j+1-pd,lat=(i-j)-pl;ritem(i+j+1,itemUsWall,k,dd>0&&dd<3.6&&Math.abs(lat)<2)}}   // rock and oil drums (city buildings: cityOccluders)
+    {const t=terr[k];if(t===T_ROCK||t===T_DRUM)ritem(i+j+1,itemTerr,k);else if(t>=T_CONC&&t<=T_TANK&&(t!==T_CONC||US_EDGE[k])){const dd=i+j+1-pd,lat=(i-j)-pl;ritem(i+j+1,itemUsWall,k,dd>0&&dd<3.6&&Math.abs(lat)<2)}}   // rock and oil drums (city buildings: cityOccluders)
   }
   if(MAP&&MAP.city)cityOccluders();
   for(const n of nodes)ritem(n.i+n.j+1,drawNode,n);

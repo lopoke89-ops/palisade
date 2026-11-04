@@ -32,7 +32,7 @@ function musicRoute(){
   if(!demo&&!$('over').hidden)return {k:'results',token:'results:'+game.gid};
   if(!$('menu').hidden)return {k:'menu',token:'menu'};
   if(!demo&&playing()){
-    if(understrip()){const U=game.us;if(U&&usKind(U.level)==='boss'&&U.gate>0&&!U.bossDown)return {k:'express',token:'usboss:'+game.gid+':'+U.level};return {k:'casino',token:'casino:'+game.gid}}   // THE UNDERSTRIP: the casino upstairs, muffled; a raid track for the boss
+    if(understrip())return usMusicRoute();   // THE UNDERSTRIP (10h): the casino upstairs, muffled by region; a raid track for each boss
     if(game.mode==='casino')return {k:'casino',token:'casino:'+game.gid};   // v0.10.1: the casino's own shuffled playlist
     if(game.mode==='blackout'&&!game.pvp&&game.bo&&game.phase==='raid'){const st=game.bo.stage;   // v0.9.7: raid tracks for POI attacks, the finale for the final push
       if(st==='push'||st==='done')return {k:'finale',token:'finale:'+game.gid};
@@ -98,7 +98,10 @@ function musicTick(){
   if(dk||now<mus.duck+1.5){if(dk!==mus.ducked){mus.ducked=dk;G.cancelScheduledValues(now);G.setValueAtTime(G.value,now);G.setTargetAtTime(dk?bv*.3:bv,now,dk?.08:.3)}}
   else{if(mus.ducked!==null){G.cancelScheduledValues(now);mus.ducked=null}G.value=bv}
   const route=musicRoute();let want=musicWant();
-  {const f=understrip()&&route&&route.k==='casino'?US_MUFFLE:20000;if(Math.abs(mus.lp.frequency.value-f)>1)mus.lp.frequency.setTargetAtTime(f,now,.4)}   // THE UNDERSTRIP: the casino's piped music, through the concrete
+  {const M=understrip()&&route&&route.k==='casino'?usReg().music:null,f=M?M.lp:20000,wet=M?M.wet:0;if(Math.abs(mus.lp.frequency.value-f)>1)mus.lp.frequency.setTargetAtTime(f,now,.4)   // THE UNDERSTRIP: the casino's piped music, through the concrete
+    if(wet||mus.wet){if(!mus.wet){mus.wet=AC.createGain();mus.wet.gain.value=0;const cv=AC.createConvolver(),n=Math.floor(AC.sampleRate*2.4),b=AC.createBuffer(2,n,AC.sampleRate);   // Shelter 7: a long concrete tail
+        for(let c=0;c<2;c++){const d=b.getChannelData(c);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/n,2.6)}cv.buffer=b;mus.lp.connect(cv);cv.connect(mus.wet);mus.wet.connect(master)}
+      if(Math.abs(mus.wet.gain.value-wet)>.01)mus.wet.gain.setTargetAtTime(wet,now,.5)}}
   if(mus.src&&(mus.cur!==want||mus.token!==route?.token))musicStop(game.phase==='raid'?.9:1.2);
   if(mus.resume&&mus.resume.token!==route?.token){if(cas.up===mus.resume.k)cas.up=null;mus.resume=null}   // left the casino: the next visit moves on
   if(want&&mus.src&&MUSIC[want].list){const left=mus.end-AC.currentTime,nx=cas.up;

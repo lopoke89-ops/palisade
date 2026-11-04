@@ -9,8 +9,8 @@ const T_GROUND=0,T_WATER=1,T_BRIDGE=2,T_LOW=3,T_CRACK=4,T_PIT=5,T_ROCK=6,T_DRUM=
 const SIZES={std:16,xl:24};
 let terr=new Uint8Array(N*N),terrLog=[],floodOn=false,floodLv=0,MAP=null,MAPO={ox:0,oy:0,xl:false};   // terrLog: tiles changed since the start (host sends it)
 const tAt=(i,j)=>inb(i,j)?terr[idx(i,j)]:T_GROUND;
-const terrSolid=t=>t===T_PIT||t===T_ROCK||t===T_DRUM||t===T_BLDG||t===T_CONC||t===T_SHUT||t===T_JUNK;
-const terrShot=t=>t===T_ROCK||t===T_BLDG||t===T_CONC||t===T_SHUT;   // tunnel walls and shut doors too; dumped junk is cover you shoot over   // what stops a bullet and blocks sight: rock outcrops only (v0.9.1: oil drums don't; a pit doesn't)
+const terrSolid=t=>t===T_PIT||t===T_ROCK||t===T_DRUM||t===T_BLDG||t===T_CONC||t===T_SHUT||t===T_JUNK||t===T_TANK;
+const terrShot=t=>t===T_ROCK||t===T_BLDG||t===T_CONC||t===T_SHUT||t===T_TANK;   // tunnel walls and shut doors too; dumped junk is cover you shoot over   // what stops a bullet and blocks sight: rock outcrops only (v0.9.1: oil drums don't; a pit doesn't)
 const wetT=t=>t===T_WATER||(t===T_LOW&&floodOn);
 // how fast you move on this spot (1 = normal)
 function slowAt(x,y){const t=tAt(Math.floor(x),Math.floor(y)),s=(t===T_WATER?.5:t===T_LOW&&floodOn?.62:t===T_ROAD?CITY.roadSpeed:t===T_RUBBLE?CITY.rubbleSpeed:1)*stormSlow(),f=frostSlow(x,y);return f<1?Math.max(.5,s*f):s}

@@ -173,7 +173,7 @@ function hud(dt){
     txt($('n'+m),locked?(m===1?'R2':'R4'):String(p.mats[m]));cls(c,'sel',game.sel===m);cls(c,'locked',locked);
   }
   cls($('pWall'),'sel',game.piece==='wall');cls($('pDoor'),'sel',game.piece==='door');
-  const US1=understrip();hid($('usKit'),!US1);if(US1)usKitHud(p);
+  const US1=understrip();hid($('usKit'),!US1);if(US1)usKitHud(p);else $('usCard').hidden=true;
   cls($('kit'),'nobuild',!cfg.build||PV==='ffa'||US1);hid($('bmBtn'),PV==='ffa'||US1);txt($('bmLab'),cfg.build?'BUILD ON':'BUILD OFF');cls($('bmBtn'),'off',!cfg.build);
   if(cfg.build&&PV!=='ffa'&&!US1){const t=buildTarget(p,game.sel,game.piece==='door'),b=$('buildBtn');
     txt($('buildAct'),t.ok?t.act:(t.act==='SOLID'?'SOLID':'BUILD'));

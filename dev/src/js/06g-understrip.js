@@ -4,9 +4,9 @@
 // every guest build the same level from the same number. Nothing here touches the game's own random stream (rnd), the
 // map or the game state: usGenerate returns a plain description that usLayMap (below) turns into terrain and markers.
 // dev/test/understrip_gen.js loads this file on its own (no browser) and checks 10,000 seeds.
-const US_KITS={1:/*@@US_KIT_R1@@*/null};
+const US_KITS={1:/*@@US_KIT_R1@@*/null,2:/*@@US_KIT_R2@@*/null,3:/*@@US_KIT_R3@@*/null};
 const US_CELL=8,US_SLOTS=[3,4],US_SIDES=['N','E','S','W'],US_OPP={N:'S',S:'N',E:'W',W:'E'},US_STEP={N:[0,-1],S:[0,1],E:[1,0],W:[-1,0]};
-const US_WALKABLE=c=>c!=='#'&&c!=='%'&&c!=='o';
+const US_WALKABLE=c=>c!=='#'&&c!=='%'&&c!=='o'&&c!=='t';
 // the one random-number generator (mulberry32) and the seed mixer; integer maths only, so the Godot port matches bit for bit
 function usRng(seed){let a=seed|0;return function(){a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 function usHash(...v){let h=0x9E3779B9|0;for(const x of v){h=Math.imul(h^(x|0),0x85EBCA6B);h^=h>>>13;h=Math.imul(h,0xC2B2AE35);h^=h>>>16}return h>>>0}
@@ -36,12 +36,12 @@ function usDoorCells(v,cx,cy,d){let x,y;if(d.side==='N'){x=cx+d.cell;y=cy}else i
   const s=US_STEP[d.side];return{x,y,ox:x+s[0],oy:y+s[1]}}
 
 // ---------- one level ----------
-// seed: the level's own seed (usLevelSeed). kind: 'normal' or 'boss'. Returns {ok, seed, attempts, G, pieces, links, tiles, ...}
+// seed: the level's own seed (usLevelSeed). kind: 'normal' or 'boss'; boss: which arena (a kit with two, region 3's). Returns {ok, seed, attempts, G, pieces, links, tiles, ...}
 const US_GEN_FAILS={},usFail=why=>{US_GEN_FAILS[why]=(US_GEN_FAILS[why]|0)+1;return null};   // why attempts are thrown away (the generator test reports it)
 const US_LEVEL={grid:{normal:7,boss:8},path:[8,12],branch:[.3,.4],tries:1500,restarts:120};
 function usLevelSeed(runSeed,region,level){return usHash(runSeed,region,level)}
-function usGenerate(kit,seed,kind='normal'){
-  const V=kit.pieces.map(p=>({p,vars:usVariants(p)}));
+function usGenerate(kit,seed,kind='normal',boss=''){
+  const V=kit.pieces.filter(p=>p.role!=='boss_arena'||!boss||!p.boss||p.boss===boss).map(p=>({p,vars:usVariants(p)}));
   for(let a=0;a<US_LEVEL.restarts;a++){const L=usTry(kit,V,(seed+a)>>>0,kind);if(L){L.seed=seed>>>0;L.attempts=a+1;return L}}
   return{ok:false,seed:seed>>>0,attempts:US_LEVEL.restarts};
 }

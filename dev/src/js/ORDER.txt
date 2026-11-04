@@ -24,6 +24,7 @@
 10h-understrip.js   v0.12 THE UNDERSTRIP: the mode (levels, shrines, Lucky Juice, shared lives, dropped salvage, the Tunnel Trader, raiders in the tunnels, the network)
 10i-understrip-bosses.js   v0.12 THE UNDERSTRIP: the two-stage bosses (the Pit Boss)
 10j-understrip-loot.js   v0.12 THE UNDERSTRIP: second weapons, loot on the floor, perks, relics, elites
+10k-understrip-regions.js   v0.12 THE UNDERSTRIP: Shelter 7 and Area 67 (hazards, alarms, drones, how each region looks)
 11-hud-chat.js   best record, HUD, text chat
 12-players.js   main update, player control and simulation (triggers, bursts, gathering)
 13-dell.js   Delgado, the quartermaster AI and shotgun

@@ -1,4 +1,4 @@
-// THE UNDERSTRIP (M1), solo, start to finish: a level from the seed (no stake, no build, no Delgado), raiders waiting in the
+// THE UNDERSTRIP (M1), solo, region 1 start to finish (and down to region 2): a level from the seed (no stake, no build, no Delgado), raiders waiting in the
 // dark until they hear or see you, no healing but Lucky Juice, a fall costs a shared life and leaves your salvage where you
 // fell, Neon Shrines (rest, refill, the raiders come back, raiders too close and you can't), the shortcut door opening from
 // one side only, chests, the Tunnel Trader (grenades, juice, a barricade you place), the lift's ring to the next level, the
@@ -74,8 +74,9 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
   P.hurtEnemy(B,B.hp-B.max*.49,pl.id);step(.1);r.boss.stage2=U().bossStage===1&&B.st===60;r.boss.flooded=!!U().floodOn;const hp2=B.hp;P.hurtEnemy(B,500,pl.id);r.boss.invulnerable=B.hp===hp2;
   r.boss.bar=+P.usBossFrac(B).toFixed(2);seen.clear();let kite=0;step(16,()=>{pl.hp=pl.max;if(B.st)seen.add(B.st);if((kite+=1/30)>2.5&&!B.st){kite=0;const a=Math.random()*6.28;for(let d=6;d>2;d--){const x=B.x+Math.cos(a)*d,y=B.y+Math.sin(a)*d;const t=P.terr[(y|0)*P.N+(x|0)];if(t!==P.T_CONC&&t!==P.T_SHUT&&t!==P.T_JUNK){tp(x,y);break}}}});r.boss.stage2Moves=[...seen].sort();
   P.hurtEnemy(B,1e9,pl.id);step(.3);r.boss.downWhy=[!!U().bossDown,U().gate,!!U().floodOn,B.dead,B.inv,B.hp,P.enemies.filter(e=>e.type==='boss').length];r.boss.down=!!U().bossDown&&U().gate===0&&!U().floodOn;
-  // 12. out: the run is won
-  tp(L().exit[0],L().exit[1]);step(3.4);r.end={phase:g().phase,won:g().won,title:document.getElementById('overTitle').textContent};
+  // 12. out of the count room: region 1 is cleared (+1 life) and the lift goes down to Shelter 7 (M3)
+  const lives1=U().lives;tp(L().exit[0],L().exit[1]);step(3.4);P.usCardHud();r.card=!document.getElementById('usCard').hidden&&document.getElementById('usCardT').textContent;step(5.3);
+  r.end={phase:g().phase,level:U().level,lives:U().lives-lives1,regions:U().regions,map:P.MAPS.understrip.name,kit:L().us.rooms[0].id.slice(0,2)};
   // 13. a run with no lives left ends on the next fall
   document.getElementById('menuBtn')&&0;P.newGame(null,'',{});await new Promise(z=>setTimeout(z,100));g().paused=true;U().lives=0;P.hurtPlayer(P.player,1e4);step(3);r.lost={phase:g().phase,won:g().won};
   return r});
@@ -96,7 +97,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
  assert.ok(r.boss.stage1Moves.length>=1&&r.boss.stage1Moves.every(s=>[1].includes(s)),'stage 1: the swing (chips are lobs)');
  assert.ok(r.boss.stage2&&r.boss.flooded&&r.boss.invulnerable);assert.equal(r.boss.bar,1,'stage 2 starts its own full bar');
  assert.ok(r.boss.stage2Moves.some(s=>s===61)&&r.boss.stage2Moves.some(s=>s===2||s===3),'stage 2: the spray and the rush');assert.ok(r.boss.down);
- assert.equal(r.end.phase,'over');assert.equal(r.end.won,true);assert.match(r.end.title,/COUNT ROOM/);
+ assert.match(r.card||'',/COUNT ROOM · CLEARED/);assert.deepEqual(r.end,{phase:'raid',level:3,lives:1,regions:1,map:'SHELTER 7',kit:'r2'});
  assert.equal(r.lost.phase,'over');assert.equal(r.lost.won,false);
  console.log('errors:',errors.length?errors:'none');await b.close();if(errors.length)process.exit(1);
 })().catch(e=>{console.error(e);process.exit(1)});

@@ -83,6 +83,9 @@ body:not(.desk) #phaseNote{max-width:150px;font-size:10px}
 #nadeBtn.empty{opacity:.4}
 /* THE UNDERSTRIP: Lucky Juice and the carried items take the build kit's place */
 #usKit{display:grid;gap:6px}#usKit[hidden]{display:none!important}
+#usCard{position:fixed;left:50%;top:22%;transform:translateX(-50%);z-index:6;min-width:min(340px,calc(100vw - 32px));max-width:calc(100vw - 32px);padding:14px 18px;background:rgba(14,16,14,.92);border:1px solid #7cff6b;color:#e8e2d0;text-align:center;pointer-events:none;font:600 13px/1.35 "Barlow Condensed",sans-serif}
+#usCard[hidden]{display:none}#usCard small{display:block;letter-spacing:.14em;color:#7cff6b;font-size:11px}#usCard b{display:block;font:900 22px/1.1 "Big Shoulders Stencil Display",sans-serif;letter-spacing:.04em;margin:4px 0 8px}
+#usCard div{display:flex;justify-content:center;gap:16px;flex-wrap:wrap}#usCard div span{display:grid}#usCard div span em{font-style:normal;font-size:20px;color:#fff}#usCard i{display:block;margin-top:8px;color:#bdb6a6;font-style:normal}
 #usDrink,#usUse,#usSwap{height:40px;background:rgba(27,24,20,.86);border:1px solid #4f9a5a;display:flex;justify-content:space-between;align-items:center;padding:0 10px;gap:6px;
   font-family:var(--stencil);font-weight:800;letter-spacing:.08em;font-size:15px;color:#9fe68f}
 #usDrink b,#usUse b,#usSwap b{font-family:var(--mono);font-size:12px;color:var(--bone)}#usDrink .kc{background:#9fe68f}#usDrink.on{background:rgba(40,90,40,.92)}#usDrink.empty,#usUse.empty{opacity:.45}
