@@ -39,12 +39,12 @@ function partyInvite(){
 function renderPartyState(){
  if(!$('partyShell')||$('partyShell').hidden)return;
  {const pg=$('menu').dataset.page,m=pg==='solo'?myMods(coopMods()):pg==='lobby'?roomMods():[],el=$('partyMods'),t=m.length?'MODIFIERS · '+modNames(m).join(' · '):'';el.hidden=!t;if(el.textContent!==t)el.textContent=t}
- const room=inRoom(),rows=partyRows(),me=rows.find(r=>r.id===myId)||rows[0],pg=$('menu').dataset.page,C=CLASSES[pick.cls]||CLASSES.soldier,M=pick.mode==='blackout'?MAPS.city:MAPS[pick.map]||MAPS.yard;
+ const room=inRoom(),rows=partyRows(),me=rows.find(r=>r.id===myId)||rows[0],pg=$('menu').dataset.page,C=CLASSES[pick.cls]||CLASSES.soldier,M=pick.mode==='blackout'?MAPS.city:pick.mode==='understrip'?MAPS.understrip:MAPS[pick.map]||MAPS.yard;
  if(pg==='locker'){const eq=locker.eq,nm=(c,k)=>(COSBY[c+':'+k]||{name:k}).name;
   $('partyMode').textContent='LOCKER';$('partyTitle').textContent='YOUR KIT';$('partySubtitle').textContent=`${nm('skin',eq.skin)} · ${nm('hat',eq.hat)} · ${nm("trail",eq.trail)}${/tracer/i.test(nm("trail",eq.trail))?"":" tracer"} · ${nm('fx',eq.fx)}`;
   $('partyPlayerName').textContent=myName();$('partyPlayerState').textContent='EQUIPPED';$('partyHint').textContent='Tap an item you own to wear it.';return}
  if(pg==='solo'||pg==='classes'){
-  $('partyMode').textContent=pg==='solo'?`SOLO · ${M.name}${pick.size==='xl'&&!M.city?' XL':''}`:'CLASSES';$('partyTitle').textContent=pg==='solo'?(M.city?'HOLD THE CITY.':'HOLD THE STAKE.'):C.name;
+  $('partyMode').textContent=pg==='solo'?`SOLO · ${M.name}${pick.size==='xl'&&!M.city&&!M.under?' XL':''}`:'CLASSES';$('partyTitle').textContent=pg==='solo'?(M.under?'FIND THE LIFT.':M.city?'HOLD THE CITY.':'HOLD THE STAKE.'):C.name;$('menu').querySelector('.homeLede')&&($('menu').querySelector('.homeLede').textContent=M.under?'No stake, no Delgado: down the tunnels on your own. Tap a line to change it.':'You and Delgado hold the stake. Tap a line to change it.');
   $('partySubtitle').textContent=pg==='solo'?`${LEN_NAME[pick.mode]||'5 RAIDS'} · ${DIFF[pick.diff].name} · ${C.name}`:'Your class carries into solo and multiplayer.';
   $('partyPlayerName').textContent=myName();$('partyPlayerState').textContent=pg==='solo'?'READY':'CHOOSING A CLASS';
   $('partyHint').textContent=pg==='solo'?M.blurb:'';return}

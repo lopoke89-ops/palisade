@@ -8,7 +8,7 @@ const US_PIT={hp:960,speed:1.6,speed2:2.1,swing:{tell:.7,r:1.8,half:.9,dmg:22,cd
 BOSSES.pitboss={name:'THE PIT BOSS',hp:US_PIT.hp,speed:US_PIT.speed,scan:11,bounty:40,col:'#e2b436',think:thinkPitBoss,us:true,box:'none',
   look:{body:'#2a2a30',vest:'#1c1c22',pants:'#26262c',head:'#b08a6a',helmet:'#1a1410',bandana:'#7a1a1a',gl:14,weapon:'sword'},
   intro:'He throws chips that go off: a ring shows where each one lands. When his jacket comes off, the floor floods and he charges.'};
-ECODE.push('boss:pitboss');   // network type codes only ever grow at the end
+ECODE.push('boss:pitboss');BOSS_WEAK.pitboss='blast';   // network type codes only ever grow at the end
 function usBossWake(){const U=game.us;if(U.bossSpawned||NET.mode==='guest')return;U.bossSpawned=true;U.bossStage=0;spawnBoss('pitboss')}
 function usBossReset(){const U=game.us;if(!U||!game.lay.arena)return;enemies=enemies.filter(e=>e.type!=='boss'&&!(e.us&&e.us.call));U.bossSpawned=false;U.bossStage=0;U.floodOn=false;floodOn=false;usGateOpen()}
 // usTick: the boss is down (once), so the arena's shrine and the lift wake

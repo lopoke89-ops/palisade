@@ -3,13 +3,13 @@
 // (US_EDGE), from a few shared block sprites (the projection is the same everywhere, so one sprite serves every tile); walls
 // on the camera side of you draw low, so a one-tile corridor never hides you, the raiders or a telegraph. Light comes from
 // you: a cone where you aim and a small glow, plus the level's lamps, neon, shrines and flares. Raiders carry no light.
-const US_LOOK={wallH:1.15,lowH:.32,cone:[[.7,.75],[1.5,.95],[2.4,1.15],[3.4,1.35],[4.5,1.5]],glow:1.5};
+const US_LOOK={wallH:1.15,lowH:.32,cone:[[.7,.8],[1.5,1.05],[2.4,1.3],[3.4,1.5],[4.5,1.65],[5.4,1.6]],glow:1.6};
 function usGroundCol(i,j,h){const t=terr[idx(i,j)];
   if(t===T_CONC||t===T_SHUT)return'#0b0c0b';
   if(t===T_WATER)return h<.5?'#16303c':'#142b36';
   if(t===T_BRIDGE)return'#4a463c';
   if(t===T_LOW)return h<.33?'#2c3532':h<.66?'#2a322f':'#28302d';
-  return h<.2?'#3a3c37':h<.75?'#363833':'#32342f'}
+  return h<.2?'#30322d':h<.75?'#2c2e29':'#292b26'}
 // the floor's own detail: cracks, puddles, the odd stain of graffiti on the floor's edge
 function usGroundDetail(i,j,h){const t=terr[idx(i,j)];if(t!==T_GROUND&&t!==T_LOW)return true;
   if(h>.9){const c=iso(i+.3+h*.4,j+.5);g.strokeStyle='rgba(15,15,14,.5)';g.lineWidth=u;g.beginPath();g.moveTo(c[0]-4*u,c[1]);g.lineTo(c[0]+2*u,c[1]-u);g.lineTo(c[0]+5*u,c[1]+u);g.stroke()}
@@ -22,7 +22,7 @@ function usBlock(kind,low){const key=kind+'|'+(low?1:0)+'|'+TW2+'|'+DPR;let S=US
   const cv2=document.createElement('canvas');cv2.width=Math.ceil((x1-x0)*DPR);cv2.height=Math.ceil((y1-y0)*DPR);const ctx=cv2.getContext('2d');ctx.setTransform(DPR,0,0,DPR,0,0);
   const kg=g,kx=camX,ky=camY,hp=heightPreview;g=ctx;camX=-x0;camY=-y0;heightPreview=true;
   try{
-    if(kind==='wall'){boxR(0,0,1,1,0,hh,low?'#4a4d46':'#3e413b','#2a2c28','#222420');
+    if(kind==='wall'){const T=boxR(0,0,1,1,0,hh,low?'#6a6d63':'#5f6258','#35372f','#2a2c26');g.strokeStyle='rgba(190,196,180,.28)';g.lineWidth=u;g.beginPath();g.moveTo(T.D[0],T.D[1]-hh);g.lineTo(T.C[0],T.C[1]-hh);g.lineTo(T.B[0],T.B[1]-hh);g.stroke();
       if(!low){g.strokeStyle='rgba(0,0,0,.35)';g.lineWidth=u;faceLine(iso(0,1),iso(1,1),hh,.35);faceLine(iso(1,1),iso(1,0),hh,.35);faceLine(iso(0,1),iso(1,1),hh,.7);faceLine(iso(1,1),iso(1,0),hh,.7);
         g.strokeStyle='rgba(120,150,150,.18)';faceLine(iso(0,1),iso(1,1),hh,.1)}}   // concrete courses and a flood line
     else if(kind==='door'){boxR(.08,.08,.92,.92,0,hh,'#5a3a24','#6b4228','#4e301c');g.fillStyle='#2a1a10';const c=iso(.5,1);g.fillRect(c[0]-6*u,c[1]-hh*.6,4*u,3*u)}

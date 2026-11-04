@@ -78,7 +78,7 @@ const rollPos=e=>{const x=Math.max(0,Math.min(1,(e-ROLL.go)/(ROLL.end-ROLL.go)))
 const rolling=p=>!!p&&p.dgE>=0&&p.dgE<ROLL.dur;
 const rollSafe=p=>!!p&&p.dgE>=ROLL.safe0&&p.dgE<ROLL.safe1;
 const canRoll=p=>!!p&&p.alive&&!demo&&!casino()&&!p.seat&&!(p.dgCd>0)&&!rolling(p)&&game.phase!=='over';
-function startRoll(p,dx,dy){const l=Math.hypot(dx,dy)||1;p.dgX=dx/l;p.dgY=dy/l;p.dgE=0;p.dgCd=ROLL.cd;p.rl=0;p.rlReq=false;p.bLeft=0;sfx('roll',p.x,p.y)}
+function startRoll(p,dx,dy){const l=Math.hypot(dx,dy)||1;p.dgX=dx/l;p.dgY=dy/l;p.dgE=0;p.dgCd=understrip()?US.rollCd:ROLL.cd;p.rl=0;p.rlReq=false;p.bLeft=0;sfx('roll',p.x,p.y)}
 // a roll's timers on the host, for everyone but this screen's own soldier (controlLocal moves that one)
 function rollTick(p,dt){p.dgCd=Math.max(0,(p.dgCd||0)-dt);if(!p.alive){p.dgE=-1;return}if(rolling(p)){p.dgE+=dt;if(p.dgE>=ROLL.dur)p.dgE=-1}}
 // A guest isn't told which way someone else rolls (their row has only how far in): it reads it off their travel,

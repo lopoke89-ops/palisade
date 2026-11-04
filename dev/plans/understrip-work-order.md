@@ -7,7 +7,7 @@
 | **Platform** | **Browser build only** (`dev/src/`). The Godot port (`godot/`) is a later, separate sweep; section 15 says how to keep that sweep mechanical. |
 | **Starts from** | v0.11.1 (`main`), network protocol `yard-30` |
 | **Director** | Big U (lopoke89-ops) |
-| **Status** | M0 (pre-production): decisions answered (section 16); the M0 papers are in `dev/plans/understrip/`, awaiting the director's sign-off |
+| **Status** | M0 signed off (November 4, 2026). **M1 (the region 1 vertical slice) built**, report in `dev/evidence/2026-11-04-understrip-m1/`; the director's fun test is next |
 
 ---
 

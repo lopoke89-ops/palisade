@@ -103,6 +103,7 @@ function applyCfg(){
   if(!['auto','30','60'].includes(cfg.fpsMode))cfg.fpsMode='auto';
   {const z=Math.round((cfg.zoom||1)*100);$('sZoom').value=z;$('sZoomV').textContent=z+'%';$('zoomSet').style.display=DESK?'':'none';setZoom(cfg.zoom||1)}   // v0.9.7.1
   for(const b of document.querySelectorAll('#msgSeg [data-msgt]')){const on=+b.dataset.msgt===(cfg.msgTime||1);b.classList.toggle('sel',on);b.setAttribute('aria-checked',String(on))}   // v0.9.7.1
+  for(const b of document.querySelectorAll('#usBrightSeg [data-usb]')){const on=+b.dataset.usb===(cfg.usBright|0);b.classList.toggle('sel',on);b.setAttribute('aria-checked',String(on))}   // THE UNDERSTRIP
   for(const b of document.querySelectorAll('#fpsSeg [data-fpsm]')){const on=b.dataset.fpsm===cfg.fpsMode;b.classList.toggle('sel',on);b.setAttribute('aria-checked',String(on))}
   $('mName').value=cfg.name||'';
 }
@@ -116,6 +117,7 @@ $('sZoom').addEventListener('input',e=>{cfg.zoom=e.target.value/100;applyCfg();s
 // the mouse wheel zooms in a game (desktops), inside the same range as the slider
 cv.addEventListener('wheel',e=>{if(!DESK||!running()||demo||overlayOpen())return;e.preventDefault();cfg.zoom=Math.round(clamp((cfg.zoom||1)+(e.deltaY<0?.05:-.05),ZOOM_MIN,ZOOM_MAX)*100)/100;applyCfg();saveCfg()},{passive:false});
 for(const b of document.querySelectorAll('#msgSeg [data-msgt]'))b.addEventListener('click',()=>{cfg.msgTime=+b.dataset.msgt;applyCfg();saveCfg()});
+for(const b of document.querySelectorAll('#usBrightSeg [data-usb]'))b.addEventListener('click',()=>{cfg.usBright=clamp(+b.dataset.usb|0,0,3);applyCfg();saveCfg()});
 $('toast').addEventListener('click',()=>{if(toastCur){toastT=0;toastTick(0)}});   // tap the message to dismiss it
 for(const b of document.querySelectorAll('#fpsSeg [data-fpsm]'))b.addEventListener('click',()=>{cfg.fpsMode=b.dataset.fpsm;FPS_AUTO.drop=false;applyCfg();saveCfg()});
 $('mName').addEventListener('input',e=>{cfg.name=e.target.value.slice(0,12);saveCfg();renderPartyState();renderIdentity()});
@@ -156,7 +158,7 @@ function leaveRun(){
   if(held<=(game.joinHeld|0)&&(game.bossLog||[]).length<=(game.joinBoss|0)&&(game.sbN|0)<=(game.joinSB|0)&&(game.fbLog||[]).length<=(game.joinFB|0)&&!blitzResult(player))return;   // nothing new since this phone came in
   game.rewarded=true;const t=lockerReward(held,false,player.kills|0,true);if(t&&!locker.cloud)toast('RUN SAVED',t.text);
 }
-function toMenu(){closeGameSettings(false);leaveRun();if(rlyActive())netReset();if(pick.mode==='casino')pick.mode=CAS_PREV||'5';   // v0.10.0: PLAY goes back to the run you had picked
+function toMenu(){closeGameSettings(false);if(MODE_ZOOM!==1){MODE_ZOOM=1;setTimeout(()=>{if(resize())caches=null},0)}leaveRun();if(rlyActive())netReset();if(pick.mode==='casino')pick.mode=CAS_PREV||'5';   // v0.10.0: PLAY goes back to the run you had picked
   game.paused=false;NET.inGame=false;$('pause').hidden=true;$('over').hidden=true;$('deadEnd').hidden=true;$('armory').hidden=true;$('menu').hidden=false;startDemo();showPage('main')}
 function abandon(){if(NET.mode!=='solo')netLeave('');else toMenu()}
 // class + threat pickers exist on the Solo and Multiplayer pages; keep them in step

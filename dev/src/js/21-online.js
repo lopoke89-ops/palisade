@@ -4,7 +4,9 @@
 // they talk directly. Each guest opens 'r' (reliable: hello, build, grenade, and every
 // one-off event: sounds, particles, bullets, toasts, wall changes), 'u' (fast: movement in),
 // and 'st' (never resent: game state out, 15 times a second).
-const PROTO='yard-31',ROOM_PREFIX='palisade-yard-27-';   // v0.10.3 yard-29: casino seat codes for craps, baccarat and the machines   // v0.9.7.1: ready states (lobby and the push), round pay
+// yard-31 (THE UNDERSTRIP) only adds fields older copies ignore, so a yard-30 copy (an old tab, the desktop game) still plays
+// every other mode with a yard-31 host. Guests say both (v for older hosts, v2 for new ones); the casino relay is told yard-30.
+const PROTO='yard-31',PROTO_OLD='yard-30',ROOM_PREFIX='palisade-yard-27-';   // v0.10.3 yard-29: casino seat codes for craps, baccarat and the machines   // v0.9.7.1: ready states (lobby and the push), round pay
 // v0.9.7 was yard-26:   // v0.9.7: City Black Out (POI summary, near-only raiders on the city, the Supreme Destroyer's states 40-47, gas and mines)
 const ROOM_SESSION=(()=>{let id='';try{id=sessionStorage.getItem('palisade.roomSession')||''}catch(e){}
   if(!/^[0-9a-f]{24}$/.test(id)){id=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');try{sessionStorage.setItem('palisade.roomSession',id)}catch(e){}}
@@ -121,7 +123,8 @@ function hostData(peerId,d){
   const c=NET.conns.get(peerId);if(!c||c.kicked||!d||typeof d!=='object'||Array.isArray(d)||typeof d.t!=='string')return;c.heard=performance.now();
   if(d.t==='hello'){
     if(c.pid||!c.r||!c.r.open)return;
-    if(d.v!==PROTO){c.r.send({t:'kick',why:'Your copy of PALISADE is a different version from the host’s. Both of you reload the page.'});return}
+    const ver=typeof d.v2==='string'?d.v2:d.v;c.v=ver;
+    if(ver!==PROTO&&!(ver===PROTO_OLD&&pick.mode!=='understrip')){c.r.send({t:'kick',why:'Your copy of PALISADE is a different version from the host’s. Both of you reload the page.'});return}
     if(d.invitationSession&&d.invitationSession!==NET.incarnation){c.r.send({t:'kick',why:'That invitation belongs to an earlier room. Ask for a new invite.'});return}
     if(!/^[0-9a-f]{24}$/.test(d.session||''))return;
     if(NET.banned.has(d.session)){c.r.send({t:'kick',why:'The host removed you from the game.'});return}
@@ -238,6 +241,7 @@ function broadcastLobby(){
   if(NET.mode==='host'&&pubTimer)lobbyPublish();
 }
 function lobbyBlock(){
+  if(pick.mode==='understrip'&&pick.pvp==='coop'&&[...NET.conns.values()].some(c=>c.pid&&c.v===PROTO_OLD))return'Someone in the room has an older copy (or the desktop game), which can\'t play THE UNDERSTRIP. They need to reload.';
   if(pick.pvp==='coop')return'';
   if(NET.roster.length<2)return'PvP needs at least two players. Share the code.';
   if(pick.pvp==='base'&&(NET.roster.every(r=>r.team!=='b')||NET.roster.every(r=>r.team==='b')))return'Both sides need at least one player. Someone tap SWITCH SIDES.';
@@ -394,7 +398,7 @@ async function netJoin(code,invitationSession=''){
   peer.on('open',()=>{
     const tgt=ROOM_PREFIX+code,r=peer.connect(tgt,{label:'r',reliable:true,serialization:'json'}),uu=peer.connect(tgt,{label:'u',reliable:false,serialization:'json'});
     NET.host={r,u:uu};
-    r.on('open',()=>{clearTimeout(to);NET.lastHeard=performance.now();const st=openStateCh(r);if(st){NET.host.st=st;st.onmessage=ev=>{try{guestData(JSON.parse(ev.data))}catch(e){}}}r.send({t:'hello',name:myName(),cls:pick.cls,cos:cosStr(myCos()),v:PROTO,sk:mySkills(),uid:locker.cloud?myUid():'',session:ROOM_SESSION,invitationSession})});
+    r.on('open',()=>{clearTimeout(to);NET.lastHeard=performance.now();const st=openStateCh(r);if(st){NET.host.st=st;st.onmessage=ev=>{try{guestData(JSON.parse(ev.data))}catch(e){}}}r.send({t:'hello',name:myName(),cls:pick.cls,cos:cosStr(myCos()),v:PROTO_OLD,v2:PROTO,sk:mySkills(),uid:locker.cloud?myUid():'',session:ROOM_SESSION,invitationSession})});
     for(const c of[r,uu]){c.on('data',guestData);c.on('error',()=>{})}
     r.on('close',()=>{if(NET.mode==='guest')netLeave('The host closed the game.')});
   });

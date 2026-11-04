@@ -7,10 +7,12 @@
 // to the next level. The host runs all of it; guests build the same level from the same seed and read the rest from the
 // snapshot (s.us).
 const understrip=()=>!!game&&game.mode==='understrip'&&!game.pvp;
-const US={levels:3,lives:3,regionLives:1,juice:3,juiceMax:6,drink:.8,heal:.45,drinkSlow:.4,exitR:1.6,exitHold:3,lift:5,wipe:2.6,bleed:20,
+const US={rollCd:2,levels:3,   // rollCd: D5, the roll comes back in 2 s in this mode (3 s elsewhere; invulnerability unchanged)
+  lives:3,regionLives:1,juice:3,juiceMax:6,drink:.8,heal:.45,drinkSlow:.4,exitR:1.6,exitHold:3,lift:5,wipe:2.6,bleed:20,
   restR:1.4,merchR:1.7,chestR:1.1,doorR:1.5,pickR:.85,restClear:8,
   sight:7.5,hear:3.2,shotHear:8,alertR:6,ambushR:2.6,regroupHp:.3,regroupT:4,maxAlive:40,
   flood:{first:[50,80],every:[75,115],warn:5,len:18},darkL:[.93,.86,.78,.66],zoom:.87};
+const US_MUFFLE=650;   // Hz: the casino's music heard through concrete (region 1; work order 4.3)
 const US_NAMES=['THE FLOOD TUNNELS · 1','THE FLOOD TUNNELS · 2','THE COUNT ROOM'];
 const T_CONC=12,T_SHUT=13,T_JUNK=14;   // tunnel wall (solid, stops shots and sight), a shut door (the same until it opens), dumped junk (solid, bullets pass)
 // the run being played (set before newGame by the host's start, a guest's start message, and each level change)
@@ -70,6 +72,7 @@ function usBegin(L,opt){
     stats:{kills:0,time:0,levelStart:0,falls:0,rests:0},log:[],alerted:new Set()};
   for(const p of players.values())usKitOut(p,true);
   if(NET.mode!=='guest')usSpawnRaiders();
+  MODE_ZOOM=1.15;setTimeout(()=>{if(resize())caches=null},0);   // 15% closer in (02-view)
   usToast(true);
 }
 const usFirstFlood=()=>US.flood.first[0]+rnd()*(US.flood.first[1]-US.flood.first[0]);
@@ -97,7 +100,7 @@ function usChangeLevel(lv,guest=false){
 function usTick(dt){
   const U=game.us;U.stats.time+=dt;
   if(U.lift>0){U.lift-=dt;if(U.lift<=0)usChangeLevel(U.level+1);return true}   // in the lift: the world waits
-  usFloodTick(dt);usFlowTick();
+  usFloodTick(dt);usFlowTick();usSteps(dt);
   for(const f of U.flares)f.t-=dt;U.flares=U.flares.filter(f=>f.t>0);
   const crew=[...players.values()];
   // drinking: the heal lands when the drink is done
@@ -204,6 +207,18 @@ function usBuy(p,m,si){const L=game.lay,U=game.us;if(!p||!p.alive||usMerchantAt(
   else{const k=S.k==='c_bar'?'bar':'flare';if(p.ui[k]>=I.max)return false;p.ui[k]++}
   p.sal-=S.price;U.left[m][si]--;personal(p,'restock');return true}
 
+// the trader's rows on the armory screen (renderArmory): what's left, what it costs, what it does
+function usTradeRows(box,p){const m=usMerchantAt(p),L=game.lay,U=game.us;if(m<0)return;
+  const h=document.createElement('div');h.className='arow usHead';const hb=document.createElement('b');hb.textContent='THE TUNNEL TRADER';const hi=document.createElement('i');hi.textContent='A casino cashier who never came back up. Stock runs out.';h.append(hb,hi);box.append(h);
+  L.merchants[m].stock.forEach((S,si)=>{const I=US_ITEMS[S.k],left=U.left[m][si]|0,row=document.createElement('div');row.className='arow';
+    const full=S.k==='c_nade'?p.nades>=p.maxN:S.k==='c_juice'?p.uj>=p.ujm:(p.ui[S.k==='c_bar'?'bar':'flare']|0)>=I.max;
+    const b=document.createElement('b');b.textContent=I.name;const sm=document.createElement('small');sm.textContent=`${left} LEFT`;b.append(sm);
+    const i=document.createElement('i');i.textContent=I.what;
+    const btn=document.createElement('button');btn.type='button';btn.dataset.usBuy=si;btn.textContent=left<=0?'SOLD OUT':full?'FULL':S.price+' SAL';btn.disabled=left<=0||full||p.sal<S.price||!canShop(p);
+    btn.setAttribute('aria-label',`${I.name}, ${I.what}, ${left} left, ${btn.textContent}`);
+    btn.addEventListener('click',()=>{initAudio();if(NET.mode==='guest'){NET.toHost({t:'ub',m,s:si});btn.disabled=true}else if(usBuy(p,m,si))renderArmory()});
+    const pips=document.createElement('div');pips.className='pips';row.append(b,btn,pips,i);box.append(row)})}
+
 // ---------- raiders in the tunnels ----------
 // idle and ambushing raiders wait where they were put; noise, sight or a hit sets them hunting the nearest of you, on that
 // player's own flow field (rebuilt as you move, a couple a frame)
@@ -212,6 +227,9 @@ function usFlowTick(){let n=0;for(const p of players.values()){if(!p.alive)conti
   if(!F){F={k:-1,f:new Float32Array(N*N),t:0};US_FLOW.set(p.id,F)}
   if(F.f.length!==N*N)F.f=new Float32Array(N*N),F.k=-1;
   if((F.k!==k||flowDirty)&&game.time-F.t>.25&&n<2){const kk=coreK;coreK=k;try{flowTo(k,F.f)}finally{coreK=kk}F.k=k;F.t=game.time;n++}}}
+// footsteps: hunting raiders on the move are heard, through walls, before they're seen (sfx muffles what's behind walls)
+function usSteps(dt){let n=0;for(const e of enemies){if(!e.us||e.us.st!=='hunt'||e.dead)continue;const S=e.us;S.stepT=(S.stepT||0)-dt;
+  if(S.stepT<=0&&n<3&&e.walk!==S.lastWalk){S.stepT=.42+rnd()*.12;S.lastWalk=e.walk;n++;sfx('step',e.x,e.y)}}}
 function usAlert(e,why){if(!e.us||e.us.st==='hunt')return;e.us.st='hunt';e.us.t=0;sfx('mark',e.x,e.y);
   for(const o of enemies)if(o!==e&&o.us&&o.us.st!=='hunt'&&!o.dead&&Math.hypot(o.x-e.x,o.y-e.y)<US.alertR&&losClear(o.x,o.y,e.x,e.y)){o.us.st='hunt';o.us.t=0}}
 // shots fired: raiders who hear them start hunting (called from shoot via usNoise)

@@ -105,7 +105,7 @@ const OPEN = () => { const P = __pal; for (let j = 4; j < P.N - 4; j++) for (let
   await G.click('[data-nav=multi]'); await G.fill('#mCode', code); await G.click('#joinBtn');
   await G.waitForFunction(() => !document.getElementById('pg-lobby').hidden, null, { timeout: 15000 });
   out.proto = await G.evaluate(() => __pal.PROTO);
-  assert.equal(out.proto, 'yard-30');
+  assert.equal(out.proto, 'yard-31');
   await H.evaluate(() => __pal.lobbyReadyAll()); await H.click('#lStart'); await G.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 8000 }); await synced(H, G);
   await H.evaluate(() => { const P = __pal; window.hold = setInterval(() => { for (const q of P.players.values()) { q.max = 1e9; q.hp = Math.max(q.hp, 1e8) } P.core.max = 1e9; P.core.hp = 1e9 }, 50) });
   const gspot = await H.evaluate(OPEN);
