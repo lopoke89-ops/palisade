@@ -103,6 +103,6 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
  assert.ok(['ring', 'acid'].every(k => B.visitor.fx1.includes(k)), 'stage 1: the pulse and the tank'); assert.ok(['blink', 'well'].every(k => B.visitor.fx2.includes(k)), 'stage 2: blink and the well');
  assert.ok(B.visitor.dark > 0, 'the lights go out'); assert.ok(B.visitor.desperate); assert.deepEqual(B.visitor.sig, ['relic:x_eye']);
  assert.deepEqual(r.run.path, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]); assert.equal(r.run.phase, 'over'); assert.equal(r.run.won, true); assert.match(r.run.title, /OUT OF AREA 67/);
- assert.equal(r.run.lives, 2, '+1 life for regions 1 and 2'); assert.equal(r.run.regions, 2);
+ assert.equal(r.run.lives, 3, '+1 life for each of the three regions'); assert.equal(r.run.regions, 3);
  console.log('errors:', errors.length ? errors : 'none'); await b.close(); if (errors.length) process.exit(1);
 })();

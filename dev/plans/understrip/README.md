@@ -40,7 +40,7 @@ The brief is [`../understrip-work-order.md`](../understrip-work-order.md). M0 is
 3. **Five items were renamed** because their ids or names were taken (D14): Dealer's Eyeshade, Neon Halo, Neon Tube, Saucer Bolt and Showgirl Plumes.
 4. **The class gun stays.** It keeps its infinite ammo, as now. The second weapon has a reserve, refilled at shrines and by AMMO BOX. That's what "ammo" means at merchants and shrines in this mode.
 5. **One M1 rendering risk (D17).** In 1–2 tile tunnels, walls nearer the camera would hide the player, because the iso view draws them on top. M1 draws near-side walls low. This is in the generator spec.
-6. **Still blocking M3:** the `import_local_save` hole (work order 9.4) is still open in `dev/supabase/schema.sql`. It's a server change that needs your go-ahead to deploy.
+6. **The `import_local_save` hole (work order 9.4)** is fixed in `dev/supabase/migrations/20261104200000_v012_understrip.sql` (M3): a local save brings in only free cosmetics. Not applied to the live database yet; that needs your go-ahead.
 
 ## Sign-off
 - [ ] Mood boards: the 10 skins (King of the Strip signed off on its own), the 3 regions, the other 20 items.

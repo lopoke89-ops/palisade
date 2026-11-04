@@ -6,6 +6,19 @@ Regenerate: rebuild with the bundled Python and `dev/build.py`, then `node dev/c
 
 Character yaw 0 faces the viewer; +90° turns toward screen right, 180° shows the back, 270° turns left. These are model-space headings, applied after the isometric world-to-screen aim projection. Tracer headings point screen up/right/down/left. Each flag panel uses the next stored palette color where available. Every directional item has exactly four panels. Animated backgrounds and kill effects use four time samples; static backgrounds are repeated to document their invariance. Headgear uses the standard Soldier as the fit reference; skin entries include all headwear compatibility flags. Gold skin auras use their gameplay painter around the feet.
 
+## v0.12 THE UNDERSTRIP CASE (catalog 6)
+
+Captured with this folder's tool limited to the case's 30 items and checked against the rows of
+`dev/supabase/migrations/20261104200000_v012_understrip.sql` (not yet live; `server-catalog.json` is the October 3 snapshot
+and predates v0.9.7, so a full run stops at `skin:nightshift`). `catalog.json` is not regenerated until the live catalogue is.
+
+- [skin-understrip-1.png](skin-understrip-1.png)
+- [skin-understrip-2.png](skin-understrip-2.png)
+- [hat-understrip-1.png](hat-understrip-1.png)
+- [trail-understrip-1.png](trail-understrip-1.png)
+- [fx-understrip-1.png](fx-understrip-1.png)
+- [bg-understrip-1.png](bg-understrip-1.png)
+
 ## Contact sheets
 
 - [skin-supply-1.png](skin-supply-1.png)

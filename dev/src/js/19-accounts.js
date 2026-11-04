@@ -95,7 +95,9 @@ async function syncLocker(){
   const mine=!L.cloud||(L.cloud.guest&&L.cloud.id!==uid);
   if(!j.imported&&mine&&!lockerFresh(L)){
     const im=await rpc('import_local_save',{p_save:{owned:L.owned,eq:L.eq,cases:L.cases,bag:L.bag,shards:L.shards,prog:L.prog,st:L.st}});
-    if(im.ok)j=im.j;
+    if(im.ok){j=im.j;   // v0.12: the server takes in only the free looks; the rest can't be checked
+      if(L.owned.some(id=>COSBY[id]&&COSBY[id].src!=='free')||L.shards>0||L.cases>1||Object.values(L.bag||{}).some(v=>v>0)){try{localStorage.setItem('palisade.localSave.kept',JSON.stringify(L))}catch(e){}
+        acct.msg='Only the free looks from this device came into your account. Cases, shards and items earned without one can\'t be checked, so they stayed behind.'}}
   }else if(j.imported&&mine&&L.cloud&&!lockerFresh(L))acct.msg='This account already took in a guest locker once, so this device\'s guest items stay with the guest. Sign out to get back to them.';
   takeLocker(j);return r;
 }

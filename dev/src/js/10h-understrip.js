@@ -18,6 +18,7 @@ const US_PLAN=[[1,'normal',''],[1,'normal',''],[1,'boss','pitboss'],[2,'normal',
   [3,'normal',''],[3,'normal',''],[3,'boss','gatekeeper'],[3,'boss','visitor']];
 const US_NAMES=['THE FLOOD TUNNELS · 1','THE FLOOD TUNNELS · 2','THE COUNT ROOM','SHELTER 7 · 1','SHELTER 7 · 2','THE MAIN HALL',
   'AREA 67 · 1','AREA 67 · 2','THE LOADING BAY','THE CONTAINMENT HALL'];
+const US_REGION_END=[2,5,8];   // the levels whose boss clears a region (its lift finishes it: 3, 6 and 9 levels done, as the server counts)
 const US_SHORT=['TUNNELS 1','TUNNELS 2','COUNT ROOM','SHELTER 1','SHELTER 2','MAIN HALL','AREA 67 · 1','AREA 67 · 2','LOADING BAY','CONTAINMENT'];
 const T_CONC=12,T_SHUT=13,T_JUNK=14,T_TANK=15;   // tunnel wall (solid, stops shots and sight), a shut door (the same until it opens), dumped junk (solid, bullets pass), a specimen tank (a wall that glows)
 // the run being played (set before newGame by the host's start, a guest's start message, and each level change)
@@ -163,7 +164,7 @@ function usLevelDone(){const U=game.us;U.exitT=0;
   if(U.level>=US.levels-1){usFinish(true);return}
   U.lift=US.lift;sfx('horn');
   // a region cleared: one more shared life (work order 5.4)
-  const regionDone=US_PLAN[U.level+1][0]!==US_PLAN[U.level][0];if(regionDone){U.lives+=US.regionLives;U.regions=(U.regions|0)+1}
+  const regionDone=US_REGION_END.includes(U.level);if(regionDone){U.lives+=US.regionLives;U.regions=(U.regions|0)+1}   // the Gatekeeper clears region 3: its life is for the finale
   toastAll(`${US_NAMES[U.level]} · CLEARED`,`${kills} raiders dropped · ${found} found · ${Math.floor(t/60)}:${String(Math.round(t)%60).padStart(2,'0')}${regionDone?' · +1 LIFE':''} · the lift goes down.`);
   for(const p of players.values())if(!p.alive){p.alive=true;p.downed=false;p.usDead=false;p.hp=p.max*.25}   // the downed come along at 25%; the dead at the next start
 }
@@ -390,10 +391,10 @@ function usHudPhase(lab,host){const U=game.us,p=player,clock=t=>{const s=Math.ma
   txt($('coreL'),'JUICE');$('coreF').style.transform=`scaleX(${p.ujm?Math.max(0,p.uj/p.ujm):0})`;txt($('coreN'),`${p.uj|0}/${p.ujm|0}`);cls($('coreM'),'alarm',!(p.uj>0));$('coreF').style.background='#7cff6b'}
 // the results card while the lift goes down (work order 5.3): the level's kills, what was found, the time, and what's next
 function usCardHud(){const U=game.us,C=$('usCard');if(!C)return;const on=U.lift>0&&U.log.length>0;if(C.hidden===!on&&!on)return;C.hidden=!on;if(!on)return;
-  const [lv,kills,t,found]=U.log[U.log.length-1],next=lv+1,newReg=US_PLAN[next]&&US_PLAN[next][0]!==US_PLAN[lv][0],key=lv+'|'+(U.lives|0);if(C.dataset.k===key)return;C.dataset.k=key;
+  const [lv,kills,t,found]=U.log[U.log.length-1],next=lv+1,newReg=US_REGION_END.includes(lv),key=lv+'|'+(U.lives|0);if(C.dataset.k===key)return;C.dataset.k=key;
   txt($('usCardEy'),'THE LIFT · GOING DOWN');txt($('usCardT'),`${US_NAMES[lv]} · CLEARED`);
   const S=$('usCardS');S.textContent='';for(const[a,v]of[['RAIDERS',kills],['FOUND',found|0],['TIME',`${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`],['LIVES',Math.max(0,U.lives)]]){const sp=document.createElement('span');const em=document.createElement('em');em.textContent=v;sp.append(em,a);S.append(sp)}
-  txt($('usCardN'),newReg?`${US_REG[US_PLAN[next][0]].name} next · +1 life for the region · the Lift Merchant rides down with you.`:'Next: '+US_NAMES[next]+' · the Lift Merchant is at the bottom.')}
+  txt($('usCardN'),newReg?`${US_REG[US_PLAN[lv][0]].name} cleared · +1 life · next: ${US_NAMES[next]} · the Lift Merchant rides down with you.`:'Next: '+US_NAMES[next]+' · the Lift Merchant is at the bottom.')}
 function usKitHud(p){const k=$('usKit');if(!k)return;usWeaponHud(p);usCardHud();
   txt($('usDrinkN'),p.ujT>0?'…':`${p.uj|0}`);cls($('usDrink'),'empty',!(p.uj>0));cls($('usDrink'),'on',p.ujT>0);
   const bar=p.uSel==='bar',n=p.ui?p.ui[p.uSel]|0:0;txt($('usItemLab'),bar?'BARRICADE':'FLARE');txt($('usItemN'),String(n));cls($('usUse'),'empty',!n);
@@ -417,7 +418,8 @@ function usOver(){const U=game.us,win=!!game.won,me=player;sfx(win?'win':'lose',
   $('overEyebrow').textContent=`THE UNDERSTRIP · ${win?'THE WHOLE DESCENT':US_REG[reg].name} · ${players.size} ${players.size===1?'PLAYER':'PLAYERS'} · ${DIFF[pick.diff]?DIFF[pick.diff].name:''}`;
   $('overLede').textContent=win?'The Visitor is down and the field is dark for good. You walked out from under the Strip.':`You reached ${US_NAMES[U.level]}${U.regions?`, ${U.regions} ${U.regions===1?'region':'regions'} cleared`:''}. Rest at every shrine you find; it's where you come back.`;
   const t=Math.round(U.stats.time);setStats([['Deepest',`${U.level+1} of ${US.levels}`],['Regions cleared',`${U.regions|0} of 3`],['Raiders dropped',me.kills|0],['Times the squad fell',U.stats.falls],['Shrine rests',U.stats.rests],['Time',`${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`],['Lives left',Math.max(0,U.lives)]]);
-  $('overLoot').hidden=true;if(typeof showRewards==='function')showRewards(null);game.rewarded=true;
+  const loot=game.rewarded?null:lockerReward(U.log.length,win,me.kills|0);game.rewarded=true;   // a case a region cleared, one more for the finish (the server decides for accounts)
+  if(loot){$('overLoot').textContent=loot.text;$('overLoot').hidden=false;showRewards(loot)}else{$('overLoot').hidden=true;showRewards(null)}
   $('againBtn').hidden=NET.mode==='guest';$('overWait').hidden=NET.mode!=='guest';
   setTimeout(()=>{if(game.phase==='over')$('over').hidden=false},900)}
 const usMerchName=p=>{const m=p&&game.lay?usMerchantAt(p):-1;return m>=0?US_MERCH[game.lay.merchants[m].kind].name:'THE TUNNEL TRADER'};

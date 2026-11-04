@@ -58,7 +58,7 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
   console.log(JSON.stringify(out, null, 1));
   for (const r of out.levels) assert.ok(r.same, 'level ' + r.level + ': the same level on all four phones');
   assert.deepEqual(out.levels.map(r => r.map), ['THE FLOOD TUNNELS', 'THE FLOOD TUNNELS', 'THE FLOOD TUNNELS', 'SHELTER 7', 'SHELTER 7', 'SHELTER 7', 'AREA 67', 'AREA 67', 'AREA 67', 'AREA 67']);
-  assert.deepEqual(out.levels.map(r => r.lives), [3, 3, 3, 4, 4, 4, 5, 5, 5, 5], 'a life for each region cleared');
+  assert.deepEqual(out.levels.map(r => r.lives), [3, 3, 3, 4, 4, 4, 5, 5, 5, 6], 'a life for each region cleared (the Gatekeeper clears region 3)');
   for (const r of out.levels.filter(r => r.down)) { assert.ok(r.guestSaw.every(s => s.st.length >= 1), 'level ' + r.level + ': every guest sees the boss');
     if (r.level === 5) assert.ok(r.guestSaw.every(s => s.blast.length === 4), 'the Custodian\'s doors reach the guests') }
   assert.equal(out.levels.filter(r => r.down).length, 4, 'four bosses down');

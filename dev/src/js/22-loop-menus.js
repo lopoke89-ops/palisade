@@ -154,7 +154,7 @@ function again(){if(NET.mode==='host')startOnline();else start()}
 function leaveRun(){
   if(casino()){if(TB.id)tbSend({op:'leave',id:TB.id});if(player)player.seat=0;tbSheet(false);return}   // v0.10.0: leaving the casino stands you up (your shards go home); there's no run to pay
   if(demo||!running()||game.pvp||game.phase==='over'||game.rewarded||!player)return;
-  const held=blackout()?boStages():game.phase==='build'?game.wave:Math.max(0,game.wave-1);
+  const held=understrip()?game.us.log.length:blackout()?boStages():game.phase==='build'?game.wave:Math.max(0,game.wave-1);
   if(held<=(game.joinHeld|0)&&(game.bossLog||[]).length<=(game.joinBoss|0)&&(game.sbN|0)<=(game.joinSB|0)&&(game.fbLog||[]).length<=(game.joinFB|0)&&!blitzResult(player))return;   // nothing new since this phone came in
   game.rewarded=true;const t=lockerReward(held,false,player.kills|0,true);if(t&&!locker.cloud)toast('RUN SAVED',t.text);
 }
