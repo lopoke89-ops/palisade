@@ -35,7 +35,7 @@ button:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
 #skipBtn{pointer-events:auto;margin-top:6px;background:transparent;border:1px solid var(--warn);color:var(--warn);
   font-family:var(--stencil);font-weight:800;letter-spacing:.1em;font-size:13px;padding:5px 10px}
 #tip{position:fixed;left:16px;right:16px;top:calc(env(safe-area-inset-top,0px) + 86px);text-align:center;pointer-events:none;font-size:12px}
-#tip span{background:rgba(20,18,16,.78);border-left:3px solid var(--warn);padding:5px 9px;display:inline-block;max-width:36ch;text-wrap:balance;text-shadow:0 1px 0 #000}
+#tip.skip{pointer-events:auto;cursor:pointer}#tip span{background:rgba(20,18,16,.78);border-left:3px solid var(--warn);padding:5px 9px;display:inline-block;max-width:36ch;text-wrap:balance;text-shadow:0 1px 0 #000}
 #toast{position:fixed;left:16px;right:16px;top:36%;text-align:center;pointer-events:none;
   font-family:var(--stencil);font-weight:900;font-size:clamp(24px,7vw,40px);letter-spacing:.06em;
   color:var(--bone);text-shadow:0 2px 0 #000,0 0 18px rgba(0,0,0,.8);opacity:0;transition:opacity .25s}
@@ -81,6 +81,15 @@ body:not(.desk) #phaseNote{max-width:150px;font-size:10px}
 /* v0.11.0: on phones held upright the kit column can't grow (the Black Out mini-map sits above it), so ROLL sits beside its bottom button */
 @media (orientation:portrait){body:not(.desk) #kit #rollBtn{position:absolute;right:calc(100% + 6px);bottom:0;width:88px}}#rollBtn .kc{background:#c9cde0}#rollBtn.empty{opacity:.45}#rollBtn.on{background:rgba(70,74,98,.92)}
 #nadeBtn.empty{opacity:.4}
+/* THE UNDERSTRIP: Lucky Juice and the carried items take the build kit's place */
+#usKit{display:grid;gap:6px}#usKit[hidden]{display:none!important}
+#usCard{position:fixed;left:50%;top:22%;transform:translateX(-50%);z-index:6;min-width:min(340px,calc(100vw - 32px));max-width:calc(100vw - 32px);padding:14px 18px;background:rgba(14,16,14,.92);border:1px solid #7cff6b;color:#e8e2d0;text-align:center;pointer-events:none;font:600 13px/1.35 "Barlow Condensed",sans-serif}
+#usCard[hidden]{display:none}#usCard small{display:block;letter-spacing:.14em;color:#7cff6b;font-size:11px}#usCard b{display:block;font:900 22px/1.1 "Big Shoulders Stencil Display",sans-serif;letter-spacing:.04em;margin:4px 0 8px}
+#usCard div{display:flex;justify-content:center;gap:16px;flex-wrap:wrap}#usCard div span{display:grid}#usCard div span em{font-style:normal;font-size:20px;color:#fff}#usCard i{display:block;margin-top:8px;color:#bdb6a6;font-style:normal}
+#usDrink,#usUse,#usSwap{height:40px;background:rgba(27,24,20,.86);border:1px solid #4f9a5a;display:flex;justify-content:space-between;align-items:center;padding:0 10px;gap:6px;
+  font-family:var(--stencil);font-weight:800;letter-spacing:.08em;font-size:15px;color:#9fe68f}
+#usDrink b,#usUse b,#usSwap b{font-family:var(--mono);font-size:12px;color:var(--bone)}#usDrink .kc{background:#9fe68f}#usDrink.on{background:rgba(40,90,40,.92)}#usDrink.empty,#usUse.empty{opacity:.45}
+#usUse,#usSwap{border-color:#a8865a;color:#e0c08a}#usWpn{height:40px;background:rgba(27,24,20,.86);border:1px solid #4f95e0;display:flex;justify-content:space-between;align-items:center;padding:0 10px;gap:6px;font-family:var(--stencil);font-weight:800;letter-spacing:.06em;font-size:12px;color:var(--bone)}#usWpn b{font-family:var(--mono);font-size:11px}#usWpn .kc{background:#9fb8d8}#usWpn[hidden]{display:none}#usUse .kc,#usSwap .kc{background:#e0c08a}#usSwap{height:32px;font-size:12px}
 
 /* ---------- overlays ---------- */
 .overlay{position:fixed;inset:0 0 auto 0;height:var(--appH,100%);display:grid;grid-template-columns:minmax(0,1fr);justify-items:center;align-items:center;
@@ -422,7 +431,7 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
 /* Landscape phones keep the kit beside the thumb area and below the status bar. */
 @media (pointer:coarse) and (min-width:601px) and (max-height:500px){
   body:not(.desk) #kit{width:176px;right:max(12px,env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 12px);grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
-  #buildKit{display:contents}
+  #buildKit,#usKit{display:contents}
   #kit .pieces,#kit #bmBtn{grid-column:1/-1}
   #kit #bmBtn,#kit .piece{height:32px}
   #kit .chip{height:36px;padding:0 6px}

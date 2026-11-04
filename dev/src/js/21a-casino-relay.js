@@ -14,7 +14,7 @@ function rlyDisconnect(){
 function rlyChannel(peer,ch='r'){
  return {peer,label:ch,get open(){return RLY.connected},send(data){rlySend({type:'packet',to:peer,data},ch==='u')},close(){rlySend({type:'remove',peer})}};
 }
-function rlyHello(){NET.toHost({t:'hello',name:myName(),cls:pick.cls,cos:cosStr(myCos()),v:PROTO,sk:mySkills(),uid:myUid(),session:ROOM_SESSION,invitationSession:RLY.incarnation});}
+function rlyHello(){NET.toHost({t:'hello',name:myName(),cls:pick.cls,cos:cosStr(myCos()),v:PROTO_OLD,v2:PROTO,sk:mySkills(),uid:myUid(),session:ROOM_SESSION,invitationSession:RLY.incarnation});}
 function rlyHostPeer(id,resumed){
  let c=NET.conns.get(id);
  if(!c){c={r:rlyChannel(id),u:rlyChannel(id,'u'),pid:null,heard:performance.now()};NET.conns.set(id,c)}
@@ -42,7 +42,7 @@ async function rlyConnect(){
  rlyStatus(RLY.attempt?'Reconnecting to the casino…':'Connecting to the casino… First connection can take about a minute.');
  const ws=new WebSocket(globalThis.PALISADE_RELAY.url.replace(/^http/,'ws')+'/relay');RLY.ws=ws;RLY.connected=false;
  const timeout=setTimeout(()=>{if(RLY.ws===ws&&!RLY.connected)ws.close()},70000);let helloToken='';
- ws.onopen=()=>{if(RLY.ws!==ws)return;helloToken=acct.s.access_token;rlySend({type:'hello',wire:'casino-relay-1',game:PROTO,role:RLY.role,token:helloToken,session:ROOM_SESSION,code:RLY.code,incarnation:RLY.incarnation,resume:RLY.resume});};
+ ws.onopen=()=>{if(RLY.ws!==ws)return;helloToken=acct.s.access_token;rlySend({type:'hello',wire:'casino-relay-1',game:PROTO_OLD,role:RLY.role,token:helloToken,session:ROOM_SESSION,code:RLY.code,incarnation:RLY.incarnation,resume:RLY.resume});};
  ws.onmessage=e=>{
   if(RLY.ws!==ws||RLY.owner!==myUid())return;let b;try{b=JSON.parse(e.data)}catch{return}
   if(b.type==='welcome'){

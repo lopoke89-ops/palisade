@@ -11,7 +11,7 @@ extends CanvasLayer
 const VERSION := "v0.11.0"
 const NAV := [["main", "PLAY"], ["online", "MULTIPLAYER"], ["locker", "LOCKER"], ["skills", "SKILLS"], ["tables", "TABLES"], ["index", "INDEX"], ["settings", "SETTINGS"]]
 const MODES := [["5", "5 RAIDS"], ["10", "10 RAIDS"], ["endless", "ENDLESS"], ["blitz", "BLITZKRIEG"], ["campaign", "CAMPAIGN"], ["blackout", "BLACK OUT"]]
-const LEN_NAME := {"5": "5 RAIDS", "10": "10 RAIDS", "endless": "ENDLESS", "blitz": "BLITZKRIEG RUSH", "campaign": "OPERATION WHITEOUT", "blackout": "CITY BLACK OUT", "casino": "THE CASINO"}
+const LEN_NAME := {"5": "5 RAIDS", "10": "10 RAIDS", "endless": "ENDLESS", "blitz": "BLITZKRIEG RUSH", "campaign": "OPERATION WHITEOUT", "blackout": "CITY BLACK OUT", "casino": "THE CASINO", "understrip": "THE UNDERSTRIP"}
 const MODE_HINT := {
 	"5": "Five raids. A boss on raid 5, at night.",
 	"10": "Ten raids. Bosses on raids 5 and 10; golden hour from raid 6, night from raid 9.",
@@ -19,7 +19,10 @@ const MODE_HINT := {
 	"blitz": "15 hard raids, then the Final Blitz: 5 minutes with a new boss every 30 seconds. The last minute is the evacuation: reach the evac site yourself, or leave with half your cases and shards.",
 	"campaign": "Operation Whiteout: travel all four maps. Carry upgrades and supplies through 12 raids, then survive the Whiteout Gauntlet and a summit evacuation.",
 	"blackout": "City Black Out: a night city. Hold eight points as bosses hit them one by one, then defend Main Command against the Supreme Destroyer.",
+	"understrip": "THE UNDERSTRIP: a dungeon crawl from the casino's flood tunnels down through Shelter 7 to Area 67. Ten levels from the seed, four bosses, Neon Shrines and shared lives. Solo for now; online comes later.",
 }
+## THE UNDERSTRIP (v0.12): playable solo; the room picker doesn't offer it until cross-play (yard-31) is ported
+const US_SOLO := ["understrip", "THE UNDERSTRIP"]
 const CLASS_TEXT := {
 	"soldier": ["the door problem", "Burst carbine: 3 rounds a pull, up to 9 with DAMAGE upgrades. Builds 40% faster and takes more hits."],
 	"sniper": ["the angle problem", "Bolt-action rifle. Heavy rounds straight through wood. Moves 10% faster."],
@@ -713,7 +716,8 @@ func show_main() -> void:
 	row.add_child(lp[0])
 	var col: VBoxContainer = lp[1]
 	col.add_child(_pt("SOLO RUN"))
-	col.add_child(_lede("You and Delgado hold the stake. Tap a line to change it."))
+	var under: bool = m.settings.data.setup.mode == "understrip"
+	col.add_child(_lede("No stake, no Delgado: down the tunnels on your own. Tap a line to change it." if under else "You and Delgado hold the stake. Tap a line to change it."))
 	col.add_child(_setup_rows("home", true))
 	var best := PalSaves.best_line(m.settings.data.setup)
 	if best != "":
@@ -728,11 +732,11 @@ func show_main() -> void:
 	var S: Dictionary = m.settings.data.setup
 	var M: Dictionary = PalMaps.MAPS.get(S.map, PalMaps.MAPS.yard)
 	var city: bool = S.mode == "blackout"
-	var eyebrow := "SOLO · %s%s" % ["THE CITY" if city else M.name, " XL" if S.size == "xl" and not city else ""]
+	var eyebrow := "SOLO · %s%s" % ["UNDER THE STRIP" if under else ("THE CITY" if city else M.name), " XL" if S.size == "xl" and not city and not under else ""]
 	var sub := "%s · %s · %s" % [LEN_NAME.get(S.mode, "5 RAIDS"), Pal.DIFF[S.diff].name, Pal.CLASSES[S.cls].name]
 	var mods := Sim.clean_mods(S.mods, S.mode)
-	var blurb: String = "A night city. Hold eight points, then Main Command." if city else M.blurb
-	row.add_child(_stage_column(eyebrow, "HOLD THE CITY." if city else "HOLD THE STAKE.", sub, mods, my_name(), "READY", blurb))
+	var blurb: String = "Three regions and a finale under the Strip: ten levels from the run's seed." if under else ("A night city. Hold eight points, then Main Command." if city else M.blurb)
+	row.add_child(_stage_column(eyebrow, "FIND THE LIFT." if under else ("HOLD THE CITY." if city else "HOLD THE STAKE."), sub, mods, my_name(), "READY", blurb))
 	# the right column: what's waiting
 	row.add_child(_home_side())
 	_settle()
@@ -869,13 +873,15 @@ func _rows_for(kind: String) -> Array:
 	var mods: Array = _mods_of(kind)
 	var bo: bool = P.mode == "blackout" and not pv
 	var rows: Array = []
-	if bo:
+	if P.mode == "understrip" and not pv:
+		rows.append(["map", "MAP", "UNDER THE STRIP", "three regions and a finale: ten levels from the run's seed"])
+	elif bo:
 		rows.append(["map", "MAP", "THE CITY", "64×64 night city · random bosses · the Supreme Destroyer"])
 	else:
 		var bosses: Array = M.bosses.map(func(k): return str(Sim.boss_def(k).get("name", k)).replace("THE ", "").to_lower())
 		rows.append(["map", "MAP", "ALL FOUR MAPS" if P.mode == "campaign" and not pv else M.name, "16×16 arena" if pv else "%s · bosses: %s" % ["XL · 24×24" if P.size == "xl" else "16×16", ", ".join(bosses)]])
 	if not pv:
-		var extra: String = {"campaign": " · 4 chapters, 12 raids + five-minute evac", "blitz": " · the Final Blitz and the evacuation", "blackout": " · hold 8 points, then the final push"}.get(P.mode, "")
+		var extra: String = {"campaign": " · 4 chapters, 12 raids + five-minute evac", "blitz": " · the Final Blitz and the evacuation", "blackout": " · hold 8 points, then the final push", "understrip": " · 3 shared lives · no healing but Lucky Juice"}.get(P.mode, "")
 		rows.append(["rules", "LENGTH", LEN_NAME.get(P.mode, "5 RAIDS"), "Threat: %s%s" % [str(Pal.DIFF[P.diff].name).to_lower(), extra]])
 	if kind != "room":
 		rows.append(["job", "CLASS", Pal.CLASSES[cls].name, CLASS_TEXT[cls][0]])
@@ -919,6 +925,8 @@ func _home_side() -> Control:
 	v.custom_minimum_size.x = UiKit.px(300)
 	var S: Dictionary = m.settings.data.setup
 	match S.mode:
+		"understrip":
+			v.add_child(_home_card(true, "SELECTED", "THE UNDERSTRIP", "From the casino's flood tunnels down through Shelter 7 to Area 67: ten levels from the seed, four bosses, Neon Shrines, shared lives and the UNDERSTRIP CASE."))
 		"blackout":
 			v.add_child(_home_card(true, "SELECTED", "CITY BLACK OUT", "A night city. Hold eight points as bosses hit them one by one, then defend Main Command against the Supreme Destroyer."))
 		"campaign":
@@ -926,9 +934,9 @@ func _home_side() -> Control:
 		"blitz":
 			v.add_child(_home_card(true, "SELECTED", "BLITZKRIEG RUSH", "15 hard raids, then the Final Blitz: a boss every 30 seconds for five minutes. Reach the evac in the last minute or keep only half your cases and shards."))
 		_:
-			v.add_child(_home_card(true, "NEW CAMPAIGN", "OPERATION WHITEOUT", "Four connected maps, revamped bosses and a summit evacuation. Frostpeak adds ramps, stairs and the Rime Colossus.", "TRY IT", func():
-				S.mode = "campaign"
-				S.mods = Sim.clean_mods(S.mods, "campaign")
+			v.add_child(_home_card(true, "NEW MODE", "THE UNDERSTRIP", "A dungeon crawl beneath the Strip: the casino's flood tunnels, Shelter 7 and Area 67. Ten levels from the seed, four bosses, Neon Shrines, shared lives and the UNDERSTRIP CASE.", "TRY IT", func():
+				S.mode = "understrip"
+				S.mods = Sim.clean_mods(S.mods, "understrip")
 				m.settings.save()
 				show_main()))
 	var L: PalLocker = m.locker
@@ -1200,7 +1208,7 @@ func _sheet_map(body: VBoxContainer, kind: String, pv: bool) -> void:
 	body.add_child(hr)
 	var g := UiKit.grid(3, 10)
 	body.add_child(g)
-	var fixed: bool = (P.mode == "campaign" or P.mode == "blackout") and not pv
+	var fixed: bool = (P.mode == "campaign" or P.mode == "blackout" or P.mode == "understrip") and not pv
 	for id in PalMaps.MAP_IDS:
 		if pv and not PalMaps.PVP_BLURB.has(id):
 			continue
@@ -1230,14 +1238,14 @@ func _sheet_map(body: VBoxContainer, kind: String, pv: bool) -> void:
 		_fid(b, "map:" + id)
 		g.add_child(b)
 	if fixed:
-		body.add_child(_lede("The campaign travels all four maps; Black Out has its own city.", Color("#aec0c5"), 10))
+		body.add_child(_lede("The campaign travels all four maps; Black Out has its own city; THE UNDERSTRIP builds its own tunnels.", Color("#aec0c5"), 10))
 	if pv:
 		body.add_child(_lede("PvP is always 16×16.", Color("#aec0c5"), 10))
 		return
 	body.add_child(UiKit.spacer(6))
 	body.add_child(_l("SIZE", "s8", 12, UiKit.KEYC, 0.12))
 	var sg := UiKit.seg([["std", "STANDARD · 16×16"], ["xl", "XL · 24×24"]], P.size, func(id): _sheet_change(kind, "size", id),
-		{"size": 14, "h": 48, "disabled": ["std", "xl"] if P.mode == "blackout" or guest else []})
+		{"size": 14, "h": 48, "disabled": ["std", "xl"] if P.mode == "blackout" or P.mode == "understrip" or guest else []})
 	_tag_seg(sg, "size")
 	body.add_child(sg)
 	body.add_child(_lede("XL: a bigger yard and about 40% more raiders.", Color("#aec0c5"), 10))
@@ -1256,10 +1264,12 @@ func _sheet_rules(body: VBoxContainer, kind: String) -> void:
 	var modes: Array = MODES.duplicate()
 	if kind == "room":
 		modes.append(["casino", "THE CASINO"])
+	elif kind == "home":
+		modes.append(US_SOLO)
 	var sg := UiKit.seg(modes, P.mode, func(id): _sheet_change(kind, "mode", id), {"cols": 3, "size": 14, "h": 48})
 	_tag_seg(sg, "mode")
 	body.add_child(sg)
-	if P.mode in ["blitz", "campaign", "blackout"]:
+	if P.mode in ["blitz", "campaign", "blackout", "understrip"]:
 		body.add_child(_lede(MODE_HINT[P.mode], UiKit.DIM))
 	body.add_child(UiKit.spacer(4))
 	body.add_child(_sheet_h2("THREAT"))
@@ -2070,7 +2080,7 @@ func reward_cards(R: Dictionary) -> HFlowContainer:
 			v.add_child(centred.call(_l(C.CASES[id].name, "m4", 9, UiKit.ODIM, 0.04, 1.35, true)))
 	if R.shards > 0:
 		var v: VBoxContainer = card.call(UiKit.OLINE)
-		v.add_child(centred.call(_l("◆", "m4", 22, Color("#f0d16b"))))
+		v.add_child(centred.call(_l("✦", "m4", 22, Color("#f0d16b"))))
 		v.add_child(centred.call(_l("+%d" % R.shards, "s9", 20, Color("#f0d16b"), 0.04)))
 		v.add_child(centred.call(_l("SHARDS", "m4", 9, UiKit.ODIM, 0.04)))
 	if R.sp > 0:

@@ -32,6 +32,7 @@ function musicRoute(){
   if(!demo&&!$('over').hidden)return {k:'results',token:'results:'+game.gid};
   if(!$('menu').hidden)return {k:'menu',token:'menu'};
   if(!demo&&playing()){
+    if(understrip())return usMusicRoute();   // THE UNDERSTRIP (10h): the casino upstairs, muffled by region; a raid track for each boss
     if(game.mode==='casino')return {k:'casino',token:'casino:'+game.gid};   // v0.10.1: the casino's own shuffled playlist
     if(game.mode==='blackout'&&!game.pvp&&game.bo&&game.phase==='raid'){const st=game.bo.stage;   // v0.9.7: raid tracks for POI attacks, the finale for the final push
       if(st==='push'||st==='done')return {k:'finale',token:'finale:'+game.gid};
@@ -90,13 +91,17 @@ function musicCrossfade(k,token){
   musicStart(k,token,{t,d});
 }
 function musicTick(){
-  if(!AC)return;
-  if(!mus.bus){mus.bus=AC.createGain();mus.bus.connect(master)}
+  if(!AC)return;usAmbience();   // THE UNDERSTRIP: Area 67's hum (10k)
+  if(!mus.bus){mus.bus=AC.createGain();mus.lp=AC.createBiquadFilter();mus.lp.type='lowpass';mus.lp.frequency.value=20000;mus.lp.Q.value=.7;mus.bus.connect(mus.lp);mus.lp.connect(master)}
   // v0.10.8: the music dips under a big win's fanfare (mus.duck: until when), then comes back over about a second
   const now=AC.currentTime,bv=.5*cfg.music,G=mus.bus.gain,dk=now<mus.duck;
   if(dk||now<mus.duck+1.5){if(dk!==mus.ducked){mus.ducked=dk;G.cancelScheduledValues(now);G.setValueAtTime(G.value,now);G.setTargetAtTime(dk?bv*.3:bv,now,dk?.08:.3)}}
   else{if(mus.ducked!==null){G.cancelScheduledValues(now);mus.ducked=null}G.value=bv}
   const route=musicRoute();let want=musicWant();
+  {const M=understrip()&&route&&route.k==='casino'?usReg().music:null,f=M?M.lp:20000,wet=M?M.wet:0;if(Math.abs(mus.lp.frequency.value-f)>1)mus.lp.frequency.setTargetAtTime(f,now,.4)   // THE UNDERSTRIP: the casino's piped music, through the concrete
+    if(wet||mus.wet){if(!mus.wet){mus.wet=AC.createGain();mus.wet.gain.value=0;const cv=AC.createConvolver(),n=Math.floor(AC.sampleRate*2.4),b=AC.createBuffer(2,n,AC.sampleRate);   // Shelter 7: a long concrete tail
+        for(let c=0;c<2;c++){const d=b.getChannelData(c);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/n,2.6)}cv.buffer=b;mus.lp.connect(cv);cv.connect(mus.wet);mus.wet.connect(master)}
+      if(Math.abs(mus.wet.gain.value-wet)>.01)mus.wet.gain.setTargetAtTime(wet,now,.5)}}
   if(mus.src&&(mus.cur!==want||mus.token!==route?.token))musicStop(game.phase==='raid'?.9:1.2);
   if(mus.resume&&mus.resume.token!==route?.token){if(cas.up===mus.resume.k)cas.up=null;mus.resume=null}   // left the casino: the next visit moves on
   if(want&&mus.src&&MUSIC[want].list){const left=mus.end-AC.currentTime,nx=cas.up;
@@ -254,7 +259,8 @@ function sfx(name,x,y,noRec,ui){
     case'core':osc(dest,t,.32,'sine',82,.6,38);nz(dest,t,.1,'lowpass',300,1,.3);break;
     case'hurt':osc(dest,t,.13,'square',210,.12,90);break;
     case'drop':nz(dest,t,.16,'lowpass',420,1,.4);break;
-    case'roll':nz(dest,t,.24,'bandpass',1100,.9,.2,320);nz(dest,t+.34,.12,'lowpass',300,1,.32);break;   // v0.11.0: the back roll
+    case'step':nz(dest,t,.05,'lowpass',240,1,.32);break;   // THE UNDERSTRIP: a footstep round the corner
+case'roll':nz(dest,t,.24,'bandpass',1100,.9,.2,320);nz(dest,t+.34,.12,'lowpass',300,1,.32);break;   // v0.11.0: the back roll
     case'lob':osc(dest,t,.12,'triangle',620,.1,300);break;
     case'plant':osc(dest,t,.05,'square',1400,.12);osc(dest,t+.12,.05,'square',1400,.12);break;
     case'beep':osc(dest,t,.04,'square',1800,.08);break;

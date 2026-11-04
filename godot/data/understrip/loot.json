@@ -1,0 +1,563 @@
+{
+  "tier": {
+    "c": {
+      "x": 1,
+      "mods": 0,
+      "price": 40
+    },
+    "r": {
+      "x": 1.08,
+      "mods": 1,
+      "price": 75
+    },
+    "e": {
+      "x": 1.16,
+      "mods": 2,
+      "price": 130
+    },
+    "l": {
+      "x": 1.25,
+      "mods": 2,
+      "price": 220,
+      "sig": true
+    },
+    "g": {
+      "x": 1.35,
+      "mods": 3,
+      "price": 380,
+      "sig": true
+    }
+  },
+  "weapons": {
+    "w_sawnoff": {
+      "region": 1,
+      "name": "SAWN-OFF",
+      "gun": {
+        "dmg": 10,
+        "pellets": 9,
+        "cd": 0.22,
+        "spread": 0.34,
+        "range": 4.2,
+        "speed": 22,
+        "mag": 2,
+        "snd": "shotgun",
+        "fall": [
+          2,
+          4.2,
+          0.5
+        ]
+      },
+      "magReload": 1.5,
+      "reserve": 24,
+      "fx": "",
+      "sig": "BOTH BARRELS: 18 pellets a shot"
+    },
+    "w_taser": {
+      "region": 1,
+      "name": "SECURITY TASER",
+      "gun": {
+        "dmg": 18,
+        "cd": 0.55,
+        "spread": 0.03,
+        "range": 4,
+        "speed": 30,
+        "mag": 8,
+        "snd": "zap"
+      },
+      "magReload": 1.8,
+      "reserve": 40,
+      "fx": "stun",
+      "sig": "ARC: jumps to three more"
+    },
+    "w_nailgun": {
+      "region": 1,
+      "name": "NAIL GUN",
+      "gun": {
+        "dmg": 11,
+        "cd": 0.11,
+        "spread": 0.07,
+        "range": 8,
+        "speed": 18,
+        "pierce": 1,
+        "mag": 30,
+        "snd": "smg"
+      },
+      "magReload": 2.2,
+      "reserve": 150,
+      "fx": "pin",
+      "sig": "RIVETS: every 5th nail deals triple"
+    },
+    "w_smg": {
+      "region": 2,
+      "name": "SHELTER SMG",
+      "gun": {
+        "dmg": 8,
+        "cd": 0.075,
+        "spread": 0.14,
+        "range": 9,
+        "speed": 23,
+        "mag": 32,
+        "snd": "smg"
+      },
+      "magReload": 2,
+      "reserve": 192,
+      "fx": "",
+      "sig": "DRUM MAG: 64 rounds"
+    },
+    "w_flare": {
+      "region": 2,
+      "name": "FLARE LAUNCHER",
+      "gun": {
+        "dmg": 15,
+        "cd": 1.4,
+        "spread": 0.02,
+        "range": 12,
+        "speed": 12,
+        "mag": 1,
+        "snd": "rocket"
+      },
+      "magReload": 1.4,
+      "reserve": 8,
+      "fx": "flare",
+      "sig": "STARBURST: three flares in a fan"
+    },
+    "w_riot": {
+      "region": 2,
+      "name": "RIOT SHOTGUN",
+      "gun": {
+        "dmg": 10,
+        "pellets": 7,
+        "cd": 0.65,
+        "spread": 0.2,
+        "range": 6,
+        "speed": 24,
+        "mag": 6,
+        "snd": "shotgun"
+      },
+      "magReload": 2.4,
+      "reserve": 48,
+      "fx": "knock",
+      "sig": "SLUG: one 70-damage slug that pierces 3"
+    },
+    "w_laser": {
+      "region": 3,
+      "name": "LAB LASER",
+      "gun": {
+        "dmg": 14,
+        "cd": 0.28,
+        "spread": 0,
+        "range": 12,
+        "speed": 60,
+        "mag": 10,
+        "snd": "zap"
+      },
+      "magReload": 2,
+      "reserve": 120,
+      "fx": "bounce",
+      "sig": "PRISM: splits into three on the first bounce"
+    },
+    "w_alien": {
+      "region": 3,
+      "name": "ALIEN PISTOL",
+      "gun": {
+        "dmg": 12,
+        "cd": 0.1,
+        "spread": 0.02,
+        "range": 12,
+        "speed": 30,
+        "mag": 6,
+        "snd": "sniper"
+      },
+      "magReload": 1.8,
+      "reserve": 60,
+      "fx": "charge",
+      "sig": "OVERCHARGE: full charge in 0.7 s"
+    },
+    "w_antigrav": {
+      "region": 3,
+      "name": "ANTI-GRAV LAUNCHER",
+      "gun": {
+        "dmg": 22,
+        "cd": 1.6,
+        "spread": 0.05,
+        "range": 9,
+        "speed": 10,
+        "mag": 4,
+        "snd": "rocket"
+      },
+      "magReload": 2.5,
+      "reserve": 16,
+      "fx": "lift",
+      "sig": "WELL: pulls raiders in first"
+    }
+  },
+  "mods": {
+    "m_dmg": {
+      "name": "HOT",
+      "what": "+15% damage",
+      "min": "r",
+      "w": 10
+    },
+    "m_rate": {
+      "name": "QUICK",
+      "what": "+12% fire rate",
+      "min": "r",
+      "w": 10
+    },
+    "m_mag": {
+      "name": "DEEP",
+      "what": "+40% magazine",
+      "min": "r",
+      "w": 8
+    },
+    "m_reload": {
+      "name": "SLICK",
+      "what": "-25% reload time",
+      "min": "r",
+      "w": 8
+    },
+    "m_range": {
+      "name": "LONG",
+      "what": "+20% range and bullet speed",
+      "min": "r",
+      "w": 7
+    },
+    "m_steady": {
+      "name": "TRUE",
+      "what": "-30% spread",
+      "min": "r",
+      "w": 7
+    },
+    "m_ammo": {
+      "name": "STOCKED",
+      "what": "+50% reserve",
+      "min": "r",
+      "w": 6
+    },
+    "m_pierce": {
+      "name": "PIERCING",
+      "what": "+1 pierce",
+      "min": "e",
+      "w": 5
+    },
+    "m_crit": {
+      "name": "LUCKY",
+      "what": "8% chance a hit deals double",
+      "min": "e",
+      "w": 5
+    },
+    "m_light": {
+      "name": "BRIGHT",
+      "what": "+30% light cone while held",
+      "min": "e",
+      "w": 4
+    },
+    "m_vamp": {
+      "name": "THIRSTY",
+      "what": "heals 2% of damage dealt (5 HP/s at most)",
+      "min": "l",
+      "w": 2
+    }
+  },
+  "perks": {
+    "p_loaded": {
+      "name": "LOADED DICE",
+      "r": "r",
+      "what": "10% chance a shot deals double damage"
+    },
+    "p_house": {
+      "name": "HOUSE EDGE",
+      "r": "e",
+      "what": "+1 Lucky Juice capacity (max 6)"
+    },
+    "p_owl": {
+      "name": "NIGHT OWL",
+      "r": "c",
+      "what": "Your light cone reaches 40% further"
+    },
+    "p_break": {
+      "name": "LUCKY BREAK",
+      "r": "l",
+      "what": "The first time you're downed each level, you stand back up at 20%"
+    },
+    "p_comped": {
+      "name": "COMP'D ROOM",
+      "r": "c",
+      "what": "Your next trade is 25% off"
+    },
+    "p_steady": {
+      "name": "STEADY HANDS",
+      "r": "c",
+      "what": "25% tighter spread"
+    },
+    "p_sip": {
+      "name": "QUICK SIP",
+      "r": "r",
+      "what": "Drinking takes 0.5 s"
+    },
+    "p_gulp": {
+      "name": "BIG GULP",
+      "r": "r",
+      "what": "Each charge heals 25% more"
+    },
+    "p_pocket": {
+      "name": "PICKPOCKET",
+      "r": "c",
+      "what": "+1 salvage a kill"
+    },
+    "p_insure": {
+      "name": "INSURANCE",
+      "r": "e",
+      "what": "Only half your salvage drops when you fall"
+    },
+    "p_sleeper": {
+      "name": "LIGHT SLEEPER",
+      "r": "r",
+      "what": "Unseen raiders within 8 tiles show at the screen's edge"
+    },
+    "p_lung": {
+      "name": "IRON LUNG",
+      "r": "r",
+      "what": "Gas and radiation hurt half as much",
+      "from": 2
+    },
+    "p_footing": {
+      "name": "SURE FOOTING",
+      "r": "c",
+      "what": "Water and debris slow you half as much"
+    },
+    "p_backstep": {
+      "name": "BACK STEP",
+      "r": "e",
+      "what": "The roll comes back 0.5 s sooner"
+    },
+    "p_riposte": {
+      "name": "RIPOSTE",
+      "r": "l",
+      "what": "Roll through a shot: +30% damage for 2 s"
+    },
+    "p_pockets": {
+      "name": "DEEP POCKETS",
+      "r": "r",
+      "what": "+50% reserve for the second weapon"
+    },
+    "p_stack": {
+      "name": "BIG STACK",
+      "r": "e",
+      "what": "+20% damage while you carry 150+ salvage"
+    },
+    "p_lastcall": {
+      "name": "LAST CALL",
+      "r": "e",
+      "what": "+20% fire rate below 30% health"
+    },
+    "p_counter": {
+      "name": "CARD COUNTER",
+      "r": "r",
+      "what": "Chests and merchants show at the screen's edge"
+    },
+    "p_pitcrew": {
+      "name": "PIT CREW",
+      "r": "r",
+      "what": "You revive teammates 40% faster"
+    },
+    "p_tiepin": {
+      "name": "THE PIT BOSS'S TIE-PIN",
+      "r": "l",
+      "what": "+1 salvage a kill (on top of Pickpocket)"
+    }
+  },
+  "relics": {
+    "x_chip": {
+      "name": "CURSED CHIP",
+      "r": "l",
+      "up": "+30% damage",
+      "down": "Lucky Juice heals half"
+    },
+    "x_crown": {
+      "name": "PAPER CROWN",
+      "r": "l",
+      "up": "+25% fire rate",
+      "down": "-25% max health"
+    },
+    "x_lens": {
+      "name": "BLACKOUT LENS",
+      "r": "l",
+      "up": "Raiders in your light cone take +25% damage",
+      "down": "Your light cone is 40% shorter"
+    },
+    "x_hand": {
+      "name": "DEAD MAN'S HAND",
+      "r": "l",
+      "up": "Downed, you blow up (60 damage, radius 2)",
+      "down": "You heal 30% less"
+    },
+    "x_deck": {
+      "name": "MARKED DECK",
+      "r": "l",
+      "up": "Merchants show 2 more items",
+      "down": "Prices +25%"
+    },
+    "x_lead": {
+      "name": "LEAD BOOTS",
+      "r": "l",
+      "up": "Knockback and pulls don't move you",
+      "down": "-15% move speed",
+      "from": 3
+    },
+    "x_eye": {
+      "name": "THE VISITOR'S EYE",
+      "r": "g",
+      "up": "See raiders through walls within 6 tiles",
+      "down": "Your light cone is 30% shorter",
+      "from": 3
+    }
+  },
+  "loot": {
+    "chest": {
+      "what": [
+        [
+          "consumable",
+          45
+        ],
+        [
+          "salvage",
+          25
+        ],
+        [
+          "weapon",
+          20
+        ],
+        [
+          "perk",
+          10
+        ]
+      ],
+      "rar": {
+        "1": {
+          "c": 55,
+          "r": 30,
+          "e": 12,
+          "l": 3
+        },
+        "2": {
+          "c": 40,
+          "r": 35,
+          "e": 18,
+          "l": 7
+        },
+        "3": {
+          "c": 25,
+          "r": 35,
+          "e": 27,
+          "l": 13
+        }
+      }
+    },
+    "elite": {
+      "what": [
+        [
+          "consumable",
+          50
+        ],
+        [
+          "weapon",
+          30
+        ],
+        [
+          "perk",
+          20
+        ]
+      ],
+      "rar": {
+        "1": {
+          "r": 65,
+          "e": 30,
+          "l": 5
+        },
+        "2": {
+          "r": 50,
+          "e": 38,
+          "l": 12
+        },
+        "3": {
+          "r": 35,
+          "e": 45,
+          "l": 20
+        }
+      },
+      "bounty": 20
+    },
+    "boss": {
+      "what": [
+        [
+          "weapon",
+          50
+        ],
+        [
+          "perk",
+          35
+        ],
+        [
+          "relic",
+          15
+        ]
+      ],
+      "rar": {
+        "1": {
+          "r": 60,
+          "e": 32,
+          "l": 8
+        },
+        "2": {
+          "r": 40,
+          "e": 42,
+          "l": 18
+        },
+        "3": {
+          "r": 20,
+          "e": 45,
+          "l": 35
+        }
+      }
+    }
+  },
+  "items": {
+    "c_nade": {
+      "name": "GRENADE",
+      "what": "+1 grenade",
+      "price": 15,
+      "max": 9
+    },
+    "c_juice": {
+      "name": "SPARE JUICE",
+      "what": "Refills one Lucky Juice charge",
+      "price": 40,
+      "max": 9
+    },
+    "c_bar": {
+      "name": "BARRICADE",
+      "what": "A one-tile barricade (120 HP). SPACE places it",
+      "price": 25,
+      "max": 2
+    },
+    "c_flare": {
+      "name": "ROAD FLARE",
+      "what": "Lights 4 tiles round for 15 s. Select with F, SPACE throws",
+      "price": 12,
+      "max": 3
+    },
+    "c_ammo": {
+      "name": "AMMO BOX",
+      "what": "Fills your second weapon's reserve",
+      "price": 30,
+      "max": 1
+    },
+    "c_ammop": {
+      "name": "AMMO PACK",
+      "what": "+40% of your second weapon's reserve",
+      "price": 0,
+      "max": 1
+    }
+  }
+}

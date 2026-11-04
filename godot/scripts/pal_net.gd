@@ -1017,7 +1017,7 @@ func _apply_wall_diff(d: Array) -> void:
 func _pl_state(p: Dictionary) -> Array:
 	return [p.id, r2(p.x), r2(p.y), r2(p.aim.x), r2(p.aim.y), ceili(p.hp), 1 if p.alive else 0, int(p.ammo) if p.gun.has("mag") else -1, int(p.tp),
 		1 if p.downed else 0, r2(p.revive), r2(minf(p.rt, 1e6)), r2(maxf(0.0, p.bcd)), r2(p.bolt / p.boltT) if p.bolt > 0 and p.boltT > 0 else 0, 1 if p.rl > 0 else 0,
-		r2(p.stun), r2(p.get("ev", 0.0)), r2(p.dgE) + 0.01 if sim.rolling(p) else 0]   # dg (yard-30): how far into a back roll, +0.01
+		r2(p.stun), r2(p.get("ev", 0.0)), r2(p.dgE) + 0.01 if sim.rolling(p) else 0]   # dg (yard-30): how far into a roll, +0.01
 
 
 static func _ch_evac_bits(p: Dictionary) -> int:

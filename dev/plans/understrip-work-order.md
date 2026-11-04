@@ -7,7 +7,7 @@
 | **Platform** | **Browser build only** (`dev/src/`). The Godot port (`godot/`) is a later, separate sweep; section 15 says how to keep that sweep mechanical. |
 | **Starts from** | v0.11.1 (`main`), network protocol `yard-30` |
 | **Director** | Big U (lopoke89-ops) |
-| **Status** | Ready for pre-production (milestone M0) |
+| **Status** | M0 signed off (November 4, 2026). **M1 (the region 1 vertical slice) built**, report in `dev/evidence/2026-11-04-understrip-m1/`; the director's fun test is next |
 
 ---
 
@@ -179,7 +179,7 @@ The two options from the brief, with the recommendation:
 ### 6.3 Healing charges (our own term: **Flasks of Lucky Juice**, D3)
 - **Count:** 3 charges at the start, refilled at shrines. Merchants sell +1 capacity (max 6) and stronger heals.
 - **Using one:** a heal takes 0.8 s, during which you walk slowly. It's a commitment, not an instant button: the Souls-like rule.
-- **The other modes' pickups:** these heal pickups are off in this mode. Healing comes only from charges, the Medic class's existing ability, and some loot.
+- **No passive healing (D9):** the other modes heal you out of a fight; that's off here. Healing comes only from charges, the Quartermaster's existing revive (D11), and some loot.
 
 ### 6.4 Dropped currency
 - **The currency:** the in-run currency is **salvage**, which the game already uses for armory upgrades (`UPG` in `04-state-armory.js`).
@@ -238,7 +238,7 @@ Write each with a name, a one-line effect, a rarity and its numbers. Examples of
 - *Loaded Dice:* 10% chance a shot deals double damage.
 - *House Edge:* +1 healing charge capacity.
 - *Night Owl:* light cone +40%.
-- *Second Wind:* the first time you're downed each level, stand back up at 20% HP.
+- *Lucky Break:* the first time you're downed each level, stand back up at 20% HP (D10: SECOND WIND is a skill-tree node).
 - *Comp'd Room:* the next merchant visit is 25% off.
 
 Balance them in M4 with the numbers in a single table, so the Godot port can copy it.
@@ -322,7 +322,7 @@ The categories are the game's own: hats (`hat`), tracers (`trail`), kill effects
 
 | Category | 1 | 2 | 3 | 4 | 5 |
 |---|---|---|---|---|---|
-| **Hats** (rare → legendary) | Dealer's visor (green eyeshade) | Showgirl feather crest | Neon halo (a flickering casino-sign ring) | Tinfoil hat | Antenna headband (bobbing alien antennae) |
+| **Hats** (common → legendary; D13) | Dealer's visor (green eyeshade) | Showgirl feather crest | Neon halo (a flickering casino-sign ring) | Tinfoil hat | Antenna headband (bobbing alien antennae) |
 | **Tracers** | Poker-chip trail (chips tumble behind the shot) | Neon strip (pink-and-blue neon tube) | Jackpot sparks (gold coins) | Tractor beam (a pale green beam that wobbles) | Plasma bolt (a fat green bolt with a ring) |
 | **Kill effects** | Jackpot! (a slot machine pays out three 7s and coins burst) | Bust (cards scatter and flip face down) | Showgirl confetti (feathers and sequins) | Abducted (a beam lifts the body up and out) | Dissolved (green goo melts it to a puddle) |
 | **Lobby backgrounds** (each animated within the existing animation budget, like the four animated winter scenes) | The Strip at night (retro neon skyline) | The flood tunnels (dripping concrete, a lit grate above) | Casino vault door (gold light through a huge round door) | Area 67 fence at dusk (searchlights and a hovering light) | Specimen hall (tanks glowing in a dark lab) |
@@ -353,9 +353,9 @@ The categories are the game's own: hats (`hat`), tracers (`trail`), kill effects
 | `10i-understrip-bosses.js` | The two-stage boss framework and the four bosses' `think` functions and moves |
 | `10j-understrip-loot.js` | Merchants, stock rolls, weapons, perks, relics, consumables and their numbers (one data table each) |
 | `16i-understrip-figures.js` | The 10 new skin models and the region's enemy looks |
-| `18e-understrip-catalog.js` | The case, the catalogue rows, and the tracer/effect/background registration (like `18a-winter-catalog.js`) |
-| `18f-understrip-scenes.js` | The five lobby background painters (like `18d-winter-scenes.js`) |
-| `20c-understrip-effects.js` | The five kill effects and five tracers (like `20b-winter-effects.js`) |
+| `18g-understrip-catalog.js` (D12) | The case, the catalogue rows, and the tracer/effect/background registration (like `18a-winter-catalog.js`) |
+| `18h-understrip-scenes.js` (D12) | The five lobby background painters (like `18d-winter-scenes.js`) |
+| `20d-understrip-effects.js` (D12) | The five kill effects and five tracers (like `20b-winter-effects.js`) |
 
 ### 10.2 Existing files touched
 
@@ -439,7 +439,7 @@ The browser version is the reference; the Godot port copies it. To keep that swe
 - Keep every table (bosses, loot, perks, weapons, merchants, room kits, case) as plain data with nothing but numbers and strings. The Godot side mirrors such tables in `godot/scripts/pal_tables.gd`-style files.
 - Keep the mode's rules in the sim-side files (`10h`, `10i`, `10j`) and the drawing in the figure/effect files. Godot splits the same way (`sim.gd` against the `view3d/` scripts).
 - Room kits should be data (tile grids plus doorway markers), not code, so both versions read the same files.
-- The generator must give the same level from the same seed in both versions. Write the generator's algorithm up in a short spec (`dev/plans/understrip-generator.md`) as part of M1.
+- The generator must give the same level from the same seed in both versions. Write the generator's algorithm up in a short spec (`dev/plans/understrip-generator.md`) as part of M1 (drafted at M0).
 - Godot's 3D view has no per-pixel darkness yet: the night light holes (`main._update_light`) are the closest thing. Plan a lighting task for the port sweep.
 - Skins with unique models will need 3D models in Godot (the browser's are drawn in 2D). That's real art work, so budget it in the port sweep, not as conversion.
 
@@ -447,16 +447,32 @@ The browser version is the reference; the Godot port copies it. To keep that swe
 
 ## 16. Decisions for the director
 
-| # | Decision | Recommendation |
+**Answered November 4, 2026:** the director took every recommendation.
+
+| # | Decision | Recommendation | Answer |
+|---|---|---|---|
+| D1 | The mode's and case's final names | THE UNDERSTRIP / UNDERSTRIP CASE | As recommended |
+| D2 | Levels per region: 2 or 3 normal levels before the boss | 2 for v1 (a ~50-minute run) | As recommended |
+| D3 | Names for the rest points and healing charges | Neon Shrines and Lucky Juice | As recommended |
+| D4 | The shelter's brand, name and colours (must be original) | "Shelter 7", run by the fictional "Desert Civil Defence Authority", olive and orange | As recommended |
+| D5 | The roll's numbers in this mode (today: 3 s cooldown, 0.3 s invulnerable) | A 2 s cooldown in this mode only; invulnerability unchanged | As recommended |
+| D6 | A second weapon slot, or weapon mods only | The second slot, with mods as the fallback | As recommended |
+| D7 | The case's weights, shard cost and the run's shard payout | `{c:40,r:32,e:18,l:8,g:2}`, 15 shards, about 2 shards per region cleared | As recommended: 2 per region, at most 6 a run |
+| D8 | Whether the mode is unlocked from the start or after a milestone (for example, finishing a Black Out) | Open from the start; it's the headline feature | As recommended |
+
+### 16.1 Settled at M0 (found while checking this brief against the code)
+
+| # | What | Settled |
 |---|---|---|
-| D1 | The mode's and case's final names | THE UNDERSTRIP / UNDERSTRIP CASE |
-| D2 | Levels per region: 2 or 3 normal levels before the boss | 2 for v1 (a ~50-minute run) |
-| D3 | Names for the rest points and healing charges | Neon Shrines and Lucky Juice |
-| D4 | The shelter's brand, name and colours (must be original) | "Shelter 7", run by the fictional "Desert Civil Defence Authority", olive and orange |
-| D5 | The roll's numbers in this mode (today: 3 s cooldown, 0.3 s invulnerable) | A 2 s cooldown in this mode only; invulnerability unchanged |
-| D6 | A second weapon slot, or weapon mods only | The second slot, with mods as the fallback |
-| D7 | The case's weights, shard cost and the run's shard payout | `{c:40,r:32,e:18,l:8,g:2}`, 15 shards, about 2 shards per region cleared |
-| D8 | Whether the mode is unlocked from the start or after a milestone (for example, finishing a Black Out) | Open from the start; it's the headline feature |
+| D9 | **Passive healing.** The other modes heal you out of a fight (4 HP/s after 4 s, more with the SECOND WIND skill: `perkMods` in `01b-mods-skills.js`, applied in `12-players.js`). There are no heal pickups to switch off, which 6.3 assumed. | **Off in this mode** (the director). The SECOND WIND skill does nothing here, and the PLAY card says so. |
+| D10 | **"Second Wind" is a skill-tree node already** (7.4's example perk). | The perk is **LUCKY BREAK**. |
+| D11 | **There's no Medic class.** 6.3's "Medic ability" is the Quartermaster's revive (`medic:true`: a downed teammate up at 60%). | Read 6.3 as the Quartermaster's revive, which is unchanged. |
+| D12 | **File names.** `18e-`, `18f-` and `20c-` are taken by the Hybrid Theory files (10.1). | `18g-understrip-catalog.js`, `18h-understrip-scenes.js`, `20d-understrip-effects.js`. |
+| D13 | **An empty rarity tier breaks the case's odds.** When a case rolls a tier it has no items in, the server hands out a random item of any tier (`private.open_case_catalog`). 9.1 says there are no common skins, and 9.3 makes hats rare-to-legendary, so D7's 40% common weight would have nothing to land on. | Five commons across the other categories (two hats, a tracer, a kill effect, a background). The 30 items' tiers are in `understrip/tables/case_items.csv`; `build_tables.py` fails if any weighted tier is empty. |
+| D14 | **Names and ids already taken.** `hat:visor` (Cyber Visor), `hat:halo`, `trail:plasma`, `fx:confetti`, and a trail named "Neon". | Dealer's Eyeshade, Neon Halo (`hat:neonhalo`), Saucer Bolt, Showgirl Plumes, Neon Tube. `build_tables.py` checks every id and name against the catalogue. |
+| D15 | **Boss health figures** (8.2–8.5). | Read as effective health for one player on Normal, both stages together: base `hp` = figure ÷ 1.25 (`BOSS_HP`). |
+| D16 | **Boss state numbers.** The Supreme Destroyer uses 40–47 and the winter bosses 101–103. | This mode's boss states use 60–89. |
+| D17 | **Walls in front of the player** hide them in narrow tunnels (the iso view draws nearer walls over people, as `cityOccluders` does for the city on purpose). | M1 risk: near-side walls draw low (a cut-away), display only. In the generator spec. |
 
 ---
 

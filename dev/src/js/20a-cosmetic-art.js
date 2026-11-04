@@ -28,6 +28,7 @@ function tracerStamp(st,t,colorIndex=0){
  if(st.pk==='star'||st.pk==='cosmic'||st.rgrad){c.fillStyle=st.rgrad?'#fff1ac':'#f4edff';c.beginPath();for(let i=1;i<4;i++){const x=i*35,y=24+(i%2?2:-2),r=i===1?5:3;c.moveTo(x-r,y);c.lineTo(x,y-r);c.lineTo(x+r,y);c.lineTo(x,y+r);c.closePath()}c.fill()}
  if(st.arc){c.globalCompositeOperation='source-over';for(const[w,col]of[[7,'rgba(40,200,220,.45)'],[3.2,st.c],[1.2,'#eaffff']]){c.strokeStyle=col;c.lineWidth=w;c.beginPath();c.arc(-14,24,26,-.62,.62);c.stroke()}}   // v0.9.4.0 Blue Arc: a crescent at the head
  if(st.chain){c.strokeStyle='#1a0604';c.lineWidth=2;for(let i=0;i<5;i++){c.beginPath();c.ellipse(18+i*22,24,8,4.2,0,0,Math.PI*2);c.stroke()}}   // Hellfire Chain: links
+ if(st.us)usTracerStamp(c,st.us);   // v0.12 THE UNDERSTRIP CASE
  if(st.pk==='rock'){c.fillStyle='#d2b8a0';c.strokeStyle='#292322';c.lineWidth=1.5;c.beginPath();for(let i=1;i<4;i++){const x=i*34,y=24+(i%2?4:-4);c.moveTo(x-4,y);c.lineTo(x,y-4);c.lineTo(x+4,y);c.lineTo(x,y+5);c.closePath()}c.fill();c.stroke()}
  TRACE_STAMPS.set(key,cv);if(TRACE_STAMPS.size>64)TRACE_STAMPS.delete(TRACE_STAMPS.keys().next().value);return cv;
 }
@@ -67,6 +68,7 @@ function paintTracer(ctx,x1,y1,x2,y2,st,w,t,heavy,colorIndex=0){
   if(tear)for(let i=0;i<2;i++){ctx.fillStyle=i?'#24eaff':'#ff285b';ctx.fillRect(len*(.28+i*.28),(i?1:-1)*split,Math.min(len*.17,width*5),width*.42)}
  }else ctx.drawImage(tracerStamp(st,t),0,-height/2,len,height);
  if(st.winter==='solsticecomet'){for(let i=0;i<4;i++){const x=len*(.45+i*.15),col=['#ef5462','#65c780','#ffe09a','#a6e8ff'][i];ctx.strokeStyle='#41644d';ctx.lineWidth=Math.max(.4,w*.22);ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,w*.7);ctx.stroke();ctx.fillStyle=col;ctx.beginPath();ctx.ellipse(x,w*.9,w*.32,w*.48,0,0,Math.PI*2);ctx.fill()}}
+ if(st.us){ctx.save();usTracerLive(ctx,st.us,len,width,t);ctx.restore()}   // v0.12
  if(st.winter==='auroralance'){ctx.fillStyle='#e2f5fa';ctx.globalAlpha*=.5;for(let i=0;i<4;i++){ctx.beginPath();ctx.arc(len*(.55+i*.12),(i%2?1:-1)*w*.5,w*.18,0,Math.PI*2);ctx.fill()}}
  ctx.restore();
 }
@@ -74,6 +76,7 @@ const FINISH_LIFE={orbital:.85,sparks:.48,smoke:1.15,confetti:.95,embers:.8,glin
 function paintFinish(ctx,key,progress,scale,x,y){
  if(paintWinterFinish(ctx,key,progress,scale,x,y))return;
  if(paintHybridFinish(ctx,key,progress,scale,x,y))return;
+ if(paintUsFinish(ctx,key,progress,scale,x,y))return;   // v0.12 THE UNDERSTRIP CASE
  if(!(key in FINISH_LIFE)||progress<0||progress>=1)return;
  const p=progress,e=1-Math.pow(1-p,3),fade=Math.min(1,(1-p)*2.8),pop=Math.min(1,p*12),tau=Math.PI*2;
  ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);ctx.globalAlpha*=fade*pop;ctx.lineJoin='round';ctx.lineCap='round';

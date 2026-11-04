@@ -4,7 +4,9 @@
 // they talk directly. Each guest opens 'r' (reliable: hello, build, grenade, and every
 // one-off event: sounds, particles, bullets, toasts, wall changes), 'u' (fast: movement in),
 // and 'st' (never resent: game state out, 15 times a second).
-const PROTO='yard-30',ROOM_PREFIX='palisade-yard-27-';   // v0.10.3 yard-29: casino seat codes for craps, baccarat and the machines   // v0.9.7.1: ready states (lobby and the push), round pay
+// yard-31 (THE UNDERSTRIP) only adds fields older copies ignore, so a yard-30 copy (an old tab, the desktop game) still plays
+// every other mode with a yard-31 host. Guests say both (v for older hosts, v2 for new ones); the casino relay is told yard-30.
+const PROTO='yard-31',PROTO_OLD='yard-30',ROOM_PREFIX='palisade-yard-27-';   // v0.10.3 yard-29: casino seat codes for craps, baccarat and the machines   // v0.9.7.1: ready states (lobby and the push), round pay
 // v0.9.7 was yard-26:   // v0.9.7: City Black Out (POI summary, near-only raiders on the city, the Supreme Destroyer's states 40-47, gas and mines)
 const ROOM_SESSION=(()=>{let id='';try{id=sessionStorage.getItem('palisade.roomSession')||''}catch(e){}
   if(!/^[0-9a-f]{24}$/.test(id)){id=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');try{sessionStorage.setItem('palisade.roomSession',id)}catch(e){}}
@@ -115,13 +117,14 @@ function checkSkills(c,claimed){
   rpc('skills_of',{p_uid:c.uid}).then(r=>{if(!r.ok||!r.j||typeof r.j!=='object')return;const t={};
     for(const S of SKILLS)t[S.id]=Math.min(want[S.id]|0,r.j[S.id]|0);put(skillStr(parseSkills(skillStr(t)),want.molOff))}).catch(()=>{});
 }
-const startMsg=()=>({t:'start',room:casino()?casRoom():undefined,roster:rosterNow(),diff:pick.diff,mode:game.mode,pvp:game.pvp,map:game.map,size:game.size,oct:game.oct?1:0,gid:game.gid,mods:game.mods,job:game.job,shots:bullets.filter(b=>!b.dead).map(bulletEvent)});
+const startMsg=()=>({t:'start',room:casino()?casRoom():undefined,us:game.us?[game.us.seed,game.us.level,game.us.lives]:undefined,roster:rosterNow(),diff:pick.diff,mode:game.mode,pvp:game.pvp,map:game.map,size:game.size,oct:game.oct?1:0,gid:game.gid,mods:game.mods,job:game.job,shots:bullets.filter(b=>!b.dead).map(bulletEvent)});
 const lighterSide=list=>{let a=0,b=0;for(const r of list)if(r.team==='b')b++;else a++;return a<=b?'a':'b'};
 function hostData(peerId,d){
   const c=NET.conns.get(peerId);if(!c||c.kicked||!d||typeof d!=='object'||Array.isArray(d)||typeof d.t!=='string')return;c.heard=performance.now();
   if(d.t==='hello'){
     if(c.pid||!c.r||!c.r.open)return;
-    if(d.v!==PROTO){c.r.send({t:'kick',why:'Your copy of PALISADE is a different version from the host’s. Both of you reload the page.'});return}
+    const ver=typeof d.v2==='string'?d.v2:d.v;c.v=ver;
+    if(ver!==PROTO&&!(ver===PROTO_OLD&&pick.mode!=='understrip')){c.r.send({t:'kick',why:'Your copy of PALISADE is a different version from the host’s. Both of you reload the page.'});return}
     if(d.invitationSession&&d.invitationSession!==NET.incarnation){c.r.send({t:'kick',why:'That invitation belongs to an earlier room. Ask for a new invite.'});return}
     if(!/^[0-9a-f]{24}$/.test(d.session||''))return;
     if(NET.banned.has(d.session)){c.r.send({t:'kick',why:'The host removed you from the game.'});return}
@@ -182,6 +185,7 @@ function hostData(peerId,d){
   else if(d.t==='u'){if(typeof d.k==='string'&&(UPG.some(u=>u.k===d.k)||d.k==='core'||d.k==='dell'))buyUpgrade(p,d.k)}
   else if(d.t==='am'){if(typeof d.id==='string'&&AMMO_BY[d.id]&&hostInt(d.slot,0,1))buyAmmo(p,d.id,d.slot)}
   else if(d.t==='rl'){if(p.gun.mag)p.rlReq=true}
+  else if(understrip()&&(d.t==='ud'||d.t==='ui'||d.t==='uu'||d.t==='ub'||d.t==='uw'||d.t==='ut'))usHostData(p,d);   // THE UNDERSTRIP (yard-31)
   else if(d.t==='dg'){   // v0.11.0 yard-30: a guest's roll (any way, not only back). The host keeps the cooldown and lets the guest travel the roll's distance on top of its walking pace.
     if(hostFinite(d.x,-1.1,1.1)&&hostFinite(d.y,-1.1,1.1)&&Math.hypot(d.x,d.y)>.5&&p.alive&&!casino()&&!p.seat&&!rolling(p)&&!(p.dgCd>.35)){startRoll(p,d.x,d.y);c.rollB=ROLL.dist+.15;c.rollUntil=performance.now()+(ROLL.dur+.6)*1000}}
   else if(d.t==='ab'){if(hostFinite(d.x,-HOST_LIMITS.targetPad,N+HOST_LIMITS.targetPad)&&hostFinite(d.y,-HOST_LIMITS.targetPad,N+HOST_LIMITS.targetPad))useAbility(p,d.x,d.y)}
@@ -237,6 +241,7 @@ function broadcastLobby(){
   if(NET.mode==='host'&&pubTimer)lobbyPublish();
 }
 function lobbyBlock(){
+  if(pick.mode==='understrip'&&pick.pvp==='coop'&&[...NET.conns.values()].some(c=>c.pid&&c.v===PROTO_OLD))return'Someone in the room has an older copy (or the desktop game), which can\'t play THE UNDERSTRIP. They need to reload.';
   if(pick.pvp==='coop')return'';
   if(NET.roster.length<2)return'PvP needs at least two players. Share the code.';
   if(pick.pvp==='base'&&(NET.roster.every(r=>r.team!=='b')||NET.roster.every(r=>r.team==='b')))return'Both sides need at least one player. Someone tap SWITCH SIDES.';
@@ -316,12 +321,12 @@ const PL_STATE=[['id',p=>p.id],['x',p=>r2(p.x)],['y',p=>r2(p.y)],['ax',p=>r2(p.a
   ['alive',p=>p.alive?1:0],['ammo',p=>p.gun.mag?p.ammo|0:-1],['tp',p=>p.tp],['down',p=>p.downed?1:0],['rev',p=>r2(p.revive)],['rt',p=>r2(p.rt)],
   ['bcd',p=>r2(Math.max(0,p.bcd))],['bolt',p=>p.bolt>0?r2(p.bolt/p.boltT):0],['rl',p=>p.rl>0?1:0],['stun',p=>r2(p.stun||0)],['ev',p=>r2(p.ev||0)],['dg',p=>rolling(p)?r2(p.dgE)+.01:0]];   // dg (v0.11.0 yard-30): how far into a back roll, +0.01 (0: not rolling)   // ev (v0.9.4.0): seconds stood in the evac ring
 const PL_SLOW=[['id',p=>p.id],['m0',p=>p.mats[0]],['m1',p=>p.mats[1]],['m2',p=>p.mats[2]],['nades',p=>p.nades],['sal',p=>p.sal|0],['kills',p=>p.kills|0],['deaths',p=>p.deaths|0],
-  ['prot',p=>p.prot>0?1:0],['ab',p=>p.ab|0],['out',p=>p.out?1:0],['ce',p=>chEvacBits(p)],['rdy',p=>p.boReady?1:0],['seat',p=>p.seat|0]];   // seat (v0.10.0, yard-28): casino seat code   // rdy (v0.9.7.1): ready for the final push   // ce (v0.9.6.4): chapter evac results, 2 bits a chapter   // out (v0.9.4.0): evacuated   // ab: class-ability state, reserved
-const PL_INFO=[['id',p=>p.id],['name',p=>p.name],['cls',p=>p.cls],['slot',p=>p.slot],['max',p=>p.max],['maxN',p=>p.maxN],['upS',p=>p.upS],['cosS',p=>p.cosS],['team',p=>p.team||''],['ammoEq',p=>p.ammoEq.join(',')],['sk',p=>p.sk]];
+  ['prot',p=>p.prot>0?1:0],['ab',p=>p.ab|0],['out',p=>p.out?1:0],['ce',p=>chEvacBits(p)],['rdy',p=>p.boReady?1:0],['seat',p=>p.seat|0],['us',p=>game.us?usPlayerBits(p):0]];   // us (yard-31): THE UNDERSTRIP's juice, items, drinking and bled-out bits   // seat (v0.10.0, yard-28): casino seat code   // rdy (v0.9.7.1): ready for the final push   // ce (v0.9.6.4): chapter evac results, 2 bits a chapter   // out (v0.9.4.0): evacuated   // ab: class-ability state, reserved
+const PL_INFO=[['id',p=>p.id],['name',p=>p.name],['cls',p=>p.cls],['slot',p=>p.slot],['max',p=>p.max],['maxN',p=>p.maxN],['upS',p=>p.upS],['cosS',p=>p.cosS],['team',p=>p.team||''],['ammoEq',p=>p.ammoEq.join(',')],['sk',p=>p.sk],['usk',p=>game.us?usKitStr(p):'']];   // usk (yard-31): THE UNDERSTRIP's second weapon, perks and relic
 // enemies: the boss-only fields sit last and trailing zeros are dropped, so a plain raider sends 7 numbers, not 12
 const EN_STATE=[['id',e=>e.id],['type',e=>ECODE.indexOf(e.type==='boss'?'boss:'+e.boss:e.type)],['x',e=>r2(e.x)],['y',e=>r2(e.y)],['ax',e=>r2(e.aim.x)],['ay',e=>r2(e.aim.y)],
   ['hp',e=>r2(e.hp/e.max)],['plant',e=>e.planted?1:0],['st',e=>e.st||0],['stF',e=>e.st?r2(Math.max(0,e.stT/e.stM)):0],['lx',e=>r2(e.lx||0)],['ly',e=>r2(e.ly||0)],
-  ['burn',e=>r2(e.burnT||0)],['slow',e=>r2(e.slowT||0)],['slowPct',e=>r2(e.slowPct||0)],['shieldLeft',e=>e.shieldHitsLeft||0],['shieldMax',e=>e.shieldHitsMax||0],['shieldBroken',e=>e.shieldBroken?1:0]];
+  ['burn',e=>r2(e.burnT||0)],['slow',e=>r2(e.slowT||0)],['slowPct',e=>r2(e.slowPct||0)],['shieldLeft',e=>e.shieldHitsLeft||0],['shieldMax',e=>e.shieldHitsMax||0],['shieldBroken',e=>e.shieldBroken?1:0],['el',e=>e.elite==='charger'?1:e.elite==='caller'?2:0],['est',e=>e.est|0],['ub',e=>e.ub|0]];   // el, est (yard-31): an UNDERSTRIP elite and its trick's state; ub: a boss's extra state (the Gatekeeper's shield wall 1, its pilot 2)
 const fieldIdx=L=>Object.fromEntries(L.map((f,i)=>[f[0],i])),PS=fieldIdx(PL_STATE),PI=fieldIdx(PL_INFO),PW=fieldIdx(PL_SLOW);
 const packRow=(L,x)=>L.map(f=>f[1](x)),packTrim=(L,x)=>{const r=packRow(L,x);while(r.length>1&&r[r.length-1]===0)r.pop();return r},PE=fieldIdx(EN_STATE);
 // player info that changed since it was last sent (all of it after a reset: game start, someone dropping in)
@@ -338,6 +343,7 @@ function applyInfo(rows){
     if(r[PI.upS]!==undefined&&String(r[PI.upS])!==p.upS){p.upS=String(r[PI.upS]);UPG.forEach((U,i)=>p.up[U.k]=clamp(+p.upS[i]||0,0,ARM_MAX));refit(p)}
     if(r[PI.ammoEq]!==undefined){const a=String(r[PI.ammoEq]).split(',');p.ammoEq=[AMMO_BY[a[0]]?a[0]:'',p.cls==='sniper'&&AMMO_BY[a[1]]&&a[1]!==a[0]?a[1]:'']}
     if(r[PI.cosS]&&r[PI.cosS]!==p.cosS){p.cos=parseCos(r[PI.cosS]);p.cosS=cosStr(p.cos)}
+    if(game.us&&r[PI.usk]!==undefined)usKitFrom(p,r[PI.usk]);
     p.name=r[PI.name];p.slot=r[PI.slot];p.max=r[PI.max];p.maxN=r[PI.maxN];if(r[PI.team])p.team=r[PI.team]}
 }
 // a player's slow row goes out when it changes and for the next 8 packets (the state channel drops packets rather
@@ -364,6 +370,7 @@ function makeSnap(withWalls){
     nd:flat(nodes,n=>[n.amt|0,n.locked?1:0]),fo:floodOn?1:0};
   if(game.bossLog&&game.bossLog.length)s.bl=game.bossLog;
   if(campaign())s.cm=game.chapter;
+  if(game.us)s.us=usSnap();   // THE UNDERSTRIP
   if(game.bo)s.bo=boSnap();if(isCity())s.near=1;   // v0.9.7 City Black Out
   if(frostFields.length)s.ice=frostFields.map(f=>[r2(f.x),r2(f.y),r2(f.t),r2(f.z)]);
   if(game.fb){const F=game.fb,E=F.evac;s.fb=[r2(F.t),F.n,F.max,E?r2(E.x):0,E?r2(E.y):0,E?r2(E.r):0,F.done?1:0,F.mapEvac?1:F.gauntlet?2:0,F.ch|0,F.wave|0]}   // [7] kind (v0.9.6.4): 1 map evac, 2 gauntlet   // v0.9.4.0: the Final Blitz clock and the evac site
@@ -392,7 +399,7 @@ async function netJoin(code,invitationSession=''){
   peer.on('open',()=>{
     const tgt=ROOM_PREFIX+code,r=peer.connect(tgt,{label:'r',reliable:true,serialization:'json'}),uu=peer.connect(tgt,{label:'u',reliable:false,serialization:'json'});
     NET.host={r,u:uu};
-    r.on('open',()=>{clearTimeout(to);NET.lastHeard=performance.now();const st=openStateCh(r);if(st){NET.host.st=st;st.onmessage=ev=>{try{guestData(JSON.parse(ev.data))}catch(e){}}}r.send({t:'hello',name:myName(),cls:pick.cls,cos:cosStr(myCos()),v:PROTO,sk:mySkills(),uid:locker.cloud?myUid():'',session:ROOM_SESSION,invitationSession})});
+    r.on('open',()=>{clearTimeout(to);NET.lastHeard=performance.now();const st=openStateCh(r);if(st){NET.host.st=st;st.onmessage=ev=>{try{guestData(JSON.parse(ev.data))}catch(e){}}}r.send({t:'hello',name:myName(),cls:pick.cls,cos:cosStr(myCos()),v:PROTO_OLD,v2:PROTO,sk:mySkills(),uid:locker.cloud?myUid():'',session:ROOM_SESSION,invitationSession})});
     for(const c of[r,uu]){c.on('data',guestData);c.on('error',()=>{})}
     r.on('close',()=>{if(NET.mode==='guest')netLeave('The host closed the game.')});
   });
@@ -404,7 +411,8 @@ function guestData(d){
     case'welcome':myId=d.id;NET.mode='guest';mStatus('');showLobby();break;
     case'lobby':NET.roster=d.roster;NET.code=d.code;NET.roomLocked=!!d.locked;pick.diff=d.diff;if(d.mode)pick.mode=d.mode;pick.pvp=d.pvp||'coop';NET.hostMods=cleanMods(d.mods,pick.pvp==='base'||pick.pvp==='ffa'?pick.pvp:d.mode==='blitz'?'blitz':'');pick.job=CLASSES[d.job]?d.job:pick.job;if(d.map)pick.map=MAP_IDS.includes(d.map)?d.map:'yard';if(d.size)pick.size=d.size==='xl'?'xl':'std';if(!NET.inGame)renderLobby();break;
     case'start':pick.diff=d.diff;if(d.mode)pick.mode=d.mode;NET.casRoom=typeof d.room==='string'?d.room.slice(0,80):'';pick.pvp=d.pvp||'coop';pick.map=MAP_IDS.includes(d.map)?d.map:'yard';pick.size=d.size==='xl'?'xl':'std';pick.oct=!!d.oct;demo=false;
-      newGame(d.roster,d.pvp||'',{gid:d.gid,mods:d.mods,job:d.job,guest:true});replayFx(d.shots||[]);NET.lastN=0;NET.inGame=true;enterGame();modsToast();break;
+      if(Array.isArray(d.us)&&hostInt(d.us[0],0,4294967295)&&hostInt(d.us[1],0,US.levels-1)){US_RUN.seed=d.us[0];US_RUN.level=d.us[1]}   // THE UNDERSTRIP: the host's run and level
+      newGame(d.roster,d.pvp||'',{gid:d.gid,mods:d.mods,job:d.job,guest:true,usLives:Array.isArray(d.us)?d.us[2]|0:undefined});replayFx(d.shots||[]);NET.lastN=0;NET.inGame=true;enterGame();modsToast();break;
     case'ping':break;
     case's':if(NET.inGame&&d.n>NET.lastN){NET.lastN=d.n;applySnap(d)}break;
     case'x':if(NET.inGame){if(campaign()&&d.cm!==undefined){if(d.cm<game.chapter)break;if(d.cm!==game.chapter)changeChapter(d.cm,true)}if(d.pi)applyInfo(d.pi);if(d.wl)decodeWalls(d.wl);if(d.wd)applyWallDiff(d.wd);replayFx(d.fx||[])}break;
@@ -414,6 +422,7 @@ function guestData(d){
   }
 }
 function applySnap(s){
+  if(s.us&&game.us&&Number.isInteger(s.us[0])&&s.us[0]>game.us.level&&s.us[0]<US.levels)usChangeLevel(s.us[0],true);   // THE UNDERSTRIP: down to the host's level first
   if(campaign()&&s.cm!==undefined){if(s.cm<game.chapter)return;if(s.cm!==game.chapter)changeChapter(s.cm,true)}
   const wasOver=game.phase==='over';
   game.phase=s.ph;game.wave=s.w;game.timer=s.tm;game.bosses=s.bk|0;game.qn=s.q;game.won=!!s.won;game.winner=s.wn||'';
@@ -442,20 +451,21 @@ function applySnap(s){
   for(const id of[...players.keys()])if(!seen.has(id))players.delete(id);
   player=players.get(myId)||player;
   for(const r of s.ps||[]){const p=players.get(r[PW.id]);if(!p)continue;   // v0.9.6.3: slow fields, only when they changed
-    p.mats=[r[PW.m0]|0,r[PW.m1]|0,r[PW.m2]|0];p.nades=r[PW.nades]|0;p.sal=r[PW.sal]|0;p.kills=r[PW.kills]|0;p.deaths=r[PW.deaths]|0;p.prot=r[PW.prot]?1:0;p.ab=r[PW.ab]|0;p.out=!!r[PW.out];p.chEvac=chEvacFrom(r[PW.ce]|0);p.boReady=!!r[PW.rdy];if(p!==player)p.seat=r[PW.seat]|0}
+    p.mats=[r[PW.m0]|0,r[PW.m1]|0,r[PW.m2]|0];p.nades=r[PW.nades]|0;p.sal=r[PW.sal]|0;p.kills=r[PW.kills]|0;p.deaths=r[PW.deaths]|0;p.prot=r[PW.prot]?1:0;p.ab=r[PW.ab]|0;p.out=!!r[PW.out];p.chEvac=chEvacFrom(r[PW.ce]|0);p.boReady=!!r[PW.rdy];if(p!==player)p.seat=r[PW.seat]|0;if(game.us)usReadBits(p,r[PW.us])}
   const q=s.qm;if(q[4]<qm.hp-.01)qm.flash=.1;qm.tx=q[0];qm.ty=q[1];qm.aim={x:q[2],y:q[3]};qm.hp=q[4];qm.max=q[5];qm.alive=!!q[6];qm.revive=q[7];game.dellLv=q[8]|0;
   const old=new Map(enemies.map(e=>[e.id,e]));enemies=[];
   for(const r of s.en){const v=k=>r[PE[k]]||0,id=r[PE.id];let e=old.get(id);
     if(!e)e={id,x:v('x'),y:v('y'),walk:rnd()*6,flash:0,max:1,hp:1};
     if(v('hp')<e.hp-.001)e.flash=.08;
     const c=ECODE[v('type')]||'rifle',bk=c.startsWith('boss:')?c.slice(5):'';
-    Object.assign(e,{type:bk?'boss':c,boss:bk||undefined,big:!!bk,raft:!!(BOSSES[bk]&&BOSSES[bk].raft)&&waterK(idx(clamp(Math.floor(v('x')),0,N-1),clamp(Math.floor(v('y')),0,N-1))),burrow:bk==='foreman'&&(v('st')===2||v('st')===4),tx:v('x'),ty:v('y'),aim:{x:v('ax'),y:v('ay')},hp:v('hp'),max:1,planted:!!v('plant'),st:v('st'),stF:v('stF'),lx:v('lx'),ly:v('ly'),burnT:v('burn'),slowT:v('slow'),slowPct:v('slowPct'),z:heightAt(v('x'),v('y')),shieldHitsLeft:v('shieldLeft'),shieldHitsMax:v('shieldMax'),shieldBroken:!!v('shieldBroken')});enemies.push(e)}
+    Object.assign(e,{type:bk?'boss':c,boss:bk||undefined,big:!!bk,raft:!!(BOSSES[bk]&&BOSSES[bk].raft)&&waterK(idx(clamp(Math.floor(v('x')),0,N-1),clamp(Math.floor(v('y')),0,N-1))),burrow:bk==='foreman'&&(v('st')===2||v('st')===4),tx:v('x'),ty:v('y'),aim:{x:v('ax'),y:v('ay')},hp:v('hp'),max:1,planted:!!v('plant'),st:v('st'),stF:v('stF'),lx:v('lx'),ly:v('ly'),burnT:v('burn'),slowT:v('slow'),slowPct:v('slowPct'),z:heightAt(v('x'),v('y')),shieldHitsLeft:v('shieldLeft'),shieldHitsMax:v('shieldMax'),shieldBroken:!!v('shieldBroken'),elite:v('el')===1?'charger':v('el')===2?'caller':undefined,est:v('est'),ub:v('ub'),pilot:!!(v('ub')&2)});enemies.push(e)}
   frostFields=(s.ice||[]).map(f=>({x:f[0],y:f[1],t:f[2],z:f[3],r:.72,k:idx(Math.floor(f[0]),Math.floor(f[1]))}));
   rockets=[];for(let o=0;o<(s.rk||[]).length;o+=4)rockets.push({x:s.rk[o],y:s.rk[o+1],vx:s.rk[o+2],vy:s.rk[o+3]});
   fires=[];for(let o=0;o<(s.fz||[]).length;o+=5)fires.push({x:s.fz[o],y:s.fz[o+1],t:s.fz[o+2],r:s.fz[o+3],nap:s.fz[o+4]|0,max:4});
   arcs=[];for(let o=0;o<(s.ar||[]).length;o+=4)arcs.push({x:s.ar[o],y:s.ar[o+1],vx:s.ar[o+2],vy:s.ar[o+3]});
   if(Array.isArray(s.fb)){const f=s.fb;game.fb={t:f[0],n:f[1],max:f[2],evac:f[5]?{x:f[3],y:f[4],r:f[5]}:null,done:!!f[6],mapEvac:f[7]===1,gauntlet:f[7]===2,ch:f[8]|0,wave:f[9]|0}}else game.fb=null;
   if(Array.isArray(s.fl))game.fbLog=s.fl.slice(0,20);
+  if(s.us)usApplySnap(s.us);
   if(s.bo){boApply(s.bo);if(game.joinPois==null){game.joinPois=s.bo[6]|0;game.joinMajors=boMajorsHeld();game.joinHeld=(s.bo[6]|0)+(s.bo[7]|0)}}   // v0.9.7: the POIs and the run's clock (and where this phone came in)
   if(Array.isArray(s.gk))game.gKill=s.gk.slice(0,6);
   if(s.bu){bullets.length=0;for(const e of s.bu)addGuestBullet(e)}
@@ -498,14 +508,14 @@ function replayFx(list){
   }}finally{replaying=false}
 }
 function guestUpdate(dt){
-  game.time+=dt;if(game.phase==='raid'&&$('tipText').textContent&&!game.pvp)setTip('');for(const c of cores)c.flash=Math.max(0,c.flash-dt);
+  game.time+=dt;if(game.phase==='raid'&&$('tipText').textContent&&!game.pvp&&!game.us)setTip('');   // THE UNDERSTRIP times its own tipsfor(const c of cores)c.flash=Math.max(0,c.flash-dt);
   const k=1-Math.exp(-dt*14);
   const smooth=e=>{if(e.tx===undefined)return;const dx=e.tx-e.x,dy=e.ty-e.y,d=Math.hypot(dx,dy);
     if(d>3){e.x=e.tx;e.y=e.ty}else{e.x+=dx*k;e.y+=dy*k;e.walk=(e.walk||0)+d*k*3}};
   for(const p of players.values()){if(p!==player)smooth(p);p.flash=Math.max(0,(p.flash||0)-dt);if(p.boltF>0)p.boltF=Math.max(0,p.boltF-dt*1.9);if(p.stun>0)p.stun=Math.max(0,p.stun-dt);if(p!==player&&rolling(p)){p.dgE+=dt;if(p.dgE>=ROLL.dur)p.dgE=-1}}
   smooth(qm);qm.flash=Math.max(0,qm.flash-dt);
   for(const e of enemies){smooth(e);e.flash=Math.max(0,e.flash-dt);e.burnT=Math.max(0,(e.burnT||0)-dt);e.slowT=Math.max(0,(e.slowT||0)-dt)}
-  for(const b of bullets){b.x+=b.vx*dt;b.y+=b.vy*dt;b.dist=(b.dist||0)+Math.hypot(b.vx,b.vy)*dt;if(b.left!==undefined){b.left-=Math.hypot(b.vx,b.vy)*dt;if(b.left<=0||!inb(b.x|0,b.y|0))b.dead=true}}
+  for(const b of bullets){const gv=game.us?usGravAt(b.x,b.y):1;b.x+=b.vx*dt*gv;b.y+=b.vy*dt*gv;b.dist=(b.dist||0)+Math.hypot(b.vx,b.vy)*dt;if(b.left!==undefined){b.left-=Math.hypot(b.vx,b.vy)*dt;if(b.left<=0||!inb(b.x|0,b.y|0))b.dead=true}}
   compactBullets();
   for(const l of lobs)l.t=Math.min(l.T,l.t+dt);
   for(const r of arcs){r.x+=r.vx*dt;r.y+=r.vy*dt}if(game.fb&&!game.fb.done&&game.phase==='raid')game.fb.t=Math.max(0,game.fb.t-dt);   // v0.9.4.0

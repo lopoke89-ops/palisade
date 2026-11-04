@@ -88,11 +88,13 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  const B=goldPolice?'#26334b':goldKnight?'#454039':o.body,V=goldClown?'#67293b':o.vest,H=o.helmet||o.cap||o.boonie||B,T=goldPolice?'#202b40':goldKnight?'#393630':o.pants||"#3b372c",skin=o.head;
  const bp=o.bolt===undefined?-1:o.bolt,kick=bp>=0&&bp<.2?(1-bp/.2)*.65:0,pull=bp>.24&&bp<.9?Math.sin((bp-.24)/.66*Math.PI):0,shotgun=o.weapon==="sg",sniper=(o.gl||14)>17;
  const W=WEAPON_TABLE[weaponKind(o)],gunX=W.x,gunY=W.y,gunZ=W.butt,gl=o.gl||14;
+ const K=o.usModel||o.usHat?{box,column,beam,dome,brim,ball,mesh,bob,time,skin,B,V,T,tint,compact,o}:null;   // v0.12 THE UNDERSTRIP CASE: the models' and hats' painters (16i) draw with these
  // Measurement uses the very same projection and endpoints as the painted barrel.
  if(!ctx)return {tip:project([gunX,gunY+bob,gunZ+gl+2.4-kick]),root:project([gunX,gunY+bob,0])};
  // A planted stance, shaped thighs, separate knees and substantial boots.
  for(const side of[-1,1]){
   const L=leg(side),{x,z,lift,ankle,knee,hip}=L;
+  if(o.usModel&&usModelLeg(K,L,side))continue;
   if(o.sahur){
    column(x,1.5+lift,1.05+z,3.4,2.2,5.3,'#9a6033',.85,.4);
    beam(ankle,knee,.95,B,1.05,.3);beam(knee,hip,1.05,B,1.2,.3);continue;
@@ -117,7 +119,7 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
   column(knee[0],knee[1],knee[2]+1.75,2.8,3.2,1.25,tint(T,.75),.88,.32);
   box(side*4.7,11.7+bob,0,1.5,3.3,2.75,tint(T,1.1),.3);
  }
- if(o.sahur){
+ if(o.usModel&&usModelBody(K)){}else if(o.sahur){
   // One continuous wooden silhouette, kept inside the existing pose frame.
   column(0,24.7+bob,0,9.5,22.6,7.6,B,.98,.5);
   for(const [x,y,h]of[[-2.6,24,8],[1.7,20.4,9],[-.3,28,5],[3.3,27,10]])
@@ -197,6 +199,7 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
   const arm=o.winterModel==='yulemaw'?2.8:o.winterModel==='gildedfrostborn'?1.25:2;
   const AC=o.jersey?skin:B;   // the jersey is sleeveless: bare arms
   beam(sh,el,o.sahur?1.1:arm,AC,o.sahur?1:arm*.85);beam(el,ha,o.sahur?1:arm*.82,AC,o.sahur?.9:arm*.71);
+  if(o.usModel)usModelArm(K,sh,el,ha,sh===shL);
   if(o.reaper){beam(sh,el,2.7,B,2.5,.4);beam(el,ha.map((v,i)=>v+(el[i]-v)*.3),2.5,B,2.6,.4)}
   beam(ha.map((v,i)=>v+(el[i]-v)*.13),ha,o.sahur?1.1:o.winterModel==='yulemaw'?2.6:1.5,o.sahur?'#bf834b':o.winterModel?B:o.jersey?tint(skin,.9):'#363b2b',o.sahur?1.05:o.winterModel==='yulemaw'?2.2:1.48,.35);
  }
@@ -227,7 +230,7 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  // small meshes break through when the head turns or an item sits close to the face.
  const faceCovered=!!(o.hood||o.sheet||o.pumpkin||o.glitchm||o.mask||o.visor||o.hockey||o.sack||o.facewrap||o.khelm||o.bomb||o.clownface||o.hybridHat==='skullhelm');
  // Angular cheek and jaw planes, ears and a shaped helmet instead of a flat circle.
- if(!o.pumpkin&&!o.sheet&&!o.sahur&&!o.winterModel){   // special heads replace the ordinary ears and face
+ if(!o.pumpkin&&!o.sheet&&!o.sahur&&!o.winterModel&&!o.usHead){   // special heads replace the ordinary ears and face
  column(0,30.1+bob,.2,7.2,6.4,6.3,skin,1.13,.6);
  column(-4.05,30.5+bob,.15,1.15,2.25,2,skin,1,.3);column(4.05,30.5+bob,.15,1.15,2.25,2,skin,1,.3);
  if(!faceCovered){
@@ -274,6 +277,7 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
  // stays across the painted brow; the headband sits just above it. In the downed
  // projection its thin band needs the exposed crown edge or the log hides it.
  sahurHatLift=o.sahur?(o.visor?0:o.headband?(o.downed?5:1.5):o.halo?0:3.5):0;solidHat=!!o.phantom;
+ if(o.usModel)usModelHead(K);
  if(o.winterModel){
   if(o.winterModel==='yulemaw'){
    column(0,30.3+bob,1,10,7.8,8.5,B,1.1,.6);
@@ -303,6 +307,7 @@ function paintWardrobeCharacter(ctx,o,angle,time,scale,cx,cy,walking=false){
    case'rimecrest':dome('#7cabbf',32,5,4.3,3.6);for(const x of[-2.8,0,2.8])beam([x,34+bob,0],[x*.7,39-Math.abs(x)*.6+bob,-.4],.85,'#c2eefa',.04,.25);break;
    case'aurorahalo':dome('#3d5d73',32,4.7,4.1,3);for(let i=0;i<8;i++){const a=i*Math.PI/4,b=a+Math.PI/4,r=6.1;beam([Math.cos(a)*r,38+bob+Math.sin(time*.8+i)*.25,Math.sin(a)*r],[Math.cos(b)*r,38+bob+Math.sin(time*.8+i+1)*.25,Math.sin(b)*r],.18,i%2?'#b4a0e9':'#8ae8d2',.18,.04)}break;
   }
+ }else if(o.usHat){usHatPaint(K,o.usHat);   // v0.12 THE UNDERSTRIP CASE headgear
  }else if(o.hybridHat&&!o.sheet){
   // v0.9.6.4 Hybrid Theory headgear
   const h=o.hybridHat,hairOn=h==='shades'||h==='yamaka'||h==='dunce';
@@ -1056,7 +1061,9 @@ function drawBossFx(){
     g.beginPath();g.moveTo(a[0],a[1]-ch);g.lineTo(b[0],b[1]-ch);g.stroke();
     if(e.st===2){const y=b[1]-WH*1.9,s=5*u;g.fillStyle='#ff4a3a';g.beginPath();g.moveTo(b[0],y-s);g.lineTo(b[0]+s*.7,y);g.lineTo(b[0],y+s);g.lineTo(b[0]-s*.7,y);g.closePath();g.fill()}}
   for(const c of chains){const a=iso(c.x0,c.y0),b=iso(c.x1,c.y1),k=c.life/c.max;g.strokeStyle=`rgba(200,205,200,${k})`;g.lineWidth=2.2*u;g.setLineDash([4*u,2*u]);g.beginPath();g.moveTo(a[0],a[1]-ch);g.lineTo(b[0],b[1]-ch*.8);g.stroke();g.setLineDash([])}
+  if(game.us){usBfxDraw(pulse);usBrightMarks()}   // THE UNDERSTRIP: what the bosses leave on the floor; raiders on the top brightness step
   for(const e of enemies){if(e.type!=='boss'||!e.st)continue;const f=NET.mode==='guest'?(e.stF||0):Math.max(0,e.stT/e.stM);
+    if(BOSSES[e.boss]&&BOSSES[e.boss].us){usBossFx(e,f,pulse,ch);continue}   // THE UNDERSTRIP
     if(drawDestroyerFx(e,f,pulse,ch))continue;   // v0.9.7: the Supreme Destroyer
     if(drawBossMove(e,f,pulse,ch))continue;   // v0.9.6.5: the new moves' warnings
     if(BOSSES[e.boss]&&BOSSES[e.boss].base&&drawBlitzFx(e,f,pulse,ch))continue;   // v0.9.4.0: a Blitzkrieg variant's own warnings
@@ -1116,12 +1123,13 @@ function drawBossBars(top){
       g.fillStyle='#2a2520';g.fillRect(x,y+11,w,4);g.fillStyle=B.col;g.fillRect(x,y+11,w*f,4);if(e.flash>0){g.fillStyle='rgba(255,255,255,.5)';g.fillRect(x,y+11,w*f,4)}y+=23}
     g.textAlign='center';return}
   for(const e of enemies){if(e.type!=='boss')continue;if(!BOSSES[e.boss])continue;const B=bossInfo(e.boss);
-    const w=Math.min(440,W-48),x=(W-w)/2,f=Math.max(0,e.hp/e.max);
+    const w=Math.min(440,W-48),x=(W-w)/2,f=Math.max(0,B.us?usBossFrac(e):e.hp/e.max),s2=B.us&&game.us&&game.us.bossStage>0;
     g.fillStyle='rgba(12,10,8,.8)';g.fillRect(x-3,y-3,w+6,26);
-    g.font='800 13px "Big Shoulders Stencil Display", "Arial Narrow", sans-serif';g.textAlign='left';g.fillStyle=B.col;g.fillText(B.name,x+2,y+10);
+    g.font='800 13px "Big Shoulders Stencil Display", "Arial Narrow", sans-serif';g.textAlign='left';g.fillStyle=e.pilot?'#7cff6b':B.col;g.fillText(e.pilot?B.name+' · THE PILOT':B.name,x+2,y+10);
     g.textAlign='right';g.fillStyle='#dcd2ba';g.font='600 11px "IBM Plex Mono", monospace';g.fillText(`${Math.ceil(f*100)}%`,x+w-2,y+10);
     {const wk=ammoMode()&&AMMO_BY[BOSS_WEAK[e.boss]];if(wk&&w>300){g.font='600 9px "IBM Plex Mono", monospace';g.fillStyle=wk.col;g.fillText('WEAK: '+wk.name,x+w-44,y+10)}}   // v0.9.6.5
-    g.fillStyle='#2a2520';g.fillRect(x,y+14,w,6);g.fillStyle=B.col;g.fillRect(x,y+14,w*f,6);
+    g.fillStyle='#2a2520';g.fillRect(x,y+14,w,6);g.fillStyle=s2?'#ff6a3a':B.col;g.fillRect(x,y+14,w*f,6);
+    if(B.us){g.fillStyle=B.col;g.fillRect(x,y+22,6,3);g.fillStyle=s2?'#ff6a3a':'#2a2520';g.fillRect(x+8,y+22,6,3)}   // THE UNDERSTRIP: the two stage pips
     if(e.flash>0){g.fillStyle='rgba(255,255,255,.5)';g.fillRect(x,y+14,w*f,6)}
     y+=32}
   g.textAlign='center';
@@ -1192,6 +1200,7 @@ function buildLook(p,cos){
   for(const k of SKIN_FX)if(S[k]!==undefined)o[k]=S[k];
   if(S.winter){o.winter=S.winter;o.winterTrim=S.winterTrim}
   if(S.winterModel){o.winterModel=S.winterModel;o.aura=S.aura}
+  if(S.usModel){o.usModel=S.usModel;if(S.usHead)o.usHead=true;if(S.aura)o.aura=S.aura}   // v0.12: a skin on its own model
   const C=p.C||CLASSES[p.cls]||CLASSES.soldier;
   if(C.name==='SNIPER'){o.gl=19}else if(C.name==='GRENADIER'){o.pack='#4a3a26';o.bandolier=true;o.gl=15;o.weapon='sg'}
   else if(C.name==='QUARTERMASTER'){o.pack='#5a4a30';o.cross=true;o.gl=11}
@@ -1209,6 +1218,7 @@ function buildLook(p,cos){
   else if(H==='devilhorns')o.horns='#7a1410';   // v0.9.4.0
   else if(H==='blackout'){o.helmet='#1d2024';o.hneon='#ffc860'}   // v0.9.7: a dark helmet with a sodium-yellow band
   else if(HYBRID_HAT_SET.has(H))o.hybridHat=H;   // v0.9.6.4
+  else if(US_HAT_SET.has(H))o.usHat=H;   // v0.12
   else o.helmet=S.hat;
   if(S.headwear&&H==='class'){delete o.helmet;delete o.cap;delete o.boonie;Object.assign(o,S.headwear)}   // v0.9.3: the outfit's own hat (a hard hat, a straw hat…)
   if(S.jersey&&H==='class'){delete o.helmet;delete o.cap;delete o.boonie;o.headband=S.jtrim}   // v0.9.6.4: jerseys wear a headband in their trim
@@ -1216,6 +1226,7 @@ function buildLook(p,cos){
   else if((S.bones||S.wraps||S.phantom)&&H==='class'){delete o.helmet;delete o.cap;delete o.boonie}   // the face is the point: no default headgear
   if(p.slot)o.mark=SLOTCOL[p.slot%6];
   if(S.winterModel){delete o.helmet;delete o.cap;delete o.boonie}
+  if(S.usModel&&H==='class'){delete o.helmet;delete o.cap;delete o.boonie;if(US_SKIN_BY[S.usModel][8])o.usHair=true}   // the model's own hat or head, or its own hair
   return o;
 }
 

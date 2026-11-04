@@ -48,6 +48,8 @@ func build_map(r: Node3D) -> void:
 	if sim.casino():
 		_casino()
 		return
+	if sim.understrip():
+		return
 	_outside()
 	if sim.map_id == "city":
 		_city()

@@ -27,6 +27,7 @@ var flashes: Array = []
 var rings: Array = []
 var zaps: Array = []
 var slashes: Array = []
+var us_shop: UsTradeUI
 var armory_open := false
 var arm_buttons: Array = []   # [Rect2, key] drawn this frame, clicked in _unhandled_input
 var floats: Array = []
@@ -503,6 +504,10 @@ func _unhandled_input(e: InputEvent) -> void:
 
 ## every in-game action, from a key, a controller button or a touch button
 func do_action(id: String) -> void:
+	if is_instance_valid(us_shop) and us_shop.merchant >= 0:
+		if id in ["pause", "armory"]:
+			us_shop.close()
+		return
 	if id == "pause" and casino_ui != null and casino_ui.is_open():   # Esc at a table: close the sheet and stand up
 		cas_stand()
 		return
@@ -532,6 +537,25 @@ func do_action(id: String) -> void:
 			_close_armory()
 		return
 	var p: Dictionary = sim.player
+	if sim.understrip() and id in ["drink", "kit", "armory", "delgado", "start", "piece", "build", "mat1", "mat2", "mat3", "matPrev", "matNext"]:
+		if id in ["drink", "kit"]:
+			sim.us.drink(p)
+		elif id == "armory":
+			var merchant = sim.us.merchant_at(p)
+			if merchant >= 0:
+				if not is_instance_valid(us_shop):
+					us_shop = UsTradeUI.new(self)
+					add_child(us_shop)
+				us_shop.open(merchant)
+			else:
+				sim.us.interact(p)
+		elif id == "build":
+			sim.us.use_item(p)
+		elif id in ["mat1", "mat2", "matPrev", "matNext"]:
+			UsLoot.swap(sim, p, 0 if id == "mat1" else (1 if id == "mat2" else 1 - p.wSel))
+		elif id == "piece":
+			p.uSel = "flare" if p.uSel == "bar" else "bar"
+		return
 	if id == "roll":   # the roll: this screen moves its own soldier; a guest tells the host, which keeps the cooldown
 		if sim.local_roll() and net.guest():
 			net.send_roll(p.dgX, p.dgY)
@@ -1731,6 +1755,31 @@ func _draw_prompts(p: Dictionary) -> void:
 	if not p.alive:
 		return
 	var u := v.u
+	if sim.understrip():
+		var text = ""
+		for item in sim.game.us.loot:
+			if Vector2(p.x-item.x,p.y-item.y).length() < 1.0:
+				text = "TAKE " + UsLoot.label(item)
+				break
+		if text == "" and sim.us.merchant_at(p) >= 0: text = "TRADE"
+		if text == "":
+			for shrine in sim.lay.shrines:
+				if Vector2(p.x-shrine.x,p.y-shrine.y).length() < 1.4: text = "REST AT NEON SHRINE"
+		var mark = func(x, y, col):
+			var pos = iso(x,y)
+			if pos.x < 14 or pos.x > v.W-14 or pos.y < 110 or pos.y > v.H-14:
+				oval(clampf(pos.x,18,v.W-18),clampf(pos.y,118,v.H-18),4*v.u,4*v.u,col)
+		if UsLoot.has(p,"p_counter"):
+			for i in sim.lay.chests.size():
+				if not (sim.game.us.chests & (1<<i)): mark.call(sim.lay.chests[i].x,sim.lay.chests[i].y,c("#c88a3a"))
+			for merchant in sim.lay.merchants: mark.call(merchant.x,merchant.y,c("#c78bff"))
+		if UsLoot.has(p,"p_sleeper"):
+			for enemy in sim.enemies:
+				if enemy.has("us") and enemy.us.st != "hunt" and not enemy.dead and Vector2(enemy.x-p.x,enemy.y-p.y).length() < 8: mark.call(enemy.x,enemy.y,c("#ff5a4a"))
+		if text != "":
+			var at = iso(p.x,p.y)
+			_key_cap(at.x,at.y+35*u,settings.keys_label("armory"),text,c("#7cff6b"))
+		return
 	if sim.casino():
 		var key := settings.keys_label("armory")
 		if p.get("seat", 0):
@@ -2674,6 +2723,8 @@ func _update_light(dt: float) -> void:
 		T = {"L": 0.2, "r": 60.0, "g": 30.0, "b": 10.0, "warm": 0.07}
 	else:
 		T = {"L": 0.12, "r": 28.0, "g": 34.0, "b": 44.0, "warm": 0.0}
+	if sim.understrip():
+		T = {"L": 0.8, "r": 4.0, "g": 8.0, "b": 10.0, "warm": 0.0}
 	var k := minf(1.0, dt * 0.8)
 	for key in T:
 		light[key] += (T[key] - light[key]) * k
@@ -2690,9 +2741,16 @@ func _update_light(dt: float) -> void:
 			holes.append(Vector4(cc.x, cc.y, r, minf(1.0, st)))
 		for p in sim.players.values():
 			if p.alive or p.downed:
-				hole.call(p.x, p.y, WH * 0.5, TW2 * 3.4, 0.95)
+				hole.call(p.x, p.y, WH * 0.5, TW2 * (1.8 if sim.understrip() else 3.4), 0.95)
 		if sim.qm.alive:
 			hole.call(sim.qm.x, sim.qm.y, WH * 0.5, TW2 * 1.8, 0.7)
+		if sim.understrip():
+			for lamp in sim.lay.lamps:
+				hole.call(lamp[0], lamp[1], WH, TW2 * 2.5, 0.8)
+			for flare in sim.game.us.flares:
+				hole.call(flare.x, flare.y, 0, TW2 * 4, 0.95)
+			for shrine in sim.lay.shrines:
+				hole.call(shrine.x, shrine.y, 0, TW2 * 2.5, 0.85)
 		if sim.casino():
 			CasinoView.lights(self, hole)
 		if sim.map_id == "city":
@@ -2713,8 +2771,9 @@ func _update_light(dt: float) -> void:
 		else:
 			for co in sim.cores:
 				hole.call(co.i + 0.5, co.j + 0.5, WH, TW2 * 3, 0.85)
-		for e in sim.enemies:
-			hole.call(e.x, e.y, WH * 0.5, TW2 * 0.9, 0.45)
+		if not sim.understrip():
+			for e in sim.enemies:
+				hole.call(e.x, e.y, WH * 0.5, TW2 * 0.9, 0.45)
 		_vis_bounds()   # vb is otherwise last frame's (set while drawing), past the walls for a frame when a smaller map starts
 		var N: int = sim.N
 		var walls: Array = sim.walls
@@ -2735,6 +2794,21 @@ func _update_light(dt: float) -> void:
 		for f in flashes:
 			hole.call(f.x, f.y, WH * 0.5, TW2 * (2.0 if f.muzzle else 4.5) * f.r * 0.6, f.life / f.max)
 	var mat: ShaderMaterial = light_rect.material
+	var cones = []
+	var reaches = PackedFloat32Array()
+	if sim.understrip():
+		for p in sim.players.values():
+			if not p.alive or cones.size() >= 6: continue
+			var at = iso(p.x, p.y) - Vector2(0, v.WH * .5)
+			cones.append(Vector4(at.x, at.y, p.aim.x, p.aim.y))
+			reaches.append(5.4 * UsLoot.cone(p))
+	mat.set_shader_parameter("cone_count", cones.size())
+	while cones.size() < 6:
+		cones.append(Vector4.ZERO)
+		reaches.append(1.0)
+	mat.set_shader_parameter("cones", cones)
+	mat.set_shader_parameter("cone_reach", reaches)
+	mat.set_shader_parameter("iso_scale", Vector2(v.TW2, v.TH2))
 	mat.set_shader_parameter("size", Vector2(v.W, v.H))
 	mat.set_shader_parameter("shade", Vector4(shade.r, shade.g, shade.b, shade.a))
 	mat.set_shader_parameter("count", holes.size())

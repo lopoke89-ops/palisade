@@ -1,0 +1,8 @@
+id,name,rarity,upside,downside,where
+x_chip,CURSED CHIP,l,+30% damage,healing charges heal half,boss; Collector
+x_crown,PAPER CROWN,l,+25% fire rate,-25% max health,boss; Collector
+x_lens,BLACKOUT LENS,l,raiders in your light cone take +25% damage,your light cone is 40% shorter,boss; Collector
+x_hand,DEAD MAN'S HAND,l,when you're downed you blow up (60 damage; radius 2),you heal 30% less from everything,boss; Collector
+x_deck,MARKED DECK,l,merchants show 2 more items,prices +25%,Collector
+x_lead,LEAD BOOTS,l,knockback and gravity wells don't move you,-15% move speed,boss (region 3)
+x_eye,THE VISITOR'S EYE,g,see raiders through walls within 6 tiles,your light cone is 30% shorter,The Visitor (first kill); Collector

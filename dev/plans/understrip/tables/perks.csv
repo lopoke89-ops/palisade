@@ -1,0 +1,21 @@
+id,name,rarity,effect,numbers,stacks,where
+p_loaded,LOADED DICE,r,a shot can deal double damage,10% chance,no,chest; elite; Collector
+p_house,HOUSE EDGE,e,more healing charges,+1 capacity (max 6),no,chest; Shrine Keeper
+p_owl,NIGHT OWL,c,a longer light cone,+40% length,no,chest; Tunnel Trader
+p_break,LUCKY BREAK,l,the first time you're downed each level you stand back up,up at 20% HP after 1.5 s,no,boss; Collector
+p_comped,COMP'D ROOM,c,the next merchant visit is cheaper,25% off one visit,yes (one visit each),chest; Lift Merchant
+p_steady,STEADY HANDS,c,tighter spread,-25% spread,no,chest; Tunnel Trader
+p_sip,QUICK SIP,r,faster heals,0.5 s instead of 0.8 s,no,chest; Shrine Keeper
+p_gulp,BIG GULP,r,bigger heals,each charge heals +25%,no,chest; Shrine Keeper
+p_pocket,PICKPOCKET,c,more salvage from kills,+1 a kill,no,chest; Tunnel Trader
+p_insure,INSURANCE,e,you drop less when you die,only half your salvage drops,no,chest; Collector
+p_sleeper,LIGHT SLEEPER,r,you hear raiders sooner,footsteps 50% farther; an edge pip for an unseen raider within 8 tiles,no,chest; Tunnel Trader
+p_lung,IRON LUNG,r,gas and radiation hurt less,-50%,no,chest (region 2 on)
+p_footing,SURE FOOTING,c,water and debris slow you less,slow halved,no,chest; Tunnel Trader
+p_backstep,BACK STEP,e,the roll comes back sooner,-0.5 s cooldown,no,chest; Collector
+p_riposte,RIPOSTE,l,rolling through an attack gives a damage burst,+30% damage for 2 s,no,boss; Collector
+p_pockets,DEEP POCKETS,r,more ammo for the second weapon,+50% reserve,no,chest; Tunnel Trader
+p_stack,BIG STACK,e,more damage while you carry salvage,+20% damage at 150+ salvage,no,chest; Collector
+p_lastcall,LAST CALL,e,faster fire when you're hurt,+20% fire rate below 30% HP,no,chest; elite
+p_counter,CARD COUNTER,r,chests and merchants show on the map,marked when you enter a level,no,chest; Lift Merchant
+p_pitcrew,PIT CREW,r,revive teammates faster,+40% revive speed,no,chest; elite

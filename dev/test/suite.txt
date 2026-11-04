@@ -145,6 +145,19 @@ tables_ui              tables casino
 casino_games_ui        tables casino net
 casino_map             casino net
 
+# THE UNDERSTRIP (dev/plans/understrip-work-order.md)
+understrip_roomkit     node understrip
+understrip_gen         node understrip
+understrip_run         understrip
+understrip_network     understrip net
+understrip_loot        node understrip
+understrip_m2          understrip
+understrip_m3          understrip bosses
+understrip_squad       serial understrip net
+understrip_server      node understrip server
+understrip_case        understrip cosmetics
+understrip_m4          understrip hud
+
 # Windows-only extras from the old run_targeted.ps1 groups; not in the default run (they were never in run_all.sh).
 # Run them with @extra.
 case_skip              extra locker

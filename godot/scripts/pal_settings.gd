@@ -31,6 +31,7 @@ const ACTIONS := [
 	["sprint", "SPRINT", [KEY_SHIFT], -1],
 	["roll", "ROLL", [KEY_V], 5],
 	["reload", "RELOAD", [KEY_R], -1],
+	["drink", "LUCKY JUICE", [KEY_C], -1],
 	["armory", "ARMORY", [KEY_E, KEY_U], 2],
 	["piece", "WALL / DOOR", [KEY_F], 3],
 	["kit", "BUILD KIT", [KEY_B], 13],

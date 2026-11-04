@@ -5039,6 +5039,396 @@
         "max_particles": 32,
         "max_trail_segments": 24
       }
+    },
+    {
+      "id": "trail:chips",
+      "key": "chips",
+      "name": "Poker Chips",
+      "description": "Chips tumble off the back of the shot: red, blue, green and white.",
+      "source_style": {
+        "c": "#e8e2d0",
+        "grad": [
+          "#ffffff",
+          "#e8e2d0",
+          "#c42a3a"
+        ],
+        "w": 1.1,
+        "len": 1.2,
+        "name": "Poker Chips",
+        "us": "chips"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#ffffff",
+        "edge": "#ffffff",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "gradient",
+        "colors": [
+          "#ffffff",
+          "#e8e2d0",
+          "#c42a3a"
+        ],
+        "glow": "#ffffff",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.097,
+        "width": 0.0145,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      },
+      "decor": {
+        "kind": "chips",
+        "colors": [
+          "#c42a3a",
+          "#2a5ac4",
+          "#e8e2d0",
+          "#2fa04a"
+        ],
+        "at": [
+          0.18,
+          0.38,
+          0.58,
+          0.78
+        ],
+        "spread": 0.035,
+        "size": 0.03,
+        "max": 4
+      }
+    },
+    {
+      "id": "trail:neontube",
+      "key": "neontube",
+      "name": "Neon Tube",
+      "description": "A pink neon tube with a blue core, humming.",
+      "source_style": {
+        "c": "#ff5ad8",
+        "grad": [
+          "#ffffff",
+          "#ff8ae4",
+          "#ff5ad8"
+        ],
+        "edge": "#5ab0ff",
+        "w": 1.05,
+        "len": 1.3,
+        "name": "Neon Tube",
+        "us": "neontube"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#ffffff",
+        "edge": "#5ab0ff",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "gradient",
+        "colors": [
+          "#ffffff",
+          "#ff8ae4",
+          "#ff5ad8"
+        ],
+        "glow": "#5ab0ff",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.1005,
+        "width": 0.0142,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.13,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      },
+      "decor": {
+        "kind": "neon",
+        "core": "#5ab0ff"
+      }
+    },
+    {
+      "id": "trail:jackpotcoins",
+      "key": "jackpotcoins",
+      "name": "Jackpot Coins",
+      "description": "Gold coins spill along the shot.",
+      "source_style": {
+        "c": "#ffd24a",
+        "grad": [
+          "#fff6c8",
+          "#ffd24a",
+          "#e2a030"
+        ],
+        "w": 1.1,
+        "len": 1.25,
+        "pk": "goldsp",
+        "pr": 0.22,
+        "name": "Jackpot Coins",
+        "us": "jackpotcoins"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#fff6c8",
+        "edge": "#fff6c8",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "gradient",
+        "colors": [
+          "#fff6c8",
+          "#ffd24a",
+          "#e2a030"
+        ],
+        "glow": "#fff6c8",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.0988,
+        "width": 0.0145,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "goldsp",
+        "rate": 24,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      },
+      "decor": {
+        "kind": "coins",
+        "at": [
+          0.2,
+          0.42,
+          0.64
+        ],
+        "spread": 0.03,
+        "size": 0.03,
+        "max": 3
+      }
+    },
+    {
+      "id": "trail:tractorbeam",
+      "key": "tractorbeam",
+      "name": "Tractor Beam",
+      "description": "A pale green beam that wobbles as it goes.",
+      "source_style": {
+        "c": "#b8ffa8",
+        "grad": [
+          "#f0fff0",
+          "#b8ffa8",
+          "#5ad86a"
+        ],
+        "w": 1.35,
+        "len": 1.5,
+        "name": "Tractor Beam",
+        "us": "tractorbeam"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#f0fff0",
+        "edge": "#f0fff0",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "gradient",
+        "colors": [
+          "#f0fff0",
+          "#b8ffa8",
+          "#5ad86a"
+        ],
+        "glow": "#f0fff0",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line",
+        "lifetime": 0.1075,
+        "width": 0.0158,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": null,
+        "rate": 0,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 0
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      },
+      "decor": {
+        "kind": "wobble",
+        "amp": 0.05,
+        "core": "#e8ffd8"
+      }
+    },
+    {
+      "id": "trail:saucerbolt",
+      "key": "saucerbolt",
+      "name": "Saucer Bolt",
+      "description": "A fat green bolt with a ring round its head.",
+      "source_style": {
+        "c": "#7cff6b",
+        "grad": [
+          "#f4ffe8",
+          "#9aff7a",
+          "#3ad84a"
+        ],
+        "w": 1.6,
+        "len": 1.1,
+        "pr": 0.12,
+        "pk": "tealdust",
+        "name": "Saucer Bolt",
+        "us": "saucerbolt"
+      },
+      "projectile": {
+        "length": 0.42,
+        "diameter": 0.078,
+        "forward": "+X",
+        "origin": "nose",
+        "emitter_offset": [
+          -0.42,
+          0,
+          0
+        ],
+        "body": "#596571",
+        "tip": "#f4ffe8",
+        "edge": "#f4ffe8",
+        "emission": 0.65
+      },
+      "palette": {
+        "mode": "gradient",
+        "colors": [
+          "#f4ffe8",
+          "#9aff7a",
+          "#3ad84a"
+        ],
+        "glow": "#f4ffe8",
+        "gold_core": false,
+        "white_core": false
+      },
+      "trail": {
+        "kind": "line_particles",
+        "lifetime": 0.0935,
+        "width": 0.017,
+        "segments": 24,
+        "opacity": 0.76,
+        "core_width": 0.0028
+      },
+      "particles": {
+        "kind": "tealdust",
+        "rate": 19,
+        "lifetime": 0.22,
+        "size": 0.026,
+        "max_count": 32
+      },
+      "glow": {
+        "radius": 0.09,
+        "strength": 0.35
+      },
+      "performance": {
+        "max_history_samples": 96,
+        "max_particles": 32,
+        "max_trail_segments": 24
+      },
+      "decor": {
+        "kind": "ring",
+        "color": "#e8ffd8",
+        "radius": 0.07,
+        "thickness": 0.007,
+        "offset": -0.05
+      }
     }
   ]
 }

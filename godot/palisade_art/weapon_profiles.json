@@ -13756,6 +13756,1046 @@
         "weapon:rocket": 0.0
       },
       "baked_weapon_slot_vertices": 312
+    },
+    "skin:pitboss": {
+      "file": "models/skins/pitboss.glb",
+      "family": "humanoid_v1",
+      "authored_weapon_profile": "carbine",
+      "default_weapon": "weapon:carbine",
+      "socket": "WeaponSocket",
+      "socket_bone": "Weapon",
+      "socket_rest_position": [
+        0.366,
+        1.2015,
+        0.576
+      ],
+      "long_gun": {
+        "parent": "WeaponSocket",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "long_gun_from_weapon_bone": {
+        "bone": "Weapon",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.707107,
+          0.707107,
+          0.0
+        ]
+      },
+      "long_gun_from_hand_r": {
+        "bone": "Hand.R",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.707107,
+          0.707107,
+          0.0
+        ]
+      },
+      "throwable": {
+        "weapon:frag": {
+          "bone": "Hand.R",
+          "translation": [
+            -0.015,
+            0.0,
+            0.075
+          ],
+          "rotation": [
+            0.0,
+            0.707107,
+            0.707107,
+            0.0
+          ]
+        },
+        "weapon:molotov": {
+          "bone": "Hand.R",
+          "translation": [
+            -0.015,
+            -0.026,
+            0.0
+          ],
+          "rotation": [
+            0.0,
+            0.707107,
+            0.707107,
+            0.0
+          ]
+        }
+      },
+      "support_hand_rest_offset": [
+        -0.03,
+        0.03,
+        0.3378
+      ],
+      "support_marker_distance_m": {
+        "weapon:carbine": 0.0,
+        "weapon:bolt": 0.0306,
+        "weapon:pump": 0.0012,
+        "weapon:smg": 0.045,
+        "weapon:delgado_shotgun": 0.0012,
+        "weapon:rocket": 0.0
+      },
+      "baked_weapon_slot_vertices": 312
+    },
+    "skin:shelterdweller": {
+      "file": "models/skins/shelterdweller.glb",
+      "family": "humanoid_v1",
+      "authored_weapon_profile": "carbine",
+      "default_weapon": "weapon:carbine",
+      "socket": "WeaponSocket",
+      "socket_bone": "Weapon",
+      "socket_rest_position": [
+        0.366,
+        1.2015,
+        0.576
+      ],
+      "long_gun": {
+        "parent": "WeaponSocket",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "long_gun_from_weapon_bone": {
+        "bone": "Weapon",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.707107,
+          0.707107,
+          0.0
+        ]
+      },
+      "long_gun_from_hand_r": {
+        "bone": "Hand.R",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.707107,
+          0.707107,
+          0.0
+        ]
+      },
+      "throwable": {
+        "weapon:frag": {
+          "bone": "Hand.R",
+          "translation": [
+            -0.015,
+            0.0,
+            0.075
+          ],
+          "rotation": [
+            0.0,
+            0.707107,
+            0.707107,
+            0.0
+          ]
+        },
+        "weapon:molotov": {
+          "bone": "Hand.R",
+          "translation": [
+            -0.015,
+            -0.026,
+            0.0
+          ],
+          "rotation": [
+            0.0,
+            0.707107,
+            0.707107,
+            0.0
+          ]
+        }
+      },
+      "support_hand_rest_offset": [
+        -0.03,
+        0.03,
+        0.3378
+      ],
+      "support_marker_distance_m": {
+        "weapon:carbine": 0.0,
+        "weapon:bolt": 0.0306,
+        "weapon:pump": 0.0012,
+        "weapon:smg": 0.045,
+        "weapon:delgado_shotgun": 0.0012,
+        "weapon:rocket": 0.0
+      },
+      "baked_weapon_slot_vertices": 312
+    },
+    "skin:gunslinger": {
+      "file": "models/skins/gunslinger.glb",
+      "family": "humanoid_v1",
+      "authored_weapon_profile": "carbine",
+      "default_weapon": "weapon:carbine",
+      "socket": "WeaponSocket",
+      "socket_bone": "Weapon",
+      "socket_rest_position": [
+        0.366,
+        1.203,
+        0.576
+      ],
+      "long_gun": {
+        "parent": "WeaponSocket",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "long_gun_from_weapon_bone": {
+        "bone": "Weapon",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.707107,
+          0.707107,
+          0.0
+        ]
+      },
+      "long_gun_from_hand_r": {
+        "bone": "Hand.R",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.707107,
+          0.707107,
+          0.0
+        ]
+      },
+      "throwable": {
+        "weapon:frag": {
+          "bone": "Hand.R",
+          "translation": [
+            -0.015,
+            0.0,
+            0.075
+          ],
+          "rotation": [
+            0.0,
+            0.707107,
+            0.707107,
+            0.0
+          ]
+        },
+        "weapon:molotov": {
+          "bone": "Hand.R",
+          "translation": [
+            -0.015,
+            -0.026,
+            0.0
+          ],
+          "rotation": [
+            0.0,
+            0.707107,
+            0.707107,
+            0.0
+          ]
+        }
+      },
+      "support_hand_rest_offset": [
+        -0.03,
+        0.03,
+        0.3378
+      ],
+      "support_marker_distance_m": {
+        "weapon:carbine": 0.0,
+        "weapon:bolt": 0.0306,
+        "weapon:pump": 0.0012,
+        "weapon:smg": 0.045,
+        "weapon:delgado_shotgun": 0.0012,
+        "weapon:rocket": 0.0
+      },
+      "baked_weapon_slot_vertices": 312
+    },
+    "skin:highroller": {
+      "file": "models/skins/highroller.glb",
+      "family": "humanoid_v1",
+      "authored_weapon_profile": "carbine",
+      "default_weapon": "weapon:carbine",
+      "socket": "WeaponSocket",
+      "socket_bone": "Weapon",
+      "socket_rest_position": [
+        0.366,
+        1.2015,
+        0.576
+      ],
+      "long_gun": {
+        "parent": "WeaponSocket",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "long_gun_from_weapon_bone": {
+        "bone": "Weapon",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.707107,
+          0.707107,
+          0.0
+        ]
+      },
+      "long_gun_from_hand_r": {
+        "bone": "Hand.R",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.707107,
+          0.707107,
+          0.0
+        ]
+      },
+      "throwable": {
+        "weapon:frag": {
+          "bone": "Hand.R",
+          "translation": [
+            -0.015,
+            0.0,
+            0.075
+          ],
+          "rotation": [
+            0.0,
+            0.707107,
+            0.707107,
+            0.0
+          ]
+        },
+        "weapon:molotov": {
+          "bone": "Hand.R",
+          "translation": [
+            -0.015,
+            -0.026,
+            0.0
+          ],
+          "rotation": [
+            0.0,
+            0.707107,
+            0.707107,
+            0.0
+          ]
+        }
+      },
+      "support_hand_rest_offset": [
+        -0.03,
+        0.03,
+        0.3378
+      ],
+      "support_marker_distance_m": {
+        "weapon:carbine": 0.0,
+        "weapon:bolt": 0.0306,
+        "weapon:pump": 0.0012,
+        "weapon:smg": 0.045,
+        "weapon:delgado_shotgun": 0.0012,
+        "weapon:rocket": 0.0
+      },
+      "baked_weapon_slot_vertices": 312
+    },
+    "skin:generalissimo": {
+      "file": "models/skins/generalissimo.glb",
+      "family": "humanoid_v1",
+      "authored_weapon_profile": "carbine",
+      "default_weapon": "weapon:carbine",
+      "socket": "WeaponSocket",
+      "socket_bone": "Weapon",
+      "socket_rest_position": [
+        0.366,
+        1.203,
+        0.576
+      ],
+      "long_gun": {
+        "parent": "WeaponSocket",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "long_gun_from_weapon_bone": {
+        "bone": "Weapon",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.707107,
+          0.707107,
+          0.0
+        ]
+      },
+      "long_gun_from_hand_r": {
+        "bone": "Hand.R",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.707107,
+          0.707107,
+          0.0
+        ]
+      },
+      "throwable": {
+        "weapon:frag": {
+          "bone": "Hand.R",
+          "translation": [
+            -0.015,
+            0.0,
+            0.075
+          ],
+          "rotation": [
+            0.0,
+            0.707107,
+            0.707107,
+            0.0
+          ]
+        },
+        "weapon:molotov": {
+          "bone": "Hand.R",
+          "translation": [
+            -0.015,
+            -0.026,
+            0.0
+          ],
+          "rotation": [
+            0.0,
+            0.707107,
+            0.707107,
+            0.0
+          ]
+        }
+      },
+      "support_hand_rest_offset": [
+        -0.03,
+        0.03,
+        0.3378
+      ],
+      "support_marker_distance_m": {
+        "weapon:carbine": 0.0,
+        "weapon:bolt": 0.0306,
+        "weapon:pump": 0.0012,
+        "weapon:smg": 0.045,
+        "weapon:delgado_shotgun": 0.0012,
+        "weapon:rocket": 0.0
+      },
+      "baked_weapon_slot_vertices": 312
+    },
+    "skin:sheriff": {
+      "file": "models/skins/sheriff.glb",
+      "family": "humanoid_v1",
+      "authored_weapon_profile": "carbine",
+      "default_weapon": "weapon:carbine",
+      "socket": "WeaponSocket",
+      "socket_bone": "Weapon",
+      "socket_rest_position": [
+        0.366,
+        1.203,
+        0.576
+      ],
+      "long_gun": {
+        "parent": "WeaponSocket",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "long_gun_from_weapon_bone": {
+        "bone": "Weapon",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.707107,
+          0.707107,
+          0.0
+        ]
+      },
+      "long_gun_from_hand_r": {
+        "bone": "Hand.R",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.707107,
+          0.707107,
+          0.0
+        ]
+      },
+      "throwable": {
+        "weapon:frag": {
+          "bone": "Hand.R",
+          "translation": [
+            -0.015,
+            0.0,
+            0.075
+          ],
+          "rotation": [
+            0.0,
+            0.707107,
+            0.707107,
+            0.0
+          ]
+        },
+        "weapon:molotov": {
+          "bone": "Hand.R",
+          "translation": [
+            -0.015,
+            -0.026,
+            0.0
+          ],
+          "rotation": [
+            0.0,
+            0.707107,
+            0.707107,
+            0.0
+          ]
+        }
+      },
+      "support_hand_rest_offset": [
+        -0.03,
+        0.03,
+        0.3378
+      ],
+      "support_marker_distance_m": {
+        "weapon:carbine": 0.0,
+        "weapon:bolt": 0.0306,
+        "weapon:pump": 0.0012,
+        "weapon:smg": 0.045,
+        "weapon:delgado_shotgun": 0.0012,
+        "weapon:rocket": 0.0
+      },
+      "baked_weapon_slot_vertices": 312
+    },
+    "skin:stripking": {
+      "file": "models/skins/stripking.glb",
+      "family": "humanoid_v1",
+      "authored_weapon_profile": "carbine",
+      "default_weapon": "weapon:carbine",
+      "socket": "WeaponSocket",
+      "socket_bone": "Weapon",
+      "socket_rest_position": [
+        0.366,
+        1.188,
+        0.576
+      ],
+      "long_gun": {
+        "parent": "WeaponSocket",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "long_gun_from_weapon_bone": {
+        "bone": "Weapon",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.707107,
+          0.707107,
+          0.0
+        ]
+      },
+      "long_gun_from_hand_r": {
+        "bone": "Hand.R",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.707107,
+          0.707107,
+          0.0
+        ]
+      },
+      "throwable": {
+        "weapon:frag": {
+          "bone": "Hand.R",
+          "translation": [
+            -0.015,
+            0.0,
+            0.075
+          ],
+          "rotation": [
+            0.0,
+            0.707107,
+            0.707107,
+            0.0
+          ]
+        },
+        "weapon:molotov": {
+          "bone": "Hand.R",
+          "translation": [
+            -0.015,
+            -0.026,
+            0.0
+          ],
+          "rotation": [
+            0.0,
+            0.707107,
+            0.707107,
+            0.0
+          ]
+        }
+      },
+      "support_hand_rest_offset": [
+        -0.03,
+        0.03,
+        0.3378
+      ],
+      "support_marker_distance_m": {
+        "weapon:carbine": 0.0,
+        "weapon:bolt": 0.0306,
+        "weapon:pump": 0.0012,
+        "weapon:smg": 0.045,
+        "weapon:delgado_shotgun": 0.0012,
+        "weapon:rocket": 0.0
+      },
+      "baked_weapon_slot_vertices": 312
+    },
+    "skin:custodian": {
+      "file": "models/skins/custodian.glb",
+      "family": "humanoid_v1",
+      "authored_weapon_profile": "carbine",
+      "default_weapon": "weapon:carbine",
+      "socket": "WeaponSocket",
+      "socket_bone": "Weapon",
+      "socket_rest_position": [
+        0.366,
+        1.203,
+        0.576
+      ],
+      "long_gun": {
+        "parent": "WeaponSocket",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "long_gun_from_weapon_bone": {
+        "bone": "Weapon",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.707107,
+          0.707107,
+          0.0
+        ]
+      },
+      "long_gun_from_hand_r": {
+        "bone": "Hand.R",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.707107,
+          0.707107,
+          0.0
+        ]
+      },
+      "throwable": {
+        "weapon:frag": {
+          "bone": "Hand.R",
+          "translation": [
+            -0.015,
+            0.0,
+            0.075
+          ],
+          "rotation": [
+            0.0,
+            0.707107,
+            0.707107,
+            0.0
+          ]
+        },
+        "weapon:molotov": {
+          "bone": "Hand.R",
+          "translation": [
+            -0.015,
+            -0.026,
+            0.0
+          ],
+          "rotation": [
+            0.0,
+            0.707107,
+            0.707107,
+            0.0
+          ]
+        }
+      },
+      "support_hand_rest_offset": [
+        -0.03,
+        0.03,
+        0.3378
+      ],
+      "support_marker_distance_m": {
+        "weapon:carbine": 0.0,
+        "weapon:bolt": 0.0306,
+        "weapon:pump": 0.0012,
+        "weapon:smg": 0.045,
+        "weapon:delgado_shotgun": 0.0012,
+        "weapon:rocket": 0.0
+      },
+      "baked_weapon_slot_vertices": 312
+    },
+    "skin:cardsharp": {
+      "file": "models/skins/cardsharp.glb",
+      "family": "humanoid_v1",
+      "authored_weapon_profile": "carbine",
+      "default_weapon": "weapon:carbine",
+      "socket": "WeaponSocket",
+      "socket_bone": "Weapon",
+      "socket_rest_position": [
+        0.366,
+        1.2015,
+        0.576
+      ],
+      "long_gun": {
+        "parent": "WeaponSocket",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "long_gun_from_weapon_bone": {
+        "bone": "Weapon",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.707107,
+          0.707107,
+          0.0
+        ]
+      },
+      "long_gun_from_hand_r": {
+        "bone": "Hand.R",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.707107,
+          0.707107,
+          0.0
+        ]
+      },
+      "throwable": {
+        "weapon:frag": {
+          "bone": "Hand.R",
+          "translation": [
+            -0.015,
+            0.0,
+            0.075
+          ],
+          "rotation": [
+            0.0,
+            0.707107,
+            0.707107,
+            0.0
+          ]
+        },
+        "weapon:molotov": {
+          "bone": "Hand.R",
+          "translation": [
+            -0.015,
+            -0.026,
+            0.0
+          ],
+          "rotation": [
+            0.0,
+            0.707107,
+            0.707107,
+            0.0
+          ]
+        }
+      },
+      "support_hand_rest_offset": [
+        -0.03,
+        0.03,
+        0.3378
+      ],
+      "support_marker_distance_m": {
+        "weapon:carbine": 0.0,
+        "weapon:bolt": 0.0306,
+        "weapon:pump": 0.0012,
+        "weapon:smg": 0.045,
+        "weapon:delgado_shotgun": 0.0012,
+        "weapon:rocket": 0.0
+      },
+      "baked_weapon_slot_vertices": 312
+    },
+    "skin:visitor": {
+      "file": "models/skins/visitor.glb",
+      "family": "humanoid_v1",
+      "authored_weapon_profile": "carbine",
+      "default_weapon": "weapon:carbine",
+      "socket": "WeaponSocket",
+      "socket_bone": "Weapon",
+      "socket_rest_position": [
+        0.366,
+        1.194,
+        0.576
+      ],
+      "long_gun": {
+        "parent": "WeaponSocket",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "long_gun_from_weapon_bone": {
+        "bone": "Weapon",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.707107,
+          0.707107,
+          0.0
+        ]
+      },
+      "long_gun_from_hand_r": {
+        "bone": "Hand.R",
+        "translation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.707107,
+          0.707107,
+          0.0
+        ]
+      },
+      "throwable": {
+        "weapon:frag": {
+          "bone": "Hand.R",
+          "translation": [
+            -0.015,
+            0.0,
+            0.075
+          ],
+          "rotation": [
+            0.0,
+            0.707107,
+            0.707107,
+            0.0
+          ]
+        },
+        "weapon:molotov": {
+          "bone": "Hand.R",
+          "translation": [
+            -0.015,
+            -0.026,
+            0.0
+          ],
+          "rotation": [
+            0.0,
+            0.707107,
+            0.707107,
+            0.0
+          ]
+        }
+      },
+      "support_hand_rest_offset": [
+        -0.03,
+        0.03,
+        0.3378
+      ],
+      "support_marker_distance_m": {
+        "weapon:carbine": 0.0,
+        "weapon:bolt": 0.0306,
+        "weapon:pump": 0.0012,
+        "weapon:smg": 0.045,
+        "weapon:delgado_shotgun": 0.0012,
+        "weapon:rocket": 0.0
+      },
+      "baked_weapon_slot_vertices": 312
     }
   },
   "excluded_characters": {
@@ -13778,7 +14818,12 @@
     "enemy:whiteferryman": "no two-hand long-gun rest pose (family raft_mount_v1, authored weapon iceharpoon)",
     "enemy:whiteforeman": "no two-hand long-gun rest pose (family heavy_biped_v1, authored weapon iceram)",
     "enemy:destroyer": "no two-hand long-gun rest pose (family heavy_biped_v1, authored weapon destroyer)",
-    "enemy:pumpkin": "no two-hand long-gun rest pose (family heavy_biped_v1, authored weapon emberblade)"
+    "enemy:pumpkin": "no two-hand long-gun rest pose (family heavy_biped_v1, authored weapon emberblade)",
+    "enemy:pitboss": "no two-hand long-gun rest pose (family heavy_biped_v1, authored weapon cashbox)",
+    "enemy:custodian": "no two-hand long-gun rest pose (family heavy_biped_v1, authored weapon mop)",
+    "enemy:gatekeeper": "no two-hand long-gun rest pose (family heavy_biped_v1, authored weapon fist)",
+    "enemy:gatekeeper_pilot": "no two-hand long-gun rest pose (family heavy_biped_v1, authored weapon pistol)",
+    "enemy:visitor": "no two-hand long-gun rest pose (family heavy_biped_v1, authored weapon none)"
   },
   "skins_with_decorated_weapon_slot": {
     "note": "These characters carry extra non-gun pieces in their baked Weapon slot (vertex surplus over the library weapon listed). Hiding the slot removes them; the library weapon does not reproduce them.",

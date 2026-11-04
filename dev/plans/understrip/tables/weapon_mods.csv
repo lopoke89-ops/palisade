@@ -1,0 +1,12 @@
+id,name,effect,value,min_rarity,weight
+m_dmg,HOT,damage,+15%,r,10
+m_rate,QUICK,fire rate,+12%,r,10
+m_mag,DEEP,magazine,+40%,r,8
+m_reload,SLICK,reload time,-25%,r,8
+m_range,LONG,range and bullet speed,+20%,r,7
+m_steady,TRUE,spread,-30%,r,7
+m_ammo,STOCKED,reserve ammo,+50%,r,6
+m_pierce,PIERCING,pierce,+1,e,5
+m_crit,LUCKY,chance a hit deals double,8%,e,5
+m_light,BRIGHT,your light cone while it's held,+30%,e,4
+m_vamp,THIRSTY,heals 2% of the damage dealt (at most 5 HP a second),2%,l,2

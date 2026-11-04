@@ -249,8 +249,9 @@ func _init() -> void:
 	await process_frame
 	ui = _locker_ui(main.menus.root)
 	var halloween := L.case_count("halloween")
+	var shards0 := L.shards   # the supply case above may have paid shards for a duplicate
 	ui._render_boxes()
-	check(L.buy_case("halloween") and L.case_count("halloween") == halloween + 1 and L.shards == 18, "BUY trades 12 shards for a Halloween Case")
+	check(L.buy_case("halloween") and L.case_count("halloween") == halloween + 1 and L.shards == shards0 - 12, "BUY trades 12 shards for a Halloween Case (%d -> %d)" % [shards0, L.shards])
 	ui._buy_sp()
 	check(main.profile.sp == 5 and L.cases == 1, "the skill-point buy needs a second press")
 	ui._buy_sp()
@@ -324,6 +325,8 @@ class Fake:
 					locker.cases -= 1
 					locker.owned.append("skin:forest")
 				return {"ok": true, "status": 200, "j": {"locker": locker, "results": opens[body.p_operation]}}
+			"/rest/v1/rpc/open_cases_v012":   # v0.12: the UNDERSTRIP CASE (catalog 6)
+				return {"ok": true, "status": 200, "j": {"locker": locker, "results": [{"item": {"id": "skin:visitor", "rarity": "g"}, "dup": false, "shards": 0}]}}
 			"/rest/v1/rpc/buy_case":
 				return {"ok": false, "status": 400, "j": {"message": "Not enough shards"}}
 		return {"ok": false, "status": 404, "j": {"message": "no route"}}
@@ -385,6 +388,10 @@ func _accounts(main) -> void:
 	var no: Dictionary = await A.open_cases("supply", 1)
 	check(not no.ok and not no.uncertain and A.pending_opening().is_empty(), "a refusal opens nothing and keeps nothing")
 	A.persist = false
+	F.log.clear()
+	var us: Dictionary = await A.open_cases("understrip", 1)
+	check(us.ok and F.log.has("POST /rest/v1/rpc/open_cases_v012") and not F.log.has("POST /rest/v1/rpc/open_cases_v0964") and us.results[0].it.id == "skin:visitor" and us.results[0].it.name == "The Visitor",
+		"the UNDERSTRIP CASE opens through open_cases_v012 only, and its items are known (%s)" % [F.log])
 	var e: String = await A.buy_case("halloween")
 	check(e == "Not enough shards", "the server's answers come through in plain words")
 	# an expired sign-in is refreshed before the call

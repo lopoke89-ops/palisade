@@ -485,6 +485,11 @@ func _process(dt: float) -> void:
 		else:
 			lt = "RAID %d" % g.wave
 		vt = ("%s · " % sim.map_def.short if sim.campaign() else "") + "%d raiders left" % (sim.enemies.size() + (int(g.get("qn", 0)) if m.net.guest() else g.queue.size()))
+	if sim.understrip():
+		lt = "%s %d/10" % [sim.map_def.short, g.us.level + 1]
+		vt = "%d LIVES · C: JUICE %d/%d · E: INTERACT" % [g.us.lives, p.uj, p.ujm]
+		lc = Color("#7cff6b")
+		on.core = false
 	lab.text = lt
 	recolor(lab, lc)
 	val.text = vt
@@ -851,7 +856,7 @@ func _make_kit() -> void:
 ## the kit's state, as hud() sets it: what each button says, which are picked, empty, on, locked, far or pulsing
 func _kit_update(sim: Sim, p: Dictionary, pv: String) -> void:
 	var g: Dictionary = sim.game
-	var build_on: bool = m.settings.data.get("build", true)
+	var build_on: bool = m.settings.data.get("build", true) and not sim.understrip()
 	var ffa := pv == "ffa"
 	var show_kit := not sim.casino()
 	for b in kit.values():
@@ -864,6 +869,9 @@ func _kit_update(sim: Sim, p: Dictionary, pv: String) -> void:
 	recolor(bm.parts.lab, BONE if build_on else DIM)
 	bm.look(KIT_BG, LINE, not build_on)
 	bm.parts.kc.text = _kc("B", "kit")
+	if sim.understrip():
+		bm.parts.lab.text = "JUICE %d/%d" % [p.uj, p.ujm]
+		bm.parts.kc.text = _kc("C", "drink")
 	var kit_on := build_on and not ffa
 	for k in ["wall", "door", "pk", "c0", "c1", "c2", "build"]:
 		kit[k].visible = kit_on
@@ -1346,6 +1354,8 @@ func _keys_update(sim: Sim, p: Dictionary, pv: String) -> void:
 		if m.net.is_online():
 			a.append(["T", "chat"])
 		a.append(["ESC", "pause"])
+	if sim.understrip():
+		a = [["WASD", "move"], ["MOUSE", "aim / fire"], ["V", "roll"], ["C", "juice"], ["E", "interact"], ["1 / 2", "weapon"], ["F", "item"], ["SPACE", "use item"], ["G", "grenade"], ["ESC", "pause"]]
 		if _has_ability(p, pv):
 			a.insert(3, ["Q", "stealth" if p.cls == "sniper" else "rocket"])
 	var W := size.x / s
@@ -1503,6 +1513,8 @@ func _draw_boss_bars() -> void:
 	for e in list:
 		var B := Sim.boss_def(e.boss)
 		var f := maxf(0, e.hp / e.max)
+		if m.sim.understrip() and e.boss=="pitboss":
+			f=clampf((f-.5)/.5 if m.sim.game.us.bossStage==0 else f/.5,0,1)
 		var col := Color(B.col)
 		if slim:   # three at once: slim rows
 			boss_c.draw_rect(Rect2(Vector2(x - 3, y - 3) * s, Vector2(w + 6, 20) * s), Color(12 / 255.0, 10 / 255.0, 8 / 255.0, 0.78))

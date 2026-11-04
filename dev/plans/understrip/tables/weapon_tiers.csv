@@ -1,0 +1,6 @@
+rarity,damage_x,mod_slots,signature,price_salvage,who_sells
+c,1.00,0,no,40,Tunnel Trader; Lift Merchant
+r,1.08,1,no,75,Tunnel Trader; Lift Merchant
+e,1.16,2,no,130,Tunnel Trader (region 2 on); Lift Merchant
+l,1.25,2,yes,220,Collector; boss drops
+g,1.35,3,yes,380,Collector only

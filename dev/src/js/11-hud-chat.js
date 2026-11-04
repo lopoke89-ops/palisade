@@ -96,7 +96,8 @@ function openChat(){
 function closeChat(){$('chatBar').hidden=true;$('chat').classList.remove('open');$('chatIn').blur()}
 function clearChat(){chatLines.length=0;$('chatLog').textContent='';$('lChatLog').textContent='';chatRate.clear();closeChat()}
 // v0.9.3.9: Settings > Show tips during games. Tips are the how-to hints; toasts (bosses, rewards, IS BACK) always show.
-function setTip(t){const show=!!t&&cfg.tips!==false;$('tip').hidden=!show;$('tipText').textContent=show?t:''}
+function setTip(t){const show=!!t&&cfg.tips!==false;$('tip').hidden=!show;$('tipText').textContent=show?t:'';$('tip').classList.toggle('skip',show&&understrip())}
+$('tip').addEventListener('click',()=>usTipSkip());   // THE UNDERSTRIP's tips are skippable
 const txt=(el,v)=>{if(el._v!==v){el._v=v;el.textContent=v}};
 const cls=(el,c,on)=>{if(el.classList.contains(c)!==on)el.classList.toggle(c,on)};
 const hid=(el,on)=>{on=!!on;if(el.hidden!==on)el.hidden=on};   // re-setting hidden counts as a page change and restyles every frame
@@ -105,9 +106,10 @@ const SLOTCOL=['#8fb58a','#a9bccb','#d0b077','#c29ac4','#86c0b8','#d08f78'];
 function keyBar(){
   if(touchMode)return;if(padMode)return padBar();const p=player,PV=game.pvp,K=(k,t)=>`<span class="kb"><kbd>${k}</kbd>${t}</span>`,a=[K('WASD','move'),K('MOUSE',p.gun&&p.gun.clickCd?'aim, click or hold to fire':p.gun&&p.gun.burst?'aim, hold to fire bursts':'aim, hold to fire'),K('G','grenade'),K('V','roll')];if(p.C&&p.C.sprint)a.push(K('SHIFT','sprint'));
   if(p.gun&&p.gun.mag)a.push(K('R','reload'));
-  if(PV!=='ffa'&&cfg.build)a.push(K('SPACE','build'),K('1 2 3','material'),K('F','door'));
+  if(understrip())a.push(K('C','drink'),K('SPACE',p.uSel==='flare'?'throw flare':'barricade'),K('F','switch item'),K('E','rest · trade · door'));   // THE UNDERSTRIP
+  else{if(PV!=='ffa'&&cfg.build)a.push(K('SPACE','build'),K('1 2 3','material'),K('F','door'));
   if(PV!=='ffa')a.push(K('B','build kit'));
-  if(shopOpen(p))a.push(K('E','armory'));
+  if(shopOpen(p))a.push(K('E','armory'))}
   if(game.phase==='build'&&NET.mode!=='guest')a.push(K('ENTER',PV?'start battle':'start raid'));
   if(NET.mode!=='solo')a.push(K('T','chat'));
   a.push(K('ESC','pause'));
@@ -119,9 +121,10 @@ function padBar(){
   const p=player,PV=game.pvp,K=(k,t)=>k==='—'?'':`<span class="kb"><kbd>${k}</kbd>${t}</span>`,a=[K(glyph(PB.LS),'move'),K(glyph(PB.RS),'aim'),K(padKey('fire'),'fire'),K(padKey('nade'),'grenade')];
   a.push(K(padKey('roll'),'roll'));
   if(hasAbility(p))a.push(K(padKey('special'),p.cls==='sniper'?'stealth':'rocket'));else if(p.C&&p.C.sprint)a.push(K(padKey('special'),'sprint'));
-  if(PV!=='ffa'&&cfg.build)a.push(K(padKey('build'),'build'),K(padKey('matPrev')+' '+padKey('matNext'),'material'),K(padKey('piece'),'door'));
+  if(understrip())a.push(K(padKey('kit'),'drink'),K(padKey('build'),p.uSel==='flare'?'throw flare':'barricade'),K(padKey('piece'),'switch item'),K(padKey('armory'),'rest · trade · door'));
+  else{if(PV!=='ffa'&&cfg.build)a.push(K(padKey('build'),'build'),K(padKey('matPrev')+' '+padKey('matNext'),'material'),K(padKey('piece'),'door'));
   if(PV!=='ffa')a.push(K(padKey('kit'),'build kit'));
-  if(shopOpen(p))a.push(K(padKey('armory'),'armory'));
+  if(shopOpen(p))a.push(K(padKey('armory'),'armory'))}
   if(game.phase==='build'&&NET.mode!=='guest')a.push(K(padKey('start'),PV?'start battle':'start raid'));
   a.push(K(glyph(PB.MENU),'pause'));
   const h=a.join(''),el=$('keys');if(el._h!==h){el._h=h;el.innerHTML=h}
@@ -160,6 +163,7 @@ function hud(dt){
     const rows=[...players.values()].sort((a,b)=>b.kills-a.kills||a.deaths-b.deaths).slice(0,6),bd=$('board'),sig=rows.map(o=>o.id+o.kills).join();
     if(bd._sig!==sig){bd._sig=sig;bd.textContent='';for(const o of rows){const li=document.createElement('li');if(o===p)li.className='me';const n=document.createElement('span');n.textContent=o===p?'YOU':o.name.toUpperCase();const b=document.createElement('b');b.textContent=o.kills;li.append(n,b);bd.append(li)}}
   }
+  else if(understrip())usHudPhase(lab,host);   // THE UNDERSTRIP
   else if(blackout())boHudPhase(lab,host);   // v0.9.7
   else if(game.phase==='build'){txt(lab,campaign()?`CH ${game.chapter+1} · BUILD`:'BUILD');cls(lab,'raid',false);txt($('phaseVal'),campaign()?`${clock(game.timer)} · ${MAP.short} · ${game.wave===12?'final evacuation':`raid ${game.wave%3+1}/3`}`:`${clock(game.timer)} until raid ${game.wave+1}`);hid($('skipBtn'),!host);txt($('skipLab'),'START RAID')}
   else if(game.fb&&!game.fb.done){const F=game.fb,ev=!!F.evac;txt(lab,F.mapEvac?`CH ${F.ch+1} · EVAC`:ev?'EVACUATE':F.gauntlet?(W<700?`WAVE ${F.wave}/6`:`GAUNTLET · WAVE ${F.wave}/6`):W<700?'BLITZ':'FINAL BLITZ');cls(lab,'raid',true);cls(lab,'evac',ev);   // v0.9.4.0
@@ -170,14 +174,15 @@ function hud(dt){
     txt($('n'+m),locked?(m===1?'R2':'R4'):String(p.mats[m]));cls(c,'sel',game.sel===m);cls(c,'locked',locked);
   }
   cls($('pWall'),'sel',game.piece==='wall');cls($('pDoor'),'sel',game.piece==='door');
-  cls($('kit'),'nobuild',!cfg.build||PV==='ffa');hid($('bmBtn'),PV==='ffa');txt($('bmLab'),cfg.build?'BUILD ON':'BUILD OFF');cls($('bmBtn'),'off',!cfg.build);
-  if(cfg.build&&PV!=='ffa'){const t=buildTarget(p,game.sel,game.piece==='door'),b=$('buildBtn');
+  const US1=understrip();hid($('usKit'),!US1);if(US1)usKitHud(p);else $('usCard').hidden=true;
+  cls($('kit'),'nobuild',!cfg.build||PV==='ffa'||US1);hid($('bmBtn'),PV==='ffa'||US1);txt($('bmLab'),cfg.build?'BUILD ON':'BUILD OFF');cls($('bmBtn'),'off',!cfg.build);
+  if(cfg.build&&PV!=='ffa'&&!US1){const t=buildTarget(p,game.sel,game.piece==='door'),b=$('buildBtn');
     txt($('buildAct'),t.ok?t.act:(t.act==='SOLID'?'SOLID':'BUILD'));
     txt($('buildSub'),t.ok?`${MAT[t.mat].name} · ${t.cost}`:t.reason);cls(b,'no',!t.ok)}
   txt($('salN'),String(p.sal|0));
   const ab=$('armBtn'),shopPhase=shopOpen(p);hid(ab,!shopPhase);
   if(shopPhase){const near=nearStake(p),afford=UPG.some(U=>p.up[U.k]<ARM_MAX&&p.sal>=U.cost[p.up[U.k]])||!game.pvp&&((game.dellLv|0)<ARM_MAX&&p.sal>=DELL_UP.cost[game.dellLv|0]||ammoMode()&&p.sal>=(p.ammoEq.some(Boolean)?75:150));
-    txt($('armLab'),'ARMORY');cls(ab,'far',!near);cls(ab,'pulse',near&&afford)}
+    if(US1){const u=usUseHere(p);txt($('armLab'),u||'USE');cls(ab,'far',!u);cls(ab,'pulse',u==='TRADE'&&afford)}else{txt($('armLab'),'ARMORY');cls(ab,'far',!near);cls(ab,'pulse',near&&afford)}}
   keyBar();
   if(!$('armory').hidden&&armorySig(p)!==armSig)renderArmory()
   txt($('nadeN'),String(p.nades));cls($('nadeBtn'),'empty',p.nades<=0);

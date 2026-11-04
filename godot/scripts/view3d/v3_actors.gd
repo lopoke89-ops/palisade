@@ -16,6 +16,7 @@ const STAFF := {"vinnie": "skin:dracula", "rosa": "skin:redcoat", "marco": "skin
 	"lena": "skin:night", "keep": "skin:yard2", "bot": "skin:gpolice"}
 ## boss state -> the clip family it shows: "Name" is a tell (wind-up, timed to the state), "Name!" is the move itself
 const BOSS_ST := {
+	"pitboss": {1: "CashBoxSwing", 2: "FloorRush", 3: "FloorRush!", 61: "CardSpray"},
 	"demolisher": {1: "Rocket", 2: "RocketFan"},
 	"arsonist": {1: "NapalmChain", 25: "Flamethrower", 26: "Flamethrower!", 27: "RingOfFire"},
 	"butcher": {1: "Blade", 2: "Charge", 3: "Charge!"},
@@ -50,7 +51,7 @@ var time := 0.0
 var anim_us := 0   # the last frame's animation updates (the profile the screenshot test prints)
 var merges := {}   # model key -> [pieces' signature, ArrayMesh, Skin]: one merged body per look, shared by its copies
 ## slots shown and hidden in play (lib.show_slot below) and the props switched in hand (_arm, _prop): never merged
-const LIVE_SLOTS := ["Weapon", "Equipment_ArmL", "Equipment_Back"]
+const LIVE_SLOTS := ["Weapon", "Equipment_ArmL", "Equipment_Back", "Equipment_Jacket", "Equipment_Damage", "Equipment_Pilot"]   # the last three: THE UNDERSTRIP bosses' stage pieces
 const LIVE_PROPS := ["HandR", "frag", "molotov", "rocket", "ClassWeapon"]
 
 
@@ -955,6 +956,12 @@ func _enemy(r: Dictionary, e: Dictionary, dt: float) -> void:
 		lib.show_slot(r.info.model, "Weapon", not e.shieldBroken)
 	if e.type == "breach" and e.get("planted", false) != r.prev.get("planted", false):
 		lib.show_slot(r.info.model, "Equipment_Back", not e.planted)
+	# THE UNDERSTRIP: the Pit Boss tears his jacket off for stage 2 (its own modular slot in the library's model)
+	if boss and str(e.boss) == "pitboss" and sim.understrip():
+		var jacket: bool = int(sim.game.us.get("bossStage", 0)) == 0
+		if r.get("jacket", true) != jacket:
+			lib.show_slot(r.info.model, "Equipment_Jacket", jacket)
+			r.jacket = jacket
 	_flash(r, e.get("flash", 0.0) > 0)
 	r.prev = {"broken": e.get("shieldBroken", false), "planted": e.get("planted", false)}
 

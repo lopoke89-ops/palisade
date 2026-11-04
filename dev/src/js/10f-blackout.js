@@ -10,7 +10,7 @@
 const BO={pay:20,payStep:5,purse:40,pushPay:60,bounty:1.25,ready:90,gather:45,gap:35,cap:60,warn:15,warnNo:3,push:300,dest:120,every:30,squad:20,bossCap:4,minorHp:.05,repair:2,heal:3,healR:5,refill:30,highR:2.5};
 const blackout=()=>!!game&&game.mode==='blackout'&&!game.pvp;
 // every boss can show up, except the ones that need a river (no repeats in a row)
-const boPool=()=>Object.keys(BOSSES).filter(k=>k!=='destroyer'&&!['ferryman','whiteferryman'].includes(k));
+const boPool=()=>Object.keys(BOSSES).filter(k=>k!=='destroyer'&&!BOSSES[k].us&&!['ferryman','whiteferryman'].includes(k));
 const boPOIs=()=>cores.filter(c=>c.poi);
 const boHeld=perk=>{const c=cores.find(o=>o.poi&&o.poi.perk===perk);return!!c&&!c.lost};
 const boCore=n=>cores[n];

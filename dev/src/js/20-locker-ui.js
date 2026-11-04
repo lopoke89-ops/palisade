@@ -91,6 +91,7 @@ function keyCap(x,y,key,text,col){
 function drawPrompts(p){
   if(!p||!p.alive)return;
   if(casino()){casPrompts(p);return}   // v0.10.0
+  if(understrip()){usPrompts(p);return}
   if(canShop(p)&&$('armory').hidden){const c=stakeOf(p),s=iso(c.i+.5,c.j+.5);keyCap(s[0],s[1]-WH*1.15-(game.pvp==='base'?66:52)*u,ctl('','E',padKey('armory')),touchMode&&!padMode?'TAP ARMORY':'ARMORY',null)}
   for(const o of players.values())if(o!==p&&o.downed&&(!game.pvp||(game.pvp==='base'&&o.team===p.team))){const d=dist2(o,p);if(d<2.2){const s=iso(o.x,o.y);keyCap(s[0],s[1]-34*u,'',d<1?'REVIVING · STAY CLOSE':'STAND CLOSE TO REVIVE','#a9bccb')}}
   if(!qm.gone&&!qm.alive&&dist2(qm,p)<2.2){const s=iso(qm.x,qm.y);keyCap(s[0],s[1]-34*u,'',dist2(qm,p)<1?'REVIVING DELGADO':'STAND CLOSE TO REVIVE DELGADO','#a9bccb')}
@@ -371,11 +372,11 @@ $('overRewards').addEventListener('click',()=>$('overRewards').classList.add('sk
 
 /* ---------- armory screen ---------- */
 let armSig='',armTab='upgrades',armSlot=0;
-function tryArmory(){if(casino()){if(player.seat)tbSheet(true);else casSit();return}   // v0.10.0: the action button sits you down in the casino
+function tryArmory(){if(understrip()){usInteract(player,true);return}if(casino()){if(player.seat)tbSheet(true);else casSit();return}   // v0.10.0: the action button sits you down in the casino
   const p=player;if(p&&p.alive&&game.phase==='build'&&lockdown()){toast('ARMORY','Lockdown: the armory stays shut until the run is over.');return}if(!shopOpen(p))return;if(!nearStake(p)){toast('ARMORY',game.pvp?'Walk back to your stake to spend salvage.':'Walk back to the stake to spend salvage.');return}openArmory()}
-function openArmory(){$('armEyebrow').textContent=game.pvp?'ARMORY · AT YOUR STAKE':'ARMORY · BETWEEN RAIDS';$('armory').hidden=false;if(NET.mode==='solo')game.paused=true;freeSticks();renderArmory();if(padMode)navFocus($('armRows').querySelector('button:not(:disabled)')||$('armClose'))}
+function openArmory(){$('armClose').textContent=understrip()?'BACK TO THE TUNNELS':'BACK TO THE FENCE';$('armEyebrow').textContent=understrip()?usMerchName(player)+' · SALVAGE ONLY':game.pvp?'ARMORY · AT YOUR STAKE':'ARMORY · BETWEEN RAIDS';$('armory').hidden=false;if(NET.mode==='solo')game.paused=true;freeSticks();renderArmory();if(padMode)navFocus($('armRows').querySelector('button:not(:disabled)')||$('armClose'))}
 function closeArmory(){if($('armory').hidden)return;$('armory').hidden=true;if(NET.mode==='solo'&&$('pause').hidden)game.paused=false}
-const armorySig=p=>p.sal+'|'+upStr(p)+'|'+p.ammoEq.join(',')+'|'+p.sk+'|'+p.cls+'|'+canShop(p)+'|'+(game.dellLv|0)+'|'+(cores[0]?Math.ceil(cores[0].hp):'');
+const armorySig=p=>p.sal+'|'+upStr(p)+'|'+p.ammoEq.join(',')+'|'+p.sk+'|'+p.cls+'|'+canShop(p)+'|'+(game.dellLv|0)+'|'+(cores[0]?Math.ceil(cores[0].hp):'')+(game.us?'|'+JSON.stringify(game.us.left)+JSON.stringify(game.us.got)+usPlayerBits(p)+'|'+p.nades+'|'+(p.uPerks||[]).length+(p.w2?p.w2.id+p.w2.r:''):'');
 function renderArmory(){
   const p=player;if(!p)return;armSig=armorySig(p);$('armSal').textContent=p.sal|0;
   const box=$('armRows');box.textContent='';
@@ -398,6 +399,7 @@ function renderArmory(){
       const slot=armSlot;btn.addEventListener('click',()=>{initAudio();if(NET.mode==='guest'){NET.toHost({t:'am',id:A.id,slot});btn.disabled=true}else if(buyAmmo(p,A.id,slot))renderArmory()});
       row.append(b,btn,i);box.append(row)}return;
   }
+  if(understrip()&&!usUpgradesHere(p)){usTradeRows(box,p);return}   // THE UNDERSTRIP: only the Shrine Keeper and the Lift Merchant sell upgrades
   for(const U of UPG){
     const t=p.up[U.k],row=document.createElement('div');row.className='arow';
     const b=document.createElement('b');b.textContent=U.name;const level=document.createElement('small');level.textContent=`${t}/${ARM_MAX}`;b.append(level);
@@ -410,6 +412,7 @@ function renderArmory(){
     btn.addEventListener('click',()=>{initAudio();if(NET.mode==='guest'){NET.toHost({t:'u',k:U.k});btn.disabled=true}else if(buyUpgrade(p,U.k))renderArmory()});
     row.append(b,btn,pips,i);box.append(row);
   }
+  if(understrip()){usTradeRows(box,p);return}   // THE UNDERSTRIP: the Tunnel Trader's stock under the upgrades
   if(game.pvp)return;
   const extra=(name,lvl,what,label,dis,aria,k)=>{
     const row=document.createElement('div');row.className='arow';

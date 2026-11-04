@@ -124,6 +124,7 @@ func _init() -> void:
 	var all := RECIPES.duplicate()
 	all.merge(_casino())   # after the others, so their noise (one stream for every recipe, in order) stays the same
 	all.merge({"roll": [["n", 0, .24, "bandpass", 1100, .9, .2, 320], ["n", .34, .12, "lowpass", 300, 1, .32, 0]]})   # v0.11.0: the back roll (last, for the same reason)
+	all.merge({"step": [["n", 0, .05, "lowpass", 240, 1, .32, 0]]})   # v0.12 THE UNDERSTRIP: a footstep round the corner (last again)
 	for name in all:
 		var layers: Array = all[name]
 		var end := 0.0

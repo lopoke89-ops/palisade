@@ -15,6 +15,7 @@ const WATER_SH := preload("res://shaders/v3/water.gdshader")
 const FLOOD_SH := preload("res://shaders/v3/flood.gdshader")
 const SUN_K := 0.2   # with the ambient (View3D.AMBIENT) a lit face shows its 2D colour
 
+var tunnels: UsView3D
 var V
 var sim: Sim
 var m
@@ -156,7 +157,7 @@ func frame(dt: float) -> void:
 	t += dt
 	frame_n += 1
 	_vis()
-	var mk := "%s|%d|%d|%d" % [sim.map_id, sim.N, m.game_n, 1 if sim.casino() else 0]
+	var mk := "%s|%d|%d|%d|%d" % [sim.map_id, sim.N, m.game_n, 1 if sim.casino() else 0, int(sim.game.us.level) if sim.understrip() else -1]
 	if mk != map_key or dirty:
 		map_key = mk
 		dirty = false
@@ -180,6 +181,8 @@ func frame(dt: float) -> void:
 	_debris()
 	_props()
 	_ghost()
+	if sim.understrip() and is_instance_valid(tunnels):
+		tunnels.frame()
 	flood_lv += ((1.0 if sim.flood_on else 0.0) - flood_lv) * minf(1.0, dt * 1.2)
 	mat_flood.set_shader_parameter("alpha", flood_lv * 0.7)
 	mat_flood.set_shader_parameter("t", t)
@@ -233,6 +236,12 @@ func _who() -> void:
 
 ## the ground of the yard (each map its own), its water and flood, bridges, pits, cracks, rocks and drums
 func _build_terrain() -> void:
+	tunnels = null
+	if sim.understrip():
+		tunnels = UsView3D.new(self)
+		terr_root.add_child(tunnels)
+		tunnels.build()
+		return
 	var N: int = sim.N
 	var g := V3Mesh.new()
 	g.sim = sim
@@ -611,7 +620,7 @@ func _face_oval(g: V3Mesh, x: float, z: float, y: float, rx: float, ry: float, c
 func _ghost() -> void:
 	var p: Dictionary = sim.player
 	var tg := {}
-	if not (not p.alive or sim.game.phase == "over" or sim.casino() or m.demo or not m.settings.data.get("build", true) or sim.pvp() == "ffa"):
+	if not (not p.alive or sim.game.phase == "over" or sim.casino() or sim.understrip() or m.demo or not m.settings.data.get("build", true) or sim.pvp() == "ffa"):
 		tg = sim.build_target(p, sim.game.sel, sim.game.piece == "door")
 	var y := 0.0
 	var key: Array = []   # all the mesh depends on, empty when there's no ghost; rebuilt only when it changes

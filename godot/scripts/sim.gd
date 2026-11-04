@@ -12,6 +12,7 @@ extends RefCounted
 
 const R_ENT := 0.27
 
+var us: SimUnderstrip
 var rng := RandomNumberGenerator.new()
 var N := 16
 var walls: Array = []          # Dictionary or null per tile, idx = j*N+i
@@ -164,6 +165,7 @@ func toast(title: String, body: String) -> void:
 
 func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {}, opt: Dictionary = {}) -> void:
 	dispose()
+	us = null
 	var pvp: String = opt.get("pvp", "")
 	if pvp != "base" and pvp != "ffa":
 		pvp = ""
@@ -175,7 +177,7 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 		rng.randomize()
 	Df = Pal.DIFF.get(diff, Pal.DIFF.normal)
 	var mode: String = opt.get("mode", "5")
-	if not ["5", "10", "endless", "blitz", "campaign", "blackout", "casino"].has(mode) or (mode == "casino" and pvp != ""):
+	if not ["5", "10", "endless", "blitz", "campaign", "blackout", "casino", "understrip"].has(mode) or (mode == "casino" and pvp != ""):
 		mode = "5"
 	if pvp != "":
 		Df = Pal.DIFF.normal
@@ -184,6 +186,11 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 		if not PalMaps.PVP_BLURB.has(map_id):
 			map_id = "yard"   # Frostpeak has no PvP layout: the Yard stands in
 		lay = PalMaps.lay_pvp(map_id, pvp)
+	elif mode == "understrip":
+		mods = []
+		map_id = "understrip"
+		lay = SimUnderstrip.layout(int(opt.get("us_seed", seed_v if seed_v >= 0 else randi())), int(opt.get("us_level", 0)))
+		assert(not lay.is_empty(), "THE UNDERSTRIP: invalid level")
 	elif mode == "casino":   # THE PALISADE FALLS CASINO: no raiders, no stake, no weapons
 		mods = []
 		map_id = "casino"
@@ -251,7 +258,7 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 		for n in nodes:
 			if n.locked and n.unlock > 3:
 				n.unlock = 3
-	var waves: float = INF if mode == "endless" else (float(BLITZ.waves) if mode == "blitz" else (float(CAMPAIGN.waves) if mode == "campaign" else (8.0 if mode == "blackout" else float(mode))))
+	var waves: float = 10.0 if mode == "understrip" else INF if mode == "endless" else (float(BLITZ.waves) if mode == "blitz" else (float(CAMPAIGN.waves) if mode == "campaign" else (8.0 if mode == "blackout" else float(mode))))
 	var timer: float = 1e9 if mode == "casino" else Pal.PVP.truce if pvp == "base" else (Pal.PVP.ffaTime if pvp == "ffa" else (BO.gather if mode == "blackout" else 40.0 + Df.build))
 	game = {"phase": "raid" if pvp == "ffa" else "build", "timer": timer, "pvp": pvp, "goal": Pal.PVP.ffaGoal, "winner": "", "sd": false, "wxT": 0.0, "job": job,
 		"gid": str(opt.get("gid", new_gid())).substr(0, 40), "prepEpoch": 0, "bo": null, "dark": false, "wave": 0, "waves": waves, "mode": mode, "queue": [], "spawnT": 0.0, "spawnGap": 1.1,
@@ -332,6 +339,10 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 		qm.x = -9.0
 		qm.y = -9.0
 	compute_flow()
+	us = null
+	if mode == "understrip":
+		us = SimUnderstrip.new(self)
+		us.begin(int(opt.get("us_seed", seed_v if seed_v >= 0 else lay.run_seed)), int(opt.get("us_level", 0)), int(opt.get("us_lives", 3)))
 
 
 ## the shared game id every screen in a match agrees on (newGid: base-36 time, a dash, 12 random characters)
@@ -525,7 +536,7 @@ func best_step(ti: int, tj: int) -> int:
 			c = 1e6
 		else:
 			var t: int = terr[k]
-			if t == PalMaps.T_PIT or t == PalMaps.T_ROCK or t == PalMaps.T_DRUM or t == PalMaps.T_BLDG:   # terr_solid
+			if t == PalMaps.T_PIT or t == PalMaps.T_ROCK or t == PalMaps.T_DRUM or t == PalMaps.T_BLDG or (t >= PalMaps.T_CONC and t <= PalMaps.T_TANK):   # terr_solid
 				c = 1e6
 			else:
 				var w = walls[k]
@@ -724,6 +735,9 @@ func hurt_player(p: Dictionary, d: float, own = null) -> void:
 	p.flash = 0.1
 	personal(p, "hurt")
 	emit(p.x, p.y, "blood")
+	if p.hp <= 0 and understrip():
+		us.down(p)
+		return
 	if p.hp <= 0 and pvp() != "":
 		pvp_down(p, own)
 		return
@@ -803,6 +817,8 @@ func hurt_ally(a: Dictionary, d: float) -> void:
 
 
 func hurt_enemy(e: Dictionary, d: float, own = null, quiet: bool = false) -> void:
+	if understrip() and e.get("inv", 0.0) > 0:
+		return
 	e.hp -= d
 	if not quiet:
 		e.flash = 0.08
@@ -810,6 +826,11 @@ func hurt_enemy(e: Dictionary, d: float, own = null, quiet: bool = false) -> voi
 	if e.hp <= 0 and not e.get("dead", false):
 		e.dead = true
 		game.stats.dropped += 1
+		if understrip():
+			game.us.stats.kills += 1
+			if e.get("elite", 0) and e.has("us"):
+				game.us.eliteDown.append(e.us.sid)
+			us.enemy_died(e, own)
 		sfx("drop", e.x, e.y)
 		emit(e.x, e.y, "blood", 6)
 		if e.type == "boss":
@@ -910,6 +931,8 @@ func build_target(p: Dictionary, sel: int, door: bool) -> Dictionary:
 
 
 func build_eval(p: Dictionary, i: int, j: int, sel: int, door: bool) -> Dictionary:
+	if understrip():
+		return {"i": i, "j": j, "ok": false, "act": "PLACE", "mat": sel, "cost": 0, "door": door, "reason": "No building in the tunnels", "why": "No building in the tunnels"}
 	var t := {"i": i, "j": j, "ok": false, "act": "PLACE", "mat": sel, "cost": 0, "door": door, "reason": ""}
 	if not p.alive:
 		t.reason = "You are down"
@@ -1066,6 +1089,11 @@ func throw_nade(p: Dictionary, tx: float, ty: float) -> void:
 # ---------------------------------------------------------------- shooting
 
 func shoot(p: Dictionary, G: Dictionary, late: float) -> void:
+	if understrip():
+		us.noise(p.x, p.y, 8.0)   # US.shotHear
+	if understrip():
+		G = G.duplicate()
+		G.dmg *= UsLoot.shot_mul(self, p)
 	var a := atan2(p.aim.y, p.aim.x)
 	var P: int = G.get("pellets", 1)
 	shot_seq += 1
@@ -1103,6 +1131,9 @@ func fire(from: Dictionary, ang: float, team: int, gun: Dictionary, late: float 
 		"over": gun.get("over", true), "skipped": false, "last": -1, "range": gun.range, "own": own, "dead": false,
 		"fall": gun.get("fall"), "pel": gun.get("pellets", 1) > 1, "shield_contact": -1, "pierce": gun.get("pierce", 0), "heavy": gun.has("pierce"),
 		"z0": zh[0] + zh[1] * 0.33, "zSlope": zh[1]})
+	if understrip():
+		for key in ["usFx", "arc", "well", "vamp", "prism"]:
+			if gun.has(key): bullets.back()[key] = gun[key]
 	if not quiet:
 		ev({"k": "flash", "x": from.x + cos(ang) * 0.4, "y": from.y + sin(ang) * 0.4, "life": 0.06, "r": 1.3 if gun.get("pellets", 1) > 1 else 0.9, "muzzle": true})
 
@@ -1120,6 +1151,9 @@ func update(dt: float, ctl: Dictionary = {}) -> void:
 		for p in players.values():
 			if p.get("seat", 0):
 				p.walk = 0.0
+		return
+	if understrip():
+		_update_understrip(dt, ctl)
 		return
 	for c in cores:
 		c.flash = maxf(0.0, c.flash - dt)
@@ -1250,6 +1284,28 @@ func end_pvp(winner: String) -> void:
 	ev({"k": "over", "win": game.won})
 
 
+func understrip() -> bool:
+	return us != null and game.get("mode", "") == "understrip"
+
+
+func _update_understrip(dt: float, ctl: Dictionary) -> void:
+	if us.tick(dt) or game.phase == "over":
+		return
+	control_local(dt, ctl)
+	for p in players.values():
+		sim_player(p, dt)
+	update_enemies(dt)
+	update_bullets(dt)
+	update_lobs(dt)
+	update_charges(dt)
+	update_rockets(dt)
+	update_arcs(dt)
+	mines_tick(dt)
+	update_fires(dt)
+	update_walls(dt)
+	update_chains(dt)
+
+
 func casino() -> bool:
 	return game.get("mode", "") == "casino"
 
@@ -1287,7 +1343,10 @@ func control_local(dt: float, ctl: Dictionary) -> void:
 			p.dgE = -1.0
 	if mag > 0.12 and not roll:
 		var d := mv.normalized()
-		var sp: float = 3.3 * mag * p.C.spd * (Pal.SPRINT.mult if spr else 1.0) * (0.45 if p.stun > 0 else 1.0) * slow_at(p.x, p.y) * p.perk.speed * (1.2 if has_mod("adrenaline") else 1.0)
+		var ground_slow = slow_at(p.x, p.y)
+		if understrip() and UsLoot.has(p, "p_footing"):
+			ground_slow = 1.0 - (1.0 - ground_slow) / 2.0
+		var sp: float = 3.3 * mag * p.C.spd * (Pal.SPRINT.mult if spr else 1.0) * (0.45 if p.stun > 0 else 1.0) * ground_slow * p.perk.speed * (1.2 if has_mod("adrenaline") else 1.0) * (0.4 if understrip() and p.get("ujT", 0.0) > 0 else 1.0)
 		move_ent(p, d.x * sp * dt, d.y * sp * dt, pt(p))
 		p.walk += dt * mag * (13.0 if spr else 10.0)
 		p.move_dir = d
@@ -1341,10 +1400,13 @@ func sim_player(p: Dictionary, dt: float) -> void:
 		if pvp() != "ffa":   # Back On Your Feet: either side's perk counts
 			for o in players.values():
 				if not is_same(o, p) and o.alive and d2(o, p) < 1 and (pvp() == "" or o.team == p.team):
-					p.revive += dt * o.perk.revive * p.perk.revive * bo_revive_mul(p)
+					p.revive += dt * o.perk.revive * p.perk.revive * bo_revive_mul(p) * (1.4 if understrip() and UsLoot.has(o, "p_pitcrew") else 1.0)
 					break
 		if p.revive >= 2.2:
 			revive_player(p)
+			return
+		if understrip():
+			us.bleed(p, dt)
 			return
 		p.rt -= dt
 		if p.rt <= 0:
@@ -1379,6 +1441,7 @@ func sim_player(p: Dictionary, dt: float) -> void:
 			else:
 				toast_to(p, "BACK AT THE STAKE", "Half your pack is in a sack where you fell." if any_m else "")
 		return
+	if understrip(): UsLoot.charge_tick(self, p, dt)
 	var G: Dictionary = p.gun
 	# cooldowns keep leftover time, so the fire rate is the same at any frame rate. Bolt-action: holding the trigger
 	# fires every bolt cycle and a click during the cycle is kept for 0.6 s. The pump: every click fires (0.12 s apart
@@ -1431,7 +1494,7 @@ func sim_player(p: Dictionary, dt: float) -> void:
 					p.bLeft = Pal.burst_n(p.up_d)
 				p.bLeft -= 1
 			shoot(p, G, -p.cd)
-			p.cd += Pal.burst_gap(p.up_d) if G.get("burst", false) and p.bLeft == 0 else G.cd * slow   # after a burst's last round: the pause
+			p.cd += Pal.burst_gap(p.up_d) if G.get("burst", false) and p.bLeft == 0 else G.cd * slow / (1.2 if understrip() and UsLoot.has(p, "p_lastcall") and p.hp < p.max * .3 else 1.0)   # after a burst's last round: the pause
 			n += 1
 			if mag > 0:
 				p.ammo -= 1
@@ -1457,7 +1520,12 @@ func sim_player(p: Dictionary, dt: float) -> void:
 				p.rl = G.reload
 			p.rl -= dt
 			if p.rl <= 0:
-				p.ammo += 1
+				if understrip() and p.wSel == 1 and p.w2 != null:
+					if p.w2.res > 0:
+						p.w2.res -= 1
+						p.ammo += 1
+				else:
+					p.ammo += 1
 				p.rl = G.reload + p.rl if p.ammo < mag else 0.0
 				sfx("shellin", p.x, p.y)
 				if p.ammo >= mag:
@@ -1489,7 +1557,7 @@ func sim_player(p: Dictionary, dt: float) -> void:
 			sacks.remove_at(s)
 			personal(p, "gather")
 			flt(p.x, p.y, "PACK RECOVERED")
-	if p.hurt > p.perk.regenAfter and not game.wx:   # Second Wind; no healing in a storm
+	if not understrip() and p.hurt > p.perk.regenAfter and not game.wx:   # Second Wind; no healing in a storm
 		p.hp = minf(p.max, p.hp + p.perk.regen * dt)
 
 
@@ -1914,6 +1982,12 @@ func end_game(win: bool, reason: String = "") -> void:
 	var title := "VICTORY" if win else "THE STAKE FELL"
 	var body := "Every raid broken." if win else "They got through."
 	match reason:
+		"understrip":
+			title = "OUT OF AREA 67"
+			body = "The Visitor is down. You made it out."
+		"understrip-lost":
+			title = "THE TUNNELS TAKE YOU"
+			body = "No lives remain."
 		"evac":
 			title = "EVACUATED"
 			body = "You made it out of the Final Blitz."
@@ -1935,7 +2009,9 @@ func update_enemies(dt: float) -> void:
 	for e in enemies:
 		if e.dead:
 			continue
-		var aimed := city_aim(e)   # a POI attacker treats his POI as the stake
+		if understrip() and us.idle(e, dt):
+			continue
+		var aimed := us.aim(e) if understrip() else city_aim(e)   # a POI attacker treats his POI as the stake
 		_enemy_tick(e, dt)
 		if aimed:
 			city_aim_end()
@@ -1974,6 +2050,9 @@ func update_enemies(dt: float) -> void:
 
 func _enemy_tick(e: Dictionary, dt: float) -> void:
 	if e.dead:
+		return
+	if understrip() and e.get("stunT", 0.0) > 0:
+		e.stunT = maxf(0.0, e.stunT - dt)
 		return
 	if e.get("burnT", 0.0) > 0:
 		var tick := minf(dt, e.burnT)
@@ -2032,6 +2111,8 @@ func _enemy_tick(e: Dictionary, dt: float) -> void:
 					e.foe = a
 	if e.foe != null and not seen(e.foe):
 		e.foe = null
+	if understrip() and us.elite_tick(e, dt):
+		return
 	var engaging := false
 	match e.type:
 		"boss":
@@ -2284,6 +2365,8 @@ func update_bullets(dt: float) -> void:
 				b.dead = true
 				break
 			if PalMaps.terr_shot(terr[k]):
+				if understrip() and b.get("usFx", "") == "bounce" and b.get("bnc", 0) < 2 and UsLoot.bounce(self, b, dt / steps):
+					continue
 				emit(b.x, b.y, "dust", 2, 1)
 				b.dead = true
 				break
@@ -2333,10 +2416,13 @@ func update_bullets(dt: float) -> void:
 								shield = [0.5, 0.6, 0.7, 0.85, 1.0][ap_rank]   # armor piercing: 50% through the shield, up to 100% at rank 4
 						hurt_enemy(e, bdmg(b) * shield * boss_weak(e, b), b.own)
 						ammo_hit(e, b)
+						if understrip(): UsLoot.bullet_hit(self, e, b)
 						b.dead = true
 						break
 			else:
 				for a in allies():
+					if understrip() and a.alive and roll_safe(a) and UsLoot.has(a, "p_riposte") and at_actor(b, a) and Vector2(a.x-b.x,a.y-b.y).length() < .3:
+						a.ripT = 2.0
 					if a.alive and not roll_safe(a) and at_actor(b, a) and Vector2(a.x - b.x, a.y - b.y).length() < 0.3:
 						hurt_ally(a, b.dmg * (0.7 if is_same(a, qm) else 1.0))
 						b.dead = true
@@ -2830,6 +2916,9 @@ func up_str(p: Dictionary) -> String:
 
 
 func can_shop(p: Dictionary) -> bool:
+	if understrip():
+		var at = us.merchant_at(p)
+		return p.alive and at >= 0 and lay.merchants[at].kind in ["keeper", "lift"]
 	return shop_open(p) and (near_stake(p) or (blackout() and bo_near_held(p)))
 
 
@@ -2849,7 +2938,8 @@ func buy_upgrade(p: Dictionary, k: String) -> bool:
 		return false
 	p.sal -= U.cost[t]
 	p.up[k] = t + 1
-	refit(p)
+	if understrip(): UsLoot.refit(self, p)
+	else: refit(p)
 	if k == "n":
 		p.nades = maxi(p.nades, p.maxN)
 	personal(p, "restock")
@@ -2917,6 +3007,8 @@ func award(own, e: Dictionary) -> void:
 	if p == null:
 		return
 	var v: int = roundi(BOUNTY.get(e.type, 4) * bo_salvage(e))
+	if understrip():
+		v += (1 if UsLoot.has(p, "p_pocket") else 0) + (1 if UsLoot.has(p, "p_tiepin") else 0)
 	p.sal += v
 	p.kills += 1
 	flt(e.x, e.y - 0.2, "+%d" % v, "#e2b436")
@@ -3133,6 +3225,8 @@ func boss_down(e: Dictionary, own) -> void:
 
 
 func think_boss(e: Dictionary, dt: float, tgt, mv) -> Array:
+	if e.boss == "pitboss":
+		return UsPitBoss.think(self, e, dt)
 	match e.boss:
 		"demolisher":
 			return _think_demolisher(e, dt, tgt, mv)
@@ -3448,6 +3542,10 @@ static func arm_boost(lv: int, old_step: float, new_step: float) -> float:
 
 
 static func boss_def(k: String) -> Dictionary:
+	if k == "pitboss":
+		var b: Dictionary = BOSSES.butcher.duplicate(true)
+		b.merge({"name":"THE PIT BOSS","hp":960.0,"speed":1.6,"scan":11.0,"bounty":40,"col":"#e2b436","intro":"Watch the explosive chips. At half health, the floor floods and he charges."}, true)
+		return b
 	if BOSSES.has(k):
 		return BOSSES[k]
 	return BOSSES2[k]
@@ -3561,6 +3659,8 @@ static func cyclone_pos(e: Dictionary, f: float) -> Vector2:
 
 
 func _knock(a: Dictionary, fx: float, fy: float, dist_: float) -> void:
+	if understrip() and UsLoot.relic(a, "x_lead"):
+		return
 	var dx: float = a.x - fx
 	var dy: float = a.y - fy
 	var l := maxf(0.001, Vector2(dx, dy).length())
@@ -4768,7 +4868,7 @@ func start_roll(p: Dictionary, dx: float, dy: float) -> void:
 	p.dgX = d.x
 	p.dgY = d.y
 	p.dgE = 0.0
-	p.dgCd = Pal.ROLL.cd
+	p.dgCd = (1.5 if UsLoot.has(p, "p_backstep") else 2.0) if understrip() else Pal.ROLL.cd
 	p.rl = 0.0
 	p.rlReq = false
 	p.bLeft = 0
@@ -6503,7 +6603,7 @@ func _flow_costs() -> PackedFloat64Array:
 	cost.resize(n)
 	for k in n:
 		var t: int = terr[k]
-		if t == PalMaps.T_PIT or t == PalMaps.T_ROCK or t == PalMaps.T_DRUM or t == PalMaps.T_BLDG:   # terr_solid
+		if t == PalMaps.T_PIT or t == PalMaps.T_ROCK or t == PalMaps.T_DRUM or t == PalMaps.T_BLDG or (t >= PalMaps.T_CONC and t <= PalMaps.T_TANK):   # terr_solid
 			cost[k] = 1e6
 			continue
 		var w = walls[k]
