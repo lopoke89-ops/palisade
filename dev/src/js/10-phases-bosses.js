@@ -299,7 +299,7 @@ function showPvpOver(){
   $('againBtn').hidden=NET.mode==='guest';$('overWait').hidden=NET.mode!=='guest';
   setTimeout(()=>{if(game.phase==='over')$('over').hidden=false},900);
 }
-function showOver(){closeGameSettings(false);
+function showOver(){closeGameSettings(false);if(understrip()){usOver();return}
   if(game.pvp){showPvpOver();return}
   setStats(COOP_STATS.map(t=>[t,0]));
   const win=!!game.won;sfx(win?'win':'lose',undefined,undefined,true);

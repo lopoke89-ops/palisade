@@ -22,7 +22,7 @@ function lookAhead(e){
 const seen=a=>a.alive&&!(a.stl>0);
 function updateEnemies(dt){
   const Df=game.Df,NM=hasMod('nightmare'),BZ=hasMod('berserk'),EL=hasMod('elite');for(const a of allies())if(a.markT>0)a.markT-=dt;
-  for(const e of enemies){const aimed=cityAim(e);try{   // v0.9.7: a POI attacker treats his POI as the core
+  for(const e of enemies){if(e.us&&!e.dead&&usIdle(e,dt))continue;const aimed=cityAim(e)||usAim(e);try{   // THE UNDERSTRIP: waiting raiders, and hunters on their quarry's flow field   // v0.9.7: a POI attacker treats his POI as the core
     if(e.dead)continue;const boss=e.type==='boss',hurry=NM&&!boss?1.18:1;
     if(e.burnT>0){const tick=Math.min(dt,e.burnT);e.burnT=Math.max(0,e.burnT-dt);hurtEnemy(e,10*tick,e.burnOwn,true);if(e.dead)continue}
     if(e.slowT>0){e.slowT=Math.max(0,e.slowT-dt);if(!e.slowT)e.slowPct=0}
@@ -196,7 +196,7 @@ function updateParticles(dt){
   if(running())localAmbience(dt);
   // time of day: overcast → golden hour → night
   const tod=game.pvp?(hasMod('nightmare')?2:0):todStage(game.phase==='raid'?game.wave:game.wave+.5);
-  const T=MAP&&MAP.casino?{L:.6,r:22,g:6,b:20,warm:.02}:tod===2?{L:isCity()&&game.dark?.8:.7,r:5,g:8,b:22,warm:0}:tod===1?{L:.2,r:60,g:30,b:10,warm:.07}:{L:.12,r:28,g:34,b:44,warm:0};
+  const T=MAP&&MAP.under?{L:usDarkL(),r:3,g:5,b:7,warm:0}:MAP&&MAP.casino?{L:.6,r:22,g:6,b:20,warm:.02}:tod===2?{L:isCity()&&game.dark?.8:.7,r:5,g:8,b:22,warm:0}:tod===1?{L:.2,r:60,g:30,b:10,warm:.07}:{L:.12,r:28,g:34,b:44,warm:0};
   const k=Math.min(1,dt*.8);for(const key of['L','r','g','b','warm'])light[key]+=(T[key]-light[key])*k;
 }
 

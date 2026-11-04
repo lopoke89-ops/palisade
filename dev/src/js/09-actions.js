@@ -33,7 +33,7 @@ function buildEval(p,i,j,sel,door){
   t.ok=true;return t;
 }
 // host/solo: actually place it
-function doBuild(p,i,j,sel,door){
+function doBuild(p,i,j,sel,door){if(understrip())return false;
   if(p.bcd>0)return;if(heightDist(p.x,p.y,i+.5,j+.5)>2.1||!heightRayClear(p.x,p.y,i+.5,j+.5))return;
   const t=buildEval(p,i,j,clamp(sel|0,0,2),!!door);
   if(!t.ok){personal(p,'deny');return}
@@ -61,6 +61,7 @@ function throwNade(p,tx,ty){
 }
 // this phone's buttons: do it (host/solo) or ask the host (guest)
 function localBuild(){
+  if(understrip()){localUseItem();return}   // the build key places a carried item in the tunnels
   const p=player;if(!p||!p.alive||rolling(p)||!cfg.build||game.pvp==='ffa')return;const t=buildTarget(p,game.sel,game.piece==='door');
   if(NET.mode==='guest'){if(!t.ok){sfx('deny',undefined,undefined,true);return}NET.toHost({t:'b',i:t.i,j:t.j,s:game.sel,d:game.piece==='door'});return}
   doBuild(p,t.i,t.j,game.sel,game.piece==='door');
@@ -117,7 +118,7 @@ function localNade(){
   throwNade(p,tx,ty);
 }
 // one pull of the trigger: a shotgun throws an even fan of pellets (a little jitter so it isn't a grid)
-function shoot(p,G,late){
+function shoot(p,G,late){if(game.us&&p.id)usNoise(p.x,p.y,US.shotHear);
   const a=Math.atan2(p.aim.y,p.aim.x),P=G.pellets|0,tc=nextTracerColor(p);
   const shot=++shotSeq;
   if(P>1)for(let i=0;i<P;i++)fire(p,a+(i/(P-1)-.5)*G.spread+(rnd()-.5)*G.spread*.3,0,G,late,i>0,tc,shot);

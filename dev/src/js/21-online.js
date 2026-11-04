@@ -4,7 +4,7 @@
 // they talk directly. Each guest opens 'r' (reliable: hello, build, grenade, and every
 // one-off event: sounds, particles, bullets, toasts, wall changes), 'u' (fast: movement in),
 // and 'st' (never resent: game state out, 15 times a second).
-const PROTO='yard-30',ROOM_PREFIX='palisade-yard-27-';   // v0.10.3 yard-29: casino seat codes for craps, baccarat and the machines   // v0.9.7.1: ready states (lobby and the push), round pay
+const PROTO='yard-31',ROOM_PREFIX='palisade-yard-27-';   // v0.10.3 yard-29: casino seat codes for craps, baccarat and the machines   // v0.9.7.1: ready states (lobby and the push), round pay
 // v0.9.7 was yard-26:   // v0.9.7: City Black Out (POI summary, near-only raiders on the city, the Supreme Destroyer's states 40-47, gas and mines)
 const ROOM_SESSION=(()=>{let id='';try{id=sessionStorage.getItem('palisade.roomSession')||''}catch(e){}
   if(!/^[0-9a-f]{24}$/.test(id)){id=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');try{sessionStorage.setItem('palisade.roomSession',id)}catch(e){}}
@@ -115,7 +115,7 @@ function checkSkills(c,claimed){
   rpc('skills_of',{p_uid:c.uid}).then(r=>{if(!r.ok||!r.j||typeof r.j!=='object')return;const t={};
     for(const S of SKILLS)t[S.id]=Math.min(want[S.id]|0,r.j[S.id]|0);put(skillStr(parseSkills(skillStr(t)),want.molOff))}).catch(()=>{});
 }
-const startMsg=()=>({t:'start',room:casino()?casRoom():undefined,roster:rosterNow(),diff:pick.diff,mode:game.mode,pvp:game.pvp,map:game.map,size:game.size,oct:game.oct?1:0,gid:game.gid,mods:game.mods,job:game.job,shots:bullets.filter(b=>!b.dead).map(bulletEvent)});
+const startMsg=()=>({t:'start',room:casino()?casRoom():undefined,us:game.us?[game.us.seed,game.us.level,game.us.lives]:undefined,roster:rosterNow(),diff:pick.diff,mode:game.mode,pvp:game.pvp,map:game.map,size:game.size,oct:game.oct?1:0,gid:game.gid,mods:game.mods,job:game.job,shots:bullets.filter(b=>!b.dead).map(bulletEvent)});
 const lighterSide=list=>{let a=0,b=0;for(const r of list)if(r.team==='b')b++;else a++;return a<=b?'a':'b'};
 function hostData(peerId,d){
   const c=NET.conns.get(peerId);if(!c||c.kicked||!d||typeof d!=='object'||Array.isArray(d)||typeof d.t!=='string')return;c.heard=performance.now();
@@ -182,6 +182,7 @@ function hostData(peerId,d){
   else if(d.t==='u'){if(typeof d.k==='string'&&(UPG.some(u=>u.k===d.k)||d.k==='core'||d.k==='dell'))buyUpgrade(p,d.k)}
   else if(d.t==='am'){if(typeof d.id==='string'&&AMMO_BY[d.id]&&hostInt(d.slot,0,1))buyAmmo(p,d.id,d.slot)}
   else if(d.t==='rl'){if(p.gun.mag)p.rlReq=true}
+  else if(understrip()&&(d.t==='ud'||d.t==='ui'||d.t==='uu'||d.t==='ub'))usHostData(p,d);   // THE UNDERSTRIP (yard-31)
   else if(d.t==='dg'){   // v0.11.0 yard-30: a guest's roll (any way, not only back). The host keeps the cooldown and lets the guest travel the roll's distance on top of its walking pace.
     if(hostFinite(d.x,-1.1,1.1)&&hostFinite(d.y,-1.1,1.1)&&Math.hypot(d.x,d.y)>.5&&p.alive&&!casino()&&!p.seat&&!rolling(p)&&!(p.dgCd>.35)){startRoll(p,d.x,d.y);c.rollB=ROLL.dist+.15;c.rollUntil=performance.now()+(ROLL.dur+.6)*1000}}
   else if(d.t==='ab'){if(hostFinite(d.x,-HOST_LIMITS.targetPad,N+HOST_LIMITS.targetPad)&&hostFinite(d.y,-HOST_LIMITS.targetPad,N+HOST_LIMITS.targetPad))useAbility(p,d.x,d.y)}
@@ -316,7 +317,7 @@ const PL_STATE=[['id',p=>p.id],['x',p=>r2(p.x)],['y',p=>r2(p.y)],['ax',p=>r2(p.a
   ['alive',p=>p.alive?1:0],['ammo',p=>p.gun.mag?p.ammo|0:-1],['tp',p=>p.tp],['down',p=>p.downed?1:0],['rev',p=>r2(p.revive)],['rt',p=>r2(p.rt)],
   ['bcd',p=>r2(Math.max(0,p.bcd))],['bolt',p=>p.bolt>0?r2(p.bolt/p.boltT):0],['rl',p=>p.rl>0?1:0],['stun',p=>r2(p.stun||0)],['ev',p=>r2(p.ev||0)],['dg',p=>rolling(p)?r2(p.dgE)+.01:0]];   // dg (v0.11.0 yard-30): how far into a back roll, +0.01 (0: not rolling)   // ev (v0.9.4.0): seconds stood in the evac ring
 const PL_SLOW=[['id',p=>p.id],['m0',p=>p.mats[0]],['m1',p=>p.mats[1]],['m2',p=>p.mats[2]],['nades',p=>p.nades],['sal',p=>p.sal|0],['kills',p=>p.kills|0],['deaths',p=>p.deaths|0],
-  ['prot',p=>p.prot>0?1:0],['ab',p=>p.ab|0],['out',p=>p.out?1:0],['ce',p=>chEvacBits(p)],['rdy',p=>p.boReady?1:0],['seat',p=>p.seat|0]];   // seat (v0.10.0, yard-28): casino seat code   // rdy (v0.9.7.1): ready for the final push   // ce (v0.9.6.4): chapter evac results, 2 bits a chapter   // out (v0.9.4.0): evacuated   // ab: class-ability state, reserved
+  ['prot',p=>p.prot>0?1:0],['ab',p=>p.ab|0],['out',p=>p.out?1:0],['ce',p=>chEvacBits(p)],['rdy',p=>p.boReady?1:0],['seat',p=>p.seat|0],['us',p=>game.us?usPlayerBits(p):0]];   // us (yard-31): THE UNDERSTRIP's juice, items, drinking and bled-out bits   // seat (v0.10.0, yard-28): casino seat code   // rdy (v0.9.7.1): ready for the final push   // ce (v0.9.6.4): chapter evac results, 2 bits a chapter   // out (v0.9.4.0): evacuated   // ab: class-ability state, reserved
 const PL_INFO=[['id',p=>p.id],['name',p=>p.name],['cls',p=>p.cls],['slot',p=>p.slot],['max',p=>p.max],['maxN',p=>p.maxN],['upS',p=>p.upS],['cosS',p=>p.cosS],['team',p=>p.team||''],['ammoEq',p=>p.ammoEq.join(',')],['sk',p=>p.sk]];
 // enemies: the boss-only fields sit last and trailing zeros are dropped, so a plain raider sends 7 numbers, not 12
 const EN_STATE=[['id',e=>e.id],['type',e=>ECODE.indexOf(e.type==='boss'?'boss:'+e.boss:e.type)],['x',e=>r2(e.x)],['y',e=>r2(e.y)],['ax',e=>r2(e.aim.x)],['ay',e=>r2(e.aim.y)],
@@ -364,6 +365,7 @@ function makeSnap(withWalls){
     nd:flat(nodes,n=>[n.amt|0,n.locked?1:0]),fo:floodOn?1:0};
   if(game.bossLog&&game.bossLog.length)s.bl=game.bossLog;
   if(campaign())s.cm=game.chapter;
+  if(game.us)s.us=usSnap();   // THE UNDERSTRIP
   if(game.bo)s.bo=boSnap();if(isCity())s.near=1;   // v0.9.7 City Black Out
   if(frostFields.length)s.ice=frostFields.map(f=>[r2(f.x),r2(f.y),r2(f.t),r2(f.z)]);
   if(game.fb){const F=game.fb,E=F.evac;s.fb=[r2(F.t),F.n,F.max,E?r2(E.x):0,E?r2(E.y):0,E?r2(E.r):0,F.done?1:0,F.mapEvac?1:F.gauntlet?2:0,F.ch|0,F.wave|0]}   // [7] kind (v0.9.6.4): 1 map evac, 2 gauntlet   // v0.9.4.0: the Final Blitz clock and the evac site
@@ -404,7 +406,8 @@ function guestData(d){
     case'welcome':myId=d.id;NET.mode='guest';mStatus('');showLobby();break;
     case'lobby':NET.roster=d.roster;NET.code=d.code;NET.roomLocked=!!d.locked;pick.diff=d.diff;if(d.mode)pick.mode=d.mode;pick.pvp=d.pvp||'coop';NET.hostMods=cleanMods(d.mods,pick.pvp==='base'||pick.pvp==='ffa'?pick.pvp:d.mode==='blitz'?'blitz':'');pick.job=CLASSES[d.job]?d.job:pick.job;if(d.map)pick.map=MAP_IDS.includes(d.map)?d.map:'yard';if(d.size)pick.size=d.size==='xl'?'xl':'std';if(!NET.inGame)renderLobby();break;
     case'start':pick.diff=d.diff;if(d.mode)pick.mode=d.mode;NET.casRoom=typeof d.room==='string'?d.room.slice(0,80):'';pick.pvp=d.pvp||'coop';pick.map=MAP_IDS.includes(d.map)?d.map:'yard';pick.size=d.size==='xl'?'xl':'std';pick.oct=!!d.oct;demo=false;
-      newGame(d.roster,d.pvp||'',{gid:d.gid,mods:d.mods,job:d.job,guest:true});replayFx(d.shots||[]);NET.lastN=0;NET.inGame=true;enterGame();modsToast();break;
+      if(Array.isArray(d.us)&&hostInt(d.us[0],0,4294967295)&&hostInt(d.us[1],0,US.levels-1)){US_RUN.seed=d.us[0];US_RUN.level=d.us[1]}   // THE UNDERSTRIP: the host's run and level
+      newGame(d.roster,d.pvp||'',{gid:d.gid,mods:d.mods,job:d.job,guest:true,usLives:Array.isArray(d.us)?d.us[2]|0:undefined});replayFx(d.shots||[]);NET.lastN=0;NET.inGame=true;enterGame();modsToast();break;
     case'ping':break;
     case's':if(NET.inGame&&d.n>NET.lastN){NET.lastN=d.n;applySnap(d)}break;
     case'x':if(NET.inGame){if(campaign()&&d.cm!==undefined){if(d.cm<game.chapter)break;if(d.cm!==game.chapter)changeChapter(d.cm,true)}if(d.pi)applyInfo(d.pi);if(d.wl)decodeWalls(d.wl);if(d.wd)applyWallDiff(d.wd);replayFx(d.fx||[])}break;
@@ -414,6 +417,7 @@ function guestData(d){
   }
 }
 function applySnap(s){
+  if(s.us&&game.us&&Number.isInteger(s.us[0])&&s.us[0]>game.us.level&&s.us[0]<US.levels)usChangeLevel(s.us[0],true);   // THE UNDERSTRIP: down to the host's level first
   if(campaign()&&s.cm!==undefined){if(s.cm<game.chapter)return;if(s.cm!==game.chapter)changeChapter(s.cm,true)}
   const wasOver=game.phase==='over';
   game.phase=s.ph;game.wave=s.w;game.timer=s.tm;game.bosses=s.bk|0;game.qn=s.q;game.won=!!s.won;game.winner=s.wn||'';
@@ -442,7 +446,7 @@ function applySnap(s){
   for(const id of[...players.keys()])if(!seen.has(id))players.delete(id);
   player=players.get(myId)||player;
   for(const r of s.ps||[]){const p=players.get(r[PW.id]);if(!p)continue;   // v0.9.6.3: slow fields, only when they changed
-    p.mats=[r[PW.m0]|0,r[PW.m1]|0,r[PW.m2]|0];p.nades=r[PW.nades]|0;p.sal=r[PW.sal]|0;p.kills=r[PW.kills]|0;p.deaths=r[PW.deaths]|0;p.prot=r[PW.prot]?1:0;p.ab=r[PW.ab]|0;p.out=!!r[PW.out];p.chEvac=chEvacFrom(r[PW.ce]|0);p.boReady=!!r[PW.rdy];if(p!==player)p.seat=r[PW.seat]|0}
+    p.mats=[r[PW.m0]|0,r[PW.m1]|0,r[PW.m2]|0];p.nades=r[PW.nades]|0;p.sal=r[PW.sal]|0;p.kills=r[PW.kills]|0;p.deaths=r[PW.deaths]|0;p.prot=r[PW.prot]?1:0;p.ab=r[PW.ab]|0;p.out=!!r[PW.out];p.chEvac=chEvacFrom(r[PW.ce]|0);p.boReady=!!r[PW.rdy];if(p!==player)p.seat=r[PW.seat]|0;if(game.us)usReadBits(p,r[PW.us])}
   const q=s.qm;if(q[4]<qm.hp-.01)qm.flash=.1;qm.tx=q[0];qm.ty=q[1];qm.aim={x:q[2],y:q[3]};qm.hp=q[4];qm.max=q[5];qm.alive=!!q[6];qm.revive=q[7];game.dellLv=q[8]|0;
   const old=new Map(enemies.map(e=>[e.id,e]));enemies=[];
   for(const r of s.en){const v=k=>r[PE[k]]||0,id=r[PE.id];let e=old.get(id);
@@ -456,6 +460,7 @@ function applySnap(s){
   arcs=[];for(let o=0;o<(s.ar||[]).length;o+=4)arcs.push({x:s.ar[o],y:s.ar[o+1],vx:s.ar[o+2],vy:s.ar[o+3]});
   if(Array.isArray(s.fb)){const f=s.fb;game.fb={t:f[0],n:f[1],max:f[2],evac:f[5]?{x:f[3],y:f[4],r:f[5]}:null,done:!!f[6],mapEvac:f[7]===1,gauntlet:f[7]===2,ch:f[8]|0,wave:f[9]|0}}else game.fb=null;
   if(Array.isArray(s.fl))game.fbLog=s.fl.slice(0,20);
+  if(s.us)usApplySnap(s.us);
   if(s.bo){boApply(s.bo);if(game.joinPois==null){game.joinPois=s.bo[6]|0;game.joinMajors=boMajorsHeld();game.joinHeld=(s.bo[6]|0)+(s.bo[7]|0)}}   // v0.9.7: the POIs and the run's clock (and where this phone came in)
   if(Array.isArray(s.gk))game.gKill=s.gk.slice(0,6);
   if(s.bu){bullets.length=0;for(const e of s.bu)addGuestBullet(e)}

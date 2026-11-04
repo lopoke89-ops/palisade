@@ -81,6 +81,12 @@ body:not(.desk) #phaseNote{max-width:150px;font-size:10px}
 /* v0.11.0: on phones held upright the kit column can't grow (the Black Out mini-map sits above it), so ROLL sits beside its bottom button */
 @media (orientation:portrait){body:not(.desk) #kit #rollBtn{position:absolute;right:calc(100% + 6px);bottom:0;width:88px}}#rollBtn .kc{background:#c9cde0}#rollBtn.empty{opacity:.45}#rollBtn.on{background:rgba(70,74,98,.92)}
 #nadeBtn.empty{opacity:.4}
+/* THE UNDERSTRIP: Lucky Juice and the carried items take the build kit's place */
+#usKit{display:grid;gap:6px}#usKit[hidden]{display:none!important}
+#usDrink,#usUse,#usSwap{height:40px;background:rgba(27,24,20,.86);border:1px solid #4f9a5a;display:flex;justify-content:space-between;align-items:center;padding:0 10px;gap:6px;
+  font-family:var(--stencil);font-weight:800;letter-spacing:.08em;font-size:15px;color:#9fe68f}
+#usDrink b,#usUse b,#usSwap b{font-family:var(--mono);font-size:12px;color:var(--bone)}#usDrink .kc{background:#9fe68f}#usDrink.on{background:rgba(40,90,40,.92)}#usDrink.empty,#usUse.empty{opacity:.45}
+#usUse,#usSwap{border-color:#a8865a;color:#e0c08a}#usUse .kc,#usSwap .kc{background:#e0c08a}#usSwap{height:32px;font-size:12px}
 
 /* ---------- overlays ---------- */
 .overlay{position:fixed;inset:0 0 auto 0;height:var(--appH,100%);display:grid;grid-template-columns:minmax(0,1fr);justify-items:center;align-items:center;
@@ -422,7 +428,7 @@ input[type=text],input[type=email],input[type=password]{-webkit-user-select:text
 /* Landscape phones keep the kit beside the thumb area and below the status bar. */
 @media (pointer:coarse) and (min-width:601px) and (max-height:500px){
   body:not(.desk) #kit{width:176px;right:max(12px,env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 12px);grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
-  #buildKit{display:contents}
+  #buildKit,#usKit{display:contents}
   #kit .pieces,#kit #bmBtn{grid-column:1/-1}
   #kit #bmBtn,#kit .piece{height:32px}
   #kit .chip{height:36px;padding:0 6px}

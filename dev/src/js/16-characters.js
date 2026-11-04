@@ -1057,6 +1057,7 @@ function drawBossFx(){
     if(e.st===2){const y=b[1]-WH*1.9,s=5*u;g.fillStyle='#ff4a3a';g.beginPath();g.moveTo(b[0],y-s);g.lineTo(b[0]+s*.7,y);g.lineTo(b[0],y+s);g.lineTo(b[0]-s*.7,y);g.closePath();g.fill()}}
   for(const c of chains){const a=iso(c.x0,c.y0),b=iso(c.x1,c.y1),k=c.life/c.max;g.strokeStyle=`rgba(200,205,200,${k})`;g.lineWidth=2.2*u;g.setLineDash([4*u,2*u]);g.beginPath();g.moveTo(a[0],a[1]-ch);g.lineTo(b[0],b[1]-ch*.8);g.stroke();g.setLineDash([])}
   for(const e of enemies){if(e.type!=='boss'||!e.st)continue;const f=NET.mode==='guest'?(e.stF||0):Math.max(0,e.stT/e.stM);
+    if(e.boss==='pitboss'){usPitFx(e,f,pulse,ch);continue}   // THE UNDERSTRIP
     if(drawDestroyerFx(e,f,pulse,ch))continue;   // v0.9.7: the Supreme Destroyer
     if(drawBossMove(e,f,pulse,ch))continue;   // v0.9.6.5: the new moves' warnings
     if(BOSSES[e.boss]&&BOSSES[e.boss].base&&drawBlitzFx(e,f,pulse,ch))continue;   // v0.9.4.0: a Blitzkrieg variant's own warnings
@@ -1116,12 +1117,13 @@ function drawBossBars(top){
       g.fillStyle='#2a2520';g.fillRect(x,y+11,w,4);g.fillStyle=B.col;g.fillRect(x,y+11,w*f,4);if(e.flash>0){g.fillStyle='rgba(255,255,255,.5)';g.fillRect(x,y+11,w*f,4)}y+=23}
     g.textAlign='center';return}
   for(const e of enemies){if(e.type!=='boss')continue;if(!BOSSES[e.boss])continue;const B=bossInfo(e.boss);
-    const w=Math.min(440,W-48),x=(W-w)/2,f=Math.max(0,e.hp/e.max);
+    const w=Math.min(440,W-48),x=(W-w)/2,f=Math.max(0,B.us?usBossFrac(e):e.hp/e.max),s2=B.us&&game.us&&game.us.bossStage>0;
     g.fillStyle='rgba(12,10,8,.8)';g.fillRect(x-3,y-3,w+6,26);
     g.font='800 13px "Big Shoulders Stencil Display", "Arial Narrow", sans-serif';g.textAlign='left';g.fillStyle=B.col;g.fillText(B.name,x+2,y+10);
     g.textAlign='right';g.fillStyle='#dcd2ba';g.font='600 11px "IBM Plex Mono", monospace';g.fillText(`${Math.ceil(f*100)}%`,x+w-2,y+10);
     {const wk=ammoMode()&&AMMO_BY[BOSS_WEAK[e.boss]];if(wk&&w>300){g.font='600 9px "IBM Plex Mono", monospace';g.fillStyle=wk.col;g.fillText('WEAK: '+wk.name,x+w-44,y+10)}}   // v0.9.6.5
-    g.fillStyle='#2a2520';g.fillRect(x,y+14,w,6);g.fillStyle=B.col;g.fillRect(x,y+14,w*f,6);
+    g.fillStyle='#2a2520';g.fillRect(x,y+14,w,6);g.fillStyle=s2?'#ff6a3a':B.col;g.fillRect(x,y+14,w*f,6);
+    if(B.us){g.fillStyle=B.col;g.fillRect(x,y+22,6,3);g.fillStyle=s2?'#ff6a3a':'#2a2520';g.fillRect(x+8,y+22,6,3)}   // THE UNDERSTRIP: the two stage pips
     if(e.flash>0){g.fillStyle='rgba(255,255,255,.5)';g.fillRect(x,y+14,w*f,6)}
     y+=32}
   g.textAlign='center';

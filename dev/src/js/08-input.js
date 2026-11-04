@@ -37,6 +37,7 @@ addEventListener('keydown',e=>{
   if(!playing()||overlayOpen())return;
   if((k==='t'||k==='/')&&NET.mode!=='solo'){e.preventDefault();keys[k]=false;openChat();return}
   if(casino()){if(k==='e'||k==='u'||k==='enter'){if(player.seat)tbSheet(true);else casSit()}if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k))e.preventDefault();return}   // v0.10.0: in the casino, E sits (no building, no weapons)
+  if(understrip()&&(k==='c'||k==='f')){if(k==='c')localDrink();else usItemSwap();return}   // THE UNDERSTRIP: C drinks, F picks the item
   if(k===' '){e.preventDefault();localBuild()}
   else if(k==='1'||k==='2'||k==='3')game.sel=+k-1;
   else if(k==='f')game.piece=game.piece==='wall'?'door':'wall';
@@ -68,8 +69,8 @@ cv.addEventListener('pointerdown',()=>{if(chatOpen())closeChat()},true);
 $('chatBar').addEventListener('submit',e=>{e.preventDefault();sendChat($('chatIn').value);closeChat()});
 for(const b of $('chatBar').querySelectorAll('.quick button'))tapBtn(b,()=>{sendChat(b.textContent);closeChat()});
 $('lChatForm').addEventListener('submit',e=>{e.preventDefault();sendChat($('lChatIn').value);$('lChatIn').value=''});
-function toggleBuild(){if(game.pvp==='ffa')return;cfg.build=!cfg.build;saveCfg();$('bmBtn').setAttribute('aria-pressed',String(cfg.build));hud(0)}
-tapBtn($('bmBtn'),live(toggleBuild));tapBtn($('armBtn'),live(()=>tryArmory()));
+function toggleBuild(){if(understrip()){localDrink();return}if(game.pvp==='ffa')return;cfg.build=!cfg.build;saveCfg();$('bmBtn').setAttribute('aria-pressed',String(cfg.build));hud(0)}
+tapBtn($('bmBtn'),live(toggleBuild));tapBtn($('usDrink'),live(localDrink));tapBtn($('usUse'),live(localUseItem));tapBtn($('usSwap'),live(usItemSwap));tapBtn($('armBtn'),live(()=>tryArmory()));
 const playing=()=>!demo&&(game.phase==='build'||game.phase==='raid');
 const running=()=>game.phase==='build'||game.phase==='raid';
 const overlayOpen=()=>game.paused||!$('pause').hidden||!$('igSet').hidden||!$('menu').hidden||!$('armory').hidden;

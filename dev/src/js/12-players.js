@@ -10,7 +10,8 @@ function update(dt){
   else if(game.phase==='build'){game.timer-=dt;if(blackout())boGather();if(game.timer<=0)startRaid()}
   else{
     if(game.queue.length){game.spawnT-=dt;if(game.spawnT<=0){spawnEnemy(game.queue.shift());game.spawnT=game.spawnGap||1.1}}
-    if(game.bo){boTick(dt);if(game.phase==='over')return}   // v0.9.7 City Black Out runs on its own clock
+    if(game.us){if(usTick(dt))return;if(game.phase==='over')return}   // THE UNDERSTRIP runs on its own rules (true: in the lift, the world waits)
+    else if(game.bo){boTick(dt);if(game.phase==='over')return}   // v0.9.7 City Black Out runs on its own clock
     else if(game.fb){fbTick(dt);if(game.phase==='over')return}   // v0.9.4.0: the Final Blitz runs on its clock, not on an empty field
     else if(!game.queue.length&&!enemies.length&&!charges.length&&!rockets.length){qm.completedRaids=Math.max(qm.completedRaids||0,game.wave);if(game.wave>=game.waves){endGame(true);return}if(!campaignAdvance())startBuild(24+game.Df.build)}
   }
@@ -44,7 +45,7 @@ function controlLocal(dt){
   if(roll){const e0=p.dgE;p.dgE=Math.min(ROLL.dur,p.dgE+dt);const s=ROLL.dist*(rollPos(p.dgE)-rollPos(e0));
     if(s>0){moveEnt(p,p.dgX*s,p.dgY*s,pt(p));p.walk+=s*3}if(rnd()<dt*22)emit(p.x,p.y,2*u,'dust',0);if(p.dgE>=ROLL.dur)p.dgE=-1}
   // 3.3 tiles a second is everyone's pace; the class sets a multiplier (sniper 1.1, grenadier 0.9)
-  if(mag>.12&&!roll){const d=sdirToWorld(mx,my),sp=3.3*mag*(p.C.spd||1)*(spr?SPRINT.mult:1)*(p.stun>0?.45:1)*slowAt(p.x,p.y)*(p.perk||PERK0).speed*(hasMod('adrenaline')?1.2:1);moveEnt(p,d.x*sp*dt,d.y*sp*dt,pt(p));p.walk+=dt*mag*(spr?13:10);p.moveDir=d;
+  if(mag>.12&&!roll){const d=sdirToWorld(mx,my),sp=3.3*mag*(p.C.spd||1)*(spr?SPRINT.mult:1)*(p.stun>0?.45:1)*(p.ujT>0?US.drinkSlow:1)*slowAt(p.x,p.y)*(p.perk||PERK0).speed*(hasMod('adrenaline')?1.2:1);moveEnt(p,d.x*sp*dt,d.y*sp*dt,pt(p));p.walk+=dt*mag*(spr?13:10);p.moveDir=d;
     if(spr&&rnd()<dt*14)emit(p.x-d.x*.2,p.y-d.y*.2,3*u,'dust',0)}
   let firing=false;
   if(padMode){if(pad.amag>.2){const d=assist(sdirToWorld(pad.ax,pad.ay));p.aim=d;p.face=d}else if(mag>.12){p.face=p.moveDir;p.aim=p.moveDir}firing=pad.fire}   // v0.9.2.1: right stick aims, the trigger fires
@@ -66,6 +67,7 @@ function simPlayer(p,dt){
     if(!p.downed)return;   // the menu's hidden demo soldier
     if(game.pvp!=='ffa')for(const o of players.values())if(o!==p&&o.alive&&dist2(o,p)<1&&(!game.pvp||o.team===p.team)){p.revive+=dt*(o.perk||PERK0).revive*(p.perk||PERK0).revive*boReviveMul(p);break}   // Back On Your Feet: either side
     if(p.revive>=2.2){revivePlayer(p);return}
+    if(understrip()){usDownTick(p,dt);return}   // no coming back at a stake: bleed out, or be got up
     p.rt-=dt;
     if(p.rt<=0){
       const m=p.mats.map(v=>Math.floor(v/2));if(m.some(v=>v>0))sacks.push({x:p.x,y:p.y,mats:m});p.mats=p.mats.map((v,i)=>v-m[i]);
@@ -111,6 +113,6 @@ function simPlayer(p,dt){
     }
   }
   for(let s=sacks.length-1;s>=0;s--){const k=sacks[s];if(heightDist(k.x,k.y,p.x,p.y)<.7){for(let m=0;m<3;m++)p.mats[m]=Math.min(p.cap[m],p.mats[m]+k.mats[m]);sacks.splice(s,1);personal(p,'gather');flt(p.x,p.y,'PACK RECOVERED')}}
-  {const K=p.perk||PERK0;if(p.hurt>K.regenAfter&&!game.wx)p.hp=Math.min(p.max,p.hp+K.regen*dt)}   // Second Wind; no healing in a storm
+  {const K=p.perk||PERK0;if(p.hurt>K.regenAfter&&!game.wx&&!understrip())p.hp=Math.min(p.max,p.hp+K.regen*dt)}   // Second Wind; no healing in a storm
 }
 

@@ -82,6 +82,7 @@ function hurtPlayer(p,d,own){
   d*=(p.perk||PERK0).vest;if(game.pvp&&hasMod('glass'))d*=1.5;   // Kevlar; Glass Cannon hits harder
   p.hp-=d;p.hurt=0;p.flash=.1;personal(p,'hurt');emit(p.x,p.y,16*u,'blood');
   if(p.hp<=0&&game.pvp){pvpDown(p,own);return}
+  if(p.hp<=0&&understrip()){usDowned(p);return}
   if(p.hp<=0){
     const help=anyUp(p),last=hasMod('laststand')&&game.phase==='raid';p.dgE=-1;p.alive=false;p.downed=true;p.hp=0;p.revive=0;p.rt=last?1e6:help?10:4;
     if(p.id===myId)buzz(80);
@@ -118,6 +119,7 @@ function hurtQM(d){
   if(q.hp<=0){q.alive=false;q.hp=0;q.revive=0;flt(q.x,q.y,'DELGADO IS DOWN','#d65a3a');toastAll('DELGADO IS DOWN','Stand over him to get him back up.')}
 }
 function hurtEnemy(e,d,own,quiet=false){
+  if(e.inv>0){if(!quiet)e.flash=.04;return}   // THE UNDERSTRIP: a boss changing stage can't be hurt
   e.hp-=d;if(!quiet){e.flash=.08;emit(e.x,e.y,15*u,'blood')}
   if(e.hp<=0&&!e.dead){e.dead=true;game.stats.dropped++;sfx('drop',e.x,e.y);for(let n=0;n<6;n++)emit(e.x,e.y,10*u,'blood');
     if(e.type==='boss'){if(!demo)bossDown(e,own);const p=own&&own!=='dell'?players.get(own):null;if(p){p.kills++;killFx(e.x,e.y,p.cos.fx)}}else award(own,e)}
