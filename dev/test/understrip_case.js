@@ -2,7 +2,7 @@
 // dev/plans/understrip/tables/case_items.csv has them, every weighted tier stocked, local openings landing on its items;
 // the ten skins on their own models (each draws differently from the standard soldier at all four angles), which hats
 // each one wears, the tracers, kill effects and backgrounds drawing; and a run's pay without an account (the server's
-// rule: a case, 2 shards and a skill point a region cleared, a case for the finish).
+// rule since v0.12.3: regions 1, 2 and 3 pay 1, 3 and 6 cases and skill points, twice that in shards; the finish 10 cases).
 const { chromium } = require('playwright'), assert = require('node:assert/strict'), fs = require('node:fs'), path = require('node:path');
 const csv = fs.readFileSync(path.join(__dirname, '../plans/understrip/tables/case_items.csv'), 'utf8').trim().split('\n').slice(1).map(l => l.split(','));
 (async () => {
@@ -39,9 +39,9 @@ const csv = fs.readFileSync(path.join(__dirname, '../plans/understrip/tables/cas
  for (const [k, v] of Object.entries(r.hats)) assert.deepEqual(v, [true, true], k + ' draws, front and back');
  assert.ok(r.wear.open.every(Boolean), 'open heads wear any hat'); assert.ok(!r.wear.closed.some(Boolean), 'models with their own hat or head wear only it'); assert.equal(r.wear.aura, 'gvisitor');
  assert.ok(r.trails.every(Boolean) && r.fx.every(Boolean) && r.bgs.every(Boolean), 'tracers, kill effects and backgrounds draw');
- assert.deepEqual(r.payWin.slice(0, 3), [4, 6, 3 + 2], 'a won run: 4 cases, 6 shards, 3 skill points (+2 for 10 levels)');
- assert.deepEqual(r.payDeep.slice(0, 2), [2, 4], 'level 7: two regions'); assert.deepEqual(r.payShallow.slice(0, 2), [0, 0]);
- assert.deepEqual(r.paySplit.slice(0, 2), [3, 4], 'rejoined at 4: regions 2 and 3, and the finish'); assert.deepEqual(r.payFast.slice(0, 2), [3, 6], 'a win under 15 minutes isn\'t a win');
+ assert.deepEqual(r.payWin.slice(0, 3), [20, 20, 10 + 2], 'a won run: 20 cases, 20 shards, 10 skill points (+2 for 10 levels)');
+ assert.deepEqual(r.payDeep.slice(0, 2), [4, 8], 'level 7: regions 1 and 2'); assert.deepEqual(r.payShallow.slice(0, 2), [0, 0]);
+ assert.deepEqual(r.paySplit.slice(0, 2), [19, 18], 'rejoined at 4: regions 2 and 3, and the finish'); assert.deepEqual(r.payFast.slice(0, 2), [10, 20], 'a win under 15 minutes isn\'t a win');
  assert.match(r.payWin[3], /understrip case/i);
  console.log('errors:', errors.length ? errors : 'none'); await b.close(); if (errors.length) process.exit(1);
 })();

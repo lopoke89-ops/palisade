@@ -43,10 +43,15 @@ The brief is [`../understrip-work-order.md`](../understrip-work-order.md). M0 is
 6. **The `import_local_save` hole (work order 9.4)** is fixed in `dev/supabase/migrations/20261104200000_v012_understrip.sql` (M3): a local save brings in only free cosmetics. Not applied to the live database yet; that needs your go-ahead.
 
 ## Sign-off
-- [ ] Mood boards: the 10 skins (King of the Strip signed off on its own), the 3 regions, the other 20 items.
-- [ ] Region 1 room kit.
-- [ ] Boss move sheets.
-- [ ] The tables (numbers are M4's starting point, not final).
-- [ ] D9–D17 as settled in section 16.1.
+- [x] Mood boards: the 10 skins (King of the Strip signed off on its own), the 3 regions, the other 20 items.
+- [x] Region 1 room kit.
+- [x] Boss move sheets.
+- [x] The tables (numbers are M4's starting point, not final).
+- [x] D9–D17 as settled in section 16.1 (signed off November 4, 2026).
+
+**Also signed off November 4, 2026:** King of the Strip, as built. **Changed:** the run's rewards scale with depth.
+Region 1 pays 1 case, 2 shards and 1 skill point; region 2 pays 3 cases, 6 shards and 3 skill points; region 3 pays 6, 12
+and 6; the win pays 10 more cases. That's 20 cases, 20 shards and 10 skill points for a full run, up from 4, 6 and 3. The
+four paper boxes above were signed off the same day after a second look.
 
 When these are signed off, M1 (the region 1 vertical slice) starts.

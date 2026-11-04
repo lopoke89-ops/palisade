@@ -429,7 +429,7 @@ function usOver(){const U=game.us,win=!!game.won,me=player;sfx(win?'win':'lose',
   $('overEyebrow').textContent=`THE UNDERSTRIP · ${win?'THE WHOLE DESCENT':US_REG[reg].name} · ${players.size} ${players.size===1?'PLAYER':'PLAYERS'} · ${DIFF[pick.diff]?DIFF[pick.diff].name:''}`;
   $('overLede').textContent=win?'The Visitor is down and the field is dark for good. You walked out from under the Strip.':`You reached ${US_NAMES[U.level]}${U.regions?`, ${U.regions} ${U.regions===1?'region':'regions'} cleared`:''}. Rest at every shrine you find; it's where you come back.`;
   const t=Math.round(U.stats.time);setStats([['Deepest',`${U.level+1} of ${US.levels}`],['Regions cleared',`${U.regions|0} of 3`],['Raiders dropped',me.kills|0],['Times the squad fell',U.stats.falls],['Shrine rests',U.stats.rests],['Time',`${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`],['Lives left',Math.max(0,U.lives)]]);
-  const loot=game.rewarded?null:lockerReward(U.log.length,win,me.kills|0);game.rewarded=true;   // a case a region cleared, one more for the finish (the server decides for accounts)
+  const loot=game.rewarded?null:lockerReward(U.log.length,win,me.kills|0);game.rewarded=true;   // 1, 3 and 6 cases for the regions cleared, 10 more for the finish (the server decides for accounts)
   if(loot){$('overLoot').textContent=loot.text;$('overLoot').hidden=false;showRewards(loot)}else{$('overLoot').hidden=true;showRewards(null)}
   $('againBtn').hidden=NET.mode==='guest';$('overWait').hidden=NET.mode!=='guest';
   setTimeout(()=>{if(game.phase==='over')$('over').hidden=false},900)}
