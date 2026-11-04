@@ -9,7 +9,7 @@ The brief is [`../understrip-work-order.md`](../understrip-work-order.md). M0 is
 | M0 deliverable (section 13) | Where | What it is |
 |---|---|---|
 | Mood boards (section 3) | [`mood-boards.md`](mood-boards.md) | One written board per skin (10) and region (3): silhouette, palette, parts, motion, headgear, the section 3 check. The other 20 cosmetics in one table |
-| Room-kit sketches, region 1 | [`room-kit-r1.png`](room-kit-r1.png) (the picture), [`../../data/understrip/rooms-r1.json`](../../data/understrip/rooms-r1.json) (the data) | 18 pieces: 6 corridors and junctions, 5 rooms, a cache, the shortcut, breather, merchant, entrance, exit, antechamber and the Pit Boss's arena. Already the format the M1 generator reads |
+| Room-kit sketches, region 1 | [`images/room-kit-r1.png`](images/room-kit-r1.png) (the picture), [`../../data/understrip/rooms-r1.json`](../../data/understrip/rooms-r1.json) (the data) | 18 pieces: 6 corridors and junctions, 5 rooms, a cache, the shortcut, breather, merchant, entrance, exit, antechamber and the Pit Boss's arena. Already the format the M1 generator reads |
 | Boss move sheets | [`boss-move-sheets.md`](boss-move-sheets.md) | All four bosses, both stages: every move's telegraph shape, warning time, size, damage, cooldown and counter. Elites too |
 | The loot table, in a spreadsheet | [`understrip-tables.xlsx`](understrip-tables.xlsx), from [`tables/*.csv`](tables/) | Weapons, tiers, mods, 20 perks, relics, consumables, healing, merchants, loot sources, enemies, bosses, the case and its 30 items, each item's odds, and the game's own numbers for comparison |
 | Generator spec (due M1, drafted now) | [`../understrip-generator.md`](../understrip-generator.md) | The exact seeded algorithm both versions follow |

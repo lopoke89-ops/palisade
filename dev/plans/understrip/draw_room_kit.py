@@ -1,5 +1,5 @@
 # Draws a room kit (dev/data/understrip/rooms-r<N>.json) as one picture sheet, top-down, for review.
-# Usage: python3 dev/plans/understrip/draw_room_kit.py [1]     -> dev/plans/understrip/room-kit-r1.png   (needs Pillow)
+# Usage: python3 dev/plans/understrip/draw_room_kit.py [1]     -> dev/plans/understrip/images/room-kit-r1.png   (needs Pillow)
 import json, os, sys
 from PIL import Image, ImageDraw, ImageFont
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.normpath(os.path.join(HERE, '../../..'))
@@ -48,4 +48,4 @@ for n, (c, name) in enumerate(key):
     elif dot: d.ellipse([kx + 3, kyy + 3, kx + T - 3, kyy + T - 3], fill=dot)
     if c == 'K': d.line([kx, kyy + T // 2, kx + T, kyy + T // 2], fill='#ffb070', width=2)
     d.text((kx + T + 8, kyy + 2), f"{c}  {name}", fill='#c8c3b8', font=font)
-out = os.path.join(HERE, f"room-kit-r{reg}.png"); img.save(out); print(os.path.relpath(out, ROOT), img.size)
+os.makedirs(os.path.join(HERE, "images"), exist_ok=True); out = os.path.join(HERE, "images", f"room-kit-r{reg}.png"); img.save(out); print(os.path.relpath(out, ROOT), img.size)
