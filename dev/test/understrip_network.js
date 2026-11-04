@@ -66,6 +66,12 @@ const Q = 'peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1', PORT = process.
   await G.waitForTimeout(800);
   out.trade = await Promise.all([H.evaluate(gid => { const g = __pal.players.get(gid); return [g.nades, g.sal] }, gid), G.evaluate(() => [__pal.player.nades, __pal.player.sal])]);
   assert.deepEqual(out.trade[0], [1, 85]); assert.deepEqual(out.trade[1], [1, 85]);
+  // M2: a weapon from the host reaches the guest (the kit rides the player info); the guest's 1 and 2 swap it on the host
+  await H.evaluate(gid => { const P = __pal, g = P.players.get(gid); P.usGiveWeapon(g, { id: 'w_smg', r: 'r', mods: ['m_dmg'] }) }, gid);
+  await G.waitForFunction(() => __pal.player.w2 && __pal.player.w2.id === 'w_smg', null, { timeout: 5000 });
+  await G.keyboard.press('1'); await G.waitForTimeout(600);
+  out.swap = await Promise.all([H.evaluate(gid => __pal.players.get(gid).wSel, gid), G.evaluate(() => [__pal.player.wSel, __pal.player.w2.r, __pal.player.w2.mods.join()])]);
+  assert.equal(out.swap[0], 0); assert.deepEqual(out.swap[1], [0, 'r', 'm_dmg']);
   // the guest down and left: bleeds out, salvage stays where they fell (seen on both)
   await H.evaluate(gid => { const P = __pal, g = P.players.get(gid); window.letDie = true; g.sal = 23; P.hurtPlayer(g, 1e7); g.rt = .3 }, gid);
   await G.waitForTimeout(1200);

@@ -26,6 +26,8 @@ function updateEnemies(dt){
     if(e.dead)continue;const boss=e.type==='boss',hurry=NM&&!boss?1.18:1;
     if(e.burnT>0){const tick=Math.min(dt,e.burnT);e.burnT=Math.max(0,e.burnT-dt);hurtEnemy(e,10*tick,e.burnOwn,true);if(e.dead)continue}
     if(e.slowT>0){e.slowT=Math.max(0,e.slowT-dt);if(!e.slowT)e.slowPct=0}
+    if(e.stunT>0){e.stunT-=dt;continue}   // THE UNDERSTRIP: stunned (the taser, a nail, lifted)
+    if(e.elite&&usEliteTick(e,dt))continue;
     e.cd=Math.max(e.cd-dt*hurry,-dt);e.flash=Math.max(0,e.flash-dt);e.scanT-=dt;
     if(BZ&&boss&&!e.st){e.cd-=dt*.33;if(e.ab!==undefined)e.ab-=dt*.33}
     const ti=e.x|0,tj=e.y|0;let tgt=null,moveTo=null;
@@ -127,7 +129,7 @@ function updateBullets(dt){
       if(heightAt(b.x,b.y)>bulletZ(b)-.08){hitFx(b.x,b.y,1);b.dead=true;break}
       if(coreKs.has(k)&&bulletZ(b)<heightAt(b.x,b.y)+1.35){const c=stakeAt(k);if(game.pvp?c.team!==b.pt:b.team===1)hurtStake(c,game.pvp?b.dmg*PVP.stakeHit:6*game.Df.dmg);else emit(b.x,b.y,WH*.5,'spark');b.dead=true;break}
       const n=nodeAt(i,j);if(n&&n.solid){hitFx(b.x,b.y,n.type);b.dead=true;break}
-      if(terrShot(terr[k])){hitFx(b.x,b.y,1);b.dead=true;break}
+      if(terrShot(terr[k])){if(b.usFx==='bounce'&&(b.bnc|0)<2&&usBounce(b,dt/steps))continue;hitFx(b.x,b.y,1);b.dead=true;break}   // THE UNDERSTRIP: the lab laser bounces
       const w=walls[k];
       if(w&&k!==b.last&&bulletZ(b)<heightAt(b.x,b.y)+1.35){
         b.last=k;
@@ -140,8 +142,9 @@ function updateBullets(dt){
       else if(b.team===0){for(const e of enemies)if(!e.dead&&!e.burrow&&bulletAtActor(b,e)&&Math.hypot(e.x-b.x,e.y-b.y)<(e.big?.55:.34)){
           // a shieldbearer's shield covers his front (about 130°): the round sparks off it
           let shield=1;if(e.type==='shield'&&!e.shieldBroken){const l=Math.hypot(b.vx,b.vy)||1;if(-(b.vx*e.aim.x+b.vy*e.aim.y)/l>.42){shieldBulletHit(e,b);const ap=b.ammo&&b.ammo.find(x=>x[0]==='ap');if(!ap){hitFx(b.x,b.y,2);sfx('shieldhit',b.x,b.y);if(!b.pel||!b.felt){b.felt=1;feelHit(b.own,false)}b.dead=true;break}shield=[.5,.6,.7,.85,1][ap[1]]||.5}}
-          hurtEnemy(e,bdmg(b)*shield*bossWeak(e,b),b.own);ammoHit(e,b);if(!b.pel||!b.felt){b.felt=1;feelHit(b.own,b.heavy)}b.dead=true;break}}
-      else{for(const a of allies())if(a.alive&&!rollSafe(a)&&bulletAtActor(b,a)&&Math.hypot(a.x-b.x,a.y-b.y)<.3){hurtAlly(a,b.dmg*(a===qm?.7:1));b.dead=true;break}}
+          hurtEnemy(e,bdmg(b)*shield*bossWeak(e,b),b.own);ammoHit(e,b);if(game.us)usBulletHit(e,b);if(!b.pel||!b.felt){b.felt=1;feelHit(b.own,b.heavy)}b.dead=true;break}}
+      else{if(game.us)for(const a of players.values())if(a.alive&&rollSafe(a)&&usHas(a,'p_riposte')&&Math.hypot(a.x-b.x,a.y-b.y)<.45)a.ripT=2;   // THE UNDERSTRIP: Riposte
+        for(const a of allies())if(a.alive&&!rollSafe(a)&&bulletAtActor(b,a)&&Math.hypot(a.x-b.x,a.y-b.y)<.3){hurtAlly(a,b.dmg*(a===qm?.7:1));b.dead=true;break}}
     }
   }
   {const hit=[];for(const b of bullets)if(b.dead&&!b.spent&&b.id)hit.push(b.id);if(hit.length)rec(['bx',...hit])}   // guests expire misses on their own

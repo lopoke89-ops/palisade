@@ -78,7 +78,7 @@ const rollPos=e=>{const x=Math.max(0,Math.min(1,(e-ROLL.go)/(ROLL.end-ROLL.go)))
 const rolling=p=>!!p&&p.dgE>=0&&p.dgE<ROLL.dur;
 const rollSafe=p=>!!p&&p.dgE>=ROLL.safe0&&p.dgE<ROLL.safe1;
 const canRoll=p=>!!p&&p.alive&&!demo&&!casino()&&!p.seat&&!(p.dgCd>0)&&!rolling(p)&&game.phase!=='over';
-function startRoll(p,dx,dy){const l=Math.hypot(dx,dy)||1;p.dgX=dx/l;p.dgY=dy/l;p.dgE=0;p.dgCd=understrip()?US.rollCd:ROLL.cd;p.rl=0;p.rlReq=false;p.bLeft=0;sfx('roll',p.x,p.y)}
+function startRoll(p,dx,dy){const l=Math.hypot(dx,dy)||1;p.dgX=dx/l;p.dgY=dy/l;p.dgE=0;p.dgCd=understrip()?US.rollCd-(usHas(p,'p_backstep')?.5:0):ROLL.cd;p.rl=0;p.rlReq=false;p.bLeft=0;sfx('roll',p.x,p.y)}
 // a roll's timers on the host, for everyone but this screen's own soldier (controlLocal moves that one)
 function rollTick(p,dt){p.dgCd=Math.max(0,(p.dgCd||0)-dt);if(!p.alive){p.dgE=-1;return}if(rolling(p)){p.dgE+=dt;if(p.dgE>=ROLL.dur)p.dgE=-1}}
 // A guest isn't told which way someone else rolls (their row has only how far in): it reads it off their travel,
@@ -118,7 +118,7 @@ function localNade(){
   throwNade(p,tx,ty);
 }
 // one pull of the trigger: a shotgun throws an even fan of pellets (a little jitter so it isn't a grid)
-function shoot(p,G,late){if(game.us&&p.id)usNoise(p.x,p.y,US.shotHear);
+function shoot(p,G,late){if(game.us&&p.id){usNoise(p.x,p.y,US.shotHear);const m=usShotMul(p);if(m!==1)G=Object.assign({},G,{dmg:G.dmg*m})}   // THE UNDERSTRIP: one-shot perks
   const a=Math.atan2(p.aim.y,p.aim.x),P=G.pellets|0,tc=nextTracerColor(p);
   const shot=++shotSeq;
   if(P>1)for(let i=0;i<P;i++)fire(p,a+(i/(P-1)-.5)*G.spread+(rnd()-.5)*G.spread*.3,0,G,late,i>0,tc,shot);
@@ -134,7 +134,7 @@ function fire(from,ang,team,gun,late=0,quiet=false,tc=nextTracerColor(from),shot
   const visual=wardrobeShotVisual(from,ang,gun);if(visual)from._shotDrawUntil=game.time+.08;
   const [z0,zSlope]=bulletHeight(from,ang,gun.range);
   bullets.push({z0:z0+zSlope*.33,zSlope,visual,id:++bulletSeq,pt:from.team||'',x:from.x+Math.cos(ang)*ahead,y:from.y+Math.sin(ang)*ahead,vx:Math.cos(ang)*gun.speed,vy:Math.sin(ang)*gun.speed,team,dmg:gun.dmg,dist:ahead-.33,over:gun.over!==false,skipped:false,last:-1,range:gun.range+(team===0&&boHigh(from)?2:0),pierce:gun.pierce||0,heavy:!!gun.pierce,
-    own,tr:own&&own!=='dell'?Math.max(0,TRAIL_IDS.indexOf(from.cos.trail)):0,tc,fall:gun.fall||null,pel:gun.pellets>1,shot,ammo:team===0&&ammoMode()&&from.ammoEq?from.ammoEq.filter(Boolean).map(id=>[id,ammoRank(from,id)]):[]});
+    own,tr:own&&own!=='dell'?Math.max(0,TRAIL_IDS.indexOf(from.cos.trail)):0,tc,fall:gun.fall||null,pel:gun.pellets>1,shot,usFx:gun.usFx||'',vamp:!!gun.vamp,prism:!!gun.prism,arc:gun.arc|0,well:!!gun.well,ammo:team===0&&ammoMode()&&from.ammoEq?from.ammoEq.filter(Boolean).map(id=>[id,ammoRank(from,id)]):[]});
   rec(bulletEvent(bullets[bullets.length-1]));
   if(!quiet)addFlash({x:from.x+Math.cos(ang)*.4,y:from.y+Math.sin(ang)*.4,life:.06,max:.06,r:gun.pellets>1?1.3:.9,muzzle:true,visual:visual?visual.slice(2):null});
 }

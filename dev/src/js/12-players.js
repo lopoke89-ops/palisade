@@ -45,7 +45,7 @@ function controlLocal(dt){
   if(roll){const e0=p.dgE;p.dgE=Math.min(ROLL.dur,p.dgE+dt);const s=ROLL.dist*(rollPos(p.dgE)-rollPos(e0));
     if(s>0){moveEnt(p,p.dgX*s,p.dgY*s,pt(p));p.walk+=s*3}if(rnd()<dt*22)emit(p.x,p.y,2*u,'dust',0);if(p.dgE>=ROLL.dur)p.dgE=-1}
   // 3.3 tiles a second is everyone's pace; the class sets a multiplier (sniper 1.1, grenadier 0.9)
-  if(mag>.12&&!roll){const d=sdirToWorld(mx,my),sp=3.3*mag*(p.C.spd||1)*(spr?SPRINT.mult:1)*(p.stun>0?.45:1)*(p.ujT>0?US.drinkSlow:1)*slowAt(p.x,p.y)*(p.perk||PERK0).speed*(hasMod('adrenaline')?1.2:1);moveEnt(p,d.x*sp*dt,d.y*sp*dt,pt(p));p.walk+=dt*mag*(spr?13:10);p.moveDir=d;
+  if(mag>.12&&!roll){const d=sdirToWorld(mx,my),sp=3.3*mag*(p.C.spd||1)*(spr?SPRINT.mult:1)*(p.stun>0?.45:1)*(p.ujT>0?US.drinkSlow:1)*(game.us?usMoveMul(p,slowAt(p.x,p.y)):slowAt(p.x,p.y))*(p.perk||PERK0).speed*(hasMod('adrenaline')?1.2:1);moveEnt(p,d.x*sp*dt,d.y*sp*dt,pt(p));p.walk+=dt*mag*(spr?13:10);p.moveDir=d;
     if(spr&&rnd()<dt*14)emit(p.x-d.x*.2,p.y-d.y*.2,3*u,'dust',0)}
   let firing=false;
   if(padMode){if(pad.amag>.2){const d=assist(sdirToWorld(pad.ax,pad.ay));p.aim=d;p.face=d}else if(mag>.12){p.face=p.moveDir;p.aim=p.moveDir}firing=pad.fire}   // v0.9.2.1: right stick aims, the trigger fires
@@ -65,7 +65,7 @@ function simPlayer(p,dt){
   if(!game.pvp)simAbility(p,dt);else if(p.ab)p.ab=0;frenzyTick(p,dt);
   if(!p.alive){p.bLeft=0;
     if(!p.downed)return;   // the menu's hidden demo soldier
-    if(game.pvp!=='ffa')for(const o of players.values())if(o!==p&&o.alive&&dist2(o,p)<1&&(!game.pvp||o.team===p.team)){p.revive+=dt*(o.perk||PERK0).revive*(p.perk||PERK0).revive*boReviveMul(p);break}   // Back On Your Feet: either side
+    if(game.pvp!=='ffa')for(const o of players.values())if(o!==p&&o.alive&&dist2(o,p)<1&&(!game.pvp||o.team===p.team)){p.revive+=dt*(o.perk||PERK0).revive*(p.perk||PERK0).revive*boReviveMul(p)*(usHas(o,'p_pitcrew')?1.4:1);break}   // Back On Your Feet: either side
     if(p.revive>=2.2){revivePlayer(p);return}
     if(understrip()){usDownTick(p,dt);return}   // no coming back at a stake: bleed out, or be got up
     p.rt-=dt;
@@ -95,13 +95,13 @@ function simPlayer(p,dt){
   else if(want||p.bLeft>0){p.prot=0;let n=0;const slow=game.pvp&&G.pierce?PVP.snipeCd:1;
     while(p.cd<=0&&n<(G.bolt?1:6)&&!(mag&&p.ammo<=0)){
       if(G.burst){if(!(p.bLeft>0)){if(!want)break;p.bLeft=burstN(p)}p.bLeft--}   // a burst, once started, always finishes
-      shoot(p,G,-p.cd);p.cd+=G.burst&&p.bLeft===0?burstGap(p):G.cd*slow;n++;if(mag)p.ammo--}   // after a burst's last round: the pause instead of the spacing
+      shoot(p,G,-p.cd);p.cd+=G.burst&&p.bLeft===0?burstGap(p):G.cd*slow/(game.us?usRateMul(p):1);n++;if(mag)p.ammo--}   // after a burst's last round: the pause instead of the spacing
     if(n){sfx(G.snd,p.x,p.y);const TS=TRAILS[p.cos.trail];if(TS&&TS.snd&&game.time-(p.trT||0)>.22){p.trT=game.time;sfx(TS.snd,p.x,p.y)}personal(p,'~f');p.sinceShot=0;p.rl=0;if(G.bolt){p.pullUsed=p.pullIn;p.boltT=(pump?Math.min(G.cd,.36):G.cd)*slow*.92;p.bolt=p.boltT;if(p.cd<0)p.cd=0}}}
   else p.cd=Math.max(p.cd,0);
   // shells go in one at a time: when the tube is empty, after a second without firing, or on R. Firing stops it.
   if(mag&&p.ammo<mag){
     if((p.ammo<=0||p.sinceShot>1.1||p.rlReq)&&!(want&&p.ammo>0)){if(!(p.rl>0))p.rl=G.reload;p.rl-=dt;
-      if(p.rl<=0){p.ammo++;p.rl=p.ammo<mag?G.reload+p.rl:0;sfx('shellin',p.x,p.y);if(p.ammo>=mag)p.rlReq=false}}
+      if(p.rl<=0){if(!usReloadStep(p)){p.rl=0;p.rlReq=false}else{p.ammo++;p.rl=p.ammo<mag?G.reload+p.rl:0;sfx('shellin',p.x,p.y);if(p.ammo>=mag)p.rlReq=false}}}
   }else{p.rl=0;p.rlReq=false}
   for(const n of nodes){
     if(n.locked||(n.type===0&&n.amt<=0))continue;

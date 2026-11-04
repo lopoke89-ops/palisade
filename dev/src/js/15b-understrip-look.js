@@ -41,7 +41,8 @@ function usItems(){const L=game.lay,U=game.us;if(!L||!U)return;
   L.chests.forEach((c,n)=>{if(!(U.chests&(1<<n)))ritem(c.x+c.y,usDrawChest,c)});
   ritem(L.exit[0]+L.exit[1]-.9,usDrawLift,L.exit);
   for(const d of U.drops)ritem(d.x+d.y,usDrawDrop,d);
-  for(const f of U.flares)ritem(f.x+f.y,usDrawFlare,f)}
+  for(const f of U.flares)ritem(f.x+f.y,usDrawFlare,f);
+  for(const l of U.loot||[])ritem(l.x+l.y,usDrawLoot,l)}
 function usDrawShrine(s,n){const U=game.us,on=!!(U.lit&(1<<n)),sleep=s.arena&&!U.bossDown,c=iso(s.x,s.y),t=game.time,fl=sleep?.15:on?.85+.15*Math.sin(t*9+n):.35+.3*Math.max(0,Math.sin(t*3.1+n*2)*Math.sin(t*7.3));
   g.fillStyle='#1d1c1a';g.fillRect(c[0]-11*u,c[1]-22*u,22*u,20*u);g.strokeStyle=`rgba(255,90,216,${fl})`;g.lineWidth=2.2*u;g.strokeRect(c[0]-9*u,c[1]-20*u,18*u,16*u);
   g.fillStyle=`rgba(255,226,120,${fl})`;g.font=`900 ${8*u}px "Big Shoulders Stencil Display", sans-serif`;g.textAlign='center';g.fillText('7',c[0],c[1]-9*u);
@@ -59,14 +60,14 @@ function usDrawFlare(f){const c=iso(f.x,f.y);g.fillStyle='#c42a1a';g.fillRect(c[
 const usDarkL=()=>US.darkL[clamp(cfg.usBright|0,0,US.darkL.length-1)];
 // drawLighting's holes in the tunnels
 function usLights(hole,at){const L=game.lay,U=game.us,t=game.time;let c;
-  const cone=(o,s)=>{c=at(o.x,o.y,WH*.5);hole(c[0],c[1],TW2*US_LOOK.glow,.85*s);const a=o.aim||{x:1,y:0};for(const[d,r]of US_LOOK.cone){c=at(o.x+a.x*d,o.y+a.y*d,WH*.3);hole(c[0],c[1],TW2*r,.8*s)}};
+  const cone=(o,s)=>{const k=usConeMul(o);c=at(o.x,o.y,WH*.5);hole(c[0],c[1],TW2*US_LOOK.glow,.85*s);const a=o.aim||{x:1,y:0};for(const[d,r]of US_LOOK.cone){c=at(o.x+a.x*d*k,o.y+a.y*d*k,WH*.3);hole(c[0],c[1],TW2*r*Math.sqrt(k),.8*s)}};   // perks and relics stretch or shorten it
   for(const o of players.values())if(o.alive||o.downed)cone(o,o===player?1:.8);
   for(const p of L.lamps){c=at(p[0],p[1],WH*.6);hole(c[0],c[1],TW2*2.8,.75)}
   L.neon.forEach((p,n)=>{const fl=.45+.35*Math.max(0,Math.sin(t*2.3+n)*Math.sin(t*5.7+n*3));c=at(p[0],p[1],WH*.4);hole(c[0],c[1],TW2*1.9,fl)});
   L.shrines.forEach((s,n)=>{if(s.arena&&!U.bossDown)return;c=at(s.x,s.y,WH*.6);hole(c[0],c[1],TW2*(U.lit&(1<<n)?2.8:1.6),.8)});
   for(const m of L.merchants){c=at(m.x,m.y,WH*.6);hole(c[0],c[1],TW2*2.2,.75)}
   if(usKind(U.level)!=='boss'||U.bossDown){c=at(L.exit[0],L.exit[1]);hole(c[0],c[1],TW2*2,.7)}
-  for(const f of U.flares){c=at(f.x,f.y,WH*.4);hole(c[0],c[1],TW2*(4+Math.sin(t*20+f.x)*.2),.95)}
+  for(const f of U.flares){c=at(f.x,f.y,WH*.4);hole(c[0],c[1],TW2*((f.r||4)+Math.sin(t*20+f.x)*.2),.95)}
   for(const d of U.drops){c=at(d.x,d.y);hole(c[0],c[1],TW2*.9,.5)}
   for(const e of enemies)if(e.type==='boss'){c=at(e.x,e.y,WH*.6);hole(c[0],c[1],TW2*1.4,.55)}   // a boss you can always find
 }

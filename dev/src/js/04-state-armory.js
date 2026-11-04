@@ -117,7 +117,7 @@ function award(own,e){
   if(demo)return;
   if(own==='dell'){for(const p of players.values())p.sal+=1;return}
   const p=players.get(own);if(!p)return;
-  const v=Math.round((BOUNTY[e.type]||4)*boSalvage(e));p.sal+=v;p.kills++;flt(e.x,e.y-.2,'+'+v,'#e2b436');killFx(e.x,e.y,p.cos.fx);
+  const v=Math.round((BOUNTY[e.type]||4)*boSalvage(e))+(game.us?usBountyPlus(p,e):0);p.sal+=v;p.kills++;flt(e.x,e.y-.2,'+'+v,'#e2b436');killFx(e.x,e.y,p.cos.fx);
 }
 const myName=()=>(acct.state==='full'&&acct.name?acct.name.slice(0,12):(cfg.name||'').trim())||'Big U';
 // opt (v0.9.2): {gid: the shared game id, mods: modifier ids, job: One Job's class, guest: true on a guest's phone}

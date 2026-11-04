@@ -52,7 +52,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
   tp(cx-sd[0]*1.1,cy-sd[1]*1.1);P.usInteract(pl,true);r.wrongSide=P.terr[k0]===P.T_SHUT;
   tp(cx+sd[0]*1.1,cy+sd[1]*1.1);P.usInteract(pl,true);r.rightSide=P.terr[k0]!==P.T_SHUT&&!!(U().opened&1);
   // 8. a chest
-  if(L().chests.length){const c=L().chests[0],s0=pl.sal;tp(c.x,c.y);step(.1);r.chest=pl.sal-s0}else r.chest='none';
+  if(L().chests.length){const c=L().chests[0],n0=(U().loot||[]).length;tp(c.x,c.y);step(.1);r.chest=(U().loot||[]).length-n0}else r.chest='none';   // (M2: a chest's loot lands on the floor, shown before it's taken)
   // 9. the Tunnel Trader
   const m=L().merchants[0];tp(m.x,m.y+1);r.shop=P.canShop(pl);pl.sal=200;pl.nades=0;
   const st=m.stock,ni=st.findIndex(q=>q.k==='c_nade'),left0=U().left[0][ni];r.buyNade=P.usBuy(pl,0,ni)&&pl.nades===1&&pl.sal===185&&U().left[0][ni]===left0-1;
@@ -89,7 +89,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
  assert.equal(r.recovered,37);assert.equal(r.dropsLeft,0);
  assert.ok(r.restBlocked,'no resting with raiders close');assert.deepEqual(r.rest,{juice:3,ix:true,lit:true,raidersBack:true});
  assert.ok(r.doorShut&&r.wrongSide&&r.rightSide,'the shortcut opens from its own side only');
- assert.ok(r.chest==='none'||r.chest>=15,'chests pay salvage');
+ assert.ok(r.chest==='none'||r.chest===1,'a chest drops its loot');
  assert.ok(r.shop&&r.notAtTrader);assert.ok(r.buyNade);assert.ok(r.buyJuice&&r.juiceSoldOut);assert.ok(r.barricade);
  assert.ok(r.lift);assert.deepEqual(r.level2,{level:1,newMap:true,atStart:true,raiders:true,lives:2});
  assert.equal(r.boss.level,2);assert.ok(r.boss.kind);assert.equal(r.boss.gate,0);assert.ok(r.boss.closing&&r.boss.sealed&&r.boss.spawned);assert.equal(r.boss.hp,1200,'960 base, x1.25 (BOSS_HP), one player on Normal');assert.ok(r.boss.exitShut,'the lift is dead until he is');

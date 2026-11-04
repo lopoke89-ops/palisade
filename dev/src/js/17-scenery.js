@@ -439,6 +439,7 @@ function render(dt){
   PM('ui');if(playing()&&!overlayOpen())drawPrompts(p);if(game.fb&&!demo)drawEvacHud();if(!demo&&MAP&&MAP.city)drawBlackoutHud();
   if(playing()&&p.alive&&!overlayOpen()&&!casino()){drawCrosshair(p);drawShells(p)}
   const top=110;
+  if(game.us&&!demo){usPips(p);usEliteFx()}
   for(const e of game.pvp&&!demo?foes():enemies){if(e.us&&e.us.st!=='hunt'&&e.type!=='boss')continue;const c=iso(e.x,e.y);if(c[0]>14&&c[0]<W-14&&c[1]>top&&c[1]<H-14)continue;   // THE UNDERSTRIP: no arrows to raiders still waiting in the dark
     const ex=clamp(c[0],18,W-18),ey=clamp(c[1],top+8,H-18),a=Math.atan2(c[1]-H/2,c[0]-W/2);
     g.save();g.translate(ex,ey);g.rotate(a);if(e.type==='boss')g.scale(1.6,1.6);g.fillStyle=game.pvp?teamCol(e):e.type==='boss'?bossInfo(e.boss).col||'#ff4a3a':ECOL[e.type]||'#ff8a5a';g.beginPath();g.moveTo(8,0);g.lineTo(-5,-6);g.lineTo(-5,6);g.closePath();g.fill();g.restore()}

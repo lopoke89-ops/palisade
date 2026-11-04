@@ -86,7 +86,7 @@ body:not(.desk) #phaseNote{max-width:150px;font-size:10px}
 #usDrink,#usUse,#usSwap{height:40px;background:rgba(27,24,20,.86);border:1px solid #4f9a5a;display:flex;justify-content:space-between;align-items:center;padding:0 10px;gap:6px;
   font-family:var(--stencil);font-weight:800;letter-spacing:.08em;font-size:15px;color:#9fe68f}
 #usDrink b,#usUse b,#usSwap b{font-family:var(--mono);font-size:12px;color:var(--bone)}#usDrink .kc{background:#9fe68f}#usDrink.on{background:rgba(40,90,40,.92)}#usDrink.empty,#usUse.empty{opacity:.45}
-#usUse,#usSwap{border-color:#a8865a;color:#e0c08a}#usUse .kc,#usSwap .kc{background:#e0c08a}#usSwap{height:32px;font-size:12px}
+#usUse,#usSwap{border-color:#a8865a;color:#e0c08a}#usWpn{height:40px;background:rgba(27,24,20,.86);border:1px solid #4f95e0;display:flex;justify-content:space-between;align-items:center;padding:0 10px;gap:6px;font-family:var(--stencil);font-weight:800;letter-spacing:.06em;font-size:12px;color:var(--bone)}#usWpn b{font-family:var(--mono);font-size:11px}#usWpn .kc{background:#9fb8d8}#usWpn[hidden]{display:none}#usUse .kc,#usSwap .kc{background:#e0c08a}#usSwap{height:32px;font-size:12px}
 
 /* ---------- overlays ---------- */
 .overlay{position:fixed;inset:0 0 auto 0;height:var(--appH,100%);display:grid;grid-template-columns:minmax(0,1fr);justify-items:center;align-items:center;

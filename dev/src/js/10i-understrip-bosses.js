@@ -13,6 +13,7 @@ function usBossWake(){const U=game.us;if(U.bossSpawned||NET.mode==='guest')retur
 function usBossReset(){const U=game.us;if(!U||!game.lay.arena)return;enemies=enemies.filter(e=>e.type!=='boss'&&!(e.us&&e.us.call));U.bossSpawned=false;U.bossStage=0;U.floodOn=false;floodOn=false;usGateOpen()}
 // usTick: the boss is down (once), so the arena's shrine and the lift wake
 function usBossTick(){const U=game.us;if(!U.bossSpawned||U.bossDown)return;if(enemies.some(e=>e.type==='boss'&&!e.dead))return;
+  {const A=game.lay.arena,B=game.lay.bossAt[0]||[A.x+A.w/2,A.y+A.h/2];usBossLoot(B[0]+.5,B[1]+1.5,'pitboss')}
   U.bossDown=true;U.floodOn=false;floodOn=false;U.floodWarned=false;U.flood=US.flood.every[0];usGateOpen();markFlow();   // the water drains, and the flash floods start over
   toastAll('THE PIT BOSS IS DOWN','The count room\'s shrine is lit and the lift is running. Rest, then take it down.')}
 // the bar shows the stage's own health
