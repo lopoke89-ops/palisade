@@ -1,7 +1,8 @@
 # Pending deploy: `20261104200000_v012_understrip.sql` (THE UNDERSTRIP, v0.12)
 
-**Status (November 4, 2026): NOT APPLIED to the live database.** Big U (the director) asked to hold the deploy. Another
-agent will apply it, **only once Big U gives the go**. Nothing in this repo touches the live database by itself.
+**Status (November 4, 2026): NOT APPLIED to the live database.** **Owner: Big U** (the director), who applies it
+himself (or hands it to whoever he chooses) and decides when. Nothing in this repo touches the live database by itself.
+The full list of what's still open for THE UNDERSTRIP is [`../plans/understrip/OPEN_ITEMS.md`](../plans/understrip/OPEN_ITEMS.md).
 
 - Migration: [`migrations/20261104200000_v012_understrip.sql`](migrations/20261104200000_v012_understrip.sql)
 - Its test (disposable Postgres, never live): [`../test/understrip_server.js`](../test/understrip_server.js), 61 checks
