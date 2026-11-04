@@ -7,3 +7,4 @@ c_ration,FIELD RATION,heals 30% of max HP over 4 s (a heal: Cursed Chip halves i
 c_smoke,SMOKE CAN,raiders within 3 tiles lose track of you for 4 s,2,18,Tunnel Trader; chest
 c_noise,NOISEMAKER,thrown: raiders within 8 tiles go to it for 6 s,2,15,chest
 c_ammo,AMMO BOX,fills the second weapon's reserve,1,30,Tunnel Trader; Lift Merchant
+c_ammop,AMMO PACK,dropped by raiders (15% of kills while someone is short); walked over: +40% of the second weapon's reserve,1,0,raiders

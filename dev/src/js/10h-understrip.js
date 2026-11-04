@@ -12,7 +12,8 @@ const US={rollCd:2,levels:10,   // rollCd: D5, the roll comes back in 2 s in thi
   restR:1.4,merchR:1.7,chestR:1.1,doorR:1.5,pickR:.85,restClear:8,
   sight:7.5,hear:3.2,shotHear:8,alertR:6,ambushR:2.6,regroupHp:.3,regroupT:4,maxAlive:40,
   regionHp:[1,1.2,1.4],squadHp:.12,   // M4: raiders are tougher deeper down, and for a bigger squad (bosses have their own +35% a player)
-  flood:{first:[50,80],every:[75,115],warn:5,len:18},darkL:[.93,.86,.76,.58],zoom:.87};
+  flood:{first:[50,80],every:[75,115],warn:5,len:18},darkL:[.86,.8,.72,.56],zoom:.87,   // v0.12.1: each brightness step lighter (DARK was .93: too dark in the playtest)
+  ammoDrop:.15,ammoPack:.4};   // v0.12.1: a raider (not an elite) drops an AMMO PACK 15% of the time while someone's second weapon is short; a pack refills 40% of the reserve
 const US_MUFFLE=650;   // Hz: the casino's music heard through concrete (region 1; work order 4.3)
 // the run: [region, level kind, boss]. Region 3 ends with the Gatekeeper's level, then the finale's (the Visitor)
 const US_PLAN=[[1,'normal',''],[1,'normal',''],[1,'boss','pitboss'],[2,'normal',''],[2,'normal',''],[2,'boss','custodian'],
@@ -148,6 +149,8 @@ function usTick(dt){
   for(const p of crew)if(p.ujT>0){p.ujT-=dt;if(p.ujT<=0){p.ujT=0;if(p.alive){const h=p.max*US.heal*usHealMul(p);p.hp=Math.min(p.max,p.hp+h);flt(p.x,p.y,`+${Math.round(h)}`,'#7cff6b');emit(p.x,p.y,WH*.6,'heal')}}}
   // salvage left where someone fell: theirs to pick up
   for(const p of crew)if(p.alive)for(let k=U.drops.length-1;k>=0;k--){const d=U.drops[k];if(d.id===p.id&&Math.hypot(d.x-p.x,d.y-p.y)<US.pickR){p.sal+=d.sal;U.drops.splice(k,1);flt(p.x,p.y,`+${d.sal} SALVAGE RECOVERED`,'#e2b436');personal(p,'restock')}}
+  // v0.12.1: ammo packs are taken by walking over them, by whoever's second weapon is short
+  if(NET.mode!=='guest')for(const l of U.loot.slice())if(l.kind==='consumable'&&l.k==='c_ammop')for(const p of crew)if(p.alive&&Math.hypot(l.x-p.x,l.y-p.y)<US.pickR&&usAmmoShort(p)){usTakeLoot(p,l.n);break}
   // chests open when you walk up to them
   game.lay.chests.forEach((c,n)=>{if(U.chests&(1<<n))return;for(const p of crew)if(p.alive&&Math.hypot(c.x-p.x,c.y-p.y)<US.chestR){U.chests|=1<<n;usOpenChest(p,c);break}});
   // the boss gate seals once someone is through
@@ -253,15 +256,20 @@ const US_GEAR_PRICE={perk:{c:40,r:70,e:110,l:160,g:240},relic:180};
 const usGearPrice=l=>l.kind==='weapon'?US_TIER[l.w.r].price:l.kind==='perk'?US_GEAR_PRICE.perk[(US_PERKS[l.k]||{r:'r'}).r]:US_GEAR_PRICE.relic;
 const usGear=l=>({gear:l,n:1,price:usGearPrice(l)});
 function usPerkOf(r,reg,rars){const pool=US_PERK_IDS.filter(k=>!(US_PERKS[k].from>reg)),near=pool.filter(k=>rars.includes(US_PERKS[k].r));return{kind:'perk',k:usPick(r,near.length?near:pool)}}
-function usLiftStock(r,reg){return[{k:r()<.5?'c_nade':'c_juice',n:1,price:0},usGear({kind:'weapon',w:usRollWeapon(r,reg,usPick(r,['c','r','r','e']))}),usGear(usPerkOf(r,reg,['c','r']))].map(S=>S.gear?S:{...S,price:US_ITEMS[S.k].price})}
+function usLiftStock(r,reg){return[{k:r()<.5?'c_nade':'c_juice',n:1,price:0},usGear({kind:'weapon',w:usRollWeapon(r,reg,usPick(r,['c','r','r','e']))}),usGear(usPerkOf(r,reg,['c','r'])),{k:'c_ammo',n:1,price:0}].map(S=>S.gear?S:{...S,price:US_ITEMS[S.k].price})}
 function usCollectorStock(r,reg){const out=[];for(let k=0;k<2;k++)out.push(usGear({kind:'weapon',w:usRollWeapon(r,reg,r()<.2?'g':r()<.55?'l':'e')}));
   const nP=1+Math.floor(r()*2),seen=[];for(let k=0;k<nP;k++){const P=usPerkOf(r,reg,['e','l']);if(!seen.includes(P.k)){seen.push(P.k);out.push(usGear(P))}}
   const rel=US_RELIC_IDS.filter(k=>!(US_RELICS[k].from>reg)&&k!=='x_eye');out.push(usGear({kind:'relic',k:usPick(r,rel)}));return out}
 const usUpgradesHere=p=>{const m=usMerchantAt(p);return m>=0&&!!US_MERCH[game.lay.merchants[m].kind].up};
 const US_ITEMS={c_nade:{name:'GRENADE',what:'+1 grenade',price:15,max:9},c_juice:{name:'SPARE JUICE',what:'Refills one Lucky Juice charge',price:40,max:9},
-  c_bar:{name:'BARRICADE',what:'A one-tile barricade (120 HP). SPACE places it',price:25,max:2},c_flare:{name:'ROAD FLARE',what:'Lights 4 tiles round for 15 s. Select with F, SPACE throws',price:12,max:3}};
+  c_bar:{name:'BARRICADE',what:'A one-tile barricade (120 HP). SPACE places it',price:25,max:2},c_flare:{name:'ROAD FLARE',what:'Lights 4 tiles round for 15 s. Select with F, SPACE throws',price:12,max:3},
+  // v0.12.1: ammo for the second weapon (the class gun never runs out). The box is bought; the pack drops from raiders
+  c_ammo:{name:'AMMO BOX',what:'Fills your second weapon\'s reserve',price:30,max:1},c_ammop:{name:'AMMO PACK',what:'+40% of your second weapon\'s reserve',price:0,max:1}};
+const usAmmoShort=p=>!!(p&&p.w2&&US_WEAPONS[p.w2.id]&&(p.w2.res|0)<usReserveMax(p.w2,p));
+function usAmmoGive(p,frac){const mx=usReserveMax(p.w2,p),add=Math.min(mx-(p.w2.res|0),Math.ceil(mx*frac));p.w2.res=(p.w2.res|0)+add;flt(p.x,p.y,`+${add} AMMO`,'#c8c3b8');return add}
 function usStock(r,reg=1){const out=[{k:'c_nade',n:2+Math.floor(r()*3)},{k:'c_juice',n:1}];for(const k of usShuffle(r,['c_bar','c_flare']))if(r()<.8)out.push({k,n:1+Math.floor(r()*2)});
-  const st=out.map(s=>({...s,price:US_ITEMS[s.k].price})),nW=1+(r()<.5?1:0);for(let k=0;k<nW;k++)st.push(usGear({kind:'weapon',w:usRollWeapon(r,reg,r()<.35?'r':'c')}));return st}
+  const st=out.map(s=>({...s,price:US_ITEMS[s.k].price})),nW=1+(r()<.5?1:0);for(let k=0;k<nW;k++)st.push(usGear({kind:'weapon',w:usRollWeapon(r,reg,r()<.35?'r':'c')}));
+  st.push({k:'c_ammo',n:2,price:US_ITEMS.c_ammo.price});return st}   // v0.12.1: last, so a v0.12.0 guest's rows still line up with the host's
 const usNearMerchant=p=>!!p&&!!game.lay&&!!game.lay.merchants&&game.lay.merchants.findIndex(q=>Math.hypot(q.x-p.x,q.y-p.y)<US.merchR);
 function usMerchantAt(p){return game.lay&&game.lay.merchants?game.lay.merchants.findIndex(q=>Math.hypot(q.x-p.x,q.y-p.y)<US.merchR):-1}
 const usPrice=(p,S)=>Math.round(S.price*(usRelic(p,'x_deck')?1.25:1)*(usHas(p,'p_comped')?.75:1));
@@ -272,6 +280,7 @@ function usBuy(p,m,si){const L=game.lay,U=game.us;if(!p||!p.alive||usMerchantAt(
   const I=US_ITEMS[S.k];
   if(S.k==='c_nade'){if(p.nades>=p.maxN)return false;p.nades++}
   else if(S.k==='c_juice'){if(p.uj>=p.ujm)return false;p.uj++}
+  else if(S.k==='c_ammo'){if(!usAmmoShort(p))return false;usAmmoGive(p,1)}
   else{const k=S.k==='c_bar'?'bar':'flare';if(p.ui[k]>=I.max)return false;p.ui[k]++}
   p.sal-=price;if(!deck)U.left[m][si]--;if(usHas(p,'p_comped'))p.compM=m;personal(p,'restock');return true}
 
@@ -279,7 +288,7 @@ function usBuy(p,m,si){const L=game.lay,U=game.us;if(!p||!p.alive||usMerchantAt(
 function usTradeRows(box,p){const m=usMerchantAt(p),L=game.lay,U=game.us;if(m<0)return;const MM=US_MERCH[L.merchants[m].kind];
   const h=document.createElement('div');h.className='arow usHead';const hb=document.createElement('b');hb.textContent=MM.name;const hi=document.createElement('i');hi.textContent=MM.line;h.append(hb,hi);box.append(h);
   L.merchants[m].stock.forEach((S,si)=>{if(S.gear){usGearRow(box,p,m,si,S);return}const I=US_ITEMS[S.k],left=U.left[m][si]|0,row=document.createElement('div');row.className='arow';
-    const full=S.k==='c_nade'?p.nades>=p.maxN:S.k==='c_juice'?p.uj>=p.ujm:(p.ui[S.k==='c_bar'?'bar':'flare']|0)>=I.max;
+    const full=S.k==='c_nade'?p.nades>=p.maxN:S.k==='c_juice'?p.uj>=p.ujm:S.k==='c_ammo'?!usAmmoShort(p):(p.ui[S.k==='c_bar'?'bar':'flare']|0)>=I.max;
     const b=document.createElement('b');b.textContent=I.name;const sm=document.createElement('small');sm.textContent=`${left} LEFT`;b.append(sm);
     const i=document.createElement('i');i.textContent=I.what;
     const btn=document.createElement('button');btn.type='button';btn.dataset.usBuy=si;btn.textContent=left<=0?'SOLD OUT':full?'FULL':S.price+' SAL';btn.disabled=left<=0||full||p.sal<S.price||!canShop(p);

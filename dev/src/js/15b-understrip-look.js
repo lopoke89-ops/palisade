@@ -3,7 +3,7 @@
 // (US_EDGE), from a few shared block sprites (the projection is the same everywhere, so one sprite serves every tile); walls
 // on the camera side of you draw low, so a one-tile corridor never hides you, the raiders or a telegraph. Light comes from
 // you: a cone where you aim and a small glow, plus the level's lamps, neon, shrines and flares. Raiders carry no light.
-const US_LOOK={wallH:1.15,lowH:.32,cone:[[.7,.8],[1.5,1.05],[2.4,1.3],[3.4,1.5],[4.5,1.65],[5.4,1.6]],glow:1.6};
+const US_LOOK={wallH:1.15,lowH:.32,cone:[[.7,.88],[1.5,1.16],[2.4,1.43],[3.4,1.65],[4.5,1.82],[5.4,1.76]],glow:1.76};   // v0.12.1: the cone and glow 10% wider (playtest: too dark)
 function usGroundCol(i,j,h){const t=terr[idx(i,j)],z=US_HAZ[idx(i,j)];
   if(t===T_CONC||t===T_TANK||t===T_SHUT&&z!==HZ_BLAST)return'#0b0c0b';
   if(t===T_WATER)return h<.5?'#16303c':'#142b36';
@@ -15,11 +15,12 @@ function usGroundCol(i,j,h){const t=terr[idx(i,j)],z=US_HAZ[idx(i,j)];
 function usGroundDetail(i,j,h){const t=terr[idx(i,j)];if(t!==T_GROUND&&t!==T_LOW)return true;
   if(usRegion()>1||US_HAZ[idx(i,j)]){usRegDetail(i,j,h);return true}
   if(h>.9){const c=iso(i+.3+h*.4,j+.5);g.strokeStyle='rgba(15,15,14,.5)';g.lineWidth=u;g.beginPath();g.moveTo(c[0]-4*u,c[1]);g.lineTo(c[0]+2*u,c[1]-u);g.lineTo(c[0]+5*u,c[1]+u);g.stroke()}
-  else if(h<.06){const c=iso(i+.5,j+.5);oval(c[0],c[1],8*u,3*u,'rgba(40,70,80,.35)')}
+  else if(h<.06){const c=iso(i+.5,j+.5);oval(c[0],c[1],8*u,3*u,'rgba(40,70,80,.35)');if(h<.03)oval(c[0]+u,c[1],5*u,1.6*u,h<.015?'rgba(255,90,216,.22)':'rgba(79,210,255,.2)')}   // v0.12.1: neon from the grates caught in the puddles
+  else if(h>.8&&h<.83){const c=iso(i+.5,j+.5);oval(c[0],c[1],7*u,2.6*u,['rgba(255,90,216,.16)','rgba(255,210,58,.14)','rgba(124,255,107,.13)'][(i+j)%3])}   // spilt paint
   return true}
 // one block, drawn with the camera at the origin, reused for every tile (key: kind, height, size)
 const US_SPR=new Map();
-function usBlock(kind,low){const reg=usRegion(),key=kind+'|'+(low?1:0)+'|'+TW2+'|'+DPR+'|'+reg;let S=US_SPR.get(key);if(S)return S;const WC=US_REG[reg].wall;
+function usBlock(kind,low,v=0){const reg=usRegion(),key=kind+'|'+(low?1:0)+'|'+TW2+'|'+DPR+'|'+reg+'|'+v;let S=US_SPR.get(key);if(S)return S;const WC=US_REG[reg].wall;
   const hh=WH*(low?US_LOOK.lowH:kind==='junk'?.62:kind==='tank'?1.3:US_LOOK.wallH),pad=4*u,x0=Math.floor((-TW2-pad)*DPR)/DPR,y0=Math.floor((-hh-pad)*DPR)/DPR,x1=TW2+pad,y1=2*TH2+pad;
   const cv2=document.createElement('canvas');cv2.width=Math.ceil((x1-x0)*DPR);cv2.height=Math.ceil((y1-y0)*DPR);const ctx=cv2.getContext('2d');ctx.setTransform(DPR,0,0,DPR,0,0);
   const kg=g,kx=camX,ky=camY,hp=heightPreview;g=ctx;camX=-x0;camY=-y0;heightPreview=true;
@@ -27,6 +28,7 @@ function usBlock(kind,low){const reg=usRegion(),key=kind+'|'+(low?1:0)+'|'+TW2+'
     if(kind==='wall'){const T=boxR(0,0,1,1,0,hh,low?WC[3]:WC[0],WC[1],WC[2]);g.strokeStyle='rgba(190,196,180,.28)';g.lineWidth=u;g.beginPath();g.moveTo(T.D[0],T.D[1]-hh);g.lineTo(T.C[0],T.C[1]-hh);g.lineTo(T.B[0],T.B[1]-hh);g.stroke();
       if(!low){g.strokeStyle='rgba(0,0,0,.35)';g.lineWidth=u;faceLine(iso(0,1),iso(1,1),hh,.35);faceLine(iso(1,1),iso(1,0),hh,.35);faceLine(iso(0,1),iso(1,1),hh,.7);faceLine(iso(1,1),iso(1,0),hh,.7);
         g.strokeStyle='rgba(120,150,150,.18)';faceLine(iso(0,1),iso(1,1),hh,.1);   // concrete courses and a flood line
+        if(reg===1&&v)usGraffiti(v,hh);   // v0.12.1: the Flood Tunnels' tags
         if(reg===2){g.strokeStyle='rgba(208,120,42,.5)';g.lineWidth=2*u;faceLine(iso(0,1),iso(1,1),hh,.5);faceLine(iso(1,1),iso(1,0),hh,.5)}   // Shelter 7's orange band
         if(reg===3){g.strokeStyle='rgba(124,255,107,.25)';g.lineWidth=1.4*u;const a=iso(.2,1),b=iso(.5,1);g.beginPath();g.moveTo(a[0],a[1]-hh*.2);g.quadraticCurveTo(a[0]+3*u,a[1]-hh*.5,b[0],b[1]-hh*.8);g.stroke()}}}   // growth up the lab wall
     else if(kind==='blast'){boxR(0,0,1,1,0,hh,'#5a5c50','#454738','#36382c');g.fillStyle='#d0782a';for(let q=0;q<4;q++){const a=iso(q/4,1),b=iso((q+.5)/4,1);g.beginPath();g.moveTo(a[0],a[1]-hh*.15);g.lineTo(b[0],b[1]-hh*.15);g.lineTo(b[0],b[1]-hh*.3);g.lineTo(a[0],a[1]-hh*.3);g.closePath();g.fill()}}
@@ -39,9 +41,28 @@ function usBlock(kind,low){const reg=usRegion(),key=kind+'|'+(low?1:0)+'|'+TW2+'
     else if(reg===3){boxR(.16,.2,.84,.8,0,hh*.75,'#d8dde0','#b0b6ba','#8c9296');g.fillStyle='#3aa0d0';const c=iso(.5,.8);g.fillRect(c[0]-5*u,c[1]-hh*.45,10*u,2*u)}   // a lab cart
     else{boxR(.18,.2,.82,.8,0,hh,'#4b4f58','#3a3d46','#2c2f36');const c=iso(.5,.8);g.fillStyle='#1a1c22';g.fillRect(c[0]-5*u,c[1]-hh*.78,10*u,6*u);g.fillStyle='rgba(255,90,216,.5)';g.fillRect(c[0]-4*u,c[1]-hh*.75,8*u,4*u)}   // a dumped slot machine
   }finally{g=kg;camX=kx;camY=ky;heightPreview=hp}
-  S={cv:cv2,x:x0,y:y0,w:cv2.width/DPR,h:cv2.height/DPR};if(US_SPR.size>32)US_SPR.clear();US_SPR.set(key,S);return S}
+  S={cv:cv2,x:x0,y:y0,w:cv2.width/DPR,h:cv2.height/DPR};if(US_SPR.size>48)US_SPR.clear();US_SPR.set(key,S);return S}
+// v0.12.1: graffiti on the Flood Tunnels' walls (our own abstract tags: no words, no real crews). v 1-3 picks the style;
+// a point on a face: s along it (0-1), f up it (0-1); the left face runs iso(0,1)→iso(1,1), the right iso(1,1)→iso(1,0)
+const US_TAG=['#ff5ad8','#4fd2ff','#ffd23a','#7cff6b','#ff8a3a','#b98cff'];
+function usGraffiti(v,hh){const L=(s,f)=>{const a=iso(0,1),b=iso(1,1);return[a[0]+(b[0]-a[0])*s,a[1]+(b[1]-a[1])*s-hh*f]},R=(s,f)=>{const a=iso(1,1),b=iso(1,0);return[a[0]+(b[0]-a[0])*s,a[1]+(b[1]-a[1])*s-hh*f]};
+  const path=(F,pts)=>{g.beginPath();pts.forEach(([s,f],n)=>{const p=F(s,f);n?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1])})};g.lineCap='round';g.lineJoin='round';
+  if(v===1){   // a bubble tag: a fat pink loop with a cyan outline and a highlight
+    const P=[[.14,.32],[.24,.62],[.36,.34],[.46,.6],[.58,.3],[.7,.58],[.84,.36]];g.strokeStyle='rgba(79,210,255,.75)';g.lineWidth=5.4*u;path(L,P);g.stroke();
+    g.strokeStyle='rgba(255,90,216,.85)';g.lineWidth=3.4*u;path(L,P);g.stroke();g.strokeStyle='rgba(255,240,250,.55)';g.lineWidth=.9*u;path(L,P.slice(1,4).map(([s,f])=>[s,f+.04]));g.stroke()}
+  else if(v===2){   // a yellow zigzag with drips, and an orange underline
+    const P=[[.12,.62],[.26,.42],[.4,.66],[.54,.4],[.68,.64],[.84,.44]];g.strokeStyle='rgba(255,210,58,.85)';g.lineWidth=2.6*u;path(R,P);g.stroke();
+    g.lineWidth=1.2*u;for(const s of[.26,.54,.84]){path(R,[[s,P.find(q=>q[0]===s)[1]],[s,P.find(q=>q[0]===s)[1]-.2-s*.12]]);g.stroke()}
+    g.strokeStyle='rgba(255,138,58,.75)';g.lineWidth=1.8*u;path(R,[[.1,.3],[.88,.3]]);g.stroke()}
+  else{   // a green star and a violet scrawl across both faces
+    const c=L(.3,.5),r=hh*.16,pts=[];for(let k=0;k<10;k++){const a=-Math.PI/2+k*Math.PI/5,rr=k%2?r*.45:r;pts.push([c[0]+Math.cos(a)*rr*1.3,c[1]+Math.sin(a)*rr])}
+    g.fillStyle='rgba(124,255,107,.7)';g.beginPath();pts.forEach((p,n)=>n?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.closePath();g.fill();
+    g.strokeStyle='rgba(185,140,255,.8)';g.lineWidth=2.2*u;path(L,[[.55,.62],[.66,.38],[.78,.6],[.9,.4]]);g.stroke();path(R,[[.06,.42],[.2,.62],[.34,.36],[.5,.56]]);g.stroke()}
+  g.lineCap='butt';g.lineJoin='miter'}
 const US_GATE=new Set();
-function itemUsWall(k,cut){const i=k%N,j=(k/N)|0,t=terr[k],kind=t===T_JUNK?'junk':t===T_TANK?'tank':t===T_SHUT?(US_GATE.has(k)?'gate':US_HAZ[k]===HZ_BLAST?'blast':'door'):'wall',S=usBlock(kind,cut&&(kind==='wall'||kind==='blast'));
+// which walls carry a tag (region 1, standing walls only): about 3 in 5, a style from the tile's own hash
+const usTagOf=k=>{let h=(k*2654435761)>>>0;h^=h>>>15;h=Math.imul(h,2246822519)>>>0;h^=h>>>13;const n=h%5;return n<2?0:n-1};
+function itemUsWall(k,cut){const i=k%N,j=(k/N)|0,t=terr[k],kind=t===T_JUNK?'junk':t===T_TANK?'tank':t===T_SHUT?(US_GATE.has(k)?'gate':US_HAZ[k]===HZ_BLAST?'blast':'door'):'wall',low=cut&&(kind==='wall'||kind==='blast'),S=usBlock(kind,low,kind==='wall'&&!low&&usRegion()===1?usTagOf(k):0);
   g.drawImage(S.cv,camX+(i-j)*TW2+S.x,camY+(i+j)*TH2+S.y,S.w,S.h)}
 // shrines, the merchant, chests, the lift's ring, dropped salvage and flares
 function usItems(){const L=game.lay,U=game.us;if(!L||!U)return;

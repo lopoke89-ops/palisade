@@ -119,12 +119,12 @@ function usTakeLoot(p,n){const U=game.us,i=U.loot.findIndex(l=>l.n===n);if(i<0||
   if(!usApplyLoot(p,l,()=>U.loot.splice(i,1)))return false;U.stats.found=(U.stats.found|0)+1;return true}
 // a pickup (or a purchase) into the player's kit: what it replaces goes on the floor. gone(): take it off the floor first
 function usCanApply(p,l){if(l.kind==='perk')return!usHas(p,l.k);if(l.kind!=='consumable')return true;const I=US_ITEMS[l.k];
-  return l.k==='c_nade'?p.nades<p.maxN:l.k==='c_juice'?p.uj<p.ujm:(p.ui[l.k==='c_bar'?'bar':'flare']|0)<I.max}
+  return l.k==='c_nade'?p.nades<p.maxN:l.k==='c_juice'?p.uj<p.ujm:l.k==='c_ammo'||l.k==='c_ammop'?usAmmoShort(p):(p.ui[l.k==='c_bar'?'bar':'flare']|0)<I.max}
 function usApplyLoot(p,l,gone){if(!usCanApply(p,l))return false;if(gone)gone();
   if(l.kind==='weapon'){const old=usGiveWeapon(p,l.w);if(old)usDropLoot(p.x+.3,p.y+.3,{kind:'weapon',w:{id:old.id,r:old.r,mods:old.mods}})}
   else if(l.kind==='perk'){p.uPerks=(p.uPerks||[]).concat([l.k]);usRefit(p)}
   else if(l.kind==='relic'){const old=p.uRelic;p.uRelic=l.k;if(old&&old!==l.k)usDropLoot(p.x+.3,p.y+.3,{kind:'relic',k:old});usRefit(p)}
-  else if(l.kind==='consumable'){if(l.k==='c_nade')p.nades++;else if(l.k==='c_juice')p.uj++;else p.ui[l.k==='c_bar'?'bar':'flare']++}
+  else if(l.kind==='consumable'){if(l.k==='c_nade')p.nades++;else if(l.k==='c_juice')p.uj++;else if(l.k==='c_ammo')usAmmoGive(p,1);else if(l.k==='c_ammop')usAmmoGive(p,US.ammoPack);else p.ui[l.k==='c_bar'?'bar':'flare']++}
   else p.sal+=l.sal;
   const lb=usLootLabel(l);toastTo(p,lb.name,lb.line);personal(p,'restock');return true}
 
@@ -180,7 +180,9 @@ const usHealMulK=p=>(usHas(p,'p_gulp')?1.25:1)*(usRelic(p,'x_chip')?.5:1)*(usRel
 // a tunnel raider down (hurtEnemy): elites stay down past a rest and drop loot
 function usEnemyDied(e,own){const U=game.us;if(!U||NET.mode==='guest')return;
   if(e.elite){U.eliteDown=U.eliteDown||[];U.eliteDown.push(e.us.sid);const r=usRng(usHash(U.seed,U.level,4000+e.us.sid));usDropLoot(e.x,e.y,usRollLoot(r,'elite',US_PLAN[U.level][0]));
-    const p=own&&players.get(own);if(p){p.sal+=US_LOOT.elite.bounty;flt(e.x,e.y-.4,`+${US_LOOT.elite.bounty} ELITE`,'#e2b436')}}}
+    const p=own&&players.get(own);if(p){p.sal+=US_LOOT.elite.bounty;flt(e.x,e.y-.4,`+${US_LOOT.elite.bounty} ELITE`,'#e2b436')}}
+  // v0.12.1: an ammo pack now and then, while someone's second weapon is short (at most 3 on the floor at once)
+  else if(e.type!=='boss'&&rnd()<US.ammoDrop&&[...players.values()].some(q=>q.alive&&usAmmoShort(q))&&U.loot.filter(l=>l.k==='c_ammop').length<3)usDropLoot(e.x,e.y,{kind:'consumable',k:'c_ammop'})}
 // a boss down: one rare-or-better drop for each of you, and the boss's own (the first time each of you beats him this run)
 function usBossLoot(x,y,key){const U=game.us;let n=0;for(const p of players.values()){const r=usRng(usHash(U.seed,U.level,7000+n));usDropLoot(x+(n%3-1)*.8,y+Math.floor(n/3)*.8,{...usRollLoot(r,'boss',US_PLAN[U.level][0]),for:p.id});n++}
   const S=US_SIG[key];if(S)usDropLoot(x,y+1.2,JSON.parse(JSON.stringify(S)))}
