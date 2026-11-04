@@ -47,6 +47,8 @@ var tip_p: PanelContainer
 var tip_l: Label
 var kit := {}   # the build kit's buttons (#kit): bm, wall, door, c0-c2, build, arm, nade, spr, roll, ab; and pk, its F
 var kit_box := Rect2()   # the kit column, in screen pixels
+var kit_sig: Array = []   # what the kit column was last laid out from (_kit_sig)
+var toast_sig: Array = []   # what the banner's small line was last wrapped from
 var _kcs: Array = []   # [label, background] of every key cap, restyled with the scale
 var toast_q: Array = []   # TOAST_Q: waiting messages {big, small, kind}
 var toast_cur = null   # the message up now
@@ -971,6 +973,8 @@ func _kcw(l: Label) -> float:
 ## buttons stacked with 7 px between them (6 inside the build kit); a button whose parts need more room widens it
 ## (the browser's grid does the same, past the right edge)
 func _kit_layout() -> void:
+	if _kit_sig() == kit_sig:
+		return
 	var W := size.x / s
 	var H := size.y / s
 	var order := ["bm", "pieces", "c0", "c1", "c2", "build", "arm", "nade", "spr", "roll", "ab"]
@@ -1044,6 +1048,25 @@ func _kit_layout() -> void:
 				_place(b.parts.kc, cw - 11 - nw - 8 - (6 if k == "roll" else 0.0) - kw, (bh - 14) / 2, kw, 14)
 		y += bh
 	kit_box = Rect2(Vector2(x0, top) * s, Vector2(136, y - top) * s)   # #kit itself stays 136 wide; wider buttons overhang it
+	kit_sig = _kit_sig()
+
+
+## all _kit_layout reads: the HUD's size and scale, and each kit control's visibility, text, style and minimum size (the
+## key caps' visibility too, which it sets itself); the column is laid out again only when one of them changed. The
+## minimum size clamps what _place sets, and after a restyle it's the old one until the next frame
+func _kit_sig() -> Array:
+	var a := [size, s]
+	for k in kit:
+		var b: Control = kit[k]
+		a.append_array([b.visible, b.get_combined_minimum_size()])
+		if b is Label:
+			a.append_array([b.text, b.label_settings])
+		elif b is KitBtn:
+			a.append(b.text)
+			for l in b.parts.values():
+				if l is Label:
+					a.append_array([l.visible, l.text, l.label_settings, l.get_combined_minimum_size()])
+	return a
 
 
 ## a label's line height in CSS pixels
@@ -1212,20 +1235,23 @@ func _toast_place() -> void:
 			var st := toast_small.label_settings
 			var f: Font = st.font
 			var mw := minf(62 * f.get_char_size(ord("0"), st.font_size).x, (w - 24) * s)
-			var lines := _wrap(sm, f, st.font_size, mw)
-			var lo := mw / 4
-			var hi := mw
-			while hi - lo > 1:
-				var mid := (lo + hi) / 2
-				if _wrap(sm, f, st.font_size, mid).size() > lines.size():
-					lo = mid
-				else:
-					hi = mid
-			lines = _wrap(sm, f, st.font_size, hi)
-			if lines.size() > 2:   # -webkit-line-clamp: 2
-				lines = [lines[0], lines[1].substr(0, maxi(0, lines[1].length() - 1)) + "…"]
-			toast_small.text = "\n".join(lines)
-			toast_small.custom_minimum_size = Vector2(ceilf(mw), 0)
+			var sig := [sm, mw, f, st.font_size]
+			if sig != toast_sig:   # wrapped again only when the line or its room changed
+				toast_sig = sig
+				var lines := _wrap(sm, f, st.font_size, mw)
+				var lo := mw / 4
+				var hi := mw
+				while hi - lo > 1:
+					var mid := (lo + hi) / 2
+					if _wrap(sm, f, st.font_size, mid).size() > lines.size():
+						lo = mid
+					else:
+						hi = mid
+				lines = _wrap(sm, f, st.font_size, hi)
+				if lines.size() > 2:   # -webkit-line-clamp: 2
+					lines = [lines[0], lines[1].substr(0, maxi(0, lines[1].length() - 1)) + "…"]
+				toast_small.text = "\n".join(lines)
+				toast_small.custom_minimum_size = Vector2(ceilf(mw), 0)
 		(toast_p.get_child(0) as VBoxContainer).add_theme_constant_override("separation", roundi(4 * s))   # small's margin-top
 	var hh := toast_p.get_combined_minimum_size().y / s
 	var bb := boss_box()

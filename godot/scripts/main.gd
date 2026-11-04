@@ -1104,9 +1104,17 @@ func _update_fx(dt: float) -> void:
 
 # ---------------------------------------------------------------- drawing helpers (15-render.js)
 
-## a world point on screen, at the ground's height there (Frostpeak's terraces; flat elsewhere)
+## a world point on screen, at the ground's height there (Frostpeak's terraces; flat elsewhere). The 2D layers call it
+## a hundred-odd times a frame, so sim.height_at and v.iso are inlined here, same sums in the same order (keep in step)
 func iso(x: float, y: float) -> Vector2:
-	return v.iso(x, y, sim.height_at(x, y))
+	var z := 0.0
+	var i := floori(x)
+	var j := floori(y)
+	var n: int = sim.N
+	if i >= 0 and j >= 0 and i < n and j < n:
+		var k := j * n + i
+		z = sim.heights[k] + ((1.0 - (y - j)) if sim.connectors[k] != 0 else 0.0)
+	return Vector2((x - y) * v.TW2 + v.cam_x, (x + y) * v.TH2 + v.cam_y - z * (24.0 * v.u))
 
 
 func c(h: String) -> Color:

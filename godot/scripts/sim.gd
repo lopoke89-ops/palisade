@@ -39,6 +39,7 @@ var flow_dirty := false
 var flow_t := 0.0
 var poi_due := false   # the POI fields are a step behind the stake's and get rebuilt next step (see compute_flow)
 var flow_jobs: Array = []   # Black Out: the fields a rebuild put on workers (FlowJob, the stake's first), taken next step
+var flow_pre: FlowJob = null   # Black Out: the next POI's field, built on a worker just before its attack (poi_flow)
 var next_id := 1
 var bullet_seq := 0
 var game := {}
@@ -431,6 +432,24 @@ func compute_flow(poi_later: bool = false) -> void:
 
 
 const FLOW_ASYNC_N := 48   # maps this big (Black Out's 64x64) rebuild their fields in play on workers (compute_flow)
+const FLOW_PRE_T := 0.5   # Black Out: the next POI's field goes to a worker this long before its attack (flow_prebuild)
+
+
+## the quiet's last FLOW_PRE_T: the next POI's field from this step's costs, on a worker, so its first raider's
+## poi_flow needn't build it (it's only used if the costs are still the same then); once per POI
+func flow_prebuild(ci: int) -> void:
+	if N < FLOW_ASYNC_N or is_frost() or poi_flows.has(ci) or (flow_pre != null and flow_pre.ci == ci):
+		return
+	if flow_pre != null:
+		WorkerThreadPool.wait_for_task_completion(flow_pre.task)
+	var J := FlowJob.new()
+	J.ci = ci
+	J.goal = idx(cores[ci].i, cores[ci].j)
+	J.side = N
+	J.cost = _flow_costs()
+	J.cost[J.goal] = 0.0   # enter_cost's core_k
+	J.task = WorkerThreadPool.add_task(J.run, true, "flow field")
+	flow_pre = J
 
 
 ## a field on a worker: its goal and costs, read on the main thread; the field, once run
@@ -464,6 +483,8 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:   # a worker may still be filling a field (no calls of its own here: it's going)
 		for J in flow_jobs:
 			WorkerThreadPool.wait_for_task_completion(J.task)
+		if flow_pre != null:
+			WorkerThreadPool.wait_for_task_completion(flow_pre.task)
 
 
 func mark_flow() -> void:
@@ -6367,6 +6388,8 @@ func bo_tick(dt: float) -> void:
 		var c: Dictionary = cores[B.order[B.n]]
 		c.next = true
 		toast("NEXT · %s" % c.poi.name, ("The Radio Tower picked it up: %d seconds." % ceili(B.t)) if bo_held("warn") else "No radio. It's coming now.")
+	if B.n < B.order.size() and B.t <= FLOW_PRE_T and B.t > 0:
+		flow_prebuild(B.order[B.n])
 	if B.t <= 0:
 		for c in cores:
 			c.next = false
@@ -6422,6 +6445,15 @@ func bo_stages() -> int:
 func poi_flow(ci: int) -> PackedFloat64Array:
 	if poi_flows.has(ci):
 		return poi_flows[ci]
+	if flow_pre != null and flow_pre.ci == ci:   # built just before the attack: kept if no tile's cost changed since
+		var J := flow_pre
+		flow_pre = null
+		var cost := _flow_costs()
+		cost[J.goal] = 0.0
+		WorkerThreadPool.wait_for_task_completion(J.task)
+		if J.side == N and J.goal == idx(cores[ci].i, cores[ci].j) and J.cost == cost:
+			poi_flows[ci] = J.out
+			return J.out
 	var f := PackedFloat64Array()
 	f.resize(N * N)
 	var c: Dictionary = cores[ci]
