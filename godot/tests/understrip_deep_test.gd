@@ -122,7 +122,7 @@ func _initialize():
 	var cu := fight(c)
 	check(not cu.is_empty() and cu.boss == "custodian", "the Custodian wakes as the gate closes")
 	if not cu.is_empty():
-		check(is_equal_approx(cu.max, 1440.0 * Sim.BOSS_HP * c.Df.hp), "his health is the browser's")
+		check(is_equal_approx(cu.max, 3556.0 * Sim.BOSS_HP * c.Df.hp), "his health is the browser's")
 		run(c, 8.0, cu)
 		var shut: bool = c.game.us.blast.any(func(b): return b == 2) or c.game.us.blast.size() == 0
 		check(shut, "the hall's blast doors slam on their rhythm")

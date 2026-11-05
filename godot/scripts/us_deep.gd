@@ -16,26 +16,27 @@ const HZ_BLAST := 5
 const HZ := {"rad": 3.0, "acid": 6.0, "gas": 10.0, "lung": 0.5, "vent_every": [13.0, 21.0], "vent_warn": 2.0, "vent_on": 6.0, "tick": 0.25, "grav": 0.6}
 const DRONE := {"touch": 4.0, "cd": 0.6, "r": 0.55, "light": 2.0, "litSpeed": 0.5, "pack": [4, 6], "alive": 12, "alarm": 3.0}
 
-const CUS := {"hp": 1440.0, "speed": 1.0, "speed2": 1.2, "mop": {"tell": 0.9, "r": 3.0, "half": 1.1, "dmg": 24.0, "slow": 0.6, "cd": [3.0, 2.5], "strip": 3.0, "dps": 8.0},
+const CUS := {"hp": 3556.0, "speed": 1.0, "speed2": 1.2, "mop": {"tell": 0.9, "r": 3.0, "half": 1.1, "dmg": 24.0, "slow": 0.6, "cd": [3.0, 2.5], "strip": 3.0, "dps": 8.0},
 	"door": {"every": 8.0, "warn": 1.0, "shut": 3.0, "dmg": 40.0}, "crush": {"tell": 1.0, "shut": 1.5, "dmg": 45.0, "cd": 7.0},
 	"gas": {"tell": 2.0, "len": 8.0, "dps": 10.0, "cd": 14.0}, "turret": {"tell": 0.8, "n": 3, "dmg": 9.0, "cd": 6.0}, "transition": 3.0}
-const GK := {"hp": 1920.0, "speed": 0.9, "suit2": 0.8, "pilot": 2.4, "pilotHp": 0.2, "rockets": {"tell": 1.1, "r": 1.2, "n": [4, 3], "cd": [5.0, 7.0], "power": 0.56},
+const GK := {"hp": 5333.0, "speed": 0.9, "suit2": 0.8, "pilot": 2.4, "pilotHp": 0.2, "rockets": {"tell": 1.1, "r": 1.2, "n": [4, 3], "cd": [5.0, 7.0], "power": 0.56},
 	"shield": {"tell": 0.6, "len": 4.0, "cd": 10.0}, "stomp": {"tell": 0.8, "r": 2.5, "dmg": 20.0, "push": 1.5, "cd": 4.0},
 	"pound": {"tell": 1.2, "r": 3.0, "dmg": 34.0, "cd": 5.0}, "sidearm": {"tell": 0.6, "n": 3, "dmg": 9.0, "cd": 2.0}, "dive": {"every": 4.0, "len": 0.5, "speed": 7.0}, "transition": 3.0}
-const VIS := {"hp": 2800.0, "speed": 1.2, "speed2": 1.4, "pulse": {"tell": 0.8, "speed": 6.0, "max": 9.0, "w": 0.45, "dmg": 24.0, "cd": 4.0},
+const VIS := {"hp": 8000.0, "speed": 1.2, "speed2": 1.4, "pulse": {"tell": 0.8, "speed": 6.0, "max": 9.0, "w": 0.45, "dmg": 24.0, "cd": 4.0},
 	"tank": {"tell": 1.2, "r": 1.3, "dmg": 30.0, "acid": 6.0, "acidT": 4.0, "cd": 6.0}, "blink": {"tell": 0.9, "r": 2.0, "dmg": 16.0, "cd": 5.0},
 	"swarm": {"n": 6, "cd": 14.0}, "well": {"tell": 1.0, "len": 3.0, "r": 6.0, "core": 1.2, "pull": 1.2, "dps": 12.0, "cd": 12.0}, "desperate": 0.7, "transition": 3.0}
 
 ## the bosses as Sim.boss_def gives them (the browser's BOSSES entries)
 const DEFS := {
-	"custodian": {"name": "THE CUSTODIAN", "hp": 1440.0, "speed": 1.0, "scan": 12.0, "bounty": 50, "col": "#9bbf5a",
+	"custodian": {"name": "THE CUSTODIAN", "hp": 3556.0, "speed": 1.0, "scan": 12.0, "bounty": 50, "col": "#9bbf5a",
 		"intro": "A shock mop and the shelter's own doors. Watch the light over each door: amber means it's about to slam."},
-	"gatekeeper": {"name": "THE GATEKEEPER", "hp": 1920.0, "speed": 0.9, "scan": 12.0, "bounty": 60, "col": "#cfd8dc",
+	"gatekeeper": {"name": "THE GATEKEEPER", "hp": 5333.0, "speed": 0.9, "scan": 12.0, "bounty": 60, "col": "#cfd8dc",
 		"intro": "Rockets fall where the circles are. His shield blocks shots from the front: go round it."},
-	"visitor": {"name": "THE VISITOR", "hp": 2800.0, "speed": 1.2, "scan": 14.0, "bounty": 80, "col": "#b8a8ff",
+	"visitor": {"name": "THE VISITOR", "hp": 8000.0, "speed": 1.2, "scan": 14.0, "bounty": 80, "col": "#b8a8ff",
 		"intro": "Psychic rings: roll through them. When the lights go out, a flash shows where it will be next."},
 }
-const HP := {"pitboss": 960.0, "custodian": 1440.0, "gatekeeper": 1920.0, "visitor": 2800.0}
+## v0.12.4 (Big U): each boss 50% more than the one before, the finale 10,000 solo on Normal (8,000 x BOSS_HP 1.25)
+const HP := {"pitboss": 2370.0, "custodian": 3556.0, "gatekeeper": 5333.0, "visitor": 8000.0}
 const WEAK := {"pitboss": "blast", "custodian": "shock", "gatekeeper": "ap", "visitor": "fire"}
 const DOWN := {"pitboss": ["THE PIT BOSS IS DOWN", "The count room's shrine is lit and the lift is running. Rest, then take it down."],
 	"custodian": ["THE CUSTODIAN IS DOWN", "The hall's doors stand open, its shrine is lit, and the lift is running."],

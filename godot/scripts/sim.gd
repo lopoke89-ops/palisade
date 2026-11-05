@@ -3563,7 +3563,7 @@ static func arm_boost(lv: int, old_step: float, new_step: float) -> float:
 static func boss_def(k: String) -> Dictionary:
 	if k == "pitboss":
 		var b: Dictionary = BOSSES.butcher.duplicate(true)
-		b.merge({"name":"THE PIT BOSS","hp":960.0,"speed":1.6,"scan":11.0,"bounty":40,"col":"#e2b436","intro":"Watch the explosive chips. At half health, the floor floods and he charges."}, true)
+		b.merge({"name":"THE PIT BOSS","hp":2370.0,"speed":1.6,"scan":11.0,"bounty":40,"col":"#e2b436","intro":"Watch the explosive chips. At half health, the floor floods and he charges."}, true)
 		return b
 	if UsDeep.DEFS.has(k):
 		var d: Dictionary = BOSSES.butcher.duplicate(true)

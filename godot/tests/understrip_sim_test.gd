@@ -66,7 +66,7 @@ func _initialize():
 	s.update(.05)
 	check(s.game.us.bossSpawned and s.game.us.gate==1,"entering arena wakes the Pit Boss and warns of closing gate")
 	var boss=s.enemies.filter(func(e): return e.type=="boss")[0]
-	check(boss.boss=="pitboss" and is_equal_approx(boss.max,960*Sim.BOSS_HP*s.Df.hp),"Pit Boss uses browser solo health (960 x BOSS_HP 1.25)")
+	check(boss.boss=="pitboss" and is_equal_approx(boss.max,2370*Sim.BOSS_HP*s.Df.hp),"Pit Boss uses browser solo health (2370 x BOSS_HP 1.25)")
 	s.hurt_enemy(boss,boss.max*.51,p.id)
 	s.update(.05)
 	check(s.game.us.bossStage==1 and boss.st==60 and boss.inv>0 and s.flood_on,"half health starts protected jacket-off transition and arena flood")
