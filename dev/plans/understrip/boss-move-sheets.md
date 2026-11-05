@@ -37,7 +37,7 @@ Each move is written the way the game already writes boss moves (`MOVE` in `dev/
 > *The casino's floor boss, in a suit that has seen better nights. He tosses chips that go off, and he always has more security on call.*
 
 **Arena:** the old count room (`r1_boss_pitboss` in the room kit), 24 × 24 tiles: low floor in the middle, a dry rim round the edge, four pillars, slot machines for cover.
-**Health:** base 960 (**1,200 effective**). **Speed:** 1.6, then 2.1. **Colour:** `#e2b436` (chip gold), then `#ff6a3a`.
+**Health:** base 2,370 (**2,963 effective**; v0.12.4: each boss 50% more than the one before). **Speed:** 1.6, then 2.1. **Colour:** `#e2b436` (chip gold), then `#ff6a3a`.
 **Intro line:** "He throws chips that explode: a ring shows where each one lands. When his jacket comes off, the floor floods and he charges."
 
 ### Stage 1
@@ -70,7 +70,7 @@ He tears his jacket off. The low floor (`,`) floods ankle-deep for the rest of t
 > *The shelter's caretaker robot, still cleaning after seventy years, and still keeping people in.*
 
 **Arena:** the shelter's main hall, with four blast doors across it on a rhythm.
-**Health:** base 1,440 (**1,800 effective**). **Speed:** 1.0, then 1.2. **Colour:** `#9bbf5a` (shelter olive), then `#ff3a2a` (emergency red).
+**Health:** base 3,556 (**4,445 effective**). **Speed:** 1.0, then 1.2. **Colour:** `#9bbf5a` (shelter olive), then `#ff3a2a` (emergency red).
 **Intro line:** "A shock mop and the shelter's own doors. Watch the light over each door: amber means it's about to slam."
 
 ### Stage 1
@@ -103,7 +103,7 @@ Its casing cracks; the shelter goes to red emergency light (lighting change, the
 > *A security pilot in a walking suit, guarding the last lab door. Break the suit and you're fighting two things.*
 
 **Arena:** the lab's loading bay, with low crates for cover.
-**Health:** base 1,920 (**2,400 effective**). Stage 2's suit has the second half; the pilot has another 20% on top. **Speed:** 0.9; in stage 2 the suit 0.8, the pilot 2.4. **Colour:** `#cfd8dc` (lab white), then the pilot `#7cff6b`.
+**Health:** base 5,333 (**6,666 effective**). Stage 2's suit has the second half; the pilot has another 20% on top. **Speed:** 0.9; in stage 2 the suit 0.8, the pilot 2.4. **Colour:** `#cfd8dc` (lab white), then the pilot `#7cff6b`.
 **Intro line:** "Rockets fall where the circles are. His shield blocks shots from the front: go round it."
 
 ### Stage 1
@@ -136,7 +136,7 @@ The pilot ejects. The suit keeps fighting, empty. **Killing either one ends the 
 > *What the government kept in the dark, in a field that is failing.*
 
 **Arena:** the containment hall: specimen tanks round the walls, the field in the middle.
-**Health:** base 2,800 (**3,500 effective**): 50% stage 1, 40% stage 2, then 10% desperate. **Speed:** 1.2, then 1.4. **Colour:** `#b8a8ff`, then its own glow only.
+**Health:** base 8,000 (**10,000 effective**, solo on Normal): 50% stage 1, 40% stage 2, then 10% desperate. **Speed:** 1.2, then 1.4. **Colour:** `#b8a8ff`, then its own glow only.
 **Intro line:** "Psychic rings: roll through them. When the lights go out, a flash shows where it will be next."
 
 ### Stage 1
