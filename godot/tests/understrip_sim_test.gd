@@ -46,6 +46,9 @@ func _initialize():
 	p.y=s.lay.exit[1]
 	for i in 61: s.update(.05)
 	check(s.game.us.lift>0 and s.game.us.level==0,"lift requires three seconds in its ring")
+	var lg=s.game.us.log
+	check(lg.size()==1 and lg[0][0]==0 and lg[0][2]>0 and lg[0].size()==4,"the lift logs the level: its number, raiders, time and finds (the results card and rewards read it)")
+	check(UsView3D.tag_of(1)==2 and UsView3D.tag_of(65535)==1 and UsView3D.tag_of(0)==0,"the Flood Tunnels' graffiti picks the browser's walls")
 	for i in 102: s.update(.05)
 	check(s.game.us.level==1 and s.game.us.lift<=0 and s.N==56,"lift changes map after its five-second ride")
 	check(p.sal==60 and p.uj==3 and p.x==s.lay.starts[0][0],"level transition retains kit and moves player to generated start")

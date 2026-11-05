@@ -306,6 +306,8 @@ func _bullets() -> void:
 		var scale := 0.62
 		var emit := head - dir * 0.42 * scale
 		_tracer_ribbon(P, emit, dir, minf(L, travelled), w, tc)
+		if P.has("decor"):
+			_decor(P.decor, head, emit, dir, minf(L, travelled), scale)
 		if models < cap:
 			models += 1
 			var node := _bullet_node(int(b.id), key)
@@ -381,6 +383,9 @@ func _tracer_ribbon(P: Dictionary, base: Vector3, dir: Vector3, L: float, w: flo
 	var outer: Array = mix_v if mode == "shot_cycle" else rib_v
 	var core_target: Array = mix_v if void_k or mode == "shot_cycle" else rib_v
 	var pts: Array = []
+	var cores: Array = []
+	var dk: String = str(P.decor.kind) if P.has("decor") else ""
+	var hum := 0.75 + 0.25 * sin(t * 40.0) if dk == "neon" else 1.0   # the neon tube buzzes
 	for i in n + 1:
 		var f := float(i) / n
 		var off := 0.0
@@ -389,12 +394,16 @@ func _tracer_ribbon(P: Dictionary, base: Vector3, dir: Vector3, L: float, w: flo
 		elif kind == "chain":
 			off = sin(i * 1.9 * 2.0 - t * 15.0) * 0.03
 		var p := base - dir * L * f + vert * off * f
+		if dk == "wobble":   # the core strand wobbles; it is drawn from these points too, so keep a straight copy for the strips
+			cores.append(p + vert * sin(i * 0.9 * 24.0 / n - t * 18.0) * float(P.decor.amp) * 1.4 * (0.25 + f))
+		else:
+			cores.append(p)
 		var col := Color.html(str(P.palette.glow)) if void_k else _shade(P, f, tc)
 		if mode == "shot_cycle" and maxf(col.r, maxf(col.g, col.b)) < 0.03:
 			col = Color.html("#a6aaa5")
 		var broken := 0.08 if kind == "glitch" and i % 5 == 3 else 1.0
-		col.a = pow(1.0 - f, 1.7) * op * broken
-		pts.append([p, col, w * pow(1.0 - f, 0.7)])
+		col.a = pow(1.0 - f, 1.7) * op * broken * hum
+		pts.append([p, col, w * pow(1.0 - f, 0.25 if dk == "neon" else 0.7)])
 	for i in n:
 		var a: Array = pts[i]
 		var b: Array = pts[i + 1]
@@ -406,10 +415,81 @@ func _tracer_ribbon(P: Dictionary, base: Vector3, dir: Vector3, L: float, w: flo
 		var cc := Color(0.97, 1, 1) if not void_k else Color.html(str(P.palette.colors[0]))
 		if P.palette.get("gold_core", false):
 			cc = Color.html("#fff4b2")
-		var ca := Color(cc, a[1].a * 0.55)
-		var cb := Color(cc, b[1].a * 0.55)
-		var cw: float = 0.3
-		_quad4(core_target, a[0] - side * a[2] * cw, a[0] + side * a[2] * cw, b[0] + side * b[2] * cw, b[0] - side * b[2] * cw, ca, ca, cb, cb)
+		if dk != "" and P.decor.has("core"):
+			cc = Color.html(str(P.decor.core))
+		var ck: float = (0.9 / hum) if dk != "" and P.decor.has("core") else 0.55
+		var ca := Color(cc, a[1].a * ck)
+		var cb := Color(cc, b[1].a * ck)
+		var cw: float = 0.3 * (2.6 if dk == "neon" else 1.8 if dk == "wobble" else 1.0)
+		var c0: Vector3 = cores[i]
+		var c1: Vector3 = cores[i + 1]
+		if dk == "wobble":   # the wobbling strand faces the camera in both crossed planes
+			_quad4(core_target, c0 - vert * a[2] * cw, c0 + vert * a[2] * cw, c1 + vert * b[2] * cw, c1 - vert * b[2] * cw, ca, ca, cb, cb)
+		_quad4(core_target, c0 - side * a[2] * cw, c0 + side * a[2] * cw, c1 + side * b[2] * cw, c1 - side * b[2] * cw, ca, ca, cb, cb)
+
+
+## THE UNDERSTRIP's tracer extras along a round's streak (tracer-effects.js, profile.decor): poker chips tumbling and
+## gold coins spinning at fixed fractions of the trail, alternately above and below it; a pulsing ring round the head.
+## Sizes are the library's metres times the bullet's scale here, about twice as large so they read at game distance.
+func _decor(D: Dictionary, head: Vector3, emit: Vector3, dir: Vector3, L: float, scale: float) -> void:
+	var side := dir.cross(Vector3.UP)
+	if side.length() < 0.001:
+		side = Vector3.FORWARD
+	side = side.normalized()
+	var vert := side.cross(dir).normalized()
+	var kind := str(D.kind)
+	if kind == "chips" or kind == "coins":
+		var r: float = float(D.size) * scale * 2.6
+		var cols: Array = D.get("colors", ["#ffd24a"])
+		var at: Array = D.at
+		for k in at.size():
+			var f: float = float(at[k])
+			if f * L < 0.02:
+				continue
+			var c: Vector3 = emit - dir * L * f + vert * (1.0 if k % 2 else -1.0) * float(D.spread) * scale * 2.4
+			var a1: Vector3
+			var a2: Vector3
+			if kind == "chips":   # tumbling on all three axes
+				var b := Basis(Vector3(1, 0, 0), t * 15.0 + k * 2.1) * Basis(Vector3(0, 1, 0), t * 5.0 + k) * Basis(Vector3(0, 0, 1), t * 9.0 + k * 1.3)
+				a1 = b.x
+				a2 = b.z
+			else:   # spinning on edge
+				var ang := t * 12.0 + k * 1.7
+				a1 = (side * cos(ang) + dir * sin(ang)).normalized()
+				a2 = vert
+			var col := Color.html(str(cols[k % cols.size()]))
+			if kind == "coins":
+				col = Color.html("#ffd24a").lerp(Color.html("#e2a030"), 0.5 + 0.5 * sin(t * 12.0 + k))
+			_disc3(mix_v, c, a1, a2, r * (1.0 - f * 0.35), col)
+			if kind == "chips":   # the chip's white edge spots
+				_disc3(mix_v, c + a1.cross(a2).normalized() * 0.002, a1, a2, r * 0.6 * (1.0 - f * 0.35), Color.html("#e8e2d0") if k % 4 != 2 else Color.html("#c42a3a"))
+	elif kind == "ring":   # round the bolt's head, pulsing
+		var R: float = float(D.radius) * scale * 2.2 * (1.0 + 0.18 * sin(t * 30.0))
+		var th: float = float(D.thickness) * scale * 2.6
+		var c: Vector3 = head + dir * float(D.offset) * scale
+		var col := Color.html(str(D.color))
+		col.a = 0.75 + 0.2 * sin(t * 30.0)
+		var segs := 20
+		for i in segs:
+			var a := TAU * i / segs
+			var b := TAU * (i + 1) / segs
+			var p0 := c + (side * cos(a) + vert * sin(a)) * R
+			var p1 := c + (side * cos(b) + vert * sin(b)) * R
+			var n0 := (side * cos(a) + vert * sin(a)) * th
+			var n1 := (side * cos(b) + vert * sin(b)) * th
+			_quad4(rib_v, p0 - n0, p0 + n0, p1 + n1, p1 - n1, col, col, col, col)
+
+
+## a flat disc (both faces) in the plane of a1 and a2
+func _disc3(v: Array, c: Vector3, a1: Vector3, a2: Vector3, r: float, col: Color) -> void:
+	var segs := 10
+	for i in segs:
+		var a := TAU * i / segs
+		var b := TAU * (i + 1) / segs
+		var p0 := c + (a1 * cos(a) + a2 * sin(a)) * r
+		var p1 := c + (a1 * cos(b) + a2 * sin(b)) * r
+		_tri(v, c, p0, p1, col, col, col)
+		_tri(v, c, p1, p0, col, col, col)
 
 
 func _ribbon_line(head: Vector3, dir: Vector3, L: float, w: float, col: Color) -> void:

@@ -95,11 +95,53 @@ light. It was all green at the start. Still nothing committed; the worktree keep
   - All suites pass: gen (1,400 hashes), sim, loot, client, `sim_test` (232), `client_test` (66).
   - `tests/understrip_shot.gd` renders the PLAY page, level 1, and the Pit Boss in both stages.
 
-**Still open for G2:**
-- the tunnel view's props are placeholder boxes (shrines, merchants, chests, lift, loot) and the browser's per-region
-  look (graffiti, ground detail);
-- the browser's tips, prompts and kit or weapon HUD details;
-- the tracer `decor` extras in `v3_fx.gd`.
+**G2 finished (Claude, later the same evening):**
+- **Tracer extras:** `v3_fx.gd` draws each profile's `decor` from `tracer_profiles.json`, as the library's
+  `tracer-effects.js` does:
+  - poker chips tumbling and gold coins spinning along the streak;
+  - the neon tube's buzz and wide tube;
+  - the tractor beam's wobbling core;
+  - the saucer bolt's pulsing ring.
+  - They are drawn about twice the library's size so they read at game distance. Profiles without `decor` are
+    unchanged.
+- **Tunnel props** (`us_view3d.gd`), the browser's pieces built in 3D:
+  - the neon shrine: a cabinet with a pink frame and a "7" that flicker until you rest, then stay lit, plus a ring on the
+    one you last rested at;
+  - the traders, the Lift Merchant and the Collector, as standing figures, with a mat of wares;
+  - the Shrine Keeper robot with its lamp eye and mop;
+  - strongboxes, which disappear once opened;
+  - the lift's deck, posts and dashed hold ring, with its progress arc;
+  - loot of each kind in its rarity's ring; salvage sacks; burning flares.
+- **Region 1's look:**
+  - the Flood Tunnels' floor shades, cracks, puddles catching neon, and spilt paint;
+  - concrete courses and a flood line on the walls;
+  - the browser's three graffiti tags, on the same walls (`tag_of` matches `usTagOf`). Each wall's paint is built once,
+    then reused.
+- **Darkness:**
+  - The overlay uses `US.darkL` with the region's tint, and the browser's whole light list: lamps, tanks, flickering neon,
+    lit and unlit shrines, traders, the open lift, flares, salvage, bosses.
+  - Settings > SCREEN has **DUNGEON BRIGHTNESS** (DARK, DIM, LIT, BRIGHT; `usBright`). On BRIGHT every raider gets a ring
+    and a marker over the dark.
+- **HUD:**
+  - The kit adds the found gun (its name and magazine/reserve, bordered in its rarity), the item SPACE places
+    (BARRICADE or FLARE), and the other item (F swaps).
+  - Prompts: the loot at your feet (name, line, TAKE); the merchant's name in its colour; REST AT THE SHRINE / REST AGAIN;
+    SERVICE DOOR; YOUR SALVAGE; and THE LIFT.
+  - First-time tips for the shrine, merchants, the boss gate and your salvage, once per player (`user://us_tips.json`).
+    They time out after 9 s, and the Tips setting still turns them off.
+  - The results card shows while the lift goes down.
+- **Sim:**
+  - `level_done()` ports `usLevelDone`: the level's `[level, kills, seconds, found]` line in `us.log` (which the card and
+    G5's rewards read), `us.regions`, the CLEARED toast, and downed players riding down at 25%.
+  - The lift needs at least one living player.
+- **Tests:**
+  - `understrip_sim_test` also checks the level log and the graffiti hash.
+  - New `tests/understrip_props_shot.gd` renders the shrine, a trader, the lift, a chest, loot with salvage and a flare,
+    a loot prompt, the results card and the five tracers. It turns tips on in memory only and deletes the tips file it
+    creates.
+
+Not ported, because it belongs with G3: Shelter 7's and Area 67's own floors, walls, hazards and lamp timings
+(`usRegGround`, `usLampOn`), and the Visitor's lights-out.
 
 G3 (the deeper bosses, using the library's Custodian, Gatekeeper, Pilot and Visitor), G4 (yard-31) and G5 (claims,
 build) are unchanged.

@@ -1539,6 +1539,8 @@ func _paint_ui(layer: CanvasItem) -> void:
 			_draw_crosshair(p)
 			_draw_shells(p)
 	_draw_edge_arrows()
+	if sim.understrip():
+		_us_card()
 	if inp.mode == "touch" and playing:
 		_draw_touch()
 	_draw_hud()
@@ -1751,20 +1753,175 @@ func _key_cap(x: float, y: float, key: String, text: String, col: Color) -> void
 	cv.draw_string(font, Vector2(cx, base), text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, c("#f3e9d6"))
 
 
+## the loot at your feet (its name, what it is, and the key to take it, under the figure), else what's here: the
+## merchant's name in its colour, the shrine, a shortcut door, your dropped salvage, the lift
+func _us_prompts(p: Dictionary) -> void:
+	var u := v.u
+	var U: Dictionary = sim.game.us
+	var L: Dictionary = sim.lay
+	var key := settings.keys_label("armory")
+	for item in U.loot:
+		if Vector2(p.x - item.x, p.y - item.y).length() < 0.85:   # US.pickR
+			var at := iso(item.x, item.y)
+			label(_us_loot_name(item), at.x, at.y + 16 * u, c(UsView3D.loot_col(item)), int(round(12 * u)))
+			var line := _us_loot_line(item)
+			if line != "":
+				label(line, at.x, at.y + 29 * u, c("#c8c3b8"), int(round(9 * u)))
+			_key_cap(at.x, at.y + 44 * u, key, "TAKE", c("#e8e2d0"))
+			return
+	var say := func(x: float, y: float, t: String, col: String) -> void:
+		var at := iso(x, y)
+		_key_cap(at.x, at.y - v.WH * 1.9, key, t, c(col))
+	var mi: int = sim.us.merchant_at(p)
+	if mi >= 0:
+		var mc: Dictionary = L.merchants[mi]
+		say.call(mc.x, mc.y, US_MERCH[mc.kind][0], US_MERCH[mc.kind][1])
+		return
+	for n in L.shrines.size():
+		var sh: Dictionary = L.shrines[n]
+		if Vector2(sh.x - p.x, sh.y - p.y).length() < 1.8 and (not sh.arena or U.bossDown):
+			say.call(sh.x, sh.y, "REST AGAIN" if int(U.rest.ix) == n else "REST AT THE SHRINE", "#ff5ad8")
+	for n in L.doors.size():
+		if int(U.opened) & (1 << n) or L.doors[n].tiles.is_empty():
+			continue
+		var dt: Array = L.doors[n].tiles[0]
+		if Vector2(dt[0] + 0.5 - p.x, dt[1] + 0.5 - p.y).length() < 2.0:
+			say.call(dt[0] + 0.5, dt[1] + 0.5, "SERVICE DOOR", "#ff9a3a")
+	for d in U.drops:
+		if d.id == p.id:
+			var at := iso(d.x, d.y)
+			label("YOUR SALVAGE · %d" % d.sal, at.x, at.y - v.WH * 1.2, c("#e2b436"), int(round(10 * u)))
+	var ex: Array = L.exit
+	if Vector2(ex[0] - p.x, ex[1] - p.y).length() < 4:
+		var dead: bool = PalUnderstrip.PLAN[int(U.level)][1] == "boss" and not U.bossDown
+		var at := iso(ex[0], ex[1])
+		label("THE LIFT · DEAD" if dead else "THE LIFT · EVERYONE IN THE RING", at.x, at.y - v.WH * 1.9, c("#7cff6b"), int(round(11 * u)))
+
+const US_MERCH := {"trader": ["THE TUNNEL TRADER", "#c78bff"], "keeper": ["THE SHRINE KEEPER", "#7cd8ff"],
+	"collector": ["THE COLLECTOR", "#e2b436"], "lift": ["THE LIFT MERCHANT", "#7cff6b"]}
+const US_RAR_N := {"c": "COMMON", "r": "RARE", "e": "EPIC", "l": "LEGENDARY", "g": "GOLD", "u": "ULTIMATE"}
+
+## usLootLabel's name: the gun, perk, relic or item itself (its rarity is the colour and the line)
+func _us_loot_name(l: Dictionary) -> String:
+	var T: Dictionary = UsLoot.tables()
+	match str(l.kind):
+		"weapon": return str(T.weapons.get(l.w.id, {}).get("name", "?"))
+		"perk": return str(T.perks.get(l.k, {}).get("name", "?"))
+		"relic": return str(T.relics.get(l.k, {}).get("name", "?"))
+		"consumable": return str(T.items.get(l.k, {}).get("name", "?"))
+	return UsLoot.label(l)
+
+## usLootLabel's line: a gun's rarity, mods and signature; a perk's effect; a relic's up and down; an item's use
+func _us_loot_line(l: Dictionary) -> String:
+	var T: Dictionary = UsLoot.tables()
+	match str(l.kind):
+		"weapon":
+			var parts: Array = [US_RAR_N.get(str(l.w.r), "")]
+			for mk in l.w.get("mods", []):
+				if T.mods.has(mk):
+					parts.append(T.mods[mk].name)
+			var W: Dictionary = T.weapons.get(l.w.id, {})
+			if T.tier.get(str(l.w.r), {}).get("sig", false) and W.get("sig", "") != "":
+				parts.append(W.sig)
+			return " · ".join(parts.filter(func(x): return x != ""))
+		"perk":
+			return str(T.perks.get(l.k, {}).get("what", ""))
+		"relic":
+			var R: Dictionary = T.relics.get(l.k, {})
+			return ("%s · %s" % [R.up, R.down]) if R.has("up") else ""
+		"consumable":
+			return str(T.items.get(l.k, {}).get("what", ""))
+	return ""
+
+## first-time help: one line, once per player profile, the first time each thing is near (the Tips setting turns them off)
+var us_tip_seen = null
+var us_tip_on := ""
+var us_tip_until := 0.0
+const US_TIP_PATH := "user://us_tips.json"
+
+func _us_tips(p: Dictionary) -> void:
+	if demo or not p.alive and us_tip_on == "":
+		return
+	var t: float = sim.game.time
+	if us_tip_on != "" and t > us_tip_until:
+		us_tip_on = ""
+		hud.set_tip("")
+	if us_tip_on != "" or not p.alive or not settings.data.get("tips", true):
+		return
+	if us_tip_seen == null:
+		us_tip_seen = {}
+		if FileAccess.file_exists(US_TIP_PATH):
+			var a = JSON.parse_string(FileAccess.get_file_as_string(US_TIP_PATH))
+			if a is Array:
+				for id in a:
+					us_tip_seen[str(id)] = true
+	var L: Dictionary = sim.lay
+	var U: Dictionary = sim.game.us
+	var near := func(x: float, y: float, r: float) -> bool: return Vector2(x - p.x, y - p.y).length() < r
+	var key := settings.keys_label("armory")
+	for id in ["shrine", "merchant", "gate", "salvage"]:
+		if us_tip_seen.has(id):
+			continue
+		var here := false
+		match id:
+			"shrine": here = L.shrines.any(func(sh): return not sh.arena and near.call(sh.x, sh.y, 6.0))
+			"merchant": here = L.merchants.any(func(mc): return near.call(mc.x, mc.y, 5.5))
+			"gate": here = L.gate.any(func(gp): return near.call(gp[0] + 0.5, gp[1] + 0.5, 7.0))
+			"salvage": here = U.drops.any(func(d): return d.id == p.id)
+		if not here:
+			continue
+		us_tip_seen[id] = true
+		var f := FileAccess.open(US_TIP_PATH, FileAccess.WRITE)
+		if f != null:
+			f.store_string(JSON.stringify(us_tip_seen.keys()))
+			f.close()
+		us_tip_on = id
+		us_tip_until = t + 9.0
+		hud.set_tip({"shrine": "NEON SHRINE: %s rests. Juice refills, everyone gets up, and you come back here. Raiders return too." % key,
+			"merchant": "A MERCHANT: %s to trade, for salvage only. The Shrine Keeper and the Lift Merchant sell upgrades." % key,
+			"gate": "THE BOSS GATE: it seals 4 seconds after the first of you steps through. Rest at the shrine first.",
+			"salvage": "YOUR SALVAGE stays where you fell. Walk over it to take it back; fall again first and it's gone."}[id])
+		return
+
+## the results card while the lift goes down: the level's raiders, finds, time and lives, and what's next
+func _us_card() -> void:
+	var U: Dictionary = sim.game.us
+	if float(U.lift) <= 0 or U.log.is_empty():
+		return
+	var u := v.u
+	var e: Array = U.log[U.log.size() - 1]
+	var lv := int(e[0])
+	var region_end: bool = lv in SimUnderstrip.REGION_END
+	var w := 460 * u
+	var h := 150 * u
+	var x0 := v.W / 2 - w / 2
+	var y0 := v.H * 0.3 - h / 2
+	var a := clampf(float(U.lift) * 2.0, 0.0, 1.0) * clampf((5.0 - float(U.lift)) * 3.0, 0.0, 1.0)
+	cv.draw_rect(Rect2(x0, y0, w, h), Color(0.07, 0.07, 0.06, 0.9 * a))
+	cv.draw_rect(Rect2(x0, y0, w, h), Color(0.49, 1.0, 0.42, 0.55 * a), false, 2 * u)
+	var green := Color(c("#7cff6b"), a)
+	var bone := Color(c("#e8e2d0"), a)
+	var dim := Color(c("#9a958a"), a)
+	label("THE LIFT · GOING DOWN", v.W / 2, y0 + 24 * u, dim, int(round(10 * u)))
+	label("%s · CLEARED" % SimUnderstrip.NAMES[lv], v.W / 2, y0 + 50 * u, green, int(round(18 * u)))
+	var stats := [["RAIDERS", str(e[1])], ["FOUND", str(e[3])], ["TIME", "%d:%02d" % [int(e[2]) / 60, int(e[2]) % 60]], ["LIVES", str(maxi(0, int(U.lives)))]]
+	for i in 4:
+		var sx := x0 + w * (i + 0.5) / 4.0
+		label(stats[i][1], sx, y0 + 86 * u, bone, int(round(20 * u)))
+		label(stats[i][0], sx, y0 + 102 * u, dim, int(round(9 * u)))
+	var nx: String = SimUnderstrip.NAMES[mini(lv + 1, 9)]
+	var reg_names := ["THE FLOOD TUNNELS", "SHELTER 7", "AREA 67"]
+	var line := ("%s cleared · +1 life · next: %s · the Lift Merchant rides down with you." % [reg_names[PalUnderstrip.PLAN[lv][0] - 1], nx]) if region_end else ("Next: %s · the Lift Merchant is at the bottom." % nx)
+	label(line, v.W / 2, y0 + 130 * u, dim, int(round(10 * u)))
+
+
 func _draw_prompts(p: Dictionary) -> void:
 	if not p.alive:
 		return
 	var u := v.u
 	if sim.understrip():
-		var text = ""
-		for item in sim.game.us.loot:
-			if Vector2(p.x-item.x,p.y-item.y).length() < 1.0:
-				text = "TAKE " + UsLoot.label(item)
-				break
-		if text == "" and sim.us.merchant_at(p) >= 0: text = "TRADE"
-		if text == "":
-			for shrine in sim.lay.shrines:
-				if Vector2(p.x-shrine.x,p.y-shrine.y).length() < 1.4: text = "REST AT NEON SHRINE"
+		_us_tips(p)
+		_us_prompts(p)
 		var mark = func(x, y, col):
 			var pos = iso(x,y)
 			if pos.x < 14 or pos.x > v.W-14 or pos.y < 110 or pos.y > v.H-14:
@@ -1776,9 +1933,6 @@ func _draw_prompts(p: Dictionary) -> void:
 		if UsLoot.has(p,"p_sleeper"):
 			for enemy in sim.enemies:
 				if enemy.has("us") and enemy.us.st != "hunt" and not enemy.dead and Vector2(enemy.x-p.x,enemy.y-p.y).length() < 8: mark.call(enemy.x,enemy.y,c("#ff5a4a"))
-		if text != "":
-			var at = iso(p.x,p.y)
-			_key_cap(at.x,at.y+35*u,settings.keys_label("armory"),text,c("#7cff6b"))
 		return
 	if sim.casino():
 		var key := settings.keys_label("armory")
@@ -2723,8 +2877,9 @@ func _update_light(dt: float) -> void:
 		T = {"L": 0.2, "r": 60.0, "g": 30.0, "b": 10.0, "warm": 0.07}
 	else:
 		T = {"L": 0.12, "r": 28.0, "g": 34.0, "b": 44.0, "warm": 0.0}
-	if sim.understrip():
-		T = {"L": 0.8, "r": 4.0, "g": 8.0, "b": 10.0, "warm": 0.0}
+	if sim.understrip():   # the darkness floor from DUNGEON BRIGHTNESS, the region's own tint
+		var dk: Dictionary = US_DARK[clampi(PalUnderstrip.PLAN[clampi(int(g.us.level), 0, 9)][0], 1, 3)]
+		T = {"L": US_DARK_L[clampi(int(settings.data.get("usBright", 0)), 0, 3)], "r": dk.r, "g": dk.g, "b": dk.b, "warm": 0.0}
 	var k := minf(1.0, dt * 0.8)
 	for key in T:
 		light[key] += (T[key] - light[key]) * k
@@ -2741,16 +2896,35 @@ func _update_light(dt: float) -> void:
 			holes.append(Vector4(cc.x, cc.y, r, minf(1.0, st)))
 		for p in sim.players.values():
 			if p.alive or p.downed:
-				hole.call(p.x, p.y, WH * 0.5, TW2 * (1.8 if sim.understrip() else 3.4), 0.95)
+				hole.call(p.x, p.y, WH * 0.5, TW2 * (1.76 if sim.understrip() else 3.4), (0.85 if p.id == sim.player.id else 0.68) if sim.understrip() else 0.95)
 		if sim.qm.alive:
 			hole.call(sim.qm.x, sim.qm.y, WH * 0.5, TW2 * 1.8, 0.7)
-		if sim.understrip():
+		if sim.understrip():   # the browser's usLights: lamps, tanks, neon, shrines, traders, the open lift, flares, salvage, bosses
+			var U: Dictionary = g.us
+			var t: float = g.time
 			for lamp in sim.lay.lamps:
-				hole.call(lamp[0], lamp[1], WH, TW2 * 2.5, 0.8)
-			for flare in sim.game.us.flares:
-				hole.call(flare.x, flare.y, 0, TW2 * 4, 0.95)
-			for shrine in sim.lay.shrines:
-				hole.call(shrine.x, shrine.y, 0, TW2 * 2.5, 0.85)
+				hole.call(lamp[0], lamp[1], WH * 0.6, TW2 * 2.8, 0.75)
+			for q in sim.lay.get("tanks", []):
+				hole.call(q[0], q[1], WH * 0.6, TW2 * 1.2, 0.4)
+			for n in sim.lay.neon.size():
+				var fl: float = 0.6 if PalSettings.reduce_motion else 0.45 + 0.35 * maxf(0.0, sin(t * 2.3 + n) * sin(t * 5.7 + n * 3))
+				hole.call(sim.lay.neon[n][0], sim.lay.neon[n][1], WH * 0.4, TW2 * 1.9, fl)
+			for n in sim.lay.shrines.size():
+				var shrine: Dictionary = sim.lay.shrines[n]
+				if shrine.arena and not U.bossDown:
+					continue
+				hole.call(shrine.x, shrine.y, WH * 0.6, TW2 * (2.8 if int(U.lit) & (1 << n) else 1.6), 0.8)
+			for mc in sim.lay.merchants:
+				hole.call(mc.x, mc.y, WH * 0.6, TW2 * 2.2, 0.75)
+			if PalUnderstrip.PLAN[int(U.level)][1] != "boss" or U.bossDown:
+				hole.call(sim.lay.exit[0], sim.lay.exit[1], 0, TW2 * 2, 0.7)
+			for flare in U.flares:
+				hole.call(flare.x, flare.y, WH * 0.4, TW2 * (float(flare.get("r", 4.0)) + sin(t * 20 + flare.x) * 0.2), 0.95)
+			for d in U.drops:
+				hole.call(d.x, d.y, 0, TW2 * 0.9, 0.5)
+			for e in sim.enemies:
+				if e.type == "boss" and not e.dead:
+					hole.call(e.x, e.y, WH * 0.6, TW2 * 1.4, 0.55)
 		if sim.casino():
 			CasinoView.lights(self, hole)
 		if sim.map_id == "city":
@@ -2821,6 +2995,9 @@ func _update_light(dt: float) -> void:
 
 
 const STORM_KIND := {"yard": "dust", "river": "rain", "quarry": "ash"}
+## THE UNDERSTRIP's darkness (US.darkL by Settings > DUNGEON BRIGHTNESS: DARK, DIM, LIT, BRIGHT) and each region's tint
+const US_DARK_L := [0.86, 0.8, 0.72, 0.56]
+const US_DARK := {1: {"r": 3.0, "g": 5.0, "b": 7.0}, 2: {"r": 6.0, "g": 6.0, "b": 2.0}, 3: {"r": 2.0, "g": 6.0, "b": 10.0}}
 
 
 func _update_post(dt: float) -> void:

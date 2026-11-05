@@ -603,17 +603,46 @@ func tick(dt: float) -> bool:
 	u.wipe=0.0
 	var exit_open=PalUnderstrip.PLAN[u.level][1]!="boss" or u.bossDown
 	var up=s.players.values().filter(func(p): return p.alive)
-	if exit_open and up.all(func(p): return Vector2(p.x-s.lay.exit[0],p.y-s.lay.exit[1]).length()<1.6):
+	if exit_open and not up.is_empty() and up.all(func(p): return Vector2(p.x-s.lay.exit[0],p.y-s.lay.exit[1]).length()<1.6):
 		u.exitT+=dt
-		if u.exitT>=3:
-			u.exitT=0.0
-			if u.level==9: s.end_game(true,"understrip")
-			else:
-				u.lift=5.0
-				s.sfx("horn")
-				if u.level in [2,5,8]: u.lives+=1
+		if u.exitT>=3: level_done()
 	else: u.exitT=maxf(0,u.exitT-dt*2)
 	return false
+
+const NAMES = ["THE FLOOD TUNNELS · 1","THE FLOOD TUNNELS · 2","THE COUNT ROOM","SHELTER 7 · 1","SHELTER 7 · 2","THE MAIN HALL",
+	"AREA 67 · 1","AREA 67 · 2","THE LOADING BAY","THE CONTAINMENT HALL"]
+const REGION_END = [2,5,8]
+
+func level_done():
+	var u=s.game.us
+	u.exitT=0.0
+	var all_kills=0
+	for p in s.players.values(): all_kills+=int(p.get("kills",0))
+	var st=u.stats
+	var kills=all_kills-int(st.get("killsAt",0))
+	st.killsAt=int(st.get("killsAt",0))+kills
+	var t=float(st.time)-float(st.get("levelStart",0.0))
+	var found=int(st.found)-int(st.get("foundAt",0))
+	st.levelStart=st.time
+	st.foundAt=st.found
+	u.log.append([u.level,kills,int(round(t)),found])
+	if u.level>=9:
+		s.end_game(true,"understrip")
+		return
+	u.lift=5.0
+	s.sfx("horn")
+	var region_done=u.level in REGION_END
+	if region_done:
+		u.lives+=1
+		u.regions=int(u.get("regions",0))+1
+	var tt=int(round(t))
+	s.toast("%s · CLEARED" % NAMES[u.level],"%d raiders dropped · %d found · %d:%02d%s · the lift goes down." % [kills,found,tt/60,tt%60," · +1 LIFE" if region_done else ""])
+	for p in s.players.values():
+		if not p.alive:
+			p.alive=true
+			p.downed=false
+			p.usDead=false
+			p.hp=p.max*.25
 
 func flood_tick(dt: float):
 	var u=s.game.us

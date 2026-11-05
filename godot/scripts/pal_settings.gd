@@ -48,7 +48,7 @@ const ACTIONS := [
 
 var data := {
 	"volume": 0.8, "music": 0.7, "shake": 1.0, "zoom": 1.0, "msgTime": 1.0, "fpsMode": "auto", "fps": false, "tips": true, "build": true,
-	"haptics": true, "vsync": true, "reduceMotion": false,
+	"haptics": true, "vsync": true, "reduceMotion": false, "usBright": 0.0,
 	"windowMode": "windowed", "winSize": "", "fpsCap": "off",   # the display ("" winSize: the window as it is)
 	"models3d": true,   # graphics: the 3D models (the world drawn with the model library) or the 2D drawing
 	"gfx3d": {},   # the 3D view's quality knobs (Quality3D.KEYS: shadows, effects, draw_margin, anim_rate, msaa...)

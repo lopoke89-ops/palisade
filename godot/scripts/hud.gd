@@ -421,7 +421,7 @@ func _process(dt: float) -> void:
 	elif tip_stage == 1 and g.stats.built >= 3:
 		tip_stage = 2
 		set_tip("Ring the CORE. Make one tile a DOOR so your crew and Delgado can get in and out. Raiders treat doors like walls.")
-	if tip != "" and ((g.phase == "raid" and pv != "ffa") or (pv == "ffa" and g.time > 9)):
+	if tip != "" and not sim.understrip() and ((g.phase == "raid" and pv != "ffa") or (pv == "ffa" and g.time > 9)):   # THE UNDERSTRIP's tips time out by themselves (main._us_tips)
 		tip = ""
 	var on := {"core": pv != "ffa" and not sim.casino(), "core2": pv == "base" and not sim.casino(), "salv": pv != "ffa" and not sim.casino(),
 		"qm": pv == "" and not sim.qm.get("gone", false) and g.phase != "over" and host and not sim.casino(), "skip": false, "board": pv == "ffa", "chat": m.net.is_online() and m.net.in_game}
@@ -787,6 +787,8 @@ const ACT := {   # the action buttons: border, text and key-cap colour, and the 
 	"ab": {"line": Color("#c9a05a"), "col": Color("#f0cf8a"), "on": Color(70 / 255.0, 90 / 255.0, 110 / 255.0, 0.92), "onl": Color("#9fc3e0"), "onc": Color("#cfe6f6")},
 }
 const CHIP_COL := [Color("#c99a5e"), Color("#c46a4c"), Color("#b9c0bf")]
+const US_KIT := {"wpn": Color("#d8d2c4"), "itm": Color("#e2b436"), "oth": Color("#a89f8c")}
+const US_RAR := {"c": "#9a958a", "r": "#4f95e0", "e": "#b168e0", "l": "#e2b436", "g": "#ffe27a", "u": "#ff9260"}
 
 
 ## a key cap (.kc): small mono letters on a coloured tab
@@ -849,8 +851,48 @@ func _make_kit() -> void:
 		n.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		b.line = A.line
 		kit[k] = b
+	for k in ["wpn", "itm", "oth"]:   # THE UNDERSTRIP's
+		var b := KitBtn.new(self, act.call({"wpn": "matNext", "itm": "build", "oth": "piece"}[k]))
+		b.part("lab", label("s8", {"wpn": 16, "itm": 15, "oth": 13}[k], US_KIT[k], 0.06))
+		b.part("kc", _kc_label(US_KIT[k], INK))
+		var n := b.part("n", label("m6", 12 if k != "oth" else 11, BONE, 0.08))
+		n.set_meta("bold", true)
+		n.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		b.line = US_KIT[k].darkened(0.3)
+		kit[k] = b
 	for b in kit.values():
 		add_child(b)
+
+
+## THE UNDERSTRIP's kit: the gun in hand (the class gun, or the found one with its magazine and reserve, bordered in its
+## rarity's colour), the item SPACE places, the other one F swaps to
+func _us_kit(sim: Sim, p: Dictionary) -> void:
+	var on := sim.understrip()
+	kit.wpn.visible = on and p.get("w2") != null
+	kit.itm.visible = on
+	kit.oth.visible = on
+	if not on:
+		return
+	if kit.wpn.visible:
+		var W: Dictionary = UsLoot.tables().weapons.get(p.w2.id, {"name": "?"})
+		var mine: bool = int(p.get("wSel", 0)) == 1
+		kit.wpn.parts.lab.text = W.name if mine else str(p.cls).to_upper().substr(0, 4) + " GUN"
+		kit.wpn.parts.n.text = ("%d/%d" % [int(p.get("ammo", 0)), int(p.w2.get("res", 0))]) if mine else "INF"
+		kit.wpn.parts.kc.text = _kc("1 / 2", "mat2")
+		var rc := Color(US_RAR.get(str(p.w2.r), "#9a958a"))
+		kit.wpn.look(KIT_BG, rc)
+		recolor(kit.wpn.parts.lab, rc.lerp(BONE, 0.35))
+	var bar: bool = str(p.get("uSel", "bar")) == "bar"
+	var ui: Dictionary = p.get("ui", {})
+	var n := int(ui.get("bar" if bar else "flare", 0))
+	kit.itm.parts.lab.text = "BARRICADE" if bar else "FLARE"
+	kit.itm.parts.n.text = str(n)
+	kit.itm.parts.kc.text = _kc("SPACE", "build")
+	kit.itm.modulate.a = 1.0 if n > 0 else 0.45
+	kit.oth.parts.lab.text = "FLARE" if bar else "BARRICADE"
+	kit.oth.parts.n.text = str(int(ui.get("flare" if bar else "bar", 0)))
+	kit.oth.parts.kc.text = _kc("F", "piece")
+	kit.oth.modulate.a = 0.7
 
 
 ## the kit's state, as hud() sets it: what each button says, which are picked, empty, on, locked, far or pulsing
@@ -869,6 +911,7 @@ func _kit_update(sim: Sim, p: Dictionary, pv: String) -> void:
 	recolor(bm.parts.lab, BONE if build_on else DIM)
 	bm.look(KIT_BG, LINE, not build_on)
 	bm.parts.kc.text = _kc("B", "kit")
+	_us_kit(sim, p)
 	if sim.understrip():
 		bm.parts.lab.text = "JUICE %d/%d" % [p.uj, p.ujm]
 		bm.parts.kc.text = _kc("C", "drink")
@@ -985,11 +1028,11 @@ func _kit_layout() -> void:
 		return
 	var W := size.x / s
 	var H := size.y / s
-	var order := ["bm", "pieces", "c0", "c1", "c2", "build", "arm", "nade", "spr", "roll", "ab"]
-	var hgt := {"bm": 30.0, "pieces": 32.0, "c0": 40.0, "c1": 40.0, "c2": 40.0, "build": 70.0, "arm": 44.0, "nade": 44.0, "spr": 44.0, "roll": 44.0, "ab": 44.0}
+	var order := ["bm", "wpn", "itm", "oth", "pieces", "c0", "c1", "c2", "build", "arm", "nade", "spr", "roll", "ab"]
+	var hgt := {"bm": 30.0, "wpn": 44.0, "itm": 44.0, "oth": 30.0, "pieces": 32.0, "c0": 40.0, "c1": 40.0, "c2": 40.0, "build": 70.0, "arm": 44.0, "nade": 44.0, "spr": 44.0, "roll": 44.0, "ab": 44.0}
 	# the widest button's own needs
 	var cw := 136.0
-	for k in ["nade", "spr", "roll", "ab"]:
+	for k in ["wpn", "itm", "oth", "nade", "spr", "roll", "ab"]:
 		var b: KitBtn = kit[k]
 		if b.visible:
 			var kw := _kcw(b.parts.kc)
