@@ -16,7 +16,8 @@ const CODE_CHARS := "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
 const LIMITS := {"name": 12, "chat": 120, "cos": 160, "skills": 160, "targetPad": 100, "moveBurst": 2.0}
 ## append only: the browser's enemy codes on the wire (10-phases-bosses.js, 10c, 10d, 10g)
 const ECODE := ["rifle", "gren", "breach", "boss:demolisher", "boss:butcher", "boss:storm", "shield", "medic", "spotter", "fire", "boss:ferryman", "boss:foreman",
-	"boss:harbinger", "boss:bluebutcher", "boss:arsonist", "boss:tempest", "boss:bulldozer", "boss:rime", "boss:whitebutcher", "boss:whiteferryman", "boss:whiteforeman", "boss:destroyer"]
+	"boss:harbinger", "boss:bluebutcher", "boss:arsonist", "boss:tempest", "boss:bulldozer", "boss:rime", "boss:whitebutcher", "boss:whiteferryman", "boss:whiteforeman", "boss:destroyer",
+	"boss:pitboss", "boss:custodian", "boss:gatekeeper", "boss:visitor", "drone"]   # 10i, 10k: THE UNDERSTRIP
 const BO_STAGES := ["gather", "attack", "gap", "push", "done", "ready"]
 const BO_NEAR := 22.0
 const FAIL := {"peer-unavailable": "No game with that code. Check it with the host, and make sure they're sitting in the lobby.",
@@ -458,6 +459,10 @@ func _host_data(peer_id: String, d: Dictionary) -> void:
 				if not r.is_empty():
 					r.team = "a" if r.get("team", "a") == "b" else "b"
 					broadcast_lobby()
+		"ud", "ui", "uu", "ub", "uw", "ut":
+			var p = sim.players.get(c.pid)
+			if p != null and in_game and sim.understrip() and sim.game.phase != "over":
+				UsNet.host_data(sim, p, d)
 		_:
 			_host_action(c, t, d)
 
@@ -782,8 +787,11 @@ func _start_msg() -> Dictionary:
 			shots.append(_bullet_event(b))
 	var g: Dictionary = sim.game
 	var room = main_ref.cas_room() if g.mode == "casino" and main_ref != null else null
-	return {"t": "start", "room": room, "roster": _roster_now(), "diff": g.diff, "mode": g.mode, "pvp": g.pvp, "map": g.map, "size": g.size, "oct": 0, "gid": g.gid,
+	var msg := {"t": "start", "room": room, "roster": _roster_now(), "diff": g.diff, "mode": g.mode, "pvp": g.pvp, "map": g.map, "size": g.size, "oct": 0, "gid": g.gid,
 		"mods": sim.mods, "job": g.job, "shots": shots}
+	if sim.understrip():
+		msg.us = [int(g.us.seed), int(g.us.level), int(g.us.lives)]
+	return msg
 
 
 # ---------------------------------------------------------------- chat
@@ -918,26 +926,29 @@ func _lobby_net(dt: float) -> void:
 ## events and wall changes on the reliable channel, split to stay under PeerJS's 16 KB JSON limit
 func _send_events(fx: Array, wl, wd: Array, pi: Array) -> void:
 	var out: Array = []
-	var put: Callable
-	put = func(list: Array, w, dd: Array, inf: Array) -> void:
-		var m := {"t": "x", "n": _snap_n, "fx": list}
-		if sim.campaign():
-			m.cm = sim.game.chapter
-		if w != null:
-			m.wl = w
-		if not dd.is_empty():
-			m.wd = dd
-		if not inf.is_empty():
-			m.pi = inf
-		if list.size() > 1 and JSON.stringify(m).length() > 12000:
-			var h := list.size() >> 1
-			put.call(list.slice(0, h), w, dd, inf)
-			put.call(list.slice(h), null, [], [])
-		else:
-			out.append(m)
-	put.call(fx, wl, wd, pi)
+	_split_events(out, fx, wl, wd, pi)
 	for m in out:
 		_send_all(m)
+
+
+## one "x" message, or two halves of the events when it would be too big (a lambda can't call itself in GDScript,
+## so the halving is a function of its own)
+func _split_events(out: Array, list: Array, w, dd: Array, inf: Array) -> void:
+	var m := {"t": "x", "n": _snap_n, "fx": list}
+	if sim.campaign():
+		m.cm = sim.game.chapter
+	if w != null:
+		m.wl = w
+	if not dd.is_empty():
+		m.wd = dd
+	if not inf.is_empty():
+		m.pi = inf
+	if list.size() > 1 and JSON.stringify(m).length() > 12000:
+		var h := list.size() >> 1
+		_split_events(out, list.slice(0, h), w, dd, inf)
+		_split_events(out, list.slice(h), null, [], [])
+	else:
+		out.append(m)
 
 
 func _send_state(s: Dictionary) -> void:
@@ -1042,7 +1053,7 @@ static func _ch_evac_from(v: int) -> Array:
 
 func _pl_slow(p: Dictionary) -> Array:
 	return [p.id, p.mats[0], p.mats[1], p.mats[2], p.nades, int(p.sal), int(p.kills), int(p.deaths), 1 if p.prot > 0 else 0, _ab_state(p),
-		1 if p.get("out", false) else 0, _ch_evac_bits(p), 1 if p.get("boReady", false) else 0, int(p.get("seat", 0))]
+		1 if p.get("out", false) else 0, _ch_evac_bits(p), 1 if p.get("boReady", false) else 0, int(p.get("seat", 0)), UsNet.player_bits(p) if sim.understrip() else 0]
 
 
 ## p.ab on the wire: rockets left (soldier) or stealth time x10 while on, minus the seconds of recharge (sniper)
@@ -1055,7 +1066,7 @@ func _ab_state(p: Dictionary) -> int:
 
 
 func _pl_info(p: Dictionary) -> Array:
-	return [p.id, p.name, p.cls, p.slot, p.max, p.maxN, sim.up_str(p), p.cosS, p.team, ",".join(p.ammoEq), p.sk]
+	return [p.id, p.name, p.cls, p.slot, p.max, p.maxN, sim.up_str(p), p.cosS, p.team, ",".join(p.ammoEq), p.sk, UsNet.kit_str(p) if sim.understrip() else ""]
 
 
 func _en_state(e: Dictionary) -> Array:
@@ -1064,6 +1075,7 @@ func _en_state(e: Dictionary) -> Array:
 	var r := [e.id, code, r2(e.x), r2(e.y), r2(e.aim.x), r2(e.aim.y), r2(e.hp / e.max), 1 if e.get("planted", false) else 0, st,
 		r2(maxf(0.0, e.stT / e.stM)) if st and e.has("stT") and e.get("stM", 0.0) > 0 else 0, r2(e.get("lx", 0.0)), r2(e.get("ly", 0.0)),
 		r2(e.get("burnT", 0.0)), r2(e.get("slowT", 0.0)), r2(e.get("slowPct", 0.0)), e.get("shieldHitsLeft", 0), e.get("shieldHitsMax", 0), 1 if e.get("shieldBroken", false) else 0]
+	r.append_array(UsNet.enemy_extra(e) if sim.understrip() else [0, 0, 0])
 	while r.size() > 1 and (r[-1] is float or r[-1] is int) and r[-1] == 0:
 		r.pop_back()
 	return r
@@ -1149,6 +1161,8 @@ func make_snap(with_walls: bool) -> Dictionary:
 		s.sl = g.sbLog
 	if not sim.terr_log.is_empty():
 		s.tr = sim.terr_log
+	if sim.understrip():
+		s.us = UsNet.snap(sim)
 	if with_walls:
 		s.wl = Marshalls.raw_to_base64(wall_bytes())
 		s.bu = sim.bullets.filter(func(b): return not b.dead).map(func(b): return _bullet_event(b))
@@ -1266,8 +1280,17 @@ func _guest_data(d: Dictionary) -> void:
 			pick.size = "xl" if d.get("size", "") == "xl" else "std"
 			cas_room = str(d.get("room", "")).substr(0, 80) if d.get("room") is String else ""
 			var pv: String = pick.pvp if pick.pvp in ["base", "ffa"] else ""
-			sim.new_game(-1, pick.diff, {}, {"roster": d.get("roster", []), "pvp": pv, "my_id": my_id, "guest": true, "gid": d.get("gid", ""),
-				"mods": d.get("mods", []), "job": d.get("job", ""), "mode": pick.mode, "map": pick.map, "size": pick.size})
+			var opt := {"roster": d.get("roster", []), "pvp": pv, "my_id": my_id, "guest": true, "gid": d.get("gid", ""),
+				"mods": d.get("mods", []), "job": d.get("job", ""), "mode": pick.mode, "map": pick.map, "size": pick.size}
+			if pick.mode == "understrip":   # the host's run: its seed, level and lives build the same tunnels here
+				var us: Array = d.get("us", []) if d.get("us") is Array else []
+				if us.size() < 3 or not _int(us[0], -2147483648, 2147483647) or not _int(us[1], 0, 9) or not _int(us[2], -1, 99):
+					leave("The host's run didn't come through. Try joining again.")
+					return
+				opt.us_seed = int(us[0])
+				opt.us_level = int(us[1])
+				opt.us_lives = int(us[2])
+			sim.new_game(-1, pick.diff, {}, opt)
 			sim.game.joinHeld = null
 			_last_n = 0
 			sim.bullets.clear()
@@ -1332,6 +1355,8 @@ func _apply_info(rows: Array) -> void:
 		p.ammoEq = [a[0] if a.size() > 0 else "", a[1] if p.cls == "sniper" and a.size() > 1 and a[1] != a[0] else ""]
 		if str(r[7]) != "":
 			p.cosS = str(r[7])
+		if sim.understrip() and r.size() > 11:
+			UsNet.kit_from(sim, p, r[11])
 		p.name = str(r[1])
 		p.slot = int(r[3])
 		p.max = float(r[4])
@@ -1343,6 +1368,8 @@ func _apply_info(rows: Array) -> void:
 
 func _apply_snap(s: Dictionary) -> void:
 	var g: Dictionary = sim.game
+	if sim.understrip() and s.has("us"):
+		UsNet.follow_level(sim, s.us)
 	if sim.campaign() and s.has("cm"):
 		if s.cm < g.chapter:
 			return
@@ -1452,6 +1479,8 @@ func _apply_snap(s: Dictionary) -> void:
 		p.boReady = w.call(12) != 0
 		if not is_same(p, sim.player):
 			p.seat = w.call(13)
+		if sim.understrip() and r.size() > 14:
+			UsNet.read_bits(p, r[14], is_same(p, sim.player))
 	var q: Array = s.qm
 	var Q: Dictionary = sim.qm
 	if q[4] < Q.hp - 0.01:
@@ -1504,6 +1533,8 @@ func _apply_snap(s: Dictionary) -> void:
 		e.shieldHitsLeft = int(v.call(15))
 		e.shieldHitsMax = int(v.call(16))
 		e.shieldBroken = v.call(17) != 0
+		if sim.understrip():
+			UsNet.enemy_read(e, int(v.call(18)), int(v.call(19)), int(v.call(20)))
 		en.append(e)
 	sim.enemies = en
 	sim.frost_fields = s.get("ice", []).map(func(f): return {"x": f[0], "y": f[1], "t": f[2], "r": 0.72, "k": sim.idx(floori(f[0]), floori(f[1]))})
@@ -1558,6 +1589,8 @@ func _apply_snap(s: Dictionary) -> void:
 		sim.terr_log = tr.duplicate()
 		sim.mark_flow()
 	sim.flood_on = s.get("fo", 0) != 0
+	if sim.understrip() and s.has("us"):
+		UsNet.apply(sim, s.us)
 	if s.get("bl") is Array:
 		g.bossLog = s.bl.slice(0, 40)
 	if s.get("sl") is Array:
@@ -1751,6 +1784,11 @@ func guest_frame(dt: float, ctl: Dictionary) -> void:
 
 
 # a guest's actions go to the host, which runs them through the same rules
+## THE UNDERSTRIP: a guest asks the host (ud drink, ui interact, uu item, ub buy, uw swap, ut take loot)
+func send_us(msg: Dictionary) -> void:
+	peer.send(_host_peer, msg)
+
+
 func send_build(i: int, j: int, sel: int, door: bool) -> void:
 	peer.send(_host_peer, {"t": "b", "i": i, "j": j, "s": sel, "d": door})
 

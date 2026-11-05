@@ -48,7 +48,7 @@ func _run() -> void:
 	main.profile.cloud = false
 	main.profile.persist = false
 	main.settings.data.name = "Godot"
-	main.settings.data.setup.cls = "soldier" if role == "host" else "sniper"
+	main.settings.data.setup.cls = "soldier" if role in ["host", "ushost"] else "sniper"
 	main.net.opts = {"host": "127.0.0.1", "port": 9000, "path": "/", "secure": false, "ice": []}
 	if role == "host":
 		await _as_host()
@@ -56,6 +56,10 @@ func _run() -> void:
 		await _pvp_host()
 	elif role == "pvpguest":
 		await _pvp_guest()
+	elif role == "ushost":
+		await _us_host()
+	elif role == "usguest":
+		await _us_guest()
 	else:
 		await _as_guest()
 	print("DRIVER %s" % ("PASS" if fails == 0 else "FAIL %d" % fails))
@@ -195,6 +199,86 @@ func _as_guest() -> void:
 	check(await _wait(func(): return n.chat.any(func(l): return l.text == "hello from godot"), 20), "the browser host's chat arrives")
 	check(await _wait(func(): return s.player.downed or not s.player.alive, 20), "the browser host knocks Godot down; Godot sees it")
 	_put("sawdown.txt", "1")
+
+
+## the tunnels' tiles as one number, to compare with the browser's (the same seed must build the same level)
+static func terr_sum(s: Sim) -> int:
+	var h := 0
+	for k in s.terr.size():
+		h = (h * 31 + int(s.terr[k]) + 1) % 1000000007
+	return h
+
+
+## THE UNDERSTRIP hosted here; the browser joins (yard-31)
+func _us_host() -> void:
+	var n: PalNet = main.net
+	main.net_host()
+	check(await _wait(func(): return n.mode == "host", 15), "the Godot room opens (%s)" % n.code)
+	n.pick.mode = "understrip"
+	n.broadcast_lobby()
+	_put("code.txt", n.code)
+	check(await _wait(func(): return n.roster.size() == 2 and n.start_block() == "", 30), "the browser joins and readies")
+	main.net_start()
+	var s: Sim = main.sim
+	check(s.understrip() and s.players.size() == 2 and int(s.game.us.level) == 0, "THE UNDERSTRIP starts with both, on level 1")
+	_put("terr.txt", "%d|%d|%d" % [terr_sum(s), int(s.game.us.seed), s.N])
+	var g: Dictionary = s.players.get("g1", {})
+	for e in s.enemies:
+		e.dead = true   # an empty level: the checks below are about the wire, not a fight
+	s.enemies.clear()
+	s.hurt_player(g, 40.0)
+	_put("hurt40.txt", "1")
+	check(await _wait(func(): return int(g.uj) == 2, 20), "the browser's drink (ud) is taken on the host")
+	# a gun at the browser player's feet: it asks to take it (ut)
+	s.us.drop_loot(g.x, g.y, {"kind": "weapon", "w": {"id": "w_sawnoff", "r": "r", "mods": []}})
+	_put("loot.txt", "1")
+	check(await _wait(func(): return g.get("w2") != null and g.w2.id == "w_sawnoff", 20), "the browser takes the gun (ut); the host gives it")
+	check(await _wait(func(): return FileAccess.file_exists(dir + "/sawkit.txt"), 20), "the browser sees the gun in its kit (usk)")
+	# Area 67's drones and the Gatekeeper's shield, as raider rows
+	UsDeep.drone_pack(s, g.x + 2.5, g.y, 3)
+	var e: Dictionary = s.spawn_enemy_at("shield", g.x + 4, g.y)
+	e.us = {"home": [e.x, e.y], "st": "hunt", "sid": 77, "look": 0.0}
+	e.elite = "charger"   # as spawn_raiders makes an elite
+	e.eab = 2.0
+	e.est = 0
+	e.estT = 0.0
+	e.lx = e.x
+	e.ly = e.y
+	_put("drones.txt", "1")
+	check(await _wait(func(): return FileAccess.file_exists(dir + "/sawdrones.txt"), 20), "the browser sees the drones and the elite (el, est)")
+	# down the lift: the browser follows
+	s.enemies.clear()
+	s.us.level_done()
+	check(await _wait(func(): return int(s.game.us.level) == 1, 10), "the lift takes the host down to level 2")
+	check(await _wait(func(): return FileAccess.file_exists(dir + "/sawlevel.txt"), 20), "the browser follows down")
+
+
+## THE UNDERSTRIP hosted by the browser; Godot joins
+func _us_guest() -> void:
+	var n: PalNet = main.net
+	check(await _wait(func(): return FileAccess.file_exists(dir + "/code.txt"), 40), "the browser room's code arrives")
+	main.net_join(FileAccess.get_file_as_string(dir + "/code.txt").strip_edges())
+	check(await _wait(func(): return n.mode == "guest" and n.roster.size() == 2 and n.pick.mode == "understrip", 20), "Godot joins an UNDERSTRIP room")
+	n.set_ready(true)
+	check(await _wait(func(): return n.in_game and not main.demo, 30), "the run starts")
+	var s: Sim = main.sim
+	check(s.understrip() and int(s.game.us.level) == 0 and int(s.game.us.lives) == 3, "Godot builds the run: level 1, 3 lives")
+	_put("terr.txt", "%d|%d|%d" % [terr_sum(s), int(s.game.us.seed), s.N])
+	check(await _wait(func(): return s.players.host.get("tx") != null, 10), "state packets arrive from the browser")
+	check(await _wait(func(): return FileAccess.file_exists(dir + "/hurt40.txt") and s.player.hp < s.player.max, 20), "the browser host's hit lands")
+	main.do_action("drink")
+	check(await _wait(func(): return FileAccess.file_exists(dir + "/drank.txt"), 20), "Godot's drink (ud) is taken on the browser host")
+	check(await _wait(func(): return int(s.player.uj) == 2, 10), "and its juice comes back as 2 (us bits)")
+	check(await _wait(func(): return not s.game.us.loot.is_empty(), 20), "the host's gun shows up as loot on the floor (us snapshot)")
+	main.do_action("armory")
+	check(await _wait(func(): return s.player.get("w2") != null and s.player.w2.id == "w_sawnoff", 20), "Godot takes it (ut); the gun arrives in its kit (usk)")
+	_put("tookgun.txt", "1")
+	check(await _wait(func(): return s.enemies.any(func(e): return e.type == "drone"), 20), "the browser host's drones show up as drones")
+	check(await _wait(func(): return s.enemies.any(func(e): return str(e.get("elite", "")) == "charger"), 10), "and its charger elite with its trick's state (el %s)" % str(s.enemies.map(func(e): return e.get("elite", 0))))
+	_put("sawdrones.txt", "1")
+	check(await _wait(func(): return int(s.game.us.level) == 1, 30), "the browser host's lift takes Godot down to level 2")
+	check(s.N == int(FileAccess.get_file_as_string(dir + "/n2.txt").strip_edges()) if FileAccess.file_exists(dir + "/n2.txt") else true, "level 2's tunnels are the host's size")
+	_put("sawlevel.txt", "1")
 
 
 ## Free-for-all on the Quarry, hosted here; the browser joins

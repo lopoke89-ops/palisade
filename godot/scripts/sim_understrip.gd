@@ -83,6 +83,7 @@ static func layout(seed: int, index: int) -> Dictionary:
 					if floor_tiles.is_empty(): break
 					var pos=floor_tiles[(k*5+3)%floor_tiles.size()]
 					out.guards.append({"id":8000+k,"type":"shield" if k==0 else "rifle","x":pos[0]+.5,"y":pos[1]+.5,"amb":0,"elite":1 if k==0 else 0})
+	UsDeep.haz_lay(l,out)
 	return out
 
 func begin(seed: int, index: int, lives: int):
@@ -93,6 +94,7 @@ func begin(seed: int, index: int, lives: int):
 	s.game.us={"seed":seed,"level":index,"lives":lives,"exitT":0.0,"lift":0.0,"wipe":0.0,"gate":0,"gateT":0.0,"bossSpawned":false,"bossDown":false,"bossStage":0,
 		"rest":{"x":s.lay.starts[0][0],"y":s.lay.starts[0][1],"ix":-1},"lit":0,"opened":0,"chests":0,"drops":[],"flares":[],"loot":[],"eliteDown":[],
 		"stats":{"kills":0,"time":0.0,"falls":0,"rests":0,"found":0},"log":[],"flood":50.0+s.rnd()*30.0,"floodOn":false,"floodWarned":false}
+	UsDeep.haz_start(s.game.us,s.lay)
 	shop_reset()
 	s.cores.clear()
 	s.core_ks.clear()
@@ -123,6 +125,7 @@ func begin(seed: int, index: int, lives: int):
 		p.ripT=0.0
 	source=populate(s.lay.us,PalUnderstrip.PLAN[index][0])+s.lay.guards
 	spawn_raiders()
+	toast_level(true)
 
 static func populate(l: Dictionary, region: int) -> Array:
 	var r=PalUnderstripGen.Rng.new(PalUnderstripGen.mix([l.seed,77]))
@@ -174,8 +177,6 @@ func spawn_raiders():
 	s.enemies=s.enemies.filter(func(e): return not e.has("us") or e.type=="boss")
 	for spawn in source:
 		if spawn.get("elite",0) and spawn.id in s.game.us.eliteDown: continue
-		# Deeper-region drones are wired with G3, before those levels are offered to players.
-		if spawn.type=="drone": continue
 		var e=s.spawn_enemy_at(spawn.type,spawn.x,spawn.y)
 		e.us={"home":[spawn.x,spawn.y],"st":"ambush" if spawn.amb else "idle","sid":spawn.id,"t":0.0,"look":s.rnd()*6.28}
 		e.elite=spawn.get("elite",0)
@@ -250,6 +251,8 @@ func rest(p: Dictionary, index: int) -> bool:
 	u.rest={"x":shrine.x,"y":shrine.y,"ix":index}
 	u.lit|=1<<index
 	u.stats.rests+=1
+	u.alarmed=[]
+	u.alarms=[]
 	for o in s.players.values():
 		if not o.alive:
 			o.x=shrine.x+(s.rnd()-.5)
@@ -329,7 +332,7 @@ func wipe():
 	s.charges.clear()
 	s.rockets.clear()
 	s.fires.clear()
-	s.enemies=s.enemies.filter(func(e): return e.type!="boss")
+	UsDeep.boss_reset(s)
 	u.bossSpawned=false
 	u.bossStage=0
 	u.floodOn=false
@@ -339,7 +342,7 @@ func wipe():
 	s.toast("THE TUNNELS TAKE YOU","%d lives left. Your salvage is where you fell." % u.lives)
 	s.sfx("lose")
 
-func change_level(index: int):
+func change_level(index: int, guest: bool = false):
 	var u=s.game.us
 	var l=layout(u.seed,index)
 	if l.is_empty():
@@ -380,7 +383,12 @@ func change_level(index: int):
 		p.usDead=false
 		p.ujT=0.0
 	u.merge({"level":index,"exitT":0.0,"lift":0.0,"wipe":0.0,"gate":0,"bossDown":false,"bossSpawned":false,"bossStage":0,"rest":{"x":l.starts[0][0],"y":l.starts[0][1],"ix":-1},"lit":0,"opened":0,"chests":0,"drops":[],"flares":[],"loot":[],"eliteDown":[],"flood":50.0+s.rnd()*30.0,"floodOn":false,"floodWarned":false},true)
+	UsDeep.haz_start(u,l)
 	shop_reset()
+	if guest:   # a guest follows the host's lift down: the raiders and the words come from the host
+		flows.clear()
+		return
+	toast_level(false)
 	source=populate(l.us,PalUnderstrip.PLAN[index][0])+l.guards
 	spawn_raiders()
 
@@ -424,6 +432,7 @@ func alert_raider(e: Dictionary):
 	if not e.has("us") or e.us.st=="hunt": return
 	e.us.st="hunt"
 	s.sfx("mark",e.x,e.y)
+	UsDeep.alarm(s,e)
 	for other in s.enemies:
 		if not is_same(other,e) and other.has("us") and other.us.st!="hunt" and not other.dead and Vector2(e.x-other.x,e.y-other.y).length()<6 and s.los_clear(other.x,other.y,e.x,e.y): other.us.st="hunt"
 
@@ -569,8 +578,10 @@ func tick(dt: float) -> bool:
 	steps(dt)
 	if PalUnderstrip.PLAN[u.level][0]==1:
 		flood_tick(dt)
+	UsDeep.haz_tick(s,dt)
 	if not s.lay.arena.is_empty():
 		gate_tick(dt)
+		UsDeep.boss_tick(s,dt)
 	for p in s.players.values():
 		p.ripT=maxf(0.0,p.ripT-dt)
 		if p.has("compM") and merchant_at(p)!=p.compM:
@@ -612,6 +623,19 @@ func tick(dt: float) -> bool:
 const NAMES = ["THE FLOOD TUNNELS · 1","THE FLOOD TUNNELS · 2","THE COUNT ROOM","SHELTER 7 · 1","SHELTER 7 · 2","THE MAIN HALL",
 	"AREA 67 · 1","AREA 67 · 2","THE LOADING BAY","THE CONTAINMENT HALL"]
 const REGION_END = [2,5,8]
+
+## a level's opening line (usToast): the boss waiting past the gate, a new region's dangers, or just deeper
+const INTRO = {1:"Find the freight lift down. Neon Shrines refill your Lucky Juice; raiders come back when you rest.",
+	2:"Shelter 7: gas vents hiss before they leak, and the yellow floor is radiation. The Desert Civil Defence Authority still guards it.",
+	3:"Area 67: acid burns, shots slow over the blue floor, and alarms bring drones. Drones die fast in your light."}
+const WAITS = {"pitboss":"The Pit Boss","custodian":"The Custodian","gatekeeper":"The Gatekeeper","visitor":"The Visitor"}
+
+func toast_level(first: bool):
+	var u=s.game.us
+	var boss=PalUnderstrip.PLAN[u.level][2]
+	var reg=PalUnderstrip.PLAN[u.level][0]
+	var new_reg=first or (u.level>0 and PalUnderstrip.PLAN[u.level-1][0]!=reg)
+	s.toast(NAMES[u.level],("%s waits past the gate. Rest at the shrine before you go through." % WAITS[boss]) if boss!="" else (INTRO[reg] if new_reg else "Deeper. Find the next lift."))
 
 func level_done():
 	var u=s.game.us
@@ -674,13 +698,7 @@ func gate_tick(dt: float):
 		u.gateT=4.0
 		s.toast("THE GATE IS CLOSING","Four seconds: everyone through.")
 		s.sfx("horn")
-		# G2's Pit Boss. Deeper bosses are added by G3.
-		if PalUnderstrip.PLAN[u.level][2]=="pitboss":
-			u.bossSpawned=true
-			var boss=s.spawn_boss("pitboss")
-			boss.us={"home":[boss.x,boss.y],"st":"hunt","sid":-boss.id,"look":0.0}
-			boss.hp=960.0*(1+.35*maxi(0,s.players.size()-1))*s.Df.hp
-			boss.max=boss.hp
+		UsDeep.wake(s)
 	elif u.gate==1:
 		u.gateT-=dt
 		if u.gateT<=0:
@@ -699,13 +717,16 @@ func gate_tick(dt: float):
 		u.flood=75.0
 		s.flood_on=false
 		gate_open()
-		s.toast("THE PIT BOSS IS DOWN","The shrine is lit and the lift is running.")
-		var at=s.lay.bossAt[0]
+		var key=UsDeep.boss_of(s)
+		UsDeep.boss_down(s)
+		s.toast(UsDeep.DOWN[key][0],UsDeep.DOWN[key][1])
+		var A=s.lay.arena
+		var at=s.lay.bossAt[0] if not s.lay.bossAt.is_empty() else [int(A.x+A.w/2),int(A.y+A.h/2)]
 		var n=0
 		for p in s.players.values():
-			drop_loot(at[0]+.5+(n%3-1)*.8,at[1]+2,UsLoot.roll(PalUnderstripGen.Rng.new(PalUnderstripGen.mix([u.seed,u.level,7000+n])),"boss",PalUnderstrip.PLAN[u.level][0]))
+			drop_loot(at[0]+.5+(n%3-1)*.8,at[1]+2+floori(n/3.0)*.8,UsLoot.roll(PalUnderstripGen.Rng.new(PalUnderstripGen.mix([u.seed,u.level,7000+n])),"boss",PalUnderstrip.PLAN[u.level][0]))
 			n+=1
-		drop_loot(at[0]+.5,at[1]+3.2,{"kind":"perk","k":"p_tiepin"})
+		drop_loot(at[0]+.5,at[1]+3.2,UsDeep.SIG[key].duplicate(true))
 
 func drop_loot(x: float, y: float, item: Dictionary):
 	var u=s.game.us
@@ -762,22 +783,40 @@ func buy(p: Dictionary, merchant: int, row: int) -> bool:
 	if UsLoot.has(p,"p_comped"): p.compM=merchant
 	return true
 
+## usItemTarget: where SPACE puts the carried item (a flare 2.4 ahead, a barricade on the build tile)
+func item_target(p: Dictionary) -> Dictionary:
+	if p.uSel=="flare":
+		var x=clampf(p.x+p.aim.x*2.4,.5,s.N-.5)
+		var y=clampf(p.y+p.aim.y*2.4,.5,s.N-.5)
+		return {"ok":true,"i":int(x),"j":int(y)}
+	var t=s.build_target(p,0,false)
+	if not s.inb(t.i,t.j): return {"ok":false,"why":"Nothing to put it on"}
+	if s.solid_tile(t.i,t.j) or s.walls[s.idx(t.i,t.j)]!=null: return {"ok":false,"why":"Something's in the way"}
+	for o in s.players.values():
+		if o.alive and int(o.x)==t.i and int(o.y)==t.j: return {"ok":false,"why":"Someone's standing there"}
+	return {"ok":true,"i":t.i,"j":t.j}
+
 func use_item(p: Dictionary) -> bool:
 	if not p.alive or p.ui[p.uSel]<=0: return false
-	var at=Vector2(p.x,p.y)+p.aim*2.4
-	if not s.inb(int(at.x),int(at.y)): return false
-	if p.uSel=="flare":
-		s.game.us.flares.append({"x":at.x,"y":at.y,"t":15.0})
-		s.sfx("lob",at.x,at.y)
-	else:
-		var target=s.build_target(p,0,false)
-		if not s.inb(target.i,target.j) or s.solid_tile(target.i,target.j) or s.walls[s.idx(target.i,target.j)]!=null: return false
+	var t=item_target(p)
+	if not t.ok: return false
+	return use_item_at(p,p.uSel,t.i,t.j)
+
+## usUseItem: a barricade on tile (i, j), or a flare in its middle (also a guest's request, checked again here)
+func use_item_at(p: Dictionary, k: String, i: int, j: int) -> bool:
+	if not p.alive or int(p.ui.get(k,0))<=0 or not s.inb(i,j) or Vector2(i+.5-p.x,j+.5-p.y).length()>3.2: return false
+	if k=="bar":
+		if s.solid_tile(i,j) or s.walls[s.idx(i,j)]!=null: return false
 		var w=Pal.make_wall(0,true)
 		w.hp=120.0
 		w.max=120.0
 		w.bar=true
-		s.sfx("place0",target.i+.5,target.j+.5)
-		s.walls[s.idx(target.i,target.j)]=w
+		s.walls[s.idx(i,j)]=w
+		s.mark_flow()
 		flows.clear()
-	p.ui[p.uSel]-=1
+		s.sfx("place0",i+.5,j+.5)
+	else:
+		s.game.us.flares.append({"x":i+.5,"y":j+.5,"t":15.0})
+		s.sfx("lob",i+.5,j+.5)
+	p.ui[k]-=1
 	return true

@@ -19,7 +19,7 @@ const MODE_HINT := {
 	"blitz": "15 hard raids, then the Final Blitz: 5 minutes with a new boss every 30 seconds. The last minute is the evacuation: reach the evac site yourself, or leave with half your cases and shards.",
 	"campaign": "Operation Whiteout: travel all four maps. Carry upgrades and supplies through 12 raids, then survive the Whiteout Gauntlet and a summit evacuation.",
 	"blackout": "City Black Out: a night city. Hold eight points as bosses hit them one by one, then defend Main Command against the Supreme Destroyer.",
-	"understrip": "THE UNDERSTRIP: a dungeon crawl from the casino's flood tunnels down through Shelter 7 to Area 67. Ten levels from the seed, four bosses, Neon Shrines and shared lives. Solo for now; online comes later.",
+	"understrip": "THE UNDERSTRIP: a dungeon crawl from the casino's flood tunnels down through Shelter 7 to Area 67. Ten levels from the seed, four bosses, Neon Shrines and shared lives. Solo, or a squad online.",
 }
 ## THE UNDERSTRIP (v0.12): playable solo; the room picker doesn't offer it until cross-play (yard-31) is ported
 const US_SOLO := ["understrip", "THE UNDERSTRIP"]
@@ -1264,8 +1264,7 @@ func _sheet_rules(body: VBoxContainer, kind: String) -> void:
 	var modes: Array = MODES.duplicate()
 	if kind == "room":
 		modes.append(["casino", "THE CASINO"])
-	elif kind == "home":
-		modes.append(US_SOLO)
+	modes.append(US_SOLO)   # THE UNDERSTRIP: solo, and online with browser players (yard-31)
 	var sg := UiKit.seg(modes, P.mode, func(id): _sheet_change(kind, "mode", id), {"cols": 3, "size": 14, "h": 48})
 	_tag_seg(sg, "mode")
 	body.add_child(sg)

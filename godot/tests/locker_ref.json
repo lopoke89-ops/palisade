@@ -489,5 +489,217 @@
    ],
    "text": "+6 supply cases · +12 winter cases from bosses · +1 hybrid theory case from bosses · +115 shards from bosses and the evac · +5 shards from leftover salvage · +15 skill points · 2 more raids to the next supply case · Unlocked Desert, Urban Grey, Beanie, Green Tracer, First Light, Ember Field."
   }
+ },
+ {
+  "name": "Understrip, out of Area 67",
+  "claim": {
+   "diff": "normal",
+   "raid_from": 0,
+   "shard_bosses": 0,
+   "salvage": 0,
+   "size": "std",
+   "map": "understrip",
+   "cls": "soldier",
+   "evac": "",
+   "cv": 6,
+   "g_cleared": 0,
+   "mode": "understrip",
+   "win": true,
+   "held": 10,
+   "raid_to": 10,
+   "kills": 180,
+   "boss_keys": [],
+   "duration_s": 2400,
+   "sb_keys": [],
+   "fb_keys": [],
+   "mods": [],
+   "ch_evac": []
+  },
+  "shards": 6,
+  "out": {
+   "cases": 5,
+   "bag": {
+    "understrip": 20,
+    "hybrid": 1
+   },
+   "shards": 26,
+   "prog": 1,
+   "st": {
+    "raids": 10,
+    "wins": 1,
+    "drops": 180,
+    "endless": 0,
+    "hardWins": 0,
+    "us_regions": 3,
+    "us_wins": 1,
+    "cls_soldier_raids": 10
+   },
+   "sp": 12,
+   "unlocked": [
+    "skin:desert",
+    "skin:urban",
+    "hat:beanie",
+    "trail:green",
+    "bg:dawn",
+    "bg:emberfield"
+   ],
+   "text": "+5 supply cases · +20 understrip cases from bosses · +1 hybrid theory case from bosses · +20 shards for the regions cleared · +6 shards from leftover salvage · +12 skill points · 2 more levels to the next supply case · Unlocked Desert, Urban Grey, Beanie, Green Tracer, First Light, Ember Field."
+  }
+ },
+ {
+  "name": "Understrip, lost in Shelter 7",
+  "claim": {
+   "diff": "normal",
+   "raid_from": 0,
+   "shard_bosses": 0,
+   "salvage": 0,
+   "size": "std",
+   "map": "understrip",
+   "cls": "soldier",
+   "evac": "",
+   "cv": 6,
+   "g_cleared": 0,
+   "mode": "understrip",
+   "win": false,
+   "held": 4,
+   "raid_to": 4,
+   "kills": 60,
+   "boss_keys": [],
+   "duration_s": 1100,
+   "sb_keys": [],
+   "fb_keys": [],
+   "mods": [],
+   "ch_evac": []
+  },
+  "shards": 2,
+  "out": {
+   "cases": 1,
+   "bag": {
+    "understrip": 1
+   },
+   "shards": 4,
+   "prog": 1,
+   "st": {
+    "raids": 4,
+    "wins": 0,
+    "drops": 60,
+    "endless": 0,
+    "hardWins": 0,
+    "us_regions": 1,
+    "cls_soldier_raids": 4
+   },
+   "sp": 1,
+   "unlocked": [
+    "skin:desert",
+    "trail:green"
+   ],
+   "text": "+1 supply case · +1 understrip case from bosses · +2 shards for the regions cleared · +2 shards from leftover salvage · +1 skill point · 2 more levels to the next supply case · Unlocked Desert, Green Tracer."
+  }
+ },
+ {
+  "name": "Understrip, a finish too fast to count",
+  "claim": {
+   "diff": "normal",
+   "raid_from": 0,
+   "shard_bosses": 0,
+   "salvage": 0,
+   "size": "std",
+   "map": "understrip",
+   "cls": "soldier",
+   "evac": "",
+   "cv": 6,
+   "g_cleared": 0,
+   "mode": "understrip",
+   "win": true,
+   "held": 10,
+   "raid_to": 10,
+   "kills": 150,
+   "boss_keys": [],
+   "duration_s": 800,
+   "sb_keys": [],
+   "fb_keys": [],
+   "mods": [],
+   "ch_evac": []
+  },
+  "shards": 0,
+  "out": {
+   "cases": 3,
+   "bag": {
+    "understrip": 10
+   },
+   "shards": 20,
+   "prog": 1,
+   "st": {
+    "raids": 10,
+    "wins": 0,
+    "drops": 150,
+    "endless": 0,
+    "hardWins": 0,
+    "us_regions": 3,
+    "cls_soldier_raids": 10
+   },
+   "sp": 12,
+   "unlocked": [
+    "skin:desert",
+    "hat:beanie",
+    "trail:green",
+    "bg:emberfield"
+   ],
+   "text": "+3 supply cases · +10 understrip cases from bosses · +20 shards for the regions cleared · +12 skill points · 2 more levels to the next supply case · Unlocked Desert, Beanie, Green Tracer, Ember Field."
+  }
+ },
+ {
+  "name": "Understrip, joined at level 4",
+  "claim": {
+   "diff": "normal",
+   "raid_from": 3,
+   "shard_bosses": 0,
+   "salvage": 0,
+   "size": "std",
+   "map": "understrip",
+   "cls": "soldier",
+   "evac": "",
+   "cv": 6,
+   "g_cleared": 0,
+   "mode": "understrip",
+   "win": true,
+   "held": 7,
+   "raid_to": 10,
+   "kills": 90,
+   "boss_keys": [],
+   "duration_s": 1500,
+   "sb_keys": [],
+   "fb_keys": [],
+   "mods": [],
+   "ch_evac": []
+  },
+  "shards": 3,
+  "out": {
+   "cases": 4,
+   "bag": {
+    "understrip": 19,
+    "hybrid": 1
+   },
+   "shards": 21,
+   "prog": 1,
+   "st": {
+    "raids": 7,
+    "wins": 1,
+    "drops": 90,
+    "endless": 0,
+    "hardWins": 0,
+    "us_regions": 2,
+    "us_wins": 1,
+    "cls_soldier_raids": 7
+   },
+   "sp": 10,
+   "unlocked": [
+    "skin:desert",
+    "skin:urban",
+    "trail:green",
+    "bg:dawn"
+   ],
+   "text": "+4 supply cases · +19 understrip cases from bosses · +1 hybrid theory case from bosses · +18 shards for the regions cleared · +3 shards from leftover salvage · +10 skill points · 2 more levels to the next supply case · Unlocked Desert, Urban Grey, Green Tracer, First Light."
+  }
  }
 ]

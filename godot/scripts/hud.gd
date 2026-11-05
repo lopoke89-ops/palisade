@@ -1556,9 +1556,12 @@ func _draw_boss_bars() -> void:
 	for e in list:
 		var B := Sim.boss_def(e.boss)
 		var f := maxf(0, e.hp / e.max)
-		if m.sim.understrip() and e.boss=="pitboss":
-			f=clampf((f-.5)/.5 if m.sim.game.us.bossStage==0 else f/.5,0,1)
-		var col := Color(B.col)
+		if m.sim.understrip():   # each stage's own bar (usBossFrac); the Gatekeeper's pilot is his own bar
+			f = UsDeep.boss_frac(m.sim, e)
+		var col := Color("#7cff6b") if e.get("pilot", false) else Color(B.col)
+		if e.get("pilot", false):
+			B = B.duplicate()
+			B.name = B.name + " · THE PILOT"
 		if slim:   # three at once: slim rows
 			boss_c.draw_rect(Rect2(Vector2(x - 3, y - 3) * s, Vector2(w + 6, 20) * s), Color(12 / 255.0, 10 / 255.0, 8 / 255.0, 0.78))
 			txt.call(st, B.name, x + 2, y + 8, 11, col)

@@ -14,6 +14,8 @@ var wall_node: MultiMeshInstance3D
 var warning: MeshInstance3D
 var live: MeshInstance3D   # the shaded props that change (chests, the Keeper, drops, flares, loot)
 var walls_live: MeshInstance3D   # what's painted on the standing walls on screen
+var haze: MeshInstance3D   # see-through: gas, water, acid, rings, wells, flashes
+const WALL_COL := {1: "#55595b", 2: "#4e5140", 3: "#8a9298"}
 var water: MeshInstance3D
 var reg := 1   # the region: 1 the Flood Tunnels, 2 Shelter 7, 3 Area 67
 var tags: Dictionary = {}   # wall tile -> its graffiti (built once, shown while the wall stands full height)
@@ -22,12 +24,15 @@ func _init(w):
 	world=w
 	name="Understrip"
 
-func material(unshaded: bool=false) -> StandardMaterial3D:
+func material(unshaded: bool=false, see_through: bool=false) -> StandardMaterial3D:
 	var mat=StandardMaterial3D.new()
 	mat.vertex_color_use_as_albedo=true
 	mat.roughness=1.0
 	mat.cull_mode=BaseMaterial3D.CULL_DISABLED
 	if unshaded: mat.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED
+	if see_through:   # clouds and floor effects: the vertex colour's alpha, drawn after the solid world, no depth written
+		mat.transparency=BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.depth_draw_mode=BaseMaterial3D.DEPTH_DRAW_DISABLED
 	return mat
 
 func mesh(g: V3Mesh, mat: Material) -> MeshInstance3D:
@@ -52,13 +57,20 @@ func build():
 			var col=Color("#34383b")*Color(shade,shade,shade)
 			if tile in [PalMaps.T_WATER,PalMaps.T_LOW]: col=Color("#173a3b")
 			if tile==PalMaps.T_BRIDGE: col=Color("#665646")
-			if reg==1: col=ground_col(tile,Pal.hash2(x,y))
+			var hz: int=s.lay.haz[y*s.N+x] if s.lay.has("haz") else 0
+			if reg==1 and hz==0: col=ground_col(tile,Pal.hash2(x,y))
+			else: col=reg_ground(tile,hz,x,y,Pal.hash2(x,y))
 			floor_mesh.quad(Vector3(x,0,y),Vector3(x,0,y+1),Vector3(x+1,0,y+1),Vector3(x+1,0,y),col)
-			if reg==1 and tile in [PalMaps.T_GROUND,PalMaps.T_LOW]: ground_detail(floor_mesh,x,y,Pal.hash2(x,y))
+			if tile in [PalMaps.T_GROUND,PalMaps.T_LOW]:
+				if reg==1 and hz==0: ground_detail(floor_mesh,x,y,Pal.hash2(x,y))
+				else: reg_detail(floor_mesh,hz,x,y,Pal.hash2(x,y))
 			if tile==PalMaps.T_LOW: flooded.quad(Vector3(x,.06,y),Vector3(x,.06,y+1),Vector3(x+1,.06,y+1),Vector3(x+1,.06,y),Color("#276f7b"))
 			if tile==PalMaps.T_JUNK: props.box(x+.1,y+.1,x+.9,y+.9,0,.5,Color("#584e42"),Color("#3b3932"),Color("#43423a"))
 			if tile==PalMaps.T_TANK:
-				props.box(x+.1,y+.1,x+.9,y+.9,0,1.4,Color("#486960"),Color("#28453f"),Color("#305047"))
+				props.prism(x+.5,y+.5,.42,0,.12,Color("#3a444c"),Color("#3a444c"),12)
+				glow.prism(x+.5,y+.5,.36,.12,1.3,Color("#3f9c7c"),Color("#3f9c7c"),12)
+				props.prism(x+.5,y+.5,.12,.5,.95,Color("#142828"),Color("#142828"),8,.08)
+				props.prism(x+.5,y+.5,.42,1.3,1.42,Color("#3a444c"),Color("#4a545c"),12)
 	for p in s.lay.lamps:
 		props.box(p[0]-.08,p[1]-.08,p[0]+.08,p[1]+.08,0,1.0,Color("#55574c"),Color("#343831"),Color("#343831"))
 		glow.box(p[0]-.12,p[1]-.12,p[0]+.12,p[1]+.12,1.0,1.15,Color("#ffca72"),Color("#ffca72"),Color("#ffca72"))
@@ -88,6 +100,10 @@ func build():
 	walls_live=MeshInstance3D.new()
 	walls_live.material_override=material()
 	add_child(walls_live)
+	haze=MeshInstance3D.new()
+	haze.material_override=material(true,true)
+	haze.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(haze)
 
 # ---------------------------------------------------------------- the pieces that never change
 
@@ -164,9 +180,13 @@ func frame():
 				if (p.alive or p.downed) and dd>0 and dd<3.5 and absf(lat)<1.8: height=.28
 			var xf=Transform3D(Basis.from_scale(Vector3(1,height,1)),Vector3(x+.5,height*.5,y+.5))
 			wall_instances.set_instance_transform(count,xf)
-			wall_instances.set_instance_color(count,Color("#665b3d") if tile==PalMaps.T_SHUT else Color("#55595b"))
+			var wc=Color(WALL_COL[reg])
+			if tile==PalMaps.T_SHUT:
+				var hz2: int=s.lay.haz[k] if s.lay.has("haz") else 0
+				wc=Color("#5a5c50") if hz2==UsDeep.HZ_BLAST else (Color("#5a1c16") if [x,y] in s.lay.gate else Color("#665b3d"))
+			wall_instances.set_instance_color(count,wc)
 			count+=1
-			if reg==1 and tile==PalMaps.T_CONC and height>1:   # its paint, built the first time the wall is on screen
+			if tile==PalMaps.T_CONC and height>1:   # its paint, built the first time the wall is on screen
 				var paint: V3Mesh=tags.get(k)
 				if paint==null:
 					paint=V3Mesh.new()
@@ -212,9 +232,12 @@ func frame():
 		elif e.st==2:
 			var side=Vector2(e.lx-e.x,e.ly-e.y).normalized().orthogonal()*.6
 			g.quad(Vector3(e.x+side.x,.04,e.y+side.y),Vector3(e.lx+side.x,.04,e.ly+side.y),Vector3(e.lx-side.x,.04,e.ly-side.y),Vector3(e.x-side.x,.04,e.y-side.y),col)
+	var hz=V3Mesh.new()
+	deep(g,hz,lv,s,U,t)
 	if int(world.m.settings.data.get("usBright",0))>=3: bright_marks(g,s)
 	warning.mesh=g.commit() if g.size()>0 else null
 	live.mesh=lv.commit() if lv.size()>0 else null
+	haze.mesh=hz.commit() if hz.size()>0 else null
 
 ## dark to full: how a light at strength f shows on the unshaded layer (no blending there, so it dims toward the dark)
 static func dim(col: Color, f: float) -> Color:
@@ -330,6 +353,161 @@ func loot(g: V3Mesh, glow: V3Mesh, l, t: float):
 	else:
 		g.box(l.x-.12,l.y-.09,l.x+.12,l.y+.09,y,y+.16,col,col.darkened(.2),col.darkened(.3))
 
+# ---------------------------------------------------------------- Shelter 7 and Area 67 (10k)
+
+## usRegGround: the hazard floors, the door tracks, then the region's three shades
+func reg_ground(tile: int, hz: int, x: int, y: int, h: float) -> Color:
+	if tile==PalMaps.T_WATER: return Color("#16303c") if h<.5 else Color("#142b36")
+	if tile==PalMaps.T_BRIDGE: return Color("#4a463c")
+	if hz==UsDeep.HZ_ACID: return Color("#2f5a1e") if h<.5 else Color("#2a5219")
+	if hz==UsDeep.HZ_RAD: return Color("#3a3a1e") if h<.5 else Color("#36361c")
+	if hz==UsDeep.HZ_GRAV: return Color("#2a3448") if h<.5 else Color("#283244")
+	if hz==UsDeep.HZ_GAS: return Color("#26281f")
+	if hz==UsDeep.HZ_BLAST: return Color("#3a2a14") if (x+y)&1 else Color("#1e1a14")
+	var F=[["#30322d","#2c2e29","#292b26"],["#30312a","#2d2e27","#2a2b24"],["#363b40","#33383d","#30353a"]][reg-1]
+	return Color(F[0 if h<.2 else (1 if h<.75 else 2)])
+
+## usRegDetail: radiation trefoils, vent grates, low-gravity rings, alien growth, lab tiles, painted lines
+func reg_detail(g: V3Mesh, hz: int, x: int, y: int, h: float):
+	var cx=x+.5
+	var cy=y+.5
+	if hz==UsDeep.HZ_RAD and h>.82:
+		for k in 3:
+			var a=k*2.094+.5
+			for i in 4:
+				var p=a+i*.225
+				var q=a+(i+1)*.225
+				g.tri(Vector3(cx,.004,cy),Vector3(cx+cos(q)*.22,.004,cy+sin(q)*.22),Vector3(cx+cos(p)*.22,.004,cy+sin(p)*.22),Color("#6a6424"),Vector3.UP)
+	elif hz==UsDeep.HZ_GAS:   # a grate
+		for k in range(-2,3):
+			flat_line(g,Vector3(x+.15,.004,cy+k*.12),Vector3(x+.85,.004,cy+k*.12),.018,Color("#141612"))
+	elif hz==UsDeep.HZ_GRAV and h>.7:
+		arc(g,cx,cy,.4,.012,0,TAU,.004,Color("#3a4a6a"),20)
+	elif reg==3 and h>.93:   # alien growth through the floor
+		g.disc(cx+.1,cy,.24,.16,.004,Color("#3a2a44"),10)
+		g.disc(cx-.06,cy+.04,.13,.08,.006,Color("#2e5a2c"),8)
+	elif reg==3 and h<.5 and (x+y)%4==0:   # lab floor tiles
+		flat_line(g,Vector3(x,.003,y+1),Vector3(x+1,.003,y+1),.008,Color("#3a3f44"))
+	elif reg==2 and h>.9:   # a painted line
+		flat_line(g,Vector3(cx-.18,.004,cy),Vector3(cx+.18,.004,cy),.035,Color("#5a3a1e"))
+
+## what a boss leaves on the floor and how his moves are telegraphed (see-through fills in hz, strokes in g), the
+## vents' gas and the blast doors' warnings, Area 67's drones (in lv)
+func deep(g: V3Mesh, hz: V3Mesh, lv: V3Mesh, s, U, t: float):
+	var pulse=.5+.5*sin(t*14)
+	if s.lay.has("vents") and U.has("vents"):
+		for n in s.lay.vents.size():
+			var st=int(U.vents[n].s)
+			if st==0: continue
+			var v=s.lay.vents[n]
+			for k in v.cloud:
+				if (k*7)%3: continue
+				var x=k%s.N+.5
+				var y=int(k/s.N)+.5
+				var a=.22 if st==2 else .08+.06*sin(t*8)
+				var col=Color(150/255.0,210/255.0,70/255.0,a)
+				var bob=.03*sin(t*1.7+k)
+				hz.prism(x+sin(t+k)*.08,y,.62,.04,.22+bob,col,col,10,.5)   # a low, flat cloud hugging the floor
+				hz.prism(x+sin(t+k)*.08,y,.5,.22+bob,.34+bob,col,col,10,.22)
+	if s.lay.has("blast") and U.has("blast"):
+		for n in s.lay.blast.size():
+			if int(U.blast[n])!=1: continue
+			for tt in s.lay.blast[n].tiles:
+				hz.disc(tt[0]+.5,tt[1]+.5,.45,.45,.03,Color(1,170/255.0,40/255.0,.25+.25*sin(t*14)),12)
+	for f in U.get("bfx",[]):
+		var w=minf(1.0,f.t/f.warn) if f.warn>0 else 1.0
+		var live: bool=f.t>=f.warn
+		match f.k:
+			"water":
+				wedge(hz,f.x,f.y,f.a,f.r,f.half,Color(90/255.0,170/255.0,1,.16+.08*sin(t*30)),.03)
+				for i in 3:
+					var a=f.a+(randf()-.5)*2*f.half
+					var d=randf()*f.r
+					g.box(f.x+cos(a)*d-.03,f.y+sin(a)*d-.03,f.x+cos(a)*d+.03,f.y+sin(a)*d+.03,.03,.06,Color("#c8ebff"),Color("#c8ebff"),Color("#c8ebff"))
+			"gas":
+				var col=Color(150/255.0,210/255.0,70/255.0,.26 if live else .06+.16*w)
+				hz.quad(Vector3(f.x,.05,f.y),Vector3(f.x,.05,f.y1),Vector3(f.x1,.05,f.y1),Vector3(f.x1,.05,f.y),col)
+				if live:
+					for i in 10:
+						var px=f.x+(f.x1-f.x)*fmod(i*.37+.1,1.0)
+						var py=f.y+(f.y1-f.y)*fmod(i*.61+.3,1.0)
+						hz.prism(px+sin(t+i)*.1,py,.6,.05,.3,Color(150/255.0,210/255.0,70/255.0,.14),Color(150/255.0,210/255.0,70/255.0,.14),10,.35)
+				for e in [[f.x,f.y,f.x1,f.y],[f.x1,f.y,f.x1,f.y1],[f.x1,f.y1,f.x,f.y1],[f.x,f.y1,f.x,f.y]]:
+					flat_line(g,Vector3(e[0],.06,e[1]),Vector3(e[2],.06,e[3]),.025,dim(Color("#b4e65a"),.5+.4*pulse if not live else .5))
+			"ring":
+				if not live:
+					arc(g,f.x,f.y,.9,.05,0,TAU,.05,dim(Color("#b8a8ff"),.4+.5*pulse),32)
+				else:
+					var R=(f.t-f.warn)*UsDeep.VIS.pulse.speed
+					arc(hz,f.x,f.y,R,UsDeep.VIS.pulse.w,0,TAU,.06,Color(184/255.0,168/255.0,1,.55),48)
+					arc(g,f.x,f.y,R,.02,0,TAU,.07,Color("#e8e2ff"),48)
+			"acid":
+				if live:
+					hz.disc(f.x,f.y,f.r,f.r,.04,Color(124/255.0,1,107/255.0,.3),24)
+					for i in 3:
+						var a=t*2+i*2.1
+						g.prism(f.x+cos(a)*f.r*.5,f.y+sin(a*1.3)*f.r*.5,.05,.04,.08,Color("#c8ffa0"),Color("#c8ffa0"),6)
+			"circle":
+				if not live:
+					arc(g,f.x,f.y,f.r,.035,0,TAU,.05,dim(Color("#ff3c28"),.55+.35*pulse),40)
+					hz.disc(f.x,f.y,f.r*w,f.r*w,.045,Color(10/255.0,20/255.0,20/255.0,.2+.4*w) if f.get("tank",false) else Color(1,60/255.0,40/255.0,.12+.18*w),32)
+			"well":
+				var R2=UsDeep.VIS.well.r
+				for i in 24:
+					var a0=TAU*i/24-t*1.2
+					arc(g,f.x,f.y,R2,.03,a0,a0+TAU/24*.55,.05,dim(Color("#b8a8ff"),.6 if live else .3+.4*pulse),2)
+				if live:
+					for i in 6:
+						var r2=R2*(1-fmod(t*.6+i/6.0,1.0))
+						var a=t*3+i*1.05
+						arc(hz,f.x,f.y,r2,.04,a,a+1.2,.05,Color(184/255.0,168/255.0,1,.35),8)
+					hz.disc(f.x,f.y,UsDeep.VIS.well.core,UsDeep.VIS.well.core,.05,Color(120/255.0,90/255.0,1,.35),24)
+			"turret":
+				if not live:
+					g.bar(Vector3(f.x,.6,f.y),Vector3(f.x1,.6,f.y1),.02,dim(Color("#ff3c28"),.45+.4*pulse))
+			"blink":
+				var R3=UsDeep.VIS.blink.r
+				hz.disc(f.x,f.y,R3*w,R3*w,.05,Color(1,1,1,.25+.55*w),32)
+				arc(g,f.x,f.y,R3,.03,0,TAU,.06,Color("#ffffff"),40)
+	for e in s.enemies:
+		if e.dead: continue
+		if e.type=="drone":
+			drone(lv,g,e,s)
+			continue
+		if e.type!="boss" or e.get("boss","")=="pitboss": continue
+		var st=int(e.get("st",0))
+		if st==63:   # the mop arc
+			wedge(hz,e.x,e.y,atan2(e.ly-e.y,e.lx-e.x),UsDeep.CUS.mop.r,UsDeep.CUS.mop.half,Color(120/255.0,200/255.0,1,.16+.2*pulse),.04)
+		elif st in [64,72,82]:   # a stage change
+			var f2=1.0-e.stT/maxf(.01,e.stM)
+			arc(g,e.x,e.y,1.2+f2*.6,.04,0,TAU,.05,dim(Color({64:"#ff3a2a",72:"#7cff6b",82:"#b8a8ff"}[st]),.4+.4*pulse),40)
+		elif st==71:   # the stomp
+			var f3=1.0-e.stT/maxf(.01,e.stM)
+			arc(g,e.x,e.y,UsDeep.GK.stomp.r,.035,0,TAU,.05,dim(Color("#ff3c28"),.55+.3*pulse),40)
+			arc(g,e.x,e.y,UsDeep.GK.stomp.r*(1-f3*.6),.025,0,TAU,.05,dim(Color("#ff3c28"),.3),40)
+		elif st==74:   # the pilot's sidearm line
+			g.bar(Vector3(e.x,.5,e.y),Vector3(e.lx,.5,e.ly),.012,dim(Color("#ff3c28"),.5+.3*pulse))
+		if int(e.get("ub",0))&1:   # the Gatekeeper's raised shield: a pale arc in front of him
+			var a=e.aim.angle()
+			arc(hz,e.x,e.y,.85,.06,a-.8,a+.8,.4,Color(154/255.0,216/255.0,1,.35),12)
+
+## a wedge on the floor: a fan from (x, y) along a0, radius r, half-angle half
+static func wedge(g: V3Mesh, x: float, y: float, a0: float, r: float, half: float, col: Color, h: float):
+	for i in 12:
+		var a=a0+(i/12.0-.5)*2*half
+		var b=a0+((i+1)/12.0-.5)*2*half
+		g.tri(Vector3(x,h,y),Vector3(x+cos(b)*r,h,y+sin(b)*r),Vector3(x+cos(a)*r,h,y+sin(a)*r),col,Vector3.UP)
+
+## a drone: a dark lens hovering over its own shadow, a green ring round it (pale in your light), its eye on you
+func drone(g: V3Mesh, glow: V3Mesh, e, s):
+	var h=V3.WALL_H*(.55+.08*sin(e.walk))*1.6
+	var lit: bool=e.get("lit",false)
+	g.disc(e.x,e.y,.2,.14,.01,Color("#111110"),10)
+	var body=Color("#e8ffe0") if e.flash>0 else Color("#1c2620")
+	g.prism(e.x,e.y,.17,h-.06,h+.06,body,body.lightened(.1),10,.12)
+	arc(glow,e.x,e.y,.24,.025,0,TAU,h,Color("#d8ff9a") if lit else Color("#7cff6b"),16)
+	glow.prism(e.x+e.aim.x*.12,e.y+e.aim.y*.12,.04,h-.02,h+.04,Color("#b8ff7a"),Color("#b8ff7a"),6)
+
 # ---------------------------------------------------------------- the Flood Tunnels' look
 
 ## usGroundCol: the floor's three shades, the low ground's, water, bridges
@@ -381,9 +559,14 @@ func wall_face(g: V3Mesh, x: int, y: int, k: int):
 	var H=1.25
 	var L=func(s: float,f: float) -> Vector3: return Vector3(x+s,f*H,y+1.003)   # the south face, west to east
 	var R=func(s: float,f: float) -> Vector3: return Vector3(x+1.003,f*H,y+1-s)   # the east face, south to north
+	var dark=Color(WALL_COL[reg]).darkened(.35)
 	for F in [L,R]:
-		for f in [.35,.7]: face_line(g,F,[[0,f],[1,f]],.008,Color("#3a3d3e"))
-		face_line(g,F,[[0,.1],[1,.1]],.008,Color("#5a6a6a"))
+		for f in [.35,.7]: face_line(g,F,[[0,f],[1,f]],.008,dark)
+		face_line(g,F,[[0,.1],[1,.1]],.008,Color(WALL_COL[reg]).lightened(.08))
+		if reg==2: face_line(g,F,[[0,.5],[1,.5]],.025,Color("#a8642a"),.001)   # Shelter 7's orange band
+	if reg==3:   # growth up the lab wall
+		face_line(g,L,[[.2,.2],[.28,.42],[.38,.62],[.5,.8]],.018,Color("#5aa050"),.001)
+	if reg!=1: return
 	var v=tag_of(k)
 	if v==1:   # a bubble tag: a fat pink loop with a cyan outline and a highlight
 		var P=[[.14,.32],[.24,.62],[.36,.34],[.46,.6],[.58,.3],[.7,.58],[.84,.36]]

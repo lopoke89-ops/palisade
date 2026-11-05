@@ -460,7 +460,7 @@ func claim_reward(c: Dictionary, j: Dictionary) -> Dictionary:
 	var R := {"kind": c.get("kind", "run"), "cases": cases, "shards": int(j.get("shards", 0)), "unlocked": ids, "prog": prog,
 		"toNext": int(j.to_next) if j.get("to_next") != null else 3 - prog, "cloud": true, "bossShards": int(j.get("boss_shards", 0)),
 		"sp": int(j.get("skill_points", 0)), "left": bool(j.get("left_behind", false)), "blitzShards": c.get("mode") in ["blitz", "campaign"],
-		"pois": -1, "claim_at": c.get("at", 0)}
+		"pois": -1, "claim_at": c.get("at", 0), "us": c.get("mode") == "understrip"}
 	R.text = m.locker.reward_text(R)
 	return R
 

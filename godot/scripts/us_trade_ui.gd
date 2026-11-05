@@ -43,6 +43,10 @@ func refresh():
 		button.custom_minimum_size.y=46
 		button.disabled=bought or p.sal<price or not UsLoot.can_apply(p,gear)
 		button.pressed.connect(func():
+			if m.net.guest():   # online as a guest: the host sells it (yard-31's ub)
+				m.net.send_us({"t":"ub","m":merchant,"s":i})
+				button.disabled=true
+				return
 			m.sim.us.buy(p,merchant,i)
 			refresh())
 		rows.add_child(button)
@@ -53,7 +57,10 @@ func refresh():
 			button.text="%s · %d/8 · %s" % [upgrade.name,rank,"MAX" if rank>=8 else "%d SAL" % upgrade.cost[rank]]
 			button.disabled=rank>=8 or (rank<8 and p.sal<upgrade.cost[rank])
 			button.pressed.connect(func():
-				m.sim.buy_upgrade(p,upgrade.k)
+				if m.net.guest():
+					m.net.send_upgrade(upgrade.k)
+				else:
+					m.sim.buy_upgrade(p,upgrade.k)
 				refresh())
 			rows.add_child(button)
 	var done=Button.new()

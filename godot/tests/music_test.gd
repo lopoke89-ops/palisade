@@ -39,6 +39,19 @@ func _run() -> void:
 	check(A.music_route()[0] == "finale", "Black Out's final push plays the finale")
 	s.game.bo.stage = "attack"
 	check(A.music_route()[0] in ["attitude", "cool", "express"], "a Black Out attack plays a raid track")
+	# THE UNDERSTRIP (usMusicRoute): the casino upstairs through concrete; each boss fight its track; Area 67 only its hum
+	s.new_game(1, "normal", {}, {"mode": "understrip"})
+	check(A.music_route()[0] == "casino", "the Flood Tunnels hear the casino upstairs")
+	s.new_game(1, "normal", {}, {"mode": "understrip", "us_level": 2})
+	s.game.us.gate = 1
+	check(A.music_route()[0] == "express", "the Pit Boss's fight plays express")
+	s.game.us.bossDown = true
+	check(A.music_route()[0] == "casino", "after him, the casino again")
+	s.new_game(1, "normal", {}, {"mode": "understrip", "us_level": 6})
+	check(A.music_route()[0] == "", "Area 67: the music cuts out (the hum plays)")
+	s.new_game(1, "normal", {}, {"mode": "understrip", "us_level": 9})
+	s.game.us.gate = 2
+	check(A.music_route()[0] == "finale", "the Visitor's fight plays the finale")
 	s.new_game(1, "normal", {}, {"mode": "casino", "map": "casino"})
 	var r := A.music_route()
 	check(r[0] == "casino" and r[1].begins_with("casino:"), "the casino plays its playlist (%s)" % r[1])

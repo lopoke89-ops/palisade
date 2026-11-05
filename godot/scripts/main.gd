@@ -538,21 +538,58 @@ func do_action(id: String) -> void:
 		return
 	var p: Dictionary = sim.player
 	if sim.understrip() and id in ["drink", "kit", "armory", "delgado", "start", "piece", "build", "mat1", "mat2", "mat3", "matPrev", "matNext"]:
+		var guest_on := net.guest()   # online as a guest: the host decides (yard-31's ud ui uu uw ut)
 		if id in ["drink", "kit"]:
-			sim.us.drink(p)
+			if not p.alive:
+				return
+			if p.uj <= 0:
+				sim.toast("LUCKY JUICE", "Empty. Rest at a Neon Shrine to refill.")
+			elif guest_on:
+				if p.get("ujT", 0.0) <= 0 and p.hp < p.max:
+					net.send_us({"t": "ud"})
+					p.ujT = UsNet.DRINK
+			else:
+				sim.us.drink(p)
 		elif id == "armory":
 			var merchant = sim.us.merchant_at(p)
-			if merchant >= 0:
+			var loot_n := -1
+			for item in sim.game.us.loot:
+				if Vector2(p.x - item.x, p.y - item.y).length() < 0.85:
+					loot_n = int(item.n)
+					break
+			if loot_n >= 0:
+				if guest_on:
+					net.send_us({"t": "ut", "n": loot_n})
+				else:
+					sim.us.take_loot(p, loot_n)
+			elif merchant >= 0:
 				if not is_instance_valid(us_shop):
 					us_shop = UsTradeUI.new(self)
 					add_child(us_shop)
 				us_shop.open(merchant)
+			elif guest_on:
+				net.send_us({"t": "ui"})
 			else:
 				sim.us.interact(p)
 		elif id == "build":
-			sim.us.use_item(p)
+			if not p.alive:
+				return
+			var item_name := "BARRICADE" if p.uSel == "bar" else "ROAD FLARE"
+			if int(p.ui.get(p.uSel, 0)) <= 0:
+				sim.toast(item_name, "You have none. The Tunnel Trader sells them.")
+				return
+			var t: Dictionary = sim.us.item_target(p)
+			if not t.ok:
+				sim.toast(item_name, t.why)
+			elif guest_on:
+				net.send_us({"t": "uu", "k": p.uSel, "i": t.i, "j": t.j})
+			else:
+				sim.us.use_item_at(p, p.uSel, t.i, t.j)
 		elif id in ["mat1", "mat2", "matPrev", "matNext"]:
-			UsLoot.swap(sim, p, 0 if id == "mat1" else (1 if id == "mat2" else 1 - p.wSel))
+			var to := 0 if id == "mat1" else (1 if id == "mat2" else 1 - int(p.wSel))
+			if guest_on and p.get("w2") != null and to != int(p.wSel):
+				net.send_us({"t": "uw", "to": to})
+			UsLoot.swap(sim, p, to)
 		elif id == "piece":
 			p.uSel = "flare" if p.uSel == "bar" else "bar"
 		return
@@ -936,14 +973,15 @@ func _process(dt: float) -> void:
 		net.host_frame(dt)   # before the events drain: they go to the guests too
 	elif net.mode == "guest" and not net.in_game:
 		net.guest_frame(dt, {})
-	if not demo and sim.game.wave != draft_wave:
-		draft_wave = sim.game.wave
+	var dw: int = sim.game.us.log.size() + 1 if sim.understrip() else sim.game.wave   # THE UNDERSTRIP: a level finished
+	if not demo and dw != draft_wave:
+		draft_wave = dw
 		locker.save_draft(sim)
 	if not demo and sim.game.phase == "over":
 		if run_sp < 0:
 			if sim.pvp() == "" and not sim.casino() and net.mode == "solo":   # this PC's best runs (solo only, as in the browser)
 				var g: Dictionary = sim.game
-				PalSaves.save_best(sim, sim.bo_stages() if sim.blackout() else (int(g.waves) if g.won or g.end_reason in ["evac", "left"] else (g.wave if g.end_reason == "evacfail" else maxi(0, g.wave - 1))), int(g.stats.dropped))
+				PalSaves.save_best(sim, g.us.log.size() if sim.understrip() else (sim.bo_stages() if sim.blackout() else (int(g.waves) if g.won or g.end_reason in ["evac", "left"] else (g.wave if g.end_reason == "evacfail" else maxi(0, g.wave - 1)))), int(g.stats.dropped))
 			last_reward = locker.pay_pvp(sim) if sim.pvp() != "" else locker.pay_run(sim)
 			run_sp = last_reward.get("sp", 0)
 		if menus.screen == "pause":
@@ -1797,6 +1835,39 @@ func _us_prompts(p: Dictionary) -> void:
 		var at := iso(ex[0], ex[1])
 		label("THE LIFT · DEAD" if dead else "THE LIFT · EVERYONE IN THE RING", at.x, at.y - v.WH * 1.9, c("#7cff6b"), int(round(11 * u)))
 
+## the words over the deeper regions' warnings: a vent about to leak, a door about to slam, a gas quarter coming, the
+## turret's target, the Gatekeeper's shield, a boss changing stage
+func _us_labels() -> void:
+	var U: Dictionary = sim.game.us
+	var L: Dictionary = sim.lay
+	var fs := int(round(10 * v.u))
+	var say := func(x: float, y: float, up: float, t: String, col: String) -> void:
+		var at := iso(x, y)
+		label(t, at.x, at.y - v.WH * up, c(col), fs)
+	if L.has("vents") and U.has("vents"):
+		for n in L.vents.size():
+			if int(U.vents[n].s) == 1:
+				say.call(L.vents[n].cx, L.vents[n].cy, 1.4, "GAS", "#b8e06a")
+	if L.has("blast") and U.has("blast"):
+		for n in L.blast.size():
+			if int(U.blast[n]) == 1:
+				say.call(L.blast[n].cx, L.blast[n].cy, 1.6, "DOOR", "#ffb02a")
+	for f in U.get("bfx", []):
+		if f.t >= f.warn:
+			continue
+		if f.k == "gas":
+			say.call((f.x + f.x1) / 2, (f.y + f.y1) / 2, 0.0, "GAS", "#b8e06a")
+		elif f.k == "turret":
+			say.call(f.x1, f.y1, 1.9, "TURRET", "#ff8a6a")
+	for e in sim.enemies:
+		if e.dead or e.type != "boss":
+			continue
+		var st := int(e.get("st", 0))
+		if st == 76:
+			say.call(e.x, e.y, 2.2, "SHIELD", "#9ad8ff")
+		elif st in [64, 72, 82]:
+			say.call(e.x, e.y, 2.3, {64: "CASING CRACKED", 72: "THE PILOT EJECTS", 82: "THE FIELD FAILS"}[st], {64: "#ff3a2a", 72: "#7cff6b", 82: "#b8a8ff"}[st])
+
 const US_MERCH := {"trader": ["THE TUNNEL TRADER", "#c78bff"], "keeper": ["THE SHRINE KEEPER", "#7cd8ff"],
 	"collector": ["THE COLLECTOR", "#e2b436"], "lift": ["THE LIFT MERCHANT", "#7cff6b"]}
 const US_RAR_N := {"c": "COMMON", "r": "RARE", "e": "EPIC", "l": "LEGENDARY", "g": "GOLD", "u": "ULTIMATE"}
@@ -1921,6 +1992,7 @@ func _draw_prompts(p: Dictionary) -> void:
 	var u := v.u
 	if sim.understrip():
 		_us_tips(p)
+		_us_labels()
 		_us_prompts(p)
 		var mark = func(x, y, col):
 			var pos = iso(x,y)
@@ -2879,7 +2951,10 @@ func _update_light(dt: float) -> void:
 		T = {"L": 0.12, "r": 28.0, "g": 34.0, "b": 44.0, "warm": 0.0}
 	if sim.understrip():   # the darkness floor from DUNGEON BRIGHTNESS, the region's own tint
 		var dk: Dictionary = US_DARK[clampi(PalUnderstrip.PLAN[clampi(int(g.us.level), 0, 9)][0], 1, 3)]
-		T = {"L": US_DARK_L[clampi(int(settings.data.get("usBright", 0)), 0, 3)], "r": dk.r, "g": dk.g, "b": dk.b, "warm": 0.0}
+		var fight: String = UsDeep.boss_of(sim) if g.us.bossSpawned and not g.us.bossDown and int(g.us.bossStage) > 0 else ""
+		if fight == "custodian":   # the casing cracked: red light
+			dk = {"r": 40.0, "g": 2.0, "b": 2.0}
+		T = {"L": US_DARK_L[clampi(int(settings.data.get("usBright", 0)), 0, 3)] + (0.04 if fight == "visitor" else 0.0), "r": dk.r, "g": dk.g, "b": dk.b, "warm": 0.0}
 	var k := minf(1.0, dt * 0.8)
 	for key in T:
 		light[key] += (T[key] - light[key]) * k
@@ -2902,11 +2977,14 @@ func _update_light(dt: float) -> void:
 		if sim.understrip():   # the browser's usLights: lamps, tanks, neon, shrines, traders, the open lift, flares, salvage, bosses
 			var U: Dictionary = g.us
 			var t: float = g.time
-			for lamp in sim.lay.lamps:
-				hole.call(lamp[0], lamp[1], WH * 0.6, TW2 * 2.8, 0.75)
+			var dark: bool = UsDeep.boss_of(sim) == "visitor" and int(U.bossStage) > 0 and not U.bossDown   # the Visitor's field fails
+			for n in sim.lay.lamps.size():
+				var on := 0.0 if dark else UsDeep.lamp_on(sim, n)
+				if on > 0:
+					hole.call(sim.lay.lamps[n][0], sim.lay.lamps[n][1], WH * 0.6, TW2 * 2.8 * (0.7 + 0.3 * on), 0.75 * on)
 			for q in sim.lay.get("tanks", []):
-				hole.call(q[0], q[1], WH * 0.6, TW2 * 1.2, 0.4)
-			for n in sim.lay.neon.size():
+				hole.call(q[0], q[1], WH * 0.6, TW2 * 1.2, 0.25 if dark else 0.4)
+			for n in (0 if dark else sim.lay.neon.size()):
 				var fl: float = 0.6 if PalSettings.reduce_motion else 0.45 + 0.35 * maxf(0.0, sin(t * 2.3 + n) * sin(t * 5.7 + n * 3))
 				hole.call(sim.lay.neon[n][0], sim.lay.neon[n][1], WH * 0.4, TW2 * 1.9, fl)
 			for n in sim.lay.shrines.size():

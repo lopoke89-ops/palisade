@@ -54,7 +54,7 @@ const BURST_N: Array = [3, 5, 7, 9, 9]
 
 const ETYPES: Dictionary = {
 	"rifle": {"hp": 36.0, "speed": 1.5}, "gren": {"hp": 46.0, "speed": 1.25}, "breach": {"hp": 30.0, "speed": 2.1},
-	"shield": {"hp": 66.0, "speed": 1.15}, "medic": {"hp": 34.0, "speed": 1.55}, "spotter": {"hp": 30.0, "speed": 1.45}, "fire": {"hp": 40.0, "speed": 1.4},
+	"shield": {"hp": 66.0, "speed": 1.15}, "medic": {"hp": 34.0, "speed": 1.55}, "spotter": {"hp": 30.0, "speed": 1.45}, "fire": {"hp": 40.0, "speed": 1.4}, "drone": {"hp": 10.0, "speed": 2.6},
 }
 
 # Second Wind defaults with no skills taken (perkMods({}))

@@ -17,6 +17,10 @@ const STAFF := {"vinnie": "skin:dracula", "rosa": "skin:redcoat", "marco": "skin
 ## boss state -> the clip family it shows: "Name" is a tell (wind-up, timed to the state), "Name!" is the move itself
 const BOSS_ST := {
 	"pitboss": {1: "CashBoxSwing", 2: "FloorRush", 3: "FloorRush!", 61: "CardSpray"},
+	"custodian": {63: "MopArc"},
+	"gatekeeper": {71: "Stomp", 76: "ShieldWall"},
+	"gatekeeper_pilot": {74: "Sidearm", 75: "Dive!"},
+	"visitor": {83: "Blink"},
 	"demolisher": {1: "Rocket", 2: "RocketFan"},
 	"arsonist": {1: "NapalmChain", 25: "Flamethrower", 26: "Flamethrower!", 27: "RingOfFire"},
 	"butcher": {1: "Blade", 2: "Charge", 3: "Charge!"},
@@ -603,9 +607,9 @@ func frame(dt: float) -> void:
 	if sim.casino():
 		_casino_staff(dt)
 	for e in sim.enemies:
-		if e.get("dead", false):
+		if e.get("dead", false) or e.type == "drone":
 			continue
-		var cid: String = "enemy:" + (str(e.boss) if e.type == "boss" else str(e.type))
+		var cid: String = "enemy:" + (str(e.boss) + ("_pilot" if e.get("pilot", false) else "") if e.type == "boss" else str(e.type))
 		if not lib.has(cid):
 			cid = "enemy:rifle"
 		var r := _rec("e:" + str(e.id), cid, "boss" if e.type == "boss" else "enemy")
@@ -962,6 +966,17 @@ func _enemy(r: Dictionary, e: Dictionary, dt: float) -> void:
 		if r.get("jacket", true) != jacket:
 			lib.show_slot(r.info.model, "Equipment_Jacket", jacket)
 			r.jacket = jacket
+	# the Custodian's casing cracks for stage 2; the Gatekeeper's cab is empty once the pilot is out
+	if boss and str(e.boss) == "custodian" and sim.understrip():
+		var cracked: bool = int(sim.game.us.get("bossStage", 0)) > 0
+		if r.get("cracked", null) != cracked:
+			lib.show_slot(r.info.model, "Equipment_Damage", cracked)
+			r.cracked = cracked
+	if boss and str(e.boss) == "gatekeeper" and not e.get("pilot", false) and sim.understrip():
+		var crewed: bool = not (e.get("gk2", false) and int(e.get("st", 0)) != 72)
+		if r.get("crewed", null) != crewed:
+			lib.show_slot(r.info.model, "Equipment_Pilot", crewed)
+			r.crewed = crewed
 	_flash(r, e.get("flash", 0.0) > 0)
 	r.prev = {"broken": e.get("shieldBroken", false), "planted": e.get("planted", false)}
 
@@ -986,7 +1001,7 @@ func _raider_clip(r: Dictionary, e: Dictionary, C: Dictionary) -> void:
 ## a boss: the tell timed to the state (it ends when the move goes off), the move, then its recovery; walking otherwise
 func _boss_clip(r: Dictionary, e: Dictionary, C: Dictionary) -> void:
 	var st: int = int(e.get("st", 0))
-	var table: Dictionary = BOSS_ST.get(str(e.boss), {})
+	var table: Dictionary = BOSS_ST.get(str(e.boss) + ("_pilot" if e.get("pilot", false) else ""), {})
 	var fam: String = table.get(st, "")
 	if st != r.st:
 		var was: String = r.bfam

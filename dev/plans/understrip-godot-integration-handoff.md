@@ -143,5 +143,90 @@ light. It was all green at the start. Still nothing committed; the worktree keep
 Not ported, because it belongs with G3: Shelter 7's and Area 67's own floors, walls, hazards and lamp timings
 (`usRegGround`, `usLampOn`), and the Visitor's lights-out.
 
+## G3 (Claude, November 4, night)
+
+A whole solo run now plays through to OUT OF AREA 67. New file `scripts/us_deep.gd` (`UsDeep`) ports 10k and the
+deeper half of 10i:
+- **Hazards:** the hazard map, vents, blast doors, tanks and lamp timers come with every layout (`haz_lay`).
+  - Shelter 7: radiation floors, and gas vents that hiss for 2 s and then leak for 6 s.
+  - Area 67: acid floors and low-gravity floors (bullets and lobs slow to 60% over them).
+  - Lamps follow `usLampOn`: Shelter 7's tubes flicker; Area 67's lights fail on its second level.
+- **Area 67's alarms and drones:** the first raider to start hunting in a room trips its alarm; 3 s later a drone pack
+  comes (4-6, at most 12 alive). Drones fly their own path to you, sting on touch, and take double damage in your light.
+  Rooms keep their waiting drones too. Resting clears the alarms.
+- **Bosses**, each at the browser's health (BOSS_HP 1.25, +35% a player), with their stage changes, telegraphs and floor
+  effects (`us.bfx`):
+  - the Custodian: mop arc with live water, blast doors on their rhythm, then crush lanes, gas quarters and a ceiling
+    turret;
+  - the Gatekeeper: rockets, shield (blocks front shots like a shieldbearer's), stomp, ground pound. At half health the
+    pilot ejects as a second body with a sidearm and dodge; downing either one ends the fight;
+  - the Visitor: psychic rings, tank throws with acid. At half health the lights go out, and it blinks, calls drone
+    swarms and casts gravity wells. Under 10% it gets desperate (every cooldown x0.7).
+  - Down: each boss's message, a drop for each player plus the boss's own (tie-pin, flare launcher, anti-grav launcher,
+    the Visitor's Eye). The floor clears, the doors open, the drones drop.
+  - Squad wipe: the boss and what he called go, and he starts again.
+- **Fix:** the Pit Boss's health now uses the browser's formula (x BOSS_HP 1.25). Solo he has 1,200, not 960;
+  `understrip_sim_test` was updated.
+- **3D:**
+  - each region's floors, hazard floors and details, wall colours and paint (Shelter 7's orange band, Area 67's
+    growth);
+  - specimen tanks; low gas clouds;
+  - blast doors and the boss gate in their own colours, with an amber warning before a door slams;
+  - every telegraph and floor effect (see-through layer `haze`);
+  - drones as hovering lenses;
+  - the library's Custodian (`Equipment_Damage` shows in stage 2), Gatekeeper (`Equipment_Pilot` hides once the pilot
+    is out), the pilot (`enemy:gatekeeper_pilot`) and the Visitor, with their Tell/Execute/Recover clips by state.
+  - Light: the Custodian's red, and the Visitor's blackout (no lamps or neon, darker).
+  - Labels: GAS, DOOR, TURRET, SHIELD, and the stage changes. The boss bars show each stage, and the pilot has his own
+    bar.
+  - Each level opens with the browser's line (a new region's dangers, or the boss waiting past the gate).
+- **Tests:**
+  - New `understrip_deep_test` (34 checks): the layouts, radiation, vents, drones and light, each boss through his stages
+    to his drop, and the last lift to the win.
+  - New `understrip_deep_shot.gd` renders Shelter 7, each boss in both stages, and Area 67's drones.
+  - All seven suites pass.
+- **Build:** a Windows build of this worktree is at `Documents\Palisade\Understrip Test Build\Palisade.exe`. The 4.7.2
+  export templates are installed in `%APPDATA%\Godot\export_templates`.
+
+Not ported: Area 67's ambient hum (`usAmbience`), and the regions' raider uniforms (`usLook`; the 3D raiders use the
+library's models).
+
+## G4 and G5, and Area 67's music (Claude, November 4, late)
+
+- **Area 67 and the regions' sound** (`pal_audio.gd`): the mode routes music as `usMusicRoute` does.
+  - Outside a boss fight, the casino upstairs plays through the concrete: low-passed at 650 Hz in the Flood Tunnels,
+    and at 420 Hz with a reverb tail in Shelter 7, on a new `Music` bus.
+  - Each boss fight has its own track: express, attitude, cool, then the finale.
+  - In Area 67 the music cuts out and the low hum plays (`usAmbience`: 55 Hz and a drifting 82.6 Hz, low-passed).
+  - `music_test` checks the routes.
+- **Still not ported:** the regions' raider uniforms (`usLook`). The 3D raiders share one merged material per model, so
+  Shelter 7's olive and Area 67's white need uniform variants of the raider models from the library (a Blender task).
+- **G5, the rewards** (`pal_locker.gd`):
+  - The claim counts the levels finished (the run log) and sends `cv:6` with the map `understrip`, as the browser's
+    `runClaim` does; the server counts the regions.
+  - With no account, the local pay is `US_PAY` [1,3,6] a region plus `US_WINPAY` 10 for the finish (cases, skill
+    points, shards ×2). A finish under 15 minutes isn't a win.
+  - The reward text says "for the regions cleared" and "more levels".
+  - Drafts and best runs count levels.
+  - `tests/locker_ref.json` gains four Understrip runs, generated by the browser's own `localRun` (bench
+    `locker_ref_ff.js`); the eight older entries are unchanged. `client_test` matches all four.
+- **G4, online** (yard-31; `scripts/us_net.gd`, `pal_net.gd`):
+  - The browser's fields are appended at the ends of the rows. Enemy codes `boss:pitboss` … `drone` are added.
+  - The start message carries `us` [seed, level, lives]; the snapshot carries `us`; player rows carry `us` bits and the
+    `usk` kit; raider rows carry `el`, `est` and `ub`.
+  - The host takes guests' `ud ui uu ub uw ut`; a guest's buttons, the trade screen and the keeper's upgrades send
+    them. A guest follows the host's lift with `change_level(n, true)`.
+  - The online room picker offers the mode.
+  - **Fixed in passing:** `_send_events` halved oversized messages through a lambda that called itself, which GDScript
+    can't do, so any batch over 12 KB crashed. It's now `_split_events`.
+- **Cross-play check** (bench `understrip_cross.js` with `cross_game_driver.gd` roles `ushost` / `usguest`; Chromium, as
+  `tests/cross_game.js`):
+  - **Godot hosts, the browser joins:** 14/14. The same tunnels from the seed, the drink, loot taken into the kit, drones
+    and an elite, the lift down to level 2; no errors on either side.
+  - **The browser hosts, Godot joins:** fails at connecting, as does the original co-op join on this PC. The WebRTC
+    plugin's DTLS handshake fails ("SSL - The requested feature is not available") when Godot calls a current browser
+    (Chrome 157, Firefox). Godot to Godot (`net_test`) works. The earlier passing runs used an older Chromium. Not
+    caused by this work; until it's fixed, a desktop player can't join a browser-hosted room.
+
 G3 (the deeper bosses, using the library's Custodian, Gatekeeper, Pilot and Visitor), G4 (yard-31) and G5 (claims,
 build) are unchanged.

@@ -100,7 +100,7 @@ const BOSS_ORDER := ["butcher", "demolisher", "storm"]
 const WEAK_BONUS := 1.35
 const BOSS_HP := 1.25
 const ABIL_ROCKET := {"stock": 5, "refill": 2, "cd": 1.5, "speed": 11.0, "range": 12.0, "R": 1.9, "power": 1.5}
-const BOUNTY := {"rifle": 4, "gren": 7, "breach": 6, "shield": 6, "medic": 5, "spotter": 5, "fire": 6}
+const BOUNTY := {"rifle": 4, "gren": 7, "breach": 6, "shield": 6, "medic": 5, "spotter": 5, "fire": 6, "drone": 2}
 const CORE_FIX := {"hp": 50.0, "cost": 25}
 const DELL_UP := {"name": "DELGADO", "what": "Shared damage, reach and fire rate up to +75%.", "cost": [30, 60, 100, 150, 200, 270, 350, 450]}
 const AMMO := [{"id": "ap", "name": "ARMOR PIERCING", "what": "Damage through a frontal riot shield", "col": "#c8e0f2"}, {"id": "fire", "name": "INCENDIARY", "what": "Burns for 10 HP/s; hits refresh the timer", "col": "#ff8244"}, {"id": "blast", "name": "EXPLOSIVE", "what": "Small enemy-only blast on impact", "col": "#ffc05a"}, {"id": "shock", "name": "LIGHTNING", "what": "Slows the target and nearby enemies", "col": "#81dafa"}]
@@ -818,7 +818,11 @@ func hurt_ally(a: Dictionary, d: float) -> void:
 
 func hurt_enemy(e: Dictionary, d: float, own = null, quiet: bool = false) -> void:
 	if understrip() and e.get("inv", 0.0) > 0:
+		if not quiet:
+			e.flash = 0.04
 		return
+	if e.type == "drone":
+		d *= UsDeep.drone_mul(self, e)
 	e.hp -= d
 	if not quiet:
 		e.flash = 0.08
@@ -2011,6 +2015,9 @@ func update_enemies(dt: float) -> void:
 			continue
 		if understrip() and us.idle(e, dt):
 			continue
+		if e.type == "drone":
+			UsDeep.drone_tick(self, e, dt)
+			continue
 		var aimed := us.aim(e) if understrip() else city_aim(e)   # a POI attacker treats his POI as the stake
 		_enemy_tick(e, dt)
 		if aimed:
@@ -2327,8 +2334,10 @@ func _aim_at(e: Dictionary, x: float, y: float) -> float:
 	return atan2(dy, dx)
 
 
-func update_bullets(dt: float) -> void:
+func update_bullets(dt_all: float) -> void:
+	var grav: bool = understrip() and lay.has("haz")
 	for b in bullets:
+		var dt: float = dt_all * UsDeep.grav_at(self, b.x, b.y) if grav else dt_all
 		var sp := Vector2(b.vx, b.vy).length()
 		var steps := ceili(sp * dt / 0.15)
 		var scale := sqrt(1.0 + pow(b.zSlope * 0.8, 2))   # bulletRangeScale: a sloping round covers more ground
@@ -2399,10 +2408,11 @@ func update_bullets(dt: float) -> void:
 					if not e.dead and not e.get("burrow", false) and at_actor(b, e) and Vector2(e.x - b.x, e.y - b.y).length() < (0.55 if e.get("big", false) else 0.34):
 						# a shieldbearer's shield covers his front (about 130°): the round sparks off it
 						var shield := 1.0
-						if e.type == "shield" and not e.shieldBroken:
+						if (e.type == "shield" and not e.shieldBroken) or int(e.get("ub", 0)) & 1:
 							var l := sp if sp > 0 else 1.0
 							if -(b.vx * e.aim.x + b.vy * e.aim.y) / l > 0.42:
-								shield_bullet_hit(e, b)
+								if e.type == "shield":
+									shield_bullet_hit(e, b)
 								var ap_rank := -1
 								if b.has("ammo"):
 									for am in b.ammo:
@@ -2431,8 +2441,9 @@ func update_bullets(dt: float) -> void:
 
 
 func update_lobs(dt: float) -> void:
+	var grav: bool = understrip() and lay.has("haz")
 	for l in lobs:
-		l.t += dt
+		l.t += dt * UsDeep.grav_at(self, l.x0 + (l.x1 - l.x0) * l.t / l.T, l.y0 + (l.y1 - l.y0) * l.t / l.T) if grav else dt
 		if l.t >= l.T:
 			l.dead = true
 			match l.get("k", 0):
@@ -3059,7 +3070,7 @@ func ammo_hit(e: Dictionary, b: Dictionary) -> void:
 func boss_weak(e: Dictionary, b: Dictionary) -> float:
 	if e.type != "boss" or not b.has("ammo"):
 		return 1.0
-	var w: String = BOSS_WEAK.get(e.boss, BOSS_WEAK2.get(e.boss, ""))
+	var w: String = BOSS_WEAK.get(e.boss, BOSS_WEAK2.get(e.boss, UsDeep.WEAK.get(e.boss, "")))
 	for am in b.ammo:
 		if am[0] == w:
 			if not e.get("weakSeen", false):
@@ -3227,6 +3238,14 @@ func boss_down(e: Dictionary, own) -> void:
 func think_boss(e: Dictionary, dt: float, tgt, mv) -> Array:
 	if e.boss == "pitboss":
 		return UsPitBoss.think(self, e, dt)
+	if understrip():
+		match e.boss:
+			"custodian":
+				return UsDeep.think_custodian(self, e, dt)
+			"gatekeeper":
+				return UsDeep.think_gatekeeper(self, e, dt)
+			"visitor":
+				return UsDeep.think_visitor(self, e, dt)
 	match e.boss:
 		"demolisher":
 			return _think_demolisher(e, dt, tgt, mv)
@@ -3546,6 +3565,10 @@ static func boss_def(k: String) -> Dictionary:
 		var b: Dictionary = BOSSES.butcher.duplicate(true)
 		b.merge({"name":"THE PIT BOSS","hp":960.0,"speed":1.6,"scan":11.0,"bounty":40,"col":"#e2b436","intro":"Watch the explosive chips. At half health, the floor floods and he charges."}, true)
 		return b
+	if UsDeep.DEFS.has(k):
+		var d: Dictionary = BOSSES.butcher.duplicate(true)
+		d.merge(UsDeep.DEFS[k], true)
+		return d
 	if BOSSES.has(k):
 		return BOSSES[k]
 	return BOSSES2[k]
