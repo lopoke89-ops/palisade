@@ -93,7 +93,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
  assert.ok(r.chest==='none'||r.chest===1,'a chest drops its loot');
  assert.ok(r.shop&&r.notAtTrader);assert.ok(r.buyNade);assert.ok(r.buyJuice&&r.juiceSoldOut);assert.ok(r.barricade);
  assert.ok(r.lift);assert.deepEqual(r.level2,{level:1,newMap:true,atStart:true,raiders:true,lives:2});
- assert.equal(r.boss.level,2);assert.ok(r.boss.kind);assert.equal(r.boss.gate,0);assert.ok(r.boss.closing&&r.boss.sealed&&r.boss.spawned);assert.equal(r.boss.hp,1200,'960 base, x1.25 (BOSS_HP), one player on Normal');assert.ok(r.boss.exitShut,'the lift is dead until he is');
+ assert.equal(r.boss.level,2);assert.ok(r.boss.kind);assert.equal(r.boss.gate,0);assert.ok(r.boss.closing&&r.boss.sealed&&r.boss.spawned);assert.equal(Math.round(r.boss.hp),2963,'2370 base, x1.25 (BOSS_HP), one player on Normal');assert.ok(r.boss.exitShut,'the lift is dead until he is');
  assert.ok(r.boss.stage1Moves.length>=1&&r.boss.stage1Moves.every(s=>[1].includes(s)),'stage 1: the swing (chips are lobs)');
  assert.ok(r.boss.stage2&&r.boss.flooded&&r.boss.invulnerable);assert.equal(r.boss.bar,1,'stage 2 starts its own full bar');
  assert.ok(r.boss.stage2Moves.some(s=>s===61)&&r.boss.stage2Moves.some(s=>s===2||s===3),'stage 2: the spray and the rush');assert.ok(r.boss.down);

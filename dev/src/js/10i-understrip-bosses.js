@@ -3,7 +3,8 @@
 // refills as a second bar. Every attack is telegraphed for at least 0.6 s, by shape: a wedge (a swing), a lane (a charge),
 // a cone (a spray), a ring on the ground (something landing). Boss states 60-89 are this mode's (the Destroyer uses 40-49).
 // usBossWake: the gate is closing, the boss comes in. usBossReset: the squad fell, the boss starts again.
-const US_PIT={hp:960,speed:1.6,speed2:2.1,swing:{tell:.7,r:1.8,half:.9,dmg:22,cd:2.5,knock:1},chips:{tell:.9,r:1.4,power:.9,cd:[3.5,3],n:[2,3],reach:8},
+// v0.12.4 (Big U): each boss has 50% more health than the one before; the finale 10,000 solo on Normal (8,000 x BOSS_HP).
+const US_PIT={hp:2370,speed:1.6,speed2:2.1,swing:{tell:.7,r:1.8,half:.9,dmg:22,cd:2.5,knock:1},chips:{tell:.9,r:1.4,power:.9,cd:[3.5,3],n:[2,3],reach:8},
   spray:{tell:.7,r:5,half:.45,n:6,dmg:8,cd:3},rush:{tell:.9,w:1.2,speed:8,dmg:32,knock:1.5,cd:6,daze:1},transition:3};
 BOSSES.pitboss={name:'THE PIT BOSS',hp:US_PIT.hp,speed:US_PIT.speed,scan:11,bounty:40,col:'#e2b436',think:thinkPitBoss,us:true,box:'none',
   look:{body:'#2a2a30',vest:'#1c1c22',pants:'#26262c',head:'#b08a6a',helmet:'#1a1410',bandana:'#7a1a1a',gl:14,weapon:'sword'},
@@ -115,7 +116,7 @@ function usBlastTick(dt){const U=game.us,L=game.lay;if(!L.blast||!L.blast.length
     if(s!==U.blast[n])usBlastSet(n,s,U.crush&&U.crush.doors.includes(n)?US_CUS.crush.dmg:D.dmg)})}
 
 // ---------- 8.3 THE CUSTODIAN · Shelter 7 ----------
-const US_CUS={hp:1440,speed:1,speed2:1.2,mop:{tell:.9,r:3,half:1.1,dmg:24,slow:.6,cd:[3,2.5],strip:3,dps:8},door:{every:8,warn:1,shut:3,dmg:40},
+const US_CUS={hp:3556,speed:1,speed2:1.2,mop:{tell:.9,r:3,half:1.1,dmg:24,slow:.6,cd:[3,2.5],strip:3,dps:8},door:{every:8,warn:1,shut:3,dmg:40},
   crush:{tell:1,shut:1.5,dmg:45,cd:7},gas:{tell:2,len:8,dps:10,cd:14},turret:{tell:.8,n:3,dmg:9,cd:6},transition:3};
 BOSSES.custodian={name:'THE CUSTODIAN',hp:US_CUS.hp,speed:US_CUS.speed,scan:12,bounty:50,col:'#9bbf5a',think:thinkCustodian,us:true,box:'none',
   look:{body:'#7d8a5a',vest:'#4a5236',pants:'#3a3f2c',head:'#9aa27a',helmet:'#5a6240',gl:10,weapon:'sword'},
@@ -140,7 +141,7 @@ function thinkCustodian(e,dt,tgt,mv,aimAt,Df){const U=game.us,P=US_CUS;if(!e.cu)
   const far=d>6?usFarFoe(e.x,e.y)||f:f;return{eng:false,mv:d<1.4?null:{x:far.x,y:far.y}}}
 
 // ---------- 8.4 THE GATEKEEPER · Area 67 ----------
-const US_GK={hp:1920,speed:.9,suit2:.8,pilot:2.4,pilotHp:.2,rockets:{tell:1.1,r:1.2,n:[4,3],cd:[5,7],power:.56},shield:{tell:.6,len:4,cd:10},stomp:{tell:.8,r:2.5,dmg:20,push:1.5,cd:4},
+const US_GK={hp:5333,speed:.9,suit2:.8,pilot:2.4,pilotHp:.2,rockets:{tell:1.1,r:1.2,n:[4,3],cd:[5,7],power:.56},shield:{tell:.6,len:4,cd:10},stomp:{tell:.8,r:2.5,dmg:20,push:1.5,cd:4},
   pound:{tell:1.2,r:3,dmg:34,cd:5},sidearm:{tell:.6,n:3,dmg:9,cd:2},dive:{every:4,len:.5,speed:7},transition:3};
 BOSSES.gatekeeper={name:'THE GATEKEEPER',hp:US_GK.hp,speed:US_GK.speed,scan:12,bounty:60,col:'#cfd8dc',think:thinkGatekeeper,us:true,box:'none',
   look:{body:'#cfd8dc',vest:'#8a959c',pants:'#6a747a',head:'#a98262',helmet:'#e4e8ea',gl:12,weapon:'shield'},
@@ -176,7 +177,7 @@ function thinkGkPilot(e,dt,aimAt,Df){const P=US_GK;if(!e.gp)e.gp={side:1,dive:P.
   return{eng:false,mv:d<4?{x:e.x+(e.x-f.x),y:e.y+(e.y-f.y)}:d>7?{x:f.x,y:f.y}:null}}   // keeps his distance
 
 // ---------- 8.5 THE VISITOR · the finale ----------
-const US_VIS={hp:2800,speed:1.2,speed2:1.4,pulse:{tell:.8,speed:6,max:9,w:.45,dmg:24,cd:4},tank:{tell:1.2,r:1.3,dmg:30,acid:6,acidT:4,cd:6},
+const US_VIS={hp:8000,speed:1.2,speed2:1.4,pulse:{tell:.8,speed:6,max:9,w:.45,dmg:24,cd:4},tank:{tell:1.2,r:1.3,dmg:30,acid:6,acidT:4,cd:6},
   blink:{tell:.9,r:2,dmg:16,cd:5},swarm:{n:6,cd:14},well:{tell:1,len:3,r:6,core:1.2,pull:1.2,dps:12,cd:12},desperate:.7,transition:3};
 BOSSES.visitor={name:'THE VISITOR',hp:US_VIS.hp,speed:US_VIS.speed,scan:14,bounty:80,col:'#b8a8ff',think:thinkVisitor,us:true,box:'none',
   look:{body:'#9a9aa8',vest:'#7a7a88',pants:'#7a7a88',head:'#b8b8c4',gl:0,nogun:true},
