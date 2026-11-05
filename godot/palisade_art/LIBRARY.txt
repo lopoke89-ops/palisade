@@ -1,3 +1,3 @@
 lopoke89-ops/palisade-3d-model-library
-238a02fd158db06447a30d84dcbeed9b4151966f
+2852ba9aceb8cd69babbbc28b4aa203c8e6fdf06
 understrip-on-weapons
