@@ -92,7 +92,7 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
  assert.ok(r.collStock.filter(x => x.startsWith('weapon')).every(x => ['e', 'l', 'g'].includes(x.split(':')[1])) && r.collStock.some(x => x === 'relic') && r.collStock.some(x => x === 'perk'), 'the Collector: epic and up, perks, a relic');
  assert.deepEqual(r.guards, ['shield*', 'rifle'], 'the Collector is guarded'); assert.equal(r.goldElsewhere, 0, 'gold only from the Collector');
  const B = r.boss;
- assert.equal(Math.round(B.custodian.hp), 4445); assert.equal(Math.round(B.gatekeeper.hp), 6666); assert.equal(Math.round(B.visitor.hp), 10000, 'v0.12.4: each boss 50% more than the last, the finale 10,000 solo on Normal');
+ assert.equal(Math.round(B.custodian.hp), 10000); assert.equal(Math.round(B.gatekeeper.hp), 31250); assert.equal(Math.round(B.visitor.hp), 62500, 'v0.12.5: base 8,000 / 25,000 / 50,000, x1.25, solo on Normal');
  for (const k of ['custodian', 'gatekeeper', 'visitor']) { const o = B[k]; assert.equal(o.boss, k); assert.ok(o.sealed, k + ' gate'); assert.ok(o.stage2 && o.inv, k + ' stage 2, 3 s untouchable'); assert.equal(o.bar, 1, k + ' stage 2 has its own bar'); assert.ok(o.down, k + ' down'); assert.equal(o.drops, 1, k + ' one drop each') }
  assert.deepEqual([B.custodian.track, B.gatekeeper.track, B.visitor.track], ['attitude', 'cool', 'finale']);
  assert.ok(B.custodian.s1.includes(63) && B.custodian.fx1.includes('water'), 'the mop arc and its water'); assert.deepEqual(B.custodian.doors, [0, 1, 2], 'the doors open, warn, shut');

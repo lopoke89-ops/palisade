@@ -1,5 +1,5 @@
 key,name,region,base_hp (BOSSES.hp),effective_hp (1 player Normal),stage_split,speed,bounty,signature drop
 pitboss,THE PIT BOSS,1,2370,2963,50 / 50,1.6 / 2.1,40,TIE-PIN (perk: +1 salvage a kill; stacks with Pickpocket)
-custodian,THE CUSTODIAN,2,3556,4445,50 / 50,1.0 / 1.2,40,flare launcher (epic)
-gatekeeper,THE GATEKEEPER,3,5333,6666,50 / 50 (the suit; the pilot has 20% more on top),0.9 / suit 0.8 pilot 2.4,40,anti-grav launcher (legendary)
-visitor,THE VISITOR,3,8000,10000,50 / 40 / 10 (desperate),1.2 / 1.4,40,the Visitor skin (first kill) and The Visitor's Eye relic
+custodian,THE CUSTODIAN,2,8000,10000,50 / 50,1.0 / 1.2,40,flare launcher (epic)
+gatekeeper,THE GATEKEEPER,3,25000,31250,50 / 50 (the suit; the pilot has 20% more on top),0.9 / suit 0.8 pilot 2.4,40,anti-grav launcher (legendary)
+visitor,THE VISITOR,3,50000,62500,33 / 57 / 10 (desperate; stage 2 brings a doubled boss from the other modes),1.2 / 1.4,40,the Visitor skin (first kill) and The Visitor's Eye relic

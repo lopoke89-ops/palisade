@@ -142,12 +142,13 @@ function spawnBoss(key,sb,second=false,fb=false,pos=null){
   const I=bossInfo(key);sfx('horn');addShake(x,y,8);if(fb){if(game.fb&&game.fb.gauntlet)return;toastAll(`BLITZ · ${game.fb.n+1}/${game.fb.max} · ${I.name}`,B.intro);return}toastAll(second?'NIGHTMARE · SECOND BOSS · '+I.name:sb&&nightmare()&&!hasMod('bossrush')?'SURPRISE · '+I.name:I.name,B.intro);
 }
 function bossDown(e,own){
+  if(e.usAdd)return;   // support is unpaid: no salvage, boss credit or cases
   const B=BOSSES[e.boss],I=bossInfo(e.boss),p=own&&own!=='dell'?players.get(own):null,share=p?15:20;game.bosses++;
-  const oct=game.oct&&e.boss==='butcher'&&!e.sb;if(e.fb){if(game.fbLog.length<20)game.fbLog.push(e.boss);if(e.gw){game.gKill=game.gKill||[];game.gKill[e.gw-1]=(game.gKill[e.gw-1]|0)+1}}else if(e.sb){game.sbN=(game.sbN|0)+1;if(game.sbLog.length<100)game.sbLog.push(e.boss)}else game.bossLog.push(oct?'butcher_oct':e.boss);   // v0.9.4.0: Final Blitz bosses have their own list   // v0.9.3.8: in-between bosses are named too, for milestones
+  const oct=game.oct&&e.boss==='butcher'&&!e.sb;if(e.fb){if(game.fbLog.length<20)game.fbLog.push(e.boss);if(e.gw){game.gKill=game.gKill||[];game.gKill[e.gw-1]=(game.gKill[e.gw-1]|0)+1}}else if(e.sb){game.sbN=(game.sbN|0)+1;if(game.sbLog.length<100)game.sbLog.push(e.boss)}else if(!e.usAdd)game.bossLog.push(oct?'butcher_oct':e.boss);   // v0.9.4.0: Final Blitz bosses have their own list   // v0.9.3.8: in-between bosses are named too, for milestones
   for(const o of players.values())o.sal+=o===p?B.bounty:share;
   flt(e.x,e.y-.4,p?`+${B.bounty} SALVAGE`:`+${share} SALVAGE EACH`,'#e2b436');
   for(let n=0;n<26;n++)emit(e.x,e.y,WH*.8,n%2?'fire':'spark');addShake(e.x,e.y,11);sfx('bigboom',e.x,e.y);
-  const bc=bossBox(e.boss),n=oct?2:B.cases||1,cn=e.fb?` +${n} ${CASES[bc].name.replace(' CASE',' Cases')} and 15-30 shards each, added when the run ends.`:e.sb?' +15-30 shards each, added when the run ends (or when you leave it).':CASES[bc]?` +${n} ${CASES[bc].name.replace(' CASE',n>1?' Cases':' Case')} each, added when the run ends (or when you leave it).`:'';
+  const bc=bossBox(e.boss),n=oct?2:B.cases||1,cn=e.usAdd?'':e.fb?` +${n} ${CASES[bc].name.replace(' CASE',' Cases')} and 15-30 shards each, added when the run ends.`:e.sb?' +15-30 shards each, added when the run ends (or when you leave it).':CASES[bc]?` +${n} ${CASES[bc].name.replace(' CASE',n>1?' Cases':' Case')} each, added when the run ends (or when you leave it).`:'';
   toastAll(`${I.name} IS DOWN`,(p?`${p.name} landed it: +${B.bounty} salvage. Everyone else +${share}.`:`+${share} salvage each.`)+cn);
 }
 // the Demolisher: plants his feet, shows a red line for a second, then sends a slow rocket down it. Every third
