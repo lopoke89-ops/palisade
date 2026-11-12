@@ -1555,6 +1555,8 @@ func _paint_glow(layer: CanvasItem) -> void:
 			if cc.x < -r or cc.x > v.W + r or cc.y < -r or cc.y > v.H + r:
 				continue
 			cv.draw_texture_rect(glow_tex, Rect2(cc.x - r, cc.y - r, r * 2, r * 2), false, Color(1, 1, 1, 0.18))
+	if v3 != null and v3.world.scenery.dress != null:   # the city's neon: its halos over the night
+		v3.world.scenery.dress.glow(layer)
 	cv = self
 
 
@@ -3051,6 +3053,8 @@ func _update_light(dt: float) -> void:
 			hole.call(ch.x, ch.y, 0, TW2 * 0.7, 0.7)
 		for f in flashes:
 			hole.call(f.x, f.y, WH * 0.5, TW2 * (2.0 if f.muzzle else 4.5) * f.r * 0.6, f.life / f.max)
+		if v3 != null and v3.world.scenery.dress != null:   # decoration last: the 96-hole limit cuts it before any gameplay light
+			v3.world.scenery.dress.holes(hole)
 	var mat: ShaderMaterial = light_rect.material
 	var cones = []
 	var reaches = PackedFloat32Array()

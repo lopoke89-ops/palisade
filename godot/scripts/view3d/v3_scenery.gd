@@ -21,6 +21,8 @@ var felt_mi: MeshInstance3D
 var felt_mat: StandardMaterial3D
 var people: Dictionary = {}   # casino staff and seated bots: key -> Node3D
 var root: Node3D
+var dress: CityDress   # the city's storefronts, rooftops and neon (Quality3D.life)
+var dress_life := -1
 
 
 func _init(world) -> void:
@@ -45,6 +47,8 @@ func build_map(r: Node3D) -> void:
 	wheel = null
 	felt_mi = null
 	people.clear()
+	dress = null
+	dress_life = Quality3D.life
 	if sim.casino():
 		_casino()
 		return
@@ -55,7 +59,11 @@ func build_map(r: Node3D) -> void:
 		_city()
 
 
-func frame(_dt: float) -> void:
+func frame(dt: float) -> void:
+	if sim.map_id == "city" and dress_life != Quality3D.life:   # the setting changed: the city is dressed again
+		W.dirty = true
+	if dress != null:
+		dress.frame(dt)
 	if sim.map_id == "city" and lamp_mi != null:
 		var on := 0 if sim.game.get("dark", false) else 1
 		if on != lamp_on:
@@ -309,6 +317,8 @@ func _city() -> void:
 	var N: int = sim.N
 	var lamps := V3Mesh.new()
 	lamps.anchor = Vector2(-9999, -9999)
+	if Quality3D.life > 0:
+		dress = CityDress.new(self)
 	for cj in range(0, N, 8):
 		for ci in range(0, N, 8):
 			var g := V3Mesh.new()
@@ -316,6 +326,8 @@ func _city() -> void:
 				for i in range(ci, mini(N, ci + 8)):
 					if sim.terr[sim.idx(i, j)] == PalMaps.T_BLDG:
 						_building(g, i, j)
+			if dress != null:
+				dress.chunk(g, ci, cj)
 			if g.size() > 0:
 				W.mesh_node(root, g.commit(), W.mat_bldg)
 	for l in sim.lay.get("lamps", []):
@@ -329,6 +341,8 @@ func _city() -> void:
 	if lamps.size() > 0:
 		W.mesh_node(root, lamps.commit(), W.mat_props)
 	lamp_mi = W.mesh_node(root, ArrayMesh.new(), W.mat_props, false)
+	if dress != null:
+		dress.lit_meshes(root)
 
 
 ## a ruined building tile: its height from its block, walls in the block's palette, a few windows on the south face

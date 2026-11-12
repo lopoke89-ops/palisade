@@ -53,9 +53,10 @@ main.gd ── 2D layers over the 3D: night/darkness (light.gdshader), labels, H
 ```
 
 The environments are almost entirely **generated in code**. They use vertex-coloured, low-poly boxes, prisms,
-cones and quads, built from the same numbers and colours the browser's 2D painter uses. Only people, weapons,
-tracers, kill effects and the player ring come from the Blender model library as GLB files. **No environment prop
-in play is a GLB today.**
+cones and quads, built from the same numbers and colours the browser's 2D painter uses. Only people, the eight
+library weapons, tracers, kill effects and the player ring come from the Blender model library as GLB files. THE
+UNDERSTRIP's nine guns are built in code too (`scripts/us_weapons.gd`: boxes and tubes into one cached mesh per gun).
+**No environment prop in play is a GLB today.**
 
 Environments in the game:
 
@@ -132,9 +133,10 @@ no extra work. Its axes are:
 
 What this means for modeling:
 
-- **You only see the top, the south face (+Z) and the east face (+X).** `V3Mesh.box` colours those three with the
-  2D's top/left/right colours. North and west faces are darkened copies that only show through shadows. Spend
-  detail on the visible faces.
+- **For fixed, axis-aligned scenery you only see the top, the south face (+Z) and the east face (+X).** `V3Mesh.box`
+  colours those three with the 2D's top/left/right colours. North and west faces are darkened copies that only show
+  through shadows. Spend detail on the visible faces. This does not hold for anything that turns: people, weapons,
+  drones and any prop placed at an angle are seen from every side they can face, so check each one.
 - **"Nearer the camera" means larger `x + y`.** The see-through rule and the wall lowering both use `x + y`
   ("depth") and `x − y` ("across").
 - **Silhouettes read from one angle.** Readability is judged in the gameplay view, not in a turntable.
@@ -224,6 +226,12 @@ This is the part most likely to surprise someone used to 3D lighting.
   3D picture.
   - **To light a new fixture, add a hole in `_update_light`**, keyed off a layout marker. An `OmniLight3D` is the wrong
     tool: it would be crushed under the overlay and costs far more.
+  - **A hole only uncovers the picture; it adds no colour.** Coloured light goes on the additive 2D glow layer
+    (`main._paint_glow`), drawn over the shade: the casino's neon, the city's lamp glows and `CityDress.glow` use it.
+  - **The 96 holes are first come, first served**, in the order `_update_light` adds them: players, Delgado, the
+    mode's own lights, raiders, burning walls and drums, kilns, charges, and muzzle flashes last. Nothing is ranked,
+    so on a crowded screen the flashes are the first to be cut. Decorative holes must be added after all of these
+    (as `CityDress.holes` is) and capped.
   - Understrip darkness: `US_DARK_L = [0.86, 0.8, 0.72, 0.56]` by Settings › DUNGEON BRIGHTNESS (DARK, DIM, LIT,
     BRIGHT); the region tints are in `US_DARK`. The Custodian's stage 2 turns it red, and the Visitor's field failure
     switches the lamps and neon off.
@@ -275,6 +283,19 @@ This is the part most likely to surprise someone used to 3D lighting.
 - **POIs** (`V3Scenery.poi`): the radio mast, power station, hospital, armory compound, gas station, hardware store,
   brickworks and parking garage, plus a burnt shell once a POI is lost. Their bars and names are painted in 2D at the
   structure's top (`paint_poi_bars`); if you change a POI's height, update its entry there.
+- **Storefronts, rooftops and neon** (`scripts/view3d/city_dress.gd`, `CityDress`; the Living World work order's
+  first slice, see `living-world-stage0-audit.md`). It is the pattern to copy for dressing any map:
+  - `plan()` turns recipes into placement records from the tiles and its own hash `vh` (never the game's random
+    numbers): 90 signs in nine districts (the nearest POI, or Main Command), each with its colours, words and one
+    landmark, plus 271 rooftop pieces. Everything stands on a building's wall or roof, so nothing looks solid where
+    you can walk. What it could not place is listed in `report().skipped`.
+  - `chunk()` adds the unlit pieces to each 8x8 building chunk's mesh (no extra draws, and they fade with the
+    building). `lit_meshes()` makes one mesh per district with its signs lit and one with them out; play only shows
+    or hides them.
+  - `frame()` reads the power: a district is lit while the Power Station holds (`game.dark`) and its own POI stands.
+    `glow()` draws the halos on the 2D glow layer; `holes()` adds a few holes in the night shade after every
+    gameplay light. Flicker and the stutter when a district dies are off under Reduce Motion.
+  - `Quality3D.life` (0 off, 1 LOW, 2 MEDIUM, 3 HIGH) sets how much is drawn, never where anything is.
 
 ### 7.3 The casino
 
@@ -344,7 +365,7 @@ craps, roulette). Live parts:
   - `live` (shaded): chests, the Keeper, loot, salvage, flares, drones;
   - `haze` (see-through): vent gas, blast warnings, boss floor effects.
 
-  Floor weapons are real `UsWeapons` GLB nodes, kept in `weapon_loot`.
+  Floor weapons are `UsWeapons` nodes (code-built meshes, cached per gun: not GLBs), kept in `weapon_loot`.
 
 ---
 
@@ -422,8 +443,9 @@ What the library has and doesn't have for environments:
 
 ### Use a GLB prop instead of code geometry
 
-There is no environment-GLB path yet; floor weapons are the model to follow (`UsWeapons.build`, cached nodes in
-`weapon_loot`). For many identical props:
+There is no environment-GLB path yet. The nearest patterns are the library weapons (`ArtLibrary`, cached
+`PackedScene`s) and the Understrip's floor guns (`UsWeapons.build`: a code-built mesh cached per gun, one node per
+gun on the floor, freed when the loot goes). For many identical props:
 
 - load once with `ArtLibrary.instantiate_file` (it caches the `PackedScene`);
 - prefer a `MultiMesh` of the GLB's mesh for repeats;
@@ -503,6 +525,7 @@ The content rules in `mood-boards.md` are hard limits. They forbid:
 | MSAA | off | 2× | 2× |
 | max kill effects / tracers | 4 / 24 | 6 / 36 | 8 / 48 |
 | render scale | 75% | 100% | 100% |
+| life (the city's dressing: `CityDress`) | 1: signs and shops, tight halos, 2 holes | 2: + rooftops, street spill, flicker, 5 holes | 3: + roofline tubes, 8 holes |
 
 **Measured** (this PC, the Black Out final push on HIGH, after `353857a`; from `bench/HANDOFF.md`):
 
@@ -511,7 +534,12 @@ The content rules in `mood-boards.md` are hard limits. They forbid:
   ground decals, walls and props were then trimmed);
 - characters dominate rendering (~3.7 ms of 5.3 ms), at 372 surfaces for 280 materials.
 
-**Environment cost is small today and should stay that way.**
+A fresh baseline of every environment at all three presets (12 November 2026, `a08ef40`) is in
+`living-world-stage0-audit.md` §2, with the script that makes it (`bench\living\lw_bench.gd`). On this PC the push
+on HIGH is now about 82 FPS.
+
+**Environment cost is small everywhere except THE UNDERSTRIP.** The yards, the city and the casino spend 0.1 to
+0.5 ms a frame on the world. The tunnels spend 2.9 to 5.7 ms, the largest single cost in that mode.
 
 How to keep it small:
 
@@ -519,9 +547,9 @@ How to keep it small:
   to keep merged meshes cullable.
 - **Share materials.** A new material is a new draw and a possible shader compile. Use vertex colour for variety.
 - **Per-frame meshes are the expensive pattern.** `UsView3D.frame()` rebuilds `warning`, `live` and `haze` from
-  scratch every frame, and copies the cached wall paint into a new mesh each frame. Dressing must not go into that
-  path. These are optimization candidates, **not measured yet**: profile first (`View3D.parts_us` gives world/people/
-  effects timings, and `View3D.frame_us` the total).
+  scratch every frame, rewrites every wall instance on screen and copies the cached wall paint into a new mesh each
+  frame. **Measured: this is the 2.9 to 5.7 ms above.** Dressing must not go into that path, and the path itself is
+  the first optimization to make (`View3D.parts_us` gives world/people/effects timings, `View3D.frame_us` the total).
 - **The wall MultiMesh** in the tunnels allocates `N×N` instances and draws `visible_instance_count`; the yard's
   wall MultiMesh resizes to the visible count.
 - **Transparency and overdraw.** Haze, gas and see-through effects are alpha-blended without depth writes. Keep them

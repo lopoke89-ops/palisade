@@ -22,8 +22,11 @@ static var max_kill_fx := 8
 static var max_tracers := 48
 ## the 3D view's resolution as a share of the window (bilinear upscale): 0.5..1
 static var render_scale := 1.0
+## the living-world dressing (CityDress): 0 off, 1 signs and storefronts, 2 + rooftops, street spill and flicker,
+## 3 + roofline tubes and more light. Never changes where anything is, only how much of it is drawn.
+static var life := 3
 
-const KEYS := ["shadows", "effects", "draw_margin", "anim_rate", "anim_far", "anim_near", "msaa", "max_kill_fx", "max_tracers", "render_scale"]
+const KEYS := ["shadows", "effects", "draw_margin", "anim_rate", "anim_far", "anim_near", "msaa", "max_kill_fx", "max_tracers", "render_scale", "life"]
 
 
 static func load_from(d) -> void:
@@ -49,21 +52,23 @@ static func load_from(d) -> void:
 		max_tracers = clampi(int(d.max_tracers), 8, 160)
 	if d.has("render_scale"):
 		render_scale = clampf(float(d.render_scale), 0.5, 1.0)
+	# settings saved before this knob: it follows the preset the shadows tell of
+	life = clampi(int(d.life), 0, 3) if d.has("life") else (clampi(shadows + 1, 1, 3) if d.has("shadows") else 3)
 
 
 static func to_dict() -> Dictionary:
 	return {"shadows": shadows, "effects": effects, "draw_margin": draw_margin, "anim_rate": anim_rate, "anim_far": anim_far,
-		"anim_near": anim_near, "msaa": msaa, "max_kill_fx": max_kill_fx, "max_tracers": max_tracers, "render_scale": render_scale}
+		"anim_near": anim_near, "msaa": msaa, "max_kill_fx": max_kill_fx, "max_tracers": max_tracers, "render_scale": render_scale, "life": life}
 
 
 ## the presets a settings page can offer
 static func preset(name: String) -> Dictionary:
 	match name:
 		"low":
-			return {"shadows": 0, "effects": 0.4, "draw_margin": 1.0, "anim_rate": 30.0, "anim_far": 12.0, "msaa": 0, "max_kill_fx": 4, "max_tracers": 24, "render_scale": 0.75}
+			return {"shadows": 0, "effects": 0.4, "draw_margin": 1.0, "anim_rate": 30.0, "anim_far": 12.0, "msaa": 0, "max_kill_fx": 4, "max_tracers": 24, "render_scale": 0.75, "life": 1}
 		"medium":
-			return {"shadows": 1, "effects": 0.7, "draw_margin": 2.0, "anim_rate": 45.0, "anim_far": 15.0, "msaa": 2, "max_kill_fx": 6, "max_tracers": 36, "render_scale": 1.0}
-	return {"shadows": 2, "effects": 1.0, "draw_margin": 3.0, "anim_rate": 60.0, "anim_far": 20.0, "msaa": 2, "max_kill_fx": 8, "max_tracers": 48, "render_scale": 1.0}
+			return {"shadows": 1, "effects": 0.7, "draw_margin": 2.0, "anim_rate": 45.0, "anim_far": 15.0, "msaa": 2, "max_kill_fx": 6, "max_tracers": 36, "render_scale": 1.0, "life": 2}
+	return {"shadows": 2, "effects": 1.0, "draw_margin": 3.0, "anim_rate": 60.0, "anim_far": 20.0, "msaa": 2, "max_kill_fx": 8, "max_tracers": 48, "render_scale": 1.0, "life": 3}
 
 
 static func apply_viewport(vp: Viewport) -> void:
