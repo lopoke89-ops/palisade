@@ -23,7 +23,7 @@ Each move is written the way the game already writes boss moves (`MOVE` in `dev/
 
 | Part | Rule |
 |---|---|
-| Stage 2 starts | At 50% health (the Visitor also has a desperate stage at 10%) |
+| Stage 2 starts | At 50% health; the Visitor changes at 2/3 remaining health, then becomes desperate at 10% |
 | Transition | 3 s with no damage taken: the boss's "breaks" animation and the arena change. Telegraphs already on the ground finish; no new ones start |
 | Health bar | Refills as a second bar in a second colour (the boss colour, then white-hot). Two pips under the name show the stage |
 | Network | The stage travels in the boss's existing `st` field family, so a guest draws the same thing from the snapshot (the way the v0.9.6.5 moves did, states 20–30). The Supreme Destroyer uses 40–49 and the winter bosses 101–103, so the new states take 60–89 |
@@ -37,7 +37,7 @@ Each move is written the way the game already writes boss moves (`MOVE` in `dev/
 > *The casino's floor boss, in a suit that has seen better nights. He tosses chips that go off, and he always has more security on call.*
 
 **Arena:** the old count room (`r1_boss_pitboss` in the room kit), 24 × 24 tiles: low floor in the middle, a dry rim round the edge, four pillars, slot machines for cover.
-**Health:** base 2,370 (**2,963 effective**; v0.12.4: each boss 50% more than the one before). **Speed:** 1.6, then 2.1. **Colour:** `#e2b436` (chip gold), then `#ff6a3a`.
+**Health:** base 2,370 (**2,963 effective**; unchanged in v0.12.5). **Speed:** 1.6, then 2.1. **Colour:** `#e2b436` (chip gold), then `#ff6a3a`.
 **Intro line:** "He throws chips that explode: a ring shows where each one lands. When his jacket comes off, the floor floods and he charges."
 
 ### Stage 1
@@ -70,7 +70,7 @@ He tears his jacket off. The low floor (`,`) floods ankle-deep for the rest of t
 > *The shelter's caretaker robot, still cleaning after seventy years, and still keeping people in.*
 
 **Arena:** the shelter's main hall, with four blast doors across it on a rhythm.
-**Health:** base 3,556 (**4,445 effective**). **Speed:** 1.0, then 1.2. **Colour:** `#9bbf5a` (shelter olive), then `#ff3a2a` (emergency red).
+**Health:** base 8,000 (**10,000 effective**; v0.12.5). **Speed:** 1.0, then 1.2. **Colour:** `#9bbf5a` (shelter olive), then `#ff3a2a` (emergency red).
 **Intro line:** "A shock mop and the shelter's own doors. Watch the light over each door: amber means it's about to slam."
 
 ### Stage 1
@@ -103,7 +103,7 @@ Its casing cracks; the shelter goes to red emergency light (lighting change, the
 > *A security pilot in a walking suit, guarding the last lab door. Break the suit and you're fighting two things.*
 
 **Arena:** the lab's loading bay, with low crates for cover.
-**Health:** base 5,333 (**6,666 effective**). Stage 2's suit has the second half; the pilot has another 20% on top. **Speed:** 0.9; in stage 2 the suit 0.8, the pilot 2.4. **Colour:** `#cfd8dc` (lab white), then the pilot `#7cff6b`.
+**Health:** base 25,000 (**31,250 effective**; v0.12.5). Stage 2's suit has the second half; the pilot has another 20% on top. **Speed:** 0.9; in stage 2 the suit 0.8, the pilot 2.4. **Colour:** `#cfd8dc` (lab white), then the pilot `#7cff6b`.
 **Intro line:** "Rockets fall where the circles are. His shield blocks shots from the front: go round it."
 
 ### Stage 1
@@ -136,7 +136,7 @@ The pilot ejects. The suit keeps fighting, empty. **Killing either one ends the 
 > *What the government kept in the dark, in a field that is failing.*
 
 **Arena:** the containment hall: specimen tanks round the walls, the field in the middle.
-**Health:** base 8,000 (**10,000 effective**, solo on Normal): 50% stage 1, 40% stage 2, then 10% desperate. **Speed:** 1.2, then 1.4. **Colour:** `#b8a8ff`, then its own glow only.
+**Health:** base 50,000 (**62,500 effective**, solo on Normal; v0.12.5): its first stage is the top third, and when the second begins it brings in a random boss from the other modes (the run's seed picks it) with double health, damage and speed, which goes down with it. Before v0.12.5: 50% stage 1, 40% stage 2, then 10% desperate. **Speed:** 1.2, then 1.4. **Colour:** `#b8a8ff`, then its own glow only.
 **Intro line:** "Psychic rings: roll through them. When the lights go out, a flash shows where it will be next."
 
 ### Stage 1
@@ -146,7 +146,7 @@ The pilot ejects. The suit keeps fighting, empty. **Killing either one ends the 
 | **Psychic Pulse** | a ring that glows, then moves out | 0.8 s, then travels 6 tiles/s | out to 9 tiles, 0.6 tiles thick | 24 | 4 s | Roll through it (`rollSafe`) or be outside 9 tiles |
 | **Tank Throw** | a circle with the tank's shadow growing in it | 1.2 s | radius 1.3 | 30; leaves acid for 4 s (6 HP/s) | 6 s | Out of the circle, then out of the acid |
 
-### Transition (50%): the scripted blackout
+### Transition (2/3 remaining): the scripted blackout
 The containment fails and the room's lights go out. Only the Visitor's glow, players' light cones, flares and muzzle flashes light the room (the brightness floor still applies; Reduce Motion softens the flicker).
 
 ### Stage 2
@@ -173,7 +173,18 @@ Every cooldown ×0.7; telegraphs unchanged. No transition pause: it simply gets 
 | **Charger** | shield raider, 165 HP | charges down a lane | lane | 0.8 s | 24 + knock |
 | **Caller** | spotter, 75 HP | a laser on a player for 1.5 s calls a mortar | circle, radius 1.5 | 1.2 s | 26 |
 
+## v0.12.5 Visitor support encounter
+
+The finale is always the Visitor. Once its top third is gone, its 3-second invulnerable transition completes,
+then it summons exactly one boss selected with `usRng(usHash(seed, 9067))` from this ordered pool:
+Demolisher, Butcher, Stormcaller, Foreman, Blue Butcher, Arsonist, Tempest, Bulldozer.
+
+The support boss has twice its normal health, damage and movement speed, with the same difficulty and +35% per
+additional player scaling. Rage preserves the speed multiplier. It hunts players, uses a full-health bar, grants no
+salvage/case/boss credit, and disappears when the Visitor dies. Killing it first does not finish the encounter.
+River bosses and the Supreme Destroyer are excluded. Retrying the encounter gives the same seeded choice.
+
 ## For the director
 - [ ] Each boss's moves feel fair on paper (every one has a telegraph of at least 0.6 s and a clear answer).
-- [ ] The health figures (1,200 / 1,800 / 2,400 / 3,500 effective) as the M4 starting point.
+- [ ] Review v0.12.5 solo Normal health: 2,962.5 / 10,000 / 31,250 / 62,500 (Gatekeeper pilot adds 20% on top).
 - [ ] Stage 2 of the Gatekeeper: killing **either** body ends it (as the work order says).

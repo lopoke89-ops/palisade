@@ -3,7 +3,9 @@
 // refills as a second bar. Every attack is telegraphed for at least 0.6 s, by shape: a wedge (a swing), a lane (a charge),
 // a cone (a spray), a ring on the ground (something landing). Boss states 60-89 are this mode's (the Destroyer uses 40-49).
 // usBossWake: the gate is closing, the boss comes in. usBossReset: the squad fell, the boss starts again.
-// v0.12.4 (Big U): each boss has 50% more health than the one before; the finale 10,000 solo on Normal (8,000 x BOSS_HP).
+// v0.12.5 (Big U): base health Pit Boss 2,370, Custodian 8,000, Gatekeeper 25,000, Visitor 50,000 (x BOSS_HP 1.25, the
+// difficulty, +35% a player). The Visitor's first stage is its top third; at its second it brings in a boss from the
+// other modes (US_ADD), with double health, damage and speed, picked from the run's seed so every screen agrees.
 const US_PIT={hp:2370,speed:1.6,speed2:2.1,swing:{tell:.7,r:1.8,half:.9,dmg:22,cd:2.5,knock:1},chips:{tell:.9,r:1.4,power:.9,cd:[3.5,3],n:[2,3],reach:8},
   spray:{tell:.7,r:5,half:.45,n:6,dmg:8,cd:3},rush:{tell:.9,w:1.2,speed:8,dmg:32,knock:1.5,cd:6,daze:1},transition:3};
 BOSSES.pitboss={name:'THE PIT BOSS',hp:US_PIT.hp,speed:US_PIT.speed,scan:11,bounty:40,col:'#e2b436',think:thinkPitBoss,us:true,box:'none',
@@ -20,14 +22,23 @@ const US_DOWN={pitboss:['THE PIT BOSS IS DOWN','The count room\'s shrine is lit 
 function usBossTick(dt){const U=game.us;if(!U.bossSpawned||U.bossDown)return;const key=usBossOf(U.level),B=enemies.filter(e=>e.type==='boss'&&!e.dead);
   if(key==='custodian'&&U.gate===2)usBlastTick(dt||0);usBfxTick(dt||0);
   if(key==='gatekeeper'&&B.length&&enemies.some(e=>e.type==='boss'&&e.dead&&e.gk2))for(const e of B){e.dead=true;e.hp=0}   // one body down ends the fight
+  if(key==='visitor'&&B.length&&B.every(e=>e.usAdd))for(const e of B){e.dead=true;e.hp=0}   // the Visitor down: what it brought goes with it
   if(enemies.some(e=>e.type==='boss'&&!e.dead))return;
   {const A=game.lay.arena,P=game.lay.bossAt[0]||[A.x+A.w/2,A.y+A.h/2];usBossLoot(P[0]+.5,P[1]+1.5,key)}
   U.bossDown=true;U.bossStage=0;U.floodOn=false;floodOn=false;U.floodWarned=false;U.flood=US.flood.every[0];U.bfx=[];U.crush=null;usBlastOpenAll();usGateOpen();markFlow();   // the water drains, and the flash floods start over
   for(const e of enemies)if(e.type==='drone')e.dead=true;
   toastAll(...US_DOWN[key])}
 // the bar shows the stage's own health (the Visitor has a third, desperate stage under 10%; the Gatekeeper's pilot is its own bar)
-const usBossFrac=e=>{const f=e.hp/e.max,st=game.us?game.us.bossStage|0:0;if(e.pilot)return clamp(f,0,1);
-  if(e.boss==='visitor')return clamp(st>=2?f/.1:st>=1?(f-.1)/.4:(f-.5)/.5,0,1);return clamp(st>0?f/.5:(f-.5)/.5,0,1)};
+const usBossFrac=e=>{const f=e.hp/e.max,st=game.us?game.us.bossStage|0:0;if(e.pilot||!BOSSES[e.boss].us)return clamp(f,0,1);
+  if(e.boss==='visitor'){const s=US_VIS.split;return clamp(st>=2?f/.1:st>=1?(f-.1)/(s-.1):(f-s)/(1-s),0,1)}return clamp(st>0?f/.5:(f-.5)/.5,0,1)};
+// the Visitor's add (v0.12.5): one of the other modes' bosses that works on any floor, doubled; the run's seed picks it
+const US_ADD=['demolisher','butcher','storm','foreman','bluebutcher','arsonist','tempest','bulldozer'];
+const usAddKey=seed=>{const r=usRng(usHash(seed,9067));return US_ADD[Math.floor(r()*US_ADD.length)]};
+function usVisitorAdd(v){if(NET.mode==='guest'||v.usSummoned)return;v.usSummoned=1;const key=usAddKey(game.us.seed),B=BOSSES[key];if(!B)return;
+  let x=v.x+2,y=v.y;if(solidTile(x|0,y|0)){const[c,d]=usArenaC();x=c;y=d}
+  const n=enemies.length;spawnBoss(key,false,false,false,[x,y]);const e=enemies[n];if(!e)return;
+  e.hp*=2;e.max=e.hp;e.speed*=2;e.usAdd=1;e.us={home:[x,y],st:'hunt',sid:-1,t:0,look:0,add:1};
+  toastAll('THE VISITOR BRINGS '+bossInfo(key).name,'Pulled through the failing field, twice as strong and twice as fast.');sfx('siren',x,y)}
 function usPitCall(e,types){const A=game.lay.arena;if(!A)return;const gx=A.x+A.w/2,gy=A.y+A.h-2.5;
   types.forEach((t,n)=>{const r=spawnEnemyAt(t,gx-1+n*2,gy);if(r){r.us={home:[r.x,r.y],st:'hunt',sid:-1,t:0,look:0,call:1}}});
   toastAll('SECURITY!','He called two of the casino\'s guards in.');sfx('siren',e.x,e.y)}
@@ -116,7 +127,7 @@ function usBlastTick(dt){const U=game.us,L=game.lay;if(!L.blast||!L.blast.length
     if(s!==U.blast[n])usBlastSet(n,s,U.crush&&U.crush.doors.includes(n)?US_CUS.crush.dmg:D.dmg)})}
 
 // ---------- 8.3 THE CUSTODIAN · Shelter 7 ----------
-const US_CUS={hp:3556,speed:1,speed2:1.2,mop:{tell:.9,r:3,half:1.1,dmg:24,slow:.6,cd:[3,2.5],strip:3,dps:8},door:{every:8,warn:1,shut:3,dmg:40},
+const US_CUS={hp:8000,speed:1,speed2:1.2,mop:{tell:.9,r:3,half:1.1,dmg:24,slow:.6,cd:[3,2.5],strip:3,dps:8},door:{every:8,warn:1,shut:3,dmg:40},
   crush:{tell:1,shut:1.5,dmg:45,cd:7},gas:{tell:2,len:8,dps:10,cd:14},turret:{tell:.8,n:3,dmg:9,cd:6},transition:3};
 BOSSES.custodian={name:'THE CUSTODIAN',hp:US_CUS.hp,speed:US_CUS.speed,scan:12,bounty:50,col:'#9bbf5a',think:thinkCustodian,us:true,box:'none',
   look:{body:'#7d8a5a',vest:'#4a5236',pants:'#3a3f2c',head:'#9aa27a',helmet:'#5a6240',gl:10,weapon:'sword'},
@@ -141,7 +152,7 @@ function thinkCustodian(e,dt,tgt,mv,aimAt,Df){const U=game.us,P=US_CUS;if(!e.cu)
   const far=d>6?usFarFoe(e.x,e.y)||f:f;return{eng:false,mv:d<1.4?null:{x:far.x,y:far.y}}}
 
 // ---------- 8.4 THE GATEKEEPER · Area 67 ----------
-const US_GK={hp:5333,speed:.9,suit2:.8,pilot:2.4,pilotHp:.2,rockets:{tell:1.1,r:1.2,n:[4,3],cd:[5,7],power:.56},shield:{tell:.6,len:4,cd:10},stomp:{tell:.8,r:2.5,dmg:20,push:1.5,cd:4},
+const US_GK={hp:25000,speed:.9,suit2:.8,pilot:2.4,pilotHp:.2,rockets:{tell:1.1,r:1.2,n:[4,3],cd:[5,7],power:.56},shield:{tell:.6,len:4,cd:10},stomp:{tell:.8,r:2.5,dmg:20,push:1.5,cd:4},
   pound:{tell:1.2,r:3,dmg:34,cd:5},sidearm:{tell:.6,n:3,dmg:9,cd:2},dive:{every:4,len:.5,speed:7},transition:3};
 BOSSES.gatekeeper={name:'THE GATEKEEPER',hp:US_GK.hp,speed:US_GK.speed,scan:12,bounty:60,col:'#cfd8dc',think:thinkGatekeeper,us:true,box:'none',
   look:{body:'#cfd8dc',vest:'#8a959c',pants:'#6a747a',head:'#a98262',helmet:'#e4e8ea',gl:12,weapon:'shield'},
@@ -177,7 +188,7 @@ function thinkGkPilot(e,dt,aimAt,Df){const P=US_GK;if(!e.gp)e.gp={side:1,dive:P.
   return{eng:false,mv:d<4?{x:e.x+(e.x-f.x),y:e.y+(e.y-f.y)}:d>7?{x:f.x,y:f.y}:null}}   // keeps his distance
 
 // ---------- 8.5 THE VISITOR · the finale ----------
-const US_VIS={hp:8000,speed:1.2,speed2:1.4,pulse:{tell:.8,speed:6,max:9,w:.45,dmg:24,cd:4},tank:{tell:1.2,r:1.3,dmg:30,acid:6,acidT:4,cd:6},
+const US_VIS={hp:50000,split:2/3,speed:1.2,speed2:1.4,pulse:{tell:.8,speed:6,max:9,w:.45,dmg:24,cd:4},tank:{tell:1.2,r:1.3,dmg:30,acid:6,acidT:4,cd:6},
   blink:{tell:.9,r:2,dmg:16,cd:5},swarm:{n:6,cd:14},well:{tell:1,len:3,r:6,core:1.2,pull:1.2,dps:12,cd:12},desperate:.7,transition:3};
 BOSSES.visitor={name:'THE VISITOR',hp:US_VIS.hp,speed:US_VIS.speed,scan:14,bounty:80,col:'#b8a8ff',think:thinkVisitor,us:true,box:'none',
   look:{body:'#9a9aa8',vest:'#7a7a88',pants:'#7a7a88',head:'#b8b8c4',gl:0,nogun:true},
@@ -186,10 +197,10 @@ ECODE.push('boss:visitor');BOSS_WEAK.visitor='fire';
 function thinkVisitor(e,dt,tgt,mv,aimAt,Df){const U=game.us,P=US_VIS;if(!e.vi)e.vi={stage:1,pulse:2,tank:3.5,blink:3,swarm:4,well:6};const S=e.vi,k=S.stage===3?P.desperate:1;
   S.pulse-=dt/k;S.tank-=dt/k;S.blink-=dt/k;S.swarm-=dt/k;S.well-=dt/k;if(e.inv>0)e.inv-=dt;
   // half health: the containment fails and the lights go out (a scripted blackout); 10%: desperate, every cooldown x0.7
-  if(S.stage===1&&e.hp<=e.max*.5){e.hp=e.max*.5;S.stage=2;e.st=82;e.stT=e.stM=P.transition;e.inv=P.transition;U.bossStage=1;
+  if(S.stage===1&&e.hp<=e.max*US_VIS.split){e.hp=e.max*US_VIS.split;S.stage=2;e.st=82;e.stT=e.stM=P.transition;e.inv=P.transition;U.bossStage=1;
     toastAll('THE VISITOR · THE FIELD FAILS','The lights are out. A white flash shows where it lands next; light kills its drones.');sfx('horn',e.x,e.y);addShake(e.x,e.y,10);return{eng:true,mv:null}}
   if(S.stage===2&&e.hp<=e.max*.1){S.stage=3;U.bossStage=2;e.speed=P.speed2*1.15;toastAll('THE VISITOR · DESPERATE','Everything it does comes faster now. Finish it.');sfx('siren',e.x,e.y)}
-  if(e.st===82){e.stT-=dt;if(e.stT<=0){e.st=0;e.speed=P.speed2}return{eng:true,mv:null}}
+  if(e.st===82){e.stT-=dt;if(e.stT<=0){e.st=0;e.speed=P.speed2;usVisitorAdd(e)}return{eng:true,mv:null}}
   if(e.st===83){e.stT-=dt;if(e.stT<=0){e.st=0;e.x=e.lx;e.y=e.ly;usFx('circle',{x:e.x,y:e.y,r:P.blink.r,dmg:P.blink.dmg,push:1,T:.3});sfx('zap',e.x,e.y)}return{eng:true,mv:null}}
   const f=usNearFoe(e);if(!f)return{eng:false,mv:null};const d=Math.hypot(f.x-e.x,f.y-e.y);aimAt(f.x,f.y);
   if(S.pulse<=0&&d<P.pulse.max+1){usFx('ring',{x:e.x,y:e.y,warn:P.pulse.tell,T:P.pulse.tell+P.pulse.max/P.pulse.speed});S.pulse=P.pulse.cd;sfx('lock',e.x,e.y)}

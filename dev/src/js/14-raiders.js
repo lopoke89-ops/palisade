@@ -40,7 +40,7 @@ function updateEnemies(dt){
     if(e.foe&&!seen(e.foe))e.foe=null;
     const aimAt=(x,y)=>{const dx=x-e.x,dy=y-e.y,l=Math.hypot(dx,dy)||1;e.aim={x:dx/l,y:dy/l};return Math.atan2(dy,dx)};
     let engaging=false;
-    if(e.type==='boss'){const px=e.x,py=e.y,r=BOSSES[e.boss].think(e,dt,tgt,moveTo,aimAt,Df);engaging=r.eng;moveTo=r.mv;
+    if(e.type==='boss'){const px=e.x,py=e.y,oldSpeed=e.speed,r=BOSSES[e.boss].think(e,dt,tgt,moveTo,aimAt,e.usAdd?e.usDf||(e.usDf={...Df,dmg:Df.dmg*2}):Df);engaging=r.eng;moveTo=r.mv;if(e.usAdd&&e.speed!==oldSpeed)e.speed*=2;   // the summon keeps doubled damage and speed, including rage
       if(e.boss!=='rime'&&frostFields.length){const slow=frostSlow(px,py);e.x=px+(e.x-px)*slow;e.y=py+(e.y-py)*slow}
       if(!heightTravelClear(px,py,e.x,e.y)){e.x=px;e.y=py;e.st=0;e.ab=2;e.cd=1}e.z=heightAt(e.x,e.y);
       if(moveTo&&!travelClear(e.x,e.y,moveTo.x,moveTo.y,false))moveTo=moveTo===tgt?tgt:(()=>{const k=bestStep(e.x|0,e.y|0);return k>=0?{x:k%N+.5,y:((k/N)|0)+.5}:null})();
