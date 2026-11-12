@@ -9,6 +9,7 @@ const V3 = preload("res://scripts/view3d/view3d.gd")
 const PX := V3.PXV   # one base pixel of the 2D's height
 const RAR_COL := {"c": "#9a958a", "r": "#4f95e0", "e": "#b168e0", "l": "#e2b436", "g": "#ffe27a", "u": "#ff9260"}
 var world
+var weapon_loot := {}
 var wall_instances: MultiMesh
 var wall_node: MultiMeshInstance3D
 var warning: MeshInstance3D
@@ -209,7 +210,14 @@ func frame():
 		if not (int(U.chests)&(1<<n)): chest(lv,s.lay.chests[n])
 	for m in s.lay.merchants:
 		if m.kind=="keeper": keeper(lv,g,m,t)
-	for item in U.loot: loot(lv,g,item,t)
+	var loot_alive={}
+	for item in U.loot:
+		loot(lv,g,item,t)
+		if item.kind=="weapon": loot_alive[item.n]=true
+	for id in weapon_loot.keys():
+		if not loot_alive.has(id):
+			weapon_loot[id].queue_free()
+			weapon_loot.erase(id)
 	for drop in U.drops: salvage(lv,drop,t)
 	for f in U.flares: flare(lv,g,f,t)
 	for e in s.enemies:
@@ -340,9 +348,15 @@ func loot(g: V3Mesh, glow: V3Mesh, l, t: float):
 	ring(glow,l.x,l.y,.32+b*.4,.025,.02,col,28)
 	var y=.18+b
 	if l.kind=="weapon":
-		g.box(l.x-.2,l.y-.035,l.x+.2,l.y+.035,y+.08,y+.16,col,col.darkened(.2),col.darkened(.3))
-		g.box(l.x-.2,l.y-.03,l.x-.08,l.y+.03,y,y+.08,col.darkened(.1),col.darkened(.25),col.darkened(.35))
-		g.box(l.x+.2,l.y-.02,l.x+.3,l.y+.02,y+.11,y+.14,Color("#2a2a28"),Color("#2a2a28"),Color("#2a2a28"))
+		var node: Node3D=weapon_loot.get(l.n)
+		if node==null or node.get_meta("weapon_id","")!=l.w.id:
+			if node!=null: node.queue_free()
+			node=UsWeapons.build(l.w.id)
+			node.scale=Vector3.ONE*.7
+			add_child(node)
+			weapon_loot[l.n]=node
+		node.position=Vector3(l.x,y+.12,l.y-.12)
+		node.rotation=Vector3(0,t*.25+float(l.n),-.25)
 	elif l.kind=="perk":
 		glow.prism(l.x,l.y,.1,y,y+.12,col,col,10,.1)
 		glow.prism(l.x,l.y,.1,y+.12,y+.2,col,col,10,.02)

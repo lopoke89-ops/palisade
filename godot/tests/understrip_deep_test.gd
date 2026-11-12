@@ -122,7 +122,7 @@ func _initialize():
 	var cu := fight(c)
 	check(not cu.is_empty() and cu.boss == "custodian", "the Custodian wakes as the gate closes")
 	if not cu.is_empty():
-		check(is_equal_approx(cu.max, 3556.0 * Sim.BOSS_HP * c.Df.hp), "his health is the browser's")
+		check(is_equal_approx(cu.max, 10000.0 * c.Df.hp), "the second boss starts at the former finale's 10,000 HP")
 		run(c, 8.0, cu)
 		var shut: bool = c.game.us.blast.any(func(b): return b == 2) or c.game.us.blast.size() == 0
 		check(shut, "the hall's blast doors slam on their rhythm")
@@ -168,12 +168,12 @@ func _initialize():
 			for f in v.game.us.bfx:
 				kinds[f.k] = true
 		check(kinds.has("ring"), "psychic rings come off it")
-		v.hurt_enemy(vi, vi.hp - vi.max * 0.49, v.player.id)
+		v.hurt_enemy(vi, vi.hp - vi.max * 0.66, v.player.id)
 		for i in 400:
 			run(v, 0.05, vi)
 			for f in v.game.us.bfx:
 				kinds[f.k] = true
-		check(v.game.us.bossStage == 1, "half health: the field fails")
+		check(v.game.us.bossStage == 1, "top third gone: the field fails")
 		check(kinds.has("blink") and kinds.has("well"), "it blinks and pulls with gravity wells (%s)" % ", ".join(kinds.keys()))
 		check(v.enemies.any(func(e): return e.type == "drone"), "it calls a drone swarm")
 		v.hurt_enemy(vi, vi.hp - vi.max * 0.09, v.player.id)

@@ -81,6 +81,7 @@ static func gun(w: Dictionary) -> Dictionary:
 		g.chargeDmg=64*tier.x*(1.15 if "m_dmg" in w.mods else 1)
 	g.reload=weapon.magReload*(.75 if "m_reload" in w.mods else 1)/g.mag
 	g.bolt=g.cd>=.5
+	g.snd="us_"+w.id.trim_prefix("w_")
 	g.us=w.id
 	g.usFx=weapon.fx
 	g.crit=.08 if "m_crit" in w.mods else 0
@@ -109,9 +110,19 @@ static func refit(s, p: Dictionary):
 		p.hp=minf(p.hp,p.max)
 	p.ujm=4 if has(p,"p_house") else 3
 
+## Weapon-local actions must never survive a swap, pickup or a menu transition.
+static func cancel_fire(p: Dictionary):
+	p.bLeft=0
+	p.chg=0.0
+	p.fire_in=false
+	p.pullUsed=p.pullIn
+	p.bolt=0.0
+	p.rl=0.0
+
 static func swap(s, p: Dictionary, to: int) -> bool:
 	if not p.alive or p.w2==null or to==p.wSel: return false
 	if p.wSel==1: p.w2.ammo=p.ammo
+	cancel_fire(p)
 	p.wSel=to
 	refit(s,p)
 	p.cd=maxf(p.cd,.25)
@@ -133,6 +144,8 @@ static func apply(s, p: Dictionary, item: Dictionary) -> bool:
 	match item.kind:
 		"weapon":
 			var old=p.w2
+			cancel_fire(p)
+			p.cd=maxf(p.cd,.25)
 			p.w2=item.w.duplicate(true)
 			p.w2.ammo=gun(p.w2).mag
 			p.w2.res=reserve(p.w2,p)
@@ -281,6 +294,8 @@ static func charge_tick(s, p: Dictionary, dt: float):
 			gun.pierce=3 if full else 0
 			gun.speed=g.speed*(1.4 if full else 1)
 			s.shoot(p,gun,0)
+			s.sfx(gun.snd,p.x,p.y)
+			p.pullUsed=p.pullIn
 			p.ammo-=1
 			p.cd=g.cd
 			p.sinceShot=0.0
@@ -317,3 +332,16 @@ static func label(item: Dictionary) -> String:
 	if item.kind=="relic": return tables().relics[item.k].name
 	if item.kind=="consumable": return tables().items[item.k].name
 	return "%d SALVAGE" % item.sal
+
+static func description(item: Dictionary) -> String:
+	var t=tables()
+	if item.kind=="weapon":
+		var w=item.w
+		var g=gun(w)
+		var text=UsWeapons.DESCRIPTION.get(w.id,"")
+		text+="\n%.1f damage%s · %d rounds · %.2f s reload" % [g.dmg," × %d pellets" % int(g.pellets) if g.get("pellets",1)>1 else "",g.mag,t.weapons[w.id].magReload*(.75 if "m_reload" in w.mods else 1)]
+		for id in w.mods: text+="\n%s: %s" % [t.mods[id].name,t.mods[id].what]
+		if t.tier[w.r].get("sig",false): text+="\n"+t.weapons[w.id].sig
+		return text
+	var group={"consumable":"items","perk":"perks","relic":"relics"}.get(item.kind,"")
+	return t[group][item.k].get("what","") if group!="" else "Salvage for supplies and upgrades."

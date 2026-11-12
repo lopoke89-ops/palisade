@@ -110,22 +110,44 @@ func begin(seed: int, index: int, lives: int):
 		n+=1
 		p.x=at[0]
 		p.y=at[1]
-		p.mats=[0,0,0]
-		p.uj=3
-		p.ujm=3
-		p.ujT=0.0
-		p.ui={"bar":0,"flare":0}
-		p.uSel="bar"
-		p.usDead=false
-		p.w2=null
-		p.wSel=0
-		p.uPerks=[]
-		p.uRelic=""
-		p.breakUsed=false
-		p.ripT=0.0
+		kit_out(p)
 	source=populate(s.lay.us,PalUnderstrip.PLAN[index][0])+s.lay.guards
 	spawn_raiders()
 	toast_level(true)
+
+static func kit_out(p: Dictionary):
+	p.mats=[0,0,0]
+	p.uj=3
+	p.ujm=3
+	p.ujT=0.0
+	p.ui={"bar":0,"flare":0}
+	p.uSel="bar"
+	p.usDead=false
+	p.w2=null
+	p.wSel=0
+	p.uPerks=[]
+	p.uRelic=""
+	p.breakUsed=false
+	p.ripT=0.0
+
+func spawn_at(p: Dictionary) -> Vector2:
+	var rest = s.game.us.rest
+	var anchor = Vector2(rest.x, rest.y)
+	var arena: Dictionary = s.lay.arena
+	var sealed = s.game.us.gate == 2 and not arena.is_empty()
+	if sealed:
+		anchor = Vector2(arena.x + arena.w / 2.0, arena.y + arena.h / 2.0)
+		for other in s.players.values():
+			if other.alive and in_room([other.x, other.y], arena):
+				anchor = Vector2(other.x, other.y)
+				break
+	for radius in range(0, 5):
+		for y in range(int(anchor.y)-radius, int(anchor.y)+radius+1):
+			for x in range(int(anchor.x)-radius, int(anchor.x)+radius+1):
+				if sealed and not in_room([x,y],arena): continue
+				var at = Vector2(x+.5, y+.5)
+				if not s.collides(at.x, at.y, .27, s.pt(p)): return at
+	return Vector2(s.lay.starts[0][0], s.lay.starts[0][1])
 
 static func populate(l: Dictionary, region: int) -> Array:
 	var r=PalUnderstripGen.Rng.new(PalUnderstripGen.mix([l.seed,77]))
@@ -632,10 +654,10 @@ const WAITS = {"pitboss":"The Pit Boss","custodian":"The Custodian","gatekeeper"
 
 func toast_level(first: bool):
 	var u=s.game.us
-	var boss=PalUnderstrip.PLAN[u.level][2]
+	var boss=UsDeep.boss_of(s)
 	var reg=PalUnderstrip.PLAN[u.level][0]
 	var new_reg=first or (u.level>0 and PalUnderstrip.PLAN[u.level-1][0]!=reg)
-	s.toast(NAMES[u.level],("%s waits past the gate. Rest at the shrine before you go through." % WAITS[boss]) if boss!="" else (INTRO[reg] if new_reg else "Deeper. Find the next lift."))
+	s.toast(NAMES[u.level],("%s waits past the gate. Rest at the shrine before you go through." % WAITS.get(boss,Sim.boss_def(boss).name)) if boss!="" else (INTRO[reg] if new_reg else "Deeper. Find the next lift."))
 
 func level_done():
 	var u=s.game.us
@@ -719,14 +741,15 @@ func gate_tick(dt: float):
 		gate_open()
 		var key=UsDeep.boss_of(s)
 		UsDeep.boss_down(s)
-		s.toast(UsDeep.DOWN[key][0],UsDeep.DOWN[key][1])
+		var down=UsDeep.DOWN.get(key,["%s IS DOWN" % Sim.boss_def(key).name,"Rest, then take the lift out of Area 67."])
+		s.toast(down[0],down[1])
 		var A=s.lay.arena
 		var at=s.lay.bossAt[0] if not s.lay.bossAt.is_empty() else [int(A.x+A.w/2),int(A.y+A.h/2)]
 		var n=0
 		for p in s.players.values():
 			drop_loot(at[0]+.5+(n%3-1)*.8,at[1]+2+floori(n/3.0)*.8,UsLoot.roll(PalUnderstripGen.Rng.new(PalUnderstripGen.mix([u.seed,u.level,7000+n])),"boss",PalUnderstrip.PLAN[u.level][0]))
 			n+=1
-		drop_loot(at[0]+.5,at[1]+3.2,UsDeep.SIG[key].duplicate(true))
+		drop_loot(at[0]+.5,at[1]+3.2,UsDeep.SIG.get(key,UsDeep.SIG.visitor).duplicate(true))
 
 func drop_loot(x: float, y: float, item: Dictionary):
 	var u=s.game.us

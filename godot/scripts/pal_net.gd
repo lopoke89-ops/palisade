@@ -393,6 +393,8 @@ func _host_data(peer_id: String, d: Dictionary) -> void:
 			p.cosS = c.cos
 			p.perk = PalProfile.perk_from({}, sim.pvp() != "")
 			sim.kit_up(p)
+			if sim.understrip():
+				SimUnderstrip.kit_out(p)
 			var at := sim.respawn_at(p)
 			p.x = at.x
 			p.y = at.y
@@ -887,7 +889,7 @@ func host_frame(dt: float) -> void:
 		if _snap_n % 3 == 1:
 			var b := wall_bytes()
 			var old := _wl_sent
-			if old.is_empty() or _now() - _wl_at > 10000:
+			if old.size() != b.size() or _now() - _wl_at > 10000:
 				wl = Marshalls.raw_to_base64(b)
 				_wl_at = int(_now())
 			else:
@@ -1284,7 +1286,9 @@ func _guest_data(d: Dictionary) -> void:
 				"mods": d.get("mods", []), "job": d.get("job", ""), "mode": pick.mode, "map": pick.map, "size": pick.size}
 			if pick.mode == "understrip":   # the host's run: its seed, level and lives build the same tunnels here
 				var us: Array = d.get("us", []) if d.get("us") is Array else []
-				if us.size() < 3 or not _int(us[0], -2147483648, 2147483647) or not _int(us[1], 0, 9) or not _int(us[2], -1, 99):
+				# usHash / randi generate uint32 seeds. Rejecting the high bit disconnects
+				# guests from half of all runs, including every retry into the same run.
+				if us.size() < 3 or not _int(us[0], 0, 4294967295) or not _int(us[1], 0, 9) or not _int(us[2], -1, 99):
 					leave("The host's run didn't come through. Try joining again.")
 					return
 				opt.us_seed = int(us[0])

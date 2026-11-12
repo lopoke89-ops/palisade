@@ -8,7 +8,7 @@ extends CanvasLayer
 ## overlays. Every control is a Godot control, so the mouse, keys and a controller (through focus) all work them.
 ## The card pages (settings, account, index, skills, tables) are built by MenuPages (menu_pages.gd).
 
-const VERSION := "v0.11.0"
+const VERSION := "v0.12.5"
 const NAV := [["main", "PLAY"], ["online", "MULTIPLAYER"], ["locker", "LOCKER"], ["skills", "SKILLS"], ["tables", "TABLES"], ["index", "INDEX"], ["settings", "SETTINGS"]]
 const MODES := [["5", "5 RAIDS"], ["10", "10 RAIDS"], ["endless", "ENDLESS"], ["blitz", "BLITZKRIEG"], ["campaign", "CAMPAIGN"], ["blackout", "BLACK OUT"]]
 const LEN_NAME := {"5": "5 RAIDS", "10": "10 RAIDS", "endless": "ENDLESS", "blitz": "BLITZKRIEG RUSH", "campaign": "OPERATION WHITEOUT", "blackout": "CITY BLACK OUT", "casino": "THE CASINO", "understrip": "THE UNDERSTRIP"}
@@ -148,6 +148,17 @@ func _process(_dt: float) -> void:
 
 func active() -> bool:
 	return screen != ""
+
+
+func _exit_tree() -> void:
+	# close() detaches the cached 3D lobby and its aura canvas. Detached Nodes are not freed
+	# with the menu tree; leaving their viewport alive leaks a whole rendering scenario at shutdown.
+	if is_instance_valid(stage):
+		if is_instance_valid(stage.under) and stage.under.get_parent()==null:
+			stage.under.free()
+		if stage.get_parent()==null:
+			stage.free()
+	stage=null
 
 
 func close() -> void:

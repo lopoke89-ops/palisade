@@ -1447,6 +1447,8 @@ func sim_player(p: Dictionary, dt: float) -> void:
 		return
 	if understrip(): UsLoot.charge_tick(self, p, dt)
 	var G: Dictionary = p.gun
+	if not G.get("burst", false):
+		p.bLeft = 0   # queued rounds belong only to a burst weapon
 	# cooldowns keep leftover time, so the fire rate is the same at any frame rate. Bolt-action: holding the trigger
 	# fires every bolt cycle and a click during the cycle is kept for 0.6 s. The pump: every click fires (0.12 s apart
 	# at most); holding the trigger fires on its own cadence.
@@ -1589,6 +1591,8 @@ func revive_player(p: Dictionary, by = null) -> bool:
 ## respawnAt: next to the stake in co-op; in Base Battle by your own stake; in Free-for-all the arena spot furthest
 ## from everyone still standing
 func respawn_at(p: Dictionary) -> Vector2:
+	if understrip():
+		return us.spawn_at(p)
 	if casino():   # one of the casino's entrance spots (CAS.spawn), as someone dropping in walks through the door
 		var sp: Array = CasinoView.SPAWN[floori(rnd() * CasinoView.SPAWN.size())]
 		return Vector2(sp[0], sp[1])
@@ -2125,7 +2129,14 @@ func _enemy_tick(e: Dictionary, dt: float) -> void:
 		"boss":
 			var px: float = e.x
 			var py: float = e.y
+			var original_df=Df
+			var original_speed: float=e.speed
+			if e.get("usAdd",false):
+				Df=Df.duplicate()
+				Df.dmg*=2
 			var r := think_boss(e, dt, tgt, move_to)
+			Df=original_df
+			if e.get("usAdd",false) and e.speed!=original_speed: e.speed*=2
 			engaging = r[0]
 			move_to = r[1]
 			if e.boss != "rime" and not frost_fields.is_empty():   # frost slows a boss's own moves too
@@ -3202,6 +3213,7 @@ func spawn_boss(key: String, sb: bool = false, fb: bool = false) -> Dictionary:
 
 
 func boss_down(e: Dictionary, own) -> void:
+	if e.get("usAdd",false): return   # summoned support grants no salvage, boss credit or cases
 	var B: Dictionary = boss_def(e.boss)
 	var by = payer(own)
 	var mine: bool = by != null

@@ -56,7 +56,7 @@ var anim_us := 0   # the last frame's animation updates (the profile the screens
 var merges := {}   # model key -> [pieces' signature, ArrayMesh, Skin]: one merged body per look, shared by its copies
 ## slots shown and hidden in play (lib.show_slot below) and the props switched in hand (_arm, _prop): never merged
 const LIVE_SLOTS := ["Weapon", "Equipment_ArmL", "Equipment_Back", "Equipment_Jacket", "Equipment_Damage", "Equipment_Pilot"]   # the last three: THE UNDERSTRIP bosses' stage pieces
-const LIVE_PROPS := ["HandR", "frag", "molotov", "rocket", "ClassWeapon"]
+const LIVE_PROPS := ["HandR", "frag", "molotov", "rocket", "ClassWeapon", "UnderstripWeapon"]
 
 
 func _init(view) -> void:
@@ -475,12 +475,25 @@ func _player_model(p: Dictionary) -> Array:
 	var cls: String = p.cls
 	var cid := lib.character_id(cls, str(eq.get("skin", "std")))
 	var hat := str(eq.get("hat", "class"))
-	var mkey := "p|%s|%s|%s" % [cid, hat, cls]
+	var usgun: String=p.w2.id if sim.understrip() and p.get("wSel",0)==1 and p.get("w2")!=null else ""
+	var mkey := "p|%s|%s|%s|%s" % [cid, hat, cls, usgun]
 	var off := float(hash(str(p.id)) % 100) / 37.0
 	return [mkey, func() -> Node3D:
 		var mdl := lib.build(cls, eq, off)
 		if mdl != null:
 			_arm(mdl, cls)
+			if usgun!="":
+				var socket=ArtLibrary.named(mdl,str(lib.attach.get(cid,{}).get("socket","WeaponSocket")))
+				if socket!=null:
+					var gun=UsWeapons.build(usgun)
+					var fit=lib.attach.get(cid,{}).get("long_gun",{})
+					var tr=fit.get("translation",[0,0,0])
+					var ro=fit.get("rotation",[0,0,0,1])
+					gun.transform=Transform3D(Basis(Quaternion(ro[0],ro[1],ro[2],ro[3])),Vector3(tr[0],tr[1],tr[2]))
+					lib.show_slot(mdl,"Weapon",false)
+					var base=ArtLibrary.named(mdl,"ClassWeapon")
+					if base!=null: base.visible=false
+					socket.add_child(gun)
 		return mdl]
 
 
@@ -537,7 +550,7 @@ func _prop(r: Dictionary, wanted: String) -> Node3D:
 	if not info.has("props"):
 		var props := {}
 		for n in ArtLibrary._all(info.model):
-			if String(n.name) in ["frag", "molotov", "rocket", "ClassWeapon"]:
+			if String(n.name) in ["frag", "molotov", "rocket", "ClassWeapon", "UnderstripWeapon"]:
 				props[String(n.name)] = n
 		info.props = props
 	return info.props.get(wanted)
@@ -854,9 +867,11 @@ func _player(r: Dictionary, p: Dictionary, dt: float) -> void:
 		var pn := _prop(r, nm)
 		if pn != null:
 			pn.visible = r.get("prop", "") == nm and _once_on(r) and (nm == "rocket" or time < r.get("prop_end", 0.0))
+	var ug := _prop(r,"UnderstripWeapon")
+	if ug!=null: ug.visible=not (r.get("prop","")=="rocket" and _once_on(r)) and not sim.casino()
 	var cw := _prop(r, "ClassWeapon")
 	if cw != null:
-		cw.visible = not (r.get("prop", "") == "rocket" and _once_on(r)) and not sim.casino()
+		cw.visible = ug==null and not (r.get("prop", "") == "rocket" and _once_on(r)) and not sim.casino()
 	if sim.casino():
 		lib.show_slot(r.info.model, "Weapon", false)
 	# faded in stealth, flashed when hit

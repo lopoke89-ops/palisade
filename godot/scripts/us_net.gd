@@ -62,6 +62,7 @@ static func kit_from(s, p: Dictionary, v) -> void:
 				p.w2.mods = ms
 	else:
 		p.w2 = null
+	UsLoot.cancel_fire(p)
 	p.wSel = 1 if a[1] == "1" and p.w2 != null else 0
 	p.uPerks = Array(a[2].split("+", false)).filter(func(k): return T.perks.has(k) or k == "p_tiepin")
 	p.uRelic = a[3] if T.relics.has(a[3]) else ""

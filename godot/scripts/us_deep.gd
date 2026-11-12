@@ -16,27 +16,55 @@ const HZ_BLAST := 5
 const HZ := {"rad": 3.0, "acid": 6.0, "gas": 10.0, "lung": 0.5, "vent_every": [13.0, 21.0], "vent_warn": 2.0, "vent_on": 6.0, "tick": 0.25, "grav": 0.6}
 const DRONE := {"touch": 4.0, "cd": 0.6, "r": 0.55, "light": 2.0, "litSpeed": 0.5, "pack": [4, 6], "alive": 12, "alarm": 3.0}
 
-const CUS := {"hp": 3556.0, "speed": 1.0, "speed2": 1.2, "mop": {"tell": 0.9, "r": 3.0, "half": 1.1, "dmg": 24.0, "slow": 0.6, "cd": [3.0, 2.5], "strip": 3.0, "dps": 8.0},
+const CUS := {"hp": 8000.0, "speed": 1.0, "speed2": 1.2, "mop": {"tell": 0.9, "r": 3.0, "half": 1.1, "dmg": 24.0, "slow": 0.6, "cd": [3.0, 2.5], "strip": 3.0, "dps": 8.0},
 	"door": {"every": 8.0, "warn": 1.0, "shut": 3.0, "dmg": 40.0}, "crush": {"tell": 1.0, "shut": 1.5, "dmg": 45.0, "cd": 7.0},
 	"gas": {"tell": 2.0, "len": 8.0, "dps": 10.0, "cd": 14.0}, "turret": {"tell": 0.8, "n": 3, "dmg": 9.0, "cd": 6.0}, "transition": 3.0}
-const GK := {"hp": 5333.0, "speed": 0.9, "suit2": 0.8, "pilot": 2.4, "pilotHp": 0.2, "rockets": {"tell": 1.1, "r": 1.2, "n": [4, 3], "cd": [5.0, 7.0], "power": 0.56},
+const GK := {"hp": 25000.0, "speed": 0.9, "suit2": 0.8, "pilot": 2.4, "pilotHp": 0.2, "rockets": {"tell": 1.1, "r": 1.2, "n": [4, 3], "cd": [5.0, 7.0], "power": 0.56},
 	"shield": {"tell": 0.6, "len": 4.0, "cd": 10.0}, "stomp": {"tell": 0.8, "r": 2.5, "dmg": 20.0, "push": 1.5, "cd": 4.0},
 	"pound": {"tell": 1.2, "r": 3.0, "dmg": 34.0, "cd": 5.0}, "sidearm": {"tell": 0.6, "n": 3, "dmg": 9.0, "cd": 2.0}, "dive": {"every": 4.0, "len": 0.5, "speed": 7.0}, "transition": 3.0}
-const VIS := {"hp": 8000.0, "speed": 1.2, "speed2": 1.4, "pulse": {"tell": 0.8, "speed": 6.0, "max": 9.0, "w": 0.45, "dmg": 24.0, "cd": 4.0},
+const VIS := {"hp": 50000.0, "split": 2.0/3.0, "speed": 1.2, "speed2": 1.4, "pulse": {"tell": 0.8, "speed": 6.0, "max": 9.0, "w": 0.45, "dmg": 24.0, "cd": 4.0},
 	"tank": {"tell": 1.2, "r": 1.3, "dmg": 30.0, "acid": 6.0, "acidT": 4.0, "cd": 6.0}, "blink": {"tell": 0.9, "r": 2.0, "dmg": 16.0, "cd": 5.0},
 	"swarm": {"n": 6, "cd": 14.0}, "well": {"tell": 1.0, "len": 3.0, "r": 6.0, "core": 1.2, "pull": 1.2, "dps": 12.0, "cd": 12.0}, "desperate": 0.7, "transition": 3.0}
 
 ## the bosses as Sim.boss_def gives them (the browser's BOSSES entries)
 const DEFS := {
-	"custodian": {"name": "THE CUSTODIAN", "hp": 3556.0, "speed": 1.0, "scan": 12.0, "bounty": 50, "col": "#9bbf5a",
+	"custodian": {"name": "THE CUSTODIAN", "hp": 8000.0, "speed": 1.0, "scan": 12.0, "bounty": 50, "col": "#9bbf5a",
 		"intro": "A shock mop and the shelter's own doors. Watch the light over each door: amber means it's about to slam."},
-	"gatekeeper": {"name": "THE GATEKEEPER", "hp": 5333.0, "speed": 0.9, "scan": 12.0, "bounty": 60, "col": "#cfd8dc",
+	"gatekeeper": {"name": "THE GATEKEEPER", "hp": 25000.0, "speed": 0.9, "scan": 12.0, "bounty": 60, "col": "#cfd8dc",
 		"intro": "Rockets fall where the circles are. His shield blocks shots from the front: go round it."},
-	"visitor": {"name": "THE VISITOR", "hp": 8000.0, "speed": 1.2, "scan": 14.0, "bounty": 80, "col": "#b8a8ff",
+	"visitor": {"name": "THE VISITOR", "hp": 50000.0, "speed": 1.2, "scan": 14.0, "bounty": 80, "col": "#b8a8ff",
 		"intro": "Psychic rings: roll through them. When the lights go out, a flash shows where it will be next."},
 }
-## v0.12.4 (Big U): each boss 50% more than the one before, the finale 10,000 solo on Normal (8,000 x BOSS_HP 1.25)
-const HP := {"pitboss": 2370.0, "custodian": 3556.0, "gatekeeper": 5333.0, "visitor": 8000.0}
+## v0.12.5: same bases, stage split and seeded summon pool as the browser.
+const HP := {"pitboss": 2370.0, "custodian": 8000.0, "gatekeeper": 25000.0, "visitor": 50000.0}
+const ADD := ["demolisher", "butcher", "storm", "foreman", "bluebutcher", "arsonist", "tempest", "bulldozer"]
+
+static func add_key(seed: int) -> String:
+	var r=PalUnderstripGen.Rng.new(PalUnderstripGen.mix([seed,9067]))
+	return ADD[int(floor(r.next()*ADD.size()))]
+
+static func visitor_add(s, visitor: Dictionary) -> void:
+	if visitor.get("usSummoned",false): return
+	visitor.usSummoned=true
+	var key=add_key(int(s.game.us.seed))
+	var x: float=visitor.x+2.0
+	var y: float=visitor.y
+	if s.solid_tile(int(x),int(y)):
+		var a=s.lay.arena
+		x=a.x+a.w/2.0
+		y=a.y+a.h/2.0
+	var e: Dictionary=s.spawn_boss(key)
+	e.x=x
+	e.y=y
+	e.lx=x
+	e.ly=y
+	e.hp=Sim.boss_def(key).hp*Sim.BOSS_HP*s.Df.hp*(1+.35*maxi(0,s.players.size()-1))*s.map_def.hp*(1.1 if s.N>16 else 1.0)*2
+	e.max=e.hp
+	e.speed*=2
+	e.usAdd=true
+	e.us={"home":[x,y],"st":"hunt","sid":-1,"t":0.0,"look":0.0,"add":true}
+	s.toast("THE VISITOR BRINGS "+Sim.boss_def(key).name,"Pulled through the failing field, twice as strong and twice as fast.")
+	s.sfx("siren",x,y)
 const WEAK := {"pitboss": "blast", "custodian": "shock", "gatekeeper": "ap", "visitor": "fire"}
 const DOWN := {"pitboss": ["THE PIT BOSS IS DOWN", "The count room's shrine is lit and the lift is running. Rest, then take it down."],
 	"custodian": ["THE CUSTODIAN IS DOWN", "The hall's doors stand open, its shrine is lit, and the lift is running."],
@@ -50,7 +78,8 @@ static func region(s) -> int:
 	return PalUnderstrip.PLAN[clampi(int(s.game.us.level), 0, 9)][0]
 
 static func boss_of(s) -> String:
-	return PalUnderstrip.PLAN[clampi(int(s.game.us.level), 0, 9)][2]
+	var level=clampi(int(s.game.us.level),0,9)
+	return PalUnderstrip.PLAN[level][2]
 
 # ---------------------------------------------------------------- the hazard map (usHazLay)
 
@@ -428,7 +457,7 @@ static func wake(s) -> void:
 	u.blastT = 0.0
 	var e: Dictionary = s.spawn_boss(key)
 	e.us = {"home": [e.x, e.y], "st": "hunt", "sid": -e.id, "look": 0.0}
-	e.hp = HP[key] * Sim.BOSS_HP * s.Df.hp * (1 + 0.35 * maxi(0, s.players.size() - 1)) * s.map_def.hp * (1.1 if s.N > 16 else 1.0)
+	e.hp = HP[PalUnderstrip.PLAN[int(u.level)][2]] * Sim.BOSS_HP * s.Df.hp * (1 + 0.35 * maxi(0, s.players.size() - 1)) * s.map_def.hp * (1.1 if s.N > 16 else 1.0)
 	e.max = e.hp
 
 ## every frame of a boss fight: the doors and the floor effects; the Gatekeeper's two bodies (either one ends it)
@@ -440,6 +469,12 @@ static func boss_tick(s, dt: float) -> void:
 	if key == "custodian" and u.gate == 2:
 		blast_tick(s, dt)
 	bfx_tick(s, dt)
+	if key == "visitor":
+		var alive=s.enemies.filter(func(e): return e.type=="boss" and not e.dead)
+		if not alive.is_empty() and alive.all(func(e): return e.get("usAdd",false)):
+			for e in alive:
+				e.dead=true
+				e.hp=0.0
 	if key == "gatekeeper" and s.enemies.any(func(e): return e.type == "boss" and e.dead and e.get("gk2", false)):
 		for e in s.enemies:
 			if e.type == "boss" and not e.dead:
@@ -467,11 +502,12 @@ static func boss_reset(s) -> void:
 ## the stage bar: each stage's own health (the Visitor has a third, desperate stage under 10%; the pilot is his own bar)
 static func boss_frac(s, e: Dictionary) -> float:
 	var f: float = e.hp / e.max
+	if not HP.has(e.boss): return clampf(f,0,1)
 	var st: int = int(s.game.us.get("bossStage", 0))
 	if e.get("pilot", false):
 		return clampf(f, 0, 1)
 	if e.boss == "visitor":
-		return clampf(f / 0.1 if st >= 2 else ((f - 0.1) / 0.4 if st >= 1 else (f - 0.5) / 0.5), 0, 1)
+		return clampf(f / 0.1 if st >= 2 else ((f - 0.1) / (VIS.split-0.1) if st >= 1 else (f - VIS.split) / (1.0-VIS.split)), 0, 1)
 	return clampf(f / 0.5 if st > 0 else (f - 0.5) / 0.5, 0, 1)
 
 # ---------------------------------------------------------------- shared by the three deeper bosses
@@ -853,8 +889,8 @@ static func think_visitor(s, e: Dictionary, dt: float) -> Array:
 		S[key] -= dt / k
 	if e.get("inv", 0.0) > 0:
 		e.inv -= dt
-	if S.stage == 1 and e.hp <= e.max * 0.5:   # half health: the containment fails and the lights go out
-		e.hp = e.max * 0.5
+	if S.stage == 1 and e.hp <= e.max * P.split:   # top third gone: the containment fails
+		e.hp = e.max * P.split
 		S.stage = 2
 		set_st(e, 82, P.transition)
 		e.inv = P.transition
@@ -874,6 +910,7 @@ static func think_visitor(s, e: Dictionary, dt: float) -> Array:
 		if e.stT <= 0:
 			e.st = 0
 			e.speed = P.speed2
+			visitor_add(s,e)
 		return [true, null]
 	if e.st == 83:
 		e.stT -= dt

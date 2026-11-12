@@ -15,6 +15,7 @@ var locker: PalLocker   # cosmetics, cases and shards (18-cosmetics.js)
 var last_reward := {}   # what the run that just ended paid
 var looks := {}   # outfit|class -> wardrobe look
 var pmotion := {}   # player id -> presentation motion
+var fire_blocked := false   # a menu click must be released before combat resumes
 var mouse_pulls := 0   # left-button presses so far (the bolt and pump guns buffer a click)
 var draw_alpha := 1.0   # people drawn faded (stealth) multiply their colours by this
 var next_cls := "soldier"   # the next game's setup (from Match Setup)
@@ -891,6 +892,8 @@ func _mouse_world() -> Vector2:
 ## this frame's controls (controlLocal): keys and the left stick or left thumb move; the mouse, the right stick or the
 ## right thumb aim (sticks get the browser's aim assist); the left button, right trigger or a hard right thumb fire
 func _controls() -> Dictionary:
+	if is_instance_valid(us_shop) and us_shop.merchant >= 0:
+		return {"pulls": mouse_pulls}
 	if demo or menus.active() or armory_open or skills_open or (chat_box != null and chat_box.visible):   # typing isn't walking
 		return {}
 	var mx := (1.0 if Input.is_action_pressed("pal_right") else 0.0) - (1.0 if Input.is_action_pressed("pal_left") else 0.0)
@@ -921,6 +924,9 @@ func _controls() -> Dictionary:
 		var d := Vector2(w.x - p.x, w.y - p.y)
 		aim = d.normalized() if d.length() > 0 else Vector2(1, 0)
 		fire = Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and not hud.has_pointer()
+	if fire_blocked:
+		if not fire: fire_blocked=false
+		fire=false
 	return {"move": mv, "aim": aim, "fire": fire, "pulls": mouse_pulls, "auto": inp.mode == "touch" or (inp.mode == "mouse" and not mouse_seen)}
 
 
@@ -959,7 +965,7 @@ func _assist(d: Vector2) -> Vector2:
 # ---------------------------------------------------------------- frame
 
 func _process(dt: float) -> void:
-	inp.tick(dt, demo or menus.active() or armory_open or skills_open or sim.game.phase == "over")
+	inp.tick(dt, demo or menus.active() or armory_open or skills_open or (is_instance_valid(us_shop) and us_shop.merchant >= 0) or sim.game.phase == "over")
 	if demo:
 		sim.game.timer = maxf(sim.game.timer, 30.0)   # the menu's yard never raids
 		sim.player.hp = sim.player.max
@@ -1026,7 +1032,7 @@ func _process(dt: float) -> void:
 	glow_layer.queue_redraw()
 	ui_layer.queue_redraw()
 	panel_layer.queue_redraw()
-	var want := Input.MOUSE_MODE_HIDDEN if not demo and not menus.active() and inp.mode == "mouse" and sim.game.phase != "over" and not sim.game.paused and not armory_open and not skills_open and sim.player.alive else Input.MOUSE_MODE_VISIBLE
+	var want := Input.MOUSE_MODE_HIDDEN if not demo and not menus.active() and inp.mode == "mouse" and sim.game.phase != "over" and not sim.game.paused and not armory_open and not skills_open and not (is_instance_valid(us_shop) and us_shop.merchant >= 0) and sim.player.alive else Input.MOUSE_MODE_VISIBLE
 	if Input.mouse_mode != want and DisplayServer.get_name() != "headless":
 		Input.mouse_mode = want
 
