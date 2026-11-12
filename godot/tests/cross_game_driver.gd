@@ -201,6 +201,31 @@ func _as_guest() -> void:
 	_put("sawdown.txt", "1")
 
 
+## the nearest centre (2+ tiles from x, y) where all three of drone_pack's spots are open floor
+static func open_spot(s: Sim, x: float, y: float) -> Vector2:
+	var best := Vector2(x + 2.5, y)
+	var bd := 1e9
+	for j in range(floori(y) - 8, floori(y) + 9):
+		for i in range(floori(x) - 8, floori(x) + 9):
+			var cx := i + 0.5
+			var cy := j + 0.5
+			var d := Vector2(cx - x, cy - y).length()
+			if d < 2.0 or d >= bd:
+				continue
+			var ok := true
+			for k in 3:
+				var a := float(k) / 3 * TAU
+				var ti := floori(cx + cos(a) * 0.8)
+				var tj := floori(cy + sin(a) * 0.8)
+				if not s.inb(ti, tj) or s.solid_tile(ti, tj):
+					ok = false
+					break
+			if ok:
+				best = Vector2(cx, cy)
+				bd = d
+	return best
+
+
 ## the tunnels' tiles as one number, to compare with the browser's (the same seed must build the same level)
 static func terr_sum(s: Sim) -> int:
 	var h := 0
@@ -234,8 +259,10 @@ func _us_host() -> void:
 	_put("loot.txt", "1")
 	check(await _wait(func(): return g.get("w2") != null and g.w2.id == "w_sawnoff", 20), "the browser takes the gun (ut); the host gives it")
 	check(await _wait(func(): return FileAccess.file_exists(dir + "/sawkit.txt"), 20), "the browser sees the gun in its kit (usk)")
-	# Area 67's drones and the Gatekeeper's shield, as raider rows
-	UsDeep.drone_pack(s, g.x + 2.5, g.y, 3)
+	# Area 67's drones and the Gatekeeper's shield, as raider rows. The pack goes on open floor near the browser
+	# player: a fixed spot (g.x + 2.5) is inside concrete on some seeds, and drone_pack rightly skips walls
+	var c := open_spot(s, g.x, g.y)
+	UsDeep.drone_pack(s, c.x, c.y, 3)
 	var e: Dictionary = s.spawn_enemy_at("shield", g.x + 4, g.y)
 	e.us = {"home": [e.x, e.y], "st": "hunt", "sid": 77, "look": 0.0}
 	e.elite = "charger"   # as spawn_raiders makes an elite
