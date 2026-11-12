@@ -186,6 +186,8 @@ static func stamp(x: Ctx2D, key: String, st: Dictionary, t: float, ci: int = 0) 
 			x.begin_path()
 			x.ellipse(18 + i * 22, 24, 8, 4.2, 0, 0, TAU)
 			x.stroke()
+	if st.get("us"):   # v0.12 THE UNDERSTRIP CASE
+		_us_stamp(x, st.us)
 	if pk == "rock":
 		x.fill_style = "#d2b8a0"
 		x.stroke_style = "#292322"
@@ -278,6 +280,10 @@ static func paint_tracer(x: Ctx2D, x1: float, y1: float, x2: float, y2: float, k
 			x.begin_path()
 			x.ellipse(px, w * 0.9, w * 0.32, w * 0.48, 0, 0, TAU)
 			x.fill()
+	if st.get("us"):   # v0.12
+		x.save()
+		_us_live(x, st.us, len, width, t)
+		x.restore()
 	if st.get("winter") == "auroralance":
 		x.fill_style = "#e2f5fa"
 		x.global_alpha *= 0.5
@@ -372,6 +378,9 @@ static func _circle(x: Ctx2D, cx: float, cy: float, r: float, col) -> void:
 	x.fill()
 
 
+const US_FX := ["bust", "plumes", "jackpot", "dissolved", "abducted"]
+
+
 static func life(key: String) -> float:
 	return PalLocker.catalog().get("FINISH_LIFE", {}).get(key, 0.0)
 
@@ -387,6 +396,9 @@ static func paint_finish(x: Ctx2D, key: String, p: float, scale: float, X: float
 			return
 	if key in ["leaf", "bands", "swish", "nuke", "poop", "demon", "hundo", "fire", "eight", "sixty", "zzz"]:
 		_hybrid_finish(x, key, p, scale, X, Y)
+		return
+	if key in US_FX:   # v0.12 THE UNDERSTRIP CASE
+		_us_finish(x, key, p, scale, X, Y)
 		return
 	if life(key) <= 0:
 		return
@@ -1326,3 +1338,287 @@ static func paint_particle(x: Ctx2D, q: Dictionary, px: float, py: float, u: flo
 		x.fill_rect(-r * 0.12, -r * 0.12, r * 0.24, r * 0.24)
 	x.restore()
 	return true
+
+
+# ---------------------------------------------------------------- v0.12 THE UNDERSTRIP CASE (20d-understrip-effects.js)
+
+## the tracer stamp's marks (usTracerStamp), on the 192x48 frame
+static func _us_stamp(x: Ctx2D, id: String) -> void:
+	if id == "chips":
+		for i in range(1, 4):
+			var px := i * 38.0
+			x.fill_style = ["#c42a3a", "#2a5ac4", "#2fa04a"][i - 1]
+			x.begin_path()
+			x.ellipse(px, 24, 7, 5, 0, 0, TAU)
+			x.fill()
+			x.stroke_style = "#f4f0e6"
+			x.line_width = 1.6
+			x.set_line_dash([3, 3])
+			x.begin_path()
+			x.ellipse(px, 24, 5, 3.4, 0, 0, TAU)
+			x.stroke()
+			x.set_line_dash([])
+	elif id == "neontube":
+		x.stroke_style = "#5ab0ff"
+		x.line_width = 2
+		x.begin_path()
+		x.move_to(4, 24)
+		x.line_to(150, 24)
+		x.stroke()
+	elif id == "jackpotcoins":
+		for i in range(1, 4):
+			x.fill_style = "#ffd24a"
+			x.begin_path()
+			x.arc(i * 36.0, 24 + (3 if i % 2 else -3), 5, 0, TAU)
+			x.fill()
+			x.stroke_style = "#8a6410"
+			x.line_width = 1.2
+			x.stroke()
+	elif id == "saucerbolt":
+		x.stroke_style = "#e8ffd8"
+		x.line_width = 2.4
+		x.begin_path()
+		x.ellipse(10, 24, 7, 13, 0, 0, TAU)
+		x.stroke()
+
+
+## the live parts on each shot (usTracerLive)
+static func _us_live(x: Ctx2D, id: String, len: float, w: float, t: float) -> void:
+	if id == "chips":   # chips tumbling off the back
+		for i in 3:
+			var r := w * 0.7
+			var tilt := absf(cos(t * 14 + i * 2))
+			x.fill_style = ["#c42a3a", "#2a5ac4", "#e8e2d0"][i]
+			x.begin_path()
+			x.ellipse(len * (0.55 + i * 0.16), (1 if i % 2 else -1) * w * 0.9, r, r * tilt + 0.2, 0, 0, TAU)
+			x.fill()
+	elif id == "tractorbeam":   # the wobble
+		x.stroke_style = "rgba(232,255,216,.7)"
+		x.line_width = maxf(0.5, w * 0.3)
+		x.begin_path()
+		for q in 13:
+			var px := len * q / 12.0
+			var py := sin(q * 0.9 - t * 18) * w * 0.9
+			if q:
+				x.line_to(px, py)
+			else:
+				x.move_to(px, py)
+		x.stroke()
+	elif id == "neontube":
+		x.global_alpha *= 0.35 + 0.25 * sin(t * 40)
+		x.fill_style = "#ff8ae4"
+		x.fill_rect(0, -w * 1.4, len * 0.7, w * 2.8)
+	elif id == "saucerbolt":
+		x.stroke_style = "rgba(124,255,107,.8)"
+		x.line_width = maxf(0.6, w * 0.35)
+		var r := w * (1.6 + 0.4 * sin(t * 30))
+		x.begin_path()
+		x.ellipse(w * 0.6, 0, r * 0.45, r, 0, 0, TAU)
+		x.stroke()
+
+
+## the kill effects (paintUsFinish): fixed geometry on the shared finish timeline, every piece placed from the progress
+static func _us_finish(x: Ctx2D, key: String, p: float, s: float, X: float, Y: float) -> void:
+	var e := 1 - pow(1 - p, 3)
+	var fade := minf(1, minf(p * 12, (1 - p) * 3))
+	var ink := "#0b1111"
+	x.save()
+	x.translate(X, Y)
+	x.scale(s, s)
+	x.global_alpha *= fade
+	x.line_join = "round"
+	x.line_cap = "round"
+	var ground := func(col: String, r: float, a: float) -> void:
+		x.fill_style = col
+		x.global_alpha *= a
+		x.begin_path()
+		x.ellipse(0, 6, r, r * 0.35, 0, 0, TAU)
+		x.fill()
+		x.global_alpha /= a
+	var blob := func(xx: float, yy: float, r: float, col: String) -> void:
+		x.fill_style = col
+		x.begin_path()
+		x.arc(xx, yy, r, 0, TAU)
+		x.fill()
+	var card := func(xx: float, yy: float, rot: float, face: float, suit: int) -> void:
+		x.save()
+		x.translate(xx, yy)
+		x.rotate(rot)
+		var fw := absf(cos(face * PI)) * 5
+		x.fill_style = "#f4f0e6" if face < 0.5 else "#a8202a"
+		x.stroke_style = ink
+		x.line_width = 0.6
+		x.fill_rect(-fw / 2, -3.6, fw, 7.2)
+		x.stroke_rect(-fw / 2, -3.6, fw, 7.2)
+		if face < 0.5 and fw > 2:
+			x.fill_style = "#c42a3a" if suit % 2 else "#141414"
+			x.font = "700 4px sans-serif"
+			x.text_align = "center"
+			x.text_baseline = "middle"
+			x.fill_text(["♠", "♥", "♣", "♦"][suit % 4], 0, 0)
+		elif fw > 2:
+			x.stroke_style = "#f4dc7a"
+			x.stroke_rect(-fw / 2 + 1, -2.6, fw - 2, 5.2)
+		x.restore()
+	match key:
+		"bust":   # cards scatter, then flip face down
+			ground.call("#a8202a", 8 + e * 8, 0.35)
+			for i in 7:
+				var a := i * TAU / 7 + 0.4
+				var r := 4 + e * 16
+				card.call(cos(a) * r, sin(a) * r * 0.5 - 14 * sin(minf(1, p * 1.6) * PI) + p * 6, a + p * 5, minf(1, maxf(0, (p - 0.35) * 2.2)), i)
+		"plumes":
+			ground.call("#ff5ad8", 8 + e * 9, 0.35)
+			for i in 9:
+				var a := i * TAU / 9
+				var r := 3 + e * 18
+				x.save()
+				x.translate(cos(a) * r + sin(p * 6 + i) * 2, sin(a) * r * 0.5 - e * 12 + p * p * 16)
+				x.rotate(a + sin(p * 5 + i))
+				x.fill_style = "#ffd0f0" if i % 2 else "#ff8ad8"
+				x.begin_path()
+				x.ellipse(0, 0, 1.4, 5, 0, 0, TAU)
+				x.fill()
+				x.stroke_style = "rgba(255,255,255,.7)"
+				x.line_width = 0.4
+				x.begin_path()
+				x.move_to(0, -5)
+				x.line_to(0, 5)
+				x.stroke()
+				x.restore()
+			for i in 12:   # sequins
+				var a := i * 2.1
+				var r := 2 + e * 22 * Pal.hash2(i, 3)
+				blob.call(cos(a) * r, sin(a) * r * 0.5 - e * 16 + p * p * 20, 0.8, ["#ffe39a", "#e6f0ff", "#ff5ad8"][i % 3])
+		"jackpot":   # three 7s, then the coins
+			ground.call("#ffd24a", 9 + e * 8, 0.35)
+			var yy := -16 * minf(1, p * 3)
+			x.fill_style = "#7a1a2a"   # the machine
+			x.stroke_style = ink
+			x.line_width = 0.8
+			x.fill_rect(-11, yy - 8, 22, 14)
+			x.stroke_rect(-11, yy - 8, 22, 14)
+			x.fill_style = "#f4f0e6"
+			x.fill_rect(-9, yy - 6, 18, 8)
+			for k in 3:
+				var spin := p < 0.25 + k * 0.12
+				var RX := -6.0 + k * 6
+				x.save()
+				x.begin_path()
+				x.rect(RX - 2.6, yy - 6, 5.2, 8)
+				x.clip()
+				if spin:
+					for q in range(-1, 2):
+						x.fill_style = "#8a8a8a"
+						x.fill_rect(RX - 1.5, yy - 2 + q * 4 + fmod(p * 90 + k * 7, 4) - 2, 3, 1.4)
+				else:
+					x.fill_style = "#c42a3a"
+					x.font = "900 7px \"Big Shoulders Stencil Display\", sans-serif"
+					x.text_align = "center"
+					x.text_baseline = "middle"
+					x.fill_text("7", RX, yy - 2)
+				x.restore()
+			x.fill_style = "#e2b436"
+			x.fill_rect(11, yy - 6, 2, 7)
+			blob.call(12, yy - 7, 1.6, "#c42a3a")
+			if p > 0.55:
+				var q := (p - 0.55) / 0.45
+				for i in 10:
+					var a := -PI / 2 + (i / 9.0 - 0.5) * 2.2
+					var r := 6 + q * 24
+					var cx := cos(a) * r
+					var y2 := yy + sin(a) * r + q * q * 30
+					blob.call(cx, y2, 1.7, "#ffd24a")
+					x.stroke_style = "#8a6410"
+					x.line_width = 0.4
+					x.begin_path()
+					x.arc(cx, y2, 1.7, 0, TAU)
+					x.stroke()
+		"dissolved":
+			var melt := minf(1, p * 1.4)
+			ground.call("#7cff6b", 6 + melt * 12, 0.5)
+			x.fill_style = "#5ad84a"   # the puddle grows
+			x.begin_path()
+			x.ellipse(0, 5, 4 + melt * 10, 1.5 + melt * 3, 0, 0, TAU)
+			x.fill()
+			if melt < 1:   # the figure slumping and dripping
+				var hgt := 18 * (1 - melt)
+				x.fill_style = "rgba(90,216,74,.85)"
+				x.begin_path()
+				x.move_to(-4, 5)
+				x.quadratic_curve_to(-5, 5 - hgt * 0.6, 0, 5 - hgt)
+				x.quadratic_curve_to(5, 5 - hgt * 0.6, 4, 5)
+				x.fill()
+				for i in 4:
+					x.fill_rect(-3 + i * 2, 5 - hgt * 0.5 + fmod(p * 20 + i * 3, 6), 1, 2)
+			for i in 5:   # bubbles
+				var q := fmod(p * 2 + i * 0.2, 1)
+				x.global_alpha = fade * (1 - q)
+				x.stroke_style = "#c8ffb0"
+				x.line_width = 0.6
+				x.begin_path()
+				x.arc(-8 + Pal.hash2(i, 7) * 16, 4 - q * 14, 1 + q * 1.5, 0, TAU)
+				x.stroke()
+		"abducted":
+			var beam := minf(1, p * 4)
+			var lift := 0.0 if p < 0.25 else minf(1, (p - 0.25) / 0.6)
+			x.global_alpha = fade * 0.35 * beam
+			var gr := x.create_linear_gradient(0, -60, 0, 8)
+			gr.add_color_stop(0, "rgba(184,255,168,.9)")
+			gr.add_color_stop(1, "rgba(184,255,168,.2)")
+			x.fill_style = gr
+			x.begin_path()
+			x.move_to(-5, -58)
+			x.line_to(5, -58)
+			x.line_to(14, 6)
+			x.line_to(-14, 6)
+			x.fill()
+			x.global_alpha = fade
+			ground.call("#b8ffa8", 14 * beam, 0.5)
+			for i in 6:   # rings rising up the beam
+				var q := fmod(p * 1.6 + i / 6.0, 1)
+				x.global_alpha = fade * (1 - q) * 0.6
+				x.stroke_style = "#e8ffd8"
+				x.line_width = 0.6
+				x.begin_path()
+				x.ellipse(0, 6 - q * 58, 12 - q * 7, (12 - q * 7) * 0.3, 0, 0, TAU)
+				x.stroke()
+			x.global_alpha = fade
+			var sp := lift * 5   # the raider, lifted and turning
+			x.save()
+			x.translate(0, 2 - lift * 56)
+			x.rotate(sin(sp) * 0.6)
+			x.global_alpha = fade * (1 - maxf(0, lift - 0.8) * 5)
+			x.fill_style = "#3a3a30"
+			x.fill_rect(-2, -9, 4, 9)
+			blob.call(0, -11, 2.2, "#a98262")
+			x.stroke_style = "#3a3a30"
+			x.line_width = 1.4
+			x.begin_path()
+			x.move_to(-2, -7)
+			x.line_to(-5, -4 + sin(sp * 2) * 2)
+			x.move_to(2, -7)
+			x.line_to(5, -4 - sin(sp * 2) * 2)
+			x.move_to(-1, 0)
+			x.line_to(-2, 4)
+			x.move_to(1, 0)
+			x.line_to(2, 4)
+			x.stroke()
+			x.restore()
+			x.global_alpha = fade
+			var sx := sin(p * 3) * 3   # the saucer
+			var sy := -62.0
+			x.fill_style = "#8a90a0"
+			x.begin_path()
+			x.ellipse(sx, sy, 15, 4, 0, 0, TAU)
+			x.fill()
+			x.fill_style = "#c8d0e0"
+			x.begin_path()
+			x.ellipse(sx, sy - 3, 6, 4, 0, PI, 0)
+			x.fill()
+			for i in 5:
+				blob.call(sx - 10 + i * 5, sy + 0.5, 1, "#7cff6b" if sin(p * 20 + i * 1.3) > 0 else "#ffd24a")
+			if p > 0.88:   # a flash as it goes
+				x.global_alpha = (1 - p) / 0.12
+				blob.call(sx, sy, 6 + (p - 0.88) * 80, "#e8ffd8")
+	x.restore()

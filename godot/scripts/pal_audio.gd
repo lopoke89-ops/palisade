@@ -7,12 +7,23 @@ const NAMES := ["ar", "rifle", "smg", "shotgun", "hit0", "hit1", "hit2", "boom",
 	"collapse", "place0", "place1", "place2", "gather", "siren", "core", "hurt", "drop", "lob", "plant", "beep", "revive", "restock",
 	"deny", "medic", "win", "lose", "horn", "rocket", "lock", "slash", "charge", "zap", "rumble", "drill", "rockfall", "winterwarn", "splash", "sniper", "rack", "pump", "shellin", "dry", "harpoon", "chain", "flood",
 	"ts_gold", "ts_plasma", "ts_rainbow", "ts_grad", "ts_aurora", "ts_star", "ts_comet", "ts_neon", "ts_cosmic", "ts_rock", "ts_solar", "ts_glitch", "ts_galaxy", "ts_void", "ts_grainbow", "kx_sparks", "kx_smoke", "kx_confetti", "kx_embers", "kx_glint", "kx_bats", "kx_spider", "kx_souls", "kx_rocketburst", "kx_reticle", "kx_frag", "kx_hellportal", "kx_orbital", "kx_cinder", "kx_tealslash", "kx_ashbrand", "kx_demonclaw", "kx_salvage", "kx_bolt", "kx_skull", "kx_pixel", "kx_frost", "kx_gradburst", "kx_sunburst", "kx_toxic", "kx_supernova", "kx_glitchout", "kx_singularity", "kx_shockwave", "kx_bubbles", "tick_c", "tick_r", "tick_e", "tick_l", "tick_g", "tick_u",
-	"cas_card", "cas_reel", "cas_lever", "cas_chip", "cas_peg", "cas_dice", "cas_lose", "cas_bust", "cas_push", "cas_small", "cas_win", "cas_big", "cas_jackpot", "cas_wheel", "roll"]
+	"us_sawnoff", "us_taser", "us_nailgun", "us_smg", "us_flare", "us_riot", "us_laser", "us_alien", "us_antigrav",
+	"cas_card", "cas_reel", "cas_lever", "cas_chip", "cas_peg", "cas_dice", "cas_lose", "cas_bust", "cas_push", "cas_small", "cas_win", "cas_big", "cas_jackpot", "cas_wheel", "roll", "step"]
 const HEADROOM := 0.5   # matches tools/render_sfx.gd
 const MASTER := 0.55
 const MUSIC := {"menu": "main_menu", "between": "between_raids", "attitude": "raid_attitude", "cool": "raid_cool", "express": "raid_express", "finale": "final_blitz", "results": "results"}
 const CASINO := ["casino_1", "casino_2", "casino_3", "casino_4", "casino_5", "casino_6", "casino_7", "casino_8", "casino_9", "casino_10", "casino_11"]
 const CASINO_XF := 5.0   # each casino track crossfades into the next over its last 5 s
+const US_BOSS_TRACK := {"pitboss": "express", "custodian": "attitude", "gatekeeper": "cool", "visitor": "finale"}
+const US_MUSIC := {1: [650.0, 0.0], 2: [420.0, 0.55], 3: [20000.0, 0.0]}   # each region's concrete: low-pass Hz, reverb wet
+var mus_bus := -1
+var mus_lp: AudioEffectLowPassFilter
+var mus_rv: AudioEffectReverb
+var hum: AudioStreamPlayer   # Area 67's hum (usAmbience)
+var hum_pb: AudioStreamGeneratorPlayback
+var hum_ph := [0.0, 0.0, 0.0]   # the two tones' and the drift's phases
+var hum_lp := 0.0
+var hum_g := 0.0
 const DUCK := {"cas_bust": 2.4, "cas_big": 2.0, "cas_jackpot": 3.4}   # the big result sounds dip the music under them
 const POOL := 24
 
@@ -68,6 +79,21 @@ func _ready() -> void:
 		var p := AudioStreamPlayer.new()
 		add_child(p)
 		players.append(p)
+	# the music's own bus: THE UNDERSTRIP's concrete (a low-pass, and Shelter 7's reverb tail); open everywhere else
+	var mb := AudioServer.bus_count
+	AudioServer.add_bus(mb)
+	AudioServer.set_bus_name(mb, "Music")
+	AudioServer.set_bus_send(mb, "Master")
+	mus_lp = AudioEffectLowPassFilter.new()
+	mus_lp.cutoff_hz = 20000.0
+	AudioServer.add_bus_effect(mb, mus_lp)
+	mus_rv = AudioEffectReverb.new()
+	mus_rv.room_size = 0.85
+	mus_rv.damping = 0.6
+	mus_rv.wet = 0.0
+	mus_rv.dry = 1.0
+	AudioServer.add_bus_effect(mb, mus_rv)
+	mus_bus = mb
 
 
 func _now() -> float:
@@ -162,6 +188,14 @@ func music_route() -> Array:
 	if demo:
 		return ["menu", "menu"]
 	var gid := str(g.get("gid", ""))
+	if sim.understrip():   # usMusicRoute: each boss fight its track; the casino upstairs; Area 67 nothing (the hum plays)
+		var U: Dictionary = g.us
+		var b: String = PalUnderstrip.PLAN[clampi(int(U.level), 0, 9)][2]
+		if b != "" and int(U.gate) > 0 and not U.bossDown:
+			return [US_BOSS_TRACK[b], "usboss:%s:%d" % [gid, int(U.level)]]
+		if PalUnderstrip.PLAN[clampi(int(U.level), 0, 9)][0] == 3:
+			return ["", "quiet:" + gid]
+		return ["casino", "casino:" + gid]
 	if g.mode == "casino":
 		return ["casino", "casino:" + gid]
 	var raid: String = ["attitude", "cool", "express"][maxi(0, g.wave - 1) % 3]
@@ -197,6 +231,8 @@ func casino_up() -> String:
 
 func _start(k: String, token: String, xf: float = 0.0) -> void:
 	mus_cur = AudioStreamPlayer.new()
+	if mus_bus >= 0:
+		mus_cur.bus = "Music"
 	add_child(mus_cur)
 	mus_cur.stream = tracks[k]
 	mus_cur.set_meta("k", k)
@@ -246,6 +282,52 @@ func _process(dt: float) -> void:
 		if f[1] <= 0.00011:
 			f[0].queue_free()
 	fading = fading.filter(func(f): return f[1] > 0.00011)
+	_us_audio(dt, r)
+
+
+## the music bus's concrete for this region (only while the casino plays upstairs), and Area 67's hum
+func _us_audio(dt: float, r: Array) -> void:
+	var M: Array = [20000.0, 0.0]
+	var us: bool = sim.understrip() and sim.game.has("us")
+	if us and r[0] == "casino":
+		M = US_MUSIC[PalUnderstrip.PLAN[clampi(int(sim.game.us.level), 0, 9)][0]]
+	if mus_lp != null:
+		var k := 1.0 - exp(-dt / 0.4)
+		mus_lp.cutoff_hz = exp(lerpf(log(mus_lp.cutoff_hz), log(M[0]), k))
+		mus_rv.wet = lerpf(mus_rv.wet, M[1], 1.0 - exp(-dt / 0.5))
+	var on: bool = us and r[0] == "" and sim.game.phase != "over" and music_vol > 0
+	var want := 0.05 * music_vol * MASTER * volume if on else 0.0
+	hum_g = lerpf(hum_g, want, 1.0 - exp(-dt / (1.2 if want > 0 else 0.4)))
+	if hum == null:
+		if not on:
+			return
+		var gen := AudioStreamGenerator.new()
+		gen.mix_rate = 22050.0
+		gen.buffer_length = 0.25
+		hum = AudioStreamPlayer.new()
+		hum.stream = gen
+		add_child(hum)
+		hum.play()
+		hum_pb = hum.get_stream_playback()
+	if hum_pb == null:
+		return
+	var rate := 22050.0
+	var n := hum_pb.get_frames_available()
+	var a := 1.0 - exp(-TAU * 320.0 / rate)   # the low-pass at 320 Hz
+	for i in n:
+		hum_ph[2] = fmod(hum_ph[2] + 0.13 / rate, 1.0)
+		var f2 := 82.6 + 1.6 * sin(TAU * hum_ph[2])
+		hum_ph[0] = fmod(hum_ph[0] + 55.0 / rate, 1.0)
+		hum_ph[1] = fmod(hum_ph[1] + f2 / rate, 1.0)
+		var tri: float = 4.0 * absf(hum_ph[1] - 0.5) - 1.0
+		var x: float = sin(TAU * hum_ph[0]) + tri
+		hum_lp += a * (x - hum_lp)
+		var v: float = hum_lp * hum_g
+		hum_pb.push_frame(Vector2(v, v))
+	if hum_g < 0.0005 and not on:
+		hum.queue_free()
+		hum = null
+		hum_pb = null
 
 
 func _exit_tree() -> void:

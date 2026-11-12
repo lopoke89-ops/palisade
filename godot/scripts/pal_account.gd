@@ -460,7 +460,7 @@ func claim_reward(c: Dictionary, j: Dictionary) -> Dictionary:
 	var R := {"kind": c.get("kind", "run"), "cases": cases, "shards": int(j.get("shards", 0)), "unlocked": ids, "prog": prog,
 		"toNext": int(j.to_next) if j.get("to_next") != null else 3 - prog, "cloud": true, "bossShards": int(j.get("boss_shards", 0)),
 		"sp": int(j.get("skill_points", 0)), "left": bool(j.get("left_behind", false)), "blitzShards": c.get("mode") in ["blitz", "campaign"],
-		"pois": -1, "claim_at": c.get("at", 0)}
+		"pois": -1, "claim_at": c.get("at", 0), "us": c.get("mode") == "understrip"}
 	R.text = m.locker.reward_text(R)
 	return R
 
@@ -556,7 +556,8 @@ static func new_operation() -> String:
 	return "%s-%s-%s-%s-%s" % [h.substr(0, 8), h.substr(8, 4), h.substr(12, 4), h.substr(16, 4), h.substr(20, 12)]
 
 
-## open_cases_v0964 (catalog 4); a server without it answers 404 and the catalog-3 opener runs.
+## open_cases_v0964 (catalog 4), or open_cases_v012 for the UNDERSTRIP CASE (catalog 6); a server without v0964 answers 404 and
+## the catalog-3 opener runs.
 ## {ok, results: [{it, dup, shards, box}], err, uncertain}. Uncertain: the opening is kept to resume.
 func open_cases(id: String, n: int, resume: Dictionary = {}) -> Dictionary:
 	var p := resume
@@ -565,8 +566,9 @@ func open_cases(id: String, n: int, resume: Dictionary = {}) -> Dictionary:
 		if persist:
 			_write(OPEN_PATH, p)
 	var args := {"p_case": p.case, "p_quantity": p.quantity, "p_operation": p.operation}
-	var r := await rpc_call("open_cases_v0964", args)
-	if r.status == 404 and p.case != "hybrid":
+	# v0.12: the UNDERSTRIP CASE (catalog 6) opens through open_cases_v012 only; every other case as before
+	var r := await rpc_call("open_cases_v012" if p.case == "understrip" else "open_cases_v0964", args)
+	if r.status == 404 and p.case != "hybrid" and p.case != "understrip":
 		r = await rpc_call("open_cases_v0962", args)
 	if not r.ok:
 		var unsure: bool = not r.status or r.status >= 500 or r.status == 401

@@ -16,6 +16,10 @@ const T_ROAD := 8
 const T_WALK := 9
 const T_RUBBLE := 10
 const T_BLDG := 11
+const T_CONC := 12
+const T_SHUT := 13
+const T_JUNK := 14
+const T_TANK := 15
 const SIZES := {"std": 16, "xl": 24}
 
 const MAPS := {
@@ -48,12 +52,12 @@ const D4 := [[1, 0], [-1, 0], [0, 1], [0, -1]]
 
 
 static func terr_solid(t: int) -> bool:
-	return t == T_PIT or t == T_ROCK or t == T_DRUM or t == T_BLDG
+	return t in [T_PIT, T_ROCK, T_DRUM, T_BLDG, T_CONC, T_SHUT, T_JUNK, T_TANK]
 
 
 ## what stops a bullet and blocks sight: rock outcrops (and buildings); oil drums and pits don't
 static func terr_shot(t: int) -> bool:
-	return t == T_ROCK or t == T_BLDG
+	return t in [T_ROCK, T_BLDG, T_CONC, T_SHUT, T_TANK]
 
 
 ## Riverbend's river: the centre column for each row

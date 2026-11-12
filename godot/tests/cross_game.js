@@ -77,6 +77,7 @@ async function godotHosts(b, port) {
   check(await until(() => exists(dir, 'rollgo.txt'), 20000), 'Godot is watching for the roll');
   check(await P.evaluate(() => { const q = __pal.player; q.aim = { x: 1, y: 0 }; __pal.localRoll(); return __pal.rolling(q) }), 'the browser rolls');
   check(await until(() => exists(dir, 'hostrolled.txt') && P.evaluate(() => __pal.rolling(__pal.players.get('host'))), 15000), 'the browser sees the Godot host roll');
+  check(await until(() => P.evaluate(() => { const h = __pal.players.get('host'); return h.rlKnown && h.dgX > .9 }), 3000), `and draws it the way it went, east (${JSON.stringify(await P.evaluate(() => { const h = __pal.players.get('host'); return [h.dgX, h.dgY] }))})`);
   // a wall through the browser's own build message, at whichever neighbour the host accepts
   await P.evaluate(() => { const p = __pal.player, i = Math.floor(p.x), j = Math.floor(p.y); for (const [a, c] of [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [-1, 1]]) __pal.NET.toHost({ t: 'b', i: i + a, j: j + c, s: 0, d: false }) });
   const hw = await until(() => exists(dir, 'hostwall.txt') && fs.readFileSync(path.join(dir, 'hostwall.txt'), 'utf8').trim(), 30000);
@@ -119,11 +120,14 @@ async function browserHosts(b, port) {
   const r0 = await H.evaluate(() => { const g = __pal.players.get('g1'); return [g.x, g.y, g.tp] });
   put(dir, 'rollgo.txt', '1');
   check(await until(() => H.evaluate(() => __pal.rolling(__pal.players.get('g1'))), 15000), 'Godot\'s roll reaches the browser host');
+  check(await H.evaluate(() => __pal.players.get('g1').dgY > .99), 'the way Godot moved (south), not back from its aim');
   await sleep(1500);
   const r1 = await H.evaluate(() => { const g = __pal.players.get('g1'); return [g.x, g.y, g.tp, g.dgCd] }), rd = Math.hypot(r1[0] - r0[0], r1[1] - r0[1]);
   check(rd > 1.2 && rd < 2.3 && r1[2] === r0[2] && r1[3] > 0, `it travels on the browser host without a refused step (${rd.toFixed(2)} tiles, tp ${r0[2]} -> ${r1[2]})`);
+  await H.keyboard.down('KeyD');   // moving: the roll goes screen-right, not back from the aim
   await H.evaluate(() => { const q = __pal.player; q.aim = { x: 0, y: 1 }; __pal.localRoll() });
   put(dir, 'hostrolled.txt', '1');
+  await sleep(700); await H.keyboard.up('KeyD');
   const bt = await until(() => exists(dir, 'built.txt') && fs.readFileSync(path.join(dir, 'built.txt'), 'utf8').trim(), 20000);
   if (bt) { const [i, j] = bt.split(',').map(Number); const ok = await until(() => H.evaluate(([i, j]) => !!__pal.walls[j * 16 + i], [i, j]), 8000); check(ok, 'Godot\'s wall stands on the browser host (' + bt + ')'); if (ok) put(dir, 'wallok.txt', '1') }
   else check(false, 'Godot built nothing');

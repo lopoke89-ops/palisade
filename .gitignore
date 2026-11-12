@@ -7,3 +7,4 @@ dev/test/*.png
 debug.html
 dev/supabase/.temp/
 /export/
+.claude/worktrees/

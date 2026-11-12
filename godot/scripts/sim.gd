@@ -12,6 +12,7 @@ extends RefCounted
 
 const R_ENT := 0.27
 
+var us: SimUnderstrip
 var rng := RandomNumberGenerator.new()
 var N := 16
 var walls: Array = []          # Dictionary or null per tile, idx = j*N+i
@@ -26,6 +27,7 @@ var poi_flows := {}   # Black Out: each POI's own flow field, built when a raide
 var _aim_save: Array = []
 var core_k := 0
 var player := {}   # the soldier on this screen
+var move_in := Vector2.ZERO   # where this screen's soldier is being pushed (control_local's move): the roll goes that way
 var players := {}   # every soldier in the match, by id ('solo' offline; 'host', 'g1'... online), in roster order
 var my_id := "solo"
 var guest := false   # a guest's screen: the host runs the match, this sim only mirrors it
@@ -36,6 +38,9 @@ var lobs: Array = []
 var sacks: Array = []
 var flow_dirty := false
 var flow_t := 0.0
+var poi_due := false   # the POI fields are a step behind the stake's and get rebuilt next step (see compute_flow)
+var flow_jobs: Array = []   # Black Out: the fields a rebuild put on workers (FlowJob, the stake's first), taken next step
+var flow_pre: FlowJob = null   # Black Out: the next POI's field, built on a worker just before its attack (poi_flow)
 var next_id := 1
 var bullet_seq := 0
 var game := {}
@@ -95,7 +100,7 @@ const BOSS_ORDER := ["butcher", "demolisher", "storm"]
 const WEAK_BONUS := 1.35
 const BOSS_HP := 1.25
 const ABIL_ROCKET := {"stock": 5, "refill": 2, "cd": 1.5, "speed": 11.0, "range": 12.0, "R": 1.9, "power": 1.5}
-const BOUNTY := {"rifle": 4, "gren": 7, "breach": 6, "shield": 6, "medic": 5, "spotter": 5, "fire": 6}
+const BOUNTY := {"rifle": 4, "gren": 7, "breach": 6, "shield": 6, "medic": 5, "spotter": 5, "fire": 6, "drone": 2}
 const CORE_FIX := {"hp": 50.0, "cost": 25}
 const DELL_UP := {"name": "DELGADO", "what": "Shared damage, reach and fire rate up to +75%.", "cost": [30, 60, 100, 150, 200, 270, 350, 450]}
 const AMMO := [{"id": "ap", "name": "ARMOR PIERCING", "what": "Damage through a frontal riot shield", "col": "#c8e0f2"}, {"id": "fire", "name": "INCENDIARY", "what": "Burns for 10 HP/s; hits refresh the timer", "col": "#ff8244"}, {"id": "blast", "name": "EXPLOSIVE", "what": "Small enemy-only blast on impact", "col": "#ffc05a"}, {"id": "shock", "name": "LIGHTNING", "what": "Slows the target and nearby enemies", "col": "#81dafa"}]
@@ -160,6 +165,7 @@ func toast(title: String, body: String) -> void:
 
 func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {}, opt: Dictionary = {}) -> void:
 	dispose()
+	us = null
 	var pvp: String = opt.get("pvp", "")
 	if pvp != "base" and pvp != "ffa":
 		pvp = ""
@@ -171,7 +177,7 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 		rng.randomize()
 	Df = Pal.DIFF.get(diff, Pal.DIFF.normal)
 	var mode: String = opt.get("mode", "5")
-	if not ["5", "10", "endless", "blitz", "campaign", "blackout", "casino"].has(mode) or (mode == "casino" and pvp != ""):
+	if not ["5", "10", "endless", "blitz", "campaign", "blackout", "casino", "understrip"].has(mode) or (mode == "casino" and pvp != ""):
 		mode = "5"
 	if pvp != "":
 		Df = Pal.DIFF.normal
@@ -180,6 +186,11 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 		if not PalMaps.PVP_BLURB.has(map_id):
 			map_id = "yard"   # Frostpeak has no PvP layout: the Yard stands in
 		lay = PalMaps.lay_pvp(map_id, pvp)
+	elif mode == "understrip":
+		mods = []
+		map_id = "understrip"
+		lay = SimUnderstrip.layout(int(opt.get("us_seed", seed_v if seed_v >= 0 else randi())), int(opt.get("us_level", 0)))
+		assert(not lay.is_empty(), "THE UNDERSTRIP: invalid level")
 	elif mode == "casino":   # THE PALISADE FALLS CASINO: no raiders, no stake, no weapons
 		mods = []
 		map_id = "casino"
@@ -247,11 +258,11 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 		for n in nodes:
 			if n.locked and n.unlock > 3:
 				n.unlock = 3
-	var waves: float = INF if mode == "endless" else (float(BLITZ.waves) if mode == "blitz" else (float(CAMPAIGN.waves) if mode == "campaign" else (8.0 if mode == "blackout" else float(mode))))
+	var waves: float = 10.0 if mode == "understrip" else INF if mode == "endless" else (float(BLITZ.waves) if mode == "blitz" else (float(CAMPAIGN.waves) if mode == "campaign" else (8.0 if mode == "blackout" else float(mode))))
 	var timer: float = 1e9 if mode == "casino" else Pal.PVP.truce if pvp == "base" else (Pal.PVP.ffaTime if pvp == "ffa" else (BO.gather if mode == "blackout" else 40.0 + Df.build))
 	game = {"phase": "raid" if pvp == "ffa" else "build", "timer": timer, "pvp": pvp, "goal": Pal.PVP.ffaGoal, "winner": "", "sd": false, "wxT": 0.0, "job": job,
 		"gid": str(opt.get("gid", new_gid())).substr(0, 40), "prepEpoch": 0, "bo": null, "dark": false, "wave": 0, "waves": waves, "mode": mode, "queue": [], "spawnT": 0.0, "spawnGap": 1.1,
-		"time": 0.0, "sel": 0, "piece": "wall", "won": false, "paused": false, "bosses": 0, "fb": null, "wx": 0, "wxHit": 0.0,
+		"time": 0.0, "sel": 0, "piece": "wall", "gathered": 0, "won": false, "paused": false, "bosses": 0, "fb": null, "wx": 0, "wxHit": 0.0,
 		"flood": {"t": 0.0, "warned": false}, "end_reason": "", "dellLv": 0, "chapter": 0, "diff": diff, "map": map_id, "size": opt.get("size", "std"),
 		"stats": {"built": 0, "lost": 0, "dropped": 0, "revives": 0, "repairs": 0},
 		"bossLog": [], "sbN": 0, "sbLog": [], "fbLog": []}
@@ -328,6 +339,10 @@ func new_game(seed_v: int = -1, diff: String = "normal", perks: Dictionary = {},
 		qm.x = -9.0
 		qm.y = -9.0
 	compute_flow()
+	us = null
+	if mode == "understrip":
+		us = SimUnderstrip.new(self)
+		us.begin(int(opt.get("us_seed", seed_v if seed_v >= 0 else lay.run_seed)), int(opt.get("us_level", 0)), int(opt.get("us_lives", 3)))
 
 
 ## the shared game id every screen in a match agrees on (newGid: base-36 time, a dash, 12 random characters)
@@ -395,43 +410,92 @@ func enter_cost(k: int) -> float:
 	return base + (2.4 if t == PalMaps.T_WATER else (1.1 if t == PalMaps.T_LOW and flood_on else 0.0))
 
 
-## the stake's flow field (Black Out's POI fields are rebuilt on demand after)
-func compute_flow() -> void:
+## the stake's flow field (Black Out's POI fields are rebuilt on demand after). poi_later, for the rebuilds in play:
+## the POI fields keep last step's for one step, so a 64x64 step doesn't build the stake's and a POI's together. On a
+## map this big (Black Out's 64x64) the rebuilds in play go to workers instead: the stake's field and every POI field a
+## raider has asked for, from this step's costs, all taken at the start of the next step (flow_wait), whatever the
+## workers' speed, so the raiders steer by them a step later every time.
+func compute_flow(poi_later: bool = false) -> void:
+	flow_wait(false)
+	if poi_later and N >= FLOW_ASYNC_N and not is_frost():
+		var cost := _flow_costs()
+		var goals := [[-1, core_k]]
+		for ci in poi_flows:
+			if not cores[ci].get("lost", false):
+				goals.append([ci, idx(cores[ci].i, cores[ci].j)])
+		for g in goals:
+			var J := FlowJob.new()
+			J.ci = g[0]
+			J.goal = g[1]
+			J.side = N
+			J.cost = cost.duplicate()
+			J.cost[J.goal] = 0.0   # enter_cost's core_k
+			J.task = WorkerThreadPool.add_task(J.run, true, "flow field")
+			flow_jobs.append(J)
+		poi_due = false
+		return
 	flow_to(core_k, dist)
-	poi_flows.clear()
+	if poi_later:
+		poi_due = not poi_flows.is_empty()
+	else:
+		poi_flows.clear()
+		poi_due = false
 
 
-func _heap_push(h: Array, item: Array) -> void:
-	h.append(item)
-	var c := h.size() - 1
-	while c > 0:
-		var p := (c - 1) >> 1
-		if h[p][0] <= item[0]:
-			break
-		h[c] = h[p]
-		c = p
-	h[c] = item
+const FLOW_ASYNC_N := 48   # maps this big (Black Out's 64x64) rebuild their fields in play on workers (compute_flow)
+const FLOW_PRE_T := 0.5   # Black Out: the next POI's field goes to a worker this long before its attack (flow_prebuild)
 
 
-func _heap_pop(h: Array) -> Array:
-	var top: Array = h[0]
-	var last: Array = h.pop_back()
-	if h.is_empty():
-		return top
-	var c := 0
-	var n := h.size()
-	while true:
-		var m := c * 2 + 1
-		if m >= n:
-			break
-		if m + 1 < n and h[m + 1][0] < h[m][0]:
-			m += 1
-		if h[m][0] >= last[0]:
-			break
-		h[c] = h[m]
-		c = m
-	h[c] = last
-	return top
+## the quiet's last FLOW_PRE_T: the next POI's field from this step's costs, on a worker, so its first raider's
+## poi_flow needn't build it (it's only used if the costs are still the same then); once per POI
+func flow_prebuild(ci: int) -> void:
+	if N < FLOW_ASYNC_N or is_frost() or poi_flows.has(ci) or (flow_pre != null and flow_pre.ci == ci):
+		return
+	if flow_pre != null:
+		WorkerThreadPool.wait_for_task_completion(flow_pre.task)
+	var J := FlowJob.new()
+	J.ci = ci
+	J.goal = idx(cores[ci].i, cores[ci].j)
+	J.side = N
+	J.cost = _flow_costs()
+	J.cost[J.goal] = 0.0   # enter_cost's core_k
+	J.task = WorkerThreadPool.add_task(J.run, true, "flow field")
+	flow_pre = J
+
+
+## a field on a worker: its goal and costs, read on the main thread; the field, once run
+class FlowJob extends RefCounted:
+	var ci := -1   # the POI (its index in cores), or -1 for the stake's field
+	var goal := 0
+	var side := 0
+	var cost := PackedFloat64Array()
+	var out := PackedFloat64Array()
+	var task := -1
+
+	func run() -> void:
+		out.resize(side * side)
+		Sim._flow_field(goal, side, cost, PackedByteArray(), out)
+
+
+## the fields compute_flow put on workers, waited for: with keep (the next step) they replace the stake's field and the
+## POI fields they were built for; without (a rebuild in place of them, a new map, the sim going) they're dropped
+func flow_wait(keep: bool) -> void:
+	for J in flow_jobs:
+		WorkerThreadPool.wait_for_task_completion(J.task)
+		if keep:
+			if J.ci < 0:
+				dist = J.out
+			else:
+				poi_flows[J.ci] = J.out
+	flow_jobs.clear()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PREDELETE:   # a worker may still be filling a field (no calls of its own here: it's going)
+		for J in flow_jobs:
+			WorkerThreadPool.wait_for_task_completion(J.task)
+		if flow_pre != null:
+			WorkerThreadPool.wait_for_task_completion(flow_pre.task)
 
 
 func mark_flow() -> void:
@@ -440,16 +504,52 @@ func mark_flow() -> void:
 		flow_t = 0.3
 
 
+## every raider asks this every step (look_ahead up to 8 times more), so off Frost it reads the tables itself: there
+## height_link is only the bounds, and the cost is enter_cost's rules inlined (keep the two in step), the same sums
 func best_step(ti: int, tj: int) -> int:
 	var best := -1
 	var bv := 1e9
-	for d in Pal.D4:
-		var i: int = ti + d[0]
-		var j: int = tj + d[1]
-		if not height_link(ti, tj, i, j):
+	if is_frost():
+		for d in Pal.D4:
+			var i: int = ti + d[0]
+			var j: int = tj + d[1]
+			if not height_link(ti, tj, i, j):
+				continue
+			var k := idx(i, j)
+			var v := dist[k] + enter_cost(k)
+			if v < bv:
+				bv = v
+				best = k
+		return best
+	if ti < 0 or tj < 0 or ti >= N or tj >= N:
+		return -1
+	for q in 4:
+		var i: int = ti + _FLOW_DI[q]
+		var j: int = tj + _FLOW_DJ[q]
+		if i < 0 or j < 0 or i >= N or j >= N:
 			continue
-		var k := idx(i, j)
-		var v := dist[k] + enter_cost(k)
+		var k := j * N + i
+		var c: float
+		if k == core_k:
+			c = 0.0
+		elif core_ks.has(k):
+			c = 1e6
+		else:
+			var t: int = terr[k]
+			if t == PalMaps.T_PIT or t == PalMaps.T_ROCK or t == PalMaps.T_DRUM or t == PalMaps.T_BLDG or (t >= PalMaps.T_CONC and t <= PalMaps.T_TANK):   # terr_solid
+				c = 1e6
+			else:
+				var w = walls[k]
+				if w != null:
+					c = 1.0 + w.hp / 8.0
+				else:
+					var n = node_ix.get(k)
+					if n != null and n.solid:
+						c = 1e6
+					else:
+						var base := 1.4 if debris[k] != 0 else (0.75 if t == PalMaps.T_ROAD else (1.25 if t == PalMaps.T_RUBBLE else 1.0))
+						c = base + (2.4 if t == PalMaps.T_WATER else (1.1 if t == PalMaps.T_LOW and flood_on else 0.0))
+		var v := dist[k] + c
 		if v < bv:
 			bv = v
 			best = k
@@ -475,13 +575,25 @@ func solid_tile(i: int, j: int, team = false) -> bool:
 func collides(x: float, y: float, r: float, team = false) -> bool:
 	if x - r < 0 or y - r < 0 or x + r > N or y + r > N:
 		return true
-	if height_collision(x, y, r):
+	if is_frost() and height_collision(x, y, r):   # (it is false everywhere else)
 		return true
 	if team is String and game.get("pvp", "") == "base" and game.phase == "build" and (x - y > -0.35 if team == "a" else x - y < 0.35):
 		return true   # the truce line
+	# solid_tile for each tile under the circle, inlined: every move asks this twice
 	for i in range(floori(x - r), floori(x + r) + 1):
 		for j in range(floori(y - r), floori(y + r) + 1):
-			if solid_tile(i, j, team):
+			if i < 0 or j < 0 or i >= N or j >= N:
+				return true
+			var k := j * N + i
+			if core_ks.has(k) or PalMaps.terr_solid(terr[k]):
+				return true
+			var w = walls[k]
+			if w != null:
+				if not (team is String and w.door and w.get("tm", "") == team or team is bool and team and w.door):
+					return true
+				continue
+			var n = node_ix.get(k)
+			if n != null and n.solid:
 				return true
 	return false
 
@@ -623,6 +735,9 @@ func hurt_player(p: Dictionary, d: float, own = null) -> void:
 	p.flash = 0.1
 	personal(p, "hurt")
 	emit(p.x, p.y, "blood")
+	if p.hp <= 0 and understrip():
+		us.down(p)
+		return
 	if p.hp <= 0 and pvp() != "":
 		pvp_down(p, own)
 		return
@@ -702,6 +817,12 @@ func hurt_ally(a: Dictionary, d: float) -> void:
 
 
 func hurt_enemy(e: Dictionary, d: float, own = null, quiet: bool = false) -> void:
+	if understrip() and e.get("inv", 0.0) > 0:
+		if not quiet:
+			e.flash = 0.04
+		return
+	if e.type == "drone":
+		d *= UsDeep.drone_mul(self, e)
 	e.hp -= d
 	if not quiet:
 		e.flash = 0.08
@@ -709,6 +830,11 @@ func hurt_enemy(e: Dictionary, d: float, own = null, quiet: bool = false) -> voi
 	if e.hp <= 0 and not e.get("dead", false):
 		e.dead = true
 		game.stats.dropped += 1
+		if understrip():
+			game.us.stats.kills += 1
+			if e.get("elite", 0) and e.has("us"):
+				game.us.eliteDown.append(e.us.sid)
+			us.enemy_died(e, own)
 		sfx("drop", e.x, e.y)
 		emit(e.x, e.y, "blood", 6)
 		if e.type == "boss":
@@ -809,6 +935,8 @@ func build_target(p: Dictionary, sel: int, door: bool) -> Dictionary:
 
 
 func build_eval(p: Dictionary, i: int, j: int, sel: int, door: bool) -> Dictionary:
+	if understrip():
+		return {"i": i, "j": j, "ok": false, "act": "PLACE", "mat": sel, "cost": 0, "door": door, "reason": "No building in the tunnels", "why": "No building in the tunnels"}
 	var t := {"i": i, "j": j, "ok": false, "act": "PLACE", "mat": sel, "cost": 0, "door": door, "reason": ""}
 	if not p.alive:
 		t.reason = "You are down"
@@ -965,6 +1093,11 @@ func throw_nade(p: Dictionary, tx: float, ty: float) -> void:
 # ---------------------------------------------------------------- shooting
 
 func shoot(p: Dictionary, G: Dictionary, late: float) -> void:
+	if understrip():
+		us.noise(p.x, p.y, 8.0)   # US.shotHear
+	if understrip():
+		G = G.duplicate()
+		G.dmg *= UsLoot.shot_mul(self, p)
 	var a := atan2(p.aim.y, p.aim.x)
 	var P: int = G.get("pellets", 1)
 	shot_seq += 1
@@ -1002,6 +1135,9 @@ func fire(from: Dictionary, ang: float, team: int, gun: Dictionary, late: float 
 		"over": gun.get("over", true), "skipped": false, "last": -1, "range": gun.range, "own": own, "dead": false,
 		"fall": gun.get("fall"), "pel": gun.get("pellets", 1) > 1, "shield_contact": -1, "pierce": gun.get("pierce", 0), "heavy": gun.has("pierce"),
 		"z0": zh[0] + zh[1] * 0.33, "zSlope": zh[1]})
+	if understrip():
+		for key in ["usFx", "arc", "well", "vamp", "prism"]:
+			if gun.has(key): bullets.back()[key] = gun[key]
 	if not quiet:
 		ev({"k": "flash", "x": from.x + cos(ang) * 0.4, "y": from.y + sin(ang) * 0.4, "life": 0.06, "r": 1.3 if gun.get("pellets", 1) > 1 else 0.9, "muzzle": true})
 
@@ -1019,6 +1155,9 @@ func update(dt: float, ctl: Dictionary = {}) -> void:
 		for p in players.values():
 			if p.get("seat", 0):
 				p.walk = 0.0
+		return
+	if understrip():
+		_update_understrip(dt, ctl)
 		return
 	for c in cores:
 		c.flash = maxf(0.0, c.flash - dt)
@@ -1056,10 +1195,15 @@ func update(dt: float, ctl: Dictionary = {}) -> void:
 				return
 			if not campaign_advance():
 				start_build(24.0 + Df.build)
+	if not flow_jobs.is_empty():   # the fields last step's rebuild put on workers (compute_flow)
+		flow_wait(true)
+	if poi_due:   # a step after the stake's rebuild (never the same step: mark_flow waits 0.3 s)
+		poi_due = false
+		poi_flows.clear()
 	if flow_dirty:
 		flow_t -= dt
 		if flow_t <= 0:
-			compute_flow()
+			compute_flow(true)
 			flow_dirty = false
 	control_local(dt, ctl)
 	for p in players.values():
@@ -1144,6 +1288,28 @@ func end_pvp(winner: String) -> void:
 	ev({"k": "over", "win": game.won})
 
 
+func understrip() -> bool:
+	return us != null and game.get("mode", "") == "understrip"
+
+
+func _update_understrip(dt: float, ctl: Dictionary) -> void:
+	if us.tick(dt) or game.phase == "over":
+		return
+	control_local(dt, ctl)
+	for p in players.values():
+		sim_player(p, dt)
+	update_enemies(dt)
+	update_bullets(dt)
+	update_lobs(dt)
+	update_charges(dt)
+	update_rockets(dt)
+	update_arcs(dt)
+	mines_tick(dt)
+	update_fires(dt)
+	update_walls(dt)
+	update_chains(dt)
+
+
 func casino() -> bool:
 	return game.get("mode", "") == "casino"
 
@@ -1161,13 +1327,14 @@ func control_local(dt: float, ctl: Dictionary) -> void:
 	if p.get("seat", 0):   # seated at a casino table: the sheet has the controls
 		return
 	var mv: Vector2 = ctl.get("move", Vector2.ZERO)
+	move_in = mv
 	var mag := minf(1.0, mv.length())
 	p.sprT = maxf(0.0, p.sprT - dt)
 	p.sprCd = maxf(0.0, p.sprCd - dt)
 	var spr: bool = p.sprT > 0
 	p.dgCd = maxf(0.0, p.dgCd - dt)
 	var roll := rolling(p)
-	if roll:   # the back roll moves this screen's soldier; walking waits until it lands
+	if roll:   # the roll moves this screen's soldier; walking waits until it lands
 		var e0: float = p.dgE
 		p.dgE = minf(Pal.ROLL.dur, p.dgE + dt)
 		var s: float = Pal.ROLL.dist * (roll_pos(p.dgE) - roll_pos(e0))
@@ -1180,7 +1347,10 @@ func control_local(dt: float, ctl: Dictionary) -> void:
 			p.dgE = -1.0
 	if mag > 0.12 and not roll:
 		var d := mv.normalized()
-		var sp: float = 3.3 * mag * p.C.spd * (Pal.SPRINT.mult if spr else 1.0) * (0.45 if p.stun > 0 else 1.0) * slow_at(p.x, p.y) * p.perk.speed * (1.2 if has_mod("adrenaline") else 1.0)
+		var ground_slow = slow_at(p.x, p.y)
+		if understrip() and UsLoot.has(p, "p_footing"):
+			ground_slow = 1.0 - (1.0 - ground_slow) / 2.0
+		var sp: float = 3.3 * mag * p.C.spd * (Pal.SPRINT.mult if spr else 1.0) * (0.45 if p.stun > 0 else 1.0) * ground_slow * p.perk.speed * (1.2 if has_mod("adrenaline") else 1.0) * (0.4 if understrip() and p.get("ujT", 0.0) > 0 else 1.0)
 		move_ent(p, d.x * sp * dt, d.y * sp * dt, pt(p))
 		p.walk += dt * mag * (13.0 if spr else 10.0)
 		p.move_dir = d
@@ -1234,10 +1404,13 @@ func sim_player(p: Dictionary, dt: float) -> void:
 		if pvp() != "ffa":   # Back On Your Feet: either side's perk counts
 			for o in players.values():
 				if not is_same(o, p) and o.alive and d2(o, p) < 1 and (pvp() == "" or o.team == p.team):
-					p.revive += dt * o.perk.revive * p.perk.revive * bo_revive_mul(p)
+					p.revive += dt * o.perk.revive * p.perk.revive * bo_revive_mul(p) * (1.4 if understrip() and UsLoot.has(o, "p_pitcrew") else 1.0)
 					break
 		if p.revive >= 2.2:
 			revive_player(p)
+			return
+		if understrip():
+			us.bleed(p, dt)
 			return
 		p.rt -= dt
 		if p.rt <= 0:
@@ -1272,7 +1445,10 @@ func sim_player(p: Dictionary, dt: float) -> void:
 			else:
 				toast_to(p, "BACK AT THE STAKE", "Half your pack is in a sack where you fell." if any_m else "")
 		return
+	if understrip(): UsLoot.charge_tick(self, p, dt)
 	var G: Dictionary = p.gun
+	if not G.get("burst", false):
+		p.bLeft = 0   # queued rounds belong only to a burst weapon
 	# cooldowns keep leftover time, so the fire rate is the same at any frame rate. Bolt-action: holding the trigger
 	# fires every bolt cycle and a click during the cycle is kept for 0.6 s. The pump: every click fires (0.12 s apart
 	# at most); holding the trigger fires on its own cadence.
@@ -1324,7 +1500,7 @@ func sim_player(p: Dictionary, dt: float) -> void:
 					p.bLeft = Pal.burst_n(p.up_d)
 				p.bLeft -= 1
 			shoot(p, G, -p.cd)
-			p.cd += Pal.burst_gap(p.up_d) if G.get("burst", false) and p.bLeft == 0 else G.cd * slow   # after a burst's last round: the pause
+			p.cd += Pal.burst_gap(p.up_d) if G.get("burst", false) and p.bLeft == 0 else G.cd * slow / (1.2 if understrip() and UsLoot.has(p, "p_lastcall") and p.hp < p.max * .3 else 1.0)   # after a burst's last round: the pause
 			n += 1
 			if mag > 0:
 				p.ammo -= 1
@@ -1350,7 +1526,12 @@ func sim_player(p: Dictionary, dt: float) -> void:
 				p.rl = G.reload
 			p.rl -= dt
 			if p.rl <= 0:
-				p.ammo += 1
+				if understrip() and p.wSel == 1 and p.w2 != null:
+					if p.w2.res > 0:
+						p.w2.res -= 1
+						p.ammo += 1
+				else:
+					p.ammo += 1
 				p.rl = G.reload + p.rl if p.ammo < mag else 0.0
 				sfx("shellin", p.x, p.y)
 				if p.ammo >= mag:
@@ -1369,6 +1550,8 @@ func sim_player(p: Dictionary, dt: float) -> void:
 			p.mats[nd.type] += y
 			if nd.type == 0:
 				nd.amt -= y
+				if p.id == my_id:
+					game.gathered += 1   # this screen's wood gathers (the HUD's tips)
 			p.gt += Pal.RATE[nd.type] * p.C.get("gather", 1.0) * p.perk.gather
 			personal(p, "gather")
 			emit(nd.i + 0.5, nd.j + 0.5, "splinter" if nd.type == 0 else ("dust" if nd.type == 1 else "spark"), 1, nd.type)
@@ -1380,7 +1563,7 @@ func sim_player(p: Dictionary, dt: float) -> void:
 			sacks.remove_at(s)
 			personal(p, "gather")
 			flt(p.x, p.y, "PACK RECOVERED")
-	if p.hurt > p.perk.regenAfter and not game.wx:   # Second Wind; no healing in a storm
+	if not understrip() and p.hurt > p.perk.regenAfter and not game.wx:   # Second Wind; no healing in a storm
 		p.hp = minf(p.max, p.hp + p.perk.regen * dt)
 
 
@@ -1408,6 +1591,11 @@ func revive_player(p: Dictionary, by = null) -> bool:
 ## respawnAt: next to the stake in co-op; in Base Battle by your own stake; in Free-for-all the arena spot furthest
 ## from everyone still standing
 func respawn_at(p: Dictionary) -> Vector2:
+	if understrip():
+		return us.spawn_at(p)
+	if casino():   # one of the casino's entrance spots (CAS.spawn), as someone dropping in walks through the door
+		var sp: Array = CasinoView.SPAWN[floori(rnd() * CasinoView.SPAWN.size())]
+		return Vector2(sp[0], sp[1])
 	if pvp() == "ffa":
 		var S: Array = lay.pspawns
 		var best: Array = S[0]
@@ -1802,6 +1990,12 @@ func end_game(win: bool, reason: String = "") -> void:
 	var title := "VICTORY" if win else "THE STAKE FELL"
 	var body := "Every raid broken." if win else "They got through."
 	match reason:
+		"understrip":
+			title = "OUT OF AREA 67"
+			body = "The Visitor is down. You made it out."
+		"understrip-lost":
+			title = "THE TUNNELS TAKE YOU"
+			body = "No lives remain."
 		"evac":
 			title = "EVACUATED"
 			body = "You made it out of the Final Blitz."
@@ -1823,28 +2017,53 @@ func update_enemies(dt: float) -> void:
 	for e in enemies:
 		if e.dead:
 			continue
-		var aimed := city_aim(e)   # a POI attacker treats his POI as the stake
+		if understrip() and us.idle(e, dt):
+			continue
+		if e.type == "drone":
+			UsDeep.drone_tick(self, e, dt)
+			continue
+		var aimed := us.aim(e) if understrip() else city_aim(e)   # a POI attacker treats his POI as the stake
 		_enemy_tick(e, dt)
 		if aimed:
 			city_aim_end()
-	for a in enemies.size():
-		for b in range(a + 1, enemies.size()):
+	# raiders closer than half a tile push apart. Every pair is looked at, in order (a push moves them for the pairs
+	# after), so the positions sit in packed arrays for the pass and pairs half a tile apart on either axis are passed
+	# over before any lookups: most pairs, in a crowd of 50 there are 1225
+	var n := enemies.size()
+	var xs := PackedFloat64Array()
+	var ys := PackedFloat64Array()
+	xs.resize(n)
+	ys.resize(n)
+	for a in n:
+		xs[a] = enemies[a].x
+		ys[a] = enemies[a].y
+	for a in n:
+		for b in range(a + 1, n):
+			var dx: float = xs[b] - xs[a]
+			var dy: float = ys[b] - ys[a]
+			if dx >= 0.5 or dx <= -0.5 or dy >= 0.5 or dy <= -0.5:
+				continue
 			var A: Dictionary = enemies[a]
 			var B: Dictionary = enemies[b]
 			if A.get("burrow", false) or B.get("burrow", false) or A.get("raft", false) or B.get("raft", false):
 				continue
-			var dx: float = B.x - A.x
-			var dy: float = B.y - A.y
 			var d := Vector2(dx, dy).length()
 			if d < 0.5 and d > 0.001:
 				var push := (0.5 - d) * 0.5
 				move_ent(A, -dx / d * push, -dy / d * push, false)
 				move_ent(B, dx / d * push, dy / d * push, false)
+				xs[a] = A.x
+				ys[a] = A.y
+				xs[b] = B.x
+				ys[b] = B.y
 	enemies = enemies.filter(func(e): return not e.dead)
 
 
 func _enemy_tick(e: Dictionary, dt: float) -> void:
 	if e.dead:
+		return
+	if understrip() and e.get("stunT", 0.0) > 0:
+		e.stunT = maxf(0.0, e.stunT - dt)
 		return
 	if e.get("burnT", 0.0) > 0:
 		var tick := minf(dt, e.burnT)
@@ -1903,12 +2122,21 @@ func _enemy_tick(e: Dictionary, dt: float) -> void:
 					e.foe = a
 	if e.foe != null and not seen(e.foe):
 		e.foe = null
+	if understrip() and us.elite_tick(e, dt):
+		return
 	var engaging := false
 	match e.type:
 		"boss":
 			var px: float = e.x
 			var py: float = e.y
+			var original_df=Df
+			var original_speed: float=e.speed
+			if e.get("usAdd",false):
+				Df=Df.duplicate()
+				Df.dmg*=2
 			var r := think_boss(e, dt, tgt, move_to)
+			Df=original_df
+			if e.get("usAdd",false) and e.speed!=original_speed: e.speed*=2
 			engaging = r[0]
 			move_to = r[1]
 			if e.boss != "rime" and not frost_fields.is_empty():   # frost slows a boss's own moves too
@@ -1986,9 +2214,10 @@ func _enemy_tick(e: Dictionary, dt: float) -> void:
 			e.ab -= dt
 			var buddy = null
 			var bb := 1e9
+			var flat := not is_frost()   # d2 without its calls: hdist is the plain distance off Frost
 			for o in enemies:
 				if not is_same(o, e) and not o.dead and o.type != "medic":
-					var d := d2(o, e)
+					var d := Vector2(e.x - o.x, e.y - o.y).length() if flat else d2(o, e)
 					if d < bb:
 						bb = d
 						buddy = o
@@ -2116,8 +2345,10 @@ func _aim_at(e: Dictionary, x: float, y: float) -> float:
 	return atan2(dy, dx)
 
 
-func update_bullets(dt: float) -> void:
+func update_bullets(dt_all: float) -> void:
+	var grav: bool = understrip() and lay.has("haz")
 	for b in bullets:
+		var dt: float = dt_all * UsDeep.grav_at(self, b.x, b.y) if grav else dt_all
 		var sp := Vector2(b.vx, b.vy).length()
 		var steps := ceili(sp * dt / 0.15)
 		var scale := sqrt(1.0 + pow(b.zSlope * 0.8, 2))   # bulletRangeScale: a sloping round covers more ground
@@ -2154,6 +2385,8 @@ func update_bullets(dt: float) -> void:
 				b.dead = true
 				break
 			if PalMaps.terr_shot(terr[k]):
+				if understrip() and b.get("usFx", "") == "bounce" and b.get("bnc", 0) < 2 and UsLoot.bounce(self, b, dt / steps):
+					continue
 				emit(b.x, b.y, "dust", 2, 1)
 				b.dead = true
 				break
@@ -2186,10 +2419,11 @@ func update_bullets(dt: float) -> void:
 					if not e.dead and not e.get("burrow", false) and at_actor(b, e) and Vector2(e.x - b.x, e.y - b.y).length() < (0.55 if e.get("big", false) else 0.34):
 						# a shieldbearer's shield covers his front (about 130°): the round sparks off it
 						var shield := 1.0
-						if e.type == "shield" and not e.shieldBroken:
+						if (e.type == "shield" and not e.shieldBroken) or int(e.get("ub", 0)) & 1:
 							var l := sp if sp > 0 else 1.0
 							if -(b.vx * e.aim.x + b.vy * e.aim.y) / l > 0.42:
-								shield_bullet_hit(e, b)
+								if e.type == "shield":
+									shield_bullet_hit(e, b)
 								var ap_rank := -1
 								if b.has("ammo"):
 									for am in b.ammo:
@@ -2203,10 +2437,13 @@ func update_bullets(dt: float) -> void:
 								shield = [0.5, 0.6, 0.7, 0.85, 1.0][ap_rank]   # armor piercing: 50% through the shield, up to 100% at rank 4
 						hurt_enemy(e, bdmg(b) * shield * boss_weak(e, b), b.own)
 						ammo_hit(e, b)
+						if understrip(): UsLoot.bullet_hit(self, e, b)
 						b.dead = true
 						break
 			else:
 				for a in allies():
+					if understrip() and a.alive and roll_safe(a) and UsLoot.has(a, "p_riposte") and at_actor(b, a) and Vector2(a.x-b.x,a.y-b.y).length() < .3:
+						a.ripT = 2.0
 					if a.alive and not roll_safe(a) and at_actor(b, a) and Vector2(a.x - b.x, a.y - b.y).length() < 0.3:
 						hurt_ally(a, b.dmg * (0.7 if is_same(a, qm) else 1.0))
 						b.dead = true
@@ -2215,8 +2452,9 @@ func update_bullets(dt: float) -> void:
 
 
 func update_lobs(dt: float) -> void:
+	var grav: bool = understrip() and lay.has("haz")
 	for l in lobs:
-		l.t += dt
+		l.t += dt * UsDeep.grav_at(self, l.x0 + (l.x1 - l.x0) * l.t / l.T, l.y0 + (l.y1 - l.y0) * l.t / l.T) if grav else dt
 		if l.t >= l.T:
 			l.dead = true
 			match l.get("k", 0):
@@ -2700,6 +2938,9 @@ func up_str(p: Dictionary) -> String:
 
 
 func can_shop(p: Dictionary) -> bool:
+	if understrip():
+		var at = us.merchant_at(p)
+		return p.alive and at >= 0 and lay.merchants[at].kind in ["keeper", "lift"]
 	return shop_open(p) and (near_stake(p) or (blackout() and bo_near_held(p)))
 
 
@@ -2719,7 +2960,8 @@ func buy_upgrade(p: Dictionary, k: String) -> bool:
 		return false
 	p.sal -= U.cost[t]
 	p.up[k] = t + 1
-	refit(p)
+	if understrip(): UsLoot.refit(self, p)
+	else: refit(p)
 	if k == "n":
 		p.nades = maxi(p.nades, p.maxN)
 	personal(p, "restock")
@@ -2787,6 +3029,8 @@ func award(own, e: Dictionary) -> void:
 	if p == null:
 		return
 	var v: int = roundi(BOUNTY.get(e.type, 4) * bo_salvage(e))
+	if understrip():
+		v += (1 if UsLoot.has(p, "p_pocket") else 0) + (1 if UsLoot.has(p, "p_tiepin") else 0)
 	p.sal += v
 	p.kills += 1
 	flt(e.x, e.y - 0.2, "+%d" % v, "#e2b436")
@@ -2837,7 +3081,7 @@ func ammo_hit(e: Dictionary, b: Dictionary) -> void:
 func boss_weak(e: Dictionary, b: Dictionary) -> float:
 	if e.type != "boss" or not b.has("ammo"):
 		return 1.0
-	var w: String = BOSS_WEAK.get(e.boss, BOSS_WEAK2.get(e.boss, ""))
+	var w: String = BOSS_WEAK.get(e.boss, BOSS_WEAK2.get(e.boss, UsDeep.WEAK.get(e.boss, "")))
 	for am in b.ammo:
 		if am[0] == w:
 			if not e.get("weakSeen", false):
@@ -2969,6 +3213,7 @@ func spawn_boss(key: String, sb: bool = false, fb: bool = false) -> Dictionary:
 
 
 func boss_down(e: Dictionary, own) -> void:
+	if e.get("usAdd",false): return   # summoned support grants no salvage, boss credit or cases
 	var B: Dictionary = boss_def(e.boss)
 	var by = payer(own)
 	var mine: bool = by != null
@@ -3003,6 +3248,16 @@ func boss_down(e: Dictionary, own) -> void:
 
 
 func think_boss(e: Dictionary, dt: float, tgt, mv) -> Array:
+	if e.boss == "pitboss":
+		return UsPitBoss.think(self, e, dt)
+	if understrip():
+		match e.boss:
+			"custodian":
+				return UsDeep.think_custodian(self, e, dt)
+			"gatekeeper":
+				return UsDeep.think_gatekeeper(self, e, dt)
+			"visitor":
+				return UsDeep.think_visitor(self, e, dt)
 	match e.boss:
 		"demolisher":
 			return _think_demolisher(e, dt, tgt, mv)
@@ -3318,6 +3573,14 @@ static func arm_boost(lv: int, old_step: float, new_step: float) -> float:
 
 
 static func boss_def(k: String) -> Dictionary:
+	if k == "pitboss":
+		var b: Dictionary = BOSSES.butcher.duplicate(true)
+		b.merge({"name":"THE PIT BOSS","hp":2370.0,"speed":1.6,"scan":11.0,"bounty":40,"col":"#e2b436","intro":"Watch the explosive chips. At half health, the floor floods and he charges."}, true)
+		return b
+	if UsDeep.DEFS.has(k):
+		var d: Dictionary = BOSSES.butcher.duplicate(true)
+		d.merge(UsDeep.DEFS[k], true)
+		return d
 	if BOSSES.has(k):
 		return BOSSES[k]
 	return BOSSES2[k]
@@ -3431,6 +3694,8 @@ static func cyclone_pos(e: Dictionary, f: float) -> Vector2:
 
 
 func _knock(a: Dictionary, fx: float, fy: float, dist_: float) -> void:
+	if understrip() and UsLoot.relic(a, "x_lead"):
+		return
 	var dx: float = a.x - fx
 	var dy: float = a.y - fy
 	var l := maxf(0.001, Vector2(dx, dy).length())
@@ -4613,7 +4878,7 @@ func local_sprint() -> void:
 	p.sprCd = p.sprT + Pal.SPRINT.cd - L
 
 
-# ---------------------------------------------------------------- the back roll (09-actions.js)
+# ---------------------------------------------------------------- the roll (09-actions.js)
 
 static func roll_pos(e: float) -> float:
 	var x := clampf((e - Pal.ROLL.go) / (Pal.ROLL.end - Pal.ROLL.go), 0.0, 1.0)
@@ -4638,7 +4903,7 @@ func start_roll(p: Dictionary, dx: float, dy: float) -> void:
 	p.dgX = d.x
 	p.dgY = d.y
 	p.dgE = 0.0
-	p.dgCd = Pal.ROLL.cd
+	p.dgCd = (1.5 if UsLoot.has(p, "p_backstep") else 2.0) if understrip() else Pal.ROLL.cd
 	p.rl = 0.0
 	p.rlReq = false
 	p.bLeft = 0
@@ -4657,13 +4922,34 @@ func roll_tick(p: Dictionary, dt: float) -> void:
 			p.dgE = -1.0
 
 
-## V, the right mouse button, RB, the ROLL button: straight back from the aim. True if it rolled.
+## V, the right mouse button, RB, the ROLL button: the way the soldier is moving; standing still, straight back from the
+## aim (the back roll). True if it rolled.
 func local_roll() -> bool:
 	var p := player
 	if not can_roll(p):
 		return false
-	start_roll(p, -p.aim.x, -p.aim.y)
+	var d: Vector2 = move_in if move_in.length() > 0.12 else -p.aim
+	start_roll(p, d.x, d.y)
 	return true
+
+
+## a guest isn't told which way someone else rolls (their row has only how far in): read it off their travel from where
+## the roll began, drawing a back roll until they've moved (rollSeen)
+static func roll_seen(p: Dictionary, was: float, from: Vector2) -> void:
+	if not (p.get("dgE", -1.0) >= 0 and p.dgE < Pal.ROLL.dur):
+		return
+	if not (was >= 0):
+		p.rlFrom = from
+		p.dgX = -p.aim.x
+		p.dgY = -p.aim.y
+		p.rlKnown = false
+	if not p.get("rlKnown", true):
+		var d: Vector2 = Vector2(p.tx, p.ty) - p.rlFrom
+		if d.length() > 0.2:
+			d = d.normalized()
+			p.dgX = d.x
+			p.dgY = d.y
+			p.rlKnown = true
 
 
 func local_reload() -> void:
@@ -4796,6 +5082,7 @@ func travel_clear(x: float, y: float, tx: float, ty: float, team = false, r: flo
 	var n := maxi(1, ceili(d / 0.1))
 	var px := x
 	var py := y
+	var frost := is_frost()
 	for s in range(1, n + 1):
 		var nx := x + (tx - x) * s / n
 		var ny := y + (ty - y) * s / n
@@ -4805,7 +5092,10 @@ func travel_clear(x: float, y: float, tx: float, ty: float, team = false, r: flo
 		var j := floori(py)
 		var ni := floori(nx)
 		var nj := floori(ny)
-		if i != ni and j != nj:
+		if not frost:   # height_link off Frost is only the bounds
+			if (i != ni or j != nj) and not (inb(i, j) and inb(ni, nj) and inb(ni, j)):
+				return false
+		elif i != ni and j != nj:
 			if not height_link(i, j, ni, j) or not height_link(ni, j, ni, nj):
 				return false
 		elif (i != ni or j != nj) and not height_link(i, j, ni, nj):
@@ -6233,6 +6523,8 @@ func bo_tick(dt: float) -> void:
 		var c: Dictionary = cores[B.order[B.n]]
 		c.next = true
 		toast("NEXT · %s" % c.poi.name, ("The Radio Tower picked it up: %d seconds." % ceili(B.t)) if bo_held("warn") else "No radio. It's coming now.")
+	if B.n < B.order.size() and B.t <= FLOW_PRE_T and B.t > 0:
+		flow_prebuild(B.order[B.n])
 	if B.t <= 0:
 		for c in cores:
 			c.next = false
@@ -6288,6 +6580,15 @@ func bo_stages() -> int:
 func poi_flow(ci: int) -> PackedFloat64Array:
 	if poi_flows.has(ci):
 		return poi_flows[ci]
+	if flow_pre != null and flow_pre.ci == ci:   # built just before the attack: kept if no tile's cost changed since
+		var J := flow_pre
+		flow_pre = null
+		var cost := _flow_costs()
+		cost[J.goal] = 0.0
+		WorkerThreadPool.wait_for_task_completion(J.task)
+		if J.side == N and J.goal == idx(cores[ci].i, cores[ci].j) and J.cost == cost:
+			poi_flows[ci] = J.out
+			return J.out
 	var f := PackedFloat64Array()
 	f.resize(N * N)
 	var c: Dictionary = cores[ci]
@@ -6316,30 +6617,119 @@ func city_aim_end() -> void:
 	core_k = _aim_save[2]
 
 
+const _FLOW_DI := [1, -1, 0, 0]   # Pal.D4, split for flow_to's inner loop
+const _FLOW_DJ := [0, 0, 1, -1]
+
+
+## Dijkstra from goal over enter_cost. Black Out's 64x64 rebuilds these in play, so it stays lean: every tile's cost is
+## read once (_flow_costs), height_link is only asked on Frost (elsewhere any in-bounds step links), and the heap is two
+## packed arrays rather than a small Array per entry (any pop order gives the same field: the costs are never negative).
 func flow_to(goal: int, out: PackedFloat64Array) -> void:
+	var cost := _flow_costs()
+	cost[goal] = 0.0   # enter_cost's core_k
+	_flow_field(goal, N, cost, _flow_links(), out)
+
+
+## every tile's enter_cost with every stake solid (flow_to opens its goal): enter_cost's rules inlined, as in best_step
+## (keep the three in step)
+func _flow_costs() -> PackedFloat64Array:
 	var n := N * N
+	var cost := PackedFloat64Array()
+	cost.resize(n)
+	for k in n:
+		var t: int = terr[k]
+		if t == PalMaps.T_PIT or t == PalMaps.T_ROCK or t == PalMaps.T_DRUM or t == PalMaps.T_BLDG or (t >= PalMaps.T_CONC and t <= PalMaps.T_TANK):   # terr_solid
+			cost[k] = 1e6
+			continue
+		var w = walls[k]
+		if w != null:
+			cost[k] = 1.0 + w.hp / 8.0
+			continue
+		var nd = node_ix.get(k)
+		if nd != null and nd.solid:
+			cost[k] = 1e6
+			continue
+		var base := 1.4 if debris[k] != 0 else (0.75 if t == PalMaps.T_ROAD else (1.25 if t == PalMaps.T_RUBBLE else 1.0))
+		cost[k] = base + (2.4 if t == PalMaps.T_WATER else (1.1 if t == PalMaps.T_LOW and flood_on else 0.0))
+	for k in core_ks:
+		cost[k] = 1e6
+	return cost
+
+
+## on Frost, which of each tile's four steps (_FLOW_DI/_FLOW_DJ) height_link allows (1); elsewhere empty: any in-bounds
+## step links
+func _flow_links() -> PackedByteArray:
+	var links := PackedByteArray()
+	if not is_frost():
+		return links
+	links.resize(4 * N * N)
+	for k in N * N:
+		for q in 4:
+			if height_link(k % N, k / N, k % N + _FLOW_DI[q], k / N + _FLOW_DJ[q]):
+				links[4 * k + q] = 1
+	return links
+
+
+## the Dijkstra itself, on its arguments only (no Sim state), so a worker can run it (compute_flow)
+static func _flow_field(goal: int, side: int, cost: PackedFloat64Array, links: PackedByteArray, out: PackedFloat64Array) -> void:
+	var n := side * side
 	out.fill(1e9)
+	var frost := not links.is_empty()
 	var done := PackedByteArray()
 	done.resize(n)
 	out[goal] = 0.0
-	var heap: Array = [[0.0, goal]]
-	while not heap.is_empty():
-		var top: Array = _heap_pop(heap)
-		var bv: float = top[0]
-		var uk: int = top[1]
-		if done[uk] or bv > out[uk]:
+	var hv := PackedFloat64Array()   # the heap: distances and tiles side by side (at most one push per link, plus the goal)
+	var hk := PackedInt32Array()
+	hv.resize(4 * n + 1)
+	hk.resize(4 * n + 1)
+	hv[0] = 0.0
+	hk[0] = goal
+	var hn := 1
+	while hn > 0:
+		var bv: float = hv[0]
+		var uk: int = hk[0]
+		hn -= 1
+		if hn > 0:   # the last entry sinks from the top
+			var lv: float = hv[hn]
+			var lk: int = hk[hn]
+			var c := 0
+			while true:
+				var m := c * 2 + 1
+				if m >= hn:
+					break
+				if m + 1 < hn and hv[m + 1] < hv[m]:
+					m += 1
+				if hv[m] >= lv:
+					break
+				hv[c] = hv[m]
+				hk[c] = hk[m]
+				c = m
+			hv[c] = lv
+			hk[c] = lk
+		if done[uk] != 0 or bv > out[uk]:
 			continue
 		done[uk] = 1
-		var ui := uk % N
-		var uj := uk / N
-		var c := enter_cost(uk)
-		for d in Pal.D4:
-			var i: int = ui + d[0]
-			var j: int = uj + d[1]
-			if not height_link(ui, uj, i, j):
+		var ui := uk % side
+		var uj := uk / side
+		var nv: float = bv + cost[uk]
+		for q in 4:
+			var i: int = ui + _FLOW_DI[q]
+			var j: int = uj + _FLOW_DJ[q]
+			if i < 0 or j < 0 or i >= side or j >= side:
 				continue
-			var k := idx(i, j)
-			var nv := bv + c
+			if frost and links[4 * uk + q] == 0:
+				continue
+			var k := j * side + i
 			if nv < out[k]:
 				out[k] = nv
-				_heap_push(heap, [nv, k])
+				var c := hn   # rises from the bottom
+				hn += 1
+				while c > 0:
+					var p := (c - 1) >> 1
+					if hv[p] <= nv:
+						break
+					hv[c] = hv[p]
+					hk[c] = hk[p]
+					c = p
+				hv[c] = nv
+				hk[c] = k

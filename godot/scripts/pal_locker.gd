@@ -9,6 +9,8 @@ const SAL_SHARD := {"rate": 20, "perRaid": 2, "max": 10}
 const BLITZ_EVAC := {"cases": 1, "shards": 25}
 const GAUNTLET_PAY := {"shards": [5, 10], "waveCase": 1, "evacCases": 2, "evacShards": 25, "chapterCase": 1}
 const BO_PAY := {"winCases": 2, "winShards": 25, "destShards": 40, "minWin": 420}
+const US_PAY := [1, 3, 6]   # what each UNDERSTRIP region pays (cases, skill points; shards twice that)
+const US_WINPAY := 10   # the finish: ten more Understrip Cases
 const SP_CASE := 3
 const CATN := {"skin": "SKIN", "hat": "HEADGEAR", "trail": "TRACER", "fx": "KILL FX", "bg": "BACKGROUND"}
 const DEFAULT_COS := {"skin": "std", "hat": "class", "trail": "std", "fx": "none"}
@@ -300,6 +302,8 @@ func add_milestones(keys: Array, held: int, from: int, mine: int, cls: String, m
 ## runClaim: this run's facts, read off the sim when it ends
 ## raids held so far in a run still going (runHeldNow)
 static func held_now(s: Sim) -> int:
+	if s.understrip():   # THE UNDERSTRIP: the levels finished (its run log)
+		return s.game.us.log.size()
 	return s.bo_stages() if s.blackout() else (s.game.wave if s.game.phase == "build" else maxi(0, s.game.wave - 1))
 
 
@@ -318,6 +322,8 @@ static func run_claim(s: Sim, early: bool = false) -> Dictionary:
 	var g: Dictionary = s.game
 	var p: Dictionary = s.player
 	var held: int = held_now(s) if early else (s.bo_stages() if s.blackout() else (int(g.waves) if g.won else (g.wave if g.end_reason == "evacfail" else maxi(0, g.wave - 1))))
+	if s.understrip():
+		held = held_now(s)
 	var res := ""
 	if s.blitz() and not (g.fb != null and g.fb.get("mapEvac", false)):
 		res = "evac" if p.get("out", false) else ("left" if g.end_reason == "left" else "")
@@ -354,6 +360,13 @@ static func run_claim(s: Sim, early: bool = false) -> Dictionary:
 		var lostM := s.cores.filter(func(k): return k.has("poi") and k.poi.major and k.lost).size()
 		c.pois_major = maxi(0, maxi(0, (B.held + B.lost if B != null else 0) - 4) - lostM)
 		c.destroyer = B != null and B.destroyer
+	if s.understrip():   # v0.12: the levels finished; the server counts the regions
+		c.cv = 6
+		c.boss_keys = []
+		c.bosses = 0
+		c.sb_keys = []
+		c.shard_bosses = 0
+		c.map = "understrip"
 	if s.campaign():
 		var gk: Array = g.get("gKill", [])
 		c.g_cleared = gk.filter(func(n): return n >= Sim.GAUNTLET.rimes + 1).size()
@@ -519,14 +532,15 @@ func local_run(c: Dictionary, sal_shards: int) -> Dictionary:
 	var from: int = c.raid_from
 	var mine: int = c.held
 	var BO: bool = c.mode == "blackout"
-	var keys: Array = [] if BO else c.boss_keys
-	var sb: int = 0 if BO else int(c.shard_bosses)
+	var US1: bool = c.mode == "understrip"
+	var keys: Array = [] if BO or US1 else c.boss_keys
+	var sb: int = 0 if BO or US1 else int(c.shard_bosses)
 	var BZ: bool = c.mode == "blitz" or c.mode == "campaign"
 	var b0 := {"bag": bag.duplicate(), "cases": cases, "shards": shards}
-	var waves: float = INF if c.mode == "endless" else (float(Sim.CAMPAIGN.waves) if c.mode == "campaign" else (float(Sim.BLITZ.waves) if BZ else (9.0 if BO else float(c.mode))))
+	var waves: float = INF if c.mode == "endless" else (float(Sim.CAMPAIGN.waves) if c.mode == "campaign" else (float(Sim.BLITZ.waves) if BZ else (9.0 if BO else (10.0 if US1 else float(c.mode)))))
 	var pct := mod_bonus(c.mods, "blitz" if c.mode == "blitz" else "")
 	var bo := _bo_local_pay(c) if BO else {}
-	var won: bool = bo.won if BO else (c.win and from * 2 <= waves and (not BZ or c.evac == "evac"))
+	var won: bool = bo.won if BO else (c.win and from * 2 <= waves and (not BZ or c.evac == "evac") and not (US1 and int(c.duration_s) < 900))
 	var drops := boss_drops(keys, held, from, waves, c.size)
 	var bshards := 0
 	for i in sb:
@@ -550,11 +564,25 @@ func local_run(c: Dictionary, sal_shards: int) -> Dictionary:
 		cases += 2 if waves >= 10 else 1
 	if c.mode == "endless":
 		cases += mine / 5
+	# v0.12.3 THE UNDERSTRIP (the server's rule): regions 1, 2 and 3 pay 1, 3 and 6 Understrip Cases and skill points,
+	# twice that in shards; the finish 10 more cases
+	var usm := 0
+	if US1:
+		var usr := 0
+		for r in [1, 2, 3]:
+			if from < 3 * r and held >= 3 * r:
+				usr += 1
+				usm += US_PAY[r - 1]
+		case_add("understrip", usm + (US_WINPAY if won else 0))
+		shards += 2 * usm
+		st.us_regions = int(st.get("us_regions", 0)) + usr
+		if won:
+			st.us_wins = int(st.get("us_wins", 0)) + 1
 	for id in drops:
 		case_add(id, drops[id])
 	add_milestones(keys, held, from, mine, c.cls, c.map, waves, c.size)
 	var sp_prog: int = profile.sp_prog if profile != null else 0
-	var sp_gain: int = (sp_prog + mine) / 5 + boss_counted(keys, held, from, waves, c.size).size() + sb + (bo.sp if BO else 0)
+	var sp_gain: int = (sp_prog + mine) / 5 + boss_counted(keys, held, from, waves, c.size).size() + sb + (bo.sp if BO else 0) + usm
 	for k in c.sb_keys.slice(0, sb):   # every in-between boss kill counts toward the boss milestones
 		st["boss_" + k] = int(st.get("boss_" + k, 0)) + 1
 	var fshards := 0
@@ -603,8 +631,8 @@ func local_run(c: Dictionary, sal_shards: int) -> Dictionary:
 	var got := check_unlocks()
 	save()
 	var all_shards: int = shards - b0.shards
-	var R := {"kind": "run", "cases": got_cases, "shards": all_shards, "bossShards": mini(all_shards, bshards + fshards + (bo.shards if BO else 0)), "sp": sp_gain,
-		"unlocked": got.map(func(x): return x.id), "left": left, "blitzShards": BZ or BO, "pois": bo.pois if BO else -1, "toNext": 3 - prog, "prog": prog}
+	var R := {"kind": "run", "cases": got_cases, "shards": all_shards, "bossShards": mini(all_shards, bshards + fshards + (bo.shards if BO else 0) + 2 * usm), "sp": sp_gain,
+		"unlocked": got.map(func(x): return x.id), "left": left, "blitzShards": BZ or BO, "pois": bo.pois if BO else -1, "toNext": 3 - prog, "prog": prog, "us": US1}
 	R.text = reward_text(R)
 	return R
 
@@ -621,7 +649,7 @@ func reward_text(R: Dictionary) -> String:
 			var C: Dictionary = CAT.CASES[id]
 			bits.append("+%d %s%s %s" % [R.cases[id], C.name.to_lower(), "s" if R.cases[id] > 1 else "", "for the win" if C.has("drop") and C.drop.has("win") else "from bosses"])
 	if R.bossShards > 0:
-		bits.append("+%s from %s" % [pl.call(R.bossShards, "shard"), "the win and the Destroyer" if R.pois >= 0 else ("bosses and the evac" if R.blitzShards else "in-between bosses")])
+		bits.append(("+%s for the regions cleared" % pl.call(R.bossShards, "shard")) if R.get("us", false) else ("+%s from %s" % [pl.call(R.bossShards, "shard"), "the win and the Destroyer" if R.pois >= 0 else ("bosses and the evac" if R.blitzShards else "in-between bosses")]))
 	if R.shards - R.bossShards > 0:
 		bits.append("+%s from leftover salvage" % pl.call(R.shards - R.bossShards, "shard"))
 	if R.sp > 0:
@@ -629,7 +657,7 @@ func reward_text(R: Dictionary) -> String:
 	if R.pois >= 0:
 		bits.append("%s held · %s to the next supply case" % [pl.call(R.pois, "point"), pl.call(R.toNext, "more point")])
 	else:
-		bits.append("%s to the next supply case" % pl.call(R.toNext, "more raid"))
+		bits.append("%s to the next supply case" % pl.call(R.toNext, "more level" if R.get("us", false) else "more raid"))
 	if not R.unlocked.is_empty():
 		bits.append("Unlocked " + ", ".join(R.unlocked.map(func(id): return item(id).get("name", id))))
 	return " · ".join(bits) + "."
