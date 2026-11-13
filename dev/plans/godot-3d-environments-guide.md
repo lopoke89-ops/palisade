@@ -358,12 +358,17 @@ craps, roulette). Live parts:
   - Shelter 7's orange band and Area 67's growth;
   - region 1's three graffiti styles (`tag_of` matches the browser's `usTagOf` bit for bit).
 
-  Each wall's paint is built the first time it's on screen, cached in `tags`, and copied into `walls_live` every
-  frame while that wall stands full height.
-- **`frame()`, every frame,** rebuilds three meshes from scratch:
+  Each wall's paint is built the first time it's on screen and cached in `tags`. The paint on screen is a mesh per
+  8×8 chunk (`paint`), rebuilt only when the chunk's on-screen part or its lowered walls change.
+- **`walls()`** redoes the wall instances and paint only when its key changes: the tiles on screen, the lowered
+  walls, and the state of the door tiles (`doors`).
+- **`frame()`, every frame,** rebuilds three small meshes, with only the pieces among the tiles on screen (`near()`):
   - `warning` (unshaded): shrine neon, the lift ring, elite and boss telegraphs, hazard outlines;
-  - `live` (shaded): chests, the Keeper, loot, salvage, flares, drones;
+  - `live` (shaded): the Keeper, loot, salvage, flares, drones;
   - `haze` (see-through): vent gas, blast warnings, boss floor effects.
+
+  Strongboxes are their own mesh (`chest_mi`), rebuilt when one is opened. Shapes that only change colour (the lift
+  ring, shrine neon) are cached white and recoloured with `tinted()`.
 
   Floor weapons are `UsWeapons` nodes (code-built meshes, cached per gun: not GLBs), kept in `weapon_loot`.
 
@@ -539,17 +544,19 @@ A fresh baseline of every environment at all three presets (12 November 2026, `a
 on HIGH is now about 82 FPS.
 
 **Environment cost is small everywhere except THE UNDERSTRIP.** The yards, the city and the casino spend 0.1 to
-0.5 ms a frame on the world. The tunnels spend 2.9 to 5.7 ms, the largest single cost in that mode.
+0.5 ms a frame on the world. The tunnels spent 2.9 to 5.7 ms until 13 November 2026; they now spend 0.3 to
+1.1 ms (audit §2.1).
 
 How to keep it small:
 
 - **Merge static geometry.** One `V3Mesh` per layer or chunk, not one node per prop. The city's 8×8 chunks show how
   to keep merged meshes cullable.
 - **Share materials.** A new material is a new draw and a possible shader compile. Use vertex colour for variety.
-- **Per-frame meshes are the expensive pattern.** `UsView3D.frame()` rebuilds `warning`, `live` and `haze` from
-  scratch every frame, rewrites every wall instance on screen and copies the cached wall paint into a new mesh each
-  frame. **Measured: this is the 2.9 to 5.7 ms above.** Dressing must not go into that path, and the path itself is
-  the first optimization to make (`View3D.parts_us` gives world/people/effects timings, `View3D.frame_us` the total).
+- **Per-frame meshes are the expensive pattern.** `UsView3D.frame()` used to rewrite every wall instance on screen
+  and copy the cached wall paint into a new mesh each frame: 2.9 to 5.7 ms. It now redoes walls and paint only when
+  the tiles on screen, the lowered walls or a door change, and builds animated pieces only while they are on screen.
+  Follow the same rule for anything new: key it on what it depends on, and rebuild only when the key changes
+  (`View3D.parts_us` gives world/people/effects timings, `View3D.frame_us` the total).
 - **The wall MultiMesh** in the tunnels allocates `N×N` instances and draws `visible_instance_count`; the yard's
   wall MultiMesh resizes to the visible count.
 - **Transparency and overdraw.** Haze, gas and see-through effects are alpha-blended without depth writes. Keep them

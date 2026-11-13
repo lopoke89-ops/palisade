@@ -1,7 +1,8 @@
 class_name UsView3D
 extends Node3D
-## Native tunnel geometry. Only exposed walls on screen are instanced each frame;
-## walls between the camera and a soldier lower visually without changing collision.
+## Native tunnel geometry. Only exposed walls on screen are instanced; walls between the camera and a soldier lower
+## visually without changing collision. The walls and their paint are redone only when what they depend on changes
+## (the tiles on screen, which walls are lowered, a door opening or closing): see walls().
 ## The props are the browser's (15b-understrip-look.js: usDrawShrine, usDrawMerchant, usDrawKeeper, usDrawChest,
 ## usDrawLift, usDrawDrop, usDrawFlare; 10j: usDrawLoot) built as low-poly pieces. What never changes (the shrines'
 ## cabinets, the traders, the lift's plate) is built once; what moves or lights up is rebuilt every frame.
@@ -14,7 +15,21 @@ var wall_instances: MultiMesh
 var wall_node: MultiMeshInstance3D
 var warning: MeshInstance3D
 var live: MeshInstance3D   # the shaded props that change (chests, the Keeper, drops, flares, loot)
-var walls_live: MeshInstance3D   # what's painted on the standing walls on screen
+const CH := 8   # the wall paint's chunk, in tiles
+var paint := {}   # chunk -> {mi, sig}: what's painted on the standing walls on screen, a mesh per chunk
+var paint_mat: StandardMaterial3D
+var conc: PackedByteArray   # 1 where a tunnel wall stands with a face to show (it never changes while this node lives)
+var doors := PackedInt32Array()   # the tiles that open and close (the arena gate, blast doors)
+var gate := {}   # the arena gate's tiles
+var wall_key: Array = []   # what the walls were last built for
+var wall_c := Color.WHITE
+const C_BLAST := Color("#5a5c50")
+const C_GATE := Color("#5a1c16")
+const C_SHUT := Color("#665b3d")
+var chest_mi: MeshInstance3D   # the strongboxes still shut (rebuilt when one is opened)
+var chest_key := -1
+var lift_geo: V3Mesh   # the lift ring's dashes and each shrine's neon: the shapes never change, only their colours
+var shrine_geo := {}
 var haze: MeshInstance3D   # see-through: gas, water, acid, rings, wells, flashes
 const WALL_COL := {1: "#55595b", 2: "#4e5140", 3: "#8a9298"}
 var water: MeshInstance3D
@@ -98,9 +113,20 @@ func build():
 	live=MeshInstance3D.new()
 	live.material_override=material()
 	add_child(live)
-	walls_live=MeshInstance3D.new()
-	walls_live.material_override=material()
-	add_child(walls_live)
+	chest_mi=MeshInstance3D.new()
+	chest_mi.material_override=live.material_override
+	add_child(chest_mi)
+	paint_mat=material()
+	wall_c=Color(WALL_COL[reg])
+	conc=PackedByteArray()
+	conc.resize(s.N*s.N)
+	for k in s.N*s.N:
+		if s.terr[k]==PalMaps.T_CONC and s.lay.edges[k]: conc[k]=1
+	for xy in s.lay.get("gate",[]):
+		gate[int(xy[1])*s.N+int(xy[0])]=true
+		doors.append(int(xy[1])*s.N+int(xy[0]))
+	for b in s.lay.get("blast",[]):
+		for xy in b.tiles: doors.append(int(xy[1])*s.N+int(xy[0]))
 	haze=MeshInstance3D.new()
 	haze.material_override=material(true,true)
 	haze.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -165,61 +191,134 @@ func trader(g: V3Mesh, m):
 
 # ---------------------------------------------------------------- every frame
 
-func frame():
-	var s=world.sim
-	var count=0
-	var lv_walls=V3Mesh.new()
-	for y in range(world.vis[2],world.vis[3]+1):
-		for x in range(world.vis[0],world.vis[1]+1):
-			var k=y*s.N+x
-			var tile=s.terr[k]
-			if tile!=PalMaps.T_SHUT and not (tile==PalMaps.T_CONC and s.lay.edges[k]): continue
-			var height=1.25
-			for p in s.players.values():
+## the walls on screen and their paint. Everything here depends only on the tiles on screen, which walls are lowered
+## (those just in front of a soldier) and which doors are shut, so it is redone only when one of those changes.
+func walls(s):
+	var N: int=s.N
+	var vis: Array=world.vis
+	var low := {}
+	for p in s.players.values():
+		if not (p.alive or p.downed): continue
+		for y in range(maxi(0,floori(p.y-1.5)),mini(N-1,ceili(p.y+2.25))+1):
+			for x in range(maxi(0,floori(p.x-1.5)),mini(N-1,ceili(p.x+2.25))+1):
 				var dd=x+y+1-(p.x+p.y)
 				var lat=(x-y)-(p.x-p.y)
-				if (p.alive or p.downed) and dd>0 and dd<3.5 and absf(lat)<1.8: height=.28
-			var xf=Transform3D(Basis.from_scale(Vector3(1,height,1)),Vector3(x+.5,height*.5,y+.5))
-			wall_instances.set_instance_transform(count,xf)
-			var wc=Color(WALL_COL[reg])
-			if tile==PalMaps.T_SHUT:
-				var hz2: int=s.lay.haz[k] if s.lay.has("haz") else 0
-				wc=Color("#5a5c50") if hz2==UsDeep.HZ_BLAST else (Color("#5a1c16") if [x,y] in s.lay.gate else Color("#665b3d"))
+				if dd>0 and dd<3.5 and absf(lat)<1.8 and (conc[y*N+x] or s.terr[y*N+x]==PalMaps.T_SHUT): low[y*N+x]=true
+	var lows: Array=low.keys()
+	lows.sort()
+	var shut := PackedByteArray()
+	for k in doors: shut.append(s.terr[k])
+	var key := [vis[0],vis[1],vis[2],vis[3],lows,shut]
+	if key==wall_key: return
+	wall_key=key
+	var count=0
+	var has_haz: bool=s.lay.has("haz")
+	for y in range(vis[2],vis[3]+1):
+		for x in range(vis[0],vis[1]+1):
+			var k=y*N+x
+			var is_shut: bool=s.terr[k]==PalMaps.T_SHUT
+			if not is_shut and conc[k]==0: continue
+			var height=.28 if low.has(k) else 1.25
+			wall_instances.set_instance_transform(count,Transform3D(Basis.from_scale(Vector3(1,height,1)),Vector3(x+.5,height*.5,y+.5)))
+			var wc=wall_c
+			if is_shut:
+				var hz2: int=s.lay.haz[k] if has_haz else 0
+				wc=C_BLAST if hz2==UsDeep.HZ_BLAST else (C_GATE if gate.has(k) else C_SHUT)
 			wall_instances.set_instance_color(count,wc)
 			count+=1
-			if tile==PalMaps.T_CONC and height>1:   # its paint, built the first time the wall is on screen
-				var paint: V3Mesh=tags.get(k)
-				if paint==null:
-					paint=V3Mesh.new()
-					wall_face(paint,x,y,k)
-					tags[k]=paint
-				lv_walls.verts.append_array(paint.verts)
-				lv_walls.norms.append_array(paint.norms)
-				lv_walls.cols.append_array(paint.cols)
-				lv_walls.uv2.append_array(paint.uv2)
 	wall_instances.visible_instance_count=count
-	walls_live.mesh=lv_walls.commit() if lv_walls.size()>0 else null
+	# the paint, a mesh per chunk: a chunk is rebuilt when its part on screen or its lowered walls change
+	var low_in := {}
+	for k in lows:
+		var c: int=(int(k/N)/CH)*1024+(k%N)/CH
+		if not low_in.has(c): low_in[c]=[]
+		low_in[c].append(k)
+	var on := {}
+	for cj in range(vis[2]/CH,vis[3]/CH+1):
+		for ci in range(vis[0]/CH,vis[1]/CH+1):
+			var c: int=cj*1024+ci
+			var x0: int=maxi(ci*CH,vis[0])
+			var x1: int=mini(ci*CH+CH-1,vis[1])
+			var y0: int=maxi(cj*CH,vis[2])
+			var y1: int=mini(cj*CH+CH-1,vis[3])
+			var sig := [x0,x1,y0,y1,low_in.get(c,[])]
+			on[c]=true
+			var P: Dictionary=paint.get(c,{})
+			if P.is_empty():
+				P={"mi":MeshInstance3D.new(),"sig":[]}
+				P.mi.material_override=paint_mat
+				add_child(P.mi)
+				paint[c]=P
+			P.mi.visible=true
+			if P.sig==sig: continue
+			P.sig=sig
+			var g=V3Mesh.new()
+			for y in range(y0,y1+1):
+				for x in range(x0,x1+1):
+					var k=y*N+x
+					if conc[k]==0 or s.terr[k]!=PalMaps.T_CONC or low.has(k): continue
+					var tag: V3Mesh=tags.get(k)   # its paint, built the first time the wall is on screen
+					if tag==null:
+						tag=V3Mesh.new()
+						wall_face(tag,x,y,k)
+						tags[k]=tag
+					g.verts.append_array(tag.verts)
+					g.norms.append_array(tag.norms)
+					g.cols.append_array(tag.cols)
+					g.uv2.append_array(tag.uv2)
+			P.mi.mesh=g.commit() if g.size()>0 else null
+	for c in paint:
+		if not on.has(c): paint[c].mi.visible=false
+
+## is something of radius r at (x, y) among the tiles on screen? What changes every frame is only built when it is.
+func near(x: float, y: float, r: float) -> bool:
+	var vis: Array=world.vis
+	return x>=vis[0]-r and x<=vis[1]+1+r and y>=vis[2]-r and y<=vis[3]+1+r
+
+## a cached white shape into g, in one colour (shaded: the shape carries its faces' shading, as bar() gives it)
+static func tinted(g: V3Mesh, shape: V3Mesh, from: int, n: int, col: Color, shaded: bool = false):
+	var cc := PackedColorArray()
+	cc.resize(n)
+	if shaded:
+		for i in n: cc[i]=col*shape.cols[from+i]
+	else:
+		cc.fill(col)
+	g.verts.append_array(shape.verts.slice(from,from+n))
+	g.norms.append_array(shape.norms.slice(from,from+n))
+	g.uv2.append_array(shape.uv2.slice(from,from+n))
+	g.cols.append_array(cc)
+
+func frame():
+	var s=world.sim
+	walls(s)
 	if water!=null: water.visible=s.flood_on
 	var U=s.game.us
 	var t: float=s.game.time
 	var g=V3Mesh.new()   # unshaded: neon, rings, flames, telegraphs
 	var lv=V3Mesh.new()   # shaded props
-	for n in s.lay.shrines.size(): shrine_neon(g,s.lay.shrines[n],n,U,t)
-	lift_ring(g,s.lay.exit,U,t)
-	for n in s.lay.chests.size():
-		if not (int(U.chests)&(1<<n)): chest(lv,s.lay.chests[n])
+	for n in s.lay.shrines.size():
+		if near(s.lay.shrines[n].x,s.lay.shrines[n].y,1.0): shrine_neon(g,s.lay.shrines[n],n,U,t)
+	if near(s.lay.exit[0],s.lay.exit[1],1.8): lift_ring(g,s.lay.exit,U,t)
+	if chest_key!=int(U.chests):
+		chest_key=int(U.chests)
+		var cg=V3Mesh.new()
+		for n in s.lay.chests.size():
+			if not (chest_key&(1<<n)): chest(cg,s.lay.chests[n])
+		chest_mi.mesh=cg.commit() if cg.size()>0 else null
 	for m in s.lay.merchants:
-		if m.kind=="keeper": keeper(lv,g,m,t)
+		if m.kind=="keeper" and near(m.x,m.y,0.8): keeper(lv,g,m,t)
 	var loot_alive={}
 	for item in U.loot:
-		loot(lv,g,item,t)
+		if near(item.x,item.y,0.6): loot(lv,g,item,t)
 		if item.kind=="weapon": loot_alive[item.n]=true
 	for id in weapon_loot.keys():
 		if not loot_alive.has(id):
 			weapon_loot[id].queue_free()
 			weapon_loot.erase(id)
-	for drop in U.drops: salvage(lv,drop,t)
-	for f in U.flares: flare(lv,g,f,t)
+	for drop in U.drops:
+		if near(drop.x,drop.y,0.5): salvage(lv,drop,t)
+	for f in U.flares:
+		if near(f.x,f.y,0.7): flare(lv,g,f,t)
 	for e in s.enemies:
 		if not e.dead and e.get("elite",false):
 			if e.elite=="charger" and e.est==1:
@@ -259,19 +358,35 @@ func shrine_neon(g: V3Mesh, p, n: int, U, t: float):
 	var fl=.15 if sleep else (.85+.15*sin(t*9+n) if on else .35+.3*maxf(0,sin(t*3.1+n*2)*sin(t*7.3)))
 	var pink=dim(Color("#ff5ad8"),fl)
 	var yel=dim(Color("#ffe278"),fl)
-	var z=p.y+.145
-	var x0=p.x-.28
-	var x1=p.x+.28
-	g.bar(Vector3(x0,.14,z),Vector3(x1,.14,z),.022,pink)
-	g.bar(Vector3(x0,.56,z),Vector3(x1,.56,z),.022,pink)
-	g.bar(Vector3(x0,.14,z),Vector3(x0,.56,z),.022,pink)
-	g.bar(Vector3(x1,.14,z),Vector3(x1,.56,z),.022,pink)
-	g.bar(Vector3(p.x-.1,.47,z+.01),Vector3(p.x+.1,.47,z+.01),.025,yel)   # the 7
-	g.bar(Vector3(p.x+.1,.47,z+.01),Vector3(p.x-.03,.22,z+.01),.025,yel)
-	var xe=p.x+.335   # the side panel's strip
-	g.bar(Vector3(xe,.14,p.y-.1),Vector3(xe,.56,p.y-.1),.016,pink)
-	g.bar(Vector3(xe,.14,p.y+.1),Vector3(xe,.56,p.y+.1),.016,pink)
-	if int(U.rest.ix)==n: ring(g,p.x,p.y,.9,.035,.012,Color("#ff5ad8").darkened(.35),40)
+	var G: Dictionary=shrine_geo.get(n,{})
+	if G.is_empty():   # the shapes, once: the frame, the 7, the side strip (white, coloured below), and the rest ring
+		var w=V3Mesh.new()
+		var z=p.y+.145
+		var x0=p.x-.28
+		var x1=p.x+.28
+		w.bar(Vector3(x0,.14,z),Vector3(x1,.14,z),.022,Color.WHITE)
+		w.bar(Vector3(x0,.56,z),Vector3(x1,.56,z),.022,Color.WHITE)
+		w.bar(Vector3(x0,.14,z),Vector3(x0,.56,z),.022,Color.WHITE)
+		w.bar(Vector3(x1,.14,z),Vector3(x1,.56,z),.022,Color.WHITE)
+		var a=w.size()
+		w.bar(Vector3(p.x-.1,.47,z+.01),Vector3(p.x+.1,.47,z+.01),.025,Color.WHITE)   # the 7
+		w.bar(Vector3(p.x+.1,.47,z+.01),Vector3(p.x-.03,.22,z+.01),.025,Color.WHITE)
+		var b=w.size()
+		var xe=p.x+.335   # the side panel's strip
+		w.bar(Vector3(xe,.14,p.y-.1),Vector3(xe,.56,p.y-.1),.016,Color.WHITE)
+		w.bar(Vector3(xe,.14,p.y+.1),Vector3(xe,.56,p.y+.1),.016,Color.WHITE)
+		var r=V3Mesh.new()
+		ring(r,p.x,p.y,.9,.035,.012,Color("#ff5ad8").darkened(.35),40)
+		G={"w":w,"a":a,"b":b,"ring":r}
+		shrine_geo[n]=G
+	tinted(g,G.w,0,G.a,pink,true)
+	tinted(g,G.w,G.a,G.b-G.a,yel,true)
+	tinted(g,G.w,G.b,G.w.size()-G.b,pink,true)
+	if int(U.rest.ix)==n:
+		g.verts.append_array(G.ring.verts)
+		g.norms.append_array(G.ring.norms)
+		g.cols.append_array(G.ring.cols)
+		g.uv2.append_array(G.ring.uv2)
 
 ## the lift's hold ring (1.6 tiles: everyone inside for three seconds): dashed, green and breathing when it's open,
 ## grey while a boss stands; a solid green arc fills round it as the hold counts up
@@ -279,11 +394,14 @@ func lift_ring(g: V3Mesh, e, U, t: float):
 	var open=PalUnderstrip.PLAN[int(U.level)][1]!="boss" or U.bossDown
 	var col=dim(Color("#7cff6b"),.45+.25*sin(t*3)) if open else Color("#3a3a36")
 	var R=1.6
-	var segs=24
-	for i in segs:
-		var a0=TAU*i/segs
-		var a1=a0+TAU/segs*.55
-		arc(g,e[0],e[1],R,.05,a0,a1,.015,col,3)
+	if lift_geo==null:
+		lift_geo=V3Mesh.new()
+		var segs=24
+		for i in segs:
+			var a0=TAU*i/segs
+			var a1=a0+TAU/segs*.55
+			arc(lift_geo,e[0],e[1],R,.05,a0,a1,.015,Color.WHITE,3)
+	tinted(g,lift_geo,0,lift_geo.size(),col)
 	var f=float(U.exitT)/3.0
 	if f>0: arc(g,e[0],e[1],R,.09,-PI/2,-PI/2+f*TAU,.02,Color("#7cff6b"),maxi(3,int(f*48)))
 
@@ -418,6 +536,7 @@ func deep(g: V3Mesh, hz: V3Mesh, lv: V3Mesh, s, U, t: float):
 				if (k*7)%3: continue
 				var x=k%s.N+.5
 				var y=int(k/s.N)+.5
+				if not near(x,y,1.0): continue
 				var a=.22 if st==2 else .08+.06*sin(t*8)
 				var col=Color(150/255.0,210/255.0,70/255.0,a)
 				var bob=.03*sin(t*1.7+k)
@@ -486,7 +605,7 @@ func deep(g: V3Mesh, hz: V3Mesh, lv: V3Mesh, s, U, t: float):
 	for e in s.enemies:
 		if e.dead: continue
 		if e.type=="drone":
-			drone(lv,g,e,s)
+			if near(e.x,e.y,0.6): drone(lv,g,e,s)
 			continue
 		if e.type!="boss" or e.get("boss","")=="pitboss": continue
 		var st=int(e.get("st",0))
@@ -621,7 +740,7 @@ static func face_line(g: V3Mesh, F: Callable, pts: Array, w: float, col: Color, 
 ## DUNGEON BRIGHTNESS on BRIGHT: every raider marked over the dark, a ring at the feet and a point over the head
 func bright_marks(g: V3Mesh, s):
 	for e in s.enemies:
-		if e.dead: continue
+		if e.dead or not near(e.x,e.y,0.6): continue
 		var col=Color("#ffd65a") if e.type=="boss" else Color("#ff785a")
 		ring(g,e.x,e.y,.42,.02,.03,col,24)
 		g.prism(e.x,e.y,0.0,1.05,1.17,col,col,3,.09)

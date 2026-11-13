@@ -72,6 +72,7 @@ What the numbers say:
    strings, rewrites the wall instances, copies each wall's cached paint into new arrays, and builds four new meshes
    (wall paint, warnings, live props, haze). The guide listed this as an unmeasured suspicion; it is now measured.
    **Dressing the tunnels before fixing this would stack new cost on the game's worst frame.**
+   *Fixed on 13 November 2026: see §2.1.*
 2. Everywhere else the environment is nearly free today (0.1 to 0.5 ms), so the city and the yards have room for
    dressing as long as it is built once and not per frame.
 3. The push is the heaviest moment (12 ms on HIGH, 16 ms at the 99th percentile): inside a 60 FPS frame, but with
@@ -85,6 +86,55 @@ The run's memory and node counts climb through the first third and then hold (no
 303–313 MB), because one process played every scene in turn and the caches filled. They are not per-scene figures.
 
 ---
+
+### 2.1 The Understrip fix (13 November 2026)
+
+`UsView3D` no longer rebuilds what has not changed. The picture is the same; the world's share of an Understrip
+frame fell from 2.8–5.8 ms to 0.3–1.1 ms.
+
+What changed in `us_view3d.gd`:
+
+- **Walls and wall paint** (`walls()`) are redone only when the tiles on screen, the set of lowered walls or a
+  door's state changes. The paint is a mesh per 8×8 chunk; a chunk is rebuilt only when its on-screen part or its
+  lowered walls change. Colour strings are parsed once.
+- **Animated pieces** (shrine neon, the lift ring, the Keeper, loot, salvage, flares, drones, vent gas, BRIGHT
+  marks) are built only while they are among the tiles on screen. The lift ring's and the shrines' shapes are cached
+  and only recoloured.
+- **Strongboxes** have their own mesh, rebuilt when one is opened.
+
+Whole frame, old → new (same seed, 600 frames, vsync off, `usab_old.json` / `usab_new.json`):
+
+| Scene | Preset | Frame p50, ms | Frame p99, ms | World update, ms | 3D update, ms | Draws |
+|---|---|---|---|---|---|---|
+| us0 | LOW | 7.28 → 4.67 (-36%) | 9.00 → 7.32 | 2.78 → 0.29 | 3.77 → 1.25 | 120 → 126 |
+| us2 | LOW | 10.13 → 4.99 (-51%) | 13.71 → 9.19 | 5.56 → 0.69 | 6.36 → 1.68 | 128 → 142 |
+| us3 | LOW | 8.25 → 4.86 (-41%) | 11.12 → 8.05 | 3.73 → 0.52 | 4.73 → 1.57 | 129 → 140 |
+| us6 | LOW | 8.71 → 5.28 (-39%) | 12.69 → 9.03 | 4.37 → 1.07 | 5.23 → 2.03 | 123 → 136 |
+| us9 | LOW | 9.44 → 5.50 (-42%) | 11.51 → 8.14 | 4.51 → 0.70 | 5.51 → 1.77 | 131 → 141 |
+| us0 | HIGH | 7.63 → 4.82 (-37%) | 10.82 → 8.06 | 2.95 → 0.29 | 4.14 → 1.53 | 141 → 158 |
+| us2 | HIGH | 10.65 → 5.23 (-51%) | 13.82 → 9.16 | 5.83 → 0.70 | 6.67 → 1.71 | 165 → 195 |
+| us3 | HIGH | 8.79 → 5.08 (-42%) | 13.79 → 8.27 | 4.03 → 0.53 | 5.07 → 1.59 | 174 → 198 |
+| us6 | HIGH | 9.31 → 5.45 (-41%) | 14.06 → 8.71 | 4.71 → 1.07 | 5.57 → 2.01 | 151 → 181 |
+| us9 | HIGH | 10.09 → 5.74 (-43%) | 14.60 → 8.22 | 4.91 → 0.74 | 5.94 → 1.83 | 156 → 175 |
+
+The tunnel view alone (`lw_us_cost.gd`, 25 held spots on five levels, HIGH): 2.64–5.68 ms → 0.11–0.88 ms. On the
+move (the soldier sweeping across the level, 300 frames), the world's share went from a mean of 3.1–4.7 ms to
+0.6–1.0 ms, and its worst frame from 4.0–7.5 ms to 1.7–2.7 ms (a worst frame is one where the camera crosses into
+new chunks).
+
+Proof that the picture is the same (`us_compare.py`, `us_old3` against `us_new3`, `us_old4` against `us_new4`):
+
+- 25 held screenshots, old code against new: 0 pixels differ.
+- Every wall instance and every wall-paint triangle matches at all 25 spots, and at 60 steps on the move on each of
+  the five levels.
+- In the animated layers the new code builds no triangle the old one did not, and leaves out only triangles outside
+  the tiles on screen (2,854 across the 25 spots).
+
+Cost of the change: 6–30 more draw calls (one per paint chunk on screen instead of one mesh).
+
+Not checked: a guest's view online (a blast door there changes the tile without a rebuild; the new code watches the
+door tiles for that, but it was not run with a second machine); loot, salvage and flares on the floor (none in these
+scenes; they use the same on-screen test); two players at once.
 
 ## 3. Coverage matrix
 
@@ -284,7 +334,7 @@ Ranked by what the player sees most, against cost and risk.
 
 1. **Review the city slice.** Big U looks at the pictures and the clip and says keep, change or drop. Nothing wider
    is built on it before that.
-2. **Fix the Understrip's per-frame rebuild** (§2, finding 1): keep the wall instances and the wall-paint mesh until
+2. **Done on 13 November 2026 (§2.1).** Fix the Understrip's per-frame rebuild (§2, finding 1): keep the wall instances and the wall-paint mesh until
    the visible set or a wall's lowered state changes; stop re-parsing colours; rebuild `live`, `warning` and `haze`
    only when their inputs change or animate. Target: world update under 1 ms. Proof: identical screenshots on fixed
    seeds, the five `us*` scenes before and after. This is pure headroom and should land before any tunnel dressing.
