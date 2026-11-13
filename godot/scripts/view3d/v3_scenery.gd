@@ -556,6 +556,7 @@ func _casino() -> void:
 			g.bar(Vector3(0.006, H * f, j), Vector3(0.006, H * f, j + 1), 0.008, gold.darkened(0.1))
 	g.bar(Vector3(0, 0, 0), Vector3(0, H, 0), 0.05, c("#b58a2e"))
 	_casino_furniture(g)
+	CasinoDress.build(g, Quality3D.life)   # signs, counters, the staff door, sconces and posters
 	W.mesh_node(root, g.commit(), W.mat_props)
 	# the wheel: turned every frame
 	CasinoView._ready_data()

@@ -648,3 +648,4 @@ static func lights(m, hole: Callable) -> void:
 	hole.call(1.0, 14.5, 0.0, v.TW2 * 2.0, 0.7)
 	hole.call(PLINKO.at[0] - 0.4, PLINKO.at[1], 0.0, v.TW2 * 1.6, 0.8)
 	hole.call(8.0, 0.6, v.WH * 2.4, v.TW2 * 3.6, 0.7)
+	CasinoDress.lights(m, hole)   # the dressing's lit signs (none at Quality3D.life 0)

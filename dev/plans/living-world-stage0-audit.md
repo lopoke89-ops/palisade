@@ -183,7 +183,7 @@ ground-level history (crosswalks, manholes, stains, delivery clutter drawn flat)
 
 | Landmark | Three story clusters | Motion and sound | Clear | Check | Status |
 |---|---|---|---|---|---|
-| The cashier's cage (exists) with a lit cage sign | Service stations behind the bar; table accessories laid out; a staff-only edge with carts | Small sign cycles; slot glow and the wheel exist | Seats, table interactions, cards and bets, the entrance | `casino` | — |
+| The cashier's cage (exists) with a lit cage sign | Service stations behind the bar; table accessories laid out; a staff-only edge with carts | Small sign cycles; slot glow and the wheel exist | Seats, table interactions, cards and bets, the entrance | `casino` | **P** |
 
 ### THE UNDERSTRIP (10 generated levels; landmarks as the set-dressing plan has them)
 
@@ -343,7 +343,7 @@ Ranked by what the player sees most, against cost and risk.
    raider and one gun shown in it.
 4. **Proof built on 13 November 2026, waiting for Big U's review (§5.1).** **The Understrip proof (Stage 3):** one Flood Tunnels room, its corridor and a shrine/merchant corner, placed
    from `sim.lay.us.rooms` with the same recipe/placement/geometry split, wall pieces dropping with the walls.
-5. **The four co-op maps done on 13 November 2026 (§5.2); the casino and PvP are not.** **Yards and the casino:** one landmark and three clusters each, outside the build area or flat.
+5. **The four co-op maps (§5.2) and the casino (§5.3) done on 13 November 2026; PvP is not.** **Yards and the casino:** one landmark and three clusters each, outside the build area or flat.
 6. **Character and weapon audit** (not started): rank the 163 rigged models and 17 guns by time on screen. Start with
    the seven raider types (they fill the screen in a push) and the nine Understrip guns (box-and-tube builds).
 7. **Renderer and plugin research:** only the built-in glow and SSAO were tried here (below). Mobile, Forward+,
@@ -422,6 +422,42 @@ Not done: the casino; the PvP layouts (`OutDress` skips them); the 24x24 yards w
 the same code, the strip is longer); the Whiteout storm, weather mods and NIGHTMARE night were not checked against the
 new pieces; motion and sound on the co-op maps; levels 2 and 3's own landmarks (the damaged pump station, the
 counting cages); the boss arenas beyond wall runs; the browser client; two players; an exported build.
+
+### 5.3 The casino (13 November 2026)
+
+`godot/scripts/view3d/casino_dress.gd` (`CasinoDress`, static), called in `V3Scenery._casino()` just before the
+room's mesh is committed. Nothing new stands or lies on the floor: every piece hangs on the north or west wall or
+sits on furniture that is solid already.
+
+- `life` 1: `CHIPS` in gold tubes on the cage's canopy (the landmark); `BAR`, `JACKPOT`, `777` and `WIN` on the north
+  wall; `LUCKY 7`, `WELCOME`, `OPEN LATE` and a row of tube diamonds on the west wall; the way in outlined in tube;
+  a band of tube high and low on each pillar; a glow under every table in the table's own colour. Each sign also
+  takes a hole in the room's shade (`CasinoDress.lights`, called last in `CasinoView.lights`), so it reads as lit.
+- `life` 2: chip racks, a cash tray and a green lamp on the cashier's counter; a mirror behind the bar; a till, taps,
+  glasses and a mat on the bar's counter; a `STAFF` door between the slots and the bar; sconces; three posters.
+  On the tables, all on the dealer's side and off the felt where cards and bets are laid: chip trays (blackjack,
+  baccarat, poker), a discard holder, a baccarat shoe, poker's printed betting line, the craps table's padded wall
+  with its diamond rubber and bank of chips, and the croupier's stacks and marker beside the roulette wheel.
+- `life` 3: chips in the racks, two shelves of bottles on the back bar's face, a bowl of lemons.
+
+Two things were built and taken out after the first render: a runner at the entrance (it covered the room's own red
+carpet) and a `SLOTS` sign on the north wall (it sat behind the room's floating labels). The cage sign says `CHIPS`
+because a floating `CASHIER` label is already there.
+
+| Check | Result |
+|---|---|
+| Sim state, dressing off against on, and old code against new | identical |
+| Dressing off, old code against new, 4 held shots | identical outside one 80 x 42 px box in each |
+| That box | the roulette wheel, which turns on its own clock: two runs of the same code differ there too |
+| Nine headless suites | pass |
+
+Picture: `bench\living\review\15_casino.jpg` (the room) and `16_casino_close.jpg`. Shots: `out_shots.sh <out> maps=casino`.
+
+Big U asked for more neon and for the tables to be dressed after the first pass; both are in the lists above.
+
+Not done: anything on the felt where cards and bets are drawn; a live game was not played at each table with the
+new pieces in view; carts on the staff edge (they would
+stand on walkable floor); a cycling sign; sound. A change to `life` takes effect the next time the casino is entered.
 
 **Built-in glow and SSAO in the Compatibility renderer** (tested locally with `bench\living\lw_glow_probe.gd`):
 
