@@ -146,10 +146,10 @@ pass, **—** not started.
 
 | Map | Landmark | Three story clusters | Motion and sound | Assets needed | Clear | Check | Status |
 |---|---|---|---|---|---|---|---|
-| The Yard | The camp's repair bench and flag by the stake | Tool racks and a half-fixed fence panel; sorted supply stacks by Delgado's route; wheel ruts and a worn path to the east gate | Tarp and flag in the wind, dust on the east side, one lit work lamp | Bench, racks, crates, tarp, ruts and path decals | Build cells, the stake, piles, spawn edge, Delgado's path | `raid`, `yardxl` | — |
-| Riverbend | The flood gauge and winch at the upper bridge | Bridge repairs with spare planks; an abandoned cart at the ford; waterline marks and sandbags on the banks | Reeds, ripples, water sound that rises with the flood | Gauge post, winch, cart, reeds, sandbags, waterline decal | Bridges, banks, flood sheet, the Ferryman's raft lane | `river` | — |
-| Ashfall Quarry | The headframe and winch over the pit | Ore staging with hoses; a warning board and a damaged site hut on the rim; drum fires with tool litter | Drum flicker (exists), dust falls, a winch creak | Headframe, hut, hoses, boards, ore heaps | Pits and cracks (they change in play), ramps, drums, the rim | `quarry` | — |
-| Frostpeak | The summit beacon (exists) and its antenna | Expedition caches with marked routes (caches and flags exist); a shelter with rope hardware; drifted snow against the handrails | Flags and snow drift in wind, beacon pulse | Shelter, rope and anchor kit, antenna fittings, drift decals | Terrace edges, ramps, stairs, handrails, the evac site | `frost` | — |
+| The Yard | The camp's repair bench and flag by the stake | Tool racks and a half-fixed fence panel; sorted supply stacks by Delgado's route; wheel ruts and a worn path to the east gate | Tarp and flag in the wind, dust on the east side, one lit work lamp | Bench, racks, crates, tarp, ruts and path decals | Build cells, the stake, piles, spawn edge, Delgado's path | `raid`, `yardxl` | **P** (outside the fence) |
+| Riverbend | The flood gauge and winch at the upper bridge | Bridge repairs with spare planks; an abandoned cart at the ford; waterline marks and sandbags on the banks | Reeds, ripples, water sound that rises with the flood | Gauge post, winch, cart, reeds, sandbags, waterline decal | Bridges, banks, flood sheet, the Ferryman's raft lane | `river` | **P** (outside the fence) |
+| Ashfall Quarry | The headframe and winch over the pit | Ore staging with hoses; a warning board and a damaged site hut on the rim; drum fires with tool litter | Drum flicker (exists), dust falls, a winch creak | Headframe, hut, hoses, boards, ore heaps | Pits and cracks (they change in play), ramps, drums, the rim | `quarry` | **P** (outside the fence) |
+| Frostpeak | The summit beacon (exists) and its antenna | Expedition caches with marked routes (caches and flags exist); a shelter with rope hardware; drifted snow against the handrails | Flags and snow drift in wind, beacon pulse | Shelter, rope and anchor kit, antenna fittings, drift decals | Terrace edges, ramps, stairs, handrails, the evac site | `frost` | **P** (outside the fence) |
 | The Whiteout Gauntlet (campaign finale on Frostpeak) | The beacon lit for evacuation | Reuses Frostpeak's kit with storm state | Whiteout wind, beacon alarm | None new | As Frostpeak, plus the evac ring | campaign run to wave 13 | — |
 | Final Blitz and evac (any co-op map) | The evac site's ring (exists) | Reuses the map's kit | Shell warnings (exist) | None new | Evac ring, shell markers | `blitz` | — |
 | Weather (dust, rain, ash) and NIGHTMARE night | — | States, not places: dressing must read under each | Storm streaks (exist) | None new | — | each map with the WEATHER mod | — |
@@ -189,16 +189,16 @@ ground-level history (crosswalks, manholes, stains, delivery clutter drawn flat)
 
 | # | Level | Landmark | Room recipe tied to a real role | Status |
 |---|---|---|---|---|
-| 1 | Flood Tunnels 1 | A large storm outfall | `corridor`: pipe runs and a drain line; `merchant`: a staff-access counter | — |
-| 2 | Flood Tunnels 2 | A damaged pump station | `room`: pump and failed sandbag line; `breather`: a maintenance break corner | — |
-| 3 | The Count Room (Pit Boss) | Counting cages round the arena | `boss_ante`: bag storage and a shuttered counter; `boss_arena`: perimeter only | — |
-| 4 | Shelter 7 1 | The check-in desk | `room`: numbered bunks and lockers; `cache`: ration shelves | — |
-| 5 | Shelter 7 2 | The generator and filter plant | `room`: switchgear; `junction`: duct runs with direction stencils | — |
-| 6 | The Main Hall (Custodian) | The central status board | `boss_ante`: cleaning and service carts; `boss_arena`: blast-door frames | — |
-| 7 | Area 67 1 | The decontamination frame | `room`: lab benches; `corridor`: cable trunks | — |
-| 8 | Area 67 2 | The breached containment cell | `room`: stripped stations with growth; `cache`: specimen storage | — |
-| 9 | The Loading Bay (Gatekeeper) | The suit-service gantry | `boss_arena`: cargo racks and freight marks on the perimeter | — |
-| 10 | The Containment Hall (Visitor) | The containment ring | `boss_arena`: observation stations and power routes on the perimeter | — |
+| 1 | Flood Tunnels 1 | A large storm outfall | `corridor`: pipe runs and a drain line; `merchant`: a staff-access counter | **P** |
+| 2 | Flood Tunnels 2 | A damaged pump station | `room`: pump and failed sandbag line; `breather`: a maintenance break corner | **P** (kit only; no landmark yet) |
+| 3 | The Count Room (Pit Boss) | Counting cages round the arena | `boss_ante`: bag storage and a shuttered counter; `boss_arena`: perimeter only | **P** (shutters and pipes; no cages yet) |
+| 4 | Shelter 7 1 | The check-in desk | `room`: numbered bunks and lockers; `cache`: ration shelves | **P** |
+| 5 | Shelter 7 2 | The generator and filter plant | `room`: switchgear; `junction`: duct runs with direction stencils | **P** |
+| 6 | The Main Hall (Custodian) | The central status board | `boss_ante`: cleaning and service carts; `boss_arena`: blast-door frames | **P** |
+| 7 | Area 67 1 | The decontamination frame | `room`: lab benches; `corridor`: cable trunks | **P** |
+| 8 | Area 67 2 | The breached containment cell | `room`: stripped stations with growth; `cache`: specimen storage | **P** |
+| 9 | The Loading Bay (Gatekeeper) | The suit-service gantry | `boss_arena`: cargo racks and freight marks on the perimeter | **P** |
+| 10 | The Containment Hall (Visitor) | The containment ring | `boss_arena`: observation stations and power routes on the perimeter | **P** |
 
 Clear, every level: doorways and shortcut doors, the boss gate, the lift ring (1.6 tiles), shrines, merchants,
 chests, loot, ambush and spawn tiles, hazard floors and their telegraphs, and one-tile routes. Wall pieces must drop with the wall when it lowers near the camera. Check = `us0`, `us2`, `us3`, `us6`,
@@ -341,13 +341,87 @@ Ranked by what the player sees most, against cost and risk.
 3. **Finish the city slice to the work order's Stage 2:** flat street history (crosswalks, manholes, stains),
    two or three sound emitters with distance limits, slow window changes, then one refined soldier, one common
    raider and one gun shown in it.
-4. **The Understrip proof (Stage 3):** one Flood Tunnels room, its corridor and a shrine/merchant corner, placed
+4. **Proof built on 13 November 2026, waiting for Big U's review (§5.1).** **The Understrip proof (Stage 3):** one Flood Tunnels room, its corridor and a shrine/merchant corner, placed
    from `sim.lay.us.rooms` with the same recipe/placement/geometry split, wall pieces dropping with the walls.
-5. **Yards and the casino:** one landmark and three clusters each, outside the build area or flat.
+5. **The four co-op maps done on 13 November 2026 (§5.2); the casino and PvP are not.** **Yards and the casino:** one landmark and three clusters each, outside the build area or flat.
 6. **Character and weapon audit** (not started): rank the 163 rigged models and 17 guns by time on screen. Start with
    the seven raider types (they fill the screen in a push) and the nine Understrip guns (box-and-tube builds).
 7. **Renderer and plugin research:** only the built-in glow and SSAO were tried here (below). Mobile, Forward+,
    ProtonScatter and Terrain3D are untested and nothing in this slice needed them.
+
+### 5.1 The Understrip dressing proof (13 November 2026)
+
+`godot/scripts/view3d/us_dress.gd` (`UsDress`), hooked into `UsView3D` in four places. It dresses the Flood Tunnels
+kit only (levels 1 to 3); Shelter 7 and Area 67 are untouched until this is reviewed.
+
+What it places, from `sim.lay.us.rooms` and a hash of its own (the level seed, a namespace, the tile, a salt):
+
+- **On the walls** (the two faces the camera sees, at most 0.12 out): pipe runs with elbows into the wall, valves that
+  weep, a junction box and cable for every lamp, stencilled signs (`T-40`, `PUMP 2`, `DRAIN`, `LIFT`, `SERVICE`,
+  `STAFF`, `SLOTS`, `COUNT`), the trader's shelves, a notice board and flask shelf by the rest shrine, shutters in the
+  Count Room's antechamber, and one storm outfall in level 1's entrance. They are built into the wall's paint, so a
+  wall that lowers in front of a soldier takes them with it.
+- **On the cover tiles** (`T_JUNK`, solid already, same tile, no taller than 0.56): pumps in the pump room, dumped
+  slot cabinets in the slots room, pallets and crates elsewhere, in place of the plain brown box.
+- **Flat on the floor** (from `life` 2): silt along wall feet, drain grates across passages, cables, stains under
+  valves, a mat by the notice board. Kept off start spots, the lift ring, shrines, traders, chests, ambush tiles,
+  doors, the boss gate and hazard floors. Boss arenas get wall pipes only.
+- **Motion** (from `life` 2, none under Reduce Motion): a ring spreading on the stain under each valve on screen.
+
+| Check | Result |
+|---|---|
+| Dressing off (`life` 0), old code against new, 28 held shots on levels 1 to 3 | 0 differ |
+| Sim state after the same seeded steps, dressing off against on (tiles, edges, rooms, marks, raiders, soldier, RNG) | identical on levels 1 to 3 |
+| Tunnel view's cost a frame, held, levels 1 and 3 | +0.01 to +0.06 ms |
+| World part on the move (mean) | level 1: 0.70 to 0.77 ms; level 3: 0.62 to 0.64 ms |
+| Pieces placed, level 1 | 175 pipe tiles, 18 boxes, 13 signs, 2 shelves, 1 board, 1 outfall, 4 pumps, 8 slot cabinets, 169 floor pieces, 25 drips |
+| Recipes that could not place a piece | level 3: one lamp cable (no wall in reach) |
+| Nine headless suites | pass |
+
+Pictures: `bench\livingeview\8_`, `9_` and `10_understrip_*.jpg` (before and after, DUNGEON BRIGHTNESS on LIT).
+Scripts: `bench\living\lw_us_shots.gd` (`us_shots.sh <out> [levels=] [tiers=] [bright=]`).
+
+Not done: sound; the browser client (the set-dressing plan wants the same placements there); new light sources;
+Shelter 7 and Area 67; the four arenas beyond wall pipes; a second player; an exported build. A new script with a
+`class_name` needs `--import` run once before the game is started from the project folder, or the 3D world fails to
+load.
+
+### 5.2 Widened after Big U's go-ahead (13 November 2026)
+
+**All ten Understrip levels.** `UsDress` now has a kit per region (`REGION`): Shelter 7 gets sheet-metal ducts, wall
+phones, bunks with foot lockers (the "slots" room), generator sets (the "pump" room), ration cases, orange signs
+(`B-24`, `BUNKS`, `GEN 2`, `STORES`, `MAIN HALL`); Area 67 gets cable trunks (with growth on them from level 8),
+monitors, pale freight cases and signs (`L-12`, `LAB 4`, `SPECIMEN`, `BAY 2`). Level landmarks, in the entrance room:
+a `CHECK IN` hatch (4), a filter housing (5), a spray bar over a wash-down pad (7), a breached cell window (8); the
+Main Hall's status board is in level 6's antechamber. Drips stay a Flood Tunnels thing.
+
+**The co-op maps.** `godot/scripts/view3d/out_dress.gd` (`OutDress`), called at the end of `V3Scenery._outside()`.
+Everything stands in the one-tile strip outside the fence on the north and west sides, only on tiles the forest left
+empty, and joins the back scenery's mesh (no extra draws, nothing per frame):
+
+| Map | Landmark (`life` 1) | Clusters (`life` 2) |
+|---|---|---|
+| The Yard | repair bench, tool rack and flag | tarp shelter with stores, supply stacks, a half-mended fence panel, a hand cart |
+| Riverbend | flood gauge and winch by the river's way out | a slumped sandbag line with reeds, bridge timber, an abandoned cart |
+| Ashfall Quarry | headframe over the rim | site hut and warning board, two ore stagings |
+| Frostpeak | expedition tent | roped cache and route flag, a second tent, an aerial on the summit beacon |
+
+| Check | Result |
+|---|---|
+| Understrip levels 4 to 10, dressing off, old code against new (70 held shots) | 0 differ |
+| Understrip levels 4 to 10, sim state off against on | identical |
+| Understrip tunnel view cost a frame, held, levels 4, 7 and 10 | within 0.03 ms of before |
+| Co-op maps, dressing off, old code against new (16 held shots) | 0 differ |
+| Co-op maps, sim state off against on | identical |
+| Recipes that could not place a piece (seed 20261102) | none |
+| Nine headless suites | pass |
+
+Pictures: `bench\living\review\11_` to `14_*.jpg`. Scripts: `lw_us_shots.gd`, `lw_out_shots.gd` (`out_shots.sh`).
+
+Not done: the casino; the PvP layouts (`OutDress` skips them); the 24x24 yards were not rendered (the placement is
+the same code, the strip is longer); the Whiteout storm, weather mods and NIGHTMARE night were not checked against the
+new pieces; motion and sound on the co-op maps; levels 2 and 3's own landmarks (the damaged pump station, the
+counting cages); the boss arenas beyond wall runs; the browser client; two players; an exported build.
 
 **Built-in glow and SSAO in the Compatibility renderer** (tested locally with `bench\living\lw_glow_probe.gd`):
 

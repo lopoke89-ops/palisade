@@ -23,6 +23,7 @@ var people: Dictionary = {}   # casino staff and seated bots: key -> Node3D
 var root: Node3D
 var dress: CityDress   # the city's storefronts, rooftops and neon (Quality3D.life)
 var dress_life := -1
+var out_dress: OutDress   # the co-op maps' camp, gauge, headframe and shelters outside the fence (Quality3D.life)
 
 
 func _init(world) -> void:
@@ -60,7 +61,7 @@ func build_map(r: Node3D) -> void:
 
 
 func frame(dt: float) -> void:
-	if sim.map_id == "city" and dress_life != Quality3D.life:   # the setting changed: the city is dressed again
+	if dress_life != Quality3D.life and not sim.understrip() and not sim.casino():   # the setting changed: the map is dressed again
 		W.dirty = true
 	if dress != null:
 		dress.frame(dt)
@@ -153,6 +154,8 @@ func _outside() -> void:
 			_edge(front, side, q)
 	if F:
 		_frost_props(back)
+	out_dress = OutDress.new(self)
+	out_dress.build(back)
 	if back.size() > 0:
 		W.mesh_node(root, back.commit(), W.mat_props)
 	if front.size() > 0:

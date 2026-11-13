@@ -35,6 +35,7 @@ const WALL_COL := {1: "#55595b", 2: "#4e5140", 3: "#8a9298"}
 var water: MeshInstance3D
 var reg := 1   # the region: 1 the Flood Tunnels, 2 Shelter 7, 3 Area 67
 var tags: Dictionary = {}   # wall tile -> its graffiti (built once, shown while the wall stands full height)
+var dress: UsDress   # the set dressing: pieces on the walls (in their paint), on the cover tiles and flat on the floor
 
 func _init(w):
 	world=w
@@ -65,6 +66,7 @@ func build():
 	var glow=V3Mesh.new()
 	var flooded=V3Mesh.new()
 	reg=PalUnderstrip.PLAN[clampi(int(s.game.us.level),0,9)][0]
+	dress=UsDress.new(s)
 	for y in s.N:
 		for x in s.N:
 			var tile=s.terr[y*s.N+x]
@@ -81,7 +83,7 @@ func build():
 				if reg==1 and hz==0: ground_detail(floor_mesh,x,y,Pal.hash2(x,y))
 				else: reg_detail(floor_mesh,hz,x,y,Pal.hash2(x,y))
 			if tile==PalMaps.T_LOW: flooded.quad(Vector3(x,.06,y),Vector3(x,.06,y+1),Vector3(x+1,.06,y+1),Vector3(x+1,.06,y),Color("#276f7b"))
-			if tile==PalMaps.T_JUNK: props.box(x+.1,y+.1,x+.9,y+.9,0,.5,Color("#584e42"),Color("#3b3932"),Color("#43423a"))
+			if tile==PalMaps.T_JUNK and not dress.junk_geo(props,x,y): props.box(x+.1,y+.1,x+.9,y+.9,0,.5,Color("#584e42"),Color("#3b3932"),Color("#43423a"))
 			if tile==PalMaps.T_TANK:
 				props.prism(x+.5,y+.5,.42,0,.12,Color("#3a444c"),Color("#3a444c"),12)
 				glow.prism(x+.5,y+.5,.36,.12,1.3,Color("#3f9c7c"),Color("#3f9c7c"),12)
@@ -95,6 +97,9 @@ func build():
 	for merchant in s.lay.merchants:
 		if merchant.kind!="keeper": trader(props,merchant)
 	mesh(floor_mesh,material())
+	var wear=V3Mesh.new()
+	dress.floor_geo(wear)
+	if wear.size()>0: mesh(wear,material())
 	mesh(props,material())
 	mesh(glow,material(true))
 	if flooded.size()>0: water=mesh(flooded,material(true))
@@ -341,6 +346,7 @@ func frame():
 			g.quad(Vector3(e.x+side.x,.04,e.y+side.y),Vector3(e.lx+side.x,.04,e.ly+side.y),Vector3(e.lx-side.x,.04,e.ly-side.y),Vector3(e.x-side.x,.04,e.y-side.y),col)
 	var hz=V3Mesh.new()
 	deep(g,hz,lv,s,U,t)
+	dress.frame(g,t,self)
 	if int(world.m.settings.data.get("usBright",0))>=3: bright_marks(g,s)
 	warning.mesh=g.commit() if g.size()>0 else null
 	live.mesh=lv.commit() if lv.size()>0 else null
@@ -699,7 +705,8 @@ func wall_face(g: V3Mesh, x: int, y: int, k: int):
 		if reg==2: face_line(g,F,[[0,.5],[1,.5]],.025,Color("#a8642a"),.001)   # Shelter 7's orange band
 	if reg==3:   # growth up the lab wall
 		face_line(g,L,[[.2,.2],[.28,.42],[.38,.62],[.5,.8]],.018,Color("#5aa050"),.001)
-	if reg!=1: return
+	dress.wall_geo(g,x,y,k)
+	if reg!=1 or dress.mute.has(k): return
 	var v=tag_of(k)
 	if v==1:   # a bubble tag: a fat pink loop with a cyan outline and a highlight
 		var P=[[.14,.32],[.24,.62],[.36,.34],[.46,.6],[.58,.3],[.7,.58],[.84,.36]]
