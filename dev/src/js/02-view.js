@@ -1,7 +1,10 @@
 /* ================= view ================= */
 let W=0,H=0,DPR=1,TW2=32,TH2=16,WH=26,u=1,camX=0,camY=0,camSX=0,camSY=0,shake=0;
 // desktop gets full-resolution scenery caches (sharper, and they blit 1:1); phones keep the smaller budget
-const DESK=!matchMedia('(pointer: coarse)').matches;
+// Edge on an Xbox drives a cursor with the controller and can say its pointer is coarse; it's a TV, not a phone
+const XBOX=/xbox/i.test(navigator.userAgent||'');
+try{if(XBOX&&'gamepadInputEmulation'in navigator)navigator.gamepadInputEmulation='gamepad'}catch(e){}   // older Edge on Xbox: hand the controller to the game, not the cursor
+const DESK=XBOX||!matchMedia('(pointer: coarse)').matches;
 const snapPx=v=>Math.round(v*DPR)/DPR;
 const LQ=1;   // full size: a half-size lighting layer costs more to stretch back up than it saves
 // iPhone home-screen apps with a see-through status bar report a window that is short by about the

@@ -34,7 +34,7 @@ function deadzone(x,y,d){const l=Math.hypot(x,y);if(l<d)return[0,0,0];const m=Ma
 function padOn(){padMode=true;touchMode=false;freeSticks();mouse.seen=false;mouse.down=false;document.body.classList.add('pad');padHints()}
 function padOff(){padMode=false;pad.fire=false;document.body.classList.remove('pad');if(pad.el){pad.el.classList.remove('padF');pad.el=null}padHints()}
 addEventListener('keydown',e=>{if(e.isTrusted&&padMode)padOff()},true);
-addEventListener('pointerdown',e=>{if(e.isTrusted&&padMode){if(e.pointerType==='touch'||e.pointerType==='pen')touchMode=true;padOff()}},true);   // a finger anywhere, menus included, brings the touch controls back
+addEventListener('pointerdown',e=>{if(e.isTrusted&&padMode){if(!XBOX&&(e.pointerType==='touch'||e.pointerType==='pen'))touchMode=true;padOff()}},true);   // a finger anywhere, menus included, brings the touch controls back
 let lastMX=null,lastMY=0;   // the mouse takes over once it really moves, not when a desk bump nudges it
 addEventListener('mousemove',e=>{if(!e.isTrusted)return;if(padMode&&lastMX!==null&&Math.abs(e.clientX-lastMX)+Math.abs(e.clientY-lastMY)>6)padOff();lastMX=e.clientX;lastMY=e.clientY},true);
 
@@ -183,7 +183,8 @@ function padRumble(ms){
 function renderPadSet(){
   const box=$('padMap');if(!box)return;
   const on=pad.idx>=0;
-  $('padStatus').textContent=on?`Controller connected (${pad.kind==='ps'?'PlayStation':'Xbox-style'} buttons). Pick an action, then press the button you want for it.`:'No controller found. Plug one in or pair it, then press any button on it.';
+  $('padStatus').textContent=on?`Controller connected (${pad.kind==='ps'?'PlayStation':'Xbox-style'} buttons). Pick an action, then press the button you want for it.`:XBOX?'The game does not see the controller yet. Hold MENU, choose Use game controls, then press any button.':'No controller found. Plug one in or pair it, then press any button on it.';
+  {const x=$('xboxNote');if(x)x.hidden=!XBOX||on}   // the Xbox line goes once the controller reaches the game
   box.innerHTML=PAD_ACTIONS.map(([a,name])=>`<button type="button" class="padRow${pad.bindAct===a?' wait':''}" data-pa="${a}"><span>${name}</span><kbd>${pad.bindAct===a?'PRESS A BUTTON':padKey(a)}</kbd></button>`).join('')+
     `<div class="padFixed"><span>MOVE <kbd>${glyph(PB.LS)}</kbd></span><span>AIM <kbd>${glyph(PB.RS)}</kbd></span><span>PAUSE <kbd>${glyph(PB.MENU)}</kbd></span></div>`;
   if(pad.el&&!pad.el.isConnected&&pad.bindAct==null){const b=box.querySelector(`[data-pa="${pad.lastPa}"]`);if(b)navFocus(b)}

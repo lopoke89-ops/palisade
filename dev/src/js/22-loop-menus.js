@@ -4,7 +4,7 @@ let last=performance.now(),fpsN=0,fpsT=0;
 // phones drawing twice as often as needed. Auto: 60 on phones, dropping to 30 for the rest of the run when the
 // phone is struggling or its battery is low and not charging; uncapped on desktops. The simulation, snapshots and
 // input metering are all time-based, so a capped phone plays the same, just with fewer pictures.
-const FPS_AUTO={drop:false,work:0,n:0,t:0},COARSE=(()=>{try{return matchMedia('(pointer:coarse)').matches}catch(e){return false}})();
+const FPS_AUTO={drop:false,work:0,n:0,t:0},COARSE=(()=>{try{return !XBOX&&matchMedia('(pointer:coarse)').matches}catch(e){return false}})();
 let fpsDrawn=0,lowBattery=false;
 try{navigator.getBattery().then(b=>{const f=()=>{lowBattery=!b.charging&&b.level<=.3};f();b.addEventListener('levelchange',f);b.addEventListener('chargingchange',f)}).catch(()=>{})}catch(e){}
 function fpsCap(){
