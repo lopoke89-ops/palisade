@@ -134,6 +134,34 @@ const FAKE = (id) => {
   await m.touchscreen.tap(200, 400); s = await S(m); assert.equal(s.mode, false); assert.equal(s.touch, true, 'a touch brings touch mode back');
   await m.close();
 
+  // 3b. Edge on an Xbox: it can say its pointer is coarse and its controller cursor sends touch-like taps.
+  // The game still treats it as a TV with a controller, and says how to hand the controller to the game.
+  {
+    const XUA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; Xbox; Xbox One) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0';
+    const ctx = await b.newContext({ viewport: { width: 1920, height: 1080 }, userAgent: XUA, hasTouch: true });
+    const coarse = () => { const mm = matchMedia.bind(window); window.matchMedia = q => /pointer/.test(q) ? { matches: /coarse/.test(q), media: q, onchange: null, addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {}, dispatchEvent() { return false } } : mm(q) };
+    const xopen = async (withPad) => { const x = await ctx.newPage(); x.on('pageerror', e => errors.push(e.message)); await x.addInitScript(coarse);
+      if (withPad) await x.addInitScript(FAKE, 'Xbox Wireless Controller (STANDARD GAMEPAD Vendor: 045e Product: 0b13)');
+      await x.goto(`http://localhost:${PORT}/debug.html?peerhost=127.0.0.1&peerport=9000&peerpath=/&debug=1`); await ready(x); return x };
+    const note = x => x.evaluate(() => { const n = document.getElementById('xboxNote'); return !n.hidden && n.offsetHeight > 0 });
+    // controller still in Edge's cursor mode: the game can't see it
+    const x0 = await xopen(false);
+    out.xbox = { coarseFaked: await x0.evaluate(() => matchMedia('(pointer: coarse)').matches), touch: (await S(x0)).touch, desk: await x0.evaluate(() => document.body.classList.contains("desk")), note: await note(x0) };
+    assert.ok(out.xbox.coarseFaked, 'the fake reports a coarse pointer'); assert.equal(out.xbox.touch, false, 'Xbox does not start in touch mode');
+    assert.equal(out.xbox.note, true, 'the main menu says how to switch Edge to game controls');
+    out.xbox.status = await x0.textContent('#padStatus'); assert.ok(/Use game controls/.test(out.xbox.status), 'Settings says it too');
+    await x0.touchscreen.tap(960, 700); out.xbox.afterTap = (await S(x0)).touch; assert.equal(out.xbox.afterTap, false, 'a cursor tap is not a finger');
+    await x0.close();
+    // game controls on: the controller drives the game and the note goes
+    const x1 = await xopen(true); await x1.waitForFunction(() => __pal.pad.idx >= 0, null, { timeout: 5000 });
+    out.xbox.noteWithPad = await note(x1); assert.equal(out.xbox.noteWithPad, false, 'the note goes once the game sees the controller');
+    await press(x1, 0); s = await S(x1); assert.equal(s.mode, true, 'a button press takes over'); assert.equal(s.touch, false);
+    await x1.touchscreen.tap(960, 700); s = await S(x1); out.xbox.tapAfterPad = s; assert.equal(s.touch, false, 'a tap never brings the touch sticks on Xbox');
+    await x1.close(); await ctx.close();
+  }
+  // a desktop never shows the Xbox line
+  { const d = await open({ width: 1280, height: 720 }, false, null, true); out.deskNote = await d.evaluate(() => !document.getElementById('xboxNote').hidden); assert.equal(out.deskNote, false, 'no Xbox note off Xbox'); await d.close() }
+
   // 4. online: a guest on a controller. The host sees their aim and trigger; nothing new goes over the network.
   const H = await open({ width: 1280, height: 720 }, false, null, true), G = await open({ width: 1280, height: 720 });
   await H.click('[data-go=multi]'); await H.fill('#mName', 'Host'); await H.click('#hostBtn');

@@ -1,21 +1,21 @@
 /* ================= input ================= */
-let touchMode=matchMedia('(pointer: coarse)').matches;
+let touchMode=!XBOX&&matchMedia('(pointer: coarse)').matches;
 const keys={},mouse={x:0,y:0,down:false,seen:false,pulls:0};
 const stickMove={id:null,ox:0,oy:0,vx:0,vy:0,mag:0},stickAim={id:null,ox:0,oy:0,vx:0,vy:0,mag:0},SR=56;
 function stickSet(s,x,y){let dx=x-s.ox,dy=y-s.oy;const l=Math.hypot(dx,dy);if(l>SR){dx*=SR/l;dy*=SR/l}s.vx=dx/SR;s.vy=dy/SR;s.mag=Math.min(1,l/SR)}
 cv.addEventListener('pointerdown',e=>{
   initAudio();
-  if(e.pointerType==='mouse'){touchMode=false;mouse.seen=true;mouse.x=e.clientX;mouse.y=e.clientY;if(e.button===0){mouse.down=true;mouse.pulls=(mouse.pulls+1)&255}else if(e.button===2&&playing()&&!overlayOpen()&&!casino())localRoll();return}   // v0.11.0: the right button rolls
+  if(e.pointerType==='mouse'||XBOX){touchMode=false;mouse.seen=true;mouse.x=e.clientX;mouse.y=e.clientY;if(e.button===0){mouse.down=true;mouse.pulls=(mouse.pulls+1)&255}else if(e.button===2&&playing()&&!overlayOpen()&&!casino())localRoll();return}   // v0.11.0: the right button rolls
   touchMode=true;const s=e.clientX<W*.45?stickMove:stickAim;if(s.id!==null)return;
   s.id=e.pointerId;s.ox=e.clientX;s.oy=e.clientY;s.vx=s.vy=s.mag=0;try{cv.setPointerCapture(e.pointerId)}catch(_){}
   e.preventDefault();
 });
 cv.addEventListener('pointermove',e=>{
-  if(e.pointerType==='mouse'){mouse.x=e.clientX;mouse.y=e.clientY;mouse.seen=true;return}
+  if(e.pointerType==='mouse'||XBOX){mouse.x=e.clientX;mouse.y=e.clientY;mouse.seen=true;return}
   if(e.pointerId===stickMove.id)stickSet(stickMove,e.clientX,e.clientY);
   if(e.pointerId===stickAim.id)stickSet(stickAim,e.clientX,e.clientY);
 });
-const endP=e=>{if(e.pointerType==='mouse'){mouse.down=false;return}for(const s of[stickMove,stickAim])if(e.pointerId===s.id){s.id=null;s.vx=s.vy=s.mag=0}};
+const endP=e=>{if(e.pointerType==='mouse'||XBOX){mouse.down=false;return}for(const s of[stickMove,stickAim])if(e.pointerId===s.id){s.id=null;s.vx=s.vy=s.mag=0}};
 cv.addEventListener('pointerup',endP);cv.addEventListener('pointercancel',endP);cv.addEventListener('lostpointercapture',endP);
 const freeSticks=()=>{for(const s of[stickMove,stickAim]){s.id=null;s.vx=s.vy=s.mag=0}mouse.down=false};
 // Safari can hand a touch to text selection or a system gesture and never tell the canvas it ended.
